@@ -1,0 +1,925 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * (c) 2016-2020 Swirlds, Inc.
+ *
+ * This software is the confidential and proprietary information of
+ * Swirlds, Inc. ("Confidential Information"). You shall not
+ * disclose such Confidential Information and shall use it only in
+ * accordance with the terms of the license agreement you entered into
+ * with Swirlds.
+ *
+ * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
+ * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
+ * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
+ * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
+ */
+
+package com.hedera.hashgraph.client.ui;
+
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
+import com.hedera.hashgraph.client.ui.pages.HomePanePage;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.testfx.api.FxRobotException;
+import org.testfx.api.FxToolkit;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_FILES_VBOX;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
+
+	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
+	protected static final String PASSWORD = "123456789";
+	public static final int ONE_SECOND = 1000;
+	private HomePanePage homePanePage;
+	private AccountsPanePage accountsPanePage;
+	private MainWindowPage mainWindowPage;
+
+	private final Path currentRelativePath = Paths.get("");
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+	private static final String DEFAULT_STORAGE = System.getProperty(
+			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	public UserAccessibleProperties properties;
+	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+	private final List<VBox> publicKeyBoxes = new ArrayList<>();
+	private final List<VBox> accountInfoBoxes = new ArrayList<>();
+	private final List<VBox> batchBoxes = new ArrayList<>();
+	private final List<VBox> transactionBoxes = new ArrayList<>();
+	private final List<VBox> softwareBoxes = new ArrayList<>();
+	private final List<VBox> systemBoxes = new ArrayList<>();
+
+
+	@Before
+	public void setUp() throws Exception {
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
+		if (new File(DEFAULT_STORAGE).mkdirs()) {
+			logger.info("Transaction tools directory created");
+		}
+
+		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
+		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
+		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
+
+		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+
+		if (new File(currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory" +
+				"/TransactionTools/Keys/").mkdirs()) {
+			logger.info("Keys path created");
+		}
+
+
+		// Special case for test: Does not ask for password during setup
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
+		final var pathname =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+
+		if (new File(pathname).exists()) {
+			FileUtils.deleteDirectory(new File(pathname));
+		}
+
+		if (new File(pathname).mkdirs()) {
+			logger.info("Output directory created");
+		}
+
+		Map<String, String> emailMap = new HashMap<>();
+		emailMap.put(
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+				"test1.council2@hederacouncil.org");
+
+		properties.setOneDriveCredentials(emailMap);
+
+		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
+		setupTransactionDirectory(DEFAULT_STORAGE);
+
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
+				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
+
+		Controller controller = new Controller();
+		var version = controller.getVersion();
+		properties.setVersionString(version);
+
+		if (new File(DEFAULT_STORAGE + "History").exists()) {
+			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
+		}
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+
+		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		homePanePage = new HomePanePage(this);
+		accountsPanePage = new AccountsPanePage(this);
+		mainWindowPage = new MainWindowPage(this);
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
+				systemBoxes);
+
+		assertEquals(newFiles.size(),
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size());
+	}
+
+	@Test
+	public void clickOnBogusItem() {
+		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
+		sleep(100);
+	}
+
+	@Test
+	public void uploadVersion_test() throws IOException, TimeoutException {
+		File outputDirectory = new File(currentRelativePath.toAbsolutePath().toString(),
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+		if (outputDirectory.mkdirs()) {
+			logger.info("Output directory created");
+		}
+		FileUtils.cleanDirectory(outputDirectory);
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
+
+		properties.setVersionString("bogus");
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		var out = outputDirectory.listFiles();
+		assert out != null;
+		assertEquals(1, out.length);
+		final var cleanVersion =
+				properties.getVersionString().replace(":", "-").replace(".", "-").replace(",", "").replace(" ", "");
+		assertEquals("SoftwareUpdated-" + cleanVersion, FilenameUtils.getBaseName(out[0].getName()));
+		FileUtils.cleanDirectory(outputDirectory);
+
+
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+		var out2 = outputDirectory.listFiles();
+		assert out2 != null;
+		assertEquals(0, out2.length);
+
+	}
+
+	@Test
+	public void startHomePane_test() {
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+		assertEquals(totalBoxes, newFiles.size());
+	}
+
+	@Test
+	public void verifySoftwareCard_Test() {
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+
+
+		var storage = DEFAULT_STORAGE + KEYS_STRING;
+		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
+
+
+		//The only one Software update box
+		assertEquals(1, softwareBoxes.size());
+		var n0 = (softwareBoxes.get(0)).getChildren().get(0);
+		assertTrue(n0 instanceof Label);
+
+		assertTrue(((Label) n0).getText().contains("Software"));
+
+
+		// First has notes: 3 items and a hyperlink:
+		final var vBox = softwareBoxes.get(0);
+		assertEquals(3, vBox.getChildren().size());
+
+		// Node 0 Label
+		assertTrue(vBox.getChildren().get(0) instanceof Label);
+		assertEquals("Software Update", ((Label) vBox.getChildren().get(0)).getText());
+
+		// Node 1 VBox
+		assertTrue(vBox.getChildren().get(1) instanceof HBox);
+		final var children1 = ((HBox) vBox.getChildren().get(1)).getChildren();
+		assertEquals(1, children1.size());
+
+		assertTrue(children1.get(0) instanceof GridPane);
+		var gridPane = (GridPane) children1.get(0);
+
+		var children2 = gridPane.getChildren();
+
+		n0 = children2.get(0);
+		assertTrue(n0 instanceof Label);
+		assertTrue(((Label) n0).getText().contains("9.4.0"));
+		// Node 2: Label - "Highlights";
+		n0 = children2.get(1);
+		assertTrue(n0 instanceof Label);
+		assertTrue(((Label) n0).getText().contains("Highlights"));
+		// Nodes 3 to 5: Label - Items;
+		n0 = children2.get(2);
+		assertTrue(n0 instanceof Label);
+		assertTrue(((Label) n0).getText().contains("Item 1"));
+		n0 = children2.get(3);
+		assertTrue(n0 instanceof Label);
+		assertTrue(((Label) n0).getText().contains("Item 2"));
+		n0 = children2.get(4);
+		assertTrue(n0 instanceof Label);
+		assertTrue(((Label) n0).getText().contains("Item 3"));
+		// Node 6: Hbox - hyperlink;
+		n0 = children2.get(5);
+		assertTrue(n0 instanceof HBox);
+		assertTrue(((HBox) n0).getChildren().get(1) instanceof Hyperlink);
+		// Node 7: Hbox - Label;
+		n0 = children2.get(6);
+		assertTrue(n0 instanceof HBox);
+		assertTrue(((HBox) n0).getChildren().get(1) instanceof Text);
+		assertEquals("38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
+				((Text) ((HBox) n0).getChildren().get(1)).getText().replace("\u00A0", "").replace("\n", ""));
+
+		assertTrue(vBox.getChildren().get(2) instanceof VBox);
+		n0 = ((VBox) vBox.getChildren().get(2)).getChildren().get(0);
+		assertTrue(n0 instanceof Button);
+		assertEquals("UPDATE", ((Button) n0).getText());
+	}
+
+	@Test
+	public void findPublicKeysAndAcceptOne_Test() {
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+
+		var storage = DEFAULT_STORAGE + KEYS_STRING;
+		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
+		final var index = 0;
+
+		sleep(ONE_SECOND);
+
+		homePanePage.clickOn2ButtonBar(index, publicKeyBoxes.get(1));
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+
+		sleep(ONE_SECOND);
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+		assertEquals(1, historyFiles.size());
+
+		var acceptedKey = (VBox) historyFiles.get(0);
+		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+
+		assertTrue(legend instanceof Label);
+		assertTrue(((Label) legend).getText().contains("accepted on"));
+
+		assertEquals(2, Objects.requireNonNull(
+				new File(storage).listFiles(pathname -> pathname.getName().endsWith(Constants.PUB_EXTENSION))).length);
+
+	}
+
+	@Test
+	public void findPublicKeysAndRejectOne_Test() {
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		sleep(ONE_SECOND);
+		var storage = DEFAULT_STORAGE + "Keys";
+		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
+
+		homePanePage.clickOn2ButtonBar(1, publicKeyBoxes.get(1));
+
+		sleep(ONE_SECOND);
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+		assertEquals(1, historyFiles.size()); // see other note
+
+		var acceptedKey = (VBox) historyFiles.get(0);
+		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+
+		assertTrue(legend instanceof Label);
+		assertTrue(((Label) legend).getText().contains("declined on"));
+
+		assertEquals(1, Objects.requireNonNull(
+				new File(storage).listFiles(pathname -> pathname.getName().endsWith(Constants.PUB_EXTENSION))).length);
+
+	}
+
+	@Test
+	public void findAccountInfosAndAcceptOne_Test() {
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		var storage = DEFAULT_STORAGE + File.separator + "Accounts";
+		assertEquals(10,
+				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
+
+		sleep(ONE_SECOND);
+		homePanePage.clickOn2ButtonBar(0, accountInfoBoxes.get(1));
+
+		sleep(ONE_SECOND);
+
+		homePanePage.enterStringInPopup("testAccount");
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+		assertEquals(1, historyFiles.size()); // see other note
+
+
+		var acceptedKey = (VBox) historyFiles.get(0);
+		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+
+
+		assertTrue(legend instanceof Label);
+		assertTrue(((Label) legend).getText().contains("accepted on"));
+
+		assertEquals(12,
+				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
+	}
+
+	@Test
+	public void findAccountInfosAndRejectOne_Test() {
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		var storage = DEFAULT_STORAGE + File.separator + "Accounts";
+		assertEquals(10,
+				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
+		sleep(ONE_SECOND);
+
+		homePanePage.clickOn2ButtonBar(1, accountInfoBoxes.get(1));
+
+		sleep(ONE_SECOND);
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find("#historyFilesVBox")).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+
+		assertEquals(1, historyFiles.size());
+
+		var acceptedKey = (VBox) historyFiles.get(0);
+		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+
+		assertTrue(legend instanceof Label);
+		assertTrue(((Label) legend).getText().contains("declined on"));
+
+		assertEquals(10, Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
+
+	}
+
+	@Test
+	public void acceptBatchTransaction_Test() throws IOException, HederaClientException {
+		sleep(ONE_SECOND);
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		var gridPane = ((GridPane) ((HBox) batchBoxes.get(1).getChildren().get(1)).getChildren().get(0));
+		assertEquals(5, gridPane.getRowCount());
+		assertEquals(2, gridPane.getColumnCount());
+
+		var c2 = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		c2.set(2029, Calendar.SEPTEMBER, 17, 19, 30, 0);
+		var sdf = new SimpleDateFormat("HH:mm:ss");
+		var localTime =
+				sdf.format(c2.getTime()) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+
+		for (var n :
+				gridPane.getChildren()) {
+			if (n instanceof Label) {
+				var text = ((Label) n).getText();
+				if (text.contains("UTC")) {
+					assertTrue(text.contains("19:30:00"));
+					assertTrue(text.contains(localTime));
+
+				}
+			}
+		}
+
+		final var children = (batchBoxes.get(1)).getChildren();
+		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
+		clickOn(addMore);
+
+		//ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
+
+		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
+
+		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		clickOn(acceptButton);
+
+		assert sign != null;
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), sign);
+
+		clickOn(sign);
+		homePanePage.enterPasswordInPopup(PASSWORD)
+				.waitForWindow();
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+
+		var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+
+		if (new File(out).mkdirs()) {
+			logger.info("Output directory created");
+		}
+
+		var zips = findByStringExtension(new File(out), "zip");
+		assertEquals(4, zips.size());
+
+		var zip1 = zips.get(0);
+		unzip(zip1);
+		var ext = new String[] { "tx", "txt", "sigpair" };
+		var output1 = new File(zip1.getAbsolutePath().replace(".zip", ""));
+		var transactionFiles = FileUtils.listFiles(output1, ext, false);
+		assertEquals(22, transactionFiles.size());
+
+		var zip2 = zips.get(0);
+		unzip(zip2);
+		var output2 = new File(zip1.getAbsolutePath().replace(".zip", ""));
+		var signatureFiles = FileUtils.listFiles(output2, ext, false);
+		assertEquals(22, signatureFiles.size());
+
+		assertTrue(verifySignature(findByStringExtension(output1, ".tx"), findByStringExtension(output2,
+				"sigpair")));
+
+	}
+
+	@Test
+	public void declineBatchTransaction_Test() {
+		sleep(ONE_SECOND);
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		final var children = (batchBoxes.get(1)).getChildren();
+
+		var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
+
+		clickOn(reject);
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+		assertEquals(1, historyFiles.size()); // see other note
+
+		var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+		if (new File(out).mkdirs()) {
+			logger.info("Output directory created");
+		}
+
+		var extensions = new String[] { "zip" };
+		var x = FileUtils.listFiles(new File(out), extensions, false);
+		assertEquals(0, x.size());
+
+	}
+
+	//@Test
+	public void acceptTransaction_Test() throws IOException, HederaClientException, InterruptedException {
+		final var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		// Check the time and local time are correct
+		var gridPane = ((GridPane) ((HBox) transactionBoxes.get(1).getChildren().get(1)).getChildren().get(0));
+		var timestamp = new Timestamp(1676601650, 0);
+		var localDateTime = timestamp.asReadableLocalString();
+		var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+		for (var n :
+				gridPane.getChildren()) {
+			if (n instanceof Label) {
+				var text = ((Label) n).getText();
+				if (text.contains("UTC")) {
+					assertTrue(text.contains(utcDateTime));
+					assertTrue(text.contains(localDateTime));
+
+				}
+			}
+		}
+
+		final var children = (transactionBoxes.get(1)).getChildren();
+		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
+		clickOn(addMore);
+
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
+
+		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
+
+		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		clickOn(acceptButton);
+
+		assert sign != null;
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), sign);
+
+		clickOn(sign);
+		homePanePage.enterPasswordInPopup(PASSWORD)
+				.waitForWindow();
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		assertEquals(totalBoxes, refreshFiles.size());
+
+		var listFiles = new File(out).listFiles();
+		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
+
+		assert listFiles != null;
+		assert listZips != null;
+
+		assertEquals(1, listZips.length);
+
+		var zip = listFiles[0];
+		unzip(zip);
+
+		var ext = new String[] { "zip", "txt" };
+		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
+		var transactionFiles = FileUtils.listFiles(output, ext, false);
+		assertEquals(2, transactionFiles.size());
+
+		var zip2 = findByStringExtension(output, "zip");
+		assertEquals(1, zip2.size());
+
+		unzip(zip2.get(0));
+		var output2 = new File(zip2.get(0).getAbsolutePath().replace(".zip", ""));
+
+		assertTrue(verifySignature(findByStringExtension(output2, ".tx"), findByStringExtension(output2, "sigpair")));
+
+	}
+
+	//@Test
+	public void declineTransaction_Test() {
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+
+		final var children = (transactionBoxes.get(1)).getChildren();
+		var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
+
+		clickOn(reject);
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
+		assertEquals(1, historyFiles.size()); // see other note
+
+		var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+
+		if (new File(out).mkdirs()) {
+			logger.info("Output directory created");
+		}
+
+		var zips = findByStringExtension(new File(out), "zip");
+		assertEquals(0, zips.size());
+
+	}
+
+	//@Test
+	public void acceptSystemTransaction_Test() throws IOException, HederaClientException, InterruptedException {
+		sleep(ONE_SECOND);
+		final var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		var totalBoxes = newFiles.size();
+		final var children = systemBoxes.get(1).getChildren();
+
+		// Check the time and local time are correct
+
+		var gridPane = ((GridPane) ((HBox) children.get(1)).getChildren().get(0));
+		var timestamp = new Timestamp(1725081403, 0);
+		var localDateTime = timestamp.asReadableLocalString();
+		var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+		for (var n :
+				gridPane.getChildren()) {
+			if (n instanceof Label) {
+				var text = ((Label) n).getText();
+				if (text.contains("UTC")) {
+					assertTrue(text.contains(utcDateTime));
+					assertTrue(text.contains(localDateTime));
+
+				}
+			}
+		}
+
+
+		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
+		clickOn(addMore);
+
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
+
+		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
+
+		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		clickOn(acceptButton);
+
+		assert sign != null;
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), sign);
+
+		clickOn(sign);
+		homePanePage.enterPasswordInPopup(PASSWORD)
+				.waitForWindow();
+
+		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes, refreshFiles.size());
+
+		var listFiles = new File(out).listFiles();
+		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
+
+		assert listFiles != null;
+		assert listZips != null;
+
+		assertEquals(1, listZips.length);
+
+		var zip = listZips[0];
+		unzip(zip);
+		var ext = new String[] { "zip", "txt" };
+		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
+		var transactionFiles = FileUtils.listFiles(output, ext, false);
+		assertEquals(2, transactionFiles.size());
+
+		var zip2 = findByStringExtension(output, "zip");
+		assertEquals(1, zip2.size());
+
+		unzip(zip2.get(0));
+		var output2 = new File(zip2.get(0).getAbsolutePath().replace(".zip", ""));
+
+		assertTrue(verifySignature(findByStringExtension(output2, ".tx"), findByStringExtension(output2, "sigpair")));
+
+	}
+
+	@Test
+	public void nicknameExists_Test() {
+		var nicknames = findAll("0.0.70-bvqyx");
+		sleep(ONE_SECOND);
+		var nicknameLabels = new HashSet<Label>();
+		for (var nickname : nicknames) {
+			if (nickname instanceof Label) {
+				nicknameLabels.add((Label) nickname);
+			}
+		}
+		assertEquals(1, nicknameLabels.size());
+
+		var badNicknames = findAll("badNick");
+		assertEquals(0, badNicknames.size());
+
+	}
+
+	@Test
+	public void nicknameNegative_Tests() throws TimeoutException, HederaClientException {
+
+		mainWindowPage.clickOnAccountsButton();
+		sleep(ONE_SECOND);
+		clickOn("ninetyFourT");
+
+		var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		var continueButton = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
+
+		assertNotNull(continueButton);
+
+		clickOn(continueButton);
+		// restart app
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		var nicknames = findAll("nineFour (0.0.94-ioaex)");
+		assertEquals(0, nicknames.size());
+	}
+
+	private List<File> findByStringExtension(File dir, String ext) {
+		var extensions = new String[] { ext };
+		return new ArrayList<>(FileUtils.listFiles(dir, extensions, false));
+	}
+
+	private void separateBoxes(ObservableList<Node> newFiles, List<VBox> publicKeyBoxes, List<VBox> accountInfoBoxes,
+			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes) {
+		for (var box :
+				newFiles) {
+			assertTrue(box instanceof VBox);
+
+			var lines = ((VBox) box).getChildren();
+			if (lines.size() >= 3) {
+				assertTrue(lines.get(0) instanceof Label);
+				var l = ((Label) lines.get(0)).getText();
+				if (l.contains("Batch")) {
+					batchBoxes.add((VBox) box);
+				} else if (l.contains("Transaction") && !l.contains("ZippedTransactions")) {
+					transactionBoxes.add((VBox) box);
+				} else if (l.contains("Account Information")) {
+					accountInfoBoxes.add((VBox) box);
+				} else if (l.contains("Public Key")) {
+					publicKeyBoxes.add((VBox) box);
+				} else if (l.contains("Software")) {
+					softwareBoxes.add((VBox) box);
+				} else if (l.contains("Content")) {
+					systemBoxes.add((VBox) box);
+				}
+			}
+		}
+	}
+
+	private static void ensureVisible(ScrollPane scrollPane, Node node) {
+		var viewport = scrollPane.getViewportBounds();
+		var contentHeight =
+				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
+		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+
+		double vValueDelta = 0;
+		var vValueCurrent = scrollPane.getVvalue();
+
+		if (nodeMaxY < 0) {
+			// currently located above (remember, top left is (0,0))
+			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
+		} else if (nodeMinY > viewport.getHeight()) {
+			// currently located below
+			vValueDelta = (nodeMinY) / contentHeight;
+		}
+		scrollPane.setVvalue(vValueCurrent + vValueDelta);
+	}
+
+	private void unzip(File zip) throws IOException {
+		var fileZip = zip.getAbsolutePath();
+		var destDir = new File(fileZip.replace(".zip", ""));
+		if (destDir.mkdirs()) {
+			logger.info("Destination directory created");
+		}
+		var buffer = new byte[1024];
+		var zis = new ZipInputStream(new FileInputStream(fileZip));
+		var zipEntry = zis.getNextEntry();
+		while (zipEntry != null) {
+			var newFile = newFile(destDir, zipEntry);
+			var fos = new FileOutputStream(newFile);
+			int len;
+			while ((len = zis.read(buffer)) > 0) {
+				fos.write(buffer, 0, len);
+			}
+			fos.close();
+			zipEntry = zis.getNextEntry();
+		}
+		zis.closeEntry();
+		zis.close();
+	}
+
+	private File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
+		var destFile = new File(destinationDir, zipEntry.getName());
+
+		var destDirPath = destinationDir.getCanonicalPath();
+		var destFilePath = destFile.getCanonicalPath();
+
+		if (!destFilePath.startsWith(destDirPath + File.separator)) {
+			throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
+		}
+
+		return destFile;
+	}
+
+	private boolean verifySignature(List<File> transactions, List<File> sigpairs) {
+		return transactions.stream().noneMatch(tx -> sigpairs.stream().filter(
+				sig -> sig.getPath().replace(".sigpair", ".tx").equals(tx.getPath())).anyMatch(
+				sig -> !verify(tx, sig)));
+	}
+
+	private boolean verify(File tx, File sig) {
+		return false;
+	}
+
+	@After
+	public void tearDown() throws IOException {
+		publicKeyBoxes.clear();
+		accountInfoBoxes.clear();
+		batchBoxes.clear();
+		transactionBoxes.clear();
+		softwareBoxes.clear();
+		systemBoxes.clear();
+
+		var currentRelativePath = Paths.get("");
+		var s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+		if ((new File(s)).exists()) {
+			FileUtils.deleteDirectory(new File(s));
+		}
+
+		var out =
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+		if (new File(out).exists()) {
+			FileUtils.cleanDirectory(new File(out));
+		}
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+	}
+
+	private static boolean accept(File pathname) {
+		return pathname.isFile() && !pathname.getName().contains(".DS");
+	}
+
+}

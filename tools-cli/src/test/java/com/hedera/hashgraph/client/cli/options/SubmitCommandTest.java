@@ -1,0 +1,275 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.cli.options;
+
+import com.hedera.hashgraph.client.cli.ToolsMain;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.sdk.AccountBalanceQuery;
+import com.hedera.hashgraph.sdk.AccountCreateTransaction;
+import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Client;
+import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import com.hedera.hashgraph.sdk.Status;
+import com.hedera.hashgraph.sdk.TransactionId;
+import com.hedera.hashgraph.sdk.TransactionReceipt;
+import com.hedera.hashgraph.sdk.TransactionResponse;
+import com.hedera.hashgraph.sdk.TransferTransaction;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeoutException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class SubmitCommandTest implements GenericFileReadWriteAware {
+
+	private static final Logger logger = LogManager.getLogger(SubmitCommandTest.class);
+	public static final String TRANSACTIONS = "src/test/resources/TempTransactions";
+	public static final String RECEIPTS = "src/test/resources/TempReceipts";
+	public static final int TEST_SIZE = 10;
+
+	private static PrivateKey generalPrivateKey;
+	private static PublicKey generalPublicKey;
+	private static Client client;
+	private static Map<AccountId, TransactionReceipt> receipts = new HashMap<>();
+
+	@BeforeAll
+	static void beforeAll() throws TimeoutException, PrecheckStatusException, ReceiptStatusException,
+			KeyStoreException, IOException {
+		var keyStore =
+				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
+		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+
+
+		generalPrivateKey = PrivateKey.generate();
+		generalPublicKey = generalPrivateKey.getPublicKey();
+		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+
+		for (int i = 0; i < 2; i++) {
+			TransactionResponse transactionResponse = new AccountCreateTransaction()
+					// The only _required_ property here is `key`
+					.setKey(generalPublicKey)
+					.setInitialBalance(Hbar.fromTinybars(1000000000))
+					.execute(client);
+
+			// This will wait for the receipt to become available
+			TransactionReceipt receipt = transactionResponse.getReceipt(client);
+
+			AccountId newAccountId = receipt.accountId;
+			receipts.put(newAccountId, receipt);
+		}
+		logger.info("{} accounts created", receipts.size());
+
+		if (new File(TRANSACTIONS).mkdirs()) {
+			logger.info("Transactions folder created");
+		}
+		FileUtils.cleanDirectory(new File(TRANSACTIONS));
+		if (new File(RECEIPTS).mkdirs()) {
+			logger.info("Receipts folder created");
+		}
+		FileUtils.cleanDirectory(new File(RECEIPTS));
+	}
+
+	@AfterEach
+	void tearDown() throws IOException {
+		FileUtils.cleanDirectory(new File(TRANSACTIONS));
+		FileUtils.cleanDirectory(new File(RECEIPTS));
+	}
+
+	@AfterAll
+	static void afterAll() throws IOException {
+		FileUtils.deleteDirectory(new File(TRANSACTIONS));
+		FileUtils.deleteDirectory(new File(RECEIPTS));
+
+	}
+
+	@Test
+	void submitOneTransaction_test() throws Exception {
+		logger.info("Creating transaction");
+
+		final var iterator = receipts.entrySet().iterator();
+		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		String transactionLocation = createTransfer(sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+
+		Hbar initialBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		logger.info("Submitting {}", transactionLocation);
+		final String[] args =
+				{ "submit", "-t", transactionLocation, "-n", "INTEGRATION", "-o", RECEIPTS };
+		ToolsMain.main(args);
+
+		File[] receipts = new File(RECEIPTS).listFiles(
+				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert receipts != null;
+		assertTrue(receipts.length > 0);
+		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		assertEquals(Status.SUCCESS, receipt.status);
+
+		Hbar finalBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		assertEquals(1000, finalBalance.toTinybars() - initialBalance.toTinybars());
+
+	}
+
+	@Test
+	void submitOneTransactionWildCards_test() throws Exception {
+		logger.info("Creating transaction");
+
+		final var iterator = receipts.entrySet().iterator();
+		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		String transactionLocation = createTransfer(sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+		Hbar initialBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		final var wildcardName = FilenameUtils.getBaseName(transactionLocation).substring(0, 5) + "*";
+		logger.info("Submitting {}", wildcardName);
+		final String[] args =
+				{ "submit", "-t", TRANSACTIONS + File.separator + wildcardName, "-n", "INTEGRATION", "-o", RECEIPTS };
+		ToolsMain.main(args);
+
+		File[] receipts = new File(RECEIPTS).listFiles(
+				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert receipts != null;
+		assertTrue(receipts.length > 0);
+		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		assertEquals(Status.SUCCESS, receipt.status);
+		Hbar finalBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		assertEquals(1000, finalBalance.toTinybars() - initialBalance.toTinybars());
+
+	}
+
+	@Test
+	void submitMultipleTransactions_test() throws Exception {
+		int count = 10;
+		Random rand = new Random();
+		final var iterator = receipts.entrySet().iterator();
+		List<String> transactions = new ArrayList<>();
+		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		Hbar initialBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		for (int i = 0; i < TEST_SIZE; i++) {
+			final var transactionValidStart = Instant.now().plusSeconds(count);
+			String transactionLocation =
+					createTransfer(sender.getKey(), receiver.getKey(), transactionValidStart);
+			transactions.add(transactionLocation);
+			count += rand.nextInt(5) + 1;
+		}
+		final String[] args =
+				{ "submit", "-t", TRANSACTIONS, "-n", "INTEGRATION", "-o", RECEIPTS };
+		ToolsMain.main(args);
+
+		File[] receipts = new File(RECEIPTS).listFiles(
+				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert receipts != null;
+		assertEquals(transactions.size(), receipts.length);
+
+		for (File receipt : receipts) {
+			assertEquals(Status.SUCCESS, TransactionReceipt.fromBytes(readBytes(receipt)).status);
+		}
+		Hbar finalBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		assertEquals(TEST_SIZE * 1000, finalBalance.toTinybars() - initialBalance.toTinybars());
+	}
+
+	@Test
+	void submitPastTransaction_test() {
+		final String[] args =
+				{ "submit", "-t", "src/test/resources/transactions/1625538609-0_0_9401-2092093589.txsig", "-n",
+						"TESTNET", "-o", RECEIPTS };
+		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
+		assertEquals("Hedera Client Runtime: No valid transactions found.", e.getMessage());
+	}
+
+	private String createTransfer(AccountId sender, AccountId receiver,
+			Instant transactionValidStart) throws HederaClientException {
+
+		var transactionId =
+				new TransactionId(sender, transactionValidStart);
+
+		var transferTransaction = new TransferTransaction();
+
+		transferTransaction.setMaxTransactionFee(Hbar.fromTinybars(1000000000))
+				.setTransactionId(transactionId)
+				.setTransactionMemo("test transfer")
+				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
+				.setTransactionValidDuration(Duration.ofSeconds(175));
+
+		// Add transfers
+		transferTransaction.addHbarTransfer(sender, Hbar.fromTinybars(-1000));
+		transferTransaction.addHbarTransfer(receiver, Hbar.fromTinybars(1000));
+		transferTransaction.freeze();
+		transferTransaction.sign(generalPrivateKey);
+
+		final var filePath =
+				TRANSACTIONS + File.separator + transactionId.toString().replace(".", "_").replace("@", "_") + ".txsig";
+		writeBytes(filePath, transferTransaction.toBytes());
+		return filePath;
+	}
+}

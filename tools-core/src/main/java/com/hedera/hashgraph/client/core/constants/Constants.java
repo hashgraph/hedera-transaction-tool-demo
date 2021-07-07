@@ -1,0 +1,158 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.core.constants;
+
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+
+import java.io.File;
+
+public class Constants {
+
+	// region FILE EXTENSIONS
+	public static final String PK_EXTENSION = "pem";
+	public static final String PUB_EXTENSION = "pub";
+	public static final String INFO_EXTENSION = "info";
+	public static final String RECEIPT_EXTENSION = "rcpt";
+	public static final String TRANSACTION_EXTENSION = "tx";
+	public static final String SIGNATURE_EXTENSION = "sig";
+	public static final String SIGNED_TRANSACTION_EXTENSION = "txsig";
+	public static final String ZIP_EXTENSION = "zip";
+	public static final String TXT_EXTENSION = "txt";
+	public static final String METADATA_EXTENSION = "meta";
+	public static final String JSON_EXTENSION = "json";
+	public static final String BATCH_TRANSACTION_EXTENSION = "csv";
+	public static final String SOFTWARE_UPDATE_EXTENSION = "pkg";
+	public static final String LARGE_BINARY_EXTENSION = "zip";
+	public static final String COMMENT_EXTENSION = "txt";
+	public static final String CONFIGURATION_EXTENSION = "cfg";
+	public static final String AES_EXTENSION = "aes";
+	public static final String GPG_EXTENSION = "asc";
+	// endregion
+
+
+	// region PROPERTY NAMES
+	public static final String LAST_TRANSACTIONS_DIRECTORY = "lastTransactionsDirectory";
+	public static final String PREFERRED_STORAGE_DIRECTORY = "preferredStorageDirectory";
+	public static final String DEFAULT_TX_FEE = "defaultTxFee";
+	public static final String DEFAULT_NODE_ID = "defaultNodeID";
+	public static final String TX_VALID_DURATION = "txValidDuration";
+	public static final String DEFAULT_HOURS = "defaultHours";
+	public static final String DEFAULT_MINUTES = "defaultMinutes";
+	public static final String DEFAULT_SECONDS = "defaultSeconds";
+	public static final String DEFAULT_AUTO_RENEW_PERIOD = "autoRenewPeriod";
+	public static final String LAST_INDEX = "lastIndex";
+	public static final String HASH = "hash";
+	public static final String VERSION = "version";
+	public static final String MNEMONIC_HASH_CODE = "hashCode";
+	public static final String ACCOUNT_INFO_MAP = "accountInfoMap";
+	public static final String USER_NAME = "userName";
+	public static final String SETUP_PHASE = "setupPhase";
+	public static final String GENERATE_RECORD = "generateRecord";
+	public static final String NETWORK = "network";
+	public static final String SALT_PROPERTY = "salt";
+	public static final String LEGACY = "legacy";
+	// endregion
+
+	// region APP DEFAULTS
+	public static final boolean DEVELOPMENT = false; // change this boolean to false before release build
+	public static final int DRIVE_LIMIT = 5;
+	public static final double RELOAD_PERIOD = 1.0; //One minute
+	public static final int KEYS_COLUMNS = 5;
+	public static final int NUMBER_OF_SINGLE_BOXES = 5;
+	public static final String TEST_PASSWORD = "123456789";
+	public static final String TEST_PASSWORD2 = "tempura business";
+	// endregion
+
+	// region TRANSACTION DEFAULTS
+	public static final int VAL_NUM_TRANSACTION_VALID_DURATION = 180;
+	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 100000000;
+	public final static int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
+	public final static int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
+	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
+	public static final int MAX_NUMBER_OF_NODES = 5;
+	// endregion
+
+	// region FILES
+	public static final String DOCUMENTS_FOLDER =
+			System.getProperty("user.home") + File.separator + "Documents" + File.separator;
+	public static final String DEFAULT_STORAGE = DOCUMENTS_FOLDER + "TransactionTools" + File.separator;
+	public static final String INITIAL_MAP_LOCATION = DOCUMENTS_FOLDER + "initialMap.json";
+	public static final String USER_PROPERTIES = "Files/user.properties";
+	public static final String DEFAULT_HISTORY = DEFAULT_STORAGE + "History";
+	public static final String DEFAULT_ACCOUNTS = DEFAULT_STORAGE + "Accounts";
+	public static final String DEFAULT_KEYS = DEFAULT_STORAGE + "Keys";
+	public static final String USER_PREFERENCE_FILE = "user.pref.xml";
+	public static final String MNEMONIC_PATH = "Files/.System/recovery.aes";
+	public static final String ACCOUNTS_MAP_FILE = DEFAULT_STORAGE + "Files/.System/accountMapFile.json";
+	public static final String ACCOUNTS_INFO_FOLDER = DEFAULT_STORAGE + "Accounts/";
+	public static final String KEYS_FOLDER = DEFAULT_STORAGE + "Keys/";
+
+	// endregion
+
+	// region STYLE
+	public static final String MENU_BUTTON_HIGHLIGHT_COLOR =
+			"-fx-background-color:  #f4f4f4; -fx-border-color:  #f4f4f4";
+	public static final String WHITE_BUTTON_STYLE =
+			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
+					"-fx-background-radius: 10;";
+	public static final String TEXT_BOX_STYLE =
+			"-fx-background-radius: 15; -fx-border-radius: 15;-fx-border-color: lightgray;" +
+					"-fx-background-color: white";
+	public static final String DEBIT = "-fx-text-fill:RED";
+	public static final String CREDIT = "-fx-text-fill:GREEN";
+	public static final String STYLE_ACTIVE =
+			"-fx-background-color: white; -fx-border-color: lightgray; -fx-border-radius: 2; " +
+					"-fx-background-radius: 2; -fx-text-fill: black";
+	public static final String STYLE_INACTIVE =
+			"-fx-background-color: #0b9dfd ; -fx-border-color:  #0b9dfd; -fx-border-radius: 2; " +
+					"-fx-background-radius: 2; -fx-text-fill: white";
+
+	public static final String HISTORY_BOX_STYLE =
+			"-fx-background-color: aliceblue; -fx-border-color: grey; -fx-background-radius: 15; " +
+					"-fx-border-radius: 15; -fx-border-width: 2";
+	public static final String REGULAR_BOX_STYLE =
+			"-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 15; " +
+					"-fx-border-radius: 15; -fx-border-width: 2";
+	public static final String BLUE_BUTTON_STYLE =
+			"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
+					"10; -fx-background-radius: 10;";
+	public static final String TEMP_FOLDER_LOCATION = System.getProperty(
+			"java.io.tmpdir");
+	public static final int NUMBER_OF_THREADS = 200;
+	public static final String INTEGRATION_NODES_JSON = "src/main/resources/IntegrationNodes.json";
+	public static final String COMMA_DELIMITER = ",";
+
+	// endregion
+
+	// region Encryption Parameters
+	public static final int GCM_IV_LENGTH = 12;
+	public static final int GCM_TAG_LENGTH = 16;
+	public static final int SALT_LENGTH = 16;
+	public static final int PBKDF2_ITERATION_COUNT = 65536;
+	public static final int KEY_LENGTH = 256;
+	// endregion
+
+	public static final String PUBLIC_KEY_LOCATION = "Files/.System/gpgPublicKey.asc";
+
+
+	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
+	public static final String RED_STYLE = "-fx-text-fill: red";
+	public static final String GREEN_STYLE = "-fx-text-fill: limegreen";
+}

@@ -1,0 +1,167 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.core.utils;
+
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.swing.JFileChooser;
+import java.io.File;
+import java.util.List;
+
+public class BrowserUtilities {
+
+	private static final Logger logger = LogManager.getLogger(BrowserUtilities.class);
+
+	/***
+	 *
+	 * Brings up a file window to allow the user to select a directory (Not used for files)
+	 *
+	 * @param initialPath    The base folder where the popup will start.
+	 * @param localPane        The pane from which the browse window will appear.
+	 * @return The selected directory.
+	 */
+	public static String browseDirectories(String initialPath, Pane localPane) {
+
+		var directoryChooser = new DirectoryChooser();
+		if ((initialPath != null && !initialPath.equals("")) && new File(initialPath).exists()) {
+			directoryChooser.setInitialDirectory(new File(initialPath));
+		}
+
+		var directory = directoryChooser.showDialog(localPane.getScene().getWindow());
+
+		return (directory != null) ? directory.getPath() : "";
+	}
+
+	/***
+	 *
+	 * Brings up a file window to allow the user to select a file (Not used for directories)
+	 *
+	 * @param initialPath    The base folder where the popup will start.
+	 * @param localPane        The pane from which the browse window will appear.
+	 * @return The selected file.
+	 */
+	public static File browseFiles(String initialPath, Pane localPane) {
+
+		if (initialPath == null || !(new File(initialPath)).exists()) {
+			initialPath =
+					new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+		}
+
+		var fileChooser = new FileChooser();
+		fileChooser.setInitialDirectory(new File((initialPath)));
+
+		return fileChooser.showOpenDialog(localPane.getScene().getWindow());
+	}
+
+	/***
+	 *
+	 * @param initialPath
+	 * @param localPane
+	 * @param type
+	 * @param ext
+	 * @return
+	 */
+	public static File browseFiles(String initialPath, Pane localPane, String type, String... ext) {
+		return browseFiles(initialPath, localPane.getScene(), type, ext);
+	}
+
+	/***
+	 *
+	 * @param initialPath
+	 * @param scene
+	 * @param type
+	 * @param ext
+	 * @return
+	 */
+	public static File browseFiles(String initialPath, Scene scene, String type, String... ext) {
+
+		if (initialPath == null || !(new File(initialPath)).exists()) {
+			initialPath =
+					new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+		}
+
+		var fileChooser = new FileChooser();
+
+
+		for (var e :
+				ext) {
+			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(type, String.format("*.%s", e)));
+		}
+
+
+		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));
+
+		var initialPathFile = new File(initialPath);
+		if (!initialPathFile.exists()) {
+			if (initialPathFile.mkdirs()) {
+				logger.info(String.format("%s does not exist. Directory has been created", initialPath));
+			}
+		}
+
+		fileChooser.setInitialDirectory(new File((initialPath)));
+
+		return fileChooser.showOpenDialog(scene.getWindow());
+	}
+
+	/***
+	 *
+	 * @param initialPath
+	 * @param localPane
+	 * @param type
+	 * @param ext
+	 * @return
+	 */
+	public static List<File> browseMultiFiles(String initialPath, Pane localPane, String type, String... ext) {
+		initialPath = (initialPath != null) ?
+				initialPath :
+				new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+		var fileChooser = new FileChooser();
+		for (var e :
+				ext) {
+			fileChooser.getExtensionFilters().add(
+					new FileChooser.ExtensionFilter(type + "-" + e, String.format("*.%s", e)));
+		}
+		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));
+
+		fileChooser.setInitialDirectory(new File(initialPath));
+		return fileChooser.showOpenMultipleDialog(localPane.getScene().getWindow());
+	}
+
+	/***
+	 *
+	 * @param initialPath
+	 * @param localPane
+	 * @return
+	 */
+	static List<File> chooseMultipleFiles(String initialPath, Pane localPane) {
+		initialPath = (initialPath != null) ?
+				initialPath :
+				new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+
+		var fileChooser = new FileChooser();
+		fileChooser.setInitialDirectory(new File((initialPath)));
+
+		return fileChooser.showOpenMultipleDialog(localPane.getScene().getWindow());
+	}
+}

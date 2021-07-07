@@ -1,0 +1,1 @@
+{"Author":"simi.hunjan@hederacouncil.org","Contents":"test transfer tx","Timestamp":"2020-11-26 21:59:58"}

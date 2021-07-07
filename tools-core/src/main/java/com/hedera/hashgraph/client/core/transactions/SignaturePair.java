@@ -1,0 +1,116 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.core.transactions;
+
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.sdk.PublicKey;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Arrays;
+
+public class SignaturePair implements GenericFileReadWriteAware, Serializable {
+	private static final Logger logger = LogManager.getLogger(SignaturePair.class);
+
+	private final byte[] publicKey;
+	private final byte[] signature;
+
+
+	public SignaturePair() {
+		publicKey = new byte[64];
+		signature = new byte[64];
+	}
+
+	public SignaturePair(PublicKey publicKey, byte[] signature) {
+		this.publicKey = publicKey.toBytes();
+		this.signature = signature;
+	}
+
+	public SignaturePair(String location) {
+		var signaturePair = read(location);
+		assert signaturePair != null;
+		this.publicKey = signaturePair.getPublicKey().toBytes();
+		this.signature = signaturePair.getSignature();
+	}
+
+	public PublicKey getPublicKey() {
+		return PublicKey.fromBytes(publicKey);
+	}
+
+	public byte[] getSignature() {
+		return signature;
+	}
+
+
+	public void write(String filePath) {
+		try {
+
+			try (var fileOut = new FileOutputStream(
+					filePath); var objectOut = new ObjectOutputStream(fileOut)) {
+				objectOut.writeObject(this);
+				logger.info("The Object  was successfully written to a file");
+			}
+		} catch (Exception ex) {
+			logger.error(ex);
+		}
+	}
+
+	private SignaturePair read(String filePath) {
+		var signaturePair = new SignaturePair();
+
+		try (
+				InputStream file = new FileInputStream(filePath);
+				InputStream buffer = new BufferedInputStream(file);
+				ObjectInput input = new ObjectInputStream(buffer)
+		) {
+			signaturePair = (SignaturePair) input.readObject();
+		} catch (ClassNotFoundException | IOException ex) {
+			logger.error("Cannot perform input. Class not found.", ex);
+		}
+		return signaturePair;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof SignaturePair)) {
+			return false;
+		}
+		if (obj == this) {
+			return true;
+		}
+		var o = (SignaturePair) obj;
+		return (Arrays.equals(this.publicKey, o.publicKey)) &&
+				(Arrays.equals(this.signature, o.signature));
+
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(signature);
+	}
+}

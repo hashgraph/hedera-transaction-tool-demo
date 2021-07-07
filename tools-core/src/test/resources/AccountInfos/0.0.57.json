@@ -1,0 +1,22 @@
+{
+  "accountID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 57
+  },
+  "contractAccountID": "0000000000000000000000000000000000000039",
+  "key": {
+    "Ed25519": "e899f9c0ea661780a26041a219e3b2a3eca47bc284ab10c8fbdb1efd27197192"
+  },
+  "balance": 4374093360,
+  "generateSendRecordThreshold": 5000000000000000000,
+  "generateReceiveRecordThreshold": 5000000000000000000,
+  "expirationTime": {
+    "seconds": 31556889864403199,
+    "nanos": 0
+  },
+  "autoRenewPeriod": {
+    "seconds": 17775,
+    "nanos": 0
+  }
+}

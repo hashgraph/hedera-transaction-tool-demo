@@ -1,0 +1,260 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.ui;/*
+ * (c) 2016-2020 Swirlds, Inc.
+ *
+ * This software is the confidential and proprietary information of
+ * Swirlds, Inc. ("Confidential Information"). You shall not
+ * disclose such Confidential Information and shall use it only in
+ * accordance with the terms of the license agreement you entered into
+ * with Swirlds.
+ *
+ * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
+ * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
+ * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
+ * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
+ */
+
+public class JavaFXIDs {
+
+	// Initial Startup Window
+
+	public final static String USERNAME_BUTTON_BAR = "#usernameButtonBar";
+	public static final String ONEDRIVE_PATH_TEXT_FIELD = "#pathTextField";
+
+	public final static String EMAIL_TEXT_FIELD = "#emailTextField";
+	public final static String STORAGE_BUTTON_BAR = "#storageButtonBar";
+	public final static String NETWORK_BUTTON_BAR = "#loadAddressBookButtonBar";
+	public final static String GENERATE_KEY_PAIR_BUTTON_BAR = "#generateKeyPairButtonBar";
+	public final static String PASSWORD_FIELD_ONE = "#passwordBox1";
+	public final static String PASSWORD_FIELD_TWO = "#passwordBox2";
+	public final static String GENERATE_KEYS_BUTTON = "#generateKeys";
+	public final static String COPY_TO_CLIPBOARD = "#copyToClipBoardButton";
+	public final static String FINISH_BOX = "#finishBox";
+	public final static String PASTE_FROM_CLIPBOARD = "#pasteFromClipBoardButton";
+	public final static String MNEMONIC_ERROR_MESSAGE = "#mnemonicErrorMessage";
+
+	public final static String FILES_PANE = "#filesGridPane";
+	public final static String KEYS_PANE = "#keysGridPane";
+	public final static String PASSPHRASE_BOX = "#passphraseBox";
+	public final static String LOAD_ADDRESS_BOOK_BUTTON = "#loadAddressBook";
+	public final static String HIDDEN_STARTUP_INFO_TEXTFIELD = "#hiddenPathInitial";
+	public final static String KEY_NICKNAME = "#nicknameTextBox";
+	public final static String APP_PASSWORD_FIELD_1 = "#appPasswordField";
+	public final static String APP_PASSWORD_FIELD_2 = "#reEnterPasswordField";
+	public final static String LINK_FOLDERS_VBOX = "#drivesBox";
+
+	// Main Pane
+	// region IDs
+
+	public final static String HOME_BUTTON = "#homeButton";
+	public final static String SIGNATURE_BUTTON = "#signatureButton";
+	public final static String CREATE_BUTTON = "#createButton";
+	public final static String BATCH_BUTTON = "#batchButton";
+	public final static String ACCOUNTS_BUTTON = "#accountsButton";
+	public final static String KEYS_BUTTON = "#keysButton";
+	public final static String SETTINGS_BUTTON = "#settingsButton";
+	public final static String MAIN_MENU_BUTTON = "#mainMenuButton";
+	public final static String CREATE_ANCHOR_PANE = "#createAnchorPane";
+
+	//Label
+	public final static String TITLE_LABEL = "#titleLabel";
+
+
+	// Home Pane
+	public final static String NEW_FILES_VBOX = "#newFilesViewVBox";
+	public final static String HISTORY_FILES_VBOX = "#historyFilesVBox";
+	public final static String MAIN_TRANSACTIONS_SCROLLPANE = "#homeFilesScrollPane";
+
+
+	// Create Pane
+
+	public final static String CREATE_MAIN_CHOICE_BOX = "#selectTransactionType";
+
+	// Buttons
+	public final static String CREATE_CREATE_KEY_BUTTON = "#createKeyButton";
+	public final static String CREATE_TRANSFER_ACCEPT_FROM_BUTTON = "#acceptFromAccountButton";
+	public final static String CREATE_TRANSFER_ACCEPT_TO_BUTTON = "#acceptToAccountButton";
+	public final static String CREATE_COMMENTS_BOX = "#commentsVBox";
+	public final static String CREATE_COMMON_FIELDS_BOX = "#commonFieldsVBox";
+	public final static String CREATE_CREATE_BOX = "#createAccountVBox";
+	public final static String CREATE_UPDATE_BOX = "#updateAccountVBox";
+	public final static String CREATE_TRANSFER_BOX = "#transferCurrencyVBox";
+	public final static String CREATE_CHOICE_BOX = "#createChoiceHBox";
+	public final static String CREATE_UPDATE_KEY_BUTTON = "#updateKeyButton";
+
+	public final static String CREATE_SYSTEM_EXPIRATION_VBOX = "#systemExpirationVBox";
+
+	public final static String CREATE_MEMO_FIELD = "#memoField";
+	public final static String CREATE_FEE_PAYER_FIELD = "#feePayerAccountField";
+	public final static String ENTITY_ID_FIELD = "#entityID";
+	public final static String CREATE_NODE_FIELD = "#nodeAccountField";
+	public final static String CREATE_HOURS = "#hourField";
+	public final static String CREATE_MINUTES = "#minuteField";
+	public final static String CREATE_SECONDS = "#secondsField";
+	public final static String CREATE_SYSTEM_HOURS = "#hourFieldSystem";
+	public final static String CREATE_SYSTEM_MINUTES = "#minuteFieldSystem";
+	public final static String CREATE_SYSTEM_SECONDS = "#secondsFieldSystem";
+
+	public final static String CREATE_INITIAL_BALANCE = "#createInitialBalance";
+	public final static String CREATE_TRANSFER_TO_ACCOUNT = "#transferToAccountIDTextField";
+	public final static String CREATE_TRANSFER_TO_AMOUNT = "#transferToAmountTextField";
+	public final static String CREATE_TRANSFER_FROM_ACCOUNT = "#transferFromAccountIDTextField";
+	public final static String CREATE_TRANSFER_FROM_AMOUNT = "#transferFromAmountTextField";
+	public final static String CREATE_UPDATE_ACCOUNT_ID = "#updateAccountID";
+	public final static String CREATE_UPDATE_AUTO_RENEW = "#updateAutoRenew";
+	public final static String CREATE_UPDATE_SRTO_O = "#updateSRTOriginal";
+	public final static String CREATE_UPDATE_RRTO_O = "#updateRRTOriginal";
+	public final static String CREATE_UPDATE_ARPO_O = "#updateARPOriginal";
+	public final static String CREATE_AUTO_RENEW = "#createAutoRenew";
+	public final static String SYSTEM_TRANSACTION_ACTION_CHOICE_BOX = "#systemActionChoiceBox";
+	public final static String SYSTEM_TRANSACTION_TYPE_CHOICE_BOX = "#systemTypeChoiceBox";
+	public final static String SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER = "#datePickerSystem";
+	public final static String CREATE_FILE_UPDATE_FILE_ID = "#updateFileID";
+	public final static String CREATE_FILE_UPDATE_CONTENTS = "#contentsTextField";
+	public final static String CREATE_FILE_UPDATE_CHUNK_SIZE = "#chunkSizeTextField";
+	public final static String CREATE_FILE_UPDATE_INTERVAL = "#intervalTextField";
+
+	public final static String KEY_LOADING_FIELD = "#keyLoadingField";
+
+	public final static String CREATE_FROM_TABLE = "#fromTransferTable";
+	public final static String CREATE_TO_TABLE = "#toTransferTable";
+
+	public final static String CREATE_COMMENTS_AREA = "#createCommentsTextArea";
+
+	public final static String CREATE_DATE_PICKER = "#datePicker";
+
+	// Labels
+	public final static String CREATE_TRANSFER_TOTAL_LABEL = "#totalTransferLabel";
+	public final static String CREATE_LOCAL_TIME_LABEL = "#createUTCTimeLabel";
+	public final static String SYSTEM_ENTITY_ID_LABEL = "#entityLabel";
+	public final static String SYSTEM_TIMEZONE_HBOX= "#timeZoneSystemHBox";
+	public final static String SYSTEM_LOCAL_TIME_LABEL="#systemCreateLocalTimeLabel";
+	// Error messages
+	public final static String CREATE_INVALID_DATE = "#invalidDate";
+	public final static String CREATE_INVALID_FEE_PAYER = "#invalidFeePayer";
+	public final static String CREATE_INVALID_NODE = "#invalidNode";
+	public final static String CREATE_INVALID_CREATE_INITIAL_BALANCE = "#invalidCreateInitialBalance";
+	public final static String CREATE_INVALID_CREATE_SEND_RECORD = "#invalidCreateSendRecord";
+	public final static String CREATE_INVALID_CREATE_RECEIVE_RECORD = "#invalidCreateReceiveThreshold";
+	public final static String CREATE_INVALID_CREATE_AUTO_RENEW = "#invalidCreateAutoRenew";
+	public final static String CREATE_INVALID_CREATE_NEW_KEY = "#invalidCreateNewKey";
+	public final static String CREATE_INVALID_UPDATE_SEND_RECORD = "#invalidUpdateSendRecord";
+	public final static String CREATE_INVALID_UPDATE_AUTO_RENEW = "#invalidUpdatedAutoRenew";
+	public final static String CREATE_INVALID_UPDATE_RECEIVE_RECORD = "#invalidUpdateReceiveRecord";
+	public final static String CREATE_INVALID_UPDATE_NEW_KEY = "#invalidUpdateNewKey";
+	public final static String CREATE_INVALID_TRANSFER_FROM_ACCOUNT = "#errorInvalidFromAccount";
+	public final static String CREATE_INVALID_TRANSFER_TO_ACCOUNT = "#errorInvalidToAccount";
+	public final static String CREATE_INVALID_TRANSFER_LIST = "#invalidTransferList";
+	public final static String CREATE_INVALID_TRANSFER_TOTAL = "#invalidTransferTotal";
+	public final static String CREATE_INVALID_UPDATE_ACCOUNT = "#invalidUpdateAccountToUpdate";
+
+	// Keys scroll panes
+	public final static String CREATE_UPDATE_ORIGINAL_KEY = "#updateOriginalKey";
+	public final static String CREATE_UPDATE_NEW_KEY = "#updateNewKey";
+	public final static String CREATE_CREATE_KEY = "#createNewKey";
+
+	public final static String PUBLIC_KEYS_VBOX = "#signingKeysVBox";
+
+	//Sign pane page
+	public final static String BROWSE_FILES_BUTTON = "#browseFilesButton";
+	public final static String HIDDEN_BROWSE_TEXTFIELD = "#hiddenPathSignSelectFolder";
+	public final static String HIDDEN_KEYS_TEXTFIELD = "#hiddenPathSign";
+
+
+	public final static String KEYS_GENERATE_KEYS = "#btnCreateKeys";
+	public final static String KEYS_EXPORT_KEYS = "#btnExportKeys";
+	public final static String KEYS_RECOVER_KEYS = "#btnRegenerateKeys";
+	public final static String KEYS_RECOVERY_PHRASE_BUTTON = "#btnShowMnemonicWords";
+	public final static String KEYS_CREATE_KEYS = "#createKeysButton";
+	public final static String KEYS_CANCEL_KEYS = "#cancelCreationButton";
+	public final static String KEYS_MNEMONIC_PASSWORD = "#recoveryPasswordField";
+	public final static String KEYS_MNEMONIC_CLOSE_VIEW = "#cancelEditMnemonicButton";
+	public final static String KEYS_MNEMONIC_ACCEPT_PASSWORD = "#acceptRecoveryPassword";
+
+	public final static String PROXY_ACCOUNT_ID = "#proxyAccountID";
+	public final static String SEND_THRESHOLD = "#sendRecThreshold";
+	public final static String RECEIVE_THRESHOLD = "#recRecordThreshold";
+	public final static String SIGNATURE_REQUIRED = "#recSigRequired";
+	public final static String EXPIRATION_TIME = "#expirationTime";
+	public final static String AUTO_RENEW = "#autoRenew";
+
+	public final static String CREATE_KEYS_VBOX = "#createKeysVBox";
+	public final static String NICKNAME = "#nicknameTextBox";
+	public final static String NICKNAME_DROPDOWN = "#accountNicknameBox";
+	public final static String ACCOUNT_ID_LABEL_ACCOUNTS = "#accountIDLabelAccounts";
+	public final static String KEYS_DETAILS = "#keyDetailsPane";
+	public final static String PASSWORD_BOX = "#passwordBox";
+	public final static String RETYPE_PASSWORD_BOX = "#retypePasswordBox";
+	public final static String REMOVE_ACCOUNT_BUTTON = "#removeAccountButton";
+	public final static String HIDDEN_ACCOUNT_INFO_TEXTFIELD = "#hiddenPathAccount";
+	public final static String CURRENT_ACCOUNT_PANE = "#currentAccountPane";
+	public final static String CHOOSE_EXPORT_LOCATION = "#chooseExportLocationBtn";
+	public final static String CANCEL_EXPORT_KEYS = "#cancelExportButton";
+	public final static String ACCOUNTS_RECOVER_KEY_INDEX = "#recoverIndexField";
+	public final static String ACCOUNTS_RECOVER_KEY_NICKNAME = "#recoverNicknameField";
+	public final static String CANCEL_RECOVER_KEYS = "#cancelRecoverKeyButton";
+	public final static String ACCOUNTS_RECOVER_KEYS_BUTTON = "#recoverKeysButton";
+	public final static String ACCOUNTS_NICKNAME_ERROR_LABEL = "#nicknameErrorLabel";
+	public final static String ACCOUNTS_SCROLL_PANE = "#accountsScrollPane";
+
+	//SettingsPane page
+	public final static String PARENT_GRID_PANE = "#parentGridPane";
+	public final static String RESET_HBOX = "#resetHBox";
+	public final static String LOAD_STORAGE_TF = "#loadStorageTextField";
+	public final static String ONEDRIVE_PATH_TF = "#pathTextFieldSP";
+	public final static String ONEDRIVE_EMAIL_TF = "#emailTextFieldSP";
+	public final static String NODE_ID_TF = "#nodeIDTextField";
+	public final static String TX_VALID_DURATION_TF = "#txValidDurationTextField";
+	public final static String AUTO_RENEW_PERIOD_TF = "#autoRenewPeriodTextField";
+	public final static String TVS_HOURS_TF = "#hoursTextField";
+	public final static String TVS_MINUTES_TF = "#minutesTextField";
+	public final static String TVS_SECONDS_TF = "#secondsTextField";
+	public final static String TRANSACTION_FEE_TF = "#defaultTransactionFee";
+	public final static String GENERATE_RECORD_SLIDER = "#generateRecordSlider";
+	public final static String ADD_FOLDER_BUTTON = "#addFolderButton";
+	public final static String CANCEL_ADD_FOLDER_BUTTON = "#cancelAddToEmailMapButton";
+	public final static String CONFIRM_ADD_FOLDER_BUTTON = "#confirmAddFolderButton";
+	public final static String IMPORT_ACCOUNT_BUTTON = "#importAccountButton";
+	public final static String IMPORT_FOLDER_BUTTON = "#importFolderButton";
+
+	// ZippedTransactions Pane
+	public final static String VERIFY_CSV_NAME = "#verifyCSVNameField";
+	public final static String CREATE_AND_SIGN_BUTTON = "#createAndSignButton";
+	public final static String BATCH_FINISH_BUTTON = "#batchFinishButton";
+	public final static String HIDDEN_CSV_INFO_TEXTFIELD = "#hiddenPathBatch";
+
+	public static final String PASSWORD_CHECK_IMAGE = "#checkPassword";
+	public static final String ACCEPT_APP_PASSWORD = "#acceptPasswordButton";
+	public static final String SIGNING_KEYS_VBOX = "#signingKeysVBox";
+
+
+	// load keys
+	public static final String CREATE_EDIT_KEY = "#createKeyButton";
+	public static final String UPDATE_EDIT_KEY = "#updateKeyButton";
+
+
+
+
+	// Time
+	public static final String SET_NOW_BUTTON = "#setNowValidStart";
+	public static final String TIME_ZONE_HBOX = "#timeZoneHBox";
+}

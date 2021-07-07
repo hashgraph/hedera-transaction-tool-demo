@@ -1,0 +1,152 @@
+{
+  "accountID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 2
+  },
+  "contractAccountID": "0000000000000000000000000000000000000002",
+  "key": {
+    "thresholdKey": {
+      "threshold": 1,
+      "keyList": [
+        {
+          "thresholdKey": {
+            "threshold": 2,
+            "keyList": [
+              {
+                "thresholdKey": {
+                  "threshold": 3,
+                  "keyList": [
+                    {
+                      "Ed25519": "debe349c0e78c6fc1ea3b04b50e94be322c18dbc2224bed6d4617b42d4d327a1"
+                    },
+                    {
+                      "Ed25519": "d5e684b0836f72f78ab11b56bd68bdbe2ce32395660c7d3e6ea4e57fdfbd2d1c"
+                    },
+                    {
+                      "Ed25519": "0ab33e285b05f1444d4445ddc8083639a4b901d73419ee1fec5e9c19bb3eb8e3"
+                    },
+                    {
+                      "Ed25519": "88293ae4507cdeb773b08535ada484b31ec46092f9b39e97f0787fc9ec822aea"
+                    },
+                    {
+                      "Ed25519": "3b52b2a94570674d3479daa0748d5ef4dee51156e0d63f95be15e4f367229dea"
+                    },
+                    {
+                      "Ed25519": "e8030841a15e2f1752f435e01cdcf86236ead362863e202c217e9f6a4abad25a"
+                    },
+                    {
+                      "Ed25519": "b53f64b5f2cfcbcdc665ee1573144a2562bbadac361337083836f8f3ee2dab3b"
+                    }
+                  ]
+                }
+              },
+              {
+                "thresholdKey": {
+                  "threshold": 1,
+                  "keyList": [
+                    {
+                      "Ed25519": "fe817e425dc9af374dc6300a8b58985d6b9b03dd62e48cfe23fa5ff8f294c1ea"
+                    },
+                    {
+                      "Ed25519": "59357c8d3ac8b1e3447af90237c85ccbbb66b43baf210002482de3dfcfb31b17"
+                    },
+                    {
+                      "Ed25519": "6eebb956bc8e4b776354fa0658598dbd01c472627292c98bd94ede7ccabd758f"
+                    },
+                    {
+                      "Ed25519": "ef2d877b88b7464d9253560b8851316f5c2f6ddf935eb4eec0761a3262b0a48c"
+                    },
+                    {
+                      "Ed25519": "99e4dfcdb2fd05b4434968002ba0dd576c61115ad355afe7ac0cb059da4036c0"
+                    },
+                    {
+                      "Ed25519": "a95d54cf49c1d08cd16d8908f37dfad95637134ffaf528a1d96da7f28d45f139"
+                    },
+                    {
+                      "Ed25519": "daa5da866bf4e990c14eff4336f5ab4b416c85a31289c8cb8ae1b4a54ce8c111"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "thresholdKey": {
+            "threshold": 2,
+            "keyList": [
+              {
+                "thresholdKey": {
+                  "threshold": 3,
+                  "keyList": [
+                    {
+                      "Ed25519": "dda407d3852e3586554b35c4d0aa18ff4d34ceb09ad0d19e31ff8f039835ff65"
+                    },
+                    {
+                      "Ed25519": "83885cc6b7712d6547d5a0b94d3623e84d5d3abe08639ae606a7deb78a3b8c6f"
+                    },
+                    {
+                      "Ed25519": "a773b3cc79c6789726a71cd8b0d06d630dc0c7b221c9fdc0c450ffead0823419"
+                    },
+                    {
+                      "Ed25519": "ddd55844c4ffd482f6de0ca2df6be8ba799cbf0eb0122d7ab50eaa56c93805cd"
+                    },
+                    {
+                      "Ed25519": "35179dcfba4056b424b87808f32b84d3ca0e34ce231a2b28d6892e6036dd9c4a"
+                    },
+                    {
+                      "Ed25519": "aeff93f6b62769c7c02590ee3473997bd4461a13428987e60e085bbbbdcb063e"
+                    },
+                    {
+                      "Ed25519": "70769cb2b8519f4144b5bdfd0a55ad050a4699e41433e4163d9cf71bd1686d46"
+                    }
+                  ]
+                }
+              },
+              {
+                "thresholdKey": {
+                  "threshold": 1,
+                  "keyList": [
+                    {
+                      "Ed25519": "35366e07f4024b7f6529bf420a38d55ae8dc9ca1fe5a734c936077015189c183"
+                    },
+                    {
+                      "Ed25519": "47c2bbb689bb9de1991061b3a153e00bf229960925093d056a5e69cd2c00f7cf"
+                    },
+                    {
+                      "Ed25519": "fbe06ef4ebfbfab0550b86aa14d21c3b3f97dbca41983c24a635af8d3d072100"
+                    },
+                    {
+                      "Ed25519": "f65aa1a38eca15d9fbee60a4545261cc5470b6b717498d1345d633245fdcf645"
+                    },
+                    {
+                      "Ed25519": "f91825f1681ee7050a6038d9d1df3ed06aafa398a6ccfc9aef365098012bf392"
+                    },
+                    {
+                      "Ed25519": "a3222abc4b08ef622b49d7cc4473586810ba4be797a47ac9aa53be5615a634bb"
+                    },
+                    {
+                      "Ed25519": "18af93828cd5f5a9dbed70bc8750a35e0744e6337761d7efa6098b1153bb0cb4"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "balance": 3787994612451515633,
+  "generateSendRecordThreshold": 5000000000000000000,
+  "generateReceiveRecordThreshold": 5000000000000000000,
+  "expirationTime": {
+    "seconds": 31556889864403199,
+    "nanos": 0
+  },
+  "autoRenewPeriod": {
+    "seconds": 17775,
+    "nanos": 0
+  }
+}

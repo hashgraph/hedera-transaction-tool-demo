@@ -1,0 +1,13 @@
+{
+  "operator": {
+	"accountId": "0.0.9401",
+	"publicKey": "302a300506032b6570032100d292412f1c86507224c1db656050c2162c91983540d608f6a31e9b4c9bdee82b",
+	"privateKey": "12a4a4add3d885bd61d7ce5cff88c5ef2d510651add00a7f64cb90de3359bc5e"
+  },
+  "network": {
+	"0.testnet.hedera.com: 50211": "0.0.3",
+	"1.testnet.hedera.com: 50211": "0.0.4",
+	"2.testnet.hedera.com: 50211": "0.0.5",
+	"3.testnet.hedera.com: 50211": "0.0.6"
+  }
+}

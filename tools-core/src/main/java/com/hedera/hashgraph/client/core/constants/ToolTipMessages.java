@@ -1,0 +1,32 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.core.constants;
+
+public class ToolTipMessages {
+	public static final String NOW_TOOLTIP_TEXT =
+			"The transaction must be submitted to the network shortly after the time chosen (within 2 " +
+					"minutes of that time). The \"now\" button sets it to the current time. It’s usually " +
+					"best to increase the time after clicking \"now\".";
+	public static final String ACCOUNTS_BOX_DESIGNER_TOOLTIP_TEXT =
+			"Accounts that have been imported to the app. Double clicking on any account name will set its " +
+					"key in the Design Box";
+	public static final String PUBLIC_KEYS_BOX_DESIGNER_TOOLTIP_TEXT =
+							"Keys that have been imported to the app, as well as the keys manually selected by the user. Drag and drop " +
+									"them to the design box";
+}

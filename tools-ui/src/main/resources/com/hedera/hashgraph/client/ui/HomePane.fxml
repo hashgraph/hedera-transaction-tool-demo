@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Hedera Transaction Tool
+  ~
+  ~ Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+<HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
+	  fx:controller="com.hedera.hashgraph.client.ui.HomePaneController">
+	<AnchorPane style="-fx-border-color: transparent;" HBox.hgrow="ALWAYS">
+		<VBox fx:id="defaultViewVBox" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+			  AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+			<padding>
+				<Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
+			</padding>
+			<Region VBox.vgrow="ALWAYS"/>
+			<VBox spacing="20.0" style="-fx-background-color: #0b9dfd;">
+				<padding>
+					<Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
+				</padding>
+				<Text strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-font-weight: bold; -fx-fill: white;"
+					  text="HEDERA TRANSACTION TOOLS" wrappingWidth="750.0"/>
+				<Text layoutX="10.0" layoutY="23.0" strokeType="OUTSIDE" strokeWidth="0.0" style="-fx-fill: white;"
+					  text="Your Hedera Transaction Tool is ready for you to create and sign transactions.&#10;&#10;If you run into issues or need assistance please contact support@hedera.com."
+					  wrappingWidth="750.0"/>
+			</VBox>
+			<Region VBox.vgrow="ALWAYS"/>
+		</VBox>
+		<ScrollPane fx:id="homeFilesScrollPane" fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0"
+					AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+			<VBox spacing="10.0">
+				<VBox>
+					<Label style="-fx-font-size: 25;" text="NEW TASKS">
+						<padding>
+							<Insets bottom="5.0" left="15.0" top="15.0"/>
+						</padding>
+					</Label>
+					<VBox fx:id="newFilesViewVBox"/>
+				</VBox>
+				<VBox fx:id="historyFilesViewVBox" layoutX="10.0" layoutY="10.0" spacing="5.0">
+					<Label style="-fx-font-size: 25;" text="HISTORY">
+						<padding>
+							<Insets bottom="5.0" left="15.0" top="15.0"/>
+						</padding>
+					</Label>
+					<HBox alignment="BOTTOM_CENTER" spacing="5.0">
+						<VBox fx:id="filterVBox"/>
+						<Region HBox.hgrow="ALWAYS"/>
+						<VBox alignment="BOTTOM_RIGHT">
+							<Region VBox.vgrow="ALWAYS"/>
+							<HBox fx:id="chooseLength" alignment="BOTTOM_RIGHT" spacing="5.0"/>
+						</VBox>
+					</HBox>
+					<VBox fx:id="historyFilesVBox"/>
+					<HBox fx:id="pagesHBox" spacing="5.0"/>
+				</VBox>
+				<padding>
+					<Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
+				</padding>
+			</VBox>
+		</ScrollPane>
+	</AnchorPane>
+</HBox>

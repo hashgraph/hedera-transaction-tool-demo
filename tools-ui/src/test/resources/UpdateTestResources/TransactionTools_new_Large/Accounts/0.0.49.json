@@ -1,0 +1,82 @@
+{
+  "accountID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 49
+  },
+  "contractAccountID": "0000000000000000000000000000000000000031",
+  "key": {
+    "thresholdKey": {
+      "threshold": 2,
+      "keyList": [
+        {
+          "thresholdKey": {
+            "threshold": 1,
+            "keyList": [
+              {
+                "Ed25519": "35366e07f4024b7f6529bf420a38d55ae8dc9ca1fe5a734c936077015189c183"
+              },
+              {
+                "Ed25519": "47c2bbb689bb9de1991061b3a153e00bf229960925093d056a5e69cd2c00f7cf"
+              },
+              {
+                "Ed25519": "fbe06ef4ebfbfab0550b86aa14d21c3b3f97dbca41983c24a635af8d3d072100"
+              },
+              {
+                "Ed25519": "f65aa1a38eca15d9fbee60a4545261cc5470b6b717498d1345d633245fdcf645"
+              },
+              {
+                "Ed25519": "f91825f1681ee7050a6038d9d1df3ed06aafa398a6ccfc9aef365098012bf392"
+              },
+              {
+                "Ed25519": "a3222abc4b08ef622b49d7cc4473586810ba4be797a47ac9aa53be5615a634bb"
+              },
+              {
+                "Ed25519": "18af93828cd5f5a9dbed70bc8750a35e0744e6337761d7efa6098b1153bb0cb4"
+              }
+            ]
+          }
+        },
+        {
+          "thresholdKey": {
+            "threshold": 3,
+            "keyList": [
+              {
+                "Ed25519": "dda407d3852e3586554b35c4d0aa18ff4d34ceb09ad0d19e31ff8f039835ff65"
+              },
+              {
+                "Ed25519": "83885cc6b7712d6547d5a0b94d3623e84d5d3abe08639ae606a7deb78a3b8c6f"
+              },
+              {
+                "Ed25519": "a773b3cc79c6789726a71cd8b0d06d630dc0c7b221c9fdc0c450ffead0823419"
+              },
+              {
+                "Ed25519": "ddd55844c4ffd482f6de0ca2df6be8ba799cbf0eb0122d7ab50eaa56c93805cd"
+              },
+              {
+                "Ed25519": "35179dcfba4056b424b87808f32b84d3ca0e34ce231a2b28d6892e6036dd9c4a"
+              },
+              {
+                "Ed25519": "aeff93f6b62769c7c02590ee3473997bd4461a13428987e60e085bbbbdcb063e"
+              },
+              {
+                "Ed25519": "70769cb2b8519f4144b5bdfd0a55ad050a4699e41433e4163d9cf71bd1686d46"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "balance": 999630182,
+  "generateSendRecordThreshold": 5000000000000000000,
+  "generateReceiveRecordThreshold": 5000000000000000000,
+  "expirationTime": {
+    "seconds": 31556889864403199,
+    "nanos": 0
+  },
+  "autoRenewPeriod": {
+    "seconds": 17775,
+    "nanos": 0
+  }
+}

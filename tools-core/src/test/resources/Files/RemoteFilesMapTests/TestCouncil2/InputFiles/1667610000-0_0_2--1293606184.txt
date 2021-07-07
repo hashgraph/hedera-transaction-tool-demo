@@ -1,0 +1,1 @@
+{"Author":"simi.hunjan@hederacouncil.org","Contents":"remove smart contract test","Timestamp":"2020-11-26 21:56:30"}

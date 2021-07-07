@@ -1,0 +1,320 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.core.remote;
+
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.FileActions;
+import com.hedera.hashgraph.client.core.enums.TransactionType;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
+import com.hedera.hashgraph.sdk.Transaction;
+import com.hedera.hashgraph.sdk.TransferTransaction;
+import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.util.zip.ZipInputStream;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class TransactionFileTest extends TestBase implements GenericFileReadWriteAware {
+	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
+
+	@Before
+	public void setUp() throws Exception {
+
+		// delete tools folders if it exists
+		final var storage = new File(DEFAULT_STORAGE);
+		if (storage.exists()) {
+			FileUtils.deleteDirectory(storage);
+		}
+
+		if (storage.mkdirs()) {
+			logger.info("Tools folder created");
+		}
+
+		if (new File(DEFAULT_KEYS).mkdirs()) {
+			logger.info("Keys folder created");
+		}
+		final var files = new File("src/test/resources/PublicKeys").listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(PUB_EXTENSION));
+		assert files != null;
+		for (File file : files) {
+			final var destFile = new File(DEFAULT_KEYS, file.getName());
+			if (!destFile.exists()) {
+				FileUtils.copyFile(file, destFile);
+			}
+		}
+		if (new File(DEFAULT_ACCOUNTS).mkdirs()) {
+			logger.info("Keys folder created");
+		}
+		final var accounts = new File("src/test/resources/AccountInfos").listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
+		assert accounts != null;
+		for (File file : accounts) {
+			final var destFile = new File(DEFAULT_ACCOUNTS, file.getName());
+			if (!destFile.exists()) {
+				FileUtils.copyFile(file, destFile);
+			}
+		}
+
+
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		var output = new File("src/test/resources/Files/output");
+		if (output.exists()) {
+			FileUtils.deleteDirectory(output);
+		}
+		final var storage = new File(DEFAULT_STORAGE);
+		if (storage.exists()) {
+			FileUtils.deleteDirectory(storage);
+		}
+	}
+
+	@Test
+	public void constructor_test() throws IOException {
+		var emptyFile = new TransactionFile();
+		assertFalse(emptyFile.isValid());
+
+		var file = new File("src/test/resources/Files/TransactionFileTests/expired.tx");
+		var info = FileDetails.parse(file);
+
+		var transactionFile = new TransactionFile(info);
+		assertNotNull(transactionFile);
+		assertTrue(transactionFile.isValid());
+		assertTrue(transactionFile.isExpired());
+
+		file = new File(
+				"src/test/resources/Files/TransactionFileTests/createAccount.tx");
+		info = FileDetails.parse(file);
+		transactionFile = new TransactionFile(info);
+		assertFalse(transactionFile.isExpired());
+
+		assertEquals(4, transactionFile.getActions().size());
+		assertTrue(transactionFile.getActions().contains(FileActions.SIGN));
+		assertTrue(transactionFile.getActions().contains(FileActions.DECLINE));
+		assertTrue(transactionFile.getActions().contains(FileActions.ADD_MORE));
+		assertTrue(transactionFile.getActions().contains(FileActions.BROWSE));
+
+		file = new File(
+				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/hundredThousandBytes.zip");
+		info = FileDetails.parse(file);
+		transactionFile = new TransactionFile(info);
+		assertFalse(transactionFile.isValid());
+
+
+		file = new File("src/test/resources/Files/TransactionFileTests/badTransactionFile.tx");
+		info = FileDetails.parse(file);
+		transactionFile = new TransactionFile(info);
+		assertFalse(transactionFile.isValid());
+
+
+	}
+
+	@Test
+	public void getters_test() throws IOException {
+		var file = new File(
+				"src/test/resources/Files/TransactionFileTests/createAccount.tx");
+		var info = FileDetails.parse(file);
+		var transactionFile = new TransactionFile(info);
+
+		assertEquals("", transactionFile.getMemo());
+		assertEquals(TransactionType.CRYPTO_CREATE, transactionFile.getTransactionType());
+		assertEquals(new Identifier(0, 0, 94), transactionFile.getFeePayerAccountId());
+		assertEquals(100000000, transactionFile.getTransactionFee());
+		assertEquals(new Timestamp(1775282400, 0), transactionFile.getTransactionValidStart());
+
+		ToolTransaction transaction = transactionFile.getTransaction();
+		assertTrue(transaction instanceof ToolCryptoCreateTransaction);
+
+		assertEquals(16, transactionFile.getSigningPublicKeys().size());
+
+	}
+
+	@Test
+	public void buildGridPaneCreate_test() throws IOException {
+		final var file = new File(
+				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/1743832800-0_0_94-58824159.tx");
+		var info = FileDetails.parse(file);
+
+		var createTransaction = new TransactionFile(info);
+		var gridPane = createTransaction.buildGridPane();
+		assertEquals(2, gridPane.getColumnCount());
+		assertEquals(14, gridPane.getChildren().size());
+		assertTrue(gridPane.getChildren().get(0) instanceof Label);
+
+		var label = (Label) gridPane.getChildren().get(3);
+		assertEquals("0.0.94-bbukb", label.getText());
+
+		label = (Label) gridPane.getChildren().get(5);
+		assertTrue(label.getText().contains("2025-04-05 06:00:00 UTC"));
+
+		assertTrue(gridPane.getChildren().get(7) instanceof Hyperlink);
+
+		label = (Label) gridPane.getChildren().get(9);
+		assertEquals("7000000 seconds", label.getText());
+
+		label = (Label) gridPane.getChildren().get(11);
+		assertEquals("0 tℏ", label.getText());
+
+		var signers = createTransaction.getSigningPublicKeys();
+		assertNotNull(signers);
+		assertEquals(16, signers.size());
+	}
+
+	@Test
+	public void buildGridPaneTransfer_test() throws IOException {
+		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
+		var info = FileDetails.parse(file);
+
+		var transfer = new TransactionFile(info);
+		var gridPane = transfer.buildGridPane();
+		assertEquals(2, gridPane.getColumnCount());
+		assertEquals(12, gridPane.getChildren().size());
+		assertTrue(gridPane.getChildren().get(0) instanceof Label);
+
+		var label = (Label) gridPane.getChildren().get(3);
+		assertEquals("0.0.76-csasv", label.getText());
+
+		label = (Label) gridPane.getChildren().get(5);
+		assertTrue(label.getText().contains("2029-05-05 22:10:07 UTC"));
+
+		label = (Label) gridPane.getChildren().get(7);
+		assertEquals("0.0.50-rlcsj", label.getText());
+		label = (Label) gridPane.getChildren().get(8);
+		assertEquals("-100 ℏ", label.getText());
+
+		label = (Label) gridPane.getChildren().get(10);
+		assertEquals("0.0.94-bbukb", label.getText());
+		label = (Label) gridPane.getChildren().get(11);
+		assertEquals("100 ℏ", label.getText());
+
+		var signers = transfer.getSigningPublicKeys();
+		assertNotNull(signers);
+		assertEquals(4, signers.size());
+	}
+
+	@Test
+	public void buildGridPaneFileUpdate_test() throws IOException {
+		final var file = new File("src/test/resources/Files/TransactionFileTests/systemDelete.tx");
+		var info = FileDetails.parse(file);
+
+		var transfer = new TransactionFile(info);
+		var gridPane = transfer.buildGridPane();
+		assertEquals(2, gridPane.getColumnCount());
+		assertEquals(10, gridPane.getChildren().size());
+		assertTrue(gridPane.getChildren().get(0) instanceof Label);
+
+		var label = (Label) gridPane.getChildren().get(3);
+		assertEquals("0.0.2-lpifi", label.getText());
+
+		label = (Label) gridPane.getChildren().get(5);
+		assertTrue(label.getText().contains("2026-05-02 09:27:13 UTC"));
+
+		label = (Label) gridPane.getChildren().get(7);
+		assertEquals("0.0.123", label.getText());
+
+		label = (Label) gridPane.getChildren().get(9);
+		assertTrue(label.getText().contains("2028-05-06 06:00:00 UTC"));
+
+		var signers = transfer.getSigningPublicKeys();
+		assertNotNull(signers);
+		assertEquals(28, signers.size());
+	}
+
+	@Test
+	public void execute_test() throws IOException, HederaClientException, KeyStoreException {
+		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
+		var info = FileDetails.parse(file);
+
+		var transfer = new TransactionFile(info);
+		var password = Constants.TEST_PASSWORD.toCharArray();
+		var keyStore0 = new Ed25519KeyStore.Builder().withPassword(password).build();
+		keyStore0.insertNewKeyPair();
+
+		var pair = Pair.of("testPem", keyStore0.get(0));
+		final var execute = transfer.execute(pair, "test_user", "src/test/resources/Files/output");
+		final var outputZip = new File(execute);
+		assertTrue(outputZip.exists());
+
+		unzip(outputZip);
+		var unzipped = new File(outputZip.getParent(), FilenameUtils.getBaseName(outputZip.getName()));
+		assertTrue(unzipped.exists());
+
+		var files = unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
+		assert files != null;
+		assertEquals(1, files.length);
+		var updateTx = Transaction.fromBytes(readBytes(files[0]));
+		assertTrue(updateTx instanceof TransferTransaction);
+		var sigs = updateTx.getSignatures();
+		assertEquals(1, sigs.entrySet().size());
+	}
+
+	private void unzip(File zip) throws IOException {
+		var fileZip = zip.getAbsolutePath();
+		var destDir = new File(fileZip.replace(".zip", ""));
+		if (destDir.mkdirs()) {
+			logger.info("Destination directory created");
+		}
+		var buffer = new byte[1024];
+		var zis = new ZipInputStream(new FileInputStream(fileZip));
+		var zipEntry = zis.getNextEntry();
+		while (zipEntry != null) {
+			var newFile = new File(destDir, zipEntry.getName());
+			var fos = new FileOutputStream(newFile);
+			int len;
+			while ((len = zis.read(buffer)) > 0) {
+				fos.write(buffer, 0, len);
+			}
+			fos.close();
+			zipEntry = zis.getNextEntry();
+		}
+		zis.closeEntry();
+		zis.close();
+	}
+}

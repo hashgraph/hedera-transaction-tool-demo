@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Hedera Transaction Tool
+  ~
+  ~ Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.TextFlow?>
+
+<StackPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.InitialStartupPaneController">
+	<VBox fx:id="scrollBoxParent" style="-fx-border-color: transparent;">
+		<HBox style="-fx-background-color: #0b9dfd;">
+			<VBox.margin>
+				<Insets />
+			</VBox.margin>
+			<VBox alignment="CENTER_LEFT" prefHeight="150.0" spacing="30.0" style="-fx-background-color: #0b9dfd;">
+				<Label style="-fx-font-size: 18; -fx-text-fill: white; -fx-font-weight: bold;" text="SET UP YOUR HEDERA TRANSACTION TOOLS">
+					</Label>
+				<Label style="-fx-font-size: 14; -fx-text-fill: white;" text="Complete the initial, one-time steps below to set up your application.">
+				</Label>
+				<padding>
+					<Insets bottom="30.0" left="25.0" right="5.0" top="30.0" />
+				</padding>
+			</VBox>
+			<ImageView fx:id="deleteImageIS" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" visible="false">
+				<Image url="@../../../../../icons/delete.png" />
+			</ImageView>
+			<ImageView fx:id="editImageIS" fitHeight="150.0" fitWidth="200.0" layoutX="495.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true" visible="false">
+				<Image url="@../../../../../icons/edit.png" />
+			</ImageView>
+		</HBox>
+		<TextField fx:id="hiddenPathInitial" onKeyReleased="#choosePath" style="-fx-font-size: 2; -fx-background-color: #0b9dfd; -fx-border-radius: 0; -fx-background-radius: 0; -fx-text-fill: #0b9dfd;" />
+		<ScrollPane fx:id="scrollPane" fitToWidth="true" maxHeight="1.7976931348623157E308" style="-fx-border-color: transparent; -fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+			<VBox fx:id="mainVBox" alignment="CENTER" spacing="30.0">
+				<padding>
+					<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+				</padding>
+				<VBox fx:id="passwordBox" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
+					<padding>
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+					</padding>
+					<GridPane fx:id="passwordGridPane" vgap="5.0">
+						<columnConstraints>
+							<ColumnConstraints minWidth="10.0" />
+							<ColumnConstraints halignment="RIGHT" hgrow="ALWAYS" minWidth="10.0" />
+						</columnConstraints>
+						<rowConstraints>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints fillHeight="false" minHeight="10.0" />
+							<RowConstraints fillHeight="false" minHeight="10.0" />
+						</rowConstraints>
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="CREATE A PASSWORD">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<Label prefWidth="800.0" style="-fx-font-size: 16;" text="Please create an application password. You will be required to enter this password every time you open the application, create a new key, or sign a transaction." wrapText="true" GridPane.rowIndex="1" />
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="STEP 1 OF 3" GridPane.columnIndex="1">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<VBox GridPane.columnIndex="1" GridPane.rowIndex="2" GridPane.valignment="BOTTOM">
+							<Region VBox.vgrow="ALWAYS" />
+							<ButtonBar fx:id="passwordButtonBar" buttonMinWidth="200.0" prefWidth="200.0">
+								<buttons>
+									<Button fx:id="acceptPasswordButton" mnemonicParsing="false" onMouseClicked="#acceptPassword" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-text-fill: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="OK" visible="false" />
+									<Button disable="true" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="CHANGE" visible="false" />
+								</buttons>
+							</ButtonBar>
+						</VBox>
+						<GridPane hgap="10.0" vgap="10.0" GridPane.rowIndex="2">
+							<columnConstraints>
+								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+							</columnConstraints>
+							<rowConstraints>
+								<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+								<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+							</rowConstraints>
+							<padding>
+								<Insets right="50.0" top="10.0" />
+							</padding>
+							<Label text="Please enter your password:&#10;(Minimum 10 characters)" wrapText="true" />
+							<Label text="Please re-enter your password:" GridPane.rowIndex="1" />
+							<VBox GridPane.columnIndex="1">
+								<HBox alignment="CENTER_LEFT" spacing="20.0">
+									<PasswordField fx:id="appPasswordField" minWidth="300.0"
+												   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
+									<ImageView fx:id="checkPassword" fitHeight="20.0" fitWidth="20.0"
+											   pickOnBounds="true" preserveRatio="true" visible="false">
+										<Image url="@../../../../../icons/greencheck.png"/>
+									</ImageView>
+								</HBox>
+								<TextFlow>
+									<padding>
+										<Insets left="10.0"/>
+									</padding>
+									<Label fx:id="characterCount" style="-fx-text-fill: red;" text="0"/>
+									<Label text=" characters"/>
+								</TextFlow>
+							</VBox>
+							<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+								<PasswordField fx:id="reEnterPasswordField" disable="true" minWidth="300.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+								<ImageView fx:id="reCheckPassword" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+									<Image url="@../../../../../icons/greencheck.png" />
+								</ImageView>
+							</HBox>
+						</GridPane>
+                  <HBox GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="passwordErrorLabel" style="-fx-text-fill: red;" text="Label" textFill="RED" visible="false" wrapText="true" />
+                     </children>
+                  </HBox>
+					</GridPane>
+				</VBox>
+				<VBox fx:id="drivesBox" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;" VBox.vgrow="ALWAYS">
+					<padding>
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+					</padding>
+					<opaqueInsets>
+						<Insets />
+					</opaqueInsets>
+					<GridPane VBox.vgrow="ALWAYS">
+						<columnConstraints>
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+							<ColumnConstraints halignment="RIGHT" hgrow="ALWAYS" minWidth="10.0" />
+						</columnConstraints>
+						<rowConstraints>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+						</rowConstraints>
+						<HBox fx:id="showEmailMapHBox" alignment="BOTTOM_LEFT" spacing="20.0" GridPane.columnSpan="3" GridPane.rowIndex="1">
+							<VBox fx:id="transactionFoldersVBoxIS" minHeight="20.0" spacing="5.0" />
+							<Button fx:id="addToEmailMapButton" mnemonicParsing="false" onAction="#addToEmailMap" style="-fx-border-color: darkgrey; -fx-background-color: white; -fx-background-radius: 5; -fx-border-radius: 5;" visible="false">
+								<graphic>
+									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/plus.png" />
+									</ImageView>
+								</graphic>
+							</Button>
+						</HBox>
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="Link shared folders">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="STEP 2 OF 3" GridPane.columnIndex="2">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<HBox fx:id="addFolderPathHBox" alignment="BOTTOM_LEFT" GridPane.columnSpan="3" GridPane.rowIndex="2">
+							<GridPane fx:id="addPathGridPaneIS" hgap="5.0" vgap="5.0">
+								<columnConstraints>
+									<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+									<ColumnConstraints hgrow="ALWAYS" />
+								</columnConstraints>
+								<rowConstraints>
+									<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+									<RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+									<RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+								</rowConstraints>
+								<padding>
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+								</padding>
+								<TextField fx:id="pathTextField" minHeight="27.0" minWidth="500.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.rowIndex="1" />
+								<ImageView fx:id="emailGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3">
+									<Image url="@../../../../../icons/greencheck.png" />
+								</ImageView>
+								<HBox alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
+									<ImageView fx:id="pathGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+										<Image url="@../../../../../icons/greencheck.png" />
+									</ImageView>
+									<Button fx:id="browseNewFolderButton" mnemonicParsing="false" onAction="#browseNewFolderAction" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+										<graphic>
+											<ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true" rotate="270.0">
+												<Image url="@../../../../../icons/browse.png" />
+											</ImageView>
+										</graphic>
+									</Button>
+								</HBox>
+								<TextField fx:id="emailTextField" disable="true" layoutX="10.0" layoutY="12.0" minWidth="500.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.rowIndex="3" />
+								<Label text="Please start by choosing the folder where transactions will be shared:" wrapText="true" />
+								<Label text="Please enter the email associated with the selected shared folder:" wrapText="true" GridPane.rowIndex="2" />
+								<Label fx:id="drivesErrorLabel" style="-fx-text-fill: red" wrapText="true" GridPane.rowIndex="5" />
+							</GridPane>
+							<Region visible="false" HBox.hgrow="ALWAYS" />
+							<VBox>
+								<padding>
+									<Insets bottom="10.0" />
+								</padding>
+								<Region VBox.vgrow="ALWAYS" />
+								<ButtonBar fx:id="addToEmailMapButtonBar" buttonMinWidth="200.0">
+									<buttons>
+										<Button fx:id="confirmAddFolderButton" mnemonicParsing="false" onAction="#addFolderEmailToMapAction" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;" text="CONFIRM" />
+										<Button fx:id="cancelAddToEmailMapButtonIS" mnemonicParsing="false" onAction="#cancelAddToEmailMap" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="CANCEL" />
+									</buttons>
+								</ButtonBar>
+							</VBox>
+							<GridPane.margin>
+								<Insets />
+							</GridPane.margin>
+						</HBox>
+					</GridPane>
+				</VBox>
+				<VBox fx:id="passphraseBox" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
+					<padding>
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+					</padding>
+					<GridPane fx:id="keysGridPane" vgap="5.0">
+						<columnConstraints>
+							<ColumnConstraints minWidth="10.0" />
+							<ColumnConstraints halignment="RIGHT" minWidth="10.0" />
+						</columnConstraints>
+						<rowConstraints>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+							<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+							<RowConstraints vgrow="SOMETIMES" />
+						</rowConstraints>
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="GENERATE A RECOVERY PHRASE" GridPane.hgrow="ALWAYS">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<HBox alignment="CENTER_RIGHT" minWidth="430.0" GridPane.columnIndex="1">
+							<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="STEP 3 OF 3">
+								<font>
+									<Font size="14.0" />
+								</font>
+							</Label>
+						</HBox>
+						<Label style="-fx-font-size: 16;" text="Generate a 24 word recovery phrase, in case you lose access to your keys. " wrapText="true" GridPane.rowIndex="1" />
+						<VBox fx:id="phraseBox" alignment="CENTER_LEFT" GridPane.columnSpan="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" GridPane.vgrow="NEVER" />
+						<Label text="To generate a new recovery phrase, click GENERATE below. If you already have a recovery phrase, enter it in the spaces below and click RECOVER." wrapText="true" GridPane.rowIndex="2">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<VBox GridPane.rowIndex="4">
+							<Label fx:id="mnemonicErrorMessage" style="-fx-text-fill: red;" text="The passphrase entered is incorrect. Please check your records and try again" visible="false" wrapText="true">
+								<font>
+									<Font size="14.0" />
+								</font>
+							</Label>
+							<Label fx:id="copyToClipboardLabel" visible="false" />
+						</VBox>
+						<ButtonBar fx:id="generateKeyPairButtonBar" buttonMinWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+							<buttons>
+								<Button fx:id="generateKeys" mnemonicParsing="false" onAction="#generatePassphraseEvent" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;" text="GENERATE" />
+								<VBox>
+									<Button fx:id="copyToClipBoardButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#copyPhraseToClipBoard" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="COPY" visible="false" />
+									<Button fx:id="pasteFromClipBoardButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#pastePhraseFromClipBoard" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="PASTE" />
+								</VBox>
+							</buttons>
+						</ButtonBar>
+					</GridPane>
+				</VBox>
+				<VBox fx:id="finishBox" style="-fx-background-color: white; -fx-border-color: lightgrey white white; -fx-border-width: 3;">
+					<GridPane vgap="5.0">
+						<columnConstraints>
+							<ColumnConstraints minWidth="10.0" />
+							<ColumnConstraints halignment="RIGHT" maxWidth="-Infinity" minWidth="10.0" />
+						</columnConstraints>
+						<rowConstraints>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
+						</rowConstraints>
+						<ButtonBar buttonMinWidth="200.0" prefWidth="430.0" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+							<buttons>
+								<Button disable="true" focusTraversable="false" mnemonicParsing="false" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;" text="GENERATE" visible="false" />
+								<Button mnemonicParsing="false" onAction="#finishSetup" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="FINISH" />
+							</buttons>
+						</ButtonBar>
+						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="FINISH SETUP">
+							<font>
+								<Font size="14.0" />
+							</font>
+						</Label>
+						<Label style="-fx-font-size: 14;" text="After copying the 24 word passphrase, please click the FINISH button to complete the setup and start using your Hedera Transaction Tools App" wrapText="true" GridPane.rowIndex="1" />
+					</GridPane>
+					<padding>
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+					</padding>
+				</VBox>
+			</VBox>
+		</ScrollPane>
+		<StackPane.margin>
+			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+		</StackPane.margin>
+	</VBox>
+	<Button fx:id="resetButton" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#resetSetup" style="-fx-background-color: #0b9dfd0b;" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0" StackPane.alignment="TOP_RIGHT">
+		<graphic>
+			<ImageView fitHeight="35.0" pickOnBounds="true" preserveRatio="true">
+				<Image url="@../../../../../icons/reload.png" />
+			</ImageView>
+		</graphic>
+		<StackPane.margin>
+			<Insets top="50.0" />
+		</StackPane.margin>
+		<tooltip>
+			<Tooltip text="Reset" />
+		</tooltip>
+	</Button>
+</StackPane>

@@ -1,0 +1,9 @@
+{
+  "notes":[
+    {"title":"Item 1","contents":"Short description 1"},
+    {"title":"Item 2","contents":"Short description 2"},
+    {"title":"Item 3","contents":"Short description 3"}
+  ],
+  "link":"https://hyperlink.to/repository/with/release.notes",
+  "dateStamp":"2025-07-14T14:02:51+0000"
+}
