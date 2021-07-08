@@ -33,3 +33,11 @@ mvn clean install
 
 For instructions on the application installation and user guide, please visit [Hedera Transaction Tools Documentation](https://docs.hedera.com/hedera-transaction-tool-demo/)
 
+##Contributing
+Contributions are welcome. Please see the contributing guide to see how you can get involved.
+
+##Code of Conduct
+This project is governed by the Contributor Covenant Code of Conduct. By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to oss@hedera.com
+
+##License
+Apache License 2.0
