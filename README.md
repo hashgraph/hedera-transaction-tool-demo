@@ -30,7 +30,6 @@ mvn clean install
 * Navigate to `hedera-transaction-tool/tools-ui/src/java` and run the Main class 
 
 ## Documentation
-
 For instructions on the application installation and user guide, please visit [Hedera Transaction Tools Documentation](https://docs.hedera.com/hedera-transaction-tool-demo/)
 
 ## Contributing
