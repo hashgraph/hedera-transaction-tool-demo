@@ -259,7 +259,6 @@ public class BatchFile extends RemoteFile {
 	/**
 	 * Get the date of the first transaction
 	 *
-	 * @return
 	 */
 	private LocalDate getFirstDate() {
 		var first = Long.MAX_VALUE;
@@ -402,7 +401,7 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
 		var tempStorage =
-				TEMP_FOLDER_LOCATION + (LocalDate.now()).toString() + File.separator + RandomStringUtils.randomAlphanumeric(
+				TEMP_FOLDER_LOCATION + (LocalDate.now()) + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		DoubleProperty progress = new SimpleDoubleProperty(1);
@@ -469,9 +468,7 @@ public class BatchFile extends RemoteFile {
 			transactionsProgressBar.progressProperty().bind(task.progressProperty());
 			new Thread(task).start();
 
-			task.setOnSucceeded(workerStateEvent -> {
-				window.close();
-			});
+			task.setOnSucceeded(workerStateEvent -> window.close());
 
 
 			cancelButton.setOnAction(actionEvent -> task.cancel());
