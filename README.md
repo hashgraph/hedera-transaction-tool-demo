@@ -1,4 +1,5 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=com.hedera.hashgraph%3Ahedera-transaction-tool&metric=alert_status&token=028c36aa276e50cba3e8f765a6e709ae2336443b)](https://sonarcloud.io/dashboard?id=com.hedera.hashgraph%3Ahedera-transaction-tool)
 
 # Hedera Transaction Tool Demo
 The Hedera Transaction Tool application is a demo application that allows a user to generate keys, create transactions, 
@@ -10,8 +11,8 @@ and is at your own risk.
 
 # Install
 ## Requirements
-* Jave 14+
-* Mac OS (currently does not support other operating systems)
+* Java 14+
+* MacOS (currently does not support other operating systems)
 
 You can download the packages for the Hedera Transaction Tool UI and CLI by downloading the assets in each tag.
 
@@ -27,3 +28,15 @@ git clone https://github.com/hashgraph/hedera-transaction-tool.git
 mvn clean install
 ```
 * Navigate to `hedera-transaction-tool/tools-ui/src/java` and run the Main class 
+
+## Documentation
+For instructions on the application installation and user guide, please visit [Hedera Transaction Tools Documentation](https://docs.hedera.com/hedera-transaction-tool-demo/)
+
+## Contributing
+Contributions are welcome. Please see the contributing guide to see how you can get involved.
+
+## Code of Conduct
+This project is governed by the Contributor Covenant Code of Conduct. By participating, you are expected to uphold this code of conduct. Please report unacceptable behavior to oss@hedera.com
+
+## License
+Apache License 2.0
