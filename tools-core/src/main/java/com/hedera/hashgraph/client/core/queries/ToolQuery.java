@@ -60,7 +60,7 @@ public class ToolQuery implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolQuery.class);
 
 	JsonObject input;
-	Query<?, ?> query;
+	Query<?, ? extends Query<?, ?>> query;
 
 	// Common fields to build the query
 	Identifier feePayerID;
@@ -200,7 +200,7 @@ public class ToolQuery implements SDKInterface, GenericFileReadWriteAware {
 	/**
 	 * Uses a verified json input to build a query
 	 */
-	public Query<?, ?> build() throws HederaClientException {
+	public Query<?, ? extends Query<?, ?>> build() throws HederaClientException {
 		return null;
 	}
 

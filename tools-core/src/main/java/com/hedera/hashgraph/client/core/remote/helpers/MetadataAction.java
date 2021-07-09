@@ -30,10 +30,10 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATI
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 
 public class MetadataAction implements Comparable {
-	private static final String TIMESTAMP = "timestamp";
+	private static final String TIMESTAMP_STRING = "timestamp";
 	private static final String KEY_NAME = "keyName";
 	private static final String USER_COMMENTS = "userComments";
-	private static final String ACTION = "action";
+	private static final String ACTION_STRING = "action";
 	private Timestamp timeStamp;
 	private Actions actions;
 	private String userComments;
@@ -54,13 +54,13 @@ public class MetadataAction implements Comparable {
 			throw new HederaClientException("Cannot parse object");
 		}
 
-		if (!metadata.has(TIMESTAMP) || !metadata.has(ACTION)) {
+		if (!metadata.has(TIMESTAMP_STRING) || !metadata.has(ACTION_STRING)) {
 			throw new HederaClientException("Invalid metadata");
 		}
 
-		var time = metadata.getAsJsonObject(TIMESTAMP);
+		var time = metadata.getAsJsonObject(TIMESTAMP_STRING);
 		this.timeStamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
-		this.actions = Actions.valueOf(metadata.get(ACTION).getAsString());
+		this.actions = Actions.valueOf(metadata.get(ACTION_STRING).getAsString());
 		this.userComments = (metadata.has(USER_COMMENTS)) ? metadata.get(USER_COMMENTS).getAsString() : "";
 		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
 	}
@@ -99,8 +99,8 @@ public class MetadataAction implements Comparable {
 
 	public JsonObject toJson() {
 		var jsonObject = new JsonObject();
-		jsonObject.add(TIMESTAMP, this.timeStamp.asJSON());
-		jsonObject.addProperty(ACTION, this.actions.getAction());
+		jsonObject.add(TIMESTAMP_STRING, this.timeStamp.asJSON());
+		jsonObject.addProperty(ACTION_STRING, this.actions.getAction());
 		jsonObject.addProperty(USER_COMMENTS, this.userComments);
 		jsonObject.addProperty(KEY_NAME, this.keyName);
 

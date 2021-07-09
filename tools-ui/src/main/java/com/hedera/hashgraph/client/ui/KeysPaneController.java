@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
@@ -141,6 +124,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			"Cannot replace a public key that is associated with an existing private key.";
 	public static final String KEYS_STRING = "/Keys/";
 	private static final String ACCEPT_MESSAGE = "CONTINUE";
+	private static final String MNEMONIC_IS_NULL = "Mnemonic is null";
 
 	public StackPane keysPane;
 	public ScrollPane mainKeysScrollPane;
@@ -206,7 +190,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	// key: Key name; value: location of the file
 	private Map<String, String> privateKeysMap = new HashMap<>();
 
-	private List<FileService> outputDirectories = new ArrayList<>();
 	private boolean startup = true;
 	private String currentHashCode = null;
 
@@ -371,10 +354,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		return publicKeysMap;
 	}
 
-	public List<FileService> getOutputDirectories() {
-		return outputDirectories;
-	}
-
 	private void cleanTextFields() {
 		nicknameTextBox.clear();
 		recoverNicknameField.clear();
@@ -440,7 +419,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void populateKeysTables() throws HederaClientException {
 
 		try {
@@ -600,10 +578,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			if (new File(controller.getPreferredStorageDirectory() + KEYS_STRING).mkdirs()) {
 				logger.info("Keys folder created");
 			}
-			var pems = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
+			var pemFiles = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 					(dir, name) -> isPEMFile(new File(name).toPath()));
-			assert pems != null;
-			stream(pems).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
+			assert pemFiles != null;
+			stream(pemFiles).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
 		} catch (Exception ex) {
 			logger.error(ex);
 		}
@@ -758,7 +736,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			if (controller.properties.getOneDriveCredentials() != null) {
 				var inputs = controller.properties.getOneDriveCredentials().keySet();
-				outputDirectories = new ArrayList<>();
+				List<FileService> outputDirectories = new ArrayList<>();
 				for (var s :
 						inputs) {
 					var fs = FileAdapterFactory.getAdapter(s);
@@ -797,7 +775,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		startup = false;
 		var mnemonic = getMnemonic();
 		if (mnemonic == null) {
-			throw new HederaClientException("Mnemonic is null");
+			throw new HederaClientException(MNEMONIC_IS_NULL);
 		}
 		setupMnemonicHBox(mnemonic);
 		currentHashCode = String.valueOf(mnemonic.words.hashCode());
@@ -836,7 +814,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		var mnemonic = getMnemonicFromFile(password);
 		if (mnemonic == null) {
-			logger.error("Mnemonic is null");
+			logger.error(MNEMONIC_IS_NULL);
 			return;
 		}
 		setupMnemonicHBox(mnemonic);
@@ -1018,7 +996,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void setupMnemonicHBox(Mnemonic mnemonic) {
 		if (mnemonic == null) {
-			logger.error("Mnemonic is null");
+			logger.error(MNEMONIC_IS_NULL);
 			return;
 		}
 		var mnemonicLabel = new Label();
@@ -1129,8 +1107,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
 			var mnemonic = getMnemonicFromFile(password);
 			if (mnemonic == null) {
-				controller.displaySystemMessage("Mnemonic is null");
-				throw new HederaClientException("Mnemonic is null");
+				controller.displaySystemMessage(MNEMONIC_IS_NULL);
+				throw new HederaClientException(MNEMONIC_IS_NULL);
 			}
 			var pk = Ed25519PrivateKey.fromMnemonic(mnemonic, index);
 
@@ -1182,7 +1160,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			} else {
 				mnemonic = getMnemonicFromFile(password);
 				if (mnemonic == null) {
-					throw new HederaClientException("Mnemonic is null");
+					throw new HederaClientException(MNEMONIC_IS_NULL);
 				}
 				fill(password, 'x');
 			}

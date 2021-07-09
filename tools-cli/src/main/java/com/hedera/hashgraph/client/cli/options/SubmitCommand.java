@@ -136,8 +136,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	}
 
-	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws HederaClientException,
-			InterruptedException {
+	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws InterruptedException {
 		assert transaction != null;
 		var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
 		assert startTime != null;

@@ -91,7 +91,7 @@ import static java.lang.Thread.sleep;
 public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolTransaction.class);
 	JsonObject input;
-	Transaction<?> transaction;
+	Transaction<? extends Transaction<?>> transaction;
 
 	TransactionType transactionType;
 
@@ -198,7 +198,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return memo;
 	}
 
-	public Transaction<?> getTransaction() {
+	public Transaction<? extends Transaction<?>> getTransaction() {
 		return transaction;
 	}
 
@@ -213,7 +213,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<?> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}
@@ -221,7 +221,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<?> collate(Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(Transaction<? extends Transaction<?>> otherTransaction) throws HederaClientRuntimeException {
 		var signatures = otherTransaction.getSignatures();
 		assert signatures.size() == 1;
 		for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
@@ -232,7 +232,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<?> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
 		for (var signaturePair : signaturePairs) {
 			var publicKey = signaturePair.getPublicKey();
 			var signature = signaturePair.getSignature();
@@ -456,16 +456,14 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * Uses a verified json input to build a transaction
 	 *
 	 * @return a transaction
-	 * @throws HederaClientRuntimeException
 	 */
-	public Transaction<?> build() throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> build() throws HederaClientRuntimeException {
 		return null;
 	}
 
 	/**
 	 * Determines the public keys that are involved in the transactions.
 	 *
-	 * @param accountsInfoFolder
 	 * @return a list of ByteStrings
 	 */
 	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {

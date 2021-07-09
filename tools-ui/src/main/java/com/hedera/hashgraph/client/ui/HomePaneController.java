@@ -665,14 +665,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			var processBuilder = new ProcessBuilder("/usr/bin/open", localLocation);
 			var process = processBuilder.start();
-			int exitCode = 0;
-			try {
-				exitCode = process.waitFor();
-			} catch (InterruptedException e) {
-				logger.error("Interrupted exception: {}", e.getMessage());
-				// Restore interrupted state
-				Thread.currentThread().interrupt();
-			}
+			int exitCode = process.waitFor();
+
 			if (exitCode == 0) {
 				System.exit(0);
 			} else {
@@ -684,7 +678,12 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			logger.error(e);
 			PopupMessage.display("Error opening update file",
 					"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
+		} catch (InterruptedException e) {
+			logger.error("Interrupted exception: {}", e.getMessage());
+			// Restore interrupted state
+			Thread.currentThread().interrupt();
 		}
+
 	}
 
 	private HBox formatRequiredSignersBox(RemoteFile rf, ButtonBar buttonBar, ButtonBar extraBar) {

@@ -24,8 +24,10 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.JsonUtils;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.AccountInfoQuery;
+import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import io.grpc.StatusRuntimeException;
@@ -99,21 +101,7 @@ public class GetAccountInfoCommand implements ToolCommand {
 				}
 				var id = Identifier.parse(account).asAccount();
 				AccountInfo accountInfo;
-				try {
-					accountInfo = new AccountInfoQuery()
-							.setAccountId(id)
-							.execute(client);
-				} catch (TimeoutException e) {
-					logger.error(e.getMessage());
-					throw new HederaClientRuntimeException(e.getMessage());
-				} catch (PrecheckStatusException e) {
-					logger.error("The transaction did not pass pre-check");
-					throw new HederaClientRuntimeException(e.getMessage());
-				} catch (StatusRuntimeException e) {
-					logger.error("Could not connect to the network");
-					throw new HederaClientRuntimeException(e);
-				}
-
+				accountInfo = getAccountInfo(client, id);
 				writeJsonObject(String.format("%s/%s.json", directory, id), JsonUtils.accountInfoToJson(accountInfo));
 				writeBytes(String.format("%s/%s.info", directory, id), accountInfo.toBytes());
 
@@ -124,5 +112,24 @@ public class GetAccountInfoCommand implements ToolCommand {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
+	}
+
+	private AccountInfo getAccountInfo(Client client, AccountId id) {
+		AccountInfo accountInfo;
+		try {
+			accountInfo = new AccountInfoQuery()
+					.setAccountId(id)
+					.execute(client);
+		} catch (TimeoutException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientRuntimeException(e.getMessage());
+		} catch (PrecheckStatusException e) {
+			logger.error("The transaction did not pass pre-check");
+			throw new HederaClientRuntimeException(e.getMessage());
+		} catch (StatusRuntimeException e) {
+			logger.error("Could not connect to the network");
+			throw new HederaClientRuntimeException(e);
+		}
+		return accountInfo;
 	}
 }

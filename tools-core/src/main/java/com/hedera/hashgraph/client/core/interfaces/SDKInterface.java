@@ -52,7 +52,7 @@ public interface SDKInterface {
 	 * @param signatures list of signatures of the transaction
 	 * @return a signed transaction
 	 */
-	Transaction<?> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException;
 
 
 	/**
@@ -61,7 +61,7 @@ public interface SDKInterface {
 	 * @return a signed transaction
 	 * @throws HederaClientRuntimeException
 	 */
-	Transaction<?> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException;
 
 	/**
 	 * Collates two transactions.
@@ -69,7 +69,7 @@ public interface SDKInterface {
 	 * @return a transaction that has all the signatures of both transactions
 	 * @throws HederaClientRuntimeException
 	 */
-	Transaction<?> collate(Transaction<?> otherTransaction) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(Transaction<? extends Transaction<?>> otherTransaction) throws HederaClientRuntimeException;
 
 	/**
 	 * Verifies the transaction has been signed with the key provided
