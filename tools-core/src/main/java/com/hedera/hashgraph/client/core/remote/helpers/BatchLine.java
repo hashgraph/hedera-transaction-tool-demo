@@ -163,6 +163,7 @@ public class BatchLine implements Comparable {
 		private Timestamp timestamp;
 
 		public Builder() {
+			// Empty default constructor
 		}
 
 		public Builder withReceiverAccountID(String stringAccountID) {

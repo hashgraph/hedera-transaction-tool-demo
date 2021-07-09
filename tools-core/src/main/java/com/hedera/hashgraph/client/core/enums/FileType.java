@@ -92,8 +92,10 @@ public enum FileType {
 			case LARGE_BINARY:
 				return "File Contents Update";
 			case METADATA:
+			case UNKNOWN:
 				break;
-
+			default:
+				throw new IllegalStateException("Unexpected value: " + this);
 		}
 		return "";
 	}

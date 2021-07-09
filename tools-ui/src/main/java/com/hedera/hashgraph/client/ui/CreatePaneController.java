@@ -16,30 +16,12 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileServices.FileAdapterFactory;
@@ -123,6 +105,11 @@ import java.util.Set;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
@@ -152,6 +139,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CreatePaneController.class);
 	private static final int LIMIT = 255;
 	protected static final double FIXED_CELL_SIZE = 30;
+	private static final String SELECT_STRING = "SELECT";
+	private static final String REGEX = "[^\\d]";
+	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
+	private static final String START_STYLE = "-fx-background-radius: 10; -fx-border-radius: 10;";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 
@@ -336,7 +327,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupSelectTransaction() {
 		selectTransactionType.getItems().clear();
 		selectTransactionType.setItems(CreateTransactionType.names());
-		selectTransactionType.setValue("SELECT");
+		selectTransactionType.setValue(SELECT_STRING);
 	}
 
 	private void makeBoxesInvisible() {
@@ -372,17 +363,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupTextListener(TextField accountTextField, TextField amountTextField) {
-		accountTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				accountTextField.setText(newValue.replaceAll("[^\\d.]", ""));
-			}
-		});
+		accountTextField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(accountTextField, newValue, "\\d*", "[^\\d.]"));
 
-		amountTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				amountTextField.setText(newValue.replaceAll("[^\\d.]", ""));
-			}
-		});
+		amountTextField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(amountTextField, newValue, "\\d*", "[^\\d.]"));
 	}
 
 	private void setupCreateFields() {
@@ -425,7 +408,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private Map<String, PublicKey> getStringPublicKeyMap() {
 		Map<String, PublicKey> publicKeys = new HashMap<>();
 		var keys =
-				new File(Constants.KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(Constants.PUB_EXTENSION));
+				new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
 		assert keys != null;
 		Arrays.stream(keys).forEach(keyFile -> publicKeys.put(FilenameUtils.getBaseName(keyFile.getName()),
 				EncryptionUtils.publicKeyFromFile(keyFile.getAbsolutePath())));
@@ -437,11 +420,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupTimeZoneChooser(timeZone, timeZoneHBox, datePicker, hourField, minuteField, secondsField,
 				createUTCTimeLabel);
 
-		updateAutoRenew.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				updateAutoRenew.setText(newValue.replaceAll("[^\\d]", ""));
-			}
-		});
+		updateAutoRenew.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText((t1) ? "true" : "false"));
@@ -496,8 +475,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		contentsLink.setOnAction(actionEvent -> {
 			final var destFile =
-					new File(String.format("%s/%s", System.getProperty("java.io.tmpdir"),
-							contents.getName().replace(" ", "_")));
+					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
 			try {
 				org.apache.commons.io.FileUtils.copyFile(contents,
 						destFile);
@@ -891,7 +869,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					var id = Identifier.parse(start.getText());
 					start.setText(id.toReadableString());
 					start.setStyle(null);
-					start.setStyle("-fx-background-radius: 10; -fx-border-radius: 10;");
+					start.setStyle(START_STYLE);
 					errorLabel.setVisible(false);
 					end.requestFocus();
 				} else {
@@ -901,6 +879,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				break;
 			case ESCAPE:
 				start.getParent().requestFocus();
+				break;
+			default:
 		}
 	}
 
@@ -945,10 +925,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		toTransferTable.visibleProperty().bind(Bindings.size(toTransferTable.getItems()).greaterThan(0));
 	}
 
-	@SuppressWarnings("unchecked")
 	private void initializeTable(TableView<AccountAmountStrings> table) {
-
-
 		ObservableList<AccountAmountStrings> data = FXCollections.observableArrayList();
 		table.setFixedCellSize(FIXED_CELL_SIZE);
 		table.setStyle("-fx-font-size: " + FIXED_CELL_SIZE / 2);
@@ -1012,9 +989,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		//thisTable.setVisible(true);
 		account.setStyle(null);
-		account.setStyle("-fx-background-radius: 10; -fx-border-radius: 10;");
+		account.setStyle(START_STYLE);
 		amount.setStyle(null);
-		amount.setStyle("-fx-background-radius: 10; -fx-border-radius: 10;");
+		amount.setStyle(START_STYLE);
 
 		var newTransaction =
 				new AccountAmountStrings(account.getText(), Utilities.stripHBarFormat(amount.getText()));
@@ -1073,10 +1050,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 
 		acceptButton.setOnKeyPressed((KeyEvent event) -> {
-			switch (event.getCode()) {
-				case ENTER:
-				case SPACE:
-					addAccountAmountToTable(accountIDTextField, amountTextField, table);
+			if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
+				addAccountAmountToTable(accountIDTextField, amountTextField, table);
 			}
 		});
 		acceptButton.setOnMouseClicked(event -> addAccountAmountToTable(accountIDTextField, amountTextField, table));
@@ -1268,7 +1243,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		outputObject.addProperty("transactionFee",
 				Long.parseLong(Utilities.stripHBarFormat(fileUpdateTransactionFee.getText())));
 
-		final var jsonName = String.format("%s/%s", System.getProperty("java.io.tmpdir"),
+		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
 		if (new File(jsonName).delete()) {
@@ -1280,17 +1255,22 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		assert jsonFile.exists();
 
 		var toPack = new File[] { jsonFile, contents };
-		ZipUtil.packEntries(toPack, new File(jsonName.replace(".json", ".zip")));
 
-		var userComments = new UserComments.Builder().withAuthor(controller.getUserName()).withComment(
-				createCommentsTextArea.getText()).build();
-		userComments.toFile(jsonFile.getAbsolutePath().replace(".json", ".txt"));
+		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, ZIP_EXTENSION));
+		final var destTxtFile = new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION));
 
-		displayAndLogInformation(
-				"File update contents transaction created");
+		ZipUtil.packEntries(toPack, destZipFile);
+		var userComments = new UserComments.Builder()
+				.withAuthor(controller.getUserName())
+				.withComment(createCommentsTextArea.getText())
+				.build();
+
+		userComments.toFile(destTxtFile.getAbsolutePath());
+		displayAndLogInformation("File update contents transaction created");
+
 		List<File> files = new ArrayList<>();
-		files.add(new File(jsonName.replace(".json", ".zip")));
-		files.add(new File(jsonName.replace(".json", ".txt")));
+		files.add(destZipFile);
+		files.add(destTxtFile);
 		moveToOutput(files, remoteLocation);
 
 		for (var file : files) {
@@ -1304,7 +1284,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		controller.homePaneController.initializeHomePane();
 		initializeCreatePane();
-		selectTransactionType.setValue("SELECT");
+		selectTransactionType.setValue(SELECT_STRING);
 	}
 
 	/**
@@ -1553,6 +1533,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				break;
 			case FILE_UPDATE:
 				flag = checkAndFlagFileUpdateContentsFields();
+				break;
 			case UNKNOWN:
 			case SELECT:
 			default:
@@ -1781,21 +1762,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void configureDateTime(DatePicker date, TextField hour, TextField minute, TextField seconds,
 			Label localTime, LocalDateTime today, TimeZone zone) {
 		hour.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				hour.setText(newValue.replaceAll("[^\\d]", ""));
-			}
+			fixTimeTextField(hour, newValue, "\\d*", REGEX);
 			refreshLocalTime(date, hour, minute, seconds, localTime, zone);
 		});
 		minute.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				minute.setText(newValue.replaceAll("[^\\d]", ""));
-			}
+			fixTimeTextField(minute, newValue, "\\d*", REGEX);
 			refreshLocalTime(date, hour, minute, seconds, localTime, zone);
 		});
 		seconds.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				seconds.setText(newValue.replaceAll("[^\\d]", ""));
-			}
+			fixTimeTextField(seconds, newValue, "\\d*", REGEX);
 			refreshLocalTime(date, hour, minute, seconds, localTime, zone);
 		});
 
@@ -1845,6 +1820,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
+	}
+
+	private void fixTimeTextField(TextField hour, String newValue, String s, String regex) {
+		if (!newValue.matches(s)) {
+			hour.setText(newValue.replaceAll(regex, ""));
+		}
 	}
 
 	private void refreshLocalTime(DatePicker date, TextField hour, TextField minute, TextField seconds,
@@ -1983,7 +1964,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
 				transaction.hashCode());
 
-		var tempStorage = System.getProperty("java.io.tmpdir") + "tempStorage";
+		var tempStorage = TEMP_DIRECTORY + "tempStorage";
 		if (new File(tempStorage).mkdirs()) {
 			logger.info("Temporary folder created");
 		}
@@ -2033,7 +2014,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		//reload the home pane, to show the transaction
 		controller.homePaneController.initializeHomePane();
 		initializeCreatePane();
-		selectTransactionType.setValue("SELECT");
+		selectTransactionType.setValue(SELECT_STRING);
 	}
 
 	private void moveToOutput(List<File> files, FileService remoteLocation) {
@@ -2132,11 +2113,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupNumberField(TextField timeField, int limit) {
-		timeField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				timeField.setText(newValue.replaceAll("[^\\d]", ""));
-			}
-		});
+		timeField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(timeField, newValue, "\\d*", REGEX));
 		timeField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				checkTimeField(timeField, limit);
@@ -2151,11 +2128,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupHbarNumberField(TextField currencyField) {
-		currencyField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("[^\\d.\\s]")) {
-				currencyField.setText(newValue.replaceAll("[^\\d.\\s]", ""));
-			}
-		});
+		currencyField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(currencyField, newValue, "[^\\d.\\s]", "[^\\d.\\s]"));
 		currencyField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				setHBarFormat(currencyField);
@@ -2169,11 +2142,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupIntNumberField(TextField intField, int limit) {
-		intField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches("\\d*")) {
-				intField.setText(newValue.replaceAll("[^\\d]", ""));
-			}
-		});
+		intField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(intField, newValue, "\\d*", REGEX));
 		intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (!newPropertyValue) {
 				try {

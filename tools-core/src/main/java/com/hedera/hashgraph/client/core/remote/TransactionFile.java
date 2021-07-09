@@ -100,6 +100,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 	public static final String UNBREAKABLE_SPACE = "\u00A0";
+	private static final Font COURIER_FONT = Font.font("Courier", 17);
 
 	private ToolTransaction transaction;
 	private TransactionType transactionType;
@@ -204,7 +205,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
-		text.setFont(Font.font("Courier", 17));
+		text.setFont(COURIER_FONT);
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
 
@@ -262,7 +263,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 				detailsGridPane.add(new Label("Initial balance: "), 0, count);
 				var initialBalance = new Label(createTransaction.getInitialBalance().toString());
-				initialBalance.setFont(Font.font("Courier", 17));
+				initialBalance.setFont(COURIER_FONT);
 				initialBalance.setStyle(DEBIT);
 				detailsGridPane.add(initialBalance, 1, count++);
 
@@ -418,7 +419,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			accountText.setPadding(new Insets(0, 0, 0, 5));
 			detailsGridPane.add(accountText, 0, count);
 			var amountText = new Label(receiver.getRight());
-			amountText.setFont(Font.font("Courier", 17));
+			amountText.setFont(COURIER_FONT);
 			amountText.setStyle(CREDIT);
 			if (amountText.getText().contains("-")) {
 				amountText.setStyle(DEBIT);

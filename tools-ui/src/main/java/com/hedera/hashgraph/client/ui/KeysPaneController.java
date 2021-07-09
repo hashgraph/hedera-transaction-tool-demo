@@ -140,6 +140,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private static final String DUPLICATED_KEY_NAME_MESSAGE =
 			"Cannot replace a public key that is associated with an existing private key.";
 	public static final String KEYS_STRING = "/Keys/";
+	private static final String ACCEPT_MESSAGE = "CONTINUE";
 
 	public StackPane keysPane;
 	public ScrollPane mainKeysScrollPane;
@@ -282,6 +283,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 					case TAB:
 						createKeysButton.requestFocus();
 						break;
+					default:
 				}
 			});
 
@@ -614,7 +616,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		if (orphanPEMs.size() > 0 && mainKeysScrollPane.isVisible()) {
 			try {
-				GenericPopup.display("Missing Public Keys", "CONTINUE", "", false, false,
+				GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
 						MISSING_PUBLIC_KEY_MESSAGE);
 			} catch (HederaClientException exception) {
 				logger.error(exception);
@@ -649,7 +651,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		if (missingHashPemList.size() > 0) {
 			try {
-				GenericPopup.display("Unknown recovery phrase", "CONTINUE", "", false, false,
+				GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
 						MISSING_HASHCODE_MESSAGE);
 				var password = getPassword();
 				if (password != null) {
@@ -923,7 +925,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			var answer = PopupMessage.display("Alert!",
 					"This operation will overwrite the existing KeyPair. Are you sure you want to do that? This " +
 							"operation is irreversible", true,
-					"CONTINUE", "CANCEL");
+					ACCEPT_MESSAGE, "CANCEL");
 
 			if (!answer) {
 				return;
@@ -936,7 +938,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 		var mnemonic = getMnemonicFromFile(password);
 		if (mnemonic == null) {
-			PopupMessage.display("Error in recovery phrase", "The recovery phrase could not be found.", "CONTINUE");
+			PopupMessage.display("Error in recovery phrase", "The recovery phrase could not be found.", ACCEPT_MESSAGE);
 			return;
 		}
 
@@ -1129,7 +1131,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			final var pubName = String.valueOf(findFileName(Paths.get(prefDir, "Keys"), nickname, PUB_EXTENSION));
 			keyPair = keyStore.insertNewKeyPair(pk);
 			if (!verifyWithPublicKey(pubName, (EdDSAPublicKey) keyPair.getPublic())) {
-				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, "CONTINUE");
+				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, ACCEPT_MESSAGE);
 				return "";
 			}
 			keyStore.write(keyStoreName, "Transaction Tool UI", index, controller.getVersion(),

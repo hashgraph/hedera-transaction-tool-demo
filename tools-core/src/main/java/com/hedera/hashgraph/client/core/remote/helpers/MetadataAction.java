@@ -30,6 +30,10 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATI
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 
 public class MetadataAction implements Comparable {
+	private static final String TIMESTAMP = "timestamp";
+	private static final String KEY_NAME = "keyName";
+	private static final String USER_COMMENTS = "userComments";
+	private static final String ACTION = "action";
 	private Timestamp timestamp;
 	private Actions action;
 	private String userComments;
@@ -50,15 +54,15 @@ public class MetadataAction implements Comparable {
 			throw new HederaClientException("Cannot parse object");
 		}
 
-		if (!metadata.has("timestamp") || !metadata.has("action")) {
+		if (!metadata.has(TIMESTAMP) || !metadata.has(ACTION)) {
 			throw new HederaClientException("Invalid metadata");
 		}
 
-		var time = metadata.getAsJsonObject("timestamp");
+		var time = metadata.getAsJsonObject(TIMESTAMP);
 		this.timestamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
-		this.action = Actions.valueOf(metadata.get("action").getAsString());
-		this.userComments = (metadata.has("userComments")) ? metadata.get("userComments").getAsString() : "";
-		this.keyName = metadata.has("keyName") ? metadata.get("keyName").getAsString() : "";
+		this.action = Actions.valueOf(metadata.get(ACTION).getAsString());
+		this.userComments = (metadata.has(USER_COMMENTS)) ? metadata.get(USER_COMMENTS).getAsString() : "";
+		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
 	}
 
 	public Timestamp getTimestamp() {
@@ -95,10 +99,10 @@ public class MetadataAction implements Comparable {
 
 	public JsonObject toJson() {
 		var jsonObject = new JsonObject();
-		jsonObject.add("timestamp", this.timestamp.asJSON());
-		jsonObject.addProperty("action", this.action.getAction());
-		jsonObject.addProperty("userComments", this.userComments);
-		jsonObject.addProperty("keyName", this.keyName);
+		jsonObject.add(TIMESTAMP, this.timestamp.asJSON());
+		jsonObject.addProperty(ACTION, this.action.getAction());
+		jsonObject.addProperty(USER_COMMENTS, this.userComments);
+		jsonObject.addProperty(KEY_NAME, this.keyName);
 
 		return jsonObject;
 	}

@@ -74,80 +74,85 @@ public class GetAccountInfoQuery extends ToolQuery {
 
 	@Override
 	public boolean checkInput(JsonObject input) {
-		var answer = true;
-		try {
-			if (input.has(FEE_PAYER_ACCOUNT_FIELD_NAME)) {
-				var feePayer = input.getAsJsonObject(FEE_PAYER_ACCOUNT_FIELD_NAME);
-				Identifier.parse(feePayer);
-			} else {
-				logger.error(MISSING_FIELD_ERROR_MESSAGE, FEE_PAYER_ACCOUNT_FIELD_NAME);
-				answer = false;
-			}
-		} catch (Exception e) {
-			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, FEE_PAYER_ACCOUNT_FIELD_NAME);
-			answer = false;
-		}
-		try {
-			if (input.has(NODE_ID_FIELD_NAME)) {
-				var node = input.getAsJsonObject(NODE_ID_FIELD_NAME);
-				Identifier.parse(node);
-			} else {
-				logger.error(MISSING_FIELD_ERROR_MESSAGE, NODE_ID_FIELD_NAME);
-				answer = false;
-			}
-		} catch (HederaClientException e) {
-			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, NODE_ID_FIELD_NAME);
-			answer = false;
-		}
-		try {
-			if (input.has(ACCOUNT_ID_FIELD_NAME)) {
-				var accounts = input.getAsJsonArray(ACCOUNT_ID_FIELD_NAME);
-				for (var account : accounts) {
-					Identifier.parse(account.getAsJsonObject());
-				}
-			} else {
-				logger.error(MISSING_FIELD_ERROR_MESSAGE, ACCOUNT_ID_FIELD_NAME);
-				answer = false;
-			}
-		} catch (HederaClientException e) {
-			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, NODE_ID_FIELD_NAME);
-			answer = false;
-		}
+		return isIdentifier(input, FEE_PAYER_ACCOUNT_FIELD_NAME) &&
+				isIdentifier(input, NODE_ID_FIELD_NAME) &&
+				isAccountArray(input) &&
+				isKeyLocation(input) &&
+				isTransactionFee(input) &&
+				isNetwork(input);
+	}
 
-		var keyLocation = input.get(FEE_PAYER_KEY_LOCATION).getAsString();
-		if (!input.has(FEE_PAYER_KEY_LOCATION)) {
-			logger.error(MISSING_FIELD_ERROR_MESSAGE, FEE_PAYER_KEY_LOCATION);
-			answer = false;
-		}
-		if (!new File(keyLocation).exists()) {
-			logger.error(FILE_DOES_NOT_EXIST_ERROR_MESSAGE, FEE_PAYER_KEY_LOCATION);
-			answer = false;
-		}
-
-		try {
-			if (input.has(TRANSACTION_FEE_FIELD_NAME)) {
-				jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME));
-			} else {
-				logger.error(MISSING_FIELD_ERROR_MESSAGE, TRANSACTION_FEE_FIELD_NAME);
-				answer = false;
-			}
-		} catch (ClassCastException e) {
-			logger.error(CANNOT_PARSE_ERROR_MESSAGE, TRANSACTION_FEE_FIELD_NAME);
-			answer = false;
-		}
-
+	private boolean isNetwork(JsonObject input) {
 		try {
 			if (input.has(NETWORK_FIELD_NAME)) {
 				NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString());
-			} else {
-				logger.error(MISSING_FIELD_ERROR_MESSAGE, NETWORK_FIELD_NAME);
-				answer = false;
+				return true;
 			}
+			logger.error(MISSING_FIELD_ERROR_MESSAGE, NETWORK_FIELD_NAME);
+			return false;
 		} catch (IllegalArgumentException e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NETWORK_FIELD_NAME);
-			answer = false;
+			return false;
 		}
+	}
 
-		return answer;
+	private boolean isTransactionFee(JsonObject input) {
+		try {
+			if (input.has(TRANSACTION_FEE_FIELD_NAME)) {
+				jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME));
+				return true;
+			}
+			logger.error(MISSING_FIELD_ERROR_MESSAGE, TRANSACTION_FEE_FIELD_NAME);
+			return false;
+		} catch (ClassCastException e) {
+			logger.error(CANNOT_PARSE_ERROR_MESSAGE, TRANSACTION_FEE_FIELD_NAME);
+			return false;
+		}
+	}
+
+	private boolean isKeyLocation(JsonObject input) {
+		if (!input.has(FEE_PAYER_KEY_LOCATION)) {
+			logger.error(MISSING_FIELD_ERROR_MESSAGE, FEE_PAYER_KEY_LOCATION);
+			return false;
+		}
+		var keyLocation = input.get(FEE_PAYER_KEY_LOCATION).getAsString();
+
+		if (new File(keyLocation).exists()) {
+			return true;
+		}
+		logger.error(FILE_DOES_NOT_EXIST_ERROR_MESSAGE, FEE_PAYER_KEY_LOCATION);
+		return false;
+	}
+
+	private boolean isAccountArray(JsonObject input) {
+		try {
+			if (!input.has(ACCOUNT_ID_FIELD_NAME)) {
+				logger.error(MISSING_FIELD_ERROR_MESSAGE, ACCOUNT_ID_FIELD_NAME);
+				return false;
+			}
+			var accounts = input.getAsJsonArray(ACCOUNT_ID_FIELD_NAME);
+			for (var account : accounts) {
+				Identifier.parse(account.getAsJsonObject());
+			}
+		} catch (HederaClientException e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, NODE_ID_FIELD_NAME);
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isIdentifier(JsonObject input, String fieldName) {
+		try {
+			if (!input.has(fieldName)) {
+				logger.error(MISSING_FIELD_ERROR_MESSAGE, fieldName);
+				return false;
+			}
+			var feePayer = input.getAsJsonObject(fieldName);
+			Identifier.parse(feePayer);
+		} catch (Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, fieldName);
+			return false;
+		}
+		return true;
 	}
 }

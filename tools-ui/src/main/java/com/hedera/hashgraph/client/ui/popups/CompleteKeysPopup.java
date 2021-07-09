@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.popups;
 
 
@@ -95,6 +78,12 @@ public class CompleteKeysPopup {
 	private static final String PRIVATE_KEY_EXPLANATION = "Private Key";
 	private static final UserAccessibleProperties properties =
 			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+	private static final String WHITE_WITH_BLUE_BORDER_STYLE = "-fx-background-color: white; -fx-border-color: " +
+			"#0b9dfd;";
+	private static final String WHITE_BUTTON_STYLE = WHITE_WITH_BLUE_BORDER_STYLE +
+			" -fx-border-radius: 10; -fx-background-radius: 10;";
+	private static final String FX_FONT_SIZE = "-fx-font-size: 16";
+
 
 	private static Boolean reloadTable = false;
 	private static List<FileService> outputDirectories = new ArrayList<>();
@@ -129,7 +118,7 @@ public class CompleteKeysPopup {
 		try {
 			publicKeyLabel = new TextArea(new String(readAllBytes(Paths.get(pubKeyAddress))));
 			publicKeyLabel.setWrapText(true);
-			publicKeyLabel.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd;");
+			publicKeyLabel.setStyle(WHITE_WITH_BLUE_BORDER_STYLE);
 			publicKeyLabel.setEditable(false);
 			publicKeyLabel.setPrefRowCount(3);
 		} catch (IOException e) {
@@ -137,13 +126,13 @@ public class CompleteKeysPopup {
 		}
 
 		var nick = new TextField();
-		nick.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-padding: 5,5,5,5");
+		nick.setStyle(WHITE_WITH_BLUE_BORDER_STYLE + " -fx-padding: 5,5,5,5");
 		HBox.setHgrow(nick, Priority.ALWAYS);
 		nick.setText(keyName);
 
 		var privateKeyLabel = new TextArea(new String(chars));
 		privateKeyLabel.setWrapText(true);
-		privateKeyLabel.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-opacity: 1;");
+		privateKeyLabel.setStyle(WHITE_WITH_BLUE_BORDER_STYLE + " -fx-opacity: 1;");
 		privateKeyLabel.setEditable(false);
 		privateKeyLabel.setDisable(true);
 		privateKeyLabel.setPrefRowCount(3);
@@ -152,9 +141,7 @@ public class CompleteKeysPopup {
 
 		// Buttons: Continue, export and view pk
 		var continueButton = new Button("CLOSE");
-		continueButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10; " +
-						"-fx-background-radius: 10;");
+		continueButton.setStyle(WHITE_BUTTON_STYLE);
 		continueButton.setPrefWidth(200);
 		continueButton.setOnAction(event -> window.close());
 
@@ -163,9 +150,7 @@ public class CompleteKeysPopup {
 		var hidePrivateButton = new Button("HIDE");
 		hidePrivateButton.setVisible(false);
 
-		showPrivateButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10; " +
-						"-fx-background-radius: 10;");
+		showPrivateButton.setStyle(WHITE_BUTTON_STYLE);
 		showPrivateButton.setMinWidth(110);
 		showPrivateButton.setOnAction(actionEvent -> {
 			var utility = new KeyPairUtility();
@@ -178,9 +163,7 @@ public class CompleteKeysPopup {
 		});
 		showPrivateButton.managedProperty().bind(showPrivateButton.visibleProperty());
 
-		hidePrivateButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10; " +
-						"-fx-background-radius: 10;");
+		hidePrivateButton.setStyle(WHITE_BUTTON_STYLE);
 		hidePrivateButton.setMinWidth(110);
 		hidePrivateButton.setOnAction(actionEvent -> {
 			privateKeyLabel.setText(new String(chars));
@@ -191,9 +174,7 @@ public class CompleteKeysPopup {
 		hidePrivateButton.managedProperty().bind(hidePrivateButton.visibleProperty());
 
 		var updateButton = new Button("CHANGE");
-		updateButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10;" +
-						" -fx-background-radius: 10;");
+		updateButton.setStyle(WHITE_BUTTON_STYLE);
 		updateButton.setMinWidth(110);
 		updateButton.setOnAction(event -> updateNickname(nick.getText()));
 		updateButton.setVisible(showNicknameEdit);
@@ -202,9 +183,7 @@ public class CompleteKeysPopup {
 		buttonBox.getChildren().addAll(showPrivateButton, hidePrivateButton);
 
 		var menuButton = new MenuButton("EXPORT");
-		menuButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-border-radius: 10;" +
-						" -fx-background-radius: 10;");
+		menuButton.setStyle(WHITE_BUTTON_STYLE);
 		menuButton.setMinWidth(110);
 		initializeExportPublicKeysMenuButton(menuButton, layout);
 
@@ -224,17 +203,17 @@ public class CompleteKeysPopup {
 		privateKeyBox.setPrefWidth(450);
 
 		var nickTitle = new Label(NICKNAME_EXPLANATION);
-		nickTitle.setStyle("-fx-font-size: 16");
+		nickTitle.setStyle(FX_FONT_SIZE);
 		nickTitle.setMaxWidth(450);
 		nickTitle.setWrapText(true);
 
 		var publicKeyTitle = new Label(PUBLIC_KEY_EXPLANATION);
-		publicKeyTitle.setStyle("-fx-font-size: 16");
+		publicKeyTitle.setStyle(FX_FONT_SIZE);
 		publicKeyTitle.setMaxWidth(450);
 		publicKeyTitle.setWrapText(true);
 
 		var privateKeyTitle = new Label(PRIVATE_KEY_EXPLANATION);
-		privateKeyTitle.setStyle("-fx-font-size: 16");
+		privateKeyTitle.setStyle(FX_FONT_SIZE);
 		privateKeyTitle.setMaxWidth(450);
 		privateKeyTitle.setWrapText(true);
 

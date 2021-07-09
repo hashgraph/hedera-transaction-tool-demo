@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.constants.Messages;
@@ -46,7 +29,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -75,10 +57,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
 import static javafx.scene.control.Alert.AlertType;
+import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
 public class SettingsPaneController {
 
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
+	private static final String REGEX = "[^\\d]";
+	private static final String REGEX1 = "\\d*";
 
 	// todo move to config file
 
@@ -150,7 +135,7 @@ public class SettingsPaneController {
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButton, cancelAddToEmailMapButton,
 					browseNewFolderButton, deleteImage, editImage);
 
-			versionLabel.setPrefWidth(Control.USE_COMPUTED_SIZE);
+			versionLabel.setPrefWidth(USE_COMPUTED_SIZE);
 
 			//Initialize drive builder
 			driveSetupHelper = DriveSetupHelper.Builder.aDriveSetupHelper()
@@ -194,7 +179,7 @@ public class SettingsPaneController {
 
 			// region Events
 			nodeIDTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
+				if (!newValue.matches(REGEX1)) {
 					nodeIDTextField.setText(newValue.replaceAll("[^\\d.]", ""));
 				}
 			});
@@ -212,8 +197,8 @@ public class SettingsPaneController {
 			});
 
 			txValidDurationTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					txValidDurationTextField.setText(newValue.replaceAll("[^\\d]", ""));
+				if (!newValue.matches(REGEX1)) {
+					txValidDurationTextField.setText(newValue.replaceAll(REGEX, ""));
 				}
 			});
 
@@ -230,8 +215,8 @@ public class SettingsPaneController {
 			});
 
 			autoRenewPeriodTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					autoRenewPeriodTextField.setText(newValue.replaceAll("[^\\d]", ""));
+				if (!newValue.matches(REGEX1)) {
+					autoRenewPeriodTextField.setText(newValue.replaceAll(REGEX, ""));
 				}
 			});
 
@@ -248,8 +233,8 @@ public class SettingsPaneController {
 			});
 
 			hoursTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					hoursTextField.setText(newValue.replaceAll("[^\\d]", ""));
+				if (!newValue.matches(REGEX1)) {
+					hoursTextField.setText(newValue.replaceAll(REGEX, ""));
 				}
 			});
 
@@ -261,8 +246,8 @@ public class SettingsPaneController {
 
 
 			minutesTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					minutesTextField.setText(newValue.replaceAll("[^\\d]", ""));
+				if (!newValue.matches(REGEX1)) {
+					minutesTextField.setText(newValue.replaceAll(REGEX, ""));
 				}
 			});
 
@@ -273,8 +258,8 @@ public class SettingsPaneController {
 			});
 
 			secondsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					secondsTextField.setText(newValue.replaceAll("[^\\d]", ""));
+				if (!newValue.matches(REGEX1)) {
+					secondsTextField.setText(newValue.replaceAll(REGEX, ""));
 				}
 			});
 			secondsTextField.setOnKeyReleased(keyEvent -> {
@@ -284,7 +269,7 @@ public class SettingsPaneController {
 			});
 
 			defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
+				if (!newValue.matches(REGEX1)) {
 					defaultTransactionFee.setText(newValue.replaceAll("[^\\d. ]", ""));
 				}
 			});

@@ -118,60 +118,118 @@ public class BatchFile extends RemoteFile {
 		List<String> csvList;
 		try {
 			csvList = readCSVFromFile(new File(getParentPath(), getName()));
-		} catch (HederaClientException e) {
-			logger.error(e);
+		} catch (Exception e) {
+			logger.error("Unable to parse: {}", e.getMessage());
 			setValid(false);
 			return;
 		}
 
 		// Sender line
-		try {
-			var senderIDLine = csvList.get(0).replace(" ", "").split("[,]");
-			if (senderIDLine.length != 2) {
-				logger.error(String.format(ERROR_MESSAGE_FORMAT, "sender ID", "Number of fields",
-						fileDetails.getName()));
-				setValid(false);
-				return;
-			}
-			this.senderAccountID = Identifier.parse(senderIDLine[1]);
-		} catch (Exception e) {
-			logger.error("Unable to parse sender");
-			setValid(false);
+		if (checkSender(fileDetails, csvList)) {
 			return;
 		}
 
 		// Submission time line
-
-		try {
-			var timeLine = csvList.get(1).replace(" ", "").split("[,:]");
-			if (timeLine.length != 3) {
-				logger.error(
-						String.format(ERROR_MESSAGE_FORMAT, "time", "Number of fields",
-								fileDetails.getName()));
-				setValid(false);
-				return;
-			}
-			this.hoursUTC = Integer.parseInt(timeLine[1]);
-			if (hoursUTC > 23 || hoursUTC < 0) {
-				logger.error(String.format("Invalid hours field: %d", hoursUTC));
-				setValid(false);
-				return;
-			}
-
-			this.minutesUTC = Integer.parseInt(timeLine[2]);
-			if (minutesUTC > 59 || minutesUTC < 0) {
-				logger.error(String.format("Invalid minutes field: %d", minutesUTC));
-				setValid(false);
-				return;
-			}
-		} catch (NumberFormatException e) {
-			logger.error(
-					String.format(ERROR_MESSAGE_FORMAT, "time", "Number format", fileDetails.getName()));
-			setValid(false);
+		if (checkTime(fileDetails, csvList)) {
 			return;
 		}
 
 		// Nodes line
+		if (checkNodes(csvList)) {
+			return;
+		}
+		checkTransfers(csvList);
+	}
+
+	/**
+	 * Checks the sender line of the csv file
+	 *
+	 * @param fileDetails
+	 * 		the details of the file
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the sender line is invalid
+	 */
+	private boolean checkSender(FileDetails fileDetails, List<String> csvList) {
+		try {
+			var senderIDLine = csvList.get(0).replace(" ", "").split("[,]");
+			if (senderIDLine.length != 2) {
+				errorBehavior(fileDetails, "Number of fields", "sender ID");
+				return true;
+			}
+			this.senderAccountID = Identifier.parse(senderIDLine[1]);
+		} catch (Exception e) {
+			logger.error("Unable to parse: {}", e.getMessage());
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the time line of the csv file
+	 *
+	 * @param fileDetails
+	 * 		the details of the file
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the time line is invalid
+	 */
+	private boolean checkTime(FileDetails fileDetails, List<String> csvList) {
+		try {
+			var timeLine = csvList.get(1).replace(" ", "").split("[,:]");
+			if (timeLine.length != 3) {
+				errorBehavior(fileDetails, "Number of fields", "time");
+				return true;
+			}
+			this.hoursUTC = Integer.parseInt(timeLine[1]);
+			if (hoursUTC > 23 || hoursUTC < 0) {
+				timeErrorBehavior("hours", hoursUTC);
+				return true;
+			}
+
+			this.minutesUTC = Integer.parseInt(timeLine[2]);
+			if (minutesUTC > 59 || minutesUTC < 0) {
+				timeErrorBehavior("minutes", minutesUTC);
+				return true;
+			}
+		} catch (NumberFormatException e) {
+			errorBehavior(fileDetails, "time", "Number format");
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the transfer lines of the csv file
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 */
+	private void checkTransfers(List<String> csvList) {
+		try {
+			transfers = new ArrayList<>();
+			for (var i = 4; i < csvList.size(); i++) {
+				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
+			}
+			this.firstTransaction = getFirstDate();
+		} catch (Exception e) {
+			logger.error(e);
+			logger.error("Unable to parse transfers");
+			setValid(false);
+		}
+		Collections.sort(transfers);
+		transfers = dedup(transfers);
+	}
+
+	/**
+	 * Checks the nodes line of the csv file
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the node line is invalid
+	 */
+	private boolean checkNodes(List<String> csvList) {
 		nodeAccountID = new ArrayList<>();
 		try {
 			var nodeAccountIDLine = csvList.get(2).replace(" ", "").split("[,]");
@@ -188,28 +246,44 @@ public class BatchFile extends RemoteFile {
 						String.format(MAX_NUMBER_OF_NODES_EXCEEDED_ERROR_MESSAGE,
 								nodeAccountID.size(), MAX_NUMBER_OF_NODES));
 				setValid(false);
-				return;
+				return true;
 			}
 		} catch (Exception e) {
-			logger.error(e);
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, e.getLocalizedMessage());
 			setValid(false);
-			return;
+			return true;
 		}
+		return false;
+	}
 
-		try {
-			transfers = new ArrayList<>();
-			for (var i = 4; i < csvList.size(); i++) {
-				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
-			}
-			this.firstTransaction = getFirstDate();
-		} catch (Exception e) {
-			logger.error(e);
-			logger.error("Unable to parse transfers");
-			setValid(false);
-		}
-		Collections.sort(transfers);
-		transfers = dedup(transfers);
+	/**
+	 * Logs a message if an error is detected in one of the time fields
+	 *
+	 * @param fieldName
+	 * 		the field that has an error
+	 * @param field
+	 * 		the value of the field
+	 */
+	private void timeErrorBehavior(String fieldName, int field) {
+		final var message = String.format("Invalid %s field: %d", fieldName, field);
+		logger.error(message);
+		setValid(false);
+	}
+
+	/**
+	 * Logs an error if there is an error in a field of the csv
+	 *
+	 * @param fileDetails
+	 * 		the details of the file
+	 * @param message
+	 * 		the message
+	 * @param field
+	 * 		the field
+	 */
+	private void errorBehavior(FileDetails fileDetails, String message, String field) {
+		final var formattedMessage = String.format(ERROR_MESSAGE_FORMAT, field, message, fileDetails.getName());
+		logger.error(formattedMessage);
+		setValid(false);
 	}
 
 	private List<BatchLine> dedup(List<BatchLine> transfers) {
@@ -258,7 +332,6 @@ public class BatchFile extends RemoteFile {
 
 	/**
 	 * Get the date of the first transaction
-	 *
 	 */
 	private LocalDate getFirstDate() {
 		var first = Long.MAX_VALUE;

@@ -126,9 +126,6 @@ public class RecoverPasswordPaneController {
 
 	private MnemonicPhraseHelper mnemonicPhraseHelper;
 
-	public RecoverPasswordPaneController() {
-	}
-
 	void injectMainController(Controller controller) {
 		this.controller = controller;
 	}

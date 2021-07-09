@@ -48,6 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeroturnaround.zip.ZipUtil;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -76,7 +77,8 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(BatchFile.class);
 
-	private static final String TEMP_LOCATION = System.getProperty("java.io.tmpdir") + "/content.bin";
+	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
+	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content.bin";
 
 	private String filename;
 	private Identifier fileID;
@@ -101,13 +103,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public LargeBinaryFile(FileDetails fileDetails) {
 		super(fileDetails);
 
-		var destination = String.format("%s%s", System.getProperty("java.io.tmpdir"), fileDetails.getBaseName());
+		var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
 		if (new File(destination).exists()) {
 			try {
 				FileUtils.deleteDirectory(new File(destination));
 			} catch (IOException e) {
-				logger.error(e);
-				setValid(false);
+				handleError(e.getMessage());
 				return;
 			}
 		}
@@ -115,8 +116,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		try {
 			unZip(fileDetails.getFullPath(), destination);
 		} catch (HederaClientException exception) {
-			logger.error(exception);
-			setValid(false);
+			handleError(exception.getMessage());
 			return;
 		}
 		logger.debug("File unzipped");
@@ -126,18 +126,16 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
 		assert jsons != null;
 		if (jsons.length != 1) {
-			logger.error(
+			handleError(
 					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length));
-			setValid(false);
 			return;
 		}
 
 		var bins = new File(destination).listFiles((dir, name) -> name.endsWith("bin"));
 		assert bins != null;
 		if (bins.length != 1) {
-			logger.error(String.format("There should be exactly one binary file in the zip archive. We found: %d",
+			handleError(String.format("There should be exactly one binary file in the zip archive. We found: %d",
 					bins.length));
-			setValid(false);
 			return;
 		}
 
@@ -145,83 +143,37 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		try {
 			details = readJsonObject(jsons[0].getPath());
 		} catch (HederaClientException exception) {
-			logger.error(exception);
-			setValid(false);
+			handleError(exception.getMessage());
 			return;
 		}
 
 		if (!details.get("filename").getAsString().equals(bins[0].getName())) {
-			logger.error("The binary file does not correspond to the file specified in the details");
-			setValid(false);
+			handleError("The binary file does not correspond to the file specified in the details");
 			return;
 		}
 
-		if (!details.has("fileID")) {
-			logger.error("Missing file ID in details file");
-			setValid(false);
-			return;
-		}
-		var fileJson = details.getAsJsonObject("fileID");
-		Identifier fileIdentifier;
-		try {
-			fileIdentifier = Identifier.parse(fileJson);
-		} catch (Exception exception) {
-			logger.error(exception);
-			setValid(false);
+		Identifier fileIdentifier = getFileIdentifier(details);
+		if (fileIdentifier == null) {
 			return;
 		}
 
-		if (!details.has("nodeID")) {
-			logger.error("Missing node ID in details file");
-			setValid(false);
+		Identifier nodeIdentifier = getNodeIdentifier(details);
+		if (nodeIdentifier == null) {
 			return;
 		}
 
-		var nodeJson = details.getAsJsonObject("nodeID");
-		Identifier nodeIdentifier;
-		try {
-			nodeIdentifier = Identifier.parse(nodeJson);
-		} catch (Exception exception) {
-			logger.error(exception);
-			setValid(false);
+		Identifier payerIdentifier = getPayerIdentifier(details);
+		if (payerIdentifier == null) {
 			return;
 		}
 
-		if (!details.has("feePayerAccountId")) {
-			logger.error("Missing fee payer ID in details file");
-			setValid(false);
+		JsonObject tvStamp = getTransactionValidStamp(details);
+		if (tvStamp == null) {
 			return;
 		}
 
-		var payerJson = details.getAsJsonObject("feePayerAccountId");
-		Identifier payerIdentifier;
-		try {
-			payerIdentifier = Identifier.parse(payerJson);
-		} catch (Exception exception) {
-			logger.error(exception);
-			setValid(false);
-			return;
-		}
-
-		if (!details.has("firsTransactionValidStart")) {
-			logger.error("Missing transaction valid start");
-			setValid(false);
-			return;
-		}
-
-		var tvStamp = details.getAsJsonObject("firsTransactionValidStart");
-		Timestamp timestamp;
-		try {
-			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
-		} catch (Exception exception) {
-			logger.error(exception);
-			setValid(false);
-			return;
-		}
-
-		if (!timestamp.isValid()) {
-			logger.error("Invalid first transaction start");
-			setValid(false);
+		Timestamp timestamp = getTimestamp(tvStamp);
+		if (timestamp == null) {
 			return;
 		}
 
@@ -237,6 +189,135 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.transactionFee = details.has("transactionFee") ? details.get("transactionFee").getAsLong() : 200000000;
 		this.memo = details.has("memo") ? details.get("memo").getAsString() : "";
 		this.content = bins[0];
+	}
+
+	/**
+	 * Returns the file id
+	 *
+	 * @param details
+	 * 		the json read from the zip provided by the user
+	 * @return the file id if it exists and is correct, Null otherwise.
+	 */
+	@Nullable
+	private Identifier getFileIdentifier(JsonObject details) {
+		Identifier fileIdentifier;
+		if (!details.has("fileID")) {
+			handleError("Missing file ID in details file");
+			return null;
+		}
+		var fileJson = details.getAsJsonObject("fileID");
+
+		try {
+			fileIdentifier = Identifier.parse(fileJson);
+		} catch (Exception exception) {
+			handleError(exception.getMessage());
+			return null;
+		}
+		return fileIdentifier;
+	}
+
+	/**
+	 * Returns the node id
+	 *
+	 * @param details
+	 * 		the json read from the zip provided by the user
+	 * @return the node id if it exists and is correct, Null otherwise.
+	 */
+	@Nullable
+	private Identifier getNodeIdentifier(JsonObject details) {
+		Identifier nodeIdentifier;
+		if (!details.has("nodeID")) {
+			handleError("Missing node ID in details file");
+			return null;
+		}
+
+		var nodeJson = details.getAsJsonObject("nodeID");
+
+		try {
+			nodeIdentifier = Identifier.parse(nodeJson);
+		} catch (Exception exception) {
+			handleError(exception.getMessage());
+			return null;
+		}
+		return nodeIdentifier;
+	}
+
+	/**
+	 * Returns the fee payer id
+	 *
+	 * @param details
+	 * 		the json read from the zip provided by the user
+	 * @return the fee payer id if it exists and is correct, Null otherwise.
+	 */
+	@Nullable
+	private Identifier getPayerIdentifier(JsonObject details) {
+		Identifier payerIdentifier = null;
+		if (!details.has("feePayerAccountId")) {
+			handleError("Missing fee payer ID in details file");
+			return null;
+		}
+
+		var payerJson = details.getAsJsonObject("feePayerAccountId");
+
+		try {
+			payerIdentifier = Identifier.parse(payerJson);
+		} catch (Exception exception) {
+			handleError(exception.getMessage());
+		}
+		return payerIdentifier;
+	}
+
+	/**
+	 * Returns the transaction valid start
+	 *
+	 * @param details
+	 * 		the json read from the zip provided by the user
+	 * @return the a json object representing the transaction valid start if it exists and is correct, Null otherwise.
+	 */
+	@Nullable
+	private JsonObject getTransactionValidStamp(JsonObject details) {
+		JsonObject tvStamp = null;
+		if (!details.has("firsTransactionValidStart")) {
+			handleError("Missing transaction valid start");
+		} else {
+			tvStamp = details.getAsJsonObject("firsTransactionValidStart");
+		}
+		return tvStamp;
+	}
+
+	/**
+	 * Returns the transaction valid start
+	 *
+	 * @param tvStamp
+	 * 		the json read from the zip provided by the user
+	 * @return the transaction valid start if it exists and is correct, Null otherwise.
+	 */
+	@Nullable
+	private Timestamp getTimestamp(JsonObject tvStamp) {
+		Timestamp timestamp;
+		try {
+			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
+		} catch (Exception exception) {
+			handleError(exception.getMessage());
+			return null;
+		}
+
+		if (!timestamp.isValid()) {
+			handleError("Invalid first transaction start");
+			return null;
+		}
+		return timestamp;
+	}
+
+	/**
+	 * logs the appropriate error and sets the valid parameter to false
+	 *
+	 * @param s
+	 * 		the string to be displayed in the logs
+	 */
+	private void handleError(String s) {
+		logger.error(s);
+		setValid(false);
 	}
 
 	public String getFilename() {
@@ -298,14 +379,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
 		} catch (HederaClientException e) {
-			logger.error(e);
+			logger.error(e.getMessage());
 		}
 		List<File> toPack = new ArrayList<>();
 
 		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
-		var tempStorage = System.getProperty(
-				"java.io.tmpdir") + (LocalDate.now()).toString() + "/LargeBinary/" + FilenameUtils.getBaseName(
-				pair.getLeft()) + "/";
+		var tempStorage =
+				TEMP_DIRECTORY + (LocalDate.now()) + File.separator + "LargeBinary" + File.separator + FilenameUtils.getBaseName(
+						pair.getLeft()) + File.separator;
 
 		var finalZip = new File(String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
 				pair.getKey().replace(".pem", "")));
@@ -357,7 +438,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					trimmed = Arrays.copyOf(buffer, inputStream);
 					writeBytes(TEMP_LOCATION, trimmed);
 
-					incrementedTime = new Timestamp(incrementedTime.asDuration().plusNanos(count * validIncrement));
+					incrementedTime =
+							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
 					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
 					var appendTransaction = new ToolFileAppendTransaction(input);
@@ -403,7 +485,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			feePayerLabel.setWrapText(true);
 			detailsGridPane.add(feePayerLabel, 1, 0);
 		} catch (HederaClientException e) {
-			logger.error(e);
+			logger.error(e.getMessage());
 		}
 
 
@@ -433,7 +515,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				r.exec(command);
 
 			} catch (IOException e) {
-				logger.error(e);
+				logger.error(e.getMessage());
 			}
 		});
 

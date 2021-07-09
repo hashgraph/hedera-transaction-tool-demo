@@ -82,6 +82,10 @@ import static com.google.common.base.Splitter.fixedLength;
 public class EncryptionUtils {
 
 	private static final Logger logger = LogManager.getLogger(EncryptionUtils.class);
+	private static final String ED_25519 = "Ed25519";
+	private static final String KEY_LIST = "keyList";
+	private static final String THRESHOLD_KEY = "thresholdKey";
+	private static final String THRESHOLD = "threshold";
 
 	/**
 	 * Build a KeyPair from Ed25519PrivateKey
@@ -134,7 +138,7 @@ public class EncryptionUtils {
 		var jsonObject = new JsonObject();
 
 		if (keyObject instanceof PublicKey) {
-			jsonObject.addProperty("Ed25519", trimTo64(keyObject));
+			jsonObject.addProperty(ED_25519, trimTo64(keyObject));
 			return jsonObject;
 		}
 
@@ -143,10 +147,10 @@ public class EncryptionUtils {
 			if (keyAsArray.size() == 1) {
 				return keyAsArray.get(0).getAsJsonObject();
 			} else {
-				jsonObject.add("keyList", keyAsArray);
+				jsonObject.add(KEY_LIST, keyAsArray);
 			}
 		} else {
-			jsonObject.add("thresholdKey", keyListToThreshold((KeyList) keyObject));
+			jsonObject.add(THRESHOLD_KEY, keyListToThreshold((KeyList) keyObject));
 		}
 
 
@@ -179,8 +183,8 @@ public class EncryptionUtils {
 	 */
 	private static JsonObject keyListToThreshold(KeyList key) throws IOException {
 		var jsonObject = new JsonObject();
-		jsonObject.addProperty("threshold", key.getThreshold());
-		jsonObject.add("keyList", keyListToJsonArray(key));
+		jsonObject.addProperty(THRESHOLD, key.getThreshold());
+		jsonObject.add(KEY_LIST, keyListToJsonArray(key));
 		return jsonObject;
 	}
 
@@ -194,8 +198,8 @@ public class EncryptionUtils {
 	public static KeyList jsonToKey(JsonObject jsonObject) {
 
 		var keyList = new KeyList();
-		if (jsonObject.has("Ed25519")) {
-			var ed = jsonObject.get("Ed25519").getAsString();
+		if (jsonObject.has(ED_25519)) {
+			var ed = jsonObject.get(ED_25519).getAsString();
 			var publicKey = PublicKey.fromString(ed);
 			keyList = new KeyList();
 			keyList.add(publicKey);
@@ -204,12 +208,12 @@ public class EncryptionUtils {
 			var publicKey = publicKeyFromFile(pubKeyFile);
 			keyList = new KeyList();
 			keyList.add(publicKey);
-		} else if (jsonObject.has("keyList")) {
-			if (jsonObject.get("keyList") instanceof JsonArray) {
-				keyList = (jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray("keyList")));
+		} else if (jsonObject.has(KEY_LIST)) {
+			if (jsonObject.get(KEY_LIST) instanceof JsonArray) {
+				keyList = (jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray(KEY_LIST)));
 			}
-		} else if (jsonObject.has("thresholdKey")) {
-			keyList = (KeyList) (jsonThresholdKeyToSDKKeyList(jsonObject.get("thresholdKey").getAsJsonObject()));
+		} else if (jsonObject.has(THRESHOLD_KEY)) {
+			keyList = (KeyList) (jsonThresholdKeyToSDKKeyList(jsonObject.get(THRESHOLD_KEY).getAsJsonObject()));
 		}
 		return keyList;
 	}
@@ -260,14 +264,14 @@ public class EncryptionUtils {
 	 */
 	private static Key jsonThresholdKeyToSDKKeyList(JsonObject thresholdKeyJson) {
 		KeyList thresholdKey;
-		if (thresholdKeyJson.has("keyList")) {
-			thresholdKey = jsonKeyListToSDKKeyList(thresholdKeyJson.getAsJsonArray("keyList"));
+		if (thresholdKeyJson.has(KEY_LIST)) {
+			thresholdKey = jsonKeyListToSDKKeyList(thresholdKeyJson.getAsJsonArray(KEY_LIST));
 		} else {
 			throw new HederaClientRuntimeException("Missing keyList in threshold key");
 		}
 
-		if (thresholdKeyJson.has("threshold")) {
-			var threshold = thresholdKeyJson.get("threshold").getAsInt();
+		if (thresholdKeyJson.has(THRESHOLD)) {
+			var threshold = thresholdKeyJson.get(THRESHOLD).getAsInt();
 			if (threshold > thresholdKey.size()) {
 				throw new HederaClientRuntimeException("Threshold cannot be larger than the number of keys");
 			}

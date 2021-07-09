@@ -150,10 +150,8 @@ public class SoftwareUpdateFile extends RemoteFile {
 	@Override
 	public GridPane buildGridPane() {
 		var detailsGridPane = new GridPane();
-
 		List<Label> messages = new ArrayList<>();
-
-		var onDate = "";
+		var count = 0;
 
 		var subTitleText =
 				(isHistory()) ? "The application was updated to " : "This will upgrade your application to";
@@ -161,19 +159,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		var formattedText = String.format("%s Version %s", subTitleText, getVersion());
 
 		if (isHistory()) {
-			try {
-				var metadataFile = new MetadataFile(getName());
-				var action = getLastAction(metadataFile.getMetadataActions());
-
-				onDate = String.format(" on %s", action.getTimestamp().asReadableLocalString());
-				formattedText += onDate;
-				digest = action.getUserComments();
-				if (digest.length() == 0) {
-					fixDigest(metadataFile, action);
-				}
-			} catch (HederaClientException e) {
-				logger.error(e);
-			}
+			formattedText = handleHistory(formattedText);
 
 		}
 		var subTitleLabel = new Label(formattedText);
@@ -181,43 +167,15 @@ public class SoftwareUpdateFile extends RemoteFile {
 		messages.add(subTitleLabel);
 
 		//comment files will have the notes highlights
-		var notesJson =
-				(hasComments()) ? ((CommentFile) getCommentsFile()).getContents() : new JsonObject();
+		JsonObject notesJson = handleNotes(messages);
 
-		if (notesJson.has("notes")) {
-			messages.add(new Label("Highlights:"));
-			var notesArray = notesJson.getAsJsonArray("notes");
-			for (var je : notesArray) {
-				var jsonObject = je.getAsJsonObject();
-				var titleString = (jsonObject.has("title")) ? jsonObject.get("title").getAsString() : "";
-				var contentsString = (jsonObject.has("contents")) ? jsonObject.get("contents").getAsString() : "";
-				messages.add(
-						new Label(String.format("\t\u2022\t%s:\t%s", titleString, contentsString)));
-			}
-		}
-		var count = 0;
 		for (var message : messages) {
 			detailsGridPane.add(message, 0, count++);
 		}
 
 		if (notesJson.has("link")) {
-			var hyperlink = new Hyperlink(notesJson.get("link").getAsString());
-			var title = new Label("Find more details at:");
-			var hbox = new HBox();
-			hbox.setSpacing(20);
-			hbox.setAlignment(Pos.CENTER_LEFT);
-			hbox.getChildren().addAll(title, hyperlink);
+			HBox hbox = handleHyperLink(notesJson);
 			detailsGridPane.add(hbox, 0, count++);
-			hyperlink.setOnAction(event -> {
-				try {
-					if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-						Desktop.getDesktop().browse(new URI(hyperlink.getText()));
-					}
-				} catch (IOException | URISyntaxException e) {
-					logger.error("Cannot open web browser");
-					logger.error(e);
-				}
-			});
 		}
 
 		var shaDigest = new Text(digest);
@@ -237,6 +195,92 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return detailsGridPane;
 	}
 
+	/**
+	 * If the card is in history show its metadata (date of update)
+	 *
+	 * @param formattedText
+	 * 		The string that will be displayed to the user
+	 * @return The string that will be displayed to the user
+	 */
+	private String handleHistory(String formattedText) {
+		String onDate;
+		try {
+			var metadataFile = new MetadataFile(getName());
+			var action = getLastAction(metadataFile.getMetadataActions());
+
+			onDate = String.format(" on %s", action.getTimestamp().asReadableLocalString());
+			formattedText += onDate;
+			digest = action.getUserComments();
+			if (digest.length() == 0) {
+				fixDigest(metadataFile, action);
+			}
+		} catch (HederaClientException e) {
+			logger.error(e);
+		}
+		return formattedText;
+	}
+
+
+	/**
+	 * If the notes contain a Hyperlink, show it to the user
+	 *
+	 * @param notesJson
+	 * 		the update notes
+	 * @return a hyperlink to be included in the grid pane
+	 */
+	private HBox handleHyperLink(JsonObject notesJson) {
+		var hyperlink = new Hyperlink(notesJson.get("link").getAsString());
+		var title = new Label("Find more details at:");
+		var hbox = new HBox();
+		hbox.setSpacing(20);
+		hbox.setAlignment(Pos.CENTER_LEFT);
+		hbox.getChildren().addAll(title, hyperlink);
+
+		hyperlink.setOnAction(event -> {
+			try {
+				if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+					Desktop.getDesktop().browse(new URI(hyperlink.getText()));
+				}
+			} catch (IOException | URISyntaxException e) {
+				logger.error("Cannot open web browser");
+				logger.error(e);
+			}
+		});
+		return hbox;
+	}
+
+	/**
+	 * If there are any release notes, display them to the user
+	 *
+	 * @param messages
+	 * 		the notes
+	 * @return an object with notes
+	 */
+	private JsonObject handleNotes(List<Label> messages) {
+		var notesJson =
+				(hasComments()) ? ((CommentFile) getCommentsFile()).getContents() : new JsonObject();
+
+		if (notesJson.has("notes")) {
+			messages.add(new Label("Highlights:"));
+			var notesArray = notesJson.getAsJsonArray("notes");
+			for (var je : notesArray) {
+				var jsonObject = je.getAsJsonObject();
+				var titleString = (jsonObject.has("title")) ? jsonObject.get("title").getAsString() : "";
+				var contentsString = (jsonObject.has("contents")) ? jsonObject.get("contents").getAsString() : "";
+				messages.add(
+						new Label(String.format("\t\u2022\t%s:\t%s", titleString, contentsString)));
+			}
+		}
+		return notesJson;
+	}
+
+	/**
+	 * Get the last action in the list
+	 *
+	 * @param metadataActions
+	 * 		a list of metadata actions
+	 * @return an action
+	 */
 	private MetadataAction getLastAction(List<MetadataAction> metadataActions) {
 		var action = metadataActions.get(0);
 		var stamp = metadataActions.get(0).getTimestamp();
@@ -251,6 +295,14 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return action;
 	}
 
+	/**
+	 * Add the file digest to the metadata
+	 *
+	 * @param metadataFile
+	 * 		the file update metadata
+	 * @param action
+	 * 		the action to be updated
+	 */
 	private void fixDigest(MetadataFile metadataFile, MetadataAction action) {
 		this.digest = calculateDigest();
 		action.setUserComments(digest);

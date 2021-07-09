@@ -845,6 +845,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						break;
 					case UNKNOWN:
 						break;
+					default:
+						throw new IllegalStateException("Unexpected value: " + Objects.requireNonNull(responseEnum));
 				}
 			}
 		}

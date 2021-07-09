@@ -112,6 +112,7 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
+import static org.zeroturnaround.zip.commons.FileUtils.*;
 
 public class Controller implements Initializable, GenericFileReadWriteAware {
 
@@ -329,6 +330,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 						break;
 					}
 				}
+				properties =
+						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
+								"");
+				recoverPasswordPane.setVisible(false);
+				setDisableButtons(false);
+				thisPane = homePane;
+				homePane.setVisible(true);
+				keysPaneController.initializeKeysPane();
+				accountsPaneController.initializeAccountPane();
+				homePaneController.initializeHomePane();
+				settingsPaneController.initializeSettingsPane();
+				createPaneController.initializeCreatePane();
+				break;
 			case TEST_PHASE:
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
@@ -343,6 +357,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
 				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + getSetupPhase());
 		}
 	}
 
@@ -558,11 +574,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		preferences.exportNode(new FileOutputStream(userPreferenceFile, false));
 
 		var destination = new File(resetStorageDirectory);
-		FileUtils.copyDirectory(sourceDir, destination);
+		copyDirectory(sourceDir, destination);
 		logger.info("Transactions Tool storage archived to " + destination.getPath());
 
 		preferences.clear();
-		FileUtils.deleteDirectory(sourceDir);
+		deleteDirectory(sourceDir);
 		Platform.exit();
 	}
 

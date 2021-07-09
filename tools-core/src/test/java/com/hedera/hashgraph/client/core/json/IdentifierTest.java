@@ -93,7 +93,7 @@ class IdentifierTest {
 
 		HederaClientException exception4 =
 				assertThrows(HederaClientException.class, () -> Identifier.parse(accountJson4));
-		assertEquals("Hedera Client: Invalid realm number", exception4.getMessage());
+		assertEquals("Hedera Client: Invalid field realmNum", exception4.getMessage());
 
 		JsonObject accountJson5 = new JsonObject();
 		accountJson5.addProperty("realmNum", 789L);
@@ -102,7 +102,7 @@ class IdentifierTest {
 
 		HederaClientException exception5 =
 				assertThrows(HederaClientException.class, () -> Identifier.parse(accountJson5));
-		assertEquals("Hedera Client: Invalid shard number", exception5.getMessage());
+		assertEquals("Hedera Client: Invalid field shardNum", exception5.getMessage());
 
 		JsonObject accountJson6 = new JsonObject();
 		accountJson6.addProperty("realmNum", 789L);

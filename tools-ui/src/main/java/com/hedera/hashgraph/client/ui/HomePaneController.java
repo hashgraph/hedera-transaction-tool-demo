@@ -118,6 +118,8 @@ import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 public class HomePaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
+	private static final String OUTPUT_FILES = "OutputFiles";
+	private static final String INPUT_FILES = "InputFiles";
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
@@ -645,7 +647,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			pairs.add(getAccountKeyPair(signer));
 		}
 
-		output = rf.getParentPath().replace("InputFiles", "OutputFiles");
+		output = rf.getParentPath().replace(INPUT_FILES, OUTPUT_FILES);
 		user = controller.properties.getEmailFromMap(new File(rf.getParentPath()).getParent());
 		for (var pair : pairs) {
 			try {
@@ -855,7 +857,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 
 		var userCommentLocation =
-				rf.getParentPath().replace("InputFiles", "OutputFiles") + File.separator + FilenameUtils.getBaseName(
+				rf.getParentPath().replace(INPUT_FILES, OUTPUT_FILES) + File.separator + FilenameUtils.getBaseName(
 						name) + ".txt";
 		if (new File(userCommentLocation).exists() && new File(userCommentLocation).isFile()) {
 			(new File(userCommentLocation)).delete();
@@ -866,7 +868,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void signTransactionAndComment(RemoteFile rf, Pair<String, KeyPair> pair) {
-
 		switch (rf.getType()) {
 			case TRANSACTION:
 			case LARGE_BINARY:
@@ -878,6 +879,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				((BatchFile) rf).setTxValidDuration(controller.properties.getTxValidDuration());
 				createSignedTransaction(rf, pair);
 				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + rf.getType());
 		}
 	}
 
@@ -926,7 +929,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private void moveToOutput(List<File> zipFiles, String remoteLocation) throws HederaClientException {
 		var emailFromMap = controller.properties.getEmailFromMap(remoteLocation);
 		var outputFolder =
-				("".equals(emailFromMap)) ? File.separator : File.separator + "OutputFiles" + File.separator;
+				("".equals(emailFromMap)) ? File.separator : File.separator + OUTPUT_FILES + File.separator;
 		var fileService = FileAdapterFactory.getAdapter(remoteLocation);
 		assert fileService != null;
 
@@ -935,10 +938,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 		if (remoteDestination.contains("Volumes")) {
 			// USB is special
-			if (!fileService.exists(File.separator + "OutputFiles")) {
-				new File(fileService.getPath() + File.separator + "OutputFiles").mkdirs();
+			if (!fileService.exists(File.separator + OUTPUT_FILES)) {
+				new File(fileService.getPath() + File.separator + OUTPUT_FILES).mkdirs();
 			}
-		} else if (!fileService.exists(File.separator + "OutputFiles" + File.separator + emailFromMap)) {
+		} else if (!fileService.exists(File.separator + OUTPUT_FILES + File.separator + emailFromMap)) {
 			// If the user doesn't exist his signature is kept locally
 			fileService = FileAdapterFactory.getAdapter(controller.getPreferredStorageDirectory());
 			new File(controller.getPreferredStorageDirectory() + remoteDestination).mkdirs();

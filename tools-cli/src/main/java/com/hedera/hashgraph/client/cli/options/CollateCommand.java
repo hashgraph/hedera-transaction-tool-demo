@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,13 +127,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		for (var output : outputs) {
 			final var files = Objects.requireNonNull(new File(output).listFiles());
-			if (files.length > 1) {
-				var zippedOutput = zipFolder(output);
-				if (!rootFolder.equals(out)) {
-					var destination = new File(out + File.separator + zippedOutput.getName());
-					FileUtils.moveFile(zippedOutput, destination);
-				}
-				FileUtils.deleteDirectory(new File(output));
+			if (onlyOneFile(output, files)) {
 				continue;
 			}
 
@@ -146,6 +141,19 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		logger.info("Collation done");
+	}
+
+	private boolean onlyOneFile(String output, File[] files) throws IOException {
+		if (files.length <= 1) {
+			return false;
+		}
+		var zippedOutput = zipFolder(output);
+		if (!rootFolder.equals(out)) {
+			var destination = new File(out, zippedOutput.getName());
+			FileUtils.moveFile(zippedOutput, destination);
+		}
+		FileUtils.deleteDirectory(new File(output));
+		return true;
 	}
 
 	private Map<String, List<String>> verifyTransactions() throws HederaClientException {

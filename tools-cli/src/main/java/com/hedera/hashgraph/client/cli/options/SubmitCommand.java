@@ -177,40 +177,48 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (var fileInput : transactionFiles) {
 			// wildcards first
 			if (fileInput.contains("*")) {
-				final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
-				var currentDirectory = new File(dir);
-				var fileList = currentDirectory.list(
-						new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
-				assert fileList != null;
-				for (var fileName : fileList) {
-					final var file = new File(dir, fileName);
-					if (file.isHidden()) {
-						continue;
-					}
-					if (file.isDirectory()) {
-						directories.add(file);
-					} else if (isTransaction(file) && file.exists()) {
-						files.add(file.getAbsolutePath());
-					}
-				}
-			} else {
-				final var file = new File(fileInput);
-				if (file.isDirectory()) {
-					directories.add(file);
-				} else if (isTransaction(file) && file.exists()) {
-					files.add(file.getAbsolutePath());
-				}
+				handleWildCards(files, directories, fileInput);
+				continue;
+			}
+			final var file = new File(fileInput);
+			if (file.isDirectory()) {
+				directories.add(file);
+			} else if (isTransaction(file) && file.exists()) {
+				files.add(file.getAbsolutePath());
 			}
 		}
 		if (directories.size() > 0) {
-			for (var directory : directories) {
-				var transactions = directory.listFiles(this::isTransaction);
-				if (transactions != null) {
-					Arrays.stream(transactions).map(File::getAbsolutePath).forEach(files::add);
-				}
-			}
+			handleDirectories(files, directories);
 		}
 		return files;
+	}
+
+	private void handleDirectories(Set<String> files, Set<File> directories) {
+		for (var directory : directories) {
+			var transactions = directory.listFiles(this::isTransaction);
+			if (transactions == null) {
+				continue;
+			}
+			Arrays.stream(transactions).map(File::getAbsolutePath).forEach(files::add);
+		}
+	}
+
+	private void handleWildCards(Set<String> files, Set<File> directories, String fileInput) {
+		final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
+		var currentDirectory = new File(dir);
+		var fileList = currentDirectory.list(
+				new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
+		assert fileList != null;
+		Arrays.stream(fileList).map(fileName -> new File(dir, fileName)).filter(file -> !file.isHidden()).forEach(
+				file -> {
+					if (file.isDirectory()) {
+						directories.add(file);
+						return;
+					}
+					if (isTransaction(file) && file.exists()) {
+						files.add(file.getAbsolutePath());
+					}
+				});
 	}
 
 	private boolean isTransaction(File file) {
