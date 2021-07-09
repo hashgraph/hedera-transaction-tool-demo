@@ -19,6 +19,10 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class JsonConstants {
+	private JsonConstants() {
+		throw new IllegalStateException("Constants class");
+	}
+
 	public static final String PREFERRED_KEY_LOCATION = "keyLocation";
 	public static final String PREFERRED_REALM = "preferredRealm";
 	public static final String PREFERRED_SHARD = "preferredShard";

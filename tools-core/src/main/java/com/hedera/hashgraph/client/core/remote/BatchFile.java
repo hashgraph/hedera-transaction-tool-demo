@@ -79,8 +79,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_FOLDER_L
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_DEFAULT_FEE;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.ERROR_MESSAGE_FORMAT;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.MAX_NUMBER_OF_NODES_EXCEEDED_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.ADD_MORE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.BROWSE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.DECLINE;
@@ -242,9 +240,8 @@ public class BatchFile extends RemoteFile {
 			}
 
 			if (nodeAccountID.size() > MAX_NUMBER_OF_NODES) {
-				logger.error(
-						String.format(MAX_NUMBER_OF_NODES_EXCEEDED_ERROR_MESSAGE,
-								nodeAccountID.size(), MAX_NUMBER_OF_NODES));
+				logger.error("{} exceeds the maximum number of nodes allowed (Max = {})", nodeAccountID.size(),
+						MAX_NUMBER_OF_NODES);
 				setValid(false);
 				return true;
 			}
@@ -265,8 +262,7 @@ public class BatchFile extends RemoteFile {
 	 * 		the value of the field
 	 */
 	private void timeErrorBehavior(String fieldName, int field) {
-		final var message = String.format("Invalid %s field: %d", fieldName, field);
-		logger.error(message);
+		logger.error("Invalid {} field: {}", fieldName, field);
 		setValid(false);
 	}
 
@@ -281,8 +277,8 @@ public class BatchFile extends RemoteFile {
 	 * 		the field
 	 */
 	private void errorBehavior(FileDetails fileDetails, String message, String field) {
-		final var formattedMessage = String.format(ERROR_MESSAGE_FORMAT, field, message, fileDetails.getName());
-		logger.error(formattedMessage);
+		logger.error("Incorrect {} in csv file ({}): File {} will not be displayed", field, message,
+				fileDetails.getName());
 		setValid(false);
 	}
 
@@ -417,7 +413,7 @@ public class BatchFile extends RemoteFile {
 			final var accounts = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					ACCOUNTS_MAP_FILE) : new JsonObject();
 			detailsGridPane.add(
-					new Label(String.format("%s", CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts))), 1,
+					new Label(CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts)), 1,
 					0);
 		} catch (HederaClientException e) {
 			logger.error(e);

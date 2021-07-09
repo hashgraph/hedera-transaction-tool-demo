@@ -33,6 +33,7 @@ import org.apache.commons.io.FilenameUtils;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.security.KeyStoreException;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.security.PasswordInput.readPasswordFromStdIn;
@@ -64,12 +65,12 @@ public class GetAccountInfoCommand implements ToolCommand {
 
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws HederaClientException {
 
 		var directory = System.getProperty("user.dir");
 		if (!"".equals(out)) {
 			if (new File(out).mkdirs()) {
-				logger.info(String.format("Directory %s created", out));
+				logger.info("Directory {} created", out);
 			}
 			directory = out;
 		}
@@ -80,7 +81,13 @@ public class GetAccountInfoCommand implements ToolCommand {
 
 		var password =
 				readPasswordFromStdIn(String.format("Enter the password for key %s", FilenameUtils.getBaseName(key)));
-		var keyStore = Ed25519KeyStore.read(password, key);
+		Ed25519KeyStore keyStore;
+		try {
+			keyStore = Ed25519KeyStore.read(password, key);
+		} catch (KeyStoreException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientException(e);
+		}
 		var privateKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 		try (var client = CommonMethods.getClient(submissionClient)) {
@@ -113,6 +120,9 @@ public class GetAccountInfoCommand implements ToolCommand {
 				logger.info("Account information for account {} has been written to file {}/{}.info", id, directory,
 						id);
 			}
+		} catch (TimeoutException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientException(e);
 		}
 	}
 }

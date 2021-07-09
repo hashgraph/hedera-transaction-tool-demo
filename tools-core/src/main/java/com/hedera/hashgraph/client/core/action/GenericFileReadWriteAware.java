@@ -57,7 +57,8 @@ public interface GenericFileReadWriteAware {
 	/**
 	 * Read a file content into a byte array.
 	 *
-	 * @param filePath path to the file to be read
+	 * @param filePath
+	 * 		path to the file to be read
 	 * @return a byte array
 	 */
 	default byte[] readBytes(String filePath) throws HederaClientException {
@@ -90,7 +91,8 @@ public interface GenericFileReadWriteAware {
 	/**
 	 * Read a file into a json object
 	 *
-	 * @param filePath The path to the file where the json object is stored
+	 * @param filePath
+	 * 		The path to the file where the json object is stored
 	 * @return a json object
 	 */
 	default JsonObject readJsonObject(final String filePath) throws HederaClientException {
@@ -126,7 +128,8 @@ public interface GenericFileReadWriteAware {
 	/**
 	 * Read a file into a json array
 	 *
-	 * @param filePath the path to the file that contains the json array
+	 * @param filePath
+	 * 		the path to the file that contains the json array
 	 * @return a json array
 	 */
 	default JsonArray readJsonArray(final String filePath) throws HederaClientException {
@@ -146,8 +149,10 @@ public interface GenericFileReadWriteAware {
 	/**
 	 * Store a json array to a file path
 	 *
-	 * @param filePath the path to the file where the json array will be stored
-	 * @param jsonObject the json object to be stored
+	 * @param filePath
+	 * 		the path to the file where the json array will be stored
+	 * @param jsonObject
+	 * 		the json object to be stored
 	 */
 	default void writeJsonObject(final String filePath, final Object jsonObject) throws HederaClientException {
 		if (filePath == null) {
@@ -177,8 +182,11 @@ public interface GenericFileReadWriteAware {
 
 	/**
 	 * Write an array of bytes to a file
-	 * @param filePath the path to the file where the bytes will be stored
-	 * @param contents the byte array
+	 *
+	 * @param filePath
+	 * 		the path to the file where the bytes will be stored
+	 * @param contents
+	 * 		the byte array
 	 */
 	default void writeBytes(final String filePath, final byte[] contents) throws HederaClientException {
 		if (filePath == null) {
@@ -213,16 +221,14 @@ public interface GenericFileReadWriteAware {
 	 */
 	default File unZip(String source, String destination) throws HederaClientException {
 		var destinationFolder = new File(destination);
+		if (!new File(source).exists()) {
+			throw new HederaClientException(String.format("The file %s does not exist", source));
+		}
 		try {
-			if (new File(source).exists()) {
-				unpack(new File(source), destinationFolder);
-			} else {
-				throw new HederaClientException(String.format("The file %s does not exist", source));
-			}
-		} catch (Throwable cause) {
+			unpack(new File(source), destinationFolder);
+		} catch (Exception cause) {
 			throw new HederaClientException(
 					String.format("Unzip error, %s, with source at location %s", cause.getCause(), source));
-
 		}
 		return destinationFolder;
 	}

@@ -19,6 +19,10 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class Messages {
+	private Messages() {
+		throw new IllegalStateException("Constants class");
+	}
+
 	public static final String TRANSACTION_STATUS_MESSAGE = "Transaction status: {}";
 	public static final String DELAY_MESSAGE = "Transaction will be sent in {} seconds";
 	public static final String NEW_PASSWORD_CONFIRMATION_MESSAGE = "Please re-enter the password for confirmation";

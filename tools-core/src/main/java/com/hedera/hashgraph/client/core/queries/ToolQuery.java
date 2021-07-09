@@ -60,7 +60,7 @@ public class ToolQuery implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolQuery.class);
 
 	JsonObject input;
-	Query query;
+	Query<?, ?> query;
 
 	// Common fields to build the query
 	Identifier feePayerID;
@@ -120,7 +120,8 @@ public class ToolQuery implements SDKInterface, GenericFileReadWriteAware {
 		var answer = true;
 
 		// Checks the common fields in the input
-		if (!CommonMethods.verifyFieldExist(input, FEE_PAYER_ACCOUNT_FIELD_NAME, NODE_ID_FIELD_NAME, TRANSACTION_FEE_FIELD_NAME,
+		if (!CommonMethods.verifyFieldExist(input, FEE_PAYER_ACCOUNT_FIELD_NAME, NODE_ID_FIELD_NAME,
+				TRANSACTION_FEE_FIELD_NAME,
 				NETWORK_FIELD_NAME,
 				TRANSACTION_VALID_START_FIELD_NAME, TRANSACTION_VALID_DURATION_FIELD_NAME)) {
 			return false;
@@ -198,11 +199,8 @@ public class ToolQuery implements SDKInterface, GenericFileReadWriteAware {
 
 	/**
 	 * Uses a verified json input to build a query
-	 *
-	 * @throws HederaClientRuntimeException
-	 * @throws HederaClientException
 	 */
-	public Query build() throws HederaClientException {
+	public Query<?, ?> build() throws HederaClientException {
 		return null;
 	}
 

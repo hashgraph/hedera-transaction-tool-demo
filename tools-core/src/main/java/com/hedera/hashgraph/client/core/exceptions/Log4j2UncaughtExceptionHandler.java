@@ -53,7 +53,7 @@ public final class Log4j2UncaughtExceptionHandler implements Thread.UncaughtExce
 		final var errorMessage =
 				String.format("ERROR: uncaught exception occurs, check app.err log file for details. %nMessage: %s",
 						e.getMessage());
-		System.out.println(errorMessage);
+		logger.error(errorMessage);
 		final var thread = t.toString();
 		logger.error("Uncaught exception {} on thread {}", e.getMessage(), thread);
 	}

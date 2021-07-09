@@ -24,6 +24,9 @@ import javafx.beans.property.SimpleDoubleProperty;
 import java.io.File;
 
 public class Constants {
+	private Constants() {
+		throw new IllegalStateException("Constants class");
+	}
 
 	// region FILE EXTENSIONS
 	public static final String PK_EXTENSION = "pem";

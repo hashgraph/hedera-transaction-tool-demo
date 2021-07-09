@@ -80,7 +80,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	private final Set<AccountId> knownIds = new HashSet<>();
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws HederaClientException, IOException {
 		if ("".equals(out)) {
 			out = rootFolder;
 		}

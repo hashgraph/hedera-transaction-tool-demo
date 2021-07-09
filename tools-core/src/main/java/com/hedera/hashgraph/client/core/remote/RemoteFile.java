@@ -161,7 +161,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 
 		if (file.getAttributes().isDirectory()) {
-			logger.error(String.format("%s must be a file", file.getName()));
+			logger.error("{} must be a file", file.getName());
 			this.valid = false;
 			return;
 		}
@@ -467,7 +467,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		Set<ByteString> keysSet = new HashSet<>();
 		var accounts = getSigningAccounts();
 		if (accounts == null) {
-			return null;
+			return new HashSet<>();
 		}
 		for (var account : accounts) {
 			var accountString =

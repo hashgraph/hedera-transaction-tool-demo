@@ -126,16 +126,19 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
 		assert jsons != null;
 		if (jsons.length != 1) {
-			handleError(
-					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length));
+			final var formattedError =
+					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length);
+			handleError(formattedError);
 			return;
 		}
 
 		var bins = new File(destination).listFiles((dir, name) -> name.endsWith("bin"));
 		assert bins != null;
 		if (bins.length != 1) {
-			handleError(String.format("There should be exactly one binary file in the zip archive. We found: %d",
-					bins.length));
+			final var formattedError =
+					String.format("There should be exactly one binary file in the zip archive. We found: %d",
+							bins.length);
+			handleError(formattedError);
 			return;
 		}
 
@@ -388,8 +391,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				TEMP_DIRECTORY + (LocalDate.now()) + File.separator + "LargeBinary" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 
-		var finalZip = new File(String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
-				pair.getKey().replace(".pem", "")));
+		final var pathname = String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
+				pair.getKey().replace(".pem", ""));
+		var finalZip = new File(pathname);
 
 		if (pair.getValue() == null || !isValid() || content == null) {
 			return null;
@@ -401,7 +405,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			}
 
 			if (new File(tempStorage).mkdirs()) {
-				logger.info(String.format("Created temp folder %s", tempStorage));
+				logger.info("Created temp folder {}", tempStorage);
 			}
 
 			try (var fileInputStream = new FileInputStream(content)) {
@@ -459,8 +463,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			toPackArray = toPack.toArray(toPackArray);
 			ZipUtil.packEntries(toPackArray, finalZip);
 			toPack.forEach(file -> {
-				if (file.delete()) {
-					logger.info(String.format("%s deleted", file.getAbsolutePath()));
+				try {
+					if (Files.deleteIfExists(file.toPath())) {
+						logger.info("{} deleted", file.getAbsolutePath());
+					}
+				} catch (IOException e) {
+					logger.error(e);
 				}
 			});
 
@@ -529,22 +537,26 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(checksum, 1, 5);
 
 		detailsGridPane.add(new Label("File size"), 0, 6);
-		detailsGridPane.add(new Label(String.format("%d bytes", FileUtils.sizeOf(getContent()))), 1, 6);
+		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
+		detailsGridPane.add(new Label(formattedContentSize), 1, 6);
 
 		var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
 			detailsGridPane.add(new Label("Chunk size"), 0, 7);
-			detailsGridPane.add(new Label(String.format("%d bytes", getChunkSize())), 1, 7);
+			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
+			detailsGridPane.add(new Label(formattedChunkSize), 1, 7);
 
 			detailsGridPane.add(new Label("Number of transactions"), 0, 8);
-			detailsGridPane.add(new Label(String.format("%d", chunks)), 1, 8);
+			final var formattedChunkNumber = String.format("%d", chunks);
+			detailsGridPane.add(new Label(formattedChunkNumber), 1, 8);
 
 			var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
 			detailsGridPane.add(interval, 0, 9);
-			detailsGridPane.add(new Label(String.format("%d nanoseconds", getValidIncrement())), 1, 9);
+			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
+			detailsGridPane.add(new Label(formattedIntervalLength), 1, 9);
 		}
 
 		var cc1 = new ColumnConstraints();

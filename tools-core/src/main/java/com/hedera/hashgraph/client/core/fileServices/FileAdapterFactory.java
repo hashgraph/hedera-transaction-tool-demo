@@ -49,6 +49,9 @@ public class FileAdapterFactory {
 
 	private static final Logger logger = LogManager.getLogger(FileAdapterFactory.class);
 
+	private FileAdapterFactory() {
+	}
+
 	public static FileService getAdapter(String path) throws HederaClientException {
 		if (path != null && !Objects.requireNonNull(path).isEmpty()) {
 			try {

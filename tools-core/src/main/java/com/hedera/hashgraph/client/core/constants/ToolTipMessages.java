@@ -19,6 +19,10 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class ToolTipMessages {
+	private ToolTipMessages() {
+		throw new IllegalStateException("Constants class");
+	}
+
 	public static final String NOW_TOOLTIP_TEXT =
 			"The transaction must be submitted to the network shortly after the time chosen (within 2 " +
 					"minutes of that time). The \"now\" button sets it to the current time. It’s usually " +

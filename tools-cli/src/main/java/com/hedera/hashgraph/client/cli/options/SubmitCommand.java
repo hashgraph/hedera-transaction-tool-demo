@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.cli.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -43,6 +44,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
@@ -75,7 +77,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private int readyTime = 1;
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws HederaClientException {
 
 		// Setup client
 		var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
@@ -102,7 +104,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
 					tx.getTransactionId()));
 			var worker = new TransactionCallableWorker(tx, delay, out, client);
-			transactionsFutureTasks[count] = new FutureTask(worker);
+			transactionsFutureTasks[count] = new FutureTask<TransactionCallableWorker>(worker);
 			executorServiceTransactions.submit(transactionsFutureTasks[count]);
 			count++;
 		}
@@ -114,32 +116,44 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		List<String> transactionResponses = new ArrayList<>();
 		for (var future : transactionsFutureTasks) {
-			final var response = (String) future.get();
+			final String response;
+			try {
+				response = (String) future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				logger.error(e.getMessage());
+				throw new HederaClientException(e);
+			}
 			if (!"".equals(response)) {
 				transactionResponses.add(response);
 			}
 		}
 		executorServiceTransactions.shutdown();
 		while (!executorServiceTransactions.isTerminated()) {
+			// wait loop
 		}
 
 		logger.info("Transactions succeeded: {} of {}", transactionResponses.size(), count);
 
 	}
 
-	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws InterruptedException {
+	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws HederaClientException {
 		assert transaction != null;
 		var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
 		assert startTime != null;
 		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
-			sleep(1000 * (difference - readyTime));
+			try {
+				sleep(1000 * (difference - readyTime));
+			} catch (InterruptedException e) {
+				logger.error(e.getMessage());
+				throw new HederaClientException(e);
+			}
 		}
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(
-			Set<String> files) throws HederaClientException, com.google.protobuf.InvalidProtocolBufferException {
+			Set<String> files) throws HederaClientException {
 		var transactions = new PriorityQueue<Transaction<?>>(files.size(), (o1, o2) -> {
 			var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
 			var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
@@ -150,7 +164,13 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		for (var file : files) {
 			var txBytes = readBytes(file);
-			var tx = Transaction.fromBytes(txBytes);
+			Transaction<? extends Transaction<?>> tx;
+			try {
+				tx = Transaction.fromBytes(txBytes);
+			} catch (InvalidProtocolBufferException e) {
+				logger.error(e.getMessage());
+				throw new HederaClientException(e);
+			}
 			if (tx.getTransactionId() == null) {
 				logger.error("Invalid transaction {}: No valid id found", file);
 				continue;

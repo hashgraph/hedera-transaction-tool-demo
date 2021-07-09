@@ -19,6 +19,11 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class ErrorMessages {
+
+	private ErrorMessages() {
+		throw new IllegalStateException("Constants class");
+	}
+
 	public static final String MISSING_FIELD_ERROR_MESSAGE = "Missing field {}";
 	public static final String CANNOT_PARSE_ERROR_MESSAGE = "Cannot parse: {}";
 	public static final String FILE_DOES_NOT_EXIST_ERROR_MESSAGE = "{} does not exist";
@@ -44,9 +49,6 @@ public class ErrorMessages {
 	public static final String COULD_NOT_LOAD_REMOTE_FILE_ERROR_MESSAGE =
 			"Could not load remote file {} due to error {}";
 	public static final String UNABLE_TO_PARSE_TIME_ERROR_MESSAGE = "Unable to parse time field: %s";
-	public static final String ERROR_MESSAGE_FORMAT = "Incorrect %s in csv file (%s): File %s will not be displayed";
-	public static final String MAX_NUMBER_OF_NODES_EXCEEDED_ERROR_MESSAGE =
-			"%d exceeds the maximum number of nodes allowed (Max = %d)";
 	public static final String NOT_EMPTY_FIELD_ERROR_MESSAGE = "Cannot add a transaction to a non empty field";
 	public static final String OUT_OF_RANGE_EXCEPTION_MESSAGE = "Out of range exception: ";
 	public static final String NULL_OBJECT_COMPARISON_ERROR_MESSAGE = "Cannot compare to a null object";
