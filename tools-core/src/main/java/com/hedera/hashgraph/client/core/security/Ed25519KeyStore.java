@@ -80,6 +80,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static net.i2p.crypto.eddsa.EdDSAPrivateKey.KEY_ALGORITHM;
 
@@ -405,5 +406,10 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	@Override
 	public boolean equals(Object o) {
 		return super.equals(o);
+	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(password) + converter.hashCode() + random.hashCode();
 	}
 }

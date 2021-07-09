@@ -560,6 +560,11 @@ public class BatchFile extends RemoteFile {
 		return super.equals(o);
 	}
 
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
 	private Stage setupProgressPopup(ProgressBar bar, ProgressBar bar2, Button cancelButton) {
 		var layout = new VBox();
 		layout.setAlignment(Pos.CENTER);

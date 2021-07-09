@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
-import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -159,5 +158,10 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	@Override
 	public boolean equals(Object obj) {
 		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + initialBalance.hashCode() + key.hashCode() + autoRenewDuration.hashCode();
 	}
 }

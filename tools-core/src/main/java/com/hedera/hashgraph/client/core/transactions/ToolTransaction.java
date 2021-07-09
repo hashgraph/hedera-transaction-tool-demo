@@ -221,7 +221,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<? extends Transaction<?>> collate(Transaction<? extends Transaction<?>> otherTransaction) throws HederaClientRuntimeException {
+	public Transaction<?> collate(Transaction<?> otherTransaction) throws HederaClientRuntimeException {
 		var signatures = otherTransaction.getSignatures();
 		assert signatures.size() == 1;
 		for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
@@ -232,7 +232,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<? extends Transaction<?>> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+	public Transaction<?> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
 		for (var signaturePair : signaturePairs) {
 			var publicKey = signaturePair.getPublicKey();
 			var signature = signaturePair.getSignature();

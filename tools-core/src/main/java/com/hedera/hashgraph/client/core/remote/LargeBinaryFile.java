@@ -572,4 +572,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public boolean equals(Object o) {
 		return super.equals(o);
 	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
 }

@@ -145,4 +145,9 @@ public class MetadataAction implements Comparable {
 
 		return this.keyName.equals(((MetadataAction) o).getKeyName());
 	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode()+ timeStamp.hashCode() + keyName.hashCode();
+	}
 }

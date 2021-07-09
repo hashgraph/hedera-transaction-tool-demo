@@ -173,4 +173,9 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 	public boolean equals(Object o) {
 		return super.equals(o);
 	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + actions.hashCode() + timestamp.hashCode();
+	}
 }
