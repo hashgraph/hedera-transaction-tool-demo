@@ -203,7 +203,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 				files.add(file.getAbsolutePath());
 			}
 		}
-		if (directories.size() > 0) {
+		if (!directories.isEmpty()) {
 			handleDirectories(files, directories);
 		}
 		return files;

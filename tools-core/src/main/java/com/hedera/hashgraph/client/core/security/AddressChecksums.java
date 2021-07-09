@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class AddressChecksums {
 	/** regex accepting both no-checksum and with-checksum formats, with 4 capture groups: 3 numbers and a checksum */
-	final private static Pattern addressInputFormat = Pattern.compile(
+	private static final Pattern addressInputFormat = Pattern.compile(
 			"^[^a-zA-Z0-9.]*(\\d+)\\.(\\d+)\\.(\\d+)[^a-zA-Z0-9.]*([a-zA-Z]*)[^a-zA-Z0-9.]*$");
 
 	/** the status of an address parsed by parseAddress */

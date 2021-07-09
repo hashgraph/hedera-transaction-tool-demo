@@ -157,7 +157,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<AccountId> getSigningAccounts() {
-		return super.getSigningAccounts();
+	public boolean equals(Object obj) {
+		return super.equals(obj);
 	}
 }

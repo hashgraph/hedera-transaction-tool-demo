@@ -136,4 +136,9 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	public List<FileActions> getActions() {
 		return actions;
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
 }

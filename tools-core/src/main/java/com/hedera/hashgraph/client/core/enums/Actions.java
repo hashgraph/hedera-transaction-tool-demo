@@ -34,11 +34,11 @@ public enum Actions {
 
 	@Override
 	public String toString() {
-		switch (this){
-			case ACCEPT:
-				return "accepted";
-			case DECLINE:
-				return "declined";
+		if (this == Actions.ACCEPT) {
+			return "accepted";
+		}
+		if (this == Actions.DECLINE) {
+			return "declined";
 		}
 		return super.toString();
 	}

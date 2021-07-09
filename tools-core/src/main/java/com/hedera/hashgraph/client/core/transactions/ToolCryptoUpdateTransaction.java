@@ -132,6 +132,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			accountUpdateTransaction.setKey(key);
 		}
 		if (autoRenewDuration != null) {
+			//noinspection deprecation
 			accountUpdateTransaction.setAutoRenewPeriod(autoRenewDuration);
 		}
 		if (receiverSignatureRequired != null) {
@@ -160,5 +161,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
 	}
 }

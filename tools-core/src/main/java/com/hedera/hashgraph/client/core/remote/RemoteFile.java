@@ -341,7 +341,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @throws HederaClientException
 	 */
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
-		return "";
+		return null;
 	}
 
 	/**

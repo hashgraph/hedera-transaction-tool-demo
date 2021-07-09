@@ -86,8 +86,8 @@ public class Constants {
 	// region TRANSACTION DEFAULTS
 	public static final int VAL_NUM_TRANSACTION_VALID_DURATION = 180;
 	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 100000000;
-	public final static int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
-	public final static int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
+	public static final  int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
+	public static final  int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
 	// endregion

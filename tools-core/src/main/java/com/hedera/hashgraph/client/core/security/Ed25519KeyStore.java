@@ -86,18 +86,18 @@ import static net.i2p.crypto.eddsa.EdDSAPrivateKey.KEY_ALGORITHM;
 
 public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 
-	public static final String RECOVERY_PHRASE_HASH_MESSAGE = "Recovery Phrase Hash:";
-	public static final String APPLICATION_NAME = "Application: %s\n";
-	public static final String VERSION = "Version: %s\n";
-	public static final String INDEX = "Index: %d\n";
-	public static final String HASH = "Recovery Phrase Hash: %s\n";
+	private static final String RECOVERY_PHRASE_HASH_MESSAGE = "Recovery Phrase Hash:";
+	private static final String APPLICATION_NAME = "Application: %s\n";
+	private static final String VERSION = "Version: %s\n";
+	private static final String INDEX = "Index: %d\n";
+	private static final String HASH = "Recovery Phrase Hash: %s\n";
 	private static final int ITERATION_COUNT = 65536;
 
 	private final SecureRandom random;
 	private final JcaPEMKeyConverter converter;
 	private final char[] password;
 
-	public final static class Builder {
+	public static final class Builder {
 
 		public Builder withPassword(final char[] password) {
 			this.password = password;
@@ -400,5 +400,10 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 		this.password = password;
 		this.converter = converter;
 		this.random = random;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
 	}
 }

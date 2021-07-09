@@ -128,4 +128,21 @@ public class MetadataAction implements Comparable {
 
 		return this.keyName.compareTo(((MetadataAction) o).getKeyName());
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == null) {
+			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
+		}
+
+		if (getClass() != o.getClass()) {
+			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
+		}
+
+		if (this.timeStamp.getSeconds() != ((MetadataAction) o).getTimeStamp().getSeconds()) {
+			return false;
+		}
+
+		return this.keyName.equals(((MetadataAction) o).getKeyName());
+	}
 }

@@ -46,6 +46,10 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.FILE_APPEND;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
 
 	@Override
 	public boolean checkInput(JsonObject input) {

@@ -75,7 +75,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
-	private static final Logger logger = LogManager.getLogger(BatchFile.class);
+	private static final Logger logger = LogManager.getLogger(LargeBinaryFile.class);
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content.bin";
@@ -568,5 +568,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return detailsGridPane;
 	}
 
-
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
 }

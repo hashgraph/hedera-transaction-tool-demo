@@ -134,4 +134,8 @@ public class MetadataFile extends RemoteFile {
 		}
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
 }

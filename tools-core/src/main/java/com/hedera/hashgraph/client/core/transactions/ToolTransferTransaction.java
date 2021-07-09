@@ -56,6 +56,11 @@ public class ToolTransferTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.CRYPTO_TRANSFER;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
 	public ToolTransferTransaction(File location) throws HederaClientException {
 		super(location);
 
@@ -134,11 +139,6 @@ public class ToolTransferTransaction extends ToolTransaction {
 			transferTransaction.addHbarTransfer(entry.getKey().asAccount(), entry.getValue());
 		}
 		return transferTransaction.freeze();
-	}
-
-	@Override
-	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
-		return super.getSigningKeys(accountsInfoFolder);
 	}
 
 	@Override

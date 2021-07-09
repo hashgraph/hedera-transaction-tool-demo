@@ -280,7 +280,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				missingFields.add(requiredField);
 			}
 		}
-		if (missingFields.size() > 0) {
+		if (!missingFields.isEmpty()) {
 			for (var s : missingFields) {
 				logger.info(String.format("Missing required field %s", s));
 			}
@@ -371,7 +371,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		var n = secondString.length();
 		var suffix = new int[m + 1][n + 1];
 		var len = 0;
-		int row = 0, col = 0;
+		int row = 0;
+		int col = 0;
 
 		for (var i = 0; i <= m; i++) {
 			for (var j = 0; j <= n; j++) {
@@ -395,15 +396,15 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return "";
 		}
 
-		var resultStr = "";
+		StringBuilder resultStr = new StringBuilder();
 		while (suffix[row][col] != 0) {
-			resultStr = firstString.charAt(row - 1) + resultStr;
+			resultStr.insert(0, firstString.charAt(row - 1));
 			--len;
 			row--;
 			col--;
 		}
 
-		return resultStr;
+		return resultStr.toString();
 	}
 
 	/**

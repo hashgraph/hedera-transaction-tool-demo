@@ -555,6 +555,11 @@ public class BatchFile extends RemoteFile {
 		return getFirstTransactionTimeStamp().asCalendar().before(Calendar.getInstance());
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
+
 	private Stage setupProgressPopup(ProgressBar bar, ProgressBar bar2, Button cancelButton) {
 		var layout = new VBox();
 		layout.setAlignment(Pos.CENTER);

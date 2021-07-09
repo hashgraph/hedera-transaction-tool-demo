@@ -33,7 +33,7 @@
  * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
  */
 
-package com.hedera.hashgraph.client.core.fileServices;
+package com.hedera.hashgraph.client.core.fileservices;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
@@ -76,8 +76,9 @@ public class FileAdapterFactory {
 	}
 
 	private static String findVolumes() {
-		if (new File("/Volumes").exists()) {
-			var roots = new File(File.separator + "Volumes").listFiles();
+		final var volume = new File(File.separator + "Volumes");
+		if (volume.exists()) {
+			var roots = volume.listFiles();
 			assert roots != null;
 			logger.debug("Found {} volumes", roots.length);
 			if (roots.length > 0) {
