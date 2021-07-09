@@ -546,7 +546,7 @@ class ToolTransactionTest {
 
 	@Test
 	void verifyWithInfoAndSubmit() throws KeyStoreException, PrecheckStatusException, TimeoutException,
-			ReceiptStatusException, HederaClientException {
+			ReceiptStatusException, HederaClientException, InterruptedException {
 		List<PublicKey> publicKeys = new ArrayList<>();
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
