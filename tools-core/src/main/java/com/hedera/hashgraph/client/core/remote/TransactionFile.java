@@ -181,6 +181,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
 	public boolean isExpired() {
 		var now = new Timestamp();
 		return now.getSeconds() > getExpiration().getSeconds();
@@ -385,9 +390,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			FileUtils.deleteDirectory(new File(tempStorage));
 
 			final var outputFile = new File(output + File.separator + user, finalZip.getName());
-			if (outputFile.exists()) {
-				outputFile.delete();
-			}
+			Files.deleteIfExists(outputFile.toPath());
 			FileUtils.moveFile(finalZip, outputFile);
 			return outputFile.getAbsolutePath();
 		} catch (IOException e) {

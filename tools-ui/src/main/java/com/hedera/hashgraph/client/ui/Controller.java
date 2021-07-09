@@ -48,7 +48,6 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
 
 import java.io.BufferedWriter;
@@ -95,7 +94,8 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
-import static org.zeroturnaround.zip.commons.FileUtils.*;
+import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
+import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
 public class Controller implements Initializable, GenericFileReadWriteAware {
 

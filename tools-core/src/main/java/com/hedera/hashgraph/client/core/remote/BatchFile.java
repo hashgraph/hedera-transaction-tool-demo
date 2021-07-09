@@ -522,7 +522,7 @@ public class BatchFile extends RemoteFile {
 						} catch (HederaClientException e) {
 							logger.error(e);
 						}
-						updateProgress(++i, max - 1);
+						updateProgress(++i, (long) max - 1);
 					}
 					transactionsProgressBar.setVisible(false);
 					try {

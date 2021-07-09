@@ -188,7 +188,7 @@ public class RemoteFilesMap {
 												type.getExtension()));
 
 								for (var metadataAction : metadataActions) {
-									final var seconds = metadataAction.getTimestamp().asDuration().getSeconds();
+									final var seconds = metadataAction.getTimeStamp().asDuration().getSeconds();
 									if (seconds > lastDate) {
 										lastDate = seconds;
 									}

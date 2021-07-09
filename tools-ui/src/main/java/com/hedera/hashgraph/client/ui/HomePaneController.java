@@ -88,6 +88,8 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -537,9 +539,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			try {
 				if (rf.getType().equals(FileType.PUBLIC_KEY)) {
 					final var keysFile = new File(KEYS_FOLDER + rf.getName());
-					if (keysFile.exists()) {
-						keysFile.delete();
-					}
+					Files.deleteIfExists(keysFile.toPath());
 					FileUtils.copyFile(new File(rf.getPath()), keysFile);
 				} else {
 					controller.accountsPaneController.importInfoFiles(
@@ -665,7 +665,14 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			var processBuilder = new ProcessBuilder("/usr/bin/open", localLocation);
 			var process = processBuilder.start();
-			var exitCode = process.waitFor();
+			int exitCode = 0;
+			try {
+				exitCode = process.waitFor();
+			} catch (InterruptedException e) {
+				logger.error("Interrupted exception: {}", e.getMessage());
+				// Restore interrupted state
+				Thread.currentThread().interrupt();
+			}
 			if (exitCode == 0) {
 				System.exit(0);
 			} else {
@@ -673,7 +680,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				PopupMessage.display("Error opening update file",
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
-		} catch (IOException | InterruptedException e) {
+		} catch (IOException e) {
 			logger.error(e);
 			PopupMessage.display("Error opening update file",
 					"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
@@ -849,7 +856,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 
-	private String buildCommentFile(RemoteFile rf, TextArea comment, String name) {
+	private String buildCommentFile(RemoteFile rf, TextArea comment, String name) throws IOException {
 		var userComments = new UserComments.Builder()
 				.withAuthor(controller.properties.getEmailFromMap(rf.getParentPath()))
 				.withComment(comment.getText())
@@ -859,8 +866,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var userCommentLocation =
 				rf.getParentPath().replace(INPUT_FILES, OUTPUT_FILES) + File.separator + FilenameUtils.getBaseName(
 						name) + ".txt";
-		if (new File(userCommentLocation).exists() && new File(userCommentLocation).isFile()) {
-			(new File(userCommentLocation)).delete();
+		if (new File(userCommentLocation).isFile()) {
+			Files.deleteIfExists(Path.of(userCommentLocation));
 		}
 
 		userComments.toFile(userCommentLocation);
@@ -920,7 +927,12 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if ("".equals(comment.getText())) {
 			return;
 		}
-		var userCommentLocation = buildCommentFile(rf, comment, name);
+		String userCommentLocation;
+		try {
+			userCommentLocation = buildCommentFile(rf, comment, name);
+		} catch (IOException e) {
+			throw new HederaClientException(e);
+		}
 		final var remoteLocation = rf.getParentPath();
 		final var zipFiles = Collections.singletonList(new File(userCommentLocation));
 		moveToOutput(zipFiles, remoteLocation);

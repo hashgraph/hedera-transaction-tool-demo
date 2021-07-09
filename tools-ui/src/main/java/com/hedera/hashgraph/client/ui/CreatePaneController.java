@@ -363,9 +363,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupTextListener(TextField accountTextField, TextField amountTextField) {
-		accountTextField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(accountTextField, newValue, "\\d*", "[^\\d.]"));
+		accountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(accountTextField, newValue, "\\d*", "[^\\d.]"));
 
-		amountTextField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(amountTextField, newValue, "\\d*", "[^\\d.]"));
+		amountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(amountTextField, newValue, "\\d*", "[^\\d.]"));
 	}
 
 	private void setupCreateFields() {
@@ -420,7 +422,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupTimeZoneChooser(timeZone, timeZoneHBox, datePicker, hourField, minuteField, secondsField,
 				createUTCTimeLabel);
 
-		updateAutoRenew.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
+		updateAutoRenew.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText((t1) ? "true" : "false"));
@@ -2094,7 +2097,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		} else {
 			label.setStyle("-fx-text-fill: black");
 		}
-		localDateTime.atZone(timeZone.toZoneId());
 
 		var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
@@ -2113,7 +2115,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupNumberField(TextField timeField, int limit) {
-		timeField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(timeField, newValue, "\\d*", REGEX));
+		timeField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(timeField, newValue, "\\d*", REGEX));
 		timeField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				checkTimeField(timeField, limit);
@@ -2128,7 +2131,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupHbarNumberField(TextField currencyField) {
-		currencyField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(currencyField, newValue, "[^\\d.\\s]", "[^\\d.\\s]"));
+		currencyField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(currencyField, newValue, "[^\\d.\\s]",
+						"[^\\d.\\s]"));
 		currencyField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				setHBarFormat(currencyField);
@@ -2142,7 +2147,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupIntNumberField(TextField intField, int limit) {
-		intField.textProperty().addListener((observable, oldValue, newValue) -> fixTimeTextField(intField, newValue, "\\d*", REGEX));
+		intField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(intField, newValue, "\\d*", REGEX));
 		intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (!newPropertyValue) {
 				try {

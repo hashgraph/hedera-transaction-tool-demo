@@ -208,7 +208,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 			var metadataFile = new MetadataFile(getName());
 			var action = getLastAction(metadataFile.getMetadataActions());
 
-			onDate = String.format(" on %s", action.getTimestamp().asReadableLocalString());
+			onDate = String.format(" on %s", action.getTimeStamp().asReadableLocalString());
 			formattedText += onDate;
 			digest = action.getUserComments();
 			if (digest.length() == 0) {
@@ -283,12 +283,12 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 */
 	private MetadataAction getLastAction(List<MetadataAction> metadataActions) {
 		var action = metadataActions.get(0);
-		var stamp = metadataActions.get(0).getTimestamp();
+		var stamp = metadataActions.get(0).getTimeStamp();
 
 		for (var metadataAction : metadataActions) {
 
-			if (metadataAction.getTimestamp().asCalendar().after(stamp.asCalendar())) {
-				stamp = metadataAction.getTimestamp();
+			if (metadataAction.getTimeStamp().asCalendar().after(stamp.asCalendar())) {
+				stamp = metadataAction.getTimeStamp();
 				action = metadataAction;
 			}
 		}
@@ -306,7 +306,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 	private void fixDigest(MetadataFile metadataFile, MetadataAction action) {
 		this.digest = calculateDigest();
 		action.setUserComments(digest);
-		action.setTimestamp(action.getTimestamp().plusNanos(1));
+		action.setTimeStamp(action.getTimeStamp().plusNanos(1));
 		metadataFile.addAction(action);
 	}
 

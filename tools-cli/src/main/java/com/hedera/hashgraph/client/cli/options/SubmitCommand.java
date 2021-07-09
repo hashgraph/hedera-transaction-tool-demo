@@ -77,7 +77,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private int readyTime = 1;
 
 	@Override
-	public void execute() throws HederaClientException {
+	public void execute() throws HederaClientException, InterruptedException {
 
 		// Setup client
 		var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
@@ -119,7 +119,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			final String response;
 			try {
 				response = (String) future.get();
-			} catch (InterruptedException | ExecutionException e) {
+			} catch (ExecutionException e) {
 				logger.error(e.getMessage());
 				throw new HederaClientException(e);
 			}
@@ -136,19 +136,16 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	}
 
-	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws HederaClientException {
+	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws HederaClientException,
+			InterruptedException {
 		assert transaction != null;
 		var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
 		assert startTime != null;
 		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
-			try {
-				sleep(1000 * (difference - readyTime));
-			} catch (InterruptedException e) {
-				logger.error(e.getMessage());
-				throw new HederaClientException(e);
-			}
+			sleep(1000 * (difference - readyTime));
+
 		}
 	}
 

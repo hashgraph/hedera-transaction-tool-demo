@@ -28,6 +28,6 @@ import java.io.IOException;
 public interface ToolCommand extends GenericFileReadWriteAware {
 	Logger logger = LogManager.getLogger(ToolCommand.class);
 
-	void execute() throws HederaClientException, IOException;
+	void execute() throws HederaClientException, IOException, InterruptedException;
 
 }

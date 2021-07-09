@@ -1004,8 +1004,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			copyMnemonicToClipboard.setVisible(true);
 			var mnemonic = getMnemonicFromFile(password);
 			setupMnemonicHBox(mnemonic);
-
-
 		} else {
 			recoveryPasswordField.clear();
 			phrasePasswordErrorLabel.setVisible(true);
@@ -1019,6 +1017,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupMnemonicHBox(Mnemonic mnemonic) {
+		if (mnemonic == null) {
+			logger.error("Mnemonic is null");
+			return;
+		}
 		var mnemonicLabel = new Label();
 		var counter = 0;
 		var phrase = "";
@@ -1126,6 +1128,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
 			var mnemonic = getMnemonicFromFile(password);
+			if (mnemonic == null) {
+				controller.displaySystemMessage("Mnemonic is null");
+				throw new HederaClientException("Mnemonic is null");
+			}
 			var pk = Ed25519PrivateKey.fromMnemonic(mnemonic, index);
 
 			final var pubName = String.valueOf(findFileName(Paths.get(prefDir, "Keys"), nickname, PUB_EXTENSION));
@@ -1175,6 +1181,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				Platform.exit();
 			} else {
 				mnemonic = getMnemonicFromFile(password);
+				if (mnemonic == null) {
+					throw new HederaClientException("Mnemonic is null");
+				}
 				fill(password, 'x');
 			}
 		} catch (HederaClientException e) {

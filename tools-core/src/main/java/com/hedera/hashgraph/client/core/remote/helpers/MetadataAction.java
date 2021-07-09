@@ -34,14 +34,14 @@ public class MetadataAction implements Comparable {
 	private static final String KEY_NAME = "keyName";
 	private static final String USER_COMMENTS = "userComments";
 	private static final String ACTION = "action";
-	private Timestamp timestamp;
-	private Actions action;
+	private Timestamp timeStamp;
+	private Actions actions;
 	private String userComments;
 	private String keyName;
 
-	public MetadataAction(Timestamp timestamp, Actions action, String userComments, String keyName) {
-		this.timestamp = new Timestamp(timestamp.getSeconds(), 0);
-		this.action = action;
+	public MetadataAction(Timestamp timestamp, Actions actions, String userComments, String keyName) {
+		this.timeStamp = new Timestamp(timestamp.getSeconds(), 0);
+		this.actions = actions;
 		this.userComments = userComments;
 		this.keyName = keyName;
 	}
@@ -59,26 +59,26 @@ public class MetadataAction implements Comparable {
 		}
 
 		var time = metadata.getAsJsonObject(TIMESTAMP);
-		this.timestamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
-		this.action = Actions.valueOf(metadata.get(ACTION).getAsString());
+		this.timeStamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
+		this.actions = Actions.valueOf(metadata.get(ACTION).getAsString());
 		this.userComments = (metadata.has(USER_COMMENTS)) ? metadata.get(USER_COMMENTS).getAsString() : "";
 		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
 	}
 
-	public Timestamp getTimestamp() {
-		return timestamp;
+	public Timestamp getTimeStamp() {
+		return timeStamp;
 	}
 
-	public void setTimestamp(Timestamp timestamp) {
-		this.timestamp = timestamp;
+	public void setTimeStamp(Timestamp timeStamp) {
+		this.timeStamp = timeStamp;
 	}
 
-	public Actions getAction() {
-		return action;
+	public Actions getActions() {
+		return actions;
 	}
 
-	public void setAction(Actions action) {
-		this.action = action;
+	public void setActions(Actions actions) {
+		this.actions = actions;
 	}
 
 	public String getUserComments() {
@@ -99,8 +99,8 @@ public class MetadataAction implements Comparable {
 
 	public JsonObject toJson() {
 		var jsonObject = new JsonObject();
-		jsonObject.add(TIMESTAMP, this.timestamp.asJSON());
-		jsonObject.addProperty(ACTION, this.action.getAction());
+		jsonObject.add(TIMESTAMP, this.timeStamp.asJSON());
+		jsonObject.addProperty(ACTION, this.actions.getAction());
 		jsonObject.addProperty(USER_COMMENTS, this.userComments);
 		jsonObject.addProperty(KEY_NAME, this.keyName);
 
@@ -122,8 +122,8 @@ public class MetadataAction implements Comparable {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
 
-		if (this.timestamp.getSeconds() != ((MetadataAction) o).getTimestamp().getSeconds()) {
-			return Long.compare(timestamp.getSeconds(), ((MetadataAction) o).getTimestamp().getSeconds());
+		if (this.timeStamp.getSeconds() != ((MetadataAction) o).getTimeStamp().getSeconds()) {
+			return Long.compare(timeStamp.getSeconds(), ((MetadataAction) o).getTimeStamp().getSeconds());
 		}
 
 		return this.keyName.compareTo(((MetadataAction) o).getKeyName());

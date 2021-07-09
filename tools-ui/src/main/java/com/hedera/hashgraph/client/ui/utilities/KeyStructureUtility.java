@@ -45,7 +45,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 
 public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtility.class);
-	private static final String KEYS_STRING = File.separator+"Keys"+File.separator;
+	private static final String KEYS_STRING = File.separator + "Keys" + File.separator;
 	private static final String THRESHOLD_KEY = "thresholdKey";
 	private static final String THRESHOLD = "threshold";
 	private static final String KEYS = "keys";
@@ -128,7 +128,10 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 	private TreeItem<String> showKey(JsonObject keyJson) {
-		TreeItem<String> node;
+		TreeItem<String> node = new TreeItem<>();
+		if (keyJson == null) {
+			return node;
+		}
 		if (hasThresholdKey(keyJson)) {
 			node = showThresholdKey(keyJson.getAsJsonObject(THRESHOLD_KEY));
 		} else if (hasKeyList(keyJson)) {

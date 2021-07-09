@@ -43,9 +43,9 @@ class MetadataActionTest {
 		var actionJson = actionLine.toJson();
 		assertTrue(actionJson.has("timestamp"));
 		assertEquals(1610038031L, actionJson.get("timestamp").getAsJsonObject().get("seconds").getAsLong());
-		assertEquals(1610038031L, actionLine.getTimestamp().getSeconds());
+		assertEquals(1610038031L, actionLine.getTimeStamp().getSeconds());
 		assertEquals(0, actionJson.get("timestamp").getAsJsonObject().get("nanos").getAsLong());
-		assertEquals(0, actionLine.getTimestamp().getNanos());
+		assertEquals(0, actionLine.getTimeStamp().getNanos());
 
 
 		assertTrue(actionJson.has("userComments"));
@@ -54,7 +54,7 @@ class MetadataActionTest {
 
 		assertTrue(actionJson.has("action"));
 		assertEquals("ACCEPT", actionJson.get("action").getAsString());
-		assertEquals(Actions.ACCEPT, actionLine.getAction());
+		assertEquals(Actions.ACCEPT, actionLine.getActions());
 
 		assertTrue(actionJson.has("keyName"));
 		assertEquals("keyStore.pem", actionJson.get("keyName").getAsString());

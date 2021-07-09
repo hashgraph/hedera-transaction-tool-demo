@@ -40,8 +40,10 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.SystemDeleteTransaction;
 import com.hedera.hashgraph.sdk.SystemUndeleteTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -54,6 +56,9 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -61,6 +66,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
@@ -273,9 +279,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public TransactionReceipt submit() throws HederaClientRuntimeException {
-		try {
-			var client = setupClient(input);
+	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException {
+
+		TransactionReceipt receipt;
+		try (var client = setupClient(input)) {
 			var start = (Objects.requireNonNull(transaction.getTransactionId()).validStart);
 			assert start != null;
 			var delay = start.getEpochSecond() - (new Timestamp().asInstant()).getEpochSecond();
@@ -284,13 +291,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				sleep(delay * 1000);
 			}
 			var transactionResponse = transaction.execute(client);
-			var receipt = transactionResponse.getReceipt(client);
-			logger.info(Messages.TRANSACTION_STATUS_MESSAGE, receipt.status);
-			return receipt;
-		} catch (Exception e) {
+			receipt = transactionResponse.getReceipt(client);
+		} catch (HederaClientException | TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
 			logger.error(e);
 			throw new HederaClientRuntimeException(e);
 		}
+		logger.info(Messages.TRANSACTION_STATUS_MESSAGE, receipt.status);
+		return receipt;
 	}
 
 	@Override
@@ -376,8 +383,11 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		} else {
 			filePath = location;
 		}
-		if (new File(filePath).exists()) {
-			new File(filePath).delete();
+		try {
+			Files.deleteIfExists(Path.of(filePath));
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientException(e);
 		}
 		writeBytes(filePath, transactionBytes);
 		return filePath;
@@ -422,6 +432,11 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 		jsonTransaction.addProperty(MEMO_FIELD_NAME, memo);
 		return jsonTransaction;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode();
 	}
 
 	@Override
