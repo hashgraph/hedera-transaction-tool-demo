@@ -211,7 +211,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private void loadNewFilesBox(RemoteFilesMap remoteFilesMap) throws HederaClientException {
 		newFilesViewVBox.getChildren().clear();
 		final var newFiles = displayFiles(remoteFilesMap, false);
-		if (newFiles.size() > 0) {
+		if (!newFiles.isEmpty()) {
 			newFilesViewVBox.getChildren().addAll(newFiles);
 		}
 	}
@@ -288,7 +288,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private RemoteFilesMap filterHistory(RemoteFilesMap historyFiles) {
-		if (filterOut.size() == 0) {
+		if (filterOut.isEmpty()) {
 			return historyFiles;
 		}
 		var filesMap = new RemoteFilesMap();
@@ -382,7 +382,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (buttonsBox != null) {
 				fileBox.getChildren().add(buttonsBox);
 			}
-			if (fileBox != null && fileBox.getChildren().size() != 0) {
+			if (fileBox != null && !fileBox.getChildren().isEmpty()) {
 				boxes.add(fileBox);
 			}
 		}
@@ -395,7 +395,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			// old style transaction
 			return;
 		}
-		controller.keyStructureUtility.loadPubKeys();
+		controller.loadPubKeys();
 		var key = new KeyList();
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
@@ -404,7 +404,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
 		try {
-			rf.setTreeView(controller.keyStructureUtility.buildKeyTreeView(key));
+			rf.setTreeView(controller.buildKeyTreeView(key));
 		} catch (IOException e) {
 			throw new HederaClientException(e);
 		}
@@ -483,7 +483,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var signButton = buildBlueButton("SIGN\u2026");
 		signButton.setOnAction(actionEvent -> {
 			List<File> signers = new ArrayList<>(rf.getSignerSet());
-			if (signers.size() > 0) {
+			if (!signers.isEmpty()) {
 				try {
 					sign(rf);
 				} catch (HederaClientException exception) {
@@ -531,7 +531,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
 				historyChanged = true;
-				controller.keyStructureUtility.loadPubKeys();
+				controller.loadPubKeys();
 				controller.accountsPaneController.initializeAccountPane();
 				controller.keysPaneController.initializeKeysPane();
 				initializeHomePane();
@@ -674,7 +674,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		signingKeys.setAlignment(Pos.TOP_RIGHT);
 		signingKeys.setSpacing(10);
 		signingKeys.managedProperty().bind(signingKeys.visibleProperty());
-		signingKeys.setVisible(rf.getSigningPublicKeys().size() > 0 && !rf.isHistory());
+		signingKeys.setVisible(!rf.getSigningPublicKeys().isEmpty() && !rf.isHistory());
 
 		var signerLabel = new Label("Keys: ");
 		signerLabel.setPadding(new Insets(2));
@@ -699,7 +699,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		keysPane.managedProperty().bind(keysPane.visibleProperty());
 		keysPane.visibleProperty().bind(Bindings.size(keysPane.getChildren()).greaterThan(0));
 
-		signerLabel.setVisible(requiredKeys.size() > 0 && !rf.isHistory());
+		signerLabel.setVisible(!requiredKeys.isEmpty() && !rf.isHistory());
 
 		var keysHBox = new HBox();
 		keysHBox.setSpacing(10);
@@ -741,7 +741,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public static void checkBoxListener(Set<File> signersSet, File keyFile, String baseName, CheckBox checkBox,
 			Logger logger) {
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1) {
+			if (Boolean.TRUE.equals(t1)) {
 				logger.info(String.format("Added %s to list of signing keys", baseName));
 				signersSet.add(keyFile);
 			} else {
@@ -1132,7 +1132,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				}
 
 				checkBox.selectedProperty().addListener((observableValue, oldValue, newValue) -> {
-					if (newValue) {
+					if (Boolean.TRUE.equals(newValue)) {
 						filterOut.add(type);
 					} else {
 						filterOut.remove(type);

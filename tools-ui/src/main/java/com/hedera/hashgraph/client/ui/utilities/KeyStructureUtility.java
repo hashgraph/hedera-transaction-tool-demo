@@ -186,12 +186,16 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 			return "Empty";
 		}
 
-		if (controller != null && controller.keyStructureUtility.pubFiles.containsKey(hexString)) {
+		if (controller != null && controller.getPubFiles().containsKey(hexString)) {
 			// If local machine has this pubKey file, show its file name
-			return controller.keyStructureUtility.pubFiles.get(hexString).getFileName().toString();
+			return controller.getPubFiles().get(hexString).getFileName().toString();
 		} else {
 			return hexString;
 		}
+	}
+
+	public Map<String, Path> getPubFiles() {
+		return pubFiles;
 	}
 
 	private TreeItem<String> showThresholdKey(JsonObject thresholdKeyJson) {

@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonObject;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -32,6 +34,7 @@ import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
 import com.hedera.hashgraph.client.ui.utilities.ReloadFilesService;
 import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
@@ -41,6 +44,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -61,6 +65,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -166,7 +171,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 	// Utility
-	public KeyStructureUtility keyStructureUtility;
+	private KeyStructureUtility keyStructureUtility;
 	public final KeyPairUtility keyPairUtility = new KeyPairUtility();
 
 	void setDisableButtons(boolean disableButtons) {
@@ -809,4 +814,25 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getGenerateRecord();
 	}
 	//endregion
+
+
+	public String showKeyString(ByteString key) {
+		return keyStructureUtility.showKeyString(key);
+	}
+
+	public TreeView<String> buildKeyTreeView(Key key) throws IOException {
+		return keyStructureUtility.buildKeyTreeView(key);
+	}
+
+	public TreeView<String> buildKeyTreeView(JsonObject key) {
+		return keyStructureUtility.buildKeyTreeView(key);
+	}
+
+	public void loadPubKeys() {
+		keyStructureUtility.loadPubKeys();
+	}
+
+	public Map<String, Path> getPubFiles(){
+		return keyStructureUtility.getPubFiles();
+	}
 }

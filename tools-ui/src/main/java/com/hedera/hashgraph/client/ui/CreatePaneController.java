@@ -149,14 +149,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
 	private final Set<String> accountNickNames = new HashSet<>();
-	public JsonObject newKeyJSON = null;
-	public JsonObject originalKey = new JsonObject();
-
+	private JsonObject newKeyJSON = null;
+	private JsonObject originalKey = new JsonObject();
 
 	File contents = null;
 
 	@FXML
-	private Controller controller;
+	public Controller controller;
 
 	// region FXML
 	public ScrollPane createScrollPane;
@@ -170,7 +169,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Button updateKeyButton;
 	public Button browseContentsButton;
 	public Button setNowValidStart;
-
 
 	// Tooltip buttons
 	public Button nowTimeToolTip;
@@ -357,7 +355,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupTextListener(transferToAccountIDTextField, transferToAmountTextField);
 
 		BooleanProperty transferBoolean = new SimpleBooleanProperty();
-		transferBoolean.setValue(toTransferTable.getItems().size() == 0 ^ fromTransferTable.getItems().size() == 0);
+		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
 
 		invalidTransferList.visibleProperty().bind(transferBoolean);
 	}
@@ -380,7 +378,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		copyFromAccountHBox.getChildren().clear();
 		copyFromAccountHBox.getChildren().add(autoCompleteNickname);
 		createSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> createRSRLabel.setText((t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
+				));
 
 		createKeyButton.setOnAction(e -> {
 			autoCompleteNickname.clear();
@@ -389,7 +388,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			var key = newKeyJSON;
 			createNewKey.setVisible(true);
 
-			var keyDesignerPopup = (!newKeyJSON.equals(new JsonObject())) ?
+			var keyDesignerPopup = !newKeyJSON.equals(new JsonObject()) ?
 					new KeyDesignerPopup(getStringPublicKeyMap(), EncryptionUtils.jsonToKey(newKeyJSON)) :
 					new KeyDesignerPopup(getStringPublicKeyMap());
 			key = keyDesignerPopup.display();
@@ -426,7 +425,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> updateRSRLabel.setText((t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
 		loadAccountNicknames();
 		var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -447,7 +446,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (key == null || key.equals(new JsonObject())) {
 				key = originalKey;
 			}
-			var keyTree = controller.keyStructureUtility.buildKeyTreeView(key);
+			var keyTree = controller.buildKeyTreeView(key);
 			keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
 			keyTree.setMinWidth(800);
 			updateNewKey.setContent(keyTree);
@@ -519,7 +518,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					expirationLabel.setText("Contract will expire on:");
 					break;
 				default:
-					if (systemTypeChoiceBox.getItems().size() > 0) {
+					if (!systemTypeChoiceBox.getItems().isEmpty()) {
 						logger.error("Unexpected value: " + t1.intValue());
 					} else {
 						logger.info("System type choice box cleared");
@@ -563,7 +562,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void loadAccountNicknames() {
 		try {
 			var nicknames =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			var accountInfos = controller.accountsPaneController.getIdNickNames();
 			for (var s : accountInfos.keySet()) {
@@ -636,7 +635,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setKeyTreeInBox(JsonObject key, ScrollPane keyScrollPane) {
-		var keyTree = controller.keyStructureUtility.buildKeyTreeView(key);
+		var keyTree = controller.buildKeyTreeView(key);
 		keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
 		keyScrollPane.setContent(keyTree);
 		keyTree.setMinWidth(800);
@@ -794,13 +793,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
 				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
-				controller.keyStructureUtility.loadPubKeys();
+				controller.loadPubKeys();
 				var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
 				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
 				newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
-				var oldKeyTreeView = controller.keyStructureUtility.buildKeyTreeView(jsonObjectKey);
+				var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 				setupKeyPane(oldKeyTreeView, updateOriginalKey);
-				var newKeyTreeView = controller.keyStructureUtility.buildKeyTreeView(jsonObjectKey);
+				var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 				setupKeyPane(newKeyTreeView, updateNewKey);
 
 				// in case they were visible before
@@ -842,7 +841,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			total -= a.getAmountAsLong();
 		}
 
-		var sign = (total < 0) ? "-" : "";
+		var sign = total < 0 ? "-" : "";
 
 		final var totalString = Utilities.setHBarFormat(Math.abs(total));
 		if (total > 0) {
@@ -862,24 +861,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			// This might happen due to the ENTER key "bouncing"
 			return;
 		}
-		switch (event.getCode()) {
-			case ENTER:
-				if (Utilities.checkAccount(start.getText())) {
-					var id = Identifier.parse(start.getText());
-					start.setText(id.toReadableString());
-					start.setStyle(null);
-					start.setStyle(START_STYLE);
-					errorLabel.setVisible(false);
-					end.requestFocus();
-				} else {
-					errorLabel.setVisible(true);
-					start.selectAll();
-				}
-				break;
-			case ESCAPE:
-				start.getParent().requestFocus();
-				break;
-			default:
+
+		if (event.getCode() == KeyCode.ENTER) {
+			if (Utilities.checkAccount(start.getText())) {
+				var id = Identifier.parse(start.getText());
+				start.setText(id.toReadableString());
+				start.setStyle(null);
+				start.setStyle(START_STYLE);
+				errorLabel.setVisible(false);
+				end.requestFocus();
+				return;
+			}
+			errorLabel.setVisible(true);
+			start.selectAll();
+		} else if (event.getCode() == KeyCode.ESCAPE) {
+			start.getParent().requestFocus();
 		}
 	}
 
@@ -898,7 +894,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			invalidTransferTotal.setVisible(false);
 		}
 
-		if (toTransferTable.getItems().size() == 0 || fromTransferTable.getItems().size() == 0) {
+		if (toTransferTable.getItems().isEmpty() || fromTransferTable.getItems().isEmpty()) {
 			displayAndLogInformation("Missing sender or recipient");
 			flag = false;
 		}
@@ -960,8 +956,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		menuItem.setOnAction((event) -> {
-			if (table.getItems().size() > 0) {
+		menuItem.setOnAction(event -> {
+			if (!table.getItems().isEmpty()) {
 				var selectedItem = table.getSelectionModel().getSelectedItem();
 				table.getItems().remove(selectedItem);
 				updateTotalAmount();
@@ -1023,7 +1019,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				amountTextField, errorLabel));
 
 		accountIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				accountTFRemoveFocus(accountIDTextField, errorLabel);
 			} else {
 				errorLabel.setVisible(false);
@@ -1042,7 +1038,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 
 		amountTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				setHBarFormat(amountTextField);
 			}
 		});
@@ -1238,7 +1234,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						ZoneId.of(timeZone.getID())).toInstant()).asJSON());
 		outputObject.addProperty("validIncrement", Integer.parseInt(intervalTextField.getText()));
 		outputObject.addProperty("transactionValidDuration", controller.getTxValidDuration());
-		outputObject.addProperty("memo", (memoField.getText() == null) ? "" : memoField.getText());
+		outputObject.addProperty("memo", memoField.getText() == null ? "" : memoField.getText());
 		outputObject.addProperty("transactionFee",
 				Long.parseLong(Utilities.stripHBarFormat(fileUpdateTransactionFee.getText())));
 
@@ -1432,7 +1428,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Transfer fields
 		//Get transfers from tables
-		if (fromTransferTable.getItems().size() > 0 && toTransferTable.getItems().size() > 0) {
+		if (!fromTransferTable.getItems().isEmpty()  && !toTransferTable.getItems().isEmpty()) {
 			List<AccountAmountStrings> transfers = new ArrayList<>();
 			for (var a :
 					fromTransferTable.getItems()) {
@@ -1465,8 +1461,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		// Expiration time
 		if (datePickerSystem != null) {
 			input.addProperty(EXPIRATION_DATE_TIME, new Timestamp(
-					(getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-							ZoneId.of(timeZoneSystem.getID()))).toInstant()).asRFCString());
+					getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
+							ZoneId.of(timeZoneSystem.getID())).toInstant()).asRFCString());
 		}
 		return input;
 	}
@@ -1647,7 +1643,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					return;
 				}
 				var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
-				controller.setLastTransactionsDirectory((new File(s)));
+				controller.setLastTransactionsDirectory(new File(s));
 				var fs = FileAdapterFactory.getAdapter(s);
 				if (type.equals(CreateTransactionType.FILE_UPDATE)) {
 					prepareZipAndComment(fs);
@@ -1796,25 +1792,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// region FOCUS EVENTS
 		hour.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info(String.format("Hours text field changed to: %s", hour.getText()));
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		minute.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info(String.format("Minute text field changed to: %s", minute.getText()));
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		seconds.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info(String.format("Second text field changed to: %s", seconds.getText()));
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (date.getValue() != null && !newPropertyValue) {
+			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info(String.format("Date changed to: %s", date.getValue().toString()));
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
@@ -1878,7 +1874,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 
 			var localDateTime =
-					LocalDateTime.of((datePicker.getValue() != null) ? datePicker.getValue() :
+					LocalDateTime.of(datePicker.getValue() != null ? datePicker.getValue() :
 							LocalDate.now(), LocalTime.of(hour, minute, second));
 
 			var transactionValidStart = Date.from(localDateTime.atZone(zoneId).toInstant());
@@ -1913,7 +1909,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 		textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				accountTFRemoveFocus(textField, errorLabel);
 			}
 		});
@@ -1947,7 +1943,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 
 		textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				setHBarFormat(textField);
 			}
 		});
@@ -1971,7 +1967,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var i = 0;
 		var txFile = new File(tempStorage + File.separator + filenames + ".tx");
 		while (txFile.exists()) {
-			txFile = new File(tempStorage + File.separator + filenames + (i++) + ".tx");
+			txFile = new File(tempStorage + File.separator + filenames + i++ + ".tx");
 		}
 
 		try {
@@ -2004,7 +2000,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 
 			FileUtils.deleteDirectory(new File(tempStorage));
-			assert !(new File(tempStorage).exists());
+			assert !new File(tempStorage).exists();
 
 		} catch (Exception e) {
 			throw new HederaClientException("Error while deleting temporary files");
@@ -2103,7 +2099,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var hour = Integer.parseInt(hours.getText());
 		var minute = Integer.parseInt(minutes.getText());
 		var second = Integer.parseInt(seconds.getText());
-		var localDateTime = LocalDateTime.of((dates.getValue() != null) ? dates.getValue() :
+		var localDateTime = LocalDateTime.of(dates.getValue() != null ? dates.getValue() :
 				LocalDate.now(), LocalTime.of(hour, minute, second));
 
 		return Date.from(localDateTime.atZone(zoneId).toInstant());
@@ -2118,7 +2114,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 		timeField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info(String.format("Time field changed to: %s", timeField.getText()));
 				checkTimeField(timeField, limit);
 			}
@@ -2135,7 +2131,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 		currencyField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				setHBarFormat(currencyField);
 			}
 		});
@@ -2145,7 +2141,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		intField.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixTimeTextField(intField, newValue, "\\d*", REGEX));
 		intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (!newPropertyValue) {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
 				try {
 					intField.setText(String.valueOf(Math.min(Integer.parseInt(intField.getText()), limit)));
 				} catch (NumberFormatException e) {

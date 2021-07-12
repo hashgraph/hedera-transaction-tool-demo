@@ -409,7 +409,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key));
 		List<String> knownKeys = new ArrayList<>();
 		for (var key : flatKey) {
-			var keyName = controller.keyStructureUtility.showKeyString(key);
+			var keyName = controller.showKeyString(key);
+
 			if (keyName.endsWith(PUB_EXTENSION)) {
 				knownKeys.add(keyName);
 			}
@@ -480,7 +481,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			var creationTime = getFileDateString(filePath);
 
-			var keyTreeView = controller.keyStructureUtility.buildKeyTreeView(info.key);
+			var keyTreeView = controller.buildKeyTreeView(info.key);
 			double height = 28;
 			keyTreeView.setPrefHeight((keyTreeView.expandedItemCountProperty().get() + 1) * height);
 

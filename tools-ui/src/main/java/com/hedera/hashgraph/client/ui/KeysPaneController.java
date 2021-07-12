@@ -376,7 +376,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private void populatePublicKeysMap() {
 		Map<String, List<String>> accountKeyMap = new HashMap<>();
 		try {
-			controller.keyStructureUtility.loadPubKeys();
+			controller.loadPubKeys();
 			if (new File(controller.getPreferredStorageDirectory() + "/Accounts").mkdirs()) {
 				logger.info("Accounts folder created");
 			}
@@ -564,7 +564,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
 		List<String> knownKeys = new ArrayList<>();
 		for (var key : flatKey) {
-			var keyName = controller.keyStructureUtility.showKeyString(key);
+			var keyName = controller.showKeyString(key);
 			if (keyName.endsWith(PUB_EXTENSION)) {
 				knownKeys.add(keyName);
 			}
