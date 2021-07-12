@@ -944,7 +944,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var fileService = FileAdapterFactory.getAdapter(remoteLocation);
 		assert fileService != null;
 
-		// todo: fix for USB
 		var remoteDestination = outputFolder + ((fileService.getPath().contains("Volumes")) ? "" : user);
 
 		if (remoteDestination.contains("Volumes")) {

@@ -65,8 +65,6 @@ public class SettingsPaneController {
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
 
-	// todo move to config file
-
 	public TextField loadStorageTextField;
 	public TextField pathTextFieldSP;
 	public TextField emailTextFieldSP;

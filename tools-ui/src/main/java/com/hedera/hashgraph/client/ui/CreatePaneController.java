@@ -561,7 +561,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void loadAccountNicknames() {
-		// todo: fix this one
 		try {
 			var nicknames =
 					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
@@ -684,7 +683,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		var input = buildJsonInput();
-		// todo: build Json  input from form data;
 
 		try {
 			var tx = new ToolCryptoCreateTransaction(input);
@@ -796,8 +794,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
 				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
-
-				//todo decide what to do with the key
 				controller.keyStructureUtility.loadPubKeys();
 				var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
 				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
@@ -2023,7 +2019,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void moveToOutput(List<File> files, FileService remoteLocation) {
 		var remote = remoteLocation.getPath() + File.separator;
 		for (var f : files) {
-			// todo remove FileService
 			try {
 				var outputFolder = File.separator;
 				if (controller.properties.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {

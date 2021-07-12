@@ -239,8 +239,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 					.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
 					.enterStringUsername("test1.council2@hederacouncil.org");
 
-			//todo: Add negative check for email
-
 			assertTrue(find("#confirmAddFolderButton").isVisible());
 			pane.acceptOneDrive();
 			logger.info("Path and email are verified: Add OneDrive folder button is visible");

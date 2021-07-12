@@ -74,7 +74,7 @@ public class Constants {
 	// endregion
 
 	// region APP DEFAULTS
-	public static final boolean DEVELOPMENT = false; 
+	public static final boolean DEVELOPMENT = false;
 	public static final int DRIVE_LIMIT = 5;
 	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;

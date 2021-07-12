@@ -90,8 +90,6 @@ class ControllerTest {
 				assertEquals(recoveredMap.get(key), testMap.get(key));
 			}
 
-			// todo: Add different types to the test
-			// todo: Revisit names
 		} catch (Exception e) {
 			logger.error(e);
 		}
