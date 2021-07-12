@@ -286,52 +286,52 @@ public class SettingsPaneController {
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
-						generateRecordLabel.setText((t1) ? "yes" : "no");
+						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
 						controller.setGenerateRecord(t1);
 					});
 
 			// endregion
 			// region FOCUS EVENTS
 			hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Hours text field changed to: %s", hoursTextField.getText()));
 					checkHours();
 				}
 			});
 			minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Minute text field changed to: %s", minutesTextField.getText()));
 					checkMinutes();
 				}
 			});
 			secondsTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Second text field changed to: %s", secondsTextField.getText()));
 					checkSeconds();
 				}
 			});
 			nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Node ID text field changed to: %s", nodeIDTextField.getText()));
 					checkNodeID();
 				}
 			});
 			txValidDurationTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Transaction valid duration text field changed to: %s",
 							txValidDurationTextField.getText()));
 					checkTransactionValidDuration();
 				}
 			});
 			autoRenewPeriodTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(String.format("Auto renew period text field changed to: %s",
 							autoRenewPeriodTextField.getText()));
 					checkAutoRenewPeriod();
 				}
 			});
 			defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (!newPropertyValue) {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
 					logger.info(
 							String.format("Transaction fee text field changed to: %s",
 									defaultTransactionFee.getText()));

@@ -57,8 +57,6 @@ public class Utilities {
 
 	private static final Logger logger = LogManager.getLogger(Utilities.class);
 	public static final String RED_BORDER_STYLE = "-fx-border-color: red";
-	private static Tooltip customTooltip;
-
 
 	/***
 	 *
@@ -238,7 +236,7 @@ public class Utilities {
 	 * 		the text that will be displayed
 	 */
 	public static void showTooltip(Pane owner, Control control, String tooltipText) {
-		customTooltip = new Tooltip();
+		var customTooltip = new Tooltip();
 		var p = control.localToScene(15.0, 15.0);
 		customTooltip.setText(tooltipText);
 		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");

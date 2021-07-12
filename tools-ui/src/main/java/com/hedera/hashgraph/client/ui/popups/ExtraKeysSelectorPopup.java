@@ -48,7 +48,7 @@ import static java.lang.Math.sqrt;
 
 public class ExtraKeysSelectorPopup {
 	protected static final String PK_EXTENSION = ".pem";
-	private final static Logger logger = LogManager.getLogger(ExtraKeysSelectorPopup.class);
+	private static final Logger logger = LogManager.getLogger(ExtraKeysSelectorPopup.class);
 
 	/**
 	 * Displays a list of checkboxes corresponding to the keys that have been imported to the app.

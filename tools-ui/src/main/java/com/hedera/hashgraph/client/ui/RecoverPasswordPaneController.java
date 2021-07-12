@@ -118,7 +118,6 @@ public class RecoverPasswordPaneController {
 				.withMnemonicErrorMessage(recoverMnemonicErrorMessage)
 				.withPhraseBox(recoverPhraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
-				.withPasteFromClipBoardButton(pasteFromClipBoardButton)
 				.withGenerateKeys(recoverPhraseButton)
 				.withFinishBox(recoverPasswordVBox)
 				.build();
@@ -317,7 +316,7 @@ public class RecoverPasswordPaneController {
 				true,
 				"CONTINUE", "CANCEL");
 
-		if (!answer) {
+		if (Boolean.FALSE.equals(answer)) {
 			return;
 		}
 

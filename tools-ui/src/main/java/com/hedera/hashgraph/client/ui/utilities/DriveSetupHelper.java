@@ -597,7 +597,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
 
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1 && emailGreenCheck.isVisible()) {
+			if (Boolean.TRUE.equals(t1) && emailGreenCheck.isVisible()) {
 				drivesErrorLabel.setVisible(false);
 			}
 		});
@@ -613,7 +613,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 
 		// If both green checks are on, there should be no error messages showing.
 		emailGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1 && pathGreenCheck.isVisible()) {
+			if (Boolean.TRUE.equals(t1)  && pathGreenCheck.isVisible()) {
 				drivesErrorLabel.setVisible(false);
 			}
 		});

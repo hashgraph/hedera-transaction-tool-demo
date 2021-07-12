@@ -36,10 +36,8 @@ public class ReloadFilesService extends ScheduledService<Void> {
 		return new Task<>() {
 			@Override
 			protected Void call() {
-				Platform.runLater(() -> {
-					controller.initializeHomePane();
-					// other auto reloading panes can go here
-				});
+				// other auto reloading panes can go here
+				Platform.runLater(controller::initializeHomePane);
 				return null;
 			}
 		};

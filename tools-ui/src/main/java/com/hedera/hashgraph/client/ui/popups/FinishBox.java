@@ -58,14 +58,13 @@ public class FinishBox {
 		var vBox = new VBox();
 		vBox.getChildren().add(label1);
 
-		if (transactions.size() > 0) {
+		if (!transactions.isEmpty()) {
 			var label2 = new Label("The following keys were created as part of the setup");
 			label2.setWrapText(true);
 			label2.setStyle("-fx-font-size: 16");
 			vBox.getChildren().add(label2);
 
-			for (var t : transactions
-			) {
+			for (var t : transactions) {
 				var name = t.substring(t.lastIndexOf('/'));
 				var file = new Hyperlink(name);
 				file.setStyle("-fx-font-size: 16");

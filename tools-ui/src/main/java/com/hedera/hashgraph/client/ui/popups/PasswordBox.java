@@ -45,9 +45,12 @@ public class PasswordBox {
 					" " +
 					"again. When prompted to enter the recovery phrase, please use the one from your records.";
 	private static final String WARNING_MESSAGE =
-			"This process will change your password.\n You will need to have your recovery phrase at hand to enter it " +
+			"This process will change your password.\n You will need to have your recovery phrase at hand to enter it" +
+					" " +
 					"at the prompt.\n Please be advised that the Keys that were generated and stored with the old " +
-					"password will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts and " +
+					"password will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts " +
+					"and" +
+					" " +
 					"Keys\" page to change the password on your Keys";
 	public static final String NO_STRING = "CANCEL";
 	public static final String RESET = "RESET";
@@ -136,9 +139,9 @@ public class PasswordBox {
 
 	private static void resetPassword() {
 		var answer = PopupMessage.display(RESET_PASSWORD_TITLE, WARNING_MESSAGE, true, RESET, NO_STRING);
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			var confirm = PopupMessage.display(RESET_PASSWORD_TITLE, "Are you sure?", true, RESET, NO_STRING);
-			if (confirm) {
+			if (Boolean.TRUE.equals(confirm)) {
 				var defaultStorage = System.getProperty(
 						"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 				var properties = new UserAccessibleProperties(defaultStorage + USER_PROPERTIES, "");

@@ -89,4 +89,24 @@ public class AccountLineInformation implements Comparable {
 		return this.getAccount().compareTo(((AccountLineInformation) o).getAccount());
 
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof AccountLineInformation)) {
+			return false;
+		}
+		var line = (AccountLineInformation) obj;
+		return this.nickname.equals(line.getNickname()) &&
+				this.account.equals(line.getAccount()) &&
+				this.balance.equals(line.getBalance())
+				&& this.signer.equals(line.signer);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + nickname.hashCode() + account.hashCode() + balance.hashCode() + signer.hashCode();
+	}
 }

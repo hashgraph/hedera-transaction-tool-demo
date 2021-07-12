@@ -49,12 +49,10 @@ public class AutoCompleteTextField extends TextField {
 		entriesPopup = new ContextMenu();
 		textProperty().addListener((observableValue, s, s2) -> {
 			var text = s2.toLowerCase().replace(" ", "");
-			if (getText().length() == 0) {
-				entriesPopup.hide();
-			} else {
+			if (getText().length() != 0) {
 				noise.set(false);
 				var searchResult = dictionary.suggestWords(text);
-				if (searchResult.size() > 0) {
+				if (!searchResult.isEmpty()) {
 					setStyle(styleString + "-fx-text-fill: black");
 					populatePopup(searchResult);
 					if (!entriesPopup.isShowing()) {
@@ -71,6 +69,8 @@ public class AutoCompleteTextField extends TextField {
 					setStyle(styleString + "-fx-text-fill: red");
 					entriesPopup.hide();
 				}
+			} else {
+				entriesPopup.hide();
 			}
 		});
 
@@ -124,7 +124,7 @@ public class AutoCompleteTextField extends TextField {
 	 * @return the text of the first word in the popup
 	 */
 	public String getFirstItem() {
-		if (entriesPopup.getItems().size() > 0) {
+		if (!entriesPopup.getItems().isEmpty()) {
 			return ((Label) ((CustomMenuItem) entriesPopup.getItems().get(0)).getContent()).getText();
 		}
 		return "";
@@ -166,9 +166,5 @@ public class AutoCompleteTextField extends TextField {
 
 	}
 
-	@Override
-	public void paste() {
-		super.paste();
-	}
 }
 

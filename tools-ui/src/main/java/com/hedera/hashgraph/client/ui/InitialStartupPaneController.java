@@ -206,7 +206,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				.withPhraseBox(phraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
 				.withCopyToClipBoardButton(copyToClipBoardButton)
-				.withPasteFromClipBoardButton(pasteFromClipBoardButton)
 				.withGenerateKeys(generateKeys)
 				.withFinishBox(finishBox)
 				.build();

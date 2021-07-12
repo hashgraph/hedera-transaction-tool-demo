@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
  */
 public class AutoCompleteNickname extends TextField {
 	private final ContextMenu entriesPopup;
-	private final String styleString =
+	private static final String styleString =
 			"-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
 					"-fx-border-radius: 10;";
 	private final Set<String> names;
@@ -85,7 +85,7 @@ public class AutoCompleteNickname extends TextField {
 				entriesPopup.hide();
 			} else if (!noise.get()) {
 				var searchResult = suggestWords(text);
-				if (searchResult.size() > 0) {
+				if (!searchResult.isEmpty()) {
 					setStyle(styleString + "-fx-text-fill: black");
 					valid.set(true);
 					populatePopup(searchResult);
@@ -154,7 +154,7 @@ public class AutoCompleteNickname extends TextField {
 	 * @return the text of the first word in the popup
 	 */
 	public String getFirstItem() {
-		if (entriesPopup.getItems().size() > 0) {
+		if (!entriesPopup.getItems().isEmpty()) {
 			return ((Label) ((CustomMenuItem) entriesPopup.getItems().get(0)).getContent()).getText();
 		}
 		return "";

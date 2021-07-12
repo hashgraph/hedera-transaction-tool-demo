@@ -275,7 +275,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 			recoverIndexField.focusedProperty().addListener(
 					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (!newValue) {
+						if (Boolean.FALSE.equals(newValue)) {
 							if (!recoverIndexField.getText().isEmpty()) {
 								var index = Integer.parseInt(recoverIndexField.getText());
 
@@ -296,7 +296,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 			recoverNicknameField.focusedProperty().addListener(
 					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (!newValue) {
+						if (Boolean.FALSE.equals(newValue)) {
 							if (!recoverNicknameField.getText().isEmpty() &&
 									indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
 									recoverIndexField.getText().isEmpty() &&
@@ -517,7 +517,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				}
 			});
 
-			if (signingKeysTableView.getItems().size() > 0) {
+			if (!signingKeysTableView.getItems().isEmpty()) {
 				signingKeysVBox.getChildren().add(signingKeysTableView);
 			}
 
@@ -550,7 +550,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private void showPrivateKeyCompletePopup(KeysTableRow rowData) {
 		var pubKeyAddress = publicKeysMap.get(rowData.getKeyName() + "." + PUB_EXTENSION);
 		var answer = CompleteKeysPopup.display(pubKeyAddress, true);
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			initializeKeysPane();
 		}
 	}
@@ -624,7 +624,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			orphanPEMs.clear();
 		}
 
-		if (missingHashPemList.size() > 0) {
+		if (!missingHashPemList.isEmpty()) {
 			try {
 				GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
 						MISSING_HASHCODE_MESSAGE);
@@ -902,7 +902,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 							"operation is irreversible", true,
 					ACCEPT_MESSAGE, "CANCEL");
 
-			if (!answer) {
+			if (Boolean.FALSE.equals(answer)) {
 				return;
 			}
 		}
