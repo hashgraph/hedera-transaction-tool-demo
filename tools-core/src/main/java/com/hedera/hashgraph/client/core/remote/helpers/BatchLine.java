@@ -156,17 +156,17 @@ public class BatchLine implements Comparable {
 		}
 
 		public Builder withAmount(String amountString) {
-			long amount;
+			long parsedAmount;
 			try {
-				amount = Long.parseLong(amountString);
+				parsedAmount = Long.parseLong(amountString);
 			} catch (NumberFormatException e) {
 				throw new HederaClientRuntimeException(String.format("Invalid amount: %s", amountString));
 			}
 
-			if (amount <= 0) {
+			if (parsedAmount <= 0) {
 				throw new HederaClientRuntimeException("Amount cannot be negative or zero");
 			}
-			this.amount = amount;
+			this.amount = parsedAmount;
 			return this;
 		}
 

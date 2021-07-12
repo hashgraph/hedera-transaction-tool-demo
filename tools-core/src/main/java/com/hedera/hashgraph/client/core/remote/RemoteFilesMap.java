@@ -67,7 +67,9 @@ public class RemoteFilesMap {
 	 * 		a list of remote files
 	 */
 	public RemoteFilesMap(final List<RemoteFile> fileList) {
-		assert (fileList != null);
+		if (fileList == null) {
+			return;
+		}
 		files = new HashMap<>();
 		for (var remoteFile : fileList) {
 			files.put(remoteFile.getName(), remoteFile);
@@ -117,16 +119,16 @@ public class RemoteFilesMap {
 	public RemoteFilesMap fromFile(FileService fileService, String version) {
 		String location = fileService.getName().equals("Volumes") || fileService.getName().equals(
 				"TransactionTools") ? "" : "InputFiles";
-		List<FileDetails> files;
+		List<FileDetails> fileDetails;
 		try {
-			files = fileService.listFiles(location);
+			fileDetails = fileService.listFiles(location);
 		} catch (HederaClientException e) {
 			logger.info(String.format("Files folder not found in FileService %s", fileService.getName()));
 			return new RemoteFilesMap();
 		}
 
 		List<RemoteFile> remoteFiles = new ArrayList<>();
-		for (var f : files) {
+		for (var f : fileDetails) {
 			try {
 				if (validFile(f)) {
 					var type = getType(FilenameUtils.getExtension(f.getName()));
@@ -152,20 +154,7 @@ public class RemoteFilesMap {
 							break;
 						case SOFTWARE_UPDATE:
 						case CONFIG:
-							remoteFile = new SoftwareUpdateFile(f);
-
-							var splitVersion = (version).split(" ");
-							var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-							Date dateTime;
-							try {
-								dateTime = formatter.parse(splitVersion[3].replace(",", ""));
-							} catch (ParseException e) {
-								logger.error(e);
-								throw new HederaClientException(e);
-							}
-
-							((SoftwareUpdateFile) remoteFile).setOldVersion(splitVersion[1].replace(",", ""));
-							((SoftwareUpdateFile) remoteFile).setOldStamp(dateTime.getTime() / TO_MS);
+							remoteFile = getSoftwareUpdateFile(version, f);
 							break;
 						case METADATA:
 							remoteFile = new MetadataFile(f);
@@ -177,27 +166,7 @@ public class RemoteFilesMap {
 					if (remoteFile.isValid()) {
 						final var remoteLocation = new File(remoteFile.getParentPath() + "/History/" +
 								FilenameUtils.removeExtension(remoteFile.getName()).concat(".meta"));
-						if (remoteLocation.exists()) {
-							long lastDate = 0;
-							try {
-								var metadataActions =
-										new MetadataFile(remoteFile.getName()).getMetadataActions();
-
-								remoteFile.setParentPath(
-										FilenameUtils.removeExtension(remoteLocation.getPath()).concat(".").concat(
-												type.getExtension()));
-
-								for (var metadataAction : metadataActions) {
-									final var seconds = metadataAction.getTimeStamp().asDuration().getSeconds();
-									if (seconds > lastDate) {
-										lastDate = seconds;
-									}
-								}
-							} catch (HederaClientException e) {
-								logger.error(e);
-							}
-							remoteFile.setSignDateInSecs(lastDate);
-						}
+						validRemoteAction(type, remoteFile, remoteLocation);
 						remoteFiles.add(remoteFile);
 					}
 				}
@@ -231,6 +200,48 @@ public class RemoteFilesMap {
 			}
 		}
 		return new RemoteFilesMap(remoteFiles);
+	}
+
+	private void validRemoteAction(FileType type, RemoteFile remoteFile, File remoteLocation) {
+		if (remoteLocation.exists()) {
+			long lastDate = 0;
+			try {
+				var metadataActions =
+						new MetadataFile(remoteFile.getName()).getMetadataActions();
+
+				remoteFile.setParentPath(
+						FilenameUtils.removeExtension(remoteLocation.getPath()).concat(".").concat(
+								type.getExtension()));
+
+				for (var metadataAction : metadataActions) {
+					final var seconds = metadataAction.getTimeStamp().asDuration().getSeconds();
+					if (seconds > lastDate) {
+						lastDate = seconds;
+					}
+				}
+			} catch (HederaClientException e) {
+				logger.error(e);
+			}
+			remoteFile.setSignDateInSecs(lastDate);
+		}
+	}
+
+	private RemoteFile getSoftwareUpdateFile(String version, FileDetails f) throws HederaClientException {
+		SoftwareUpdateFile remoteFile = new SoftwareUpdateFile(f);
+
+		var splitVersion = version.split(" ");
+		var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+		Date dateTime;
+		try {
+			dateTime = formatter.parse(splitVersion[3].replace(",", ""));
+		} catch (ParseException e) {
+			logger.error(e);
+			throw new HederaClientException(e);
+		}
+
+		remoteFile.setOldVersion(splitVersion[1].replace(",", ""));
+		remoteFile.setOldStamp(dateTime.getTime() / TO_MS);
+		return remoteFile;
 	}
 
 	private static FileType getType(String extension) throws HederaClientException {

@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
@@ -201,7 +184,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		try {
 			var map =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), map));
 			feePayerLabel.setWrapText(true);
 			detailsGridPane.add(feePayerLabel, 1, 0);
@@ -225,7 +208,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		try {
-			nicknames = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
@@ -253,7 +236,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				setAccountAmounts(detailsGridPane, count++, senders);
 
 				detailsGridPane.add(new Label("Receivers: "), 0, count++);
-				setAccountAmounts(detailsGridPane, count++, receivers);
+				setAccountAmounts(detailsGridPane, count, receivers);
 				break;
 			case CRYPTO_CREATE:
 				var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
@@ -318,7 +301,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
 							true);
 					expirationTimeLabel.setWrapText(true);
-					detailsGridPane.add(expirationTimeLabel, 1, count++);
+					detailsGridPane.add(expirationTimeLabel, 1, count);
 				}
 				break;
 
@@ -340,10 +323,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		var keyName = FilenameUtils.getBaseName(pair.getLeft());
 		var tempStorage =
-				System.getProperty("java.io.tmpdir") + (LocalDate.now()).toString() + "/Transaction/" + keyName;
-		var finalZip = new File(
-				String.format("%s%s/%s-%s.zip", System.getProperty("java.io.tmpdir"),
-						(LocalDate.now()).toString(), this.getBaseName(), keyName));
+				System.getProperty("java.io.tmpdir") + LocalDate.now() + "/Transaction/" + keyName;
+		var finalZip = new File(System.getProperty("java.io.tmpdir") + LocalDate.now(),
+				this.getBaseName() + "-" + keyName + ".zip");
 
 		final var tempTxFile =
 				tempStorage + File.separator + this.getBaseName() + "." + Constants.TRANSACTION_EXTENSION;
@@ -361,7 +343,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			}
 
 			if (new File(tempStorage).mkdirs()) {
-				logger.info(String.format("Created temp folder %s", tempStorage));
+				logger.info("Created temp folder {}", tempStorage);
 			}
 
 			// Store a copy of the transaction
@@ -379,12 +361,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				assert file.isFile();
 			}
 
-			logger.info("Packing " + Arrays.toString(toPack) + " to " + tempStorage + ".zip");
+			logger.info("Packing {} to {}.zip", Arrays.toString(toPack), tempStorage);
 			ZipUtil.packEntries(toPack, finalZip);
 
 			for (var file : toPack) {
 				Files.deleteIfExists(file.toPath());
-				logger.info("Delete " + file.getName());
+				logger.info("Delete {}", file.getName());
 			}
 
 			FileUtils.deleteDirectory(new File(tempStorage));
@@ -432,7 +414,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 	}
 
-	private void displayKey(TreeView keyTreeView) {
+	private void displayKey(TreeView<String> keyTreeView) {
 		var window = new Stage();
 		keyTreeView.setStyle("-fx-font-size: 16");
 		var keysPane = new ScrollPane();

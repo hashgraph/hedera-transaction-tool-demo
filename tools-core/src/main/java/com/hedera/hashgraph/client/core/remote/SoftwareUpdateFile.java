@@ -122,6 +122,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return digest;
 	}
 
+	@Override
 	public List<FileActions> getActions() {
 		return actions;
 	}

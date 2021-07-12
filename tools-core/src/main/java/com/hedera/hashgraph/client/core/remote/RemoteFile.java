@@ -492,7 +492,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return a set of account IDs
 	 */
 	public Set<AccountId> getSigningAccounts() {
-		return null;
+		return new HashSet<>();
 	}
 
 	/**
@@ -634,10 +634,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		var charsLeft = new Label(String.format("Characters left: %d", COMMENT_FIELD_CHARACTER_LIMIT));
 		commentArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue.intValue() > oldValue.intValue()) {
-				if (commentArea.getText().length() >= COMMENT_FIELD_CHARACTER_LIMIT) {
-					commentArea.setText(commentArea.getText().substring(0, COMMENT_FIELD_CHARACTER_LIMIT));
-				}
+			if (newValue.intValue() > oldValue.intValue() && commentArea.getText().length() >= COMMENT_FIELD_CHARACTER_LIMIT) {
+				commentArea.setText(commentArea.getText().substring(0, COMMENT_FIELD_CHARACTER_LIMIT));
 			}
 			charsLeft.setText(String.format("Characters left: %d",
 					COMMENT_FIELD_CHARACTER_LIMIT - commentArea.getText().length()));
