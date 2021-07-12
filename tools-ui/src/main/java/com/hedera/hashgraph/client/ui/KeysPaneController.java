@@ -252,21 +252,18 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 					createKeysButton.setDisable(false);
 					nicknameErrorLabel.setVisible(false);
 				}
-				switch (keyEvent.getCode()) {
-					case ENTER:
-						if (!exists) {
-							try {
-								generateKeysEvent();
-							} catch (HederaClientException e) {
-								logger.error(e);
-								controller.displaySystemMessage(e);
-							}
+
+				if (keyEvent.getCode() == KeyCode.ENTER) {
+					if (!exists) {
+						try {
+							generateKeysEvent();
+						} catch (HederaClientException e) {
+							logger.error(e);
+							controller.displaySystemMessage(e);
 						}
-						break;
-					case TAB:
-						createKeysButton.requestFocus();
-						break;
-					default:
+					}
+				} else if (keyEvent.getCode() == KeyCode.TAB) {
+					createKeysButton.requestFocus();
 				}
 			});
 

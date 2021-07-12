@@ -286,8 +286,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * If the user presses the reset button at any time, the process should restart from a clean state
 	 */
 	public void resetSetup() {
-		if (PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes",
-				"No")) {
+		if (Boolean.TRUE.equals(
+				PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes", "No"))) {
 			deleteDirectory(new File(controller.getPreferredStorageDirectory()));
 			controller.resetProperties();
 			initializeStartupPane();
