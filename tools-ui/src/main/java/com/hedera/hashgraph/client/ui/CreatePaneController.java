@@ -658,8 +658,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupOutputDirectoriesList() {
 		try {
-			if (controller.properties.getOneDriveCredentials() != null) {
-				var inputs = controller.properties.getOneDriveCredentials().keySet();
+			if (controller.getOneDriveCredentials() != null) {
+				var inputs = controller.getOneDriveCredentials().keySet();
 				outputDirectories = new ArrayList<>();
 				for (var s :
 						inputs) {
@@ -1237,7 +1237,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				new Timestamp(getDate(datePicker, hourField, minuteField, secondsField,
 						ZoneId.of(timeZone.getID())).toInstant()).asJSON());
 		outputObject.addProperty("validIncrement", Integer.parseInt(intervalTextField.getText()));
-		outputObject.addProperty("transactionValidDuration", controller.properties.getTxValidDuration());
+		outputObject.addProperty("transactionValidDuration", controller.getTxValidDuration());
 		outputObject.addProperty("memo", (memoField.getText() == null) ? "" : memoField.getText());
 		outputObject.addProperty("transactionFee",
 				Long.parseLong(Utilities.stripHBarFormat(fileUpdateTransactionFee.getText())));
@@ -1382,17 +1382,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		// Use default fee for transactions (note: Large binary files might override this)
 		var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, controller.properties.getDefaultTxFee());
+		feeJson.addProperty(TINY_BARS, controller.getDefaultTxFee());
 		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
 
 		// Use default for transaction valid duration
-		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, controller.properties.getTxValidDuration());
+		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, controller.getTxValidDuration());
 
 		// Node ID
 		input.add(NODE_ID_FIELD_NAME, Identifier.parse(nodeAccountField.getText()).asJSON());
 
 		// Network
-		input.addProperty(NETWORK_FIELD_NAME, controller.properties.getNetworkProperty());
+		input.addProperty(NETWORK_FIELD_NAME, controller.getNetworkProperty());
 
 
 		// Crypto create account fields
@@ -1611,7 +1611,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				outputDirectories) {
 			var menuItem = new MenuItem(s.getPath().replace(System.getProperty("user.home") + File.separator, ""));
 			logger.info("Adding menu-item: \"{}\"", menuItem.getText());
-			var email = controller.properties.getEmailFromMap(s.getPath());
+			var email = controller.getEmailFromMap(s.getPath());
 			controller.setUserName(email);
 
 			menuItem.setOnAction(actionEvent -> {
@@ -1709,7 +1709,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		memoField.lengthProperty().addListener((observable, oldValue, newValue) -> setTextSizeLimit(memoField,
 				MEMO_LENGTH, oldValue, newValue));
 
-		nodeAccountField.setText(controller.properties.getDefaultNodeID());
+		nodeAccountField.setText(controller.getDefaultNodeID());
 
 		configureDateTime(datePicker, hourField, minuteField, secondsField, createUTCTimeLabel, LocalDateTime.now(),
 				timeZone);
@@ -2021,8 +2021,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		for (var f : files) {
 			try {
 				var outputFolder = File.separator;
-				if (controller.properties.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {
-					var user = controller.properties.getEmailFromMap(remoteLocation.getPath());
+				if (controller.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {
+					var user = controller.getEmailFromMap(remoteLocation.getPath());
 					outputFolder = "".equals(user) ? File.separator : "/OutputFiles/" + user + File.separator;
 					logger.info("Exporting file: {}", f.getAbsolutePath());
 				}
@@ -2053,7 +2053,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			ScrollPane newKey) {
 
 		cleanCommonFields(hour, minute, seconds, date, feePayer, node, memo);
-		autoRenew.setText(String.valueOf(controller.properties.getAutoRenewPeriod()));
+		autoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		receiverSignatureRequired.setSelected(false);
 		createCommentsTextArea.clear();
 		setupNewKeyObject();
@@ -2064,12 +2064,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void cleanCommonFields(TextField hour, TextField minute, TextField seconds, DatePicker date,
 			TextField feePayer, TextField node, TextArea memo) {
-		hour.setText(String.format("%02d", controller.properties.getDefaultHours()));
-		minute.setText(String.format("%02d", controller.properties.getDefaultMinutes()));
-		seconds.setText(String.format("%02d", controller.properties.getDefaultSeconds()));
+		hour.setText(String.format("%02d", controller.getDefaultHours()));
+		minute.setText(String.format("%02d", controller.getDefaultMinutes()));
+		seconds.setText(String.format("%02d", controller.getDefaultSeconds()));
 		date.setValue(null);
 		feePayer.clear();
-		node.setText(controller.properties.getDefaultNodeID());
+		node.setText(controller.getDefaultNodeID());
 		memo.clear();
 		createUTCTimeLabel.setText("");
 	}

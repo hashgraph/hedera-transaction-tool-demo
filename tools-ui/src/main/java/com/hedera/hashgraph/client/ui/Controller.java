@@ -132,9 +132,21 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 
-	public UserAccessibleProperties properties;
-	Pane lastPane = new Pane();
-	public Pane thisPane = new Pane();
+	private UserAccessibleProperties properties;
+
+	public void setProperties(UserAccessibleProperties properties) {
+		this.properties = properties;
+	}
+
+	private Pane thisPane = new Pane();
+
+	public Pane getThisPane() {
+		return thisPane;
+	}
+
+	public void setThisPane(Pane thisPane) {
+		this.thisPane = thisPane;
+	}
 
 	// sub controllers
 	@FXML
@@ -461,7 +473,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		initialStartupPane.setVisible(false);
 		recoverPasswordPane.setVisible(false);
 
-		lastPane = thisPane;
+		Pane lastPane = thisPane;
 		lastPane.setVisible(false);
 		thisPane = next;
 		thisPane.setVisible(true);
@@ -667,6 +679,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return new byte[SALT_LENGTH];
 	}
 
+	//region PROPERTIES
 	/**
 	 * Determines which algorithm was used to encrypt the mnemonic
 	 *
@@ -675,4 +688,125 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public boolean isLegacyMnemonic() {
 		return properties.isLegacy();
 	}
+
+	public void setAccountInfoMap(Map<String, String> accountInfos) {
+		properties.setAccountInfoMap(accountInfos);
+	}
+
+	public void setLegacy(boolean b) {
+		properties.setLegacy(b);
+	}
+
+	public void resetProperties() {
+		properties.resetProperties();
+	}
+
+	public void setOneDriveCredentials(Map<String, String> objectObjectHashMap) {
+		properties.setOneDriveCredentials(objectObjectHashMap);
+	}
+
+	public UserAccessibleProperties getProperties() {
+		return this.properties;
+	}
+
+	public long getDefaultTxFee() {
+		return properties.getDefaultTxFee();
+	}
+
+	public int getDefaultHours() {
+		return properties.getDefaultHours();
+	}
+
+	public int getDefaultMinutes() {
+		return properties.getDefaultMinutes();
+	}
+
+	public int getDefaultSeconds() {
+		return properties.getDefaultSeconds();
+	}
+
+	public String getDefaultNodeID() {
+		return properties.getDefaultNodeID();
+	}
+
+	public long getTxValidDuration() {
+		return properties.getTxValidDuration();
+	}
+
+	public long getAutoRenewPeriod() {
+		return properties.getAutoRenewPeriod();
+	}
+
+	public void setGenerateRecord(boolean b) {
+		properties.setGenerateRecord(b);
+	}
+
+	public void setDefaultTxFee(long fee) {
+		properties.setDefaultTxFee(fee);
+	}
+
+	public void setDefaultSeconds(int s) {
+		properties.setDefaultSeconds(s);
+	}
+
+	public void setDefaultMinutes(int m) {
+		properties.setDefaultMinutes(m);
+	}
+
+	public void setDefaultHours(int h) {
+		properties.setDefaultHours(h);
+	}
+
+	public void setTxValidDuration(int duration) {
+		properties.setTxValidDuration(duration);
+	}
+
+	public void setAutoRenewPeriod(int duration) {
+		properties.setAutoRenewPeriod(duration);
+	}
+
+	public void setDefaultNodeID(String node) {
+		properties.setDefaultNodeID(node);
+	}
+
+	public int getMnemonicHashCode() {
+		return properties.getMnemonicHashCode();
+	}
+
+	public Map<String, String> getOneDriveCredentials() {
+		return properties.getOneDriveCredentials();
+	}
+
+	public String getHash() {
+		return properties.getHash();
+	}
+
+	public boolean hasSalt() {
+		return properties.hasSalt();
+	}
+
+	public void setHash(char[] password) throws HederaClientException {
+		properties.setHash(password);
+	}
+
+	public void setSalt(boolean b) {
+		properties.setSalt(b);
+	}
+
+	public void setMnemonicHashCode(int hashCode) {
+		properties.setMnemonicHashCode(hashCode);
+	}
+
+	public String getEmailFromMap(String path) {
+		return properties.getEmailFromMap(path);
+	}
+
+	public String getNetworkProperty() {
+		return properties.getNetworkProperty();
+	}
+
+	public boolean getGenerateRecord() {
+		return properties.getGenerateRecord();
+	}
+	//endregion
 }

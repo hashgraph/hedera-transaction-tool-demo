@@ -265,13 +265,13 @@ public class RecoverPasswordPaneController {
 		recoverAppPasswordField.setDisable(true);
 		recoverReEnterPasswordField.setDisable(true);
 		recoverChangePasswordButton.setDisable(true);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 
 		// Store the mnemonic and password hash
 		Platform.runLater(() -> {
 			recoverChangePasswordButton.setVisible(false);
 			try {
-				controller.properties.setHash(password);
+				controller.setHash(password);
 				mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
 			} catch (HederaClientException e) {
 				logger.error(e.getMessage());

@@ -683,7 +683,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	private void addHistory(GridPane detailsGridPane) throws HederaClientException {
 		var rowCount = detailsGridPane.getRowCount();
 		var signingHistory = getSigningHistory();
-		if (signingHistory.size() == 0) {
+		if (signingHistory.isEmpty()) {
 			return;
 		}
 		var accepted = false;

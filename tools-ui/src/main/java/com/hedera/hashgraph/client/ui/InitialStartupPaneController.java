@@ -266,7 +266,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		}
 
 		controller.setSetupPhase(SetupPhase.NORMAL_OPERATION_PHASE);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 		controller.homePane.setVisible(true);
 		controller.setDisableButtons(false);
 
@@ -289,7 +289,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		if (PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes",
 				"No")) {
 			deleteDirectory(new File(controller.getPreferredStorageDirectory()));
-			controller.properties.resetProperties();
+			controller.resetProperties();
 			initializeStartupPane();
 		}
 	}
@@ -298,7 +298,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Choose a directory (input folder)
 	 */
 	public void browseNewFolderAction() {
-		var directory = BrowserUtilities.browseDirectories("", controller.thisPane);
+		var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 		if (directory.isEmpty()) {
 			return;
 		}
@@ -373,7 +373,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	public void generatePassphraseEvent() {
 		mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), true);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 	}
 
 	/**
@@ -407,7 +407,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	private void resetDrivesBox() {
 		if (new File(controller.getPreferredStorageDirectory() + "/Files/user.properties").exists()) {
-			controller.properties.setOneDriveCredentials(new HashMap<>());
+			controller.setOneDriveCredentials(new HashMap<>());
 		}
 		drivesBox.setVisible(false);
 		transactionFoldersVBoxIS.getChildren().clear();
@@ -501,7 +501,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				if (location.isDirectory()) {
 					String directory;
 					if (hiddenPathInitial.getText().isEmpty()) {
-						directory = BrowserUtilities.browseDirectories("", controller.thisPane);
+						directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 					} else {
 						directory = hiddenPathInitial.getText();
 						hiddenPathInitial.clear();

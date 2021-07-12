@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -250,9 +233,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void loadRemoteFilesMap(String version) throws HederaClientException {
-		if (controller.properties.getOneDriveCredentials() != null && !controller.properties.getOneDriveCredentials().isEmpty()) {
+		if (controller.getOneDriveCredentials() != null && !controller.getOneDriveCredentials().isEmpty()) {
 			// Load remote files
-			var emailMap = controller.properties.getOneDriveCredentials();
+			var emailMap = controller.getOneDriveCredentials();
 			var keyMap = emailMap.keySet();
 			List<String> inputFolder = new ArrayList<>(keyMap);
 			inputFolder.add("USB");
@@ -648,7 +631,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 
 		output = rf.getParentPath().replace(INPUT_FILES, OUTPUT_FILES);
-		user = controller.properties.getEmailFromMap(new File(rf.getParentPath()).getParent());
+		user = controller.getEmailFromMap(new File(rf.getParentPath()).getParent());
 		for (var pair : pairs) {
 			try {
 				signTransactionAndComment(rf, pair);
@@ -857,7 +840,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	private String buildCommentFile(RemoteFile rf, TextArea comment, String name) throws IOException {
 		var userComments = new UserComments.Builder()
-				.withAuthor(controller.properties.getEmailFromMap(rf.getParentPath()))
+				.withAuthor(controller.getEmailFromMap(rf.getParentPath()))
 				.withComment(comment.getText())
 				.build();
 
@@ -881,8 +864,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				break;
 			case BATCH:
 				assert rf instanceof BatchFile;
-				((BatchFile) rf).setTransactionFee(controller.properties.getDefaultTxFee());
-				((BatchFile) rf).setTxValidDuration(controller.properties.getTxValidDuration());
+				((BatchFile) rf).setTransactionFee(controller.getDefaultTxFee());
+				((BatchFile) rf).setTxValidDuration(controller.getTxValidDuration());
 				createSignedTransaction(rf, pair);
 				break;
 			default:
@@ -938,7 +921,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void moveToOutput(List<File> zipFiles, String remoteLocation) throws HederaClientException {
-		var emailFromMap = controller.properties.getEmailFromMap(remoteLocation);
+		var emailFromMap = controller.getEmailFromMap(remoteLocation);
 		var outputFolder =
 				("".equals(emailFromMap)) ? File.separator : File.separator + OUTPUT_FILES + File.separator;
 		var fileService = FileAdapterFactory.getAdapter(remoteLocation);

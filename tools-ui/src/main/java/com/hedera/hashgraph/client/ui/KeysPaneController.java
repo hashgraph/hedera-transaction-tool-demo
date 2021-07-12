@@ -201,8 +201,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void initializeKeysPane() {
 		try {
 
-			currentHashCode = String.valueOf(controller.properties.getMnemonicHashCode());
-			if (startup && SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.properties.getSetupPhase())) {
+			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
+			if (startup && SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 				initializeWordsGridPane();
 			}
 
@@ -734,8 +734,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void initializeOutputDirectories() {
 		try {
-			if (controller.properties.getOneDriveCredentials() != null) {
-				var inputs = controller.properties.getOneDriveCredentials().keySet();
+			if (controller.getOneDriveCredentials() != null) {
+				var inputs = controller.getOneDriveCredentials().keySet();
 				List<FileService> outputDirectories = new ArrayList<>();
 				for (var s :
 						inputs) {
@@ -974,7 +974,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void recoveryPassword() {
 		var password = recoveryPasswordField.getText().toCharArray();
 		var passwordAuthenticator = new PasswordAuthenticator();
-		if (passwordAuthenticator.authenticate(password, controller.properties.getHash())) {
+		if (passwordAuthenticator.authenticate(password, controller.getHash())) {
 			recoveryPasswordField.clear();
 			phrasePasswordErrorLabel.setVisible(false);
 			recoveryPasswordVBox.setVisible(false);
@@ -1063,15 +1063,15 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				return null;
 			}
 			try {
-				boolean authenticate = (controller.properties.hasSalt()) ?
-						passwordAuthenticator.authenticate(password, controller.properties.getHash()) :
-						passwordAuthenticator.authenticateLegacy(password, controller.properties.getHash());
+				boolean authenticate = (controller.hasSalt()) ?
+						passwordAuthenticator.authenticate(password, controller.getHash()) :
+						passwordAuthenticator.authenticateLegacy(password, controller.getHash());
 				if (authenticate) {
-					if (!controller.properties.hasSalt()) {
+					if (!controller.hasSalt()) {
 						// handle password migration
 						logger.info("Handling password hash migration");
-						controller.properties.setHash(password);
-						controller.properties.setSalt(true);
+						controller.setHash(password);
+						controller.setSalt(true);
 					}
 					break;
 				} else {
@@ -1172,8 +1172,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		if ("0".equals(currentHashCode)) {
 			assert mnemonic != null;
-			controller.properties.setMnemonicHashCode(mnemonic.words.hashCode());
-			currentHashCode = String.valueOf(controller.properties.getMnemonicHashCode());
+			controller.setMnemonicHashCode(mnemonic.words.hashCode());
+			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
 		}
 
 		return mnemonic;

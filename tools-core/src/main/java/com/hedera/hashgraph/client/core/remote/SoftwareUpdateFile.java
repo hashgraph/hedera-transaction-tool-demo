@@ -372,5 +372,39 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return true;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof SoftwareUpdateFile)) {
+			return false;
+		}
 
+		if (!super.equals(o)) {
+			return false;
+		}
+
+		var other = (SoftwareUpdateFile) o;
+		if (!this.timestamp.equals(other.timestamp)) {
+			return false;
+		}
+		if (!this.version.equals(other.version)) {
+			return false;
+		}
+		if (!this.digest.equals(other.digest)) {
+			return false;
+		}
+		if (this.actions.size() != other.actions.size()) {
+			return false;
+		}
+		for (FileActions action : actions) {
+			if (!other.actions.contains(action)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + timestamp.hashCode() + version.hashCode() + digest.hashCode();
+	}
 }

@@ -141,9 +141,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	/***
 	 *
-	 * @param accountInfos
-	 * @param idNickNames
-	 * @throws IOException
 	 */
 	private void getAccountsFromFileSystem(Map<String, String> accountInfos,
 			Map<String, String> idNickNames) throws HederaClientException {
@@ -180,7 +177,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		hiddenPathAccount.clear();
 		try {
 			getAccountsFromFileSystem(accountInfos, idNickNames);
-			controller.properties.setAccountInfoMap(accountInfos);
+			controller.setAccountInfoMap(accountInfos);
 			updateAccountLineInformation();
 		} catch (Exception exception) {
 			logger.error(exception);
@@ -191,8 +188,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	/**
 	 * Builds the list of accounts that will be used to populate the table
 	 *
-	 * @throws InvalidProtocolBufferException
-	 * @throws HederaClientException
 	 */
 	private void updateAccountLineInformation() throws InvalidProtocolBufferException, HederaClientException {
 		var nicknames =
@@ -280,48 +275,45 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		canSignColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
 
 		var expanderColumn =
-				new TableRowExpanderColumn<AccountLineInformation>(this::buildAccountVBox);
+				new TableRowExpanderColumn<>(this::buildAccountVBox);
 		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
 
 		var actionColumn = new TableColumn<AccountLineInformation, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> cellFactory =
-				accountLineInformationStringTableColumn -> {
-					final TableCell<AccountLineInformation, String> cell = new TableCell<>() {
-						final Button button = deleteButton();
+				accountLineInformationStringTableColumn -> new TableCell<>() {
+					final Button button = deleteButton();
 
-						@Override
-						public void updateItem(String item, boolean empty) {
-							if (empty) {
-								setGraphic(null);
-							} else {
-								if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-									var x = table.getItems().get(getIndex());
-									button.setText(x.getNickname() + "T");
-									button.setStyle("-fx-font-size: 2");
-								}
-								button.setOnAction(actionEvent -> {
-									var answer = PopupMessage.display("Warning", DELETE_ACCOUNT_WARNING_MESSAGE, true,
-											CONTINUE_LABEL, CANCEL_LABEL);
-									if (answer) {
-										var accountLineInformation1 =
-												getTableView().getItems().get(getIndex());
-										logger.info(String.format("Deleting %s",
-												accountLineInformation1.getNickname()));
-										try {
-											deleteAccount(accountLineInformation1);
-											table.getItems().remove(getIndex());
-										} catch (HederaClientException exception) {
-											logger.error(exception);
-										}
-									}
-								});
-								setGraphic(button);
+					@Override
+					public void updateItem(String item, boolean empty) {
+						if (empty) {
+							setGraphic(null);
+						} else {
+							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+								var x = table.getItems().get(getIndex());
+								button.setText(x.getNickname() + "T");
+								button.setStyle("-fx-font-size: 2");
 							}
-							setText(null);
+							button.setOnAction(actionEvent -> {
+								var answer = PopupMessage.display("Warning", DELETE_ACCOUNT_WARNING_MESSAGE, true,
+										CONTINUE_LABEL, CANCEL_LABEL);
+								if (Boolean.TRUE.equals(answer)) {
+									var accountLineInformation1 =
+											getTableView().getItems().get(getIndex());
+									logger.info(String.format("Deleting %s",
+											accountLineInformation1.getNickname()));
+									try {
+										deleteAccount(accountLineInformation1);
+										table.getItems().remove(getIndex());
+									} catch (HederaClientException exception) {
+										logger.error(exception);
+									}
+								}
+							});
+							setGraphic(button);
 						}
-					};
-					return cell;
+						setText(null);
+					}
 				};
 		actionColumn.setCellFactory(cellFactory);
 
@@ -355,7 +347,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 *
 	 * @param accountLineInformation
 	 * 		the line from the table that must be deleted
-	 * @throws HederaClientException
 	 */
 	public void deleteAccount(AccountLineInformation accountLineInformation) throws HederaClientException {
 		var accountID = accountLineInformation.getAccount().toReadableString();
@@ -423,7 +414,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				knownKeys.add(keyName);
 			}
 		}
-		if (knownKeys.size() == 0) {
+		if (knownKeys.isEmpty()) {
 			return false;
 		}
 		for (var knownKey : knownKeys) {
@@ -438,7 +429,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	/**
 	 * builds an HBox with details about the account. It also provides an action to change the nickname of the account
 	 *
-	 * @param parameter
 	 * @return an HBox node
 	 */
 	private VBox buildAccountVBox(TableRowExpanderColumn.TableRowDataFeatures<AccountLineInformation> parameter) {
@@ -646,7 +636,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
 			getAccountsFromFileSystem(accountInfos, idNickNames);
-			controller.properties.setAccountInfoMap(accountInfos);
+			controller.setAccountInfoMap(accountInfos);
 		} catch (HederaClientException exception) {
 			logger.error(exception);
 		}
@@ -654,12 +644,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Builds an HBox with a label and a formatted textfield
+	 * Builds an HBox with a label and a formatted text field
 	 *
 	 * @param field
 	 * 		explanatory text in the label
 	 * @param text
-	 * 		textfield text
+	 * 		text field text
 	 * @return an HBox
 	 */
 	private HBox setupTextField(String field, String text) {
@@ -711,7 +701,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * Import accounts from a folder/folders
 	 */
 	public void importAccountFromFolder() throws HederaClientException {
-		controller.thisPane = accountsPane;
+		controller.setThisPane(accountsPane);
 		File folder;
 		if (!hiddenPathAccount.getText().isEmpty()) {
 			folder = new File(hiddenPathAccount.getText());
@@ -721,7 +711,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			if (directory == null) {
 				return;
 			}
-			folder = new File(BrowserUtilities.browseDirectories(directory, controller.thisPane));
+			folder = new File(BrowserUtilities.browseDirectories(directory, controller.getThisPane()));
 			controller.setLastTransactionsDirectory(folder);
 		}
 
@@ -751,7 +741,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public void importAccountFromFile() throws HederaClientException {
 
 		// browse to file
-		controller.thisPane = accountsPane;
+		controller.setThisPane(accountsPane);
 		List<File> files = new ArrayList<>();
 		if (!hiddenPathAccount.getText().isEmpty()) {
 			// for testing purposes only
@@ -765,7 +755,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (directory == null) {
 			return;
 		}
-		files = BrowserUtilities.browseMultiFiles(directory, controller.thisPane, "Info", "info");
+		files = BrowserUtilities.browseMultiFiles(directory, controller.getThisPane(), "Info", "info");
 		if (files == null) {
 			return;
 		}
@@ -780,7 +770,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 *
 	 * @param files
 	 * 		list of files
-	 * @throws HederaClientException
 	 */
 	public void importInfoFiles(List<File> files) throws HederaClientException {
 
@@ -799,7 +788,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var counter = 0;
 		// First deal with the duplicates
-		if (duplicates.size() > 0) {
+		if (!duplicates.isEmpty()) {
 			var keepAsking = true;
 			var responseEnum = ResponseEnum.UNKNOWN;
 			for (var file : duplicates) {
@@ -836,7 +825,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 		// now we must deal with the new files
-		if (newFiles.size() > 0) {
+		if (!newFiles.isEmpty()) {
 			var responseEnum = ResponseEnum.UNKNOWN;
 			var keepAsking = true;
 			for (var file : newFiles) {
@@ -886,7 +875,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			controller.homePaneController.setForceUpdate(true);
 			controller.homePaneController.initializeHomePane();
 			getAccountsFromFileSystem(accountInfos, idNickNames);
-			controller.properties.setAccountInfoMap(accountInfos);
+			controller.setAccountInfoMap(accountInfos);
 			try {
 				updateAccountLineInformation();
 			} catch (InvalidProtocolBufferException e) {
@@ -982,8 +971,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 	/**
-	 * @param nickname
-	 * @param infoFile
 	 */
 	private void storeAccount(String nickname, String infoFile) {
 		try {
@@ -1021,7 +1008,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 *
 	 * @param keyEvent
 	 * 		the triggering key event
-	 * @throws Exception
 	 */
 	public void choosePath(KeyEvent keyEvent) throws Exception {
 		if ((KeyCode.ENTER).equals(keyEvent.getCode())) {

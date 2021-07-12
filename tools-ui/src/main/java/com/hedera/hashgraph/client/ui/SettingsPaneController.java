@@ -151,21 +151,21 @@ public class SettingsPaneController {
 					.withCancelAddToEmailMapButton(cancelAddToEmailMapButton)
 					.withTransactionFoldersVBox(transactionFoldersVBoxSP)
 					.withAddPathGridPane(addPathGridPane)
-					.withTempProperties(controller.properties)
+					.withTempProperties(controller.getProperties())
 					.withDeleteImage(deleteImage.getImage())
 					.withEditImage(editImage.getImage())
 					.build();
 
 			loadStorageTextField.setText(controller.getPreferredStorageDirectory());
 			defaultTransactionFee.setText(
-					Utilities.setHBarFormat(controller.properties.getDefaultTxFee()).replace("\u0127", ""));
-			hoursTextField.setText(String.valueOf(controller.properties.getDefaultHours()));
-			minutesTextField.setText(String.format("%02d", controller.properties.getDefaultMinutes()));
-			secondsTextField.setText(String.format("%02d", controller.properties.getDefaultSeconds()));
-			nodeIDTextField.setText(controller.properties.getDefaultNodeID());
+					Utilities.setHBarFormat(controller.getDefaultTxFee()).replace("\u0127", ""));
+			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
+			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
+			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
+			nodeIDTextField.setText(controller.getDefaultNodeID());
 			nodeIDTextField.setEditable(true);
-			txValidDurationTextField.setText(String.valueOf(controller.properties.getTxValidDuration()));
-			autoRenewPeriodTextField.setText(String.valueOf(controller.properties.getAutoRenewPeriod()));
+			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
+			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
 
 			localTimeLabel.setText(getLocalTime());
 
@@ -287,7 +287,7 @@ public class SettingsPaneController {
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
 						generateRecordLabel.setText((t1) ? "yes" : "no");
-						controller.properties.setGenerateRecord(t1);
+						controller.setGenerateRecord(t1);
 					});
 
 			// endregion
@@ -398,8 +398,8 @@ public class SettingsPaneController {
 
 		var fee = Long.parseLong(txFee);
 
-		controller.properties.setDefaultTxFee(fee);
-		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.properties.getDefaultTxFee()));
+		controller.setDefaultTxFee(fee);
+		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.getDefaultTxFee()));
 
 	}
 
@@ -409,8 +409,8 @@ public class SettingsPaneController {
 			secondsTextField.setText(Integer.toString(59));
 			s = 59;
 		}
-		controller.properties.setDefaultSeconds(s);
-		secondsTextField.setText(String.format("%02d", controller.properties.getDefaultSeconds()));
+		controller.setDefaultSeconds(s);
+		secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
 		localTimeLabel.setText(getLocalTime());
 	}
 
@@ -420,8 +420,8 @@ public class SettingsPaneController {
 			minutesTextField.setText(Integer.toString(59));
 			m = 59;
 		}
-		controller.properties.setDefaultMinutes(m);
-		minutesTextField.setText(String.format("%02d", controller.properties.getDefaultMinutes()));
+		controller.setDefaultMinutes(m);
+		minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 		localTimeLabel.setText(getLocalTime());
 	}
 
@@ -431,7 +431,7 @@ public class SettingsPaneController {
 			hoursTextField.setText(Integer.toString(23));
 			h = 23;
 		}
-		controller.properties.setDefaultHours(h);
+		controller.setDefaultHours(h);
 		localTimeLabel.setText(getLocalTime());
 	}
 
@@ -440,8 +440,8 @@ public class SettingsPaneController {
 		if (duration < 1 || duration > 180) {
 			tvsErrorLabel.setVisible(true);
 		} else {
-			controller.properties.setTxValidDuration(duration);
-			txValidDurationTextField.setText(String.valueOf(controller.properties.getTxValidDuration()));
+			controller.setTxValidDuration(duration);
+			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			tvsErrorLabel.setVisible(false);
 			settingScrollPane.requestFocus();
 		}
@@ -452,8 +452,8 @@ public class SettingsPaneController {
 		if (duration < MINIMUM_AUTO_RENEW_PERIOD || duration > MAXIMUM_AUTO_RENEW_PERIOD) {
 			arpErrorLabel.setVisible(true);
 		} else {
-			controller.properties.setAutoRenewPeriod(duration);
-			autoRenewPeriodTextField.setText(String.valueOf(controller.properties.getAutoRenewPeriod()));
+			controller.setAutoRenewPeriod(duration);
+			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
 			arpErrorLabel.setVisible(false);
 			settingScrollPane.requestFocus();
 		}
@@ -461,7 +461,7 @@ public class SettingsPaneController {
 
 	private void checkTransactionFee() {
 		var transactionFee = Long.parseLong(Utilities.stripHBarFormat(defaultTransactionFee.getText()));
-		controller.properties.setDefaultTxFee(transactionFee);
+		controller.setDefaultTxFee(transactionFee);
 		defaultTransactionFee.setText(Utilities.setHBarFormat(transactionFee));
 	}
 
@@ -471,9 +471,9 @@ public class SettingsPaneController {
 		try {
 			accountID = Identifier.parse(account);
 			if (accountID.isValid()) {
-				controller.properties.setDefaultNodeID(accountID.toReadableString());
+				controller.setDefaultNodeID(accountID.toReadableString());
 				nodeIDTextField.clear();
-				nodeIDTextField.setText(controller.properties.getDefaultNodeID());
+				nodeIDTextField.setText(controller.getDefaultNodeID());
 				settingScrollPane.requestFocus();
 				accountIDErrorLabel.setVisible(false);
 			} else {
@@ -486,8 +486,8 @@ public class SettingsPaneController {
 
 	private String getLocalTime() {
 		var localDateTime = LocalDateTime.of(LocalDate.now(),
-				LocalTime.of(controller.properties.getDefaultHours(), controller.properties.getDefaultMinutes(),
-						controller.properties.getDefaultSeconds()));
+				LocalTime.of(controller.getDefaultHours(), controller.getDefaultMinutes(),
+						controller.getDefaultSeconds()));
 		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of("UTC")).toInstant());
 		var localDateFormat = new SimpleDateFormat("HH:mm:ss");
 
@@ -499,7 +499,7 @@ public class SettingsPaneController {
 	//region SETTINGS
 	public void browseStorageIconPressed() throws IOException {
 		var directory =
-				BrowserUtilities.browseDirectories(controller.getPreferredStorageDirectory(), controller.thisPane);
+				BrowserUtilities.browseDirectories(controller.getPreferredStorageDirectory(), controller.getThisPane());
 		//If the user didn't choose a directory (by clicking 'Cancel')
 		if (directory.isEmpty()) {
 			return;
@@ -550,7 +550,7 @@ public class SettingsPaneController {
 	}
 
 	public void browseNewFolderAction() {
-		var directory = BrowserUtilities.browseDirectories("", controller.thisPane);
+		var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 		//If the user didn't choose a directory (by clicking 'Cancel')
 		if (directory.isEmpty()) {
 			return;
