@@ -37,8 +37,20 @@ public class KeysTableRow {
 		this.accountList = accountList;
 		this.index = index;
 		this.signer = signer;
-		this.mnemonic = (mnemonic && signer) ? "\u2713" : ((!mnemonic && signer) ? "\u2718" : "");
-		this.iconFile = (!signer) ? "icons/1GreyKey.png" : (mnemonic) ? "icons/2GreenKeys.png" : "icons/2BlueKeys.png";
+		if (mnemonic && signer) {
+			this.mnemonic = "\u2713";
+		} else if (!mnemonic && signer) {
+			this.mnemonic = "\u2718";
+		} else {
+			this.mnemonic = "";
+		}
+		if (!signer) {
+			this.iconFile = "icons/1GreyKey.png";
+		} else if (mnemonic) {
+			this.iconFile = "icons/2GreenKeys.png";
+		} else {
+			this.iconFile = "icons/2BlueKeys.png";
+		}
 	}
 
 	public KeysTableRow(String keyName, String index, boolean signer, boolean mnemonic) {
@@ -99,7 +111,13 @@ public class KeysTableRow {
 	}
 
 	public void setMnemonic(boolean mnemonic) {
-		this.mnemonic = (mnemonic && signer) ? "\u2713" : ((!mnemonic && signer) ? "\u2718" : "");
+		if (mnemonic && signer) {
+			this.mnemonic = "\u2713";
+		} else if (!mnemonic && signer) {
+			this.mnemonic = "\u2718";
+		} else {
+			this.mnemonic = "";
+		}
 	}
 
 	public String getIconFile() {

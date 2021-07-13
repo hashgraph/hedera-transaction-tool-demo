@@ -88,6 +88,7 @@ import org.zeroturnaround.zip.ZipUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -519,7 +520,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					break;
 				default:
 					if (!systemTypeChoiceBox.getItems().isEmpty()) {
-						logger.error("Unexpected value: " + t1.intValue());
+						logger.error("Unexpected value: {}", t1.intValue());
 					} else {
 						logger.info("System type choice box cleared");
 					}
@@ -596,7 +597,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				label.setText("");
 			}
 			zone.setID(chooser.getText());
-			logger.info(String.format("Timezone changed to: %s", zone.getID()));
+			logger.info("Timezone changed to: {}", zone.getID());
 			setLocalDateString(date, hour, minute, seconds, zone, label);
 		});
 	}
@@ -617,7 +618,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				return;
 			}
 			var address = controller.accountsPaneController.getAccountInfos().get(id);
-			logger.info("Chosen account: " + nick);
+			logger.info("Chosen account: {}", nick);
 			try {
 				var info =
 						AccountInfo.fromBytes(readBytes(address));
@@ -982,7 +983,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 
-		//thisTable.setVisible(true);
 		account.setStyle(null);
 		account.setStyle(START_STYLE);
 		amount.setStyle(null);
@@ -1081,7 +1081,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		try {
 			var account = Identifier.parse(entityID.getText());
-			logger.info(String.format("Account %s parsed", account.toReadableString()));
+			logger.info("Account {} parsed", account.toReadableString());
 		} catch (Exception e) {
 			return false;
 		}
@@ -1269,12 +1269,19 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		moveToOutput(files, remoteLocation);
 
 		for (var file : files) {
-			if (file.delete()) {
-				logger.info(String.format("%s has been deleted", file.getAbsolutePath()));
+			try {
+				Files.deleteIfExists(file.toPath());
+				logger.info("{} has been deleted", file.getAbsolutePath());
+			} catch (IOException e) {
+				logger.error("{} cannot be deleted", file.getAbsolutePath());
 			}
 		}
-		if (new File(jsonName).delete()) {
+
+		try {
+			Files.deleteIfExists(Path.of(jsonName));
 			logger.info("Json file deleted");
+		} catch (IOException e) {
+			logger.error("Json file could not be deleted");
 		}
 
 		controller.homePaneController.initializeHomePane();
@@ -1428,7 +1435,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Transfer fields
 		//Get transfers from tables
-		if (!fromTransferTable.getItems().isEmpty()  && !toTransferTable.getItems().isEmpty()) {
+		if (!fromTransferTable.getItems().isEmpty() && !toTransferTable.getItems().isEmpty()) {
 			List<AccountAmountStrings> transfers = new ArrayList<>();
 			for (var a :
 					fromTransferTable.getItems()) {
@@ -1479,7 +1486,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var creatorComments = new UserComments.Builder().withAuthor(controller.getUserName()).withComment(
 				createCommentsTextArea.getText()).build();
 
-		logger.info(creatorComments.toString());
+		logger.info(creatorComments);
 
 		controller.displaySystemMessage(String.format("With comments: %s", creatorComments));
 
@@ -1534,7 +1541,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			default:
 		}
 		if (flag) {
-			logger.info(String.format("Finish button enabled (%s)", transactionType.getTypeString()));
+			logger.info("Finish button enabled ({})", transactionType.getTypeString());
 		}
 		return flag;
 	}
@@ -1718,11 +1725,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		createCommentsTextArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
 			setTextSizeLimit(createCommentsTextArea, LIMIT, oldValue, newValue);
-			if (newValue.intValue() > oldValue.intValue()) {
-				if (createCommentsTextArea.getText().length() >= LIMIT) {
-					createCommentsTextArea.setText(createCommentsTextArea.getText().substring(0, LIMIT));
-				}
+			if (newValue.intValue() > oldValue.intValue() && createCommentsTextArea.getText().length() >= LIMIT) {
+				createCommentsTextArea.setText(createCommentsTextArea.getText().substring(0, LIMIT));
 			}
+
 			createCharsLeft.setText(
 					String.format("Characters left: %d", LIMIT - createCommentsTextArea.getText().length()));
 		});
@@ -1746,11 +1752,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setTextSizeLimit(TextArea field, int endIndex, Number oldValue, Number newValue) {
-		if (newValue.intValue() > oldValue.intValue()) {
-
-			if (field.getText().length() >= endIndex) {
-				field.setText(memoField.getText().substring(0, endIndex));
-			}
+		if (newValue.intValue() > oldValue.intValue() && field.getText().length() >= endIndex) {
+			field.setText(memoField.getText().substring(0, endIndex));
 		}
 	}
 
@@ -1793,25 +1796,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		// region FOCUS EVENTS
 		hour.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info(String.format("Hours text field changed to: %s", hour.getText()));
+				logger.info("Hours text field changed to: {}", hour.getText());
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		minute.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info(String.format("Minute text field changed to: %s", minute.getText()));
+				logger.info("Minute text field changed to: {}", minute.getText());
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		seconds.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info(String.format("Second text field changed to: %s", seconds.getText()));
+				logger.info("Second text field changed to: {}", seconds.getText());
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
 		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info(String.format("Date changed to: %s", date.getValue().toString()));
+				logger.info("Date changed to: {}", date.getValue().toString());
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
@@ -1836,7 +1839,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		if (date.getValue() != null) {
-			logger.info(String.format("Date changed to: %s", date.getValue().toString()));
+			logger.info("Date changed to: {}", date.getValue().toString());
 			setLocalDateString(date, hour, minute, seconds, timeZone, localTime);
 		} else {
 			logger.info("Date cleared");
@@ -1972,7 +1975,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		try {
 			transaction.store(txFile.getAbsolutePath());
-			//FileUtils.storeMessage(txFile.getAbsolutePath(), transaction);
 			userComments.toFile(txFile.getAbsolutePath().replace(".tx", ".txt"));
 		} catch (HederaClientException e) {
 			logger.error(e);
@@ -2115,7 +2117,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 		timeField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info(String.format("Time field changed to: %s", timeField.getText()));
+				logger.info("Time field changed to: {}", timeField.getText());
 				checkTimeField(timeField, limit);
 			}
 		});
@@ -2174,7 +2176,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
-		logger.info(String.format("Currency text field changed to: %s", currencyTextField.getText()));
+		logger.info("Currency text field changed to: {}", currencyTextField.getText());
 		var hBarsString = Utilities.setHBarFormat(hBarsLong);
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
 	}

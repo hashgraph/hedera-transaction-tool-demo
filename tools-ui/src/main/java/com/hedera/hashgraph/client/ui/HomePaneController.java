@@ -742,10 +742,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			Logger logger) {
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.TRUE.equals(t1)) {
-				logger.info(String.format("Added %s to list of signing keys", baseName));
+				logger.info("Added {} to list of signing keys", baseName);
 				signersSet.add(keyFile);
 			} else {
-				logger.info(String.format("Removed %s from list of signing keys", baseName));
+				logger.info("Removed {} from list of signing keys", baseName);
 				signersSet.remove(keyFile);
 			}
 		});
@@ -1109,7 +1109,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 		var titleBox = new HBox();
 		titleBox.getChildren().addAll(title, toolTipButton);
-		//	titleBox.setAlignment(Pos.CENTER_LEFT);
 
 		var vBox = new VBox();
 		vBox.setPadding(new Insets(5));

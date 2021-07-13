@@ -214,7 +214,7 @@ public class RecoverPasswordPaneController {
 		for (var key : keys) {
 			var index = getIndex(key);
 			if (index >= 0) {
-				logger.info(String.format("%s -> %d", key, index));
+				logger.info("{} -> {}", key, index);
 				var row = recoverKeysListGridPane.getRowCount();
 				recoverKeysListGridPane.add(new Label(FilenameUtils.removeExtension(key)), 0, row);
 				recoverKeysListGridPane.add(new Label(Integer.toString(index)), 1, row);
@@ -251,7 +251,7 @@ public class RecoverPasswordPaneController {
 		recoverPhraseBox.getChildren().add(mnemonicGridPane);
 	}
 
-	public void acceptPassword(){
+	public void acceptPassword() {
 		password = recoverAppPasswordField.getText().toCharArray();
 		recoverChangePasswordButton.setVisible(false);
 		recoverChangePasswordButton.setDisable(true);
@@ -285,9 +285,7 @@ public class RecoverPasswordPaneController {
 			if (indexMap.size() > 0) {
 				recoverSelectedKeysVBox.setVisible(true);
 				if (indexMap.size() > 0) {
-					for (int index : indexMap.keySet()) {
-						recoverKey(index, indexMap.get(index));
-					}
+					indexMap.forEach(this::recoverKey);
 				}
 			} else {
 				recoverNoKeysVBox.setVisible(true);

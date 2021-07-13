@@ -31,11 +31,11 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class MnemonicBox {
-	private static final String BUTTON_CONTINUE = "CONTINUE";
-	private static final String BUTTON_RETURN = "RETURN";
 	static Boolean confirmation = null;
 
-
+	private MnemonicBox() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static Boolean display(String title, String message, String[] words, String buttonName) {
 		var window = new Stage();
@@ -56,7 +56,8 @@ public class MnemonicBox {
 
 		var yesButton = new Button(buttonName.toUpperCase());
 		yesButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10;" +
+				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
+						"10;" +
 						" -fx-background-radius: 10;");
 		yesButton.setPrefWidth(150);
 
@@ -66,8 +67,8 @@ public class MnemonicBox {
 		var phrase = "";
 		for (var word :
 				words) {
-				phrase = phrase.concat(word.toUpperCase());
-			if (counter<23) {
+			phrase = phrase.concat(word.toUpperCase());
+			if (counter < 23) {
 				if (counter % 4 == 3) {
 					phrase = phrase.concat("\n");
 				} else {
@@ -87,8 +88,9 @@ public class MnemonicBox {
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
 		layout.setOnKeyPressed(event -> {
-			if (event.getCode() == KeyCode.ENTER)
+			if (event.getCode() == KeyCode.ENTER) {
 				window.close();
+			}
 		});
 
 		layout.getChildren().addAll(label, mnemonic, yesButton);

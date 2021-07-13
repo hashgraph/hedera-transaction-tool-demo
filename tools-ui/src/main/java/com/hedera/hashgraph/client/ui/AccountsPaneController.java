@@ -187,7 +187,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	/**
 	 * Builds the list of accounts that will be used to populate the table
-	 *
 	 */
 	private void updateAccountLineInformation() throws InvalidProtocolBufferException, HederaClientException {
 		var nicknames =
@@ -208,8 +207,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	// endregion
 
 	// region GETTERS
-	//public Map<String, JsonObject> getAccountsMap() {return accounts;	}
-
 	public Map<String, String> getAccountInfos() {
 		return accountInfos;
 	}
@@ -388,12 +385,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		assert historyInfo != null;
 		if (historyInfo.length > 0) {
 			for (var file : historyInfo) {
-				if (file.delete()) {
-					logger.info(String.format("File %s deleted", file.getAbsolutePath()));
+				try {
+					Files.deleteIfExists(file.toPath());
+					logger.info("File {} deleted", file.getAbsolutePath());
+				} catch (IOException e) {
+					logger.error("File {} cannot be deleted", file.getAbsolutePath());
 				}
 			}
 		}
-		logger.info(String.format("Account %s has been deleted", accountID));
+		logger.info("Account {} has been deleted", accountID);
 		controller.createPaneController.initializeCreatePane();
 	}
 
@@ -972,6 +972,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 	/**
+	 *
 	 */
 	private void storeAccount(String nickname, String infoFile) {
 		try {
@@ -1010,7 +1011,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param keyEvent
 	 * 		the triggering key event
 	 */
-	public void choosePath(KeyEvent keyEvent) throws Exception {
+	public void choosePath(KeyEvent keyEvent) throws HederaClientException {
 		if ((KeyCode.ENTER).equals(keyEvent.getCode())) {
 			var infoPath = (hiddenPathAccount.getText()).replace(" ", "");
 			if (infoPath.endsWith(".info") && (new File(infoPath)).exists()) {

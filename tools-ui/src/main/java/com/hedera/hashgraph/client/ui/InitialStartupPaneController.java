@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
@@ -52,6 +51,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -133,7 +135,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Constructor
 	 */
 	public InitialStartupPaneController() {
-		logger.info(String.format("Default storage directory to: %s", DEFAULT_STORAGE));
+		logger.info("Default storage directory to: {}", DEFAULT_STORAGE);
 	}
 
 	/**
@@ -144,10 +146,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	private void setupTransactionDirectory(String location) {
 		var directory = new File(location);
-		if (!directory.exists()) {
-			if (!directory.mkdirs()) {
-				logger.info("Directory already exists");
-			}
+		if (!directory.exists() && !directory.mkdirs()) {
+			logger.info("Directory already exists");
 		}
 
 		if (new File(String.format("%s/Accounts/", location)).mkdirs()) {
@@ -274,9 +274,14 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		controller.keysPaneController.initializeKeysPane();
 		controller.createPaneController.initializeCreatePane();
 		controller.settingsPaneController.initializeSettingsPane();
-		if (new File(INITIAL_MAP_LOCATION).delete()) {
+
+		try {
+			Files.deleteIfExists(Path.of(INITIAL_MAP_LOCATION));
 			logger.info("Initial map file deleted");
+		} catch (IOException e) {
+			logger.error("Initial map cannot be deleted");
 		}
+
 		controller.changeTab(controller.homePane);
 		controller.menuButtonBar.setVisible(true);
 	}
@@ -496,20 +501,18 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		if ((KeyCode.ENTER).equals(keyEvent.getCode())) {
 			var infoPath = (hiddenPathInitial.getText()).replace(" ", "");
 			var location = new File(infoPath);
-			if (location.exists()) {
-				if (location.isDirectory()) {
-					String directory;
-					if (hiddenPathInitial.getText().isEmpty()) {
-						directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
-					} else {
-						directory = hiddenPathInitial.getText();
-						hiddenPathInitial.clear();
-					}
-					controller.setPreferredStorageDirectory(directory);
-					keysGridPane.setVisible(true);
-					passphraseBox.setVisible(true);
-					setupTransactionDirectory(directory);
+			if (location.exists() && location.isDirectory()) {
+				String directory;
+				if (hiddenPathInitial.getText().isEmpty()) {
+					directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
+				} else {
+					directory = hiddenPathInitial.getText();
+					hiddenPathInitial.clear();
 				}
+				controller.setPreferredStorageDirectory(directory);
+				keysGridPane.setVisible(true);
+				passphraseBox.setVisible(true);
+				setupTransactionDirectory(directory);
 			}
 		}
 	}

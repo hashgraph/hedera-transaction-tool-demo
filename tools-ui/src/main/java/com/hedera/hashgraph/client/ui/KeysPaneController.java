@@ -81,6 +81,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
@@ -275,35 +276,32 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 			recoverIndexField.focusedProperty().addListener(
 					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (Boolean.FALSE.equals(newValue)) {
-							if (!recoverIndexField.getText().isEmpty()) {
-								var index = Integer.parseInt(recoverIndexField.getText());
+						if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
+							var index = Integer.parseInt(recoverIndexField.getText());
 
-								List<String> values = new ArrayList<>();
-								for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-									if (entry.getValue() == index) {
-										values.add(entry.getKey());
-									}
+							List<String> values = new ArrayList<>();
+							for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+								if (entry.getValue() == index) {
+									values.add(entry.getKey());
 								}
+							}
 
-								// We will only populate the nickname field if the key index is not duplicated
-								if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
-									recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
-								}
+							// We will only populate the nickname field if the key index is not duplicated
+							if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
+								recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
 							}
 						}
 					});
 
 			recoverNicknameField.focusedProperty().addListener(
 					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (Boolean.FALSE.equals(newValue)) {
-							if (!recoverNicknameField.getText().isEmpty() &&
-									indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
-									recoverIndexField.getText().isEmpty() &&
-									indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
-								recoverIndexField.setText(
-										indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
-							}
+						if (Boolean.FALSE.equals(newValue) &&
+								!recoverNicknameField.getText().isEmpty() &&
+								indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
+								recoverIndexField.getText().isEmpty() &&
+								indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
+							recoverIndexField.setText(
+									indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
 						}
 					});
 
@@ -613,7 +611,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 					try {
 						var empty = new File(pubKey_filename);
 						if (empty.createNewFile()) {
-							logger.info(String.format("Created empty file %s", pubKey_filename));
+							logger.info("Created empty file {}", pubKey_filename);
 						}
 					} catch (IOException e) {
 						logger.error(e);
@@ -1057,7 +1055,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		while (true) {
 			password = PasswordBox.display("Password", "Please enter your password", "password", true);
 			if (password == null) {
-				return null;
+				return new char[0];
 			}
 			try {
 				boolean authenticate = (controller.hasSalt()) ?
@@ -1334,9 +1332,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void replaceOnce(File duplicate, String oldFile) throws IOException {
 		if (!duplicate.getName().equals(FilenameUtils.getName(oldFile))) {
-			if (new File(oldFile).delete()) {
-				logger.info(String.format("Old file %s deleted", oldFile));
-			}
+			Files.deleteIfExists(Path.of(oldFile));
+			logger.info("Old file {} deleted", oldFile);
+
 			org.apache.commons.io.FileUtils.copyFile(duplicate,
 					new File(
 							controller.getPreferredStorageDirectory() + KEYS_STRING + duplicate.getName()));
@@ -1366,9 +1364,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			var hashBoolean = Objects.equals(Ed25519KeyStore.getMnemonicHashCode(pemFile.getAbsolutePath()),
 					Ed25519KeyStore.getMnemonicHashCode(pemKey.getAbsolutePath()));
 			if (indexBoolean && hashBoolean) {
-				logger.info(String.format(
-						"Found duplicated private key: PEMs %s and %s have the same mnemonic hash and index",
-						pemFile.getAbsolutePath(), pemKey.getAbsolutePath()));
+				logger.info("Found duplicated private key: PEMs {} and {} have the same mnemonic hash and index",
+						pemFile.getAbsolutePath(), pemKey.getAbsolutePath());
 				return pemKey.getAbsolutePath();
 			}
 		}
@@ -1378,8 +1375,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private String checkIfDuplicate(File publicKey, File[] pubKeys) throws IOException {
 		for (var pubKey : pubKeys) {
 			if (org.apache.commons.io.FileUtils.contentEquals(publicKey, pubKey)) {
-				logger.info(String.format("Found duplicated public key: Contents of %s identical to %s",
-						publicKey.getAbsolutePath(), pubKey.getAbsolutePath()));
+				logger.info("Found duplicated public key: Contents of {} identical to {}",
+						publicKey.getAbsolutePath(), pubKey.getAbsolutePath());
 				return pubKey.getAbsolutePath();
 			}
 		}

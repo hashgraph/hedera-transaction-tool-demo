@@ -41,6 +41,10 @@ public class FinishBox {
 
 	private static final Logger logger = LogManager.getLogger(FinishBox.class);
 
+	private FinishBox() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static void display(List<String> transactions) {
 		var window = new Stage();
 
@@ -141,9 +145,6 @@ public class FinishBox {
 		label2.setStyle("-fx-font-size: 16");
 		vBox.getChildren().add(label2);
 
-
-//		String name = createdKeysFileName.substring(createdKeysFileName.lastIndexOf('/'));
-
 		var path = createdKeysFileName.getParentFile().getPath();
 		var file = new Hyperlink(path);
 		if (path.length() > 50) {
@@ -174,10 +175,6 @@ public class FinishBox {
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setSpacing(10);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
-
-
-		//	ScrollPane layout = new ScrollPane();
-		//	layout.setContent(vBox);
 
 		var scene = new Scene(vBox);
 

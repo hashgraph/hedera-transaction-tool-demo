@@ -57,6 +57,10 @@ public class PasswordBox {
 	public static final String RESET_PASSWORD_TITLE = "Reset Password";
 	private static char[] answer;
 
+	private PasswordBox() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static char[] display(String title, String message, String defaultMessage, boolean inputPwd) {
 
 		var window = new Stage();

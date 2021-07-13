@@ -46,6 +46,10 @@ public class TwoButtonPopup {
 	private static ResponseEnum responseEnum = ResponseEnum.UNKNOWN;
 	protected static final String MESSAGE = "Please enter a nickname for account %s";
 
+	private TwoButtonPopup() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static ResponseTuple display(final String accountIDString, boolean multiple) {
 		var proposedNick = new AtomicReference<String>();
 		proposedNick.set(accountIDString);

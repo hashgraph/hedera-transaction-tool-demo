@@ -90,7 +90,6 @@ public class SettingsPaneController {
 	public Button browseNewFolderButton;
 	public Button cancelAddToEmailMapButton;
 
-
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
 
@@ -115,11 +114,10 @@ public class SettingsPaneController {
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
 
-
-	DriveSetupHelper driveSetupHelper;
-
 	@FXML
 	private Controller controller;
+
+	DriveSetupHelper driveSetupHelper;
 
 	void injectMainController(Controller controller) {
 		this.controller = controller;
@@ -294,47 +292,44 @@ public class SettingsPaneController {
 			// region FOCUS EVENTS
 			hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Hours text field changed to: %s", hoursTextField.getText()));
+					logger.info("Hours text field changed to: {}", hoursTextField.getText());
 					checkHours();
 				}
 			});
 			minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Minute text field changed to: %s", minutesTextField.getText()));
+					logger.info("Minute text field changed to: {}", minutesTextField.getText());
 					checkMinutes();
 				}
 			});
 			secondsTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Second text field changed to: %s", secondsTextField.getText()));
+					logger.info("Second text field changed to: {}", secondsTextField.getText());
 					checkSeconds();
 				}
 			});
 			nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Node ID text field changed to: %s", nodeIDTextField.getText()));
+					logger.info("Node ID text field changed to: {}", nodeIDTextField.getText());
 					checkNodeID();
 				}
 			});
 			txValidDurationTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Transaction valid duration text field changed to: %s",
-							txValidDurationTextField.getText()));
+					logger.info("Transaction valid duration text field changed to: {}",
+							txValidDurationTextField.getText());
 					checkTransactionValidDuration();
 				}
 			});
 			autoRenewPeriodTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(String.format("Auto renew period text field changed to: %s",
-							autoRenewPeriodTextField.getText()));
+					logger.info("Auto renew period text field changed to: {}", autoRenewPeriodTextField.getText());
 					checkAutoRenewPeriod();
 				}
 			});
 			defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info(
-							String.format("Transaction fee text field changed to: %s",
-									defaultTransactionFee.getText()));
+					logger.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
 					checkTransactionFee();
 				}
 			});
@@ -511,7 +506,7 @@ public class SettingsPaneController {
 		FileUtils.moveDirectory(previous, newDir);
 		loadStorageTextField.setText(directory + "/TransactionTools");
 		controller.setPreferredStorageDirectory(loadStorageTextField.getText());
-		logger.info(String.format("Storage directory set to: %s", controller.getPreferredStorageDirectory()));
+		logger.info("Storage directory set to: {}", controller.getPreferredStorageDirectory());
 	}
 
 
@@ -526,10 +521,8 @@ public class SettingsPaneController {
 		var a = new Alert(AlertType.WARNING, Messages.RESET_ALERT_MESSAGE, cancelType, continueType
 		);
 		var result = a.showAndWait();
-		if (result.isPresent()) {
-			if (result.get() == continueType) {
-				controller.resetApp();
-			}
+		if (result.isPresent() && result.get() == continueType) {
+			controller.resetApp();
 		}
 	}
 

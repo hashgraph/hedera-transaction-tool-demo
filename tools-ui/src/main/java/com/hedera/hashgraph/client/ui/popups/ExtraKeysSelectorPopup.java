@@ -50,6 +50,10 @@ public class ExtraKeysSelectorPopup {
 	protected static final String PK_EXTENSION = ".pem";
 	private static final Logger logger = LogManager.getLogger(ExtraKeysSelectorPopup.class);
 
+	private ExtraKeysSelectorPopup() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Displays a list of checkboxes corresponding to the keys that have been imported to the app.
 	 * Allows the user to choose a subset of the keys that will be used for signing the transaction.
@@ -70,7 +74,7 @@ public class ExtraKeysSelectorPopup {
 		assert knownKeys != null;
 		Arrays.sort(knownKeys);
 		var columns = (int) max(3, sqrt(knownKeys.length));
-		logger.info(String.format("Gridpanes will have %d columns", columns));
+		logger.info("Grid panes will have {} columns", columns);
 
 
 		var nonSignersVBox = new VBox();

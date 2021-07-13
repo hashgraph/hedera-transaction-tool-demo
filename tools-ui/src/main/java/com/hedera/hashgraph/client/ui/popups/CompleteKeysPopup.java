@@ -84,7 +84,6 @@ public class CompleteKeysPopup {
 			" -fx-border-radius: 10; -fx-background-radius: 10;";
 	private static final String FX_FONT_SIZE = "-fx-font-size: 16";
 
-
 	private static Boolean reloadTable = false;
 	private static List<FileService> outputDirectories = new ArrayList<>();
 	private static String publicKey = "";
@@ -94,6 +93,9 @@ public class CompleteKeysPopup {
 	private static final Logger logger = LogManager.getLogger(CompleteKeysPopup.class);
 	private static String keyName = "";
 
+	private CompleteKeysPopup() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static Boolean display(String pubKeyAddress, boolean showNicknameEdit) {
 		initializeOutputDirectories();
@@ -355,10 +357,10 @@ public class CompleteKeysPopup {
 				var user = properties.getOneDriveCredentials().get(fs.getPath());
 				var remote = "/OutputFiles/" + ((fs.getPath().contains("Volumes")) ? "" : user);
 				fs.upload(path, remote);
-				logger.info(String.format("Key %s uploaded to %s", keyName, remote));
+				logger.info("Key {} uploaded to {}", keyName, remote);
 			} else {
 				fs.upload(path, "/");
-				logger.info(String.format("Key %s uploaded", keyName));
+				logger.info("Key {} uploaded", keyName);
 			}
 		} catch (HederaClientException e) {
 			logger.error(e);

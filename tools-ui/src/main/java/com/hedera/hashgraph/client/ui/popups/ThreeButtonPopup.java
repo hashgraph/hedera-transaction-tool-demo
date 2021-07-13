@@ -52,6 +52,10 @@ public class ThreeButtonPopup {
 		return display(file, MESSAGE, true, multipleFiles);
 	}
 
+	private ThreeButtonPopup() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static ResponseEnum display(File file, String message, boolean allowKeep, boolean multipleFiles) {
 
 		var window = new Stage();

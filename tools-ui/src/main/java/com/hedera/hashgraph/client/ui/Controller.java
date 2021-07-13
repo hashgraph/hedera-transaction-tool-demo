@@ -209,7 +209,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			}
 			setSetupPhase(INITIAL_SETUP_PHASE);
 		} else {
-			logger.info(String.format("The current storage directory is: %s", getPreferredStorageDirectory()));
+			logger.info("The current storage directory is: {}", getPreferredStorageDirectory());
 		}
 
 
@@ -322,13 +322,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				initialStartupPaneController.initializeStartupPane();
 				break;
 			case NORMAL_OPERATION_PHASE:
-				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists()) {
-					if ("".equals(properties.getHash())) {
-						logger.info("Missing hash in config file: Putting the application in password recovery mode");
-						PopupMessage.display("Missing Password", Messages.PASSWORD_NOT_FOUND_MESSAGE, "CONTINUE");
-						setSetupPhase(PASSWORD_RECOVERY_PHASE);
-						break;
-					}
+				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists() && "".equals(
+						properties.getHash())) {
+					logger.info("Missing hash in config file: Putting the application in password recovery mode");
+					PopupMessage.display("Missing Password", Messages.PASSWORD_NOT_FOUND_MESSAGE, "CONTINUE");
+					setSetupPhase(PASSWORD_RECOVERY_PHASE);
+					break;
+
 				}
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
@@ -558,8 +558,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var sourceDir = userDefStorageDirectory.equals("") ? new File(
 				defaultStorageDirectory) : new File(userDefStorageDirectory);
 
-		logger.info(String.format("Default storage %s", defaultStorageDirectory));
-		logger.info(String.format("Before reset storage %s", sourceDir.getPath()));
+		logger.info("Default storage {}", defaultStorageDirectory);
+		logger.info("Before reset storage {}", sourceDir.getPath());
 		var secondsToArchive = Instant.now().getEpochSecond();
 		var resetStorageDirectory =
 				String.format("%s.%s", sourceDir.getPath(), secondsToArchive);
@@ -575,7 +575,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		var destination = new File(resetStorageDirectory);
 		copyDirectory(sourceDir, destination);
-		logger.info("Transactions Tool storage archived to " + destination.getPath());
+		logger.info("Transactions Tool storage archived to {}", destination.getPath());
 
 		preferences.clear();
 		deleteDirectory(sourceDir);
@@ -625,7 +625,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					buildProps.get("git.build.version"),
 					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
 		} catch (Exception ex) {
-			logger.error("Error Printing Version" + ex);
+			logger.error("Error Printing Version {}", ex.getMessage());
 			displaySystemMessage(ex);
 		}
 		return version;
@@ -685,6 +685,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	//region PROPERTIES
+
 	/**
 	 * Determines which algorithm was used to encrypt the mnemonic
 	 *
@@ -832,7 +833,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		keyStructureUtility.loadPubKeys();
 	}
 
-	public Map<String, Path> getPubFiles(){
+	public Map<String, Path> getPubFiles() {
 		return keyStructureUtility.getPubFiles();
 	}
 }

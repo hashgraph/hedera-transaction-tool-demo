@@ -51,6 +51,10 @@ public class PopupMessage {
 		return display(title, message, confirm, yesString, noString, BUTTON_CONTINUE);
 	}
 
+	private PopupMessage() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Adopt Open-Close Principal here, to close its implementation, but open for any other public methods to adapt in.
 	 * <br/>
