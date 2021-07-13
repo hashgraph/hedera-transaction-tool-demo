@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class IdentifierTest {
 
 	@Test
-	void parse_Test() throws HederaClientException {
+	void parse_Test() {
 		// Parse string
 		Identifier identifierFromString1 = Identifier.parse("0.2.56");
 		assertEquals(0L, identifierFromString1.getShardNum());
@@ -65,8 +65,10 @@ class IdentifierTest {
 		HederaClientRuntimeException exception3 =
 				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse("0.notANumber.23"));
 		assertEquals("java.lang.NumberFormatException: For input string: \"notANumber\"", exception3.getMessage());
+	}
 
-
+	@Test
+	void parseJson_Test() throws HederaClientException {
 		// Parse json
 		JsonObject accountJson1 = new JsonObject();
 		accountJson1.addProperty("realmNum", 789L);
@@ -202,7 +204,7 @@ class IdentifierTest {
 
 	@Test
 	void toString_Test() {
-		Identifier identifier = new Identifier(2,6,9);
+		Identifier identifier = new Identifier(2, 6, 9);
 		assertEquals("{\"realmNum\":6,\"shardNum\":2,\"accountNum\":9}", identifier.toString());
 		assertEquals("2.6.9", identifier.toReadableString());
 	}
@@ -214,15 +216,15 @@ class IdentifierTest {
 		accountJson.addProperty("realmNum", 7);
 		accountJson.addProperty("accountNum", 13);
 
-		Identifier identifier = new Identifier(5,7,13);
+		Identifier identifier = new Identifier(5, 7, 13);
 		assertEquals(accountJson, identifier.asJSON());
 	}
 
 	@Test
-	void equals_test(){
-		Identifier id1 = new Identifier(1,2,3);
-		Identifier id2 = new Identifier(1,2,3);
-		Identifier id3 = new Identifier(3,6,9);
+	void equals_test() {
+		Identifier id1 = new Identifier(1, 2, 3);
+		Identifier id2 = new Identifier(1, 2, 3);
+		Identifier id3 = new Identifier(3, 6, 9);
 
 		assertTrue(id1.equals(id2));
 		assertTrue(id1.equals(id1));
@@ -233,8 +235,8 @@ class IdentifierTest {
 	}
 
 	@Test
-	void hash_test(){
-		Identifier id2 = new Identifier(1,2,3);
+	void hash_test() {
+		Identifier id2 = new Identifier(1, 2, 3);
 		assertEquals(30817, id2.hashCode());
 	}
 }

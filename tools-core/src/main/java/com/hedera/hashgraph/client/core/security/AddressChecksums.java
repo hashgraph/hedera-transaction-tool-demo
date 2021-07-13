@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class AddressChecksums {
 	/** regex accepting both no-checksum and with-checksum formats, with 4 capture groups: 3 numbers and a checksum */
-	private static final Pattern addressInputFormat = Pattern.compile(
+	private static final Pattern ADDRESS_INPUT_FORMAT = Pattern.compile(
 			"^[^a-zA-Z0-9.]*(\\d+)\\.(\\d+)\\.(\\d+)[^a-zA-Z0-9.]*([a-zA-Z]*)[^a-zA-Z0-9.]*$");
 
 	/** the status of an address parsed by parseAddress */
@@ -79,7 +79,7 @@ public class AddressChecksums {
 	 */
 	public static ParsedAddress parseAddress(String addr) {
 		var results = new ParsedAddress();
-		var match = addressInputFormat.matcher(addr);
+		var match = ADDRESS_INPUT_FORMAT.matcher(addr);
 		if (!match.matches()) {
 			results.isValid = false;
 			results.status = parseStatus.BAD_FORMAT; //when status==BAD_FORMAT, the rest of the fields should be ignored
@@ -90,9 +90,14 @@ public class AddressChecksums {
 		results.num3 = Integer.parseInt(match.group(3));
 		var ad = results.num1 + "." + results.num2 + "." + results.num3;
 		var c = checksum(ad);
-		results.status = ("".equals(match.group(4))) ? parseStatus.GOOD_NO_CHECKSUM
-				: (c.equals(match.group(4).toLowerCase())) ? parseStatus.GOOD_WITH_CHECKSUM
-				: parseStatus.BAD_CHECKSUM;
+		final var matchGroup = match.group(4).toLowerCase();
+		if ("".equals(matchGroup)) {
+			results.status = parseStatus.GOOD_NO_CHECKSUM;
+		} else if (c.equals(matchGroup)) {
+			results.status = parseStatus.GOOD_WITH_CHECKSUM;
+		} else {
+			results.status = parseStatus.BAD_CHECKSUM;
+		}
 		results.isValid = (results.status != parseStatus.BAD_CHECKSUM);
 		results.correctChecksum = c;
 		results.givenChecksum = match.group(4);

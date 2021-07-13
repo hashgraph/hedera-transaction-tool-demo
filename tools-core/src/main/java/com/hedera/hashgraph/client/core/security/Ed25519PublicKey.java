@@ -68,7 +68,9 @@ public final class Ed25519PublicKey {
 	 * 		if {@code bytes.length != 32}
 	 */
 	public static Ed25519PublicKey fromBytes(byte[] bytes) {
-		assert bytes.length == Ed25519.PUBLIC_KEY_SIZE;
+		if (bytes.length != Ed25519.PUBLIC_KEY_SIZE) {
+			throw new HederaClientRuntimeException("Incorrect public key file");
+		}
 		return new Ed25519PublicKey(new Ed25519PublicKeyParameters(bytes, 0));
 	}
 
@@ -123,7 +125,7 @@ public final class Ed25519PublicKey {
 		try {
 			publicKeyInfo = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(pubKeyParams);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		// I'd love to dedup this with the code in `Ed25519PrivateKey.toString()`
@@ -133,7 +135,7 @@ public final class Ed25519PublicKey {
 		try {
 			encoded = publicKeyInfo.getEncoded("DER");
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		return Hex.toHexString(encoded);

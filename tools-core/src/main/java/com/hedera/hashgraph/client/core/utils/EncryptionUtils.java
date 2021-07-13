@@ -81,6 +81,10 @@ import static com.google.common.base.Splitter.fixedLength;
 
 public class EncryptionUtils {
 
+	private EncryptionUtils() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	private static final Logger logger = LogManager.getLogger(EncryptionUtils.class);
 	private static final String ED_25519 = "Ed25519";
 	private static final String KEY_LIST = "keyList";

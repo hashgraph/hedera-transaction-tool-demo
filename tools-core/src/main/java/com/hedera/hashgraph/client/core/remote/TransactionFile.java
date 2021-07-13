@@ -361,7 +361,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				assert file.isFile();
 			}
 
-			logger.info("Packing {} to {}.zip", Arrays.toString(toPack), tempStorage);
+			final var packed = Arrays.toString(toPack);
+			logger.info("Packing {} to {}.zip", packed, tempStorage);
 			ZipUtil.packEntries(toPack, finalZip);
 
 			for (var file : toPack) {

@@ -156,6 +156,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 		return accountsSet;
 	}
 
+	@Override
 	public JsonObject asJson() {
 		var output = super.asJson();
 		var array = new JsonArray();

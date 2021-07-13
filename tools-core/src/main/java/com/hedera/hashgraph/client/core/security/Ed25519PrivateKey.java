@@ -167,7 +167,7 @@ public final class Ed25519PrivateKey {
 					new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519),
 					new DEROctetString(privateKeyParams.getEncoded()));
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		byte[] encoded;
@@ -175,7 +175,7 @@ public final class Ed25519PrivateKey {
 		try {
 			encoded = privateKeyInfo.getEncoded("DER");
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		return Hex.toHexString(encoded);
