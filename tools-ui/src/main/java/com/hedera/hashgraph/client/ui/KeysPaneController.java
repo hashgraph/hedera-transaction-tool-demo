@@ -803,7 +803,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public void generateKeysEvent() throws HederaClientException {
 		var password = getPassword();
-		if (password == null) {
+		if (password.length == 0) {
 			return;
 		}
 
@@ -906,7 +906,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 
 		var password = getPassword();
-		if (password == null) {
+		if (password.length == 0) {
 			return;
 		}
 		var mnemonic = getMnemonicFromFile(password);
@@ -1149,7 +1149,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		Mnemonic mnemonic = null;
 		try {
 			var password = getPassword();
-			if (password == null) {
+			if (password.length == 0) {
 				// If we don't enter the password, the application should exit
 				Platform.exit();
 			} else {

@@ -1080,8 +1080,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			var account = Identifier.parse(entityID.getText());
-			logger.info("Account {} parsed", account.toReadableString());
+			var account = Identifier.parse(entityID.getText()).toReadableString();
+			logger.info("Account {} parsed", account);
 		} catch (Exception e) {
 			return false;
 		}
@@ -1814,7 +1814,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Date changed to: {}", date.getValue().toString());
+				logger.info("Date changed to: {}", date.getValue());
 				setLocalDateString(date, hour, minute, seconds, zone, localTime);
 			}
 		});
@@ -1838,8 +1838,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 
-		if (date.getValue() != null) {
-			logger.info("Date changed to: {}", date.getValue().toString());
+		final var dateValue = date.getValue();
+		if (dateValue != null) {
+			logger.info("Date changed to: {}", dateValue);
 			setLocalDateString(date, hour, minute, seconds, timeZone, localTime);
 		} else {
 			logger.info("Date cleared");
