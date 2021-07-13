@@ -173,7 +173,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 
 		JsonObject accountJson = readJsonObject(DEFAULT_STORAGE + "/Accounts/0.0.2.json");
-		assertFalse(accountJson == null);
+		assertNotNull(accountJson);
 
 		final File accountMapFile = new File(DEFAULT_STORAGE + "Files/.System/accountMapFile.json");
 		assertTrue(accountMapFile.exists());

@@ -45,7 +45,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -57,6 +59,10 @@ public class Utilities {
 
 	private static final Logger logger = LogManager.getLogger(Utilities.class);
 	public static final String RED_BORDER_STYLE = "-fx-border-color: red";
+
+	private Utilities() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	/***
 	 *
@@ -189,9 +195,15 @@ public class Utilities {
 			}
 		} // either file or an empty directory
 
-		logger.info("removing file or directory : " + dir.getName());
+		logger.info("removing file or directory : {}", dir.getName());
 
-		return dir.delete();
+		try {
+			Files.deleteIfExists(dir.toPath());
+			return true;
+		} catch (IOException e) {
+			logger.error("Directory {} cannot be deleted", dir.getAbsolutePath());
+			return false;
+		}
 	}
 
 	/**

@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
@@ -49,7 +32,6 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 import java.util.Objects;
 
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 
 public class RecoverPasswordPage {
@@ -63,8 +45,7 @@ public class RecoverPasswordPage {
 
 		assertNotNull(words);
 
-		for (String w :
-				words) {
+		for (String w : words) {
 			setNextWord(w);
 		}
 		return this;
@@ -239,41 +220,9 @@ public class RecoverPasswordPage {
 		}
 	}
 
-	public void enterPasswordAndContinue(String password) throws InterruptedException {
-		assertNotNull(password);
-
-		ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
-
-		Button button = new Button();
-
-		HBox hBox = new HBox();
-
-		assertNotNull(popupNodes);
-		for (Node n :
-				popupNodes) {
-			if (n instanceof PasswordField) {
-				driver.clickOn(n);
-				driver.write(password);
-			}
-			if (n instanceof HBox) {
-				hBox = (HBox) n;
-			}
-		}
-
-		sleep(5000);
-
-		for (Node n :
-				hBox.getChildren()) {
-			if (n instanceof Button && "CONFIRM".equals(((Button) n).getText())) {
-				button = (Button) n;
-			}
-		}
-
-		driver.clickOn(button);
-	}
-
 	public RecoverPasswordPage clickContinueThree() {
-		ObservableList<Node> popupNodes = ((VBox) Objects.requireNonNull(TestUtil.getPopupNodes()).get(0)).getChildren();
+		ObservableList<Node> popupNodes =
+				((VBox) Objects.requireNonNull(TestUtil.getPopupNodes()).get(0)).getChildren();
 
 		Button button = new Button();
 
