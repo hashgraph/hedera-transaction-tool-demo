@@ -64,6 +64,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -234,96 +235,21 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 
 			// Events
-			nicknameTextBox.setOnKeyReleased(keyEvent -> {
-				if (nicknameTextBox.getText().equals("")) {
-					nicknameErrorLabel.setVisible(false);
-					createKeysButton.setDisable(true);
-					return;
-				}
+			nicknameTextBox.setOnKeyReleased(this::nickNameTextBoxEvent);
 
-				var pathToKeys = controller.getPreferredStorageDirectory() + KEYS_STRING + nicknameTextBox.getText();
-				var exists =
-						new File(pathToKeys + "." + PK_EXTENSION).exists() || new File(
-								pathToKeys + "." + PUB_EXTENSION).exists();
+			recoverIndexField.textProperty().addListener(this::recoverIndexFieldListenerAction);
 
-				if (exists) {
-					nicknameErrorLabel.setVisible(true);
-					createKeysButton.setDisable(true);
-				} else {
-					createKeysButton.setDisable(false);
-					nicknameErrorLabel.setVisible(false);
-				}
+			recoverIndexField.focusedProperty().addListener(this::recoverIndexFieldFocusedAction);
 
-				if (keyEvent.getCode() == KeyCode.ENTER) {
-					if (!exists) {
-						try {
-							generateKeysEvent();
-						} catch (HederaClientException e) {
-							logger.error(e);
-							controller.displaySystemMessage(e);
-						}
-					}
-				} else if (keyEvent.getCode() == KeyCode.TAB) {
-					createKeysButton.requestFocus();
-				}
-			});
+			recoverNicknameField.focusedProperty().addListener(this::recoverNickNameFieldFocusedAction);
 
-			recoverIndexField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
-				}
-			});
-
-			recoverIndexField.focusedProperty().addListener(
-					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
-							var index = Integer.parseInt(recoverIndexField.getText());
-
-							List<String> values = new ArrayList<>();
-							for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-								if (entry.getValue() == index) {
-									values.add(entry.getKey());
-								}
-							}
-
-							// We will only populate the nickname field if the key index is not duplicated
-							if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
-								recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
-							}
-						}
-					});
-
-			recoverNicknameField.focusedProperty().addListener(
-					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (Boolean.FALSE.equals(newValue) &&
-								!recoverNicknameField.getText().isEmpty() &&
-								indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
-								recoverIndexField.getText().isEmpty() &&
-								indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
-							recoverIndexField.setText(
-									indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
-						}
-					});
-
-			recoverNicknameField.setOnKeyReleased(keyEvent -> {
-				if (!recoverNicknameField.getText().isEmpty() &&
-						indexMap.containsKey(recoverNicknameField.getText() + PK_EXTENSION) &&
-						recoverIndexField.getText().isEmpty() &&
-						indexMap.get(recoverNicknameField.getText() + PK_EXTENSION) >= 0) {
-					recoverIndexField.setText(indexMap.get(recoverNicknameField.getText() + PK_EXTENSION).toString());
-				}
-			});
+			recoverNicknameField.setOnKeyReleased(this::recoverNicknameFieldKeyAction);
 
 			recoveryPasswordVBox.managedProperty().bind(recoveryPasswordVBox.visibleProperty());
 
 			recoveryVBox.managedProperty().bind(recoveryVBox.visibleProperty());
 
-			recoveryPasswordField.setOnKeyReleased(keyEvent -> {
-				phrasePasswordErrorLabel.setVisible(false);
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					recoveryPassword();
-				}
-			});
+			recoveryPasswordField.setOnKeyReleased(this::recoveryPasswordKeyAction);
 
 			// region Tooltips
 			publicKeyToolTip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, publicKeyToolTip,
@@ -343,6 +269,47 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			logger.error(e);
 		}
 
+	}
+
+	private void recoveryPasswordKeyAction(KeyEvent keyEvent) {
+		phrasePasswordErrorLabel.setVisible(false);
+		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+			recoveryPassword();
+		}
+	}
+
+	private void nickNameTextBoxEvent(KeyEvent keyEvent) {
+		if (nicknameTextBox.getText().equals("")) {
+			nicknameErrorLabel.setVisible(false);
+			createKeysButton.setDisable(true);
+			return;
+		}
+
+		var pathToKeys = controller.getPreferredStorageDirectory() + KEYS_STRING + nicknameTextBox.getText();
+		var exists =
+				new File(pathToKeys + "." + PK_EXTENSION).exists() || new File(
+						pathToKeys + "." + PUB_EXTENSION).exists();
+
+		if (exists) {
+			nicknameErrorLabel.setVisible(true);
+			createKeysButton.setDisable(true);
+		} else {
+			createKeysButton.setDisable(false);
+			nicknameErrorLabel.setVisible(false);
+		}
+
+		if (keyEvent.getCode() == KeyCode.ENTER) {
+			if (!exists) {
+				try {
+					generateKeysEvent();
+				} catch (HederaClientException e) {
+					logger.error(e);
+					controller.displaySystemMessage(e);
+				}
+			}
+		} else if (keyEvent.getCode() == KeyCode.TAB) {
+			createKeysButton.requestFocus();
+		}
 	}
 
 	public Map<String, String> getPublicKeysMap() {
@@ -1063,7 +1030,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 						passwordAuthenticator.authenticateLegacy(password, controller.getHash());
 				if (authenticate) {
 					if (!controller.hasSalt()) {
-						// handle password migration
+						// recoverNicknameFieldKeyAction password migration
 						logger.info("Handling password hash migration");
 						controller.setHash(password);
 						controller.setSalt(true);
@@ -1381,6 +1348,53 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 		}
 		return "";
+	}
+
+	private void recoverIndexFieldListenerAction(ObservableValue<? extends String> observable, String oldValue,
+			String newValue) {
+		if (!newValue.matches("\\d*")) {
+			recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
+		}
+	}
+
+	private void recoverIndexFieldFocusedAction(ObservableValue<? extends Boolean> observable, Boolean oldValue,
+			Boolean newValue) {
+		if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
+			var index = Integer.parseInt(recoverIndexField.getText());
+
+			List<String> values = new ArrayList<>();
+			for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
+				if (entry.getValue() == index) {
+					values.add(entry.getKey());
+				}
+			}
+
+			// We will only populate the nickname field if the key index is not duplicated
+			if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
+				recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
+			}
+		}
+	}
+
+	private void recoverNickNameFieldFocusedAction(ObservableValue<? extends Boolean> observable, Boolean oldValue,
+			Boolean newValue) {
+		if (Boolean.FALSE.equals(newValue) &&
+				!recoverNicknameField.getText().isEmpty() &&
+				indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
+				recoverIndexField.getText().isEmpty() &&
+				indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
+			recoverIndexField.setText(
+					indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
+		}
+	}
+
+	private void recoverNicknameFieldKeyAction(KeyEvent keyEvent) {
+		if (!recoverNicknameField.getText().isEmpty() &&
+				indexMap.containsKey(recoverNicknameField.getText() + PK_EXTENSION) &&
+				recoverIndexField.getText().isEmpty() &&
+				indexMap.get(recoverNicknameField.getText() + PK_EXTENSION) >= 0) {
+			recoverIndexField.setText(indexMap.get(recoverNicknameField.getText() + PK_EXTENSION).toString());
+		}
 	}
 
 	// endregion

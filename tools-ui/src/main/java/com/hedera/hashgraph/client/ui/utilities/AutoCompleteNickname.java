@@ -18,12 +18,14 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,8 +37,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Class extends a textfield to allow for an "autocorrect" from a provided list. As the user types in the the textbox, a
- * list of suggestions will appear. These suggestions will originate in the provided list of words.
+ * Class extends a text field to allow for an "autocorrect" from a provided list. As the user types in the the text box,
+ * a list of suggestions will appear. These suggestions will originate in the provided list of words.
  * This class will be used to suggest to the user one of the nicknames of the accounts on record. If the user types a
  * word that is not in the list, it will show in red.
  */
@@ -62,56 +64,32 @@ public class AutoCompleteNickname extends TextField {
 		setStyle(STYLE_STRING);
 
 		entriesPopup = new ContextMenu();
-		textProperty().addListener((observableValue, s, s2) -> {
-			var text = s2.toLowerCase().replace(" ", "");
-			if (getText().length() == 0) {
-				entriesPopup.hide();
-			} else if (!noise.get()) {
-				var searchResult = suggestWords(text);
-				if (!searchResult.isEmpty()) {
-					setStyle(STYLE_STRING + "-fx-text-fill: black");
-					valid.set(true);
-					populatePopup(searchResult);
-					if (!entriesPopup.isShowing()) {
-						entriesPopup.show(AutoCompleteNickname.this, Side.BOTTOM, 0, 0);
-					}
-					if (searchResult.size() == 1) {
-						if (text.equals(searchResult.get(0))) {
-							entriesPopup.hide();
-						} else {
-							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-						}
-					}
-				} else {
-					setStyle(STYLE_STRING + "-fx-text-fill: red");
-					valid.set(false);
-					entriesPopup.hide();
-				}
-			}
-		});
+		textProperty().addListener(this::textPropertyListenerAction);
 
 		focusedProperty().addListener((observableValue, aBoolean, aBoolean2) -> entriesPopup.hide());
-		setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
-				entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-				noise.set(true);
+		setOnKeyReleased(this::keyReleasedAction);
+
+
+	}
+
+	private void keyReleasedAction(KeyEvent keyEvent) {
+		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
+			noise.set(true);
+		}
+		if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
+			if (!valid.get()) {
+				return;
 			}
-			if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
-				if (!valid.get()) {
-					return;
-				}
-				noise.set(false);
-				var text = this.getText().toLowerCase().replace(" ", "");
+			noise.set(false);
+			var text = this.getText().toLowerCase().replace(" ", "");
 
-				final var firstItem = getFirstItem();
-				if (!"".equals(text) && (text.equals(firstItem) || isSingleItem())) {
-					setText(firstItem);
-					nickname = firstItem;
-				}
+			final var firstItem = getFirstItem();
+			if (!"".equals(text) && (text.equals(firstItem) || isSingleItem())) {
+				setText(firstItem);
+				nickname = firstItem;
 			}
-		});
-
-
+		}
 	}
 
 	public void setDefault(String defaultName) {
@@ -125,7 +103,7 @@ public class AutoCompleteNickname extends TextField {
 	/**
 	 * Returns the chosen nickname
 	 *
-	 * @return
+	 * @return a string nickname
 	 */
 	public String getNickname() {
 		return nickname;
@@ -193,5 +171,36 @@ public class AutoCompleteNickname extends TextField {
 						Comparator.naturalOrder()).collect(Collectors.toList());
 
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
+	}
+
+	private void textPropertyListenerAction(ObservableValue<? extends String> observableValue, String s, String s2) {
+		var text = s2.toLowerCase().replace(" ", "");
+		if (getText().length() != 0) {
+			if (!noise.get()) {
+				var searchResult = suggestWords(text);
+				if (!searchResult.isEmpty()) {
+					setStyle(STYLE_STRING + "-fx-text-fill: black");
+					valid.set(true);
+					populatePopup(searchResult);
+					if (!entriesPopup.isShowing()) {
+						entriesPopup.show(AutoCompleteNickname.this, Side.BOTTOM, 0, 0);
+					}
+					if (searchResult.size() == 1) {
+						if (text.equals(searchResult.get(0))) {
+							entriesPopup.hide();
+						} else {
+							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
+						}
+					}
+
+				} else {
+					setStyle(STYLE_STRING + "-fx-text-fill: red");
+					valid.set(false);
+					entriesPopup.hide();
+				}
+			}
+			return;
+		}
+		entriesPopup.hide();
 	}
 }
