@@ -67,6 +67,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -228,11 +229,53 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var table = new TableView<AccountLineInformation>();
 		table.getItems().clear();
 
+		TableColumn<AccountLineInformation, String> nicknameColumn = getNicknameColumn(table);
+
+		TableColumn<AccountLineInformation, Identifier> accountIDColumn = getAccountIDColumn(table);
+
+		TableColumn<AccountLineInformation, Hbar> balanceColumn = getBalanceColumn(table);
+
+		TableColumn<AccountLineInformation, String> canSignColumn = getCanSignColumn(table);
+
+		TableRowExpanderColumn<AccountLineInformation> expanderColumn = getExpanderColumn();
+
+		TableColumn<AccountLineInformation, String> actionColumn = getActionColumn(table);
+
+		table.getColumns().addAll(expanderColumn, nicknameColumn, accountIDColumn, balanceColumn, canSignColumn,
+				actionColumn);
+		table.getItems().addAll(accountLineInformation);
+
+		if (accountLineInformation.size() == 1) {
+			expanderColumn.toggleExpanded(0);
+		}
+		return table;
+	}
+
+	/**
+	 * Setup the nickname column in the table
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<AccountLineInformation, String> getNicknameColumn(TableView<AccountLineInformation> table) {
 		var nicknameColumn = new TableColumn<AccountLineInformation, String>("Nickname");
 		nicknameColumn.setCellValueFactory(new PropertyValueFactory<>("nickname"));
 		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(2));
 		nicknameColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
+		return nicknameColumn;
+	}
 
+	/**
+	 * Setup the Account ID column
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<AccountLineInformation, Identifier> getAccountIDColumn(TableView<AccountLineInformation> table) {
 		var accountIDColumn = new TableColumn<AccountLineInformation, Identifier>("Account ID");
 		accountIDColumn.setCellValueFactory(new PropertyValueFactory<>("account"));
 		accountIDColumn.setCellFactory(tc -> new TableCell<>() {
@@ -248,33 +291,18 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		});
 		accountIDColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(2));
 		accountIDColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
+		return accountIDColumn;
+	}
 
-		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("Balance (At file creation)");
-		balanceColumn.setCellValueFactory(new PropertyValueFactory<>("balance"));
-		balanceColumn.setCellFactory(tc -> new TableCell<>() {
-			@Override
-			protected void updateItem(Hbar hBars, boolean empty) {
-				if (empty) {
-					setText("");
-				} else {
-					setFont(Font.font("Courier", 17));
-					setText(hBars.toString());
-				}
-			}
-		});
-
-		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(4).subtract(24));
-		balanceColumn.setStyle("-fx-alignment: TOP-RIGHT; -fx-padding: 10");
-
-		var canSignColumn = new TableColumn<AccountLineInformation, String>("Can Sign?");
-		canSignColumn.setCellValueFactory(new PropertyValueFactory<>("signer"));
-		canSignColumn.prefWidthProperty().bind(table.widthProperty().divide(10));
-		canSignColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
-
-		var expanderColumn =
-				new TableRowExpanderColumn<>(this::buildAccountVBox);
-		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
-
+	/**
+	 * Setup the action column
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<AccountLineInformation, String> getActionColumn(TableView<AccountLineInformation> table) {
 		var actionColumn = new TableColumn<AccountLineInformation, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> cellFactory =
@@ -302,22 +330,70 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 								CONTINUE_LABEL, CANCEL_LABEL);
 						if (Boolean.TRUE.equals(answer)) {
 							var accountLineInformation1 = getTableView().getItems().get(getIndex());
-							logger.info(String.format("Deleting %s", accountLineInformation1.getNickname()));
+							logger.info("Deleting {}", accountLineInformation1.getNickname());
 							deleteAccount(accountLineInformation1);
 							table.getItems().remove(getIndex());
 						}
 					}
 				};
 		actionColumn.setCellFactory(cellFactory);
+		return actionColumn;
+	}
 
-		table.getColumns().addAll(expanderColumn, nicknameColumn, accountIDColumn, balanceColumn, canSignColumn,
-				actionColumn);
-		table.getItems().addAll(accountLineInformation);
+	/**
+	 * Setup the expander column
+	 *
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableRowExpanderColumn<AccountLineInformation> getExpanderColumn() {
+		var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
+		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		return expanderColumn;
+	}
 
-		if (accountLineInformation.size() == 1) {
-			expanderColumn.toggleExpanded(0);
-		}
-		return table;
+	/**
+	 * Setup the "Can Sign?" column
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<AccountLineInformation, String> getCanSignColumn(TableView<AccountLineInformation> table) {
+		var canSignColumn = new TableColumn<AccountLineInformation, String>("Can Sign?");
+		canSignColumn.setCellValueFactory(new PropertyValueFactory<>("signer"));
+		canSignColumn.prefWidthProperty().bind(table.widthProperty().divide(10));
+		canSignColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		return canSignColumn;
+	}
+
+	/**
+	 * Setup the Balance column
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<AccountLineInformation, Hbar> getBalanceColumn(TableView<AccountLineInformation> table) {
+		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("Balance (At file creation)");
+		balanceColumn.setCellValueFactory(new PropertyValueFactory<>("balance"));
+		balanceColumn.setCellFactory(tc -> new TableCell<>() {
+			@Override
+			protected void updateItem(Hbar hBars, boolean empty) {
+				if (empty) {
+					setText("");
+				} else {
+					setFont(Font.font("Courier", 17));
+					setText(hBars.toString());
+				}
+			}
+		});
+
+		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(4).subtract(24));
+		balanceColumn.setStyle("-fx-alignment: TOP-RIGHT; -fx-padding: 10");
+		return balanceColumn;
 	}
 
 	/**
