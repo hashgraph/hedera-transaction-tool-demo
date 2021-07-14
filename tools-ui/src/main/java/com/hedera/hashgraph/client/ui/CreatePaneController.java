@@ -144,6 +144,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String REGEX = "[^\\d]";
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String START_STYLE = "-fx-background-radius: 10; -fx-border-radius: 10;";
+	private static final String MENU_BUTTON_STYLE =
+			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
+					"-fx-background-radius: 10;";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 
@@ -1600,18 +1603,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private MenuButton createTransactionMenuButton(CreateTransactionType type) {
 		var menuButton = new MenuButton();
 		setupOutputDirectoriesList();
-		menuButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
-						"10;" +
-						" -fx-background-radius: 10;");
+		menuButton.setStyle(MENU_BUTTON_STYLE);
 		menuButton.setText("CREATE AND EXPORT");
 		menuButton.setMinWidth(300);
 
 
 		menuButton.getItems().clear();
 		// setup button text
-		for (var s :
-				outputDirectories) {
+		for (var s : outputDirectories) {
 			var menuItem = new MenuItem(s.getPath().replace(System.getProperty("user.home") + File.separator, ""));
 			logger.info("Adding menu-item: \"{}\"", menuItem.getText());
 			var email = controller.getEmailFromMap(s.getPath());
@@ -1621,20 +1620,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				if (doNotStoreExpiringTransaction()) {
 					return;
 				}
-				try {
-					if (type.equals(CreateTransactionType.FILE_UPDATE)) {
-						prepareZipAndComment(s);
-					} else {
-						var pair = getUserCommentsTransactionPair(type);
-						if (pair == null) {
-							return;
-						}
-						storeTransactionAndComment(pair, s);
-					}
-				} catch (Exception e) {
-					logger.error(e);
-					controller.displaySystemMessage(e);
-				}
+				storeToOutput(type, s);
 			});
 			menuButton.getItems().add(menuItem);
 		}
@@ -1644,27 +1630,57 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (doNotStoreExpiringTransaction()) {
 				return;
 			}
-			try {
-				var pair = getUserCommentsTransactionPair(type);
-				if (pair == null) {
-					return;
-				}
-				var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
-				controller.setLastTransactionsDirectory(new File(s));
-				var fs = FileAdapterFactory.getAdapter(s);
-				if (type.equals(CreateTransactionType.FILE_UPDATE)) {
-					prepareZipAndComment(fs);
-				} else {
-					storeTransactionAndComment(pair, fs);
-				}
-			} catch (Exception e) {
-				logger.error(e);
-				controller.displaySystemMessage(e);
-			}
+			storeOutputToBrowsedOutput(type);
 		});
 		menuButton.getItems().add(menuItem);
 		return menuButton;
 
+	}
+
+	/**
+	 * Store a transaction and comments to one of the standard outputs
+	 *
+	 * @param type
+	 * 		the transaction type
+	 * @param fileService
+	 * 		the file service that will be used to store the transaction
+	 */
+	private void storeToOutput(CreateTransactionType type, FileService fileService) {
+		if (fileService == null) {
+			return;
+		}
+		try {
+			var pair = getUserCommentsTransactionPair(type);
+			if (pair == null) {
+				return;
+			}
+			if (type.equals(CreateTransactionType.FILE_UPDATE)) {
+				prepareZipAndComment(fileService);
+				return;
+			}
+			storeTransactionAndComment(pair, fileService);
+		} catch (HederaClientException e) {
+			controller.displaySystemMessage(e);
+		}
+
+	}
+
+	/**
+	 * Browse to a folder and store the transaction and comment
+	 *
+	 * @param type
+	 * 		the transaction type
+	 */
+	private void storeOutputToBrowsedOutput(CreateTransactionType type) {
+		var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
+		controller.setLastTransactionsDirectory(new File(s));
+		FileService fileService = null;
+		try {
+			fileService = FileAdapterFactory.getAdapter(s);
+		} catch (HederaClientException e) {
+			controller.displaySystemMessage(e);
+		}
+		storeToOutput(type, fileService);
 	}
 
 	private boolean doNotStoreExpiringTransaction() {

@@ -928,49 +928,70 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	private int handleNewFiles(List<File> newFiles, Set<String> nicknames) throws HederaClientException {
 		int counter = 0;
-		if (!newFiles.isEmpty()) {
-			var responseEnum = ResponseEnum.UNKNOWN;
-			var keepAsking = true;
-			for (var file : newFiles) {
-				var responseTuple = new ResponseTuple();
-				if (keepAsking) {
-					while (responseTuple.getNickname().equals("")) {
-						responseTuple =
-								TwoButtonPopup.display(FilenameUtils.getBaseName(file.getName()), newFiles.size() > 1);
-						if (nicknames.contains(responseTuple.getNickname())) {
-							PopupMessage.display("Duplicate nickname",
-									String.format(NICKNAME_IN_USE_MESSAGE, responseTuple.getNickname()),
-									CONTINUE_LABEL);
-							responseTuple.setNickname("");
-						}
-					}
-					responseEnum = responseTuple.getResponseEnum();
-					nicknames.add(responseTuple.getNickname());
-				}
-				switch (responseEnum) {
-					case IGNORE_ONCE:
-						keepAsking = true;
-						break;
-					case IGNORE_ALWAYS:
-						keepAsking = false;
-						break;
-					case REPLACE_ONCE:
-						importFromFile(file, responseTuple.getNickname());
-						counter++;
-						keepAsking = true;
-						break;
-					case REPLACE_ALWAYS:
-						importFromFile(file, FilenameUtils.getBaseName(file.getName()));
-						counter++;
-						keepAsking = false;
-						break;
-					case KEEP_BOTH_ONCE:
-					case KEEP_BOTH_ALWAYS:
-					case UNKNOWN:
-				}
+		var responseEnum = ResponseEnum.UNKNOWN;
+		var keepAsking = true;
+
+		if (newFiles.isEmpty()) {
+			return counter;
+		}
+		for (var file : newFiles) {
+			String newNickname = "";
+			if (keepAsking) {
+				var responseTuple =
+						getNicknameTuple(newFiles.size(), nicknames, FilenameUtils.getBaseName(file.getName()));
+				responseEnum = responseTuple.getResponseEnum();
+				nicknames.add(responseTuple.getNickname());
+				newNickname = responseTuple.getNickname();
+			}
+			switch (responseEnum) {
+				case IGNORE_ONCE:
+					keepAsking = true;
+					break;
+				case IGNORE_ALWAYS:
+					keepAsking = false;
+					break;
+				case REPLACE_ONCE:
+					importFromFile(file, newNickname);
+					counter++;
+					keepAsking = true;
+					break;
+				case REPLACE_ALWAYS:
+					importFromFile(file, FilenameUtils.getBaseName(file.getName()));
+					counter++;
+					keepAsking = false;
+					break;
+				case KEEP_BOTH_ONCE:
+				case KEEP_BOTH_ALWAYS:
+				case UNKNOWN:
 			}
 		}
 		return counter;
+	}
+
+	/**
+	 * Gets the nickname tuple for new files
+	 *
+	 * @param newFiles
+	 * 		the number of new files (to decide how many buttons to show in the popup)
+	 * @param nicknames
+	 * 		the nicknames set
+	 * @param file
+	 * 		the file that needs a new nickname
+	 * @return the tuple
+	 */
+	@NotNull
+	private ResponseTuple getNicknameTuple(int newFiles, Set<String> nicknames, String file) {
+		var responseTuple = new ResponseTuple();
+		while (responseTuple.getNickname().equals("")) {
+			responseTuple = TwoButtonPopup.display(file, newFiles > 1);
+			if (nicknames.contains(responseTuple.getNickname())) {
+				PopupMessage.display("Duplicate nickname",
+						String.format(NICKNAME_IN_USE_MESSAGE, responseTuple.getNickname()),
+						CONTINUE_LABEL);
+				responseTuple.setNickname("");
+			}
+		}
+		return responseTuple;
 	}
 
 	/**

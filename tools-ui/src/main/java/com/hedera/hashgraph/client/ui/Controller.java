@@ -606,6 +606,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var d = new Date();
 		systemMessagesTextField.appendText(
 				d + ": " + exception.toString() + System.getProperty("line.separator"));
+		logger.error(exception);
 	}
 
 	/**
