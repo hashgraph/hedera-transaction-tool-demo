@@ -699,10 +699,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllCreateFields() {
-		cleanFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField, memoField,
-				createAutoRenew, createSignatureRequired, createNewKey);
+		cleanFields();
 		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
-
 	}
 
 	private void clearErrorMessages(Label... errorMessages) {
@@ -775,9 +773,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void cleanAllUpdateFields() {
 		updateAccountID.clear();
-		cleanFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField, memoField,
-				updateAutoRenew, updateReceiverSignatureRequired, updateNewKey);
-
+		cleanFields();
 		updateARPOriginal.clear();
 		updateRSROriginal.setText("???");
 		updateOriginalKey.setContent(new HBox());
@@ -2063,18 +2059,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		scrollPane.managedProperty().bind(scrollPane.visibleProperty());
 	}
 
-	private void cleanFields(TextField hour, TextField minute, TextField seconds, DatePicker date, TextField feePayer,
-			TextField node, TextArea memo, TextField autoRenew, ToggleSwitch receiverSignatureRequired,
-			ScrollPane newKey) {
+	private void cleanFields() {
+		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField, memoField);
 
-		cleanCommonFields(hour, minute, seconds, date, feePayer, node, memo);
-		autoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		receiverSignatureRequired.setSelected(false);
+		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		createSignatureRequired.setSelected(false);
+		updateReceiverSignatureRequired.setSelected(false);
 		createCommentsTextArea.clear();
 		setupNewKeyObject();
 
-		newKey.setContent(new HBox());
-		newKey.setVisible(false);
+		createNewKey.setContent(new HBox());
+		createNewKey.setVisible(false);
+
+		updateNewKey.setContent(new HBox());
+		updateNewKey.setVisible(false);
 	}
 
 	private void cleanCommonFields(TextField hour, TextField minute, TextField seconds, DatePicker date,

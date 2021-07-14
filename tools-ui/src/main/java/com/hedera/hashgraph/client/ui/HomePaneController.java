@@ -148,7 +148,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	public void initializeHomePane() {
-		var version = controller.getVersion();
 		loadPubKeys();
 		loadPKMap();
 		accountsInfoMap.putAll(controller.getAccountInfoMap());
@@ -158,8 +157,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
 		try {
-			loadHistory(version);
-			loadRemoteFilesMap(version);
+			loadHistory();
+			loadRemoteFilesMap();
 
 			// Only refresh if there have been changes in the remotes or the history
 			var countFiles = remoteFilesMap.size();
@@ -226,13 +225,23 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		buildAdvanceHBox();
 	}
 
+	/**
+	 * Load the history files into the history box
+	 *
+	 * @param remoteFilesMap
+	 * 		the history files map
+	 */
 	private void loadHistoryVBox(RemoteFilesMap remoteFilesMap) throws HederaClientException {
 		final var historyNodes = displayFiles(remoteFilesMap, true);
 		historyFilesVBox.getChildren().clear();
 		historyFilesVBox.getChildren().addAll(historyNodes);
 	}
 
-	private void loadRemoteFilesMap(String version) throws HederaClientException {
+	/**
+	 * Load all remote files into the map
+	 */
+	private void loadRemoteFilesMap() throws HederaClientException {
+
 		if (controller.getOneDriveCredentials() != null && !controller.getOneDriveCredentials().isEmpty()) {
 			// Load remote files
 			var emailMap = controller.getOneDriveCredentials();
@@ -242,37 +251,62 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (forceUpdate) {
 				remoteFilesMap.clearMap();
 			}
-
-			for (var s : inputFolder) {
-				var count = remoteFilesMap.size();
-				var fileService = FileAdapterFactory.getAdapter(s);
-				if (fileService != null && fileService.exists() && (fileService.lastModified() > lastModified || forceUpdate)) {
-					final var remoteFiles = new RemoteFilesMap(version).fromFile(fileService);
-					this.remoteFilesMap.addAllNotExpired(remoteFiles);
-					lastModified = fileService.lastModified();
-					logger.info("{} Files loaded from {}", this.remoteFilesMap.size() - count, s);
-				}
-			}
+			loadInputFolderIntoMap(inputFolder);
 
 			// before showing the transactions need to check the history
-			for (var rf : remoteFilesMap.getFiles()) {
-				if (historyFiles.exists(rf.getName())) {
-					if (rf instanceof InfoFile || rf instanceof PublicKeyFile) {
-						var newDate = rf.getDate();
-						var historyDate = historyFiles.get(rf.getName()).getDate();
-						if (newDate <= historyDate) {
-							remoteFilesMap.remove(rf.getName());
-						}
-					} else {
-						remoteFilesMap.remove(rf.getName());
-					}
-				}
-			}
+			removeHistoryFiles();
 		}
 		logger.debug("Done loading remote files");
 	}
 
-	private void loadHistory(String version) {
+
+	/**
+	 * Load the not expired files from input from the input folder into the Remote Files Map
+	 *
+	 * @param inputFolder
+	 * 		the folder where transactions are stored
+	 */
+	private void loadInputFolderIntoMap(List<String> inputFolder) throws HederaClientException {
+		var version = controller.getVersion();
+
+		for (var s : inputFolder) {
+			var count = remoteFilesMap.size();
+			var fileService = FileAdapterFactory.getAdapter(s);
+			if (fileService != null && fileService.exists() && (fileService.lastModified() > lastModified || forceUpdate)) {
+				final var remoteFiles = new RemoteFilesMap(version).fromFile(fileService);
+				this.remoteFilesMap.addAllNotExpired(remoteFiles);
+				lastModified = fileService.lastModified();
+				logger.info("{} Files loaded from {}", this.remoteFilesMap.size() - count, s);
+			}
+		}
+	}
+
+	/**
+	 * Remove the files from the map that are also in the history
+	 */
+	private void removeHistoryFiles() {
+		for (var rf : remoteFilesMap.getFiles()) {
+			if (!historyFiles.exists(rf.getName())) {
+				continue;
+			}
+			if (rf instanceof InfoFile || rf instanceof PublicKeyFile) {
+				var newDate = rf.getDate();
+				var historyDate = historyFiles.get(rf.getName()).getDate();
+				if (newDate <= historyDate) {
+					remoteFilesMap.remove(rf.getName());
+				}
+				continue;
+			}
+			remoteFilesMap.remove(rf.getName());
+		}
+	}
+
+	/**
+	 * Load the history files
+	 */
+	private void loadHistory() {
+		var version = controller.getVersion();
+
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
 		}
@@ -280,8 +314,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		historyFiles.clearMap();
 		historyFiles =
 				new RemoteFilesMap(version).fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY));
-		for (var rf :
-				historyFiles.getFiles()) {
+		for (var rf : historyFiles.getFiles()) {
 			rf.setHistory(true);
 		}
 	}
@@ -983,56 +1016,55 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var next = buildMoveByOneButton("Next", Math.min(pages, page + 1));
 
 		if (pages < NUMBER_OF_SINGLE_BOXES) {
-			for (var i = 1; i <= pages; i++) {
-				if (page == i - 1) {
-					pagesHBox.getChildren().add(buildDummyButton(i));
-				} else {
-					pagesHBox.getChildren().add(buildPageButton(i));
-				}
+			var i = 0;
+			while (i < pages) {
+				Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
+				pagesHBox.getChildren().add(b);
+				i++;
 			}
-		} else {
-			var start = Math.max(0, page - backwards);
-			var end = Math.min(pages, page + forwards);
-			if (end - start < NUMBER_OF_SINGLE_BOXES) {
-				if (start == 0) {
-					end = NUMBER_OF_SINGLE_BOXES;
-				} else if (end == NUMBER_OF_SINGLE_BOXES) {
-					start = 0;
-				}
-			}
+			return;
+		}
 
-			if (page > 0) {
-				pagesHBox.getChildren().add(prev);
-			}
-
-			if (start < backwards) {
-				start = 0;
+		var start = Math.max(0, page - backwards);
+		var end = Math.min(pages, page + forwards);
+		if (end - start < NUMBER_OF_SINGLE_BOXES) {
+			if (start == 0) {
 				end = NUMBER_OF_SINGLE_BOXES;
+			} else if (end == NUMBER_OF_SINGLE_BOXES) {
+				start = 0;
+			}
+		}
+
+		if (page > 0) {
+			pagesHBox.getChildren().add(prev);
+		}
+
+		if (start < backwards) {
+			start = 0;
+			end = NUMBER_OF_SINGLE_BOXES;
+		} else {
+			pagesHBox.getChildren().add(buildPageButton(1));
+			pagesHBox.getChildren().add(new Label("..."));
+		}
+		if (end > pages - backwards) {
+			end = pages;
+			start = pages - NUMBER_OF_SINGLE_BOXES;
+		}
+
+		for (var i = start + 1; i <= end; i++) {
+			if (page == i - 1) {
+				pagesHBox.getChildren().add(buildDummyButton(i));
 			} else {
-				pagesHBox.getChildren().add(buildPageButton(1));
-				pagesHBox.getChildren().add(new Label("..."));
+				pagesHBox.getChildren().add(buildPageButton(i));
 			}
-			if (end > pages - backwards) {
-				end = pages;
-				start = pages - NUMBER_OF_SINGLE_BOXES;
-			}
+		}
+		if (end < pages - 1) {
+			pagesHBox.getChildren().add(new Label("..."));
+			pagesHBox.getChildren().add(buildPageButton(pages));
+		}
 
-			for (var i = start + 1; i <= end; i++) {
-				if (page == i - 1) {
-					pagesHBox.getChildren().add(buildDummyButton(i));
-				} else {
-					pagesHBox.getChildren().add(buildPageButton(i));
-				}
-			}
-			if (end < pages - 1) {
-				pagesHBox.getChildren().add(new Label("..."));
-				pagesHBox.getChildren().add(buildPageButton(pages));
-			}
-
-			if (page < pages - 1) {
-				pagesHBox.getChildren().add(next);
-			}
-
+		if (page < pages - 1) {
+			pagesHBox.getChildren().add(next);
 		}
 	}
 
