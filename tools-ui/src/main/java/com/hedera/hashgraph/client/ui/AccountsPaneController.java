@@ -283,33 +283,29 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 					@Override
 					public void updateItem(String item, boolean empty) {
-						if (empty) {
-							setGraphic(null);
-						} else {
+						setText(null);
+						if (!empty) {
 							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
 								var x = table.getItems().get(getIndex());
 								button.setText(x.getNickname() + "T");
 								button.setStyle("-fx-font-size: 2");
 							}
-							button.setOnAction(actionEvent -> {
-								var answer = PopupMessage.display("Warning", DELETE_ACCOUNT_WARNING_MESSAGE, true,
-										CONTINUE_LABEL, CANCEL_LABEL);
-								if (Boolean.TRUE.equals(answer)) {
-									var accountLineInformation1 =
-											getTableView().getItems().get(getIndex());
-									logger.info(String.format("Deleting %s",
-											accountLineInformation1.getNickname()));
-									try {
-										deleteAccount(accountLineInformation1);
-										table.getItems().remove(getIndex());
-									} catch (HederaClientException exception) {
-										logger.error(exception);
-									}
-								}
-							});
+							button.setOnAction(actionEvent -> setAccountTableButtonAction());
 							setGraphic(button);
+							return;
 						}
-						setText(null);
+						setGraphic(null);
+					}
+
+					private void setAccountTableButtonAction() {
+						var answer = PopupMessage.display("Warning", DELETE_ACCOUNT_WARNING_MESSAGE, true,
+								CONTINUE_LABEL, CANCEL_LABEL);
+						if (Boolean.TRUE.equals(answer)) {
+							var accountLineInformation1 = getTableView().getItems().get(getIndex());
+							logger.info(String.format("Deleting %s", accountLineInformation1.getNickname()));
+							deleteAccount(accountLineInformation1);
+							table.getItems().remove(getIndex());
+						}
 					}
 				};
 		actionColumn.setCellFactory(cellFactory);
@@ -345,7 +341,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param accountLineInformation
 	 * 		the line from the table that must be deleted
 	 */
-	public void deleteAccount(AccountLineInformation accountLineInformation) throws HederaClientException {
+	public void deleteAccount(AccountLineInformation accountLineInformation) {
 		var accountID = accountLineInformation.getAccount().toReadableString();
 		var directory = controller.getPreferredStorageDirectory();
 		if (Paths.get(directory, ACCOUNTS, ARCHIVE).toFile().mkdirs()) {
@@ -366,18 +362,19 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			Files.move(oldJsonPath, newJsonPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			controller.logAndDisplayError(e);
-			throw new HederaClientException(e);
 		}
 
 		// update nickname store
-		var nicknames =
-				(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-
-		if (nicknames.has(accountID)) {
-			nicknames.remove(accountID);
-			writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
+		JsonObject nicknames;
+		try {
+			nicknames = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			if (nicknames.has(accountID)) {
+				nicknames.remove(accountID);
+				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
+			}
+		} catch (HederaClientException e) {
+			controller.logAndDisplayError(e);
 		}
-
 		// Delete the account info from the History of accepted files
 		var historyInfo = new File(controller.getPreferredStorageDirectory() + "/History").listFiles(
 				(dir, name) -> name.contains(accountID));
