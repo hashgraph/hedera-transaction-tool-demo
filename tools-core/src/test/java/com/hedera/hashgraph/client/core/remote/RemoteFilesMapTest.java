@@ -57,8 +57,9 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	public void constructor_test() throws Exception {
 		var fileService = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assertNotNull(fileService);
-		var remoteFilesMap = new RemoteFilesMap().fromFile(fileService,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService);
 		var files = remoteFilesMap.getFiles();
 		assertNotNull(files);
 		assertEquals(30, files.size());
@@ -90,12 +91,13 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 
 		FileUtils.deleteDirectory(badDir);
 
-		var remoteFilesMap_fake = new RemoteFilesMap().fromFile(fileService_fake,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap_fake = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService_fake);
 		assertEquals(0, remoteFilesMap_fake.size());
 
-		var remoteFilesMap_badVersion = new RemoteFilesMap().fromFile(fileService,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap_badVersion = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(fileService);
 
 		assertEquals(0, remoteFilesMap_badVersion.countType(FileType.SOFTWARE_UPDATE));
 
@@ -105,8 +107,9 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	public void utils_test() throws HederaClientException {
 		var fileService1 = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assert fileService1 != null;
-		var remoteFilesMap = new RemoteFilesMap().fromFile(fileService1,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService1);
 
 		// exists
 		assertTrue(remoteFilesMap.exists("0-0-2_1678312256-0.tx"));
@@ -127,16 +130,18 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 		// addAll
 		var fileService2 = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil2/");
 		assert fileService2 != null;
-		var remoteFilesMap2 = new RemoteFilesMap().fromFile(fileService2,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap2 = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService2);
 		remoteFilesMap.addAll(remoteFilesMap2);
 
 		assertEquals(61, remoteFilesMap.size());
 
 		var fileService3 = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assert fileService3 != null;
-		var remoteFilesMap3 = new RemoteFilesMap().fromFile(fileService3,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap3 = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService3);
 		remoteFilesMap.addAll(remoteFilesMap3);
 
 		assertEquals(61, remoteFilesMap.size());
@@ -164,16 +169,17 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	public void addAllNotExpired_test() throws HederaClientException {
 		var fileService1 = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assert fileService1 != null;
-		var remoteFilesMap = new RemoteFilesMap().fromFile(fileService1,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService1);
 
 		assertTrue(remoteFilesMap.getFilesNotExpired().size() < remoteFilesMap.getFiles().size());
-		int diff = remoteFilesMap.size() - remoteFilesMap.getFilesNotExpired().size();
 
 		var fileService2 = FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil2/");
 		assert fileService2 != null;
-		var remoteFilesMap2 = new RemoteFilesMap().fromFile(fileService2,
-				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2");
+		var remoteFilesMap2 = new RemoteFilesMap(
+				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
+				fileService2);
 		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), remoteFilesMap2.getFiles().size());
 
 		remoteFilesMap2.addAllNotExpired(remoteFilesMap);

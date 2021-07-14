@@ -44,8 +44,8 @@ public class RemoteFilesMap {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMap.class);
 	private static final int TO_MS = 1000;
-	private static String version;
 
+	private String version = "";
 	private Map<String, RemoteFile> files;
 
 	/**
@@ -66,6 +66,11 @@ public class RemoteFilesMap {
 
 	public RemoteFilesMap() {
 		files = new HashMap<>();
+	}
+
+	public RemoteFilesMap(String version) {
+		this.version = version;
+		this.files = new HashMap<>();
 	}
 
 	/**
@@ -108,12 +113,9 @@ public class RemoteFilesMap {
 	 *
 	 * @param fileService
 	 * 		the FileService
-	 * @param currentVersion
-	 * 		the current app version
 	 * @return a RemoteFilesMap
 	 */
-	public RemoteFilesMap fromFile(FileService fileService, String currentVersion) {
-		version = currentVersion;
+	public RemoteFilesMap fromFile(FileService fileService) {
 		String location = fileService.getName().equals("Volumes") || fileService.getName().equals(
 				"TransactionTools") ? "" : "InputFiles";
 		try {

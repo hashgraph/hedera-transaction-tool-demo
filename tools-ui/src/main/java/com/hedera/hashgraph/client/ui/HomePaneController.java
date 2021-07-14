@@ -247,7 +247,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				var count = remoteFilesMap.size();
 				var fileService = FileAdapterFactory.getAdapter(s);
 				if (fileService != null && fileService.exists() && (fileService.lastModified() > lastModified || forceUpdate)) {
-					final var remoteFiles = new RemoteFilesMap().fromFile(fileService, version);
+					final var remoteFiles = new RemoteFilesMap(version).fromFile(fileService);
 					this.remoteFilesMap.addAllNotExpired(remoteFiles);
 					lastModified = fileService.lastModified();
 					logger.info("{} Files loaded from {}", this.remoteFilesMap.size() - count, s);
@@ -279,8 +279,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		// Load history files
 		historyFiles.clearMap();
 		historyFiles =
-				new RemoteFilesMap().fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY),
-						version);
+				new RemoteFilesMap(version).fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY));
 		for (var rf :
 				historyFiles.getFiles()) {
 			rf.setHistory(true);
