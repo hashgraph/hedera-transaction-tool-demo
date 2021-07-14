@@ -177,11 +177,35 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public GridPane buildGridPane() {
 		var detailsGridPane = super.buildGridPane();
-		var nicknames = new JsonObject();
-		var keysLink = new Hyperlink("Click for more details");
-		var sigReqLabel = new Label("Receiver signature required: ");
-		sigReqLabel.setWrapText(true);
+		handleTransactionCommonFields(detailsGridPane);
+		var count = detailsGridPane.getRowCount() + 1;
 
+		switch (transaction.getTransactionType()) {
+			case CRYPTO_TRANSFER:
+				handleCryptoTransferFields(detailsGridPane, count);
+				break;
+			case CRYPTO_CREATE:
+				handleCryptoCreateTransactionFields(detailsGridPane, count);
+				break;
+			case CRYPTO_UPDATE:
+				handleCryptoUpdateTransactionField(detailsGridPane, count);
+				break;
+			case SYSTEM_DELETE_UNDELETE:
+				handleSystemTransactionField(detailsGridPane, count);
+				break;
+			default:
+				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
+		}
+		return detailsGridPane;
+	}
+
+	/**
+	 * Add the common fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 */
+	private void handleTransactionCommonFields(GridPane detailsGridPane) {
 		try {
 			var map =
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
@@ -205,111 +229,144 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
+	}
 
-
+	/**
+	 * Add the CRYPTO TRANSFER exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoTransferFields(GridPane detailsGridPane, int count) {
+		var nicknames = new JsonObject();
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
-		var count = detailsGridPane.getRowCount() + 1;
-		switch (transaction.getTransactionType()) {
-			case CRYPTO_TRANSFER:
-				var accountAmountMap =
-						((ToolTransferTransaction) transaction).getAccountAmountMap();
-				List<Pair<String, String>> senders = new ArrayList<>();
-				List<Pair<String, String>> receivers = new ArrayList<>();
-				for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
-					var amount = entry.getValue();
-					var identifier = entry.getKey();
-					if (amount.toTinybars() < 0) {
-						senders.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
-								amount.toString().replace(" ", UNBREAKABLE_SPACE)));
-					} else {
-						receivers.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
-								amount.toString().replace(" ", UNBREAKABLE_SPACE)));
-					}
-				}
-
-				detailsGridPane.add(new Label("Senders: "), 0, count++);
-				setAccountAmounts(detailsGridPane, count++, senders);
-
-				detailsGridPane.add(new Label("Receivers: "), 0, count++);
-				setAccountAmounts(detailsGridPane, count, receivers);
-				break;
-			case CRYPTO_CREATE:
-				var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
-				detailsGridPane.add(new Label("Key: "), 0, count);
-				keysLink.setOnAction(actionEvent -> displayKey(treeView));
-				detailsGridPane.add(keysLink, 1, count++);
-
-				detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-				detailsGridPane.add(
-						new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds()))
-						, 1, count++);
-
-				detailsGridPane.add(new Label("Initial balance: "), 0, count);
-				var initialBalance = new Label(createTransaction.getInitialBalance().toString());
-				initialBalance.setFont(COURIER_FONT);
-				initialBalance.setStyle(DEBIT);
-				detailsGridPane.add(initialBalance, 1, count++);
-
-				detailsGridPane.add(sigReqLabel, 0, count);
-				detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
-						count);
-
-				break;
-			case CRYPTO_UPDATE:
-				var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
-
-				if (updateTransaction.getKey() != null) {
-					detailsGridPane.add(new Label("Key: "), 0, count);
-					keysLink.setOnAction(actionEvent -> displayKey(treeView));
-					detailsGridPane.add(keysLink, 1, count++);
-				}
-
-				if (updateTransaction.getAutoRenewDuration() != null) {
-					detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-					detailsGridPane.add(
-							new Label(String.format("%s seconds",
-									updateTransaction.getAutoRenewDuration().getSeconds()))
-							, 1, count++);
-				}
-
-
-				if (updateTransaction.isReceiverSignatureRequired() != null) {
-					detailsGridPane.add(sigReqLabel, 0, count);
-					detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
-							1,
-							count);
-				}
-				break;
-			case SYSTEM_DELETE_UNDELETE:
-				var toolSystemTransaction = (ToolSystemTransaction) transaction;
-				var isDelete = toolSystemTransaction.isDelete();
-				var isFile = toolSystemTransaction.isFile();
-
-				detailsGridPane.add(new Label(isFile ? "File ID: " : "Contract ID: "), 0, count);
-				detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
-						count++);
-
-				if (isDelete) {
-					var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
-					subLabel.setWrapText(true);
-					detailsGridPane.add(subLabel, 0, count);
-					var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
-							true);
-					expirationTimeLabel.setWrapText(true);
-					detailsGridPane.add(expirationTimeLabel, 1, count);
-				}
-				break;
-
-			default:
-				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
+		var accountAmountMap =
+				((ToolTransferTransaction) transaction).getAccountAmountMap();
+		List<Pair<String, String>> senders = new ArrayList<>();
+		List<Pair<String, String>> receivers = new ArrayList<>();
+		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+			var amount = entry.getValue();
+			var identifier = entry.getKey();
+			if (amount.toTinybars() < 0) {
+				senders.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
+						amount.toString().replace(" ", UNBREAKABLE_SPACE)));
+			} else {
+				receivers.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
+						amount.toString().replace(" ", UNBREAKABLE_SPACE)));
+			}
 		}
 
-		return detailsGridPane;
+		detailsGridPane.add(new Label("Senders: "), 0, count++);
+		setAccountAmounts(detailsGridPane, count++, senders);
+
+		detailsGridPane.add(new Label("Receivers: "), 0, count++);
+		setAccountAmounts(detailsGridPane, count, receivers);
+	}
+
+	/**
+	 * Add the CRYPTO CREATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoCreateTransactionFields(GridPane detailsGridPane, int count) {
+		var keysLink = new Hyperlink("Click for more details");
+		var sigReqLabel = new Label("Receiver signature required: ");
+		sigReqLabel.setWrapText(true);
+
+		var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
+		detailsGridPane.add(new Label("Key: "), 0, count);
+		keysLink.setOnAction(actionEvent -> displayKey(treeView));
+		detailsGridPane.add(keysLink, 1, count++);
+
+		detailsGridPane.add(new Label("Auto renew period: "), 0, count);
+		detailsGridPane.add(
+				new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds()))
+				, 1, count++);
+
+		detailsGridPane.add(new Label("Initial balance: "), 0, count);
+		var initialBalance = new Label(createTransaction.getInitialBalance().toString());
+		initialBalance.setFont(COURIER_FONT);
+		initialBalance.setStyle(DEBIT);
+		detailsGridPane.add(initialBalance, 1, count++);
+
+		detailsGridPane.add(sigReqLabel, 0, count);
+		detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
+				count);
+	}
+
+	/**
+	 * Add the CRYPTO UPDATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoUpdateTransactionField(GridPane detailsGridPane, int count) {
+		var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
+		var sigReqLabel = new Label("Receiver signature required: ");
+		sigReqLabel.setWrapText(true);
+
+		var keysLink = new Hyperlink("Click for more details");
+		if (updateTransaction.getKey() != null) {
+			detailsGridPane.add(new Label("Key: "), 0, count);
+			keysLink.setOnAction(actionEvent -> displayKey(treeView));
+			detailsGridPane.add(keysLink, 1, count++);
+		}
+
+		if (updateTransaction.getAutoRenewDuration() != null) {
+			detailsGridPane.add(new Label("Auto renew period: "), 0, count);
+			detailsGridPane.add(
+					new Label(String.format("%s seconds",
+							updateTransaction.getAutoRenewDuration().getSeconds()))
+					, 1, count++);
+		}
+
+
+		if (updateTransaction.isReceiverSignatureRequired() != null) {
+			detailsGridPane.add(sigReqLabel, 0, count);
+			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
+					1,
+					count);
+		}
+	}
+
+	/**
+	 * Add the SYSTEM exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleSystemTransactionField(GridPane detailsGridPane, int count) {
+		var toolSystemTransaction = (ToolSystemTransaction) transaction;
+		var isDelete = toolSystemTransaction.isDelete();
+		var isFile = toolSystemTransaction.isFile();
+
+		detailsGridPane.add(new Label(isFile ? "File ID: " : "Contract ID: "), 0, count);
+		detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
+				count++);
+
+		if (isDelete) {
+			var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
+			subLabel.setWrapText(true);
+			detailsGridPane.add(subLabel, 0, count);
+			var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
+					true);
+			expirationTimeLabel.setWrapText(true);
+			detailsGridPane.add(expirationTimeLabel, 1, count);
+		}
 	}
 
 	@Override

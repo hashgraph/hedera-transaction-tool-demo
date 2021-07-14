@@ -96,7 +96,6 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		var transactions = setupPriorityQueue(files);
 
 		// Submit the transactions
-
 		var count = 0;
 		while (!transactions.isEmpty()) {
 			sleepUntilNeeded(transactions.peek(), readyTime);
@@ -259,8 +258,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 				return NULL_VALID_START;
 			}
 			assert tx.getTransactionValidDuration() != null;
-			if (tx.getTransactionId().validStart.plusSeconds(tx.getTransactionValidDuration().toSeconds()).isAfter(
-					Instant.now())) {
+			if (tx.getTransactionId().validStart
+					.plusSeconds(tx.getTransactionValidDuration().toSeconds())
+					.isBefore(Instant.now())) {
 				return EXPIRED_START;
 			}
 			return ID_OK;
