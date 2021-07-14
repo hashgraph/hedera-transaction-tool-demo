@@ -31,6 +31,8 @@ public class ToolTipMessages {
 			"Accounts that have been imported to the app. Double clicking on any account name will set its " +
 					"key in the Design Box";
 	public static final String PUBLIC_KEYS_BOX_DESIGNER_TOOLTIP_TEXT =
-							"Keys that have been imported to the app, as well as the keys manually selected by the user. Drag and drop " +
-									"them to the design box";
+			"Keys that have been imported to the app, as well as the keys manually selected by the user. Drag and " +
+					"drop them to the design box";
+	public static final String FILTER_TOOLTIP_TEXT =
+			"Select the file types to show in the History. If no filters are selected, all the History will be shown";
 }
