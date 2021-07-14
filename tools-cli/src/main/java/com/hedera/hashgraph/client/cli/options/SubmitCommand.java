@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
+import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static java.lang.Thread.sleep;
 
@@ -161,29 +162,32 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (var file : files) {
 			var txBytes = readBytes(file);
 			Transaction<? extends Transaction<?>> tx;
+
 			try {
 				tx = Transaction.fromBytes(txBytes);
+				assert tx.getTransactionValidDuration() != null;
 			} catch (InvalidProtocolBufferException e) {
 				logger.error(e.getMessage());
 				throw new HederaClientException(e);
 			}
-			if (tx.getTransactionId() == null) {
-				logger.error("Invalid transaction {}: No valid id found", file);
-				continue;
+			switch (getFitness(tx)) {
+				case NULL_ID:
+					logger.error("Invalid transaction {}: No valid id found", file);
+					break;
+				case NULL_VALID_START:
+					logger.error("Invalid transaction {}: No valid start time found", file);
+					break;
+				case EXPIRED_START:
+					logger.error("Transaction {} happens in the past. Skipped.", file);
+					break;
+				case ID_OK:
+					logger.info("Transaction {} added to queue", file);
+					transactions.add(tx);
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + getFitness(tx));
 			}
-			if (tx.getTransactionId().validStart == null) {
-				logger.error("Invalid transaction {}: No valid start time found", file);
-				continue;
-			}
-			assert tx.getTransactionValidDuration() != null;
-			if (tx.getTransactionId().validStart.plusSeconds(tx.getTransactionValidDuration().toSeconds()).isBefore(
-					Instant.now())) {
-				logger.error("Transaction {} happens in the past. Skipped.", file);
-				continue;
-			}
-			transactions.add(tx);
 		}
-
 		return transactions;
 	}
 
@@ -239,5 +243,27 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	private boolean isTransaction(File file) {
 		return SIGNED_TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(file.getName()));
+	}
+
+	public enum TransactionIDFitness {
+		NULL_ID,
+		NULL_VALID_START,
+		EXPIRED_START,
+		ID_OK;
+
+		public static TransactionIDFitness getFitness(Transaction<?> tx) {
+			if (tx.getTransactionId() == null) {
+				return NULL_ID;
+			}
+			if (tx.getTransactionId().validStart == null) {
+				return NULL_VALID_START;
+			}
+			assert tx.getTransactionValidDuration() != null;
+			if (tx.getTransactionId().validStart.plusSeconds(tx.getTransactionValidDuration().toSeconds()).isAfter(
+					Instant.now())) {
+				return EXPIRED_START;
+			}
+			return ID_OK;
+		}
 	}
 }

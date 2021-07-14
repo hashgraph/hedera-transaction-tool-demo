@@ -846,7 +846,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		list of files
 	 */
 	public void importInfoFiles(List<File> files) throws HederaClientException {
-
 		List<File> duplicates = new ArrayList<>();
 		List<File> newFiles = new ArrayList<>();
 		Set<String> nicknames = new HashSet<>(idNickNames.values());
@@ -860,8 +859,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		}
 
-		var counter = 0;
 		// First deal with the duplicates
+		var counter = handleDuplicateFiles(duplicates);
+
+		// Now we must deal with the new files
+		counter += handleNewFiles(newFiles, nicknames);
+
+		// Only refresh the panes if the accounts have changed
+		if (counter > 0) {
+			refreshPanes();
+		}
+	}
+
+	/**
+	 * Handle duplicate files
+	 *
+	 * @param duplicates
+	 * 		a list of duplicates
+	 * @return the number of accounts changes
+	 */
+	private int handleDuplicateFiles(List<File> duplicates) throws HederaClientException {
+		int counter = 0;
 		if (!duplicates.isEmpty()) {
 			var keepAsking = true;
 			var responseEnum = ResponseEnum.UNKNOWN;
@@ -896,9 +914,20 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		}
+		return counter;
+	}
 
-
-		// now we must deal with the new files
+	/**
+	 * Handle the new Accounts
+	 *
+	 * @param newFiles
+	 * 		list of new files
+	 * @param nicknames
+	 * 		list of nicknames
+	 * @return the number of accounts accepted
+	 */
+	private int handleNewFiles(List<File> newFiles, Set<String> nicknames) throws HederaClientException {
+		int counter = 0;
 		if (!newFiles.isEmpty()) {
 			var responseEnum = ResponseEnum.UNKNOWN;
 			var keepAsking = true;
@@ -939,23 +968,29 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					case KEEP_BOTH_ALWAYS:
 					case UNKNOWN:
 				}
-
 			}
 		}
+		return counter;
+	}
 
-		if (counter > 0) {
-			initializeAccountPane();
-			controller.keysPaneController.initializeKeysPane();
-			controller.homePaneController.setForceUpdate(true);
-			controller.homePaneController.initializeHomePane();
-			getAccountsFromFileSystem(accountInfos, idNickNames);
-			controller.setAccountInfoMap(accountInfos);
-			try {
-				updateAccountLineInformation();
-			} catch (InvalidProtocolBufferException e) {
-				controller.logAndDisplayError(e);
-				throw new HederaClientException(e);
-			}
+	/**
+	 * If accounts have been imported or changed, refresh panes
+	 *
+	 * @throws HederaClientException
+	 * 		if there is an InvalidProtocolException thrown
+	 */
+	private void refreshPanes() throws HederaClientException {
+		initializeAccountPane();
+		controller.keysPaneController.initializeKeysPane();
+		controller.homePaneController.setForceUpdate(true);
+		controller.homePaneController.initializeHomePane();
+		getAccountsFromFileSystem(accountInfos, idNickNames);
+		controller.setAccountInfoMap(accountInfos);
+		try {
+			updateAccountLineInformation();
+		} catch (InvalidProtocolBufferException e) {
+			controller.logAndDisplayError(e);
+			throw new HederaClientException(e);
 		}
 	}
 

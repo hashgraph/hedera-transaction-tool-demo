@@ -18,18 +18,26 @@
 
 package com.hedera.hashgraph.client.core.enums;
 
-import com.hedera.hashgraph.client.core.constants.Constants;
+import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONFIGURATION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SOFTWARE_UPDATE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 
 public enum FileType {
-	TRANSACTION(Constants.TRANSACTION_EXTENSION),
-	BATCH(Constants.BATCH_TRANSACTION_EXTENSION),
-	LARGE_BINARY(Constants.LARGE_BINARY_EXTENSION),
-	SOFTWARE_UPDATE(Constants.SOFTWARE_UPDATE_EXTENSION),
-	ACCOUNT_INFO(Constants.INFO_EXTENSION),
-	PUBLIC_KEY(Constants.PUB_EXTENSION),
-	COMMENT(Constants.COMMENT_EXTENSION),
-	CONFIG(Constants.CONFIGURATION_EXTENSION),
-	METADATA(Constants.METADATA_EXTENSION),
+	TRANSACTION(TRANSACTION_EXTENSION),
+	BATCH(BATCH_TRANSACTION_EXTENSION),
+	LARGE_BINARY(LARGE_BINARY_EXTENSION),
+	SOFTWARE_UPDATE(SOFTWARE_UPDATE_EXTENSION),
+	ACCOUNT_INFO(INFO_EXTENSION),
+	PUBLIC_KEY(PUB_EXTENSION),
+	COMMENT(COMMENT_EXTENSION),
+	CONFIG(CONFIGURATION_EXTENSION),
+	METADATA(METADATA_EXTENSION),
 	UNKNOWN("");
 
 	private final String extension;
