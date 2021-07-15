@@ -573,17 +573,16 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void populatePrivateKeysMap() {
 		privateKeysMap = new HashMap<>();
-		try {
-			if (new File(controller.getPreferredStorageDirectory() + KEYS_STRING).mkdirs()) {
-				logger.info("Keys folder created");
-			}
-			var pemFiles = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
-					(dir, name) -> isPEMFile(new File(name).toPath()));
-			assert pemFiles != null;
-			stream(pemFiles).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
-		} catch (Exception ex) {
-			logger.error(ex);
+
+		final var keysDirectory = new File(controller.getPreferredStorageDirectory(), KEYS_STRING);
+		if (keysDirectory.mkdirs()) {
+			logger.info("Keys folder created");
 		}
+		var pemFiles = keysDirectory.listFiles((dir, name) -> isPEMFile(new File(name).toPath()));
+		if (pemFiles != null) {
+			stream(pemFiles).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
+		}
+
 
 		populatePemMaps();
 
@@ -592,80 +591,102 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 						Collectors.toList());
 
 		if (orphanPEMs.size() > 0 && mainKeysScrollPane.isVisible()) {
-			try {
-				GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
-						MISSING_PUBLIC_KEY_MESSAGE);
-			} catch (HederaClientException exception) {
-				logger.error(exception);
-			}
-
-			for (var entry : orphanPEMs.entrySet()) {
-				var key = entry.getKey();
-				var value = entry.getValue();
-				var keyPair = getKeyPair(key);
-				final var pubKey_filename = value.replace(PK_EXTENSION, PUB_EXTENSION);
-				if (keyPair != null) {
-					try {
-						EncryptionUtils.storePubKey(pubKey_filename, (EdDSAPublicKey) keyPair.getPublic());
-					} catch (IOException e) {
-						logger.error(e);
-						logger.error("Cannot store the public key");
-					}
-				} else {
-					try {
-						var empty = new File(pubKey_filename);
-						if (empty.createNewFile()) {
-							logger.info("Created empty file {}", pubKey_filename);
-						}
-					} catch (IOException e) {
-						logger.error(e);
-						logger.error("Cannot create empty file");
-					}
-				}
-			}
-			orphanPEMs.clear();
+			handleOrphanPem();
 		}
 
 		if (!missingHashPemList.isEmpty()) {
-			try {
-				GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
-						MISSING_HASHCODE_MESSAGE);
-				var password = getPassword();
-				if (password != null) {
-					var mnemonic = getMnemonicFromFile(password);
-					if (mnemonic != null) {
-						if (currentHashCode == null) {
-							currentHashCode = String.valueOf(mnemonic.words.hashCode());
-						}
-						for (var key : missingHashPemList) {
-							var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
-							final var originalPath = privateKeysMap.get(key);
-							final var pubName0 = originalPath.replace(PK_EXTENSION, PUB_EXTENSION);
-							final var index = Ed25519KeyStore.getIndex(originalPath);
-							if (index < 0) {
-								addEmptyHashToPem(originalPath);
-								continue;
-							}
-							var pk = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
-							var keyPair = keyStore.insertNewKeyPair(pk);
-							if (verifyWithPublicKey(pubName0, (EdDSAPublicKey) keyPair.getPublic())) {
-								moveFile(new File(originalPath), new File(getArchivePathname(key)));
-								keyStore.write(originalPath, "Transaction Tool UI", index, controller.getVersion(),
-										mnemonic.words.hashCode());
-							} else {
-								addEmptyHashToPem(originalPath);
-							}
-						}
-					}
-					populatePemMaps();
-				}
-			} catch (HederaClientException | KeyStoreException | IOException exception) {
-				logger.error(exception);
-			}
-
+			handleMissingHashPem(missingHashPemList);
 			missingHashPemList.clear();
 		}
 
+	}
+
+	private void handleMissingHashPem(List<String> missingHashPemList) {
+		try {
+			GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
+					MISSING_HASHCODE_MESSAGE);
+			var password = getPassword();
+			if (password == null) {
+				return;
+			}
+			var mnemonic = getMnemonicFromFile(password);
+			if (mnemonic == null) {
+				return;
+			}
+			if (currentHashCode == null) {
+				currentHashCode = String.valueOf(mnemonic.words.hashCode());
+			}
+			handleMissingHashPemList(missingHashPemList, password, mnemonic);
+			populatePemMaps();
+		} catch (HederaClientException | KeyStoreException | IOException exception) {
+			logger.error(exception);
+		}
+	}
+
+	private void handleOrphanPem() {
+		try {
+			GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
+					MISSING_PUBLIC_KEY_MESSAGE);
+		} catch (HederaClientException exception) {
+			logger.error(exception);
+		}
+
+		for (var entry : orphanPEMs.entrySet()) {
+			var key = entry.getKey();
+			var value = entry.getValue();
+			var keyPair = getKeyPair(key);
+			final var pubKey_filename = value.replace(PK_EXTENSION, PUB_EXTENSION);
+			if (keyPair == null) {
+				handleNullKeyPair(pubKey_filename);
+				continue;
+			}
+			handleExistingKeyPair(keyPair, pubKey_filename);
+		}
+		orphanPEMs.clear();
+	}
+
+	private void handleMissingHashPemList(List<String> missingHashPemList, char[] password,
+			Mnemonic mnemonic) throws KeyStoreException, IOException {
+		for (var key : missingHashPemList) {
+			var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
+			final var originalPath = privateKeysMap.get(key);
+			final var pubName0 = originalPath.replace(PK_EXTENSION, PUB_EXTENSION);
+			final var index = Ed25519KeyStore.getIndex(originalPath);
+			if (index < 0) {
+				addEmptyHashToPem(originalPath);
+				continue;
+			}
+			var pk = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
+			var keyPair = keyStore.insertNewKeyPair(pk);
+			if (verifyWithPublicKey(pubName0, (EdDSAPublicKey) keyPair.getPublic())) {
+				moveFile(new File(originalPath), new File(getArchivePathname(key)));
+				keyStore.write(originalPath, "Transaction Tool UI", index, controller.getVersion(),
+						mnemonic.words.hashCode());
+			} else {
+				addEmptyHashToPem(originalPath);
+			}
+		}
+	}
+
+	private void handleExistingKeyPair(KeyPair keyPair, String pubKey_filename) {
+		try {
+			EncryptionUtils.storePubKey(pubKey_filename, (EdDSAPublicKey) keyPair.getPublic());
+		} catch (IOException e) {
+			logger.error(e);
+			logger.error("Cannot store the public key");
+		}
+	}
+
+	private void handleNullKeyPair(String pubKey_filename) {
+		try {
+			var empty = new File(pubKey_filename);
+			if (empty.createNewFile()) {
+				logger.info("Created empty file {}", pubKey_filename);
+			}
+		} catch (IOException e) {
+			logger.error(e);
+			logger.error("Cannot create empty file");
+		}
 	}
 
 	private void populatePemMaps() {
