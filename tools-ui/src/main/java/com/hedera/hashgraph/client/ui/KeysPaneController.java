@@ -606,7 +606,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
 					MISSING_HASHCODE_MESSAGE);
 			var password = getPassword();
-			if (password == null) {
+			if (password.length == 0) {
 				return;
 			}
 			var mnemonic = getMnemonicFromFile(password);
