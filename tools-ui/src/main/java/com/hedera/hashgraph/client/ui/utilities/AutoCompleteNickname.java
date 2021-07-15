@@ -173,40 +173,46 @@ public class AutoCompleteNickname extends TextField {
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
 	}
 
-	/**
-	 * 
-	 * @param observableValue
-	 * @param s
-	 * @param s2
-	 */
 	private void textPropertyListenerAction(ObservableValue<? extends String> observableValue, String s, String s2) {
 		var text = s2.toLowerCase().replace(" ", "");
 		if (getText().length() != 0) {
 			if (!noise.get()) {
 				var searchResult = suggestWords(text);
-				if (!searchResult.isEmpty()) {
+				if (searchResult.isEmpty()) {
+					setStyle(STYLE_STRING + "-fx-text-fill: red");
+					valid.set(false);
+					entriesPopup.hide();
+				} else {
 					setStyle(STYLE_STRING + "-fx-text-fill: black");
 					valid.set(true);
 					populatePopup(searchResult);
 					if (!entriesPopup.isShowing()) {
 						entriesPopup.show(AutoCompleteNickname.this, Side.BOTTOM, 0, 0);
 					}
-					if (searchResult.size() == 1) {
-						if (text.equals(searchResult.get(0))) {
-							entriesPopup.hide();
-						} else {
-							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-						}
-					}
-
-				} else {
-					setStyle(STYLE_STRING + "-fx-text-fill: red");
-					valid.set(false);
-					entriesPopup.hide();
+					singleResultAction(text, searchResult);
 				}
 			}
 			return;
 		}
 		entriesPopup.hide();
+	}
+
+	/**
+	 * Hide the menu if there is there is only one match
+	 *
+	 * @param text
+	 * 		the input text
+	 * @param searchResult
+	 * 		the matching search results
+	 */
+	private void singleResultAction(String text, List<String> searchResult) {
+		if (searchResult.size() != 1) {
+			return;
+		}
+		if (text.equals(searchResult.get(0))) {
+			entriesPopup.hide();
+			return;
+		}
+		entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
 	}
 }
