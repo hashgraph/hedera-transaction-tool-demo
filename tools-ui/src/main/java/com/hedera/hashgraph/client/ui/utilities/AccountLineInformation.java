@@ -101,12 +101,6 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 
 	@Override
 	public int compareTo(@NotNull AccountLineInformation o) {
-		if (o == null) {
-			throw new NullPointerException("Cannot compare to a null object");
-		}
-		if (!(o instanceof AccountLineInformation)) {
-			throw new HederaClientRuntimeException("Incompatible types");
-		}
 		return this.getAccount().compareTo(o.getAccount());
 	}
 }

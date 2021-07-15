@@ -36,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
-
 public class Identifier implements Comparable<Identifier> {
 
 	public static final String REALM_NUM = "realmNum";
@@ -261,12 +258,6 @@ public class Identifier implements Comparable<Identifier> {
 	public int compareTo(@NotNull Identifier o) {
 		if (this == o) {
 			return 0;
-		}
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-		if (getClass() != o.getClass()) {
-			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
 
 		if (this.equals(o)) {
