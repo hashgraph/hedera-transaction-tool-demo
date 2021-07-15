@@ -699,6 +699,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 					@Override
 					protected void updateItem(String item, boolean empty) {
 						super.updateItem(item, empty);
+						updateAction(item);
+					}
+
+					private void updateAction(String item) {
 						if (item != null) {
 							setText(item);
 							final var contextMenu = new ContextMenu();
@@ -707,101 +711,117 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 									actionEvent -> removeFromTree(treeView.getSelectionModel().getSelectedItem()));
 							contextMenu.getItems().add(deleteMenu);
 
-							if (item.contains(THRESHOLD_MARKER)) {
-								var addThresholdMenu = new MenuItem("add threshold key");
-								addThresholdMenu.setOnAction(actionEvent -> {
-									var newThreshold = new TreeItem<>(THRESHOLD_KEY_X_OF_X);
-									getTreeItem().getChildren().add(newThreshold);
-									logger.info("Added threshold to tree");
-								});
-								contextMenu.getItems().add(addThresholdMenu);
-							}
+							handleThresholds(item, contextMenu);
 							setContextMenu(contextMenu);
 							return;
 						}
 						setText(null);
 						setGraphic(null);
 					}
+
+					private void handleThresholds(String item, ContextMenu contextMenu) {
+						if (item.contains(THRESHOLD_MARKER)) {
+							var addThresholdMenu = new MenuItem("add threshold key");
+							addThresholdMenu.setOnAction(actionEvent -> addThresholdMenuEvent());
+							contextMenu.getItems().add(addThresholdMenu);
+						}
+					}
+
+					private void addThresholdMenuEvent() {
+						var newThreshold = new TreeItem<>(THRESHOLD_KEY_X_OF_X);
+						getTreeItem().getChildren().add(newThreshold);
+						logger.info("Added threshold to tree");
+					}
 				};
 
-				treeCell.setOnDragDetected((MouseEvent event) -> {
-					if (treeCell.getTreeItem().isLeaf()) {
-						var db = treeCell.startDragAndDrop(TransferMode.MOVE);
-						var content = new ClipboardContent();
-						content.putString(treeCell.getItem());
-						db.setContent(content);
-						event.consume();
-					}
-				});
+				treeCell.setOnDragDetected((MouseEvent event) -> treeCellDragAction(treeCell, event));
 
-				treeCell.setOnDragDone(event -> {
-					if (event.getTransferMode().equals(TransferMode.MOVE)) {
-						removeFromTree(treeCell.getTreeItem());
-					}
-					event.consume();
-				});
+				treeCell.setOnDragDone(event -> treeCellDragDoneEvent(treeCell, event));
 
 				treeCell.setOnDragEntered((DragEvent event) -> treeCell.setStyle("-fx-background-color: lightblue;"));
 
 				treeCell.setOnDragExited((DragEvent event) -> treeCell.setStyle(""));
 
-				treeCell.setOnDragOver((DragEvent event) -> {
-					var db = event.getDragboard();
-					if (db.hasString()) {
-						event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
-					}
-					event.consume();
-				});
+				treeCell.setOnDragOver((DragEvent event) -> treeCellDragOverEvent(event));
 
-				treeCell.setOnDragDropped((DragEvent event) -> {
-					logger.info("treeCell.setOnDragDropped");
-					var db = event.getDragboard();
-					var success = false;
-					if (treeCell.getTreeItem() != null && db.hasString()) {
-						final var value = treeCell.getTreeItem().getValue();
-						if (!value.contains(" key")) {
-							treeCell.getTreeItem().setValue(THRESHOLD_KEY_X_OF_X);
-							treeCell.getTreeItem().getChildren().add(new TreeItem<>(value));
-						}
-						treeCell.getTreeItem().getChildren().add(new TreeItem<>(db.getString()));
-						treeCell.getTreeItem().setExpanded(true);
-						success = true;
-					}
-					setSizes(treeView.getRoot());
-					event.setDropCompleted(success);
-					event.consume();
-				});
+				treeCell.setOnDragDropped((DragEvent event) -> treeCellDragDroppedEvent(treeCell, event));
 
-				treeCell.setOnMouseClicked(mouseEvent -> {
-					if (treeCell.getTreeItem() == null) {
-						return;
-					}
-					if (mouseEvent.getButton().equals(MouseButton.PRIMARY) && mouseEvent.getClickCount() == 2) {
-						if (treeCell.getTreeItem().isLeaf()) {
-							return;
-						}
-
-						var item = treeCell.getTreeItem();
-						try {
-							var t = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
-									"Enter the threshold");
-							if (t == null) {
-								return;
-							}
-							var threshold = Integer.parseInt(t);
-
-							item.setValue(
-									String.format("%s(%d of %d)",
-											item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
-											item.getChildren().size()));
-						} catch (HederaClientException e) {
-							logger.error(e);
-						}
-					}
-				});
+				treeCell.setOnMouseClicked(mouseEvent -> treeCellMouseClickedEvent(treeCell, mouseEvent));
 				return treeCell;
 			}
 		};
+	}
+
+	private void treeCellMouseClickedEvent(TreeCell<String> treeCell, MouseEvent mouseEvent) {
+		if (treeCell.getTreeItem() == null) {
+			return;
+		}
+		if (!mouseEvent.getButton().equals(MouseButton.PRIMARY) || mouseEvent.getClickCount() != 2) {
+			return;
+		}
+		if (treeCell.getTreeItem().isLeaf()) {
+			return;
+		}
+
+		var item = treeCell.getTreeItem();
+		try {
+			var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
+					"Enter the threshold");
+			if (thresholdString == null) {
+				return;
+			}
+			var threshold = Integer.parseInt(thresholdString);
+			final var formattedItem = String.format("%s(%d of %d)",
+					item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
+					item.getChildren().size());
+			item.setValue(formattedItem);
+		} catch (HederaClientException e) {
+			logger.error(e);
+		}
+	}
+
+	private void treeCellDragDroppedEvent(TreeCell<String> treeCell, DragEvent event) {
+		logger.info("treeCell.setOnDragDropped");
+		var db = event.getDragboard();
+		var success = false;
+		if (treeCell.getTreeItem() != null && db.hasString()) {
+			final var value = treeCell.getTreeItem().getValue();
+			if (!value.contains(" key")) {
+				treeCell.getTreeItem().setValue(THRESHOLD_KEY_X_OF_X);
+				treeCell.getTreeItem().getChildren().add(new TreeItem<>(value));
+			}
+			treeCell.getTreeItem().getChildren().add(new TreeItem<>(db.getString()));
+			treeCell.getTreeItem().setExpanded(true);
+			success = true;
+		}
+		setSizes(treeView.getRoot());
+		event.setDropCompleted(success);
+		event.consume();
+	}
+
+	private void treeCellDragOverEvent(DragEvent event) {
+		var db = event.getDragboard();
+		if (db.hasString()) {
+			event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
+		}
+		event.consume();
+	}
+
+	private void treeCellDragDoneEvent(TreeCell<String> treeCell, DragEvent event) {
+		if (event.getTransferMode().equals(TransferMode.MOVE)) {
+			removeFromTree(treeCell.getTreeItem());
+		}
+		event.consume();
+	}
+
+	private void treeCellDragAction(TreeCell<String> treeCell, MouseEvent event) {
+		if (treeCell.getTreeItem().isLeaf()) {
+			var db = treeCell.startDragAndDrop(TransferMode.MOVE);
+			var content = new ClipboardContent();
+			content.putString(treeCell.getItem());
+			db.setContent(content);
+			event.consume();
+		}
 	}
 
 	/**
@@ -851,13 +871,14 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		initial node
 	 */
 	private void checkTree(TreeItem<String> root) {
-		if (!root.isLeaf()) {
-			if (getThresholdFromString(root.getValue(), root.getChildren().size()) == -1) {
-				missingThresholds.add(root.getValue());
-			}
-			for (var child : root.getChildren()) {
-				checkTree(child);
-			}
+		if (root.isLeaf()) {
+			return;
+		}
+		if (getThresholdFromString(root.getValue(), root.getChildren().size()) == -1) {
+			missingThresholds.add(root.getValue());
+		}
+		for (var child : root.getChildren()) {
+			checkTree(child);
 		}
 	}
 

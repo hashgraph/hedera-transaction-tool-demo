@@ -68,8 +68,6 @@ public class AutoCompleteNickname extends TextField {
 
 		focusedProperty().addListener((observableValue, aBoolean, aBoolean2) -> entriesPopup.hide());
 		setOnKeyReleased(this::keyReleasedAction);
-
-
 	}
 
 	private void keyReleasedAction(KeyEvent keyEvent) {

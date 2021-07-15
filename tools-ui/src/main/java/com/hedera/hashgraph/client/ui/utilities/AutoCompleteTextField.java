@@ -47,32 +47,7 @@ public class AutoCompleteTextField extends TextField {
 		var dictionary = new Dictionary();
 		var noise = new AtomicBoolean(true);
 		entriesPopup = new ContextMenu();
-		textProperty().addListener((observableValue, s, s2) -> {
-			var text = s2.toLowerCase().replace(" ", "");
-			if (getText().length() != 0) {
-				noise.set(false);
-				var searchResult = dictionary.suggestWords(text);
-				if (!searchResult.isEmpty()) {
-					setStyle(styleString + "-fx-text-fill: black");
-					populatePopup(searchResult);
-					if (!entriesPopup.isShowing()) {
-						entriesPopup.show(AutoCompleteTextField.this, Side.BOTTOM, 0, 0);
-					}
-					if (searchResult.size() == 1) {
-						if (text.equals(searchResult.get(0))) {
-							entriesPopup.hide();
-						} else {
-							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-						}
-					}
-				} else {
-					setStyle(styleString + "-fx-text-fill: red");
-					entriesPopup.hide();
-				}
-			} else {
-				entriesPopup.hide();
-			}
-		});
+		textProperty().addListener((observableValue, s, s2) -> handleTextPropertyListener(dictionary, noise, s2));
 
 		focusedProperty().addListener((observableValue, aBoolean, aBoolean2) -> entriesPopup.hide());
 
@@ -82,22 +57,60 @@ public class AutoCompleteTextField extends TextField {
 			}
 		});
 
-		setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+		setOnKeyReleased(keyEvent -> handleKeyReleasedEvent(noise, keyEvent));
+
+
+	}
+
+	private void handleKeyReleasedEvent(AtomicBoolean noise, KeyEvent keyEvent) {
+		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
+			noise.set(true);
+		}
+
+		if (!keyEvent.getCode().equals(KeyCode.ENTER) && !keyEvent.getCode().equals(KeyCode.TAB)) {
+			return;
+		}
+
+		var text = this.getText().toLowerCase().replace(" ", "");
+
+		if ("".equals(text) || (!text.equals(getFirstItem()) && !isSingleItem())) {
+			return;
+		}
+
+		setText(getFirstItem());
+		goToNextTextField();
+	}
+
+	private void handleTextPropertyListener(Dictionary dictionary, AtomicBoolean noise, String s2) {
+		var text = s2.toLowerCase().replace(" ", "");
+		if (getText().length() != 0) {
+			noise.set(false);
+			var searchResult = dictionary.suggestWords(text);
+			if (searchResult.isEmpty()) {
+				setStyle(styleString + "-fx-text-fill: red");
+				entriesPopup.hide();
+			} else {
+				handleNonEmptySearch(text, searchResult);
+			}
+		} else {
+			entriesPopup.hide();
+		}
+	}
+
+	private void handleNonEmptySearch(String text, List<String> searchResult) {
+		setStyle(styleString + "-fx-text-fill: black");
+		populatePopup(searchResult);
+		if (!entriesPopup.isShowing()) {
+			entriesPopup.show(AutoCompleteTextField.this, Side.BOTTOM, 0, 0);
+		}
+		if (searchResult.size() == 1) {
+			if (text.equals(searchResult.get(0))) {
+				entriesPopup.hide();
+			} else {
 				entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-				noise.set(true);
 			}
-			if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
-				var text = this.getText().toLowerCase().replace(" ", "");
-
-				if (!"".equals(text) && (text.equals(getFirstItem()) || isSingleItem())) {
-					setText(getFirstItem());
-					goToNextTextField();
-				}
-			}
-		});
-
-
+		}
 	}
 
 	/**
