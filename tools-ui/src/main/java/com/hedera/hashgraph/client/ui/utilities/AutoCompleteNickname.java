@@ -173,6 +173,12 @@ public class AutoCompleteNickname extends TextField {
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
 	}
 
+	/**
+	 * 
+	 * @param observableValue
+	 * @param s
+	 * @param s2
+	 */
 	private void textPropertyListenerAction(ObservableValue<? extends String> observableValue, String s, String s2) {
 		var text = s2.toLowerCase().replace(" ", "");
 		if (getText().length() != 0) {
