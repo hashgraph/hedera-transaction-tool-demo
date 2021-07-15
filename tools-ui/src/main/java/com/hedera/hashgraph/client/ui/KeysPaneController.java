@@ -668,20 +668,20 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void handleExistingKeyPair(KeyPair keyPair, String pubKey_filename) {
+	private void handleExistingKeyPair(KeyPair keyPair, String pubKeyFilename) {
 		try {
-			EncryptionUtils.storePubKey(pubKey_filename, (EdDSAPublicKey) keyPair.getPublic());
+			EncryptionUtils.storePubKey(pubKeyFilename, (EdDSAPublicKey) keyPair.getPublic());
 		} catch (IOException e) {
 			logger.error(e);
 			logger.error("Cannot store the public key");
 		}
 	}
 
-	private void handleNullKeyPair(String pubKey_filename) {
+	private void handleNullKeyPair(String pubKeyFilename) {
 		try {
-			var empty = new File(pubKey_filename);
+			var empty = new File(pubKeyFilename);
 			if (empty.createNewFile()) {
-				logger.info("Created empty file {}", pubKey_filename);
+				logger.info("Created empty file {}", pubKeyFilename);
 			}
 		} catch (IOException e) {
 			logger.error(e);

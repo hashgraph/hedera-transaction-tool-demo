@@ -190,7 +190,11 @@ public class SettingsPaneController {
 
 			setupAutoRenewTextField();
 
-			setupTimeTextFields();
+			setupHoursField();
+
+			setupMinutesField();
+
+			setupSecondsField();
 
 			setupDefaultTransactionFeeTextField();
 
@@ -199,10 +203,6 @@ public class SettingsPaneController {
 						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
 						controller.setGenerateRecord(t1);
 					});
-
-			// endregion
-			// region FOCUS EVENTS
-
 
 			// endregion
 
@@ -221,7 +221,6 @@ public class SettingsPaneController {
 
 			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
 					FOLDER_TOOLTIP_MESSAGES));
-
 
 			// endregion
 
@@ -261,7 +260,7 @@ public class SettingsPaneController {
 				TRANSACTION_FEE_TOOLTIP_MESSAGE));
 	}
 
-	private void setupTimeTextFields() {
+	private void setupHoursField() {
 		hoursTextField.textProperty().addListener((observable, oldValue, newValue) -> {
 			if (!newValue.matches(REGEX1)) {
 				hoursTextField.setText(newValue.replaceAll(REGEX, ""));
@@ -274,7 +273,15 @@ public class SettingsPaneController {
 			}
 		});
 
+		hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Hours text field changed to: {}", hoursTextField.getText());
+				checkHours();
+			}
+		});
+	}
 
+	private void setupMinutesField() {
 		minutesTextField.textProperty().addListener((observable, oldValue, newValue) -> {
 			if (!newValue.matches(REGEX1)) {
 				minutesTextField.setText(newValue.replaceAll(REGEX, ""));
@@ -287,6 +294,15 @@ public class SettingsPaneController {
 			}
 		});
 
+		minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Minute text field changed to: {}", minutesTextField.getText());
+				checkMinutes();
+			}
+		});
+	}
+
+	private void setupSecondsField() {
 		secondsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
 			if (!newValue.matches(REGEX1)) {
 				secondsTextField.setText(newValue.replaceAll(REGEX, ""));
@@ -296,20 +312,6 @@ public class SettingsPaneController {
 		secondsTextField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				checkSeconds();
-			}
-		});
-
-		hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Hours text field changed to: {}", hoursTextField.getText());
-				checkHours();
-			}
-		});
-
-		minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Minute text field changed to: {}", minutesTextField.getText());
-				checkMinutes();
 			}
 		});
 
