@@ -132,15 +132,11 @@ public class MetadataAction implements Comparable<MetadataAction> {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode()+ timeStamp.hashCode() + keyName.hashCode();
+		return super.hashCode() + timeStamp.hashCode() + keyName.hashCode();
 	}
 
 	@Override
 	public int compareTo(@NotNull MetadataAction o) {
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-
 		if (getClass() != o.getClass()) {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}

@@ -93,12 +93,5 @@ class BatchLineTest {
 		assertTrue(parsed0.compareTo(BatchLine.parse(line1, hours0, minutes0)) < 0);
 		assertTrue(parsed0.compareTo(BatchLine.parse(line2, hours0, minutes0)) > 0);
 		assertTrue(parsed0.compareTo(BatchLine.parse(line3, hours0, minutes0)) < 0);
-
-		Exception exception = assertThrows(NullPointerException.class, () -> parsed0.compareTo(null));
-		assertEquals(NULL_OBJECT_COMPARISON_ERROR_MESSAGE, exception.getMessage());
-		exception = assertThrows(HederaClientRuntimeException.class, () -> parsed0.compareTo("test"));
-		assertEquals("Hedera Client Runtime: " + INCOMPATIBLE_TYPES_ERROR_MESSAGE, exception.getMessage());
-
-
 	}
 }

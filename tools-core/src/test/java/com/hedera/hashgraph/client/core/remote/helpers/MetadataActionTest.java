@@ -99,13 +99,6 @@ class MetadataActionTest {
 		assertTrue(action0.compareTo(new MetadataAction(new Timestamp(1610038031L, 0), Actions.DECLINE, "user comments",
 				"someOtherKey")) < 0);
 		assertEquals(0, action0.compareTo(action0));
-
-		Exception exception = assertThrows(NullPointerException.class, () -> action0.compareTo(null));
-		assertEquals(NULL_OBJECT_COMPARISON_ERROR_MESSAGE, exception.getMessage());
-		exception = assertThrows(HederaClientRuntimeException.class, () -> action0.compareTo("test"));
-		assertEquals("Hedera Client Runtime: " + INCOMPATIBLE_TYPES_ERROR_MESSAGE, exception.getMessage());
-
-
 	}
 
 }

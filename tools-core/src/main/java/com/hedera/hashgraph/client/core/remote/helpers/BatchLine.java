@@ -117,10 +117,6 @@ public class BatchLine implements Comparable<BatchLine> {
 
 	@Override
 	public int compareTo(@NotNull BatchLine o) {
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-
 		if (getClass() != o.getClass()) {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
