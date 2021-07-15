@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -35,7 +36,7 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATI
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.OUT_OF_RANGE_EXCEPTION_MESSAGE;
 
-public class BatchLine implements Comparable {
+public class BatchLine implements Comparable<BatchLine> {
 
 	private final Identifier receiverAccountID;
 	private final long amount;
@@ -115,7 +116,7 @@ public class BatchLine implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
+	public int compareTo(@NotNull BatchLine o) {
 		if (o == null) {
 			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
 		}
@@ -128,16 +129,15 @@ public class BatchLine implements Comparable {
 			return 0;
 		}
 
-		if (!this.getDate().equals(((BatchLine) o).getDate())) {
-			return this.getDate().asInstant().compareTo(((BatchLine) o).getDate().asInstant());
+		if (!this.getDate().equals(o.getDate())) {
+			return this.getDate().asInstant().compareTo(o.getDate().asInstant());
 		}
 
-		if (!this.getReceiverAccountID().equals(((BatchLine) o).getReceiverAccountID())) {
-			return this.getReceiverAccountID().compareTo(((BatchLine) o).getReceiverAccountID());
+		if (!this.getReceiverAccountID().equals(o.getReceiverAccountID())) {
+			return this.getReceiverAccountID().compareTo(o.getReceiverAccountID());
 		}
 
-		return Long.compare(this.getAmount(), ((BatchLine) o).getAmount());
-
+		return Long.compare(this.getAmount(), o.getAmount());
 	}
 
 	public static final class Builder {
@@ -150,8 +150,7 @@ public class BatchLine implements Comparable {
 		}
 
 		public Builder withReceiverAccountID(String stringAccountID) {
-			var receiverID = Identifier.parse(stringAccountID);
-			this.receiverAccountID = receiverID;
+			this.receiverAccountID = Identifier.parse(stringAccountID);
 			return this;
 		}
 
@@ -176,9 +175,10 @@ public class BatchLine implements Comparable {
 		 * @param excelDate
 		 * 		Date string in the
 		 * @param hour
+		 * 		the hour (0-23)
 		 * @param minutes
-		 * @return
-		 * @throws HederaClientException
+		 * 		the minutes (0-59)
+		 * @return a TimeStamp builder
 		 */
 		public Builder withTimeStamp(String excelDate, int hour, int minutes) throws HederaClientException {
 			final var formatter = new SimpleDateFormat("MM/dd/yy");

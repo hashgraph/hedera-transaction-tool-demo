@@ -693,6 +693,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private Callback<TreeView<String>, TreeCell<String>> getTreeCallback() {
 		return new Callback<>() {
+			private void handleDrag(DragEvent event) {
+				treeCellDragOverEvent(event);
+			}
+
 			@Override
 			public TreeCell<String> call(TreeView<String> stringTreeView) {
 				TreeCell<String> treeCell = new TreeCell<>() {
@@ -735,17 +739,11 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				};
 
 				treeCell.setOnDragDetected((MouseEvent event) -> treeCellDragAction(treeCell, event));
-
 				treeCell.setOnDragDone(event -> treeCellDragDoneEvent(treeCell, event));
-
 				treeCell.setOnDragEntered((DragEvent event) -> treeCell.setStyle("-fx-background-color: lightblue;"));
-
 				treeCell.setOnDragExited((DragEvent event) -> treeCell.setStyle(""));
-
-				treeCell.setOnDragOver((DragEvent event) -> treeCellDragOverEvent(event));
-
+				treeCell.setOnDragOver(this::handleDrag);
 				treeCell.setOnDragDropped((DragEvent event) -> treeCellDragDroppedEvent(treeCell, event));
-
 				treeCell.setOnMouseClicked(mouseEvent -> treeCellMouseClickedEvent(treeCell, mouseEvent));
 				return treeCell;
 			}

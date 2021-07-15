@@ -25,11 +25,12 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import org.jetbrains.annotations.NotNull;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 
-public class MetadataAction implements Comparable {
+public class MetadataAction implements Comparable<MetadataAction> {
 	private static final String TIMESTAMP_STRING = "timestamp";
 	private static final String KEY_NAME = "keyName";
 	private static final String USER_COMMENTS = "userComments";
@@ -113,23 +114,6 @@ public class MetadataAction implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-
-		if (getClass() != o.getClass()) {
-			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
-		}
-
-		if (this.timeStamp.getSeconds() != ((MetadataAction) o).getTimeStamp().getSeconds()) {
-			return Long.compare(timeStamp.getSeconds(), ((MetadataAction) o).getTimeStamp().getSeconds());
-		}
-
-		return this.keyName.compareTo(((MetadataAction) o).getKeyName());
-	}
-
-	@Override
 	public boolean equals(Object o) {
 		if (o == null) {
 			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
@@ -149,5 +133,22 @@ public class MetadataAction implements Comparable {
 	@Override
 	public int hashCode() {
 		return super.hashCode()+ timeStamp.hashCode() + keyName.hashCode();
+	}
+
+	@Override
+	public int compareTo(@NotNull MetadataAction o) {
+		if (o == null) {
+			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
+		}
+
+		if (getClass() != o.getClass()) {
+			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
+		}
+
+		if (this.timeStamp.getSeconds() != o.getTimeStamp().getSeconds()) {
+			return Long.compare(timeStamp.getSeconds(), o.getTimeStamp().getSeconds());
+		}
+
+		return this.keyName.compareTo(o.getKeyName());
 	}
 }

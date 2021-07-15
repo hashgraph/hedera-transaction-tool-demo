@@ -103,10 +103,11 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			assert tx != null;
 			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
 					tx.getTransactionId()));
-			var worker = new TransactionCallableWorker(tx, delay, out, client);
-			transactionsFutureTasks[count] = new FutureTask<TransactionCallableWorker>(worker);
+			TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
+			transactionsFutureTasks[count] = new FutureTask<>(worker);
 			executorServiceTransactions.submit(transactionsFutureTasks[count]);
 			count++;
+
 		}
 
 		if (count == 0) {

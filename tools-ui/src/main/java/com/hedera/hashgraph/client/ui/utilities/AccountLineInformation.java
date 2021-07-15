@@ -22,8 +22,9 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
+import org.jetbrains.annotations.NotNull;
 
-public class AccountLineInformation implements Comparable {
+public class AccountLineInformation implements Comparable<AccountLineInformation> {
 	private String nickname;
 	private Identifier account;
 	private Hbar balance;
@@ -79,18 +80,6 @@ public class AccountLineInformation implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
-		if (o == null) {
-			throw new NullPointerException("Cannot compare to a null object");
-		}
-		if (!(o instanceof AccountLineInformation)) {
-			throw new HederaClientRuntimeException("Incompatible types");
-		}
-		return this.getAccount().compareTo(((AccountLineInformation) o).getAccount());
-
-	}
-
-	@Override
 	public boolean equals(Object obj) {
 		if (!super.equals(obj)) {
 			return false;
@@ -108,5 +97,16 @@ public class AccountLineInformation implements Comparable {
 	@Override
 	public int hashCode() {
 		return super.hashCode() + nickname.hashCode() + account.hashCode() + balance.hashCode() + signer.hashCode();
+	}
+
+	@Override
+	public int compareTo(@NotNull AccountLineInformation o) {
+		if (o == null) {
+			throw new NullPointerException("Cannot compare to a null object");
+		}
+		if (!(o instanceof AccountLineInformation)) {
+			throw new HederaClientRuntimeException("Incompatible types");
+		}
+		return this.getAccount().compareTo(o.getAccount());
 	}
 }

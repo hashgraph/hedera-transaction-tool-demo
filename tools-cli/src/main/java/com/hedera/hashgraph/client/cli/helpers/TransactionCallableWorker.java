@@ -39,7 +39,7 @@ import java.util.concurrent.TimeoutException;
 
 import static java.lang.Thread.sleep;
 
-public class TransactionCallableWorker implements Callable, GenericFileReadWriteAware {
+public class TransactionCallableWorker implements Callable<String>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
 
 	private Transaction<?> tx;
@@ -55,7 +55,7 @@ public class TransactionCallableWorker implements Callable, GenericFileReadWrite
 	}
 
 	@Override
-	public Object call() throws Exception {
+	public String call() throws Exception {
 		assert tx != null;
 		assert tx.getTransactionValidDuration() != null;
 		if (Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart.plusSeconds(

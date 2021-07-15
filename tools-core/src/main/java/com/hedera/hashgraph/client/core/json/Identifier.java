@@ -16,25 +16,7 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.json;
-
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,13 +32,14 @@ import com.hedera.hashgraph.sdk.proto.ContractID;
 import com.hedera.hashgraph.sdk.proto.FileID;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 
-public class Identifier implements Comparable {
+public class Identifier implements Comparable<Identifier> {
 
 	public static final String REALM_NUM = "realmNum";
 	public static final String SHARD_NUM = "shardNum";
@@ -275,7 +258,7 @@ public class Identifier implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
+	public int compareTo(@NotNull Identifier o) {
 		if (this == o) {
 			return 0;
 		}
@@ -290,15 +273,14 @@ public class Identifier implements Comparable {
 			return 0;
 		}
 
-		final var identifier = (Identifier) o;
-		if (this.realmNum != identifier.getRealmNum()) {
-			return Long.compare(this.realmNum, identifier.getRealmNum());
+		if (this.realmNum != o.getRealmNum()) {
+			return Long.compare(this.realmNum, o.getRealmNum());
 		}
 
-		if (this.shardNum != identifier.getShardNum()) {
-			return Long.compare(this.shardNum, identifier.getShardNum());
+		if (this.shardNum != o.getShardNum()) {
+			return Long.compare(this.shardNum, o.getShardNum());
 		}
 
-		return Long.compare(this.accountNum, identifier.getAccountNum());
+		return Long.compare(this.accountNum, o.getAccountNum());
 	}
 }
