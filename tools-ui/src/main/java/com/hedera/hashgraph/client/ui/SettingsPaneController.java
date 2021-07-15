@@ -56,6 +56,12 @@ import java.util.prefs.BackingStoreException;
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FOLDER_TOOLTIP_MESSAGES;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.GENERATE_RECORD_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NODE_ID_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.START_TIME_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.TRANSACTION_FEE_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.VALID_DURATION_TOOLTIP_MESSAGE;
 import static javafx.scene.control.Alert.AlertType;
 import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
@@ -64,6 +70,10 @@ public class SettingsPaneController {
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
+	public static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
+			"The period of time in which the account will renew in seconds.\n" +
+					"Min:7000000 seconds \n" +
+					"Max: 8000000 seconds";
 
 	public TextField loadStorageTextField;
 	public TextField pathTextFieldSP;
@@ -174,113 +184,15 @@ public class SettingsPaneController {
 			readVersion();
 
 			// region Events
-			nodeIDTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					nodeIDTextField.setText(newValue.replaceAll("[^\\d.]", ""));
-				}
-			});
+			setupNodeIDTextField();
 
-			nodeIDTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkNodeID();
-				}
-			});
+			setupTxValidDurationTextField();
 
-			nodeIDTextField.setOnKeyPressed(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.TAB)) {
-					checkNodeID();
-				}
-			});
+			setupAutoRenewTextField();
 
-			txValidDurationTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					txValidDurationTextField.setText(newValue.replaceAll(REGEX, ""));
-				}
-			});
+			setupTimeTextFields();
 
-			txValidDurationTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkTransactionValidDuration();
-				}
-			});
-
-			txValidDurationTextField.setOnKeyPressed(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.TAB)) {
-					checkTransactionValidDuration();
-				}
-			});
-
-			autoRenewPeriodTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					autoRenewPeriodTextField.setText(newValue.replaceAll(REGEX, ""));
-				}
-			});
-
-			autoRenewPeriodTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkAutoRenewPeriod();
-				}
-			});
-
-			autoRenewPeriodTextField.setOnKeyPressed(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.TAB)) {
-					checkAutoRenewPeriod();
-				}
-			});
-
-			hoursTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					hoursTextField.setText(newValue.replaceAll(REGEX, ""));
-				}
-			});
-
-			hoursTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkHours();
-				}
-			});
-
-
-			minutesTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					minutesTextField.setText(newValue.replaceAll(REGEX, ""));
-				}
-			});
-
-			minutesTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkMinutes();
-				}
-			});
-
-			secondsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					secondsTextField.setText(newValue.replaceAll(REGEX, ""));
-				}
-			});
-			secondsTextField.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkSeconds();
-				}
-			});
-
-			defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches(REGEX1)) {
-					defaultTransactionFee.setText(newValue.replaceAll("[^\\d. ]", ""));
-				}
-			});
-
-			defaultTransactionFee.setOnKeyReleased(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					checkFee();
-				}
-			});
-
-			defaultTransactionFee.setOnKeyPressed(keyEvent -> {
-				if (keyEvent.getCode().equals(KeyCode.TAB)) {
-					checkFee();
-				}
-			});
+			setupDefaultTransactionFeeTextField();
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
@@ -290,83 +202,25 @@ public class SettingsPaneController {
 
 			// endregion
 			// region FOCUS EVENTS
-			hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Hours text field changed to: {}", hoursTextField.getText());
-					checkHours();
-				}
-			});
-			minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Minute text field changed to: {}", minutesTextField.getText());
-					checkMinutes();
-				}
-			});
-			secondsTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Second text field changed to: {}", secondsTextField.getText());
-					checkSeconds();
-				}
-			});
-			nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Node ID text field changed to: {}", nodeIDTextField.getText());
-					checkNodeID();
-				}
-			});
-			txValidDurationTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Transaction valid duration text field changed to: {}",
-							txValidDurationTextField.getText());
-					checkTransactionValidDuration();
-				}
-			});
-			autoRenewPeriodTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Auto renew period text field changed to: {}", autoRenewPeriodTextField.getText());
-					checkAutoRenewPeriod();
-				}
-			});
-			defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					logger.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
-					checkTransactionFee();
-				}
-			});
+
+
 			// endregion
 
 			// region Tooltips
-			nodeIDTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, nodeIDTooltip,
-					"The account ID of the node that will submit the transaction to the Hedera network"));
-
 			validDurationTooltip.setOnAction(
 					actionEvent -> Utilities.showTooltip(controller.settingsPane, validDurationTooltip,
-							"The period of time in " +
-									"seconds for when the transaction is valid on the Hedera network.\n" +
-									"Min: 30 seconds Max: 180 seconds"));
+							VALID_DURATION_TOOLTIP_MESSAGE));
 
 			generateRecordTooltip.setOnAction(
 					actionEvent -> Utilities.showTooltip(controller.settingsPane, generateRecordTooltip,
-							"Whether the transaction should generate a record or not"));
+							GENERATE_RECORD_TOOLTIP_MESSAGE));
 
 			startTimeTooltip.setOnAction(
 					actionEvent -> Utilities.showTooltip(controller.settingsPane, startTimeTooltip,
-							"The start time of the transaction from which the transaction valid duration begins in " +
-									"UTC" +
-									" " +
-									"format."));
-
-			maxFeeTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, maxFeeTooltip,
-					"The max transaction fee that will be offered"));
-
-			autoRenewTooltip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
-							"The period of time in which the account will renew in seconds.\n" +
-									"Min:7000000 seconds \n" +
-									"Max: 8000000 seconds"));
+							START_TIME_TOOLTIP_MESSAGE));
 
 			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
-					"The shared folder must contain the InputFiles and OutputFiles directories."));
+					FOLDER_TOOLTIP_MESSAGES));
 
 
 			// endregion
@@ -375,6 +229,186 @@ public class SettingsPaneController {
 			logger.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
+	}
+
+	private void setupDefaultTransactionFeeTextField() {
+		defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				defaultTransactionFee.setText(newValue.replaceAll("[^\\d. ]", ""));
+			}
+		});
+
+		defaultTransactionFee.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkFee();
+			}
+		});
+
+		defaultTransactionFee.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.TAB)) {
+				checkFee();
+			}
+		});
+
+		defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
+				checkTransactionFee();
+			}
+		});
+
+		maxFeeTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, maxFeeTooltip,
+				TRANSACTION_FEE_TOOLTIP_MESSAGE));
+	}
+
+	private void setupTimeTextFields() {
+		hoursTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				hoursTextField.setText(newValue.replaceAll(REGEX, ""));
+			}
+		});
+
+		hoursTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkHours();
+			}
+		});
+
+
+		minutesTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				minutesTextField.setText(newValue.replaceAll(REGEX, ""));
+			}
+		});
+
+		minutesTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkMinutes();
+			}
+		});
+
+		secondsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				secondsTextField.setText(newValue.replaceAll(REGEX, ""));
+			}
+		});
+
+		secondsTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkSeconds();
+			}
+		});
+
+		hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Hours text field changed to: {}", hoursTextField.getText());
+				checkHours();
+			}
+		});
+
+		minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Minute text field changed to: {}", minutesTextField.getText());
+				checkMinutes();
+			}
+		});
+
+		secondsTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Second text field changed to: {}", secondsTextField.getText());
+				checkSeconds();
+			}
+		});
+	}
+
+	private void setupAutoRenewTextField() {
+		autoRenewPeriodTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				autoRenewPeriodTextField.setText(newValue.replaceAll(REGEX, ""));
+			}
+		});
+
+		autoRenewPeriodTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkAutoRenewPeriod();
+			}
+		});
+
+		autoRenewPeriodTextField.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.TAB)) {
+				checkAutoRenewPeriod();
+			}
+		});
+
+		autoRenewPeriodTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Auto renew period text field changed to: {}", autoRenewPeriodTextField.getText());
+				checkAutoRenewPeriod();
+			}
+		});
+
+		autoRenewTooltip.setOnAction(
+				actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
+						AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+	}
+
+	private void setupTxValidDurationTextField() {
+		txValidDurationTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				txValidDurationTextField.setText(newValue.replaceAll(REGEX, ""));
+			}
+		});
+
+		txValidDurationTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkTransactionValidDuration();
+			}
+		});
+
+		txValidDurationTextField.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.TAB)) {
+				checkTransactionValidDuration();
+			}
+		});
+
+		txValidDurationTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Transaction valid duration text field changed to: {}",
+						txValidDurationTextField.getText());
+				checkTransactionValidDuration();
+			}
+		});
+	}
+
+	private void setupNodeIDTextField() {
+		nodeIDTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches(REGEX1)) {
+				nodeIDTextField.setText(newValue.replaceAll("[^\\d.]", ""));
+			}
+		});
+
+		nodeIDTextField.setOnKeyReleased(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				checkNodeID();
+			}
+		});
+
+		nodeIDTextField.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.TAB)) {
+				checkNodeID();
+			}
+		});
+
+		nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Node ID text field changed to: {}", nodeIDTextField.getText());
+				checkNodeID();
+			}
+		});
+
+		nodeIDTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, nodeIDTooltip,
+				NODE_ID_TOOLTIP_MESSAGE));
+
 	}
 
 	private void managedPropertyBinding(Node... nodes) {

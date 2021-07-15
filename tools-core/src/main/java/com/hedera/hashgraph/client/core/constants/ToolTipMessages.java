@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class ToolTipMessages {
+
 	private ToolTipMessages() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -35,4 +36,18 @@ public class ToolTipMessages {
 					"drop them to the design box";
 	public static final String FILTER_TOOLTIP_TEXT =
 			"Select the file types to show in the History. If no filters are selected, all the History will be shown";
+	public static final String VALID_DURATION_TOOLTIP_MESSAGE = "The period of time in " +
+			"seconds for when the transaction is valid on the Hedera network.\n" +
+			"Min: 30 seconds Max: 180 seconds";
+	public static final String GENERATE_RECORD_TOOLTIP_MESSAGE =
+			"Whether the transaction should generate a record or not";
+	public static final String START_TIME_TOOLTIP_MESSAGE =
+			"The start time of the transaction from which the transaction valid duration begins in " +
+					"UTC format.";
+	public static final String FOLDER_TOOLTIP_MESSAGES =
+			"The shared folder must contain the InputFiles and OutputFiles directories.";
+	public static final String TRANSACTION_FEE_TOOLTIP_MESSAGE = "The max transaction fee that will be offered";
+	public static final String NODE_ID_TOOLTIP_MESSAGE =
+			"The account ID of the node that will submit the transaction to the Hedera network";
+
 }
