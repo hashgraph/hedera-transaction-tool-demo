@@ -89,7 +89,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 
 		var worker = new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
-		worker.call();
+		var x = worker.call();
 		File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;

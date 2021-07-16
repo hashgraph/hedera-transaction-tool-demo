@@ -144,8 +144,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public void setupMnemonicGridPane(GridPane mnemonicWordsGridPane, Mnemonic mnemonic) {
 		var i = 0;
-		for (var c :
-				mnemonic.words) {
+		for (var c : mnemonic.words) {
 			var t = styleTextField(c.toString().toUpperCase());
 			mnemonicWordsGridPane.add(t, i % 4, i / 4);
 			i++;
@@ -155,7 +154,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	public void generatePassphraseEvent(char[] password, byte[] salt, boolean showPopup) {
 		var words = getWordsFromGridPane();
 
-		if (words.size() == 0) {
+		if (words.isEmpty()) {
 			mnemonic = Mnemonic.generate24();
 			words = mnemonic.words;
 		}
@@ -327,8 +326,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	}
 
 	public static final class Builder {
-		public Button copyToClipBoardButton;
-		public Button pasteFromClipBoardButton;
+		private Button copyToClipBoardButton;
 		private Label mnemonicErrorMessage;
 		private String storageDirectory;
 		private VBox phraseBox;
@@ -364,11 +362,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		public Builder withCopyToClipBoardButton(Button copyToClipBoardButton) {
 			this.copyToClipBoardButton = copyToClipBoardButton;
-			return this;
-		}
-
-		public Builder withPasteFromClipBoardButton(Button pasteFromClipBoardButton) {
-			this.pasteFromClipBoardButton = pasteFromClipBoardButton;
 			return this;
 		}
 

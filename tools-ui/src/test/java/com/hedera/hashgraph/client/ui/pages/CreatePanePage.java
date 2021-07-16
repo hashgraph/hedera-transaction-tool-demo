@@ -16,37 +16,17 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.pages;
 
 
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
-import com.sun.javafx.scene.control.MenuBarButton;
-import javafx.geometry.VerticalDirection;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -57,26 +37,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.testfx.util.NodeQueryUtils;
-import org.testfx.util.WaitForAsyncUtils;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMENTS_AREA;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_DATE_PICKER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_EDIT_KEY;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FEE_PAYER_FIELD;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_CHUNK_SIZE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_CONTENTS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_FILE_ID;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_INTERVAL;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_HOURS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_INITIAL_BALANCE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MAIN_CHOICE_BOX;
@@ -94,9 +67,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_FROM_AMOU
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_TO_ACCOUNT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_TO_AMOUNT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ACCOUNT_ID;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_KEY_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ENTITY_ID_FIELD;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEY_LOADING_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SET_NOW_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TIMEZONE_HBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TRANSACTION_ACTION_CHOICE_BOX;
@@ -137,18 +108,10 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setExpiration(String date) {
-		driver.clickOn(SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER);
-		driver.write(date);
-		driver.type(KeyCode.ENTER);
-		return this;
-	}
-
 	public CreatePanePage setHours(int hours) throws InterruptedException {
 		driver.doubleClickOn(CREATE_HOURS);
 		driver.write(String.valueOf(hours));
 		driver.type(KeyCode.TAB);
-		sleep(500);
 		return this;
 	}
 
@@ -156,7 +119,6 @@ public class CreatePanePage {
 		driver.doubleClickOn(CREATE_MINUTES);
 		driver.write(String.valueOf(minutes));
 		driver.type(KeyCode.TAB);
-		sleep(500);
 		return this;
 	}
 
@@ -217,7 +179,7 @@ public class CreatePanePage {
 		assert inner4 != null;
 		assert inner4.size() == 1;
 		assert inner4.get(0) instanceof ListView;
-		ListView<String> accountList = (ListView) inner4.get(0);
+		ListView<String> accountList = (ListView<String>) inner4.get(0);
 		for (var item : accountList.getItems()) {
 			if (item.contains(account)) {
 				driver.doubleClickOn(item);
@@ -281,27 +243,6 @@ public class CreatePanePage {
 
 		driver.clickOn(inner2.get(paneEnum.value));
 		return inner2.get(paneEnum.value);
-	}
-
-	public void clickOnMenuItem(String item) throws TimeoutException {
-		var popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		assert popupNodes.size() == 2;
-		assert popupNodes.get(0) instanceof MenuBar;
-		var menuBar = (MenuBar) popupNodes.get(0);
-		var menus = menuBar.getMenus();
-		assert menus.size() == 1;
-		var fileMenu = menus.get(0);
-		var fileQuery = driver.findAll("File");
-		for (Node node : fileQuery) {
-			if (node instanceof MenuBarButton) {
-				driver.clickOn(node);
-			}
-		}
-
-		WaitForAsyncUtils.waitFor(2, TimeUnit.SECONDS, () ->
-				driver.lookup(item).match(NodeQueryUtils.isVisible()).tryQuery().isPresent());
-		driver.clickOn(item);
 	}
 
 	private void ensureVisible(Node node) {
@@ -396,18 +337,6 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setNewKey(String path) {
-		TextField f = driver.find(KEY_LOADING_FIELD);
-		ensureVisible(f);
-		f.setText(path);
-
-		ensureVisible(driver.find(CREATE_UPDATE_KEY_BUTTON));
-		driver.clickOn(CREATE_UPDATE_KEY_BUTTON);
-
-		return this;
-
-	}
-
 	public CreatePanePage setOperation(OperationType type) {
 		ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_ACTION_CHOICE_BOX);
 		driver.clickOn(choiceBox);
@@ -426,7 +355,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setEntity(SystemEntity entity) {
-		ChoiceBox choiceBox = driver.find(SYSTEM_TRANSACTION_TYPE_CHOICE_BOX);
+		ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_TYPE_CHOICE_BOX);
 		driver.clickOn(choiceBox);
 		switch (entity) {
 
@@ -440,15 +369,6 @@ public class CreatePanePage {
 				throw new IllegalStateException("Unexpected value: " + entity);
 		}
 		return this;
-	}
-
-	public CreatePanePage setStartDate(Date date) {
-		return getCreatePanePage(date, CREATE_DATE_PICKER, CREATE_HOURS, CREATE_MINUTES, CREATE_SECONDS);
-	}
-
-	public CreatePanePage setExpirationDate(Date date) {
-		return getCreatePanePage(date, SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER, CREATE_SYSTEM_HOURS,
-				CREATE_SYSTEM_MINUTES, CREATE_SYSTEM_SECONDS);
 	}
 
 	public CreatePanePage setStartDate(LocalDateTime date) {
@@ -496,11 +416,6 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage scrollDown() {
-		driver.scroll(VerticalDirection.DOWN);
-		return this;
-	}
-
 	public CreatePanePage setEntityID(long id) {
 		ensureVisible(driver.find(ENTITY_ID_FIELD));
 		driver.doubleClickOn(ENTITY_ID_FIELD);
@@ -509,35 +424,10 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFileID(long id) {
-		ensureVisible(driver.find(CREATE_FILE_UPDATE_FILE_ID));
-		driver.doubleClickOn(CREATE_FILE_UPDATE_FILE_ID);
-		driver.write(String.valueOf(id));
-		driver.type(KeyCode.ENTER);
-		return this;
-
-	}
-
 	public CreatePanePage setContents(String contentsPath) {
 		ensureVisible(driver.find(CREATE_FILE_UPDATE_CONTENTS));
 		driver.clickOn(CREATE_FILE_UPDATE_CONTENTS);
 		driver.write(contentsPath);
-		driver.type(KeyCode.ENTER);
-		return this;
-	}
-
-	public CreatePanePage setChunkSize(int size) {
-		ensureVisible(driver.find(CREATE_FILE_UPDATE_CHUNK_SIZE));
-		driver.clickOn(CREATE_FILE_UPDATE_CHUNK_SIZE);
-		driver.write(Integer.toString(size));
-		driver.type(KeyCode.ENTER);
-		return this;
-	}
-
-	public CreatePanePage setInterval(int interval) {
-		ensureVisible(driver.find(CREATE_FILE_UPDATE_INTERVAL));
-		driver.clickOn(CREATE_FILE_UPDATE_INTERVAL);
-		driver.write(Integer.toString(interval));
 		driver.type(KeyCode.ENTER);
 		return this;
 	}

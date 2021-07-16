@@ -161,7 +161,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 
 		if (file.getAttributes().isDirectory()) {
-			logger.error(String.format("%s must be a file", file.getName()));
+			logger.error("{} must be a file", file.getName());
 			this.valid = false;
 			return;
 		}
@@ -299,7 +299,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			var actions = d.getMetadataActions();
 			actions.forEach(action -> {
 				final var key = new File(KEYS_FOLDER, action.getKeyName());
-				if (Actions.ACCEPT.equals(action.getAction()) && key.exists()) {
+				if (Actions.ACCEPT.equals(action.getActions()) && key.exists()) {
 					oldKeys.add(key);
 				}
 			});
@@ -341,7 +341,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @throws HederaClientException
 	 */
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
-		return "";
+		return null;
 	}
 
 	/**
@@ -467,7 +467,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		Set<ByteString> keysSet = new HashSet<>();
 		var accounts = getSigningAccounts();
 		if (accounts == null) {
-			return null;
+			return new HashSet<>();
 		}
 		for (var account : accounts) {
 			var accountString =
@@ -492,7 +492,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return a set of account IDs
 	 */
 	public Set<AccountId> getSigningAccounts() {
-		return null;
+		return new HashSet<>();
 	}
 
 	/**
@@ -508,9 +508,9 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		List<Label> messages = new ArrayList<>();
 		var metadataFileList = getSigningHistory();
 		for (var m : metadataFileList) {
-			var action = m.getAction().toString();
+			var action = m.getActions().toString();
 			var label = new Label(String.format("Information regarding %s %s was %s on %s.", entity, getName(),
-					action, m.getTimestamp().asReadableLocalString()));
+					action, m.getTimeStamp().asReadableLocalString()));
 			label.setWrapText(true);
 			label.minHeightProperty().bind(Constants.FONT_SIZE.multiply(3));
 			VBox.setVgrow(label, Priority.ALWAYS);
@@ -549,7 +549,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			logger.error(e);
 		}
 		for (var metadataAction : signingHistory) {
-			if (metadataAction.getAction().equals(Actions.ACCEPT)) {
+			if (metadataAction.getActions().equals(Actions.ACCEPT)) {
 				return true;
 			}
 		}
@@ -634,10 +634,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		var charsLeft = new Label(String.format("Characters left: %d", COMMENT_FIELD_CHARACTER_LIMIT));
 		commentArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue.intValue() > oldValue.intValue()) {
-				if (commentArea.getText().length() >= COMMENT_FIELD_CHARACTER_LIMIT) {
-					commentArea.setText(commentArea.getText().substring(0, COMMENT_FIELD_CHARACTER_LIMIT));
-				}
+			if (newValue.intValue() > oldValue.intValue() && commentArea.getText().length() >= COMMENT_FIELD_CHARACTER_LIMIT) {
+				commentArea.setText(commentArea.getText().substring(0, COMMENT_FIELD_CHARACTER_LIMIT));
 			}
 			charsLeft.setText(String.format("Characters left: %d",
 					COMMENT_FIELD_CHARACTER_LIMIT - commentArea.getText().length()));
@@ -671,8 +669,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 			actions.forEach(action -> {
 				new File(KEYS_FOLDER, action.getKeyName());
-				if (action.getTimestamp().getSeconds() > signDateInSecs) {
-					signDateInSecs = action.getTimestamp().getSeconds();
+				if (action.getTimeStamp().getSeconds() > signDateInSecs) {
+					signDateInSecs = action.getTimeStamp().getSeconds();
 				}
 			});
 		} catch (HederaClientException e) {
@@ -683,12 +681,12 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	private void addHistory(GridPane detailsGridPane) throws HederaClientException {
 		var rowCount = detailsGridPane.getRowCount();
 		var signingHistory = getSigningHistory();
-		if (signingHistory.size() == 0) {
+		if (signingHistory.isEmpty()) {
 			return;
 		}
 		var accepted = false;
 		for (var metadataAction : signingHistory) {
-			if (Actions.ACCEPT.equals(metadataAction.getAction())) {
+			if (Actions.ACCEPT.equals(metadataAction.getActions())) {
 				accepted = true;
 				break;
 			}
@@ -697,17 +695,17 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.add(new Label("Previously signed by:"), 0, rowCount++);
 		}
 		for (var metadataAction : signingHistory) {
-			if (Actions.ACCEPT.equals(metadataAction.getAction())) {
+			if (Actions.ACCEPT.equals(metadataAction.getActions())) {
 				final var label = new Label(String.format("%s on: ", metadataAction.getKeyName()));
 				label.setWrapText(true);
 				detailsGridPane.add(label, 0, rowCount);
-				detailsGridPane.add(new Label(metadataAction.getTimestamp().asReadableLocalString()), 1, rowCount++);
+				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			}
 		}
 		for (var metadataAction : signingHistory) {
-			if (Actions.DECLINE.equals(metadataAction.getAction())) {
+			if (Actions.DECLINE.equals(metadataAction.getActions())) {
 				detailsGridPane.add(new Label("Declined on: "), 0, rowCount);
-				detailsGridPane.add(new Label(metadataAction.getTimestamp().asReadableLocalString()), 1, rowCount++);
+				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			}
 		}
 
@@ -746,6 +744,11 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 		var that = (RemoteFile) o;
 		return name.equals(that.name) && date == that.getDate();
+	}
+
+	@Override
+	public int hashCode() {
+		return new File(parentPath, name).hashCode();
 	}
 
 	@Override

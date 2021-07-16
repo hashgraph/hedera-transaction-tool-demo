@@ -16,28 +16,12 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -85,6 +69,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
@@ -174,7 +159,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-			if (new File(currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+			if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 					"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 				logger.info("Output path created");
 			}
@@ -195,12 +180,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			Map<String, String> emailMap = new HashMap<>();
 
 			emailMap.put(
-					currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
 
 			var objectMapper = new ObjectMapper();
 			var mapAsString = objectMapper.writeValueAsString(emailMap);
+			assertNotNull(mapAsString);
 
 			properties.setOneDriveCredentials(emailMap);
 			properties.setHash("123456789".toCharArray());
@@ -258,64 +244,60 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void openCreatePageTab_Test() {
-		try {
-			assertNotNull(find(CREATE_ANCHOR_PANE));
-			assertNotNull(find(CREATE_MAIN_CHOICE_BOX));
-			Thread.sleep(THREAD_PAUSE_TIME);
-		} catch (InterruptedException e) {
-			logger.error(e);
-			assertNotNull(e);
-		}
+		assertNotNull(find(CREATE_ANCHOR_PANE));
+		assertNotNull(find(CREATE_MAIN_CHOICE_BOX));
+		sleep(THREAD_PAUSE_TIME);
 
 	}
 
 	@Test
-	public void transactionHeader_Test() {
+	public void transactionHeader1_Test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
+		assertNotNull(find(CREATE_MEMO_FIELD));
+		assertNotNull(find(CREATE_NODE_FIELD));
+		assertNotNull(find(CREATE_FEE_PAYER_FIELD));
+		assertNotNull(find(CREATE_DATE_PICKER));
+		assertNotNull(find(CREATE_HOURS));
+		assertNotNull(find(CREATE_MINUTES));
+		assertNotNull(find(CREATE_SECONDS));
+		assertNotNull(find(CREATE_COMMENTS_AREA));
+		assertTrue(find(CREATE_MEMO_FIELD).isVisible());
+		assertTrue(find(CREATE_NODE_FIELD).isVisible());
+		assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
+		assertTrue(find(CREATE_DATE_PICKER).isVisible());
+		assertTrue(find(CREATE_HOURS).isVisible());
+		assertTrue(find(CREATE_MINUTES).isVisible());
+		assertTrue(find(CREATE_SECONDS).isVisible());
+		assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
+		sleep(THREAD_PAUSE_TIME);
+	}
+
+	@Test
+	public void transactionHeader2_Test() {
+		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
+		assertNotNull(find(CREATE_MEMO_FIELD));
+		assertNotNull(find(CREATE_NODE_FIELD));
+		assertNotNull(find(CREATE_FEE_PAYER_FIELD));
+		assertNotNull(find(CREATE_DATE_PICKER));
+		assertNotNull(find(CREATE_HOURS));
+		assertNotNull(find(CREATE_MINUTES));
+		assertNotNull(find(CREATE_SECONDS));
+		assertNotNull(find(CREATE_COMMENTS_AREA));
+		assertTrue(find(CREATE_MEMO_FIELD).isVisible());
+		assertTrue(find(CREATE_NODE_FIELD).isVisible());
+		assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
+		assertTrue(find(CREATE_DATE_PICKER).isVisible());
+		assertTrue(find(CREATE_HOURS).isVisible());
+		assertTrue(find(CREATE_MINUTES).isVisible());
+		assertTrue(find(CREATE_SECONDS).isVisible());
+		assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
+		sleep(THREAD_PAUSE_TIME);
+	}
+
+	@Test
+	public void transactionHeader3_Test() {
 		try {
-			createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
-
-			assertNotNull(find(CREATE_MEMO_FIELD));
-			assertNotNull(find(CREATE_NODE_FIELD));
-			assertNotNull(find(CREATE_FEE_PAYER_FIELD));
-			assertNotNull(find(CREATE_DATE_PICKER));
-			assertNotNull(find(CREATE_HOURS));
-			assertNotNull(find(CREATE_MINUTES));
-			assertNotNull(find(CREATE_SECONDS));
-			assertNotNull(find(CREATE_COMMENTS_AREA));
-			assertTrue(find(CREATE_MEMO_FIELD).isVisible());
-			assertTrue(find(CREATE_NODE_FIELD).isVisible());
-			assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
-			assertTrue(find(CREATE_DATE_PICKER).isVisible());
-			assertTrue(find(CREATE_HOURS).isVisible());
-			assertTrue(find(CREATE_MINUTES).isVisible());
-			assertTrue(find(CREATE_SECONDS).isVisible());
-			//	assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-			assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-			Thread.sleep(THREAD_PAUSE_TIME);
-
-			createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
-
-			assertNotNull(find(CREATE_MEMO_FIELD));
-			assertNotNull(find(CREATE_NODE_FIELD));
-			assertNotNull(find(CREATE_FEE_PAYER_FIELD));
-			assertNotNull(find(CREATE_DATE_PICKER));
-			assertNotNull(find(CREATE_HOURS));
-			assertNotNull(find(CREATE_MINUTES));
-			assertNotNull(find(CREATE_SECONDS));
-			assertNotNull(find(CREATE_COMMENTS_AREA));
-			assertTrue(find(CREATE_MEMO_FIELD).isVisible());
-			assertTrue(find(CREATE_NODE_FIELD).isVisible());
-			assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
-			assertTrue(find(CREATE_DATE_PICKER).isVisible());
-			assertTrue(find(CREATE_HOURS).isVisible());
-			assertTrue(find(CREATE_MINUTES).isVisible());
-			assertTrue(find(CREATE_SECONDS).isVisible());
-//			assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-			assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-			Thread.sleep(THREAD_PAUSE_TIME);
-
 			createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
-
 			assertNotNull(find(CREATE_MEMO_FIELD));
 			assertNotNull(find(CREATE_NODE_FIELD));
 			assertNotNull(find(CREATE_FEE_PAYER_FIELD));
@@ -331,18 +313,16 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			assertTrue(find(CREATE_HOURS).isVisible());
 			assertTrue(find(CREATE_MINUTES).isVisible());
 			assertTrue(find(CREATE_SECONDS).isVisible());
-//			assertFalse(find(CREATE_CHOICE_BOX).isVisible());
 			assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-			Thread.sleep(THREAD_PAUSE_TIME);
+			sleep(THREAD_PAUSE_TIME);
 		} catch (Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
-
 	}
 
 	@Test
-	public void exclusiveFields_Test() throws InterruptedException {
+	public void exclusiveFields1_Test() {
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -368,11 +348,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_LIST).isVisible());
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+		sleep(THREAD_PAUSE_TIME);
+	}
 
-
-//		assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-		Thread.sleep(THREAD_PAUSE_TIME);
-
+	@Test
+	public void exclusiveFields2_Test() {
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -401,11 +381,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_LIST).isVisible());
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+		sleep(THREAD_PAUSE_TIME);
+	}
 
-
-//		assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-		Thread.sleep(THREAD_PAUSE_TIME);
-
+	@Test
+	public void exclusiveFields3_Test() {
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -436,9 +416,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
 
-//		assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-		Thread.sleep(THREAD_PAUSE_TIME);
-
+		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -491,14 +469,16 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.clickOnNowButton();
 
-		assertEquals(localDateTime.getDayOfMonth(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getDayOfMonth());
+		assertEquals(localDateTime.getDayOfMonth(),
+				((DatePicker) find(CREATE_DATE_PICKER)).getValue().getDayOfMonth());
 		assertEquals(localDateTime.getMonth(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getMonth());
 		assertEquals(localDateTime.getYear(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getYear());
 
 		assertEquals(localDateTime.getHour(), Long.parseLong(((TextField) find(CREATE_HOURS)).getText()));
 		assertEquals(localDateTime.getMinute(), Long.parseLong(((TextField) find(CREATE_MINUTES)).getText()));
 		assertTrue(
-				Math.abs(localDateTime.getSecond() - Long.parseLong(((TextField) find(CREATE_SECONDS)).getText())) <= 2);
+				Math.abs(localDateTime.getSecond() - Long.parseLong(
+						((TextField) find(CREATE_SECONDS)).getText())) <= 2);
 	}
 
 	@Test
@@ -509,15 +489,17 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var localDateTime = LocalDateTime.now();
 		final var localZoneID = ZoneId.of(TimeZone.getDefault().getID());
 
-		assertEquals(localDateTime.getDayOfMonth(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getDayOfMonth());
+		assertEquals(localDateTime.getDayOfMonth(),
+				((DatePicker) find(CREATE_DATE_PICKER)).getValue().getDayOfMonth());
 		assertEquals(localDateTime.getMonth(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getMonth());
 		assertEquals(localDateTime.getYear(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getYear());
 
 		assertEquals(localDateTime.getHour(), Long.parseLong(((TextField) find(CREATE_HOURS)).getText()));
 		assertEquals(localDateTime.getMinute(), Long.parseLong(((TextField) find(CREATE_MINUTES)).getText()));
 		assertTrue(
-				Math.abs(localDateTime.getSecond() - Long.parseLong(((TextField) find(CREATE_SECONDS)).getText())) <= 2);
-		final var utcString = getUTCString(localDateTime, localZoneID, 0);
+				Math.abs(localDateTime.getSecond() - Long.parseLong(
+						((TextField) find(CREATE_SECONDS)).getText())) <= 2);
+		final var utcString = getUTCString(localDateTime, localZoneID);
 
 
 		var splitUTC = utcString.split(" ");
@@ -531,7 +513,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(TimeZone.getDefault().getID(), createPanePage.getStartTimezone());
 		var randomTimezone = getRandomTimezone();
 		createPanePage.setStartTimezone(randomTimezone);
-		checkDateString(utcString, CREATE_LOCAL_TIME_LABEL);
+		checkDateString(utcString);
 
 		assertEquals(TimeZone.getDefault().getID(), createPanePage.getSystemTimezone());
 		var randomTimezoneSystem = getRandomTimezone();
@@ -564,10 +546,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setComment("this is a comment that will go with the transaction")
 				.setDate(datePickerFormat.format(date));
 
-//		assertFalse(find(CREATE_CHOICE_BOX).isVisible());
-
 		assertTrue(find(CREATE_LOCAL_TIME_LABEL).isVisible());
-		//	assertTrue(dateLabel.getText().contains(sdf.format(date)));
 		logger.info(String.format("CREATE: Local date label =>>> %s", dateLabel.getText()));
 		assertTrue(dateLabel.getText().contains(":00:00"));
 
@@ -630,7 +609,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 
@@ -723,11 +702,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 
 
+		assertNotNull(toolTransaction);
 		assertEquals(new Identifier(0, 0, 10019).asAccount(),
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A transfer", toolTransaction.getMemo());
 
 		var transferMap = toolTransaction.getAccountAmountMap();
@@ -787,7 +767,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var tree = ((ScrollPane) oldKey).getContent();
 
 		assertTrue(tree instanceof TreeView);
-		assertEquals(6, TestUtil.countTreeNodes(((TreeView) tree).getRoot()));
+		assertEquals(6, TestUtil.countTreeNodes(((TreeView<String>) tree).getRoot()));
 
 		createPanePage.setDate(datePickerFormat.format(date))
 				.setHours(2)
@@ -806,7 +786,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var newTree = ((ScrollPane) newKey).getContent();
 		assertTrue(newTree instanceof TreeView);
 
-		assertEquals(18, TestUtil.countTreeNodes(((TreeView) newTree).getRoot()));
+		assertEquals(18, TestUtil.countTreeNodes(((TreeView<String>) newTree).getRoot()));
 
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
@@ -847,7 +827,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
@@ -934,11 +914,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 		}
 
+		assertNotNull(toolTransaction);
 		assertEquals(new Identifier(0, 0, 3232).asAccount(),
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A comment", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof SystemDeleteTransaction);
@@ -1010,7 +991,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A comment", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof SystemDeleteTransaction);
@@ -1128,7 +1109,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A comment", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof SystemUndeleteTransaction);
@@ -1195,7 +1176,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
-				toolTransaction.getTransactionId().validStart.getEpochSecond());
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A comment", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof SystemUndeleteTransaction);
@@ -1221,7 +1202,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 					pathname -> {
 						var name = pathname.getName();
-						return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
+						return name.endsWith(Constants.TXT_EXTENSION) ||
+								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
+								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
 					});
 
 			assert transactions != null;
@@ -1240,12 +1223,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 	}
 
-	private String getUTCString(LocalDateTime localDateTime, ZoneId zoneID, int secondsToAdd) {
+	private String getUTCString(LocalDateTime localDateTime, ZoneId zoneID) {
 		var date = Date.from(localDateTime.atZone(zoneID).toInstant());
 		localDateTime.atZone(zoneID);
 		var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
-		return dateTimeFormatter.format(date.toInstant().plusSeconds(secondsToAdd)) +
+		return dateTimeFormatter.format(date.toInstant().plusSeconds(0)) +
 				" Coordinated Universal Time";
 	}
 
@@ -1259,13 +1242,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	 * Compare the date, hours and minutes on a time label with a string. Skipping seconds because of corner cases
 	 *
 	 * @param utcString
-	 * 		string that contains the string that holsd "truth"
-	 * @param label
-	 * 		label to check
+	 * 		string that contains the string that holds "truth"
 	 */
-	private void checkDateString(String utcString, String label) {
+	private void checkDateString(String utcString) {
 		var split1 = utcString.split("[ :]");
-		var split2 = ((Label) find(label)).getText().split("[ :]");
+		var split2 = ((Label) find(JavaFXIDs.CREATE_LOCAL_TIME_LABEL)).getText().split("[ :]");
 		assertEquals(split1[0], split2[0]);
 		assertEquals(split1[1], split2[1]);
 		assertEquals(split1[2], split2[2]);

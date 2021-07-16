@@ -16,31 +16,14 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
+import org.jetbrains.annotations.NotNull;
 
-public class AccountLineInformation implements Comparable {
+public class AccountLineInformation implements Comparable<AccountLineInformation> {
 	private String nickname;
 	private Identifier account;
 	private Hbar balance;
@@ -96,14 +79,27 @@ public class AccountLineInformation implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
-		if (o == null) {
-			throw new NullPointerException("Cannot compare to a null object");
+	public boolean equals(Object obj) {
+		if (!super.equals(obj)) {
+			return false;
 		}
-		if (!(o instanceof AccountLineInformation)) {
-			throw new HederaClientRuntimeException("Incompatible types");
+		if (!(obj instanceof AccountLineInformation)) {
+			return false;
 		}
-		return this.getAccount().compareTo(((AccountLineInformation) o).getAccount());
+		var line = (AccountLineInformation) obj;
+		return this.nickname.equals(line.getNickname()) &&
+				this.account.equals(line.getAccount()) &&
+				this.balance.equals(line.getBalance())
+				&& this.signer.equals(line.signer);
+	}
 
+	@Override
+	public int hashCode() {
+		return super.hashCode() + nickname.hashCode() + account.hashCode() + balance.hashCode() + signer.hashCode();
+	}
+
+	@Override
+	public int compareTo(@NotNull AccountLineInformation o) {
+		return this.getAccount().compareTo(o.getAccount());
 	}
 }

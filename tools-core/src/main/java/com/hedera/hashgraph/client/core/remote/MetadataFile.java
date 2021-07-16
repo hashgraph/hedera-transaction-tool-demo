@@ -96,7 +96,7 @@ public class MetadataFile extends RemoteFile {
 		super(new File(Constants.DEFAULT_HISTORY,
 				FilenameUtils.getBaseName(name) + "." + Constants.METADATA_EXTENSION).getAbsolutePath());
 		if (!isValid()) {
-
+			return;
 		}
 		List<String> lines;
 		var location = new File(Constants.DEFAULT_HISTORY,
@@ -134,4 +134,13 @@ public class MetadataFile extends RemoteFile {
 		}
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		return super.equals(o);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + metadataActions.hashCode();
+	}
 }

@@ -77,6 +77,10 @@ import static org.bouncycastle.openpgp.PGPUtil.getDecoderStream;
 public class SecurityUtilities {
 	private static final Logger logger = LogManager.getLogger(SecurityUtilities.class);
 
+	private SecurityUtilities() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Stores the mnemonic in a password encrypted file
 	 *

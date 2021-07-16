@@ -32,6 +32,10 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS
 
 public class JsonUtils {
 
+	private JsonUtils() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Converts an AccountInfo object to a Json object
 	 *

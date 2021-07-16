@@ -256,9 +256,6 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(1, publicKeys.size());
 
 		createPanePage.clickOnKeyDesignerCancel();
-
-		// todo: Add testing around loading one key. Tests with FileChooser don't work headless.
-
 	}
 
 	@Test

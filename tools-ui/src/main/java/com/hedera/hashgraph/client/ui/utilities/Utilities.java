@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.codahale.passpol.PasswordPolicy;
@@ -62,7 +45,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -74,8 +59,10 @@ public class Utilities {
 
 	private static final Logger logger = LogManager.getLogger(Utilities.class);
 	public static final String RED_BORDER_STYLE = "-fx-border-color: red";
-	private static Tooltip customTooltip;
 
+	private Utilities() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	/***
 	 *
@@ -208,9 +195,15 @@ public class Utilities {
 			}
 		} // either file or an empty directory
 
-		logger.info("removing file or directory : " + dir.getName());
+		logger.info("removing file or directory : {}", dir.getName());
 
-		return dir.delete();
+		try {
+			Files.deleteIfExists(dir.toPath());
+			return true;
+		} catch (IOException e) {
+			logger.error("Directory {} cannot be deleted", dir.getAbsolutePath());
+			return false;
+		}
 	}
 
 	/**
@@ -255,7 +248,7 @@ public class Utilities {
 	 * 		the text that will be displayed
 	 */
 	public static void showTooltip(Pane owner, Control control, String tooltipText) {
-		customTooltip = new Tooltip();
+		var customTooltip = new Tooltip();
 		var p = control.localToScene(15.0, 15.0);
 		customTooltip.setText(tooltipText);
 		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");

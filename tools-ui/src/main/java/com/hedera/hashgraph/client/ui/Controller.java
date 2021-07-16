@@ -16,25 +16,10 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonObject;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -49,6 +34,7 @@ import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
 import com.hedera.hashgraph.client.ui.utilities.ReloadFilesService;
 import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
@@ -58,6 +44,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
@@ -65,7 +52,6 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.zeroturnaround.zip.commons.FileUtils;
 import org.zeroturnaround.zip.commons.IOUtils;
 
 import java.io.BufferedWriter;
@@ -79,6 +65,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -112,6 +99,8 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
+import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
+import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
 public class Controller implements Initializable, GenericFileReadWriteAware {
 
@@ -148,9 +137,21 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 
-	public UserAccessibleProperties properties;
-	Pane lastPane = new Pane();
-	public Pane thisPane = new Pane();
+	private UserAccessibleProperties properties;
+
+	public void setProperties(UserAccessibleProperties properties) {
+		this.properties = properties;
+	}
+
+	private Pane thisPane = new Pane();
+
+	public Pane getThisPane() {
+		return thisPane;
+	}
+
+	public void setThisPane(Pane thisPane) {
+		this.thisPane = thisPane;
+	}
 
 	// sub controllers
 	@FXML
@@ -170,7 +171,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 	// Utility
-	public KeyStructureUtility keyStructureUtility;
+	private KeyStructureUtility keyStructureUtility;
 	public final KeyPairUtility keyPairUtility = new KeyPairUtility();
 
 	void setDisableButtons(boolean disableButtons) {
@@ -208,7 +209,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			}
 			setSetupPhase(INITIAL_SETUP_PHASE);
 		} else {
-			logger.info(String.format("The current storage directory is: %s", getPreferredStorageDirectory()));
+			logger.info("The current storage directory is: {}", getPreferredStorageDirectory());
 		}
 
 
@@ -321,14 +322,27 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				initialStartupPaneController.initializeStartupPane();
 				break;
 			case NORMAL_OPERATION_PHASE:
-				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists()) {
-					if ("".equals(properties.getHash())) {
-						logger.info("Missing hash in config file: Putting the application in password recovery mode");
-						PopupMessage.display("Missing Password", Messages.PASSWORD_NOT_FOUND_MESSAGE, "CONTINUE");
-						setSetupPhase(PASSWORD_RECOVERY_PHASE);
-						break;
-					}
+				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists() && "".equals(
+						properties.getHash())) {
+					logger.info("Missing hash in config file: Putting the application in password recovery mode");
+					PopupMessage.display("Missing Password", Messages.PASSWORD_NOT_FOUND_MESSAGE, "CONTINUE");
+					setSetupPhase(PASSWORD_RECOVERY_PHASE);
+					break;
+
 				}
+				properties =
+						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
+								"");
+				recoverPasswordPane.setVisible(false);
+				setDisableButtons(false);
+				thisPane = homePane;
+				homePane.setVisible(true);
+				keysPaneController.initializeKeysPane();
+				accountsPaneController.initializeAccountPane();
+				homePaneController.initializeHomePane();
+				settingsPaneController.initializeSettingsPane();
+				createPaneController.initializeCreatePane();
+				break;
 			case TEST_PHASE:
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
@@ -343,6 +357,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
 				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + getSetupPhase());
 		}
 	}
 
@@ -462,7 +478,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		initialStartupPane.setVisible(false);
 		recoverPasswordPane.setVisible(false);
 
-		lastPane = thisPane;
+		Pane lastPane = thisPane;
 		lastPane.setVisible(false);
 		thisPane = next;
 		thisPane.setVisible(true);
@@ -542,8 +558,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var sourceDir = userDefStorageDirectory.equals("") ? new File(
 				defaultStorageDirectory) : new File(userDefStorageDirectory);
 
-		logger.info(String.format("Default storage %s", defaultStorageDirectory));
-		logger.info(String.format("Before reset storage %s", sourceDir.getPath()));
+		logger.info("Default storage {}", defaultStorageDirectory);
+		logger.info("Before reset storage {}", sourceDir.getPath());
 		var secondsToArchive = Instant.now().getEpochSecond();
 		var resetStorageDirectory =
 				String.format("%s.%s", sourceDir.getPath(), secondsToArchive);
@@ -558,11 +574,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		preferences.exportNode(new FileOutputStream(userPreferenceFile, false));
 
 		var destination = new File(resetStorageDirectory);
-		FileUtils.copyDirectory(sourceDir, destination);
-		logger.info("Transactions Tool storage archived to " + destination.getPath());
+		copyDirectory(sourceDir, destination);
+		logger.info("Transactions Tool storage archived to {}", destination.getPath());
 
 		preferences.clear();
-		FileUtils.deleteDirectory(sourceDir);
+		deleteDirectory(sourceDir);
 		Platform.exit();
 	}
 
@@ -590,6 +606,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var d = new Date();
 		systemMessagesTextField.appendText(
 				d + ": " + exception.toString() + System.getProperty("line.separator"));
+		logger.error(exception);
 	}
 
 	/**
@@ -609,7 +626,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					buildProps.get("git.build.version"),
 					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
 		} catch (Exception ex) {
-			logger.error("Error Printing Version" + ex);
+			logger.error("Error Printing Version {}", ex.getMessage());
 			displaySystemMessage(ex);
 		}
 		return version;
@@ -668,6 +685,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return new byte[SALT_LENGTH];
 	}
 
+	//region PROPERTIES
+
 	/**
 	 * Determines which algorithm was used to encrypt the mnemonic
 	 *
@@ -675,5 +694,147 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 */
 	public boolean isLegacyMnemonic() {
 		return properties.isLegacy();
+	}
+
+	public void setAccountInfoMap(Map<String, String> accountInfos) {
+		properties.setAccountInfoMap(accountInfos);
+	}
+
+	public void setLegacy(boolean b) {
+		properties.setLegacy(b);
+	}
+
+	public void resetProperties() {
+		properties.resetProperties();
+	}
+
+	public void setOneDriveCredentials(Map<String, String> objectObjectHashMap) {
+		properties.setOneDriveCredentials(objectObjectHashMap);
+	}
+
+	public UserAccessibleProperties getProperties() {
+		return this.properties;
+	}
+
+	public long getDefaultTxFee() {
+		return properties.getDefaultTxFee();
+	}
+
+	public int getDefaultHours() {
+		return properties.getDefaultHours();
+	}
+
+	public int getDefaultMinutes() {
+		return properties.getDefaultMinutes();
+	}
+
+	public int getDefaultSeconds() {
+		return properties.getDefaultSeconds();
+	}
+
+	public String getDefaultNodeID() {
+		return properties.getDefaultNodeID();
+	}
+
+	public long getTxValidDuration() {
+		return properties.getTxValidDuration();
+	}
+
+	public long getAutoRenewPeriod() {
+		return properties.getAutoRenewPeriod();
+	}
+
+	public void setGenerateRecord(boolean b) {
+		properties.setGenerateRecord(b);
+	}
+
+	public void setDefaultTxFee(long fee) {
+		properties.setDefaultTxFee(fee);
+	}
+
+	public void setDefaultSeconds(int s) {
+		properties.setDefaultSeconds(s);
+	}
+
+	public void setDefaultMinutes(int m) {
+		properties.setDefaultMinutes(m);
+	}
+
+	public void setDefaultHours(int h) {
+		properties.setDefaultHours(h);
+	}
+
+	public void setTxValidDuration(int duration) {
+		properties.setTxValidDuration(duration);
+	}
+
+	public void setAutoRenewPeriod(int duration) {
+		properties.setAutoRenewPeriod(duration);
+	}
+
+	public void setDefaultNodeID(String node) {
+		properties.setDefaultNodeID(node);
+	}
+
+	public int getMnemonicHashCode() {
+		return properties.getMnemonicHashCode();
+	}
+
+	public Map<String, String> getOneDriveCredentials() {
+		return properties.getOneDriveCredentials();
+	}
+
+	public String getHash() {
+		return properties.getHash();
+	}
+
+	public boolean hasSalt() {
+		return properties.hasSalt();
+	}
+
+	public void setHash(char[] password) throws HederaClientException {
+		properties.setHash(password);
+	}
+
+	public void setSalt(boolean b) {
+		properties.setSalt(b);
+	}
+
+	public void setMnemonicHashCode(int hashCode) {
+		properties.setMnemonicHashCode(hashCode);
+	}
+
+	public String getEmailFromMap(String path) {
+		return properties.getEmailFromMap(path);
+	}
+
+	public String getNetworkProperty() {
+		return properties.getNetworkProperty();
+	}
+
+	public boolean getGenerateRecord() {
+		return properties.getGenerateRecord();
+	}
+	//endregion
+
+
+	public String showKeyString(ByteString key) {
+		return keyStructureUtility.showKeyString(key);
+	}
+
+	public TreeView<String> buildKeyTreeView(Key key) throws IOException {
+		return keyStructureUtility.buildKeyTreeView(key);
+	}
+
+	public TreeView<String> buildKeyTreeView(JsonObject key) {
+		return keyStructureUtility.buildKeyTreeView(key);
+	}
+
+	public void loadPubKeys() {
+		keyStructureUtility.loadPubKeys();
+	}
+
+	public Map<String, Path> getPubFiles() {
+		return keyStructureUtility.getPubFiles();
 	}
 }

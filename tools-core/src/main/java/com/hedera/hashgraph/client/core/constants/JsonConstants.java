@@ -19,6 +19,10 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class JsonConstants {
+	private JsonConstants() {
+		throw new IllegalStateException("Constants class");
+	}
+
 	public static final String PREFERRED_KEY_LOCATION = "keyLocation";
 	public static final String PREFERRED_REALM = "preferredRealm";
 	public static final String PREFERRED_SHARD = "preferredShard";
@@ -36,33 +40,32 @@ public class JsonConstants {
 	public static final String FILE_ID_FIELD_NAME = "fileID";
 	public static final String CONTENTS_FIELD_NAME = "newContentsLocation";
 
-	public static String TRANSACTION_FEE_FIELD_NAME = "transactionFee";
-	public static String ACCOUNT_ID_FIELD_NAME = "accountID";
-	public static String NODE_ID_FIELD_NAME = "nodeAccountID";
-	public static String NETWORK_FIELD_NAME = "network";
+	public static final String TRANSACTION_FEE_FIELD_NAME = "transactionFee";
+	public static final String ACCOUNT_ID_FIELD_NAME = "accountID";
+	public static final String NODE_ID_FIELD_NAME = "nodeAccountID";
+	public static final String NETWORK_FIELD_NAME = "network";
 
-	public static String REALM_NUMBER = "realmNum";
-	public static String SHARD_NUMBER = "shardNum";
-	public static String ACCOUNT_NUMBER = "accountNum";
+	public static final String REALM_NUMBER = "realmNum";
+	public static final String SHARD_NUMBER = "shardNum";
+	public static final String ACCOUNT_NUMBER = "accountNum";
 
-	public static String TRANSACTION_VALID_DURATION_FIELD_NAME = "transactionValidDuration";
-	public static String TRANSACTION_VALID_START_FIELD_NAME = "transactionValidStart";
-	public static String TRANSACTION_VALID_START_READABLE_FIELD_NAME = "transactionValidStart_RFC";
-	public static String MEMO_FIELD_NAME = "memo";
+	public static final String TRANSACTION_VALID_DURATION_FIELD_NAME = "transactionValidDuration";
+	public static final String TRANSACTION_VALID_START_FIELD_NAME = "transactionValidStart";
+	public static final String TRANSACTION_VALID_START_READABLE_FIELD_NAME = "transactionValidStart_RFC";
+	public static final String MEMO_FIELD_NAME = "memo";
 
-	public static String FEE_PAYER_KEY_LOCATION = "feePayerKeyLocation";
-	public static String SIGNING_KEYS_LOCATION = "signingKeysLocation";
+	public static final String FEE_PAYER_KEY_LOCATION = "feePayerKeyLocation";
 
-	public static String NEW_KEY_FIELD_NAME = "newKey";
-	public static String INITIAL_BALANCE_FIELD_NAME = "initialBalance";
-	public static String AUTO_RENEW_PERIOD_FIELD_NAME = "autoRenewPeriod";
-	public static String RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME = "receiverSignatureRequired";
+	public static final String NEW_KEY_FIELD_NAME = "newKey";
+	public static final String INITIAL_BALANCE_FIELD_NAME = "initialBalance";
+	public static final String AUTO_RENEW_PERIOD_FIELD_NAME = "autoRenewPeriod";
+	public static final String RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME = "receiverSignatureRequired";
 
-	public static String TRANSFERS = "transfers";
-	public static String ACCOUNT = "account";
-	public static String AMOUNT = "amount";
+	public static final String TRANSFERS = "transfers";
+	public static final String ACCOUNT = "account";
+	public static final String AMOUNT = "amount";
 
-	public static String H_BARS = "hBars";
-	public static String TINY_BARS = "tinyBars";
+	public static final String H_BARS = "hBars";
+	public static final String TINY_BARS = "tinyBars";
 
 }

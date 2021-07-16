@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.cli.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -43,9 +44,11 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
+import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static java.lang.Thread.sleep;
 
@@ -75,7 +78,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private int readyTime = 1;
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws HederaClientException, InterruptedException {
 
 		// Setup client
 		var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
@@ -93,7 +96,6 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		var transactions = setupPriorityQueue(files);
 
 		// Submit the transactions
-
 		var count = 0;
 		while (!transactions.isEmpty()) {
 			sleepUntilNeeded(transactions.peek(), readyTime);
@@ -101,10 +103,11 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			assert tx != null;
 			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
 					tx.getTransactionId()));
-			var worker = new TransactionCallableWorker(tx, delay, out, client);
-			transactionsFutureTasks[count] = new FutureTask(worker);
+			TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
+			transactionsFutureTasks[count] = new FutureTask<>(worker);
 			executorServiceTransactions.submit(transactionsFutureTasks[count]);
 			count++;
+
 		}
 
 		if (count == 0) {
@@ -114,13 +117,20 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		List<String> transactionResponses = new ArrayList<>();
 		for (var future : transactionsFutureTasks) {
-			final var response = (String) future.get();
+			final String response;
+			try {
+				response = (String) future.get();
+			} catch (ExecutionException e) {
+				logger.error(e.getMessage());
+				throw new HederaClientException(e);
+			}
 			if (!"".equals(response)) {
 				transactionResponses.add(response);
 			}
 		}
 		executorServiceTransactions.shutdown();
 		while (!executorServiceTransactions.isTerminated()) {
+			// wait loop
 		}
 
 		logger.info("Transactions succeeded: {} of {}", transactionResponses.size(), count);
@@ -135,11 +145,12 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
 			sleep(1000 * (difference - readyTime));
+
 		}
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(
-			Set<String> files) throws HederaClientException, com.google.protobuf.InvalidProtocolBufferException {
+			Set<String> files) throws HederaClientException {
 		var transactions = new PriorityQueue<Transaction<?>>(files.size(), (o1, o2) -> {
 			var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
 			var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
@@ -150,24 +161,33 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		for (var file : files) {
 			var txBytes = readBytes(file);
-			var tx = Transaction.fromBytes(txBytes);
-			if (tx.getTransactionId() == null) {
-				logger.error("Invalid transaction {}: No valid id found", file);
-				continue;
-			}
-			if (tx.getTransactionId().validStart == null) {
-				logger.error("Invalid transaction {}: No valid start time found", file);
-				continue;
-			}
-			assert tx.getTransactionValidDuration() != null;
-			if (tx.getTransactionId().validStart.plusSeconds(tx.getTransactionValidDuration().toSeconds()).isBefore(
-					Instant.now())) {
-				logger.error("Transaction {} happens in the past. Skipped.", file);
-				continue;
-			}
-			transactions.add(tx);
-		}
+			Transaction<? extends Transaction<?>> tx;
 
+			try {
+				tx = Transaction.fromBytes(txBytes);
+				assert tx.getTransactionValidDuration() != null;
+			} catch (InvalidProtocolBufferException e) {
+				logger.error(e.getMessage());
+				throw new HederaClientException(e);
+			}
+			switch (getFitness(tx)) {
+				case NULL_ID:
+					logger.error("Invalid transaction {}: No valid id found", file);
+					break;
+				case NULL_VALID_START:
+					logger.error("Invalid transaction {}: No valid start time found", file);
+					break;
+				case EXPIRED_START:
+					logger.error("Transaction {} happens in the past. Skipped.", file);
+					break;
+				case ID_OK:
+					logger.info("Transaction {} added to queue", file);
+					transactions.add(tx);
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + getFitness(tx));
+			}
+		}
 		return transactions;
 	}
 
@@ -177,43 +197,76 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (var fileInput : transactionFiles) {
 			// wildcards first
 			if (fileInput.contains("*")) {
-				final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
-				var currentDirectory = new File(dir);
-				var fileList = currentDirectory.list(
-						new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
-				assert fileList != null;
-				for (var fileName : fileList) {
-					final var file = new File(dir, fileName);
-					if (file.isHidden()) {
-						continue;
-					}
-					if (file.isDirectory()) {
-						directories.add(file);
-					} else if (isTransaction(file) && file.exists()) {
-						files.add(file.getAbsolutePath());
-					}
-				}
-			} else {
-				final var file = new File(fileInput);
-				if (file.isDirectory()) {
-					directories.add(file);
-				} else if (isTransaction(file) && file.exists()) {
-					files.add(file.getAbsolutePath());
-				}
+				handleWildCards(files, directories, fileInput);
+				continue;
+			}
+			final var file = new File(fileInput);
+			if (file.isDirectory()) {
+				directories.add(file);
+			} else if (isTransaction(file) && file.exists()) {
+				files.add(file.getAbsolutePath());
 			}
 		}
-		if (directories.size() > 0) {
-			for (var directory : directories) {
-				var transactions = directory.listFiles(this::isTransaction);
-				if (transactions != null) {
-					Arrays.stream(transactions).map(File::getAbsolutePath).forEach(files::add);
-				}
-			}
+		if (!directories.isEmpty()) {
+			handleDirectories(files, directories);
 		}
 		return files;
 	}
 
+	private void handleDirectories(Set<String> files, Set<File> directories) {
+		for (var directory : directories) {
+			var transactions = directory.listFiles(this::isTransaction);
+			if (transactions == null) {
+				continue;
+			}
+			Arrays.stream(transactions).map(File::getAbsolutePath).forEach(files::add);
+		}
+	}
+
+	private void handleWildCards(Set<String> files, Set<File> directories, String fileInput) {
+		final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
+		var currentDirectory = new File(dir);
+		var fileList = currentDirectory.list(
+				new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
+		assert fileList != null;
+		Arrays.stream(fileList).map(fileName -> new File(dir, fileName)).filter(file -> !file.isHidden()).forEach(
+				file -> {
+					if (file.isDirectory()) {
+						directories.add(file);
+						return;
+					}
+					if (isTransaction(file) && file.exists()) {
+						files.add(file.getAbsolutePath());
+					}
+				});
+	}
+
 	private boolean isTransaction(File file) {
 		return SIGNED_TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(file.getName()));
+	}
+
+	public enum TransactionIDFitness {
+		NULL_ID,
+		NULL_VALID_START,
+		EXPIRED_START,
+		ID_OK;
+
+		public static TransactionIDFitness getFitness(Transaction<?> tx) {
+			if (tx.getTransactionId() == null) {
+				return NULL_ID;
+			}
+			if (tx.getTransactionId().validStart == null) {
+				return NULL_VALID_START;
+			}
+			if (tx.getTransactionValidDuration() == null) {
+				return NULL_ID;
+			}
+			if (tx.getTransactionId().validStart
+					.plusSeconds(tx.getTransactionValidDuration().toSeconds())
+					.isBefore(Instant.now())) {
+				return EXPIRED_START;
+			}
+			return ID_OK;
+		}
 	}
 }

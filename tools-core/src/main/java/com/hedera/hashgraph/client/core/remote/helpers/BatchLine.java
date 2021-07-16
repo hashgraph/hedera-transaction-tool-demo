@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.remote.helpers;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -41,6 +24,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -49,10 +33,9 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.OUT_OF_RANGE_EXCEPTION_MESSAGE;
 
-public class BatchLine implements Comparable {
+public class BatchLine implements Comparable<BatchLine> {
 
 	private final Identifier receiverAccountID;
 	private final long amount;
@@ -132,11 +115,7 @@ public class BatchLine implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-
+	public int compareTo(@NotNull BatchLine o) {
 		if (getClass() != o.getClass()) {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
@@ -145,16 +124,15 @@ public class BatchLine implements Comparable {
 			return 0;
 		}
 
-		if (!this.getDate().equals(((BatchLine) o).getDate())) {
-			return this.getDate().asInstant().compareTo(((BatchLine) o).getDate().asInstant());
+		if (!this.getDate().equals(o.getDate())) {
+			return this.getDate().asInstant().compareTo(o.getDate().asInstant());
 		}
 
-		if (!this.getReceiverAccountID().equals(((BatchLine) o).getReceiverAccountID())) {
-			return this.getReceiverAccountID().compareTo(((BatchLine) o).getReceiverAccountID());
+		if (!this.getReceiverAccountID().equals(o.getReceiverAccountID())) {
+			return this.getReceiverAccountID().compareTo(o.getReceiverAccountID());
 		}
 
-		return Long.compare(this.getAmount(), ((BatchLine) o).getAmount());
-
+		return Long.compare(this.getAmount(), o.getAmount());
 	}
 
 	public static final class Builder {
@@ -163,26 +141,26 @@ public class BatchLine implements Comparable {
 		private Timestamp timestamp;
 
 		public Builder() {
+			// Empty default constructor
 		}
 
 		public Builder withReceiverAccountID(String stringAccountID) {
-			var receiverID = Identifier.parse(stringAccountID);
-			this.receiverAccountID = receiverID;
+			this.receiverAccountID = Identifier.parse(stringAccountID);
 			return this;
 		}
 
 		public Builder withAmount(String amountString) {
-			long amount;
+			long parsedAmount;
 			try {
-				amount = Long.parseLong(amountString);
+				parsedAmount = Long.parseLong(amountString);
 			} catch (NumberFormatException e) {
 				throw new HederaClientRuntimeException(String.format("Invalid amount: %s", amountString));
 			}
 
-			if (amount <= 0) {
+			if (parsedAmount <= 0) {
 				throw new HederaClientRuntimeException("Amount cannot be negative or zero");
 			}
-			this.amount = amount;
+			this.amount = parsedAmount;
 			return this;
 		}
 
@@ -192,9 +170,10 @@ public class BatchLine implements Comparable {
 		 * @param excelDate
 		 * 		Date string in the
 		 * @param hour
+		 * 		the hour (0-23)
 		 * @param minutes
-		 * @return
-		 * @throws HederaClientException
+		 * 		the minutes (0-59)
+		 * @return a TimeStamp builder
 		 */
 		public Builder withTimeStamp(String excelDate, int hour, int minutes) throws HederaClientException {
 			final var formatter = new SimpleDateFormat("MM/dd/yy");

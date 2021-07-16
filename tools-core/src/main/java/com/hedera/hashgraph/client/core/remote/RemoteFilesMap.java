@@ -16,30 +16,12 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.remote;
 
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -52,13 +34,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
+import static org.apache.commons.io.FilenameUtils.getBaseName;
+import static org.apache.commons.io.FilenameUtils.getExtension;
+import static org.apache.commons.io.FilenameUtils.removeExtension;
+
 public class RemoteFilesMap {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMap.class);
 	private static final int TO_MS = 1000;
 
+	private String version = "";
 	private Map<String, RemoteFile> files;
-	// versionDateString is of the form XX.XX.XXXX dateTimeString
 
 	/**
 	 * Constructor
@@ -67,7 +55,9 @@ public class RemoteFilesMap {
 	 * 		a list of remote files
 	 */
 	public RemoteFilesMap(final List<RemoteFile> fileList) {
-		assert (fileList != null);
+		if (fileList == null) {
+			return;
+		}
 		files = new HashMap<>();
 		for (var remoteFile : fileList) {
 			files.put(remoteFile.getName(), remoteFile);
@@ -76,6 +66,11 @@ public class RemoteFilesMap {
 
 	public RemoteFilesMap() {
 		files = new HashMap<>();
+	}
+
+	public RemoteFilesMap(String version) {
+		this.version = version;
+		this.files = new HashMap<>();
 	}
 
 	/**
@@ -113,91 +108,91 @@ public class RemoteFilesMap {
 		return remoteFileList;
 	}
 
-
-	public RemoteFilesMap fromFile(FileService fileService, String version) {
+	/**
+	 * Load remote files from a FileService
+	 *
+	 * @param fileService
+	 * 		the FileService
+	 * @return a RemoteFilesMap
+	 */
+	public RemoteFilesMap fromFile(FileService fileService) {
 		String location = fileService.getName().equals("Volumes") || fileService.getName().equals(
 				"TransactionTools") ? "" : "InputFiles";
-		List<FileDetails> files;
 		try {
-			files = fileService.listFiles(location);
-		} catch (HederaClientException e) {
-			logger.info(String.format("Files folder not found in FileService %s", fileService.getName()));
+			List<FileDetails> fileDetails = fileService.listFiles(location);
+			return new RemoteFilesMap(getRemoteFiles(fileDetails));
+		} catch (HederaClientException | ParseException e) {
+			logger.info("Files folder not found in FileService {}", fileService.getName());
 			return new RemoteFilesMap();
 		}
+	}
 
+	/**
+	 * Load all files into a list of remote files
+	 *
+	 * @param fileDetails
+	 * 		a list of files
+	 * @return a list of RemoteFile
+	 */
+	private List<RemoteFile> getRemoteFiles(List<FileDetails> fileDetails) throws ParseException {
+		List<RemoteFile> remoteFiles = getRemoteFileList(fileDetails);
+
+		for (RemoteFile rf : remoteFiles) {
+			if (rf.getType().equals(FileType.COMMENT)) {
+				continue;
+			}
+
+			var linkedComments = findFile(remoteFiles, getBaseName(rf.getName()) + "." + TXT_EXTENSION);
+			rf.setComments((linkedComments != null));
+			rf.setCommentsFile(rf.hasComments() ? linkedComments : null);
+
+			// Handle the software update
+			if (rf.getType().equals(FileType.SOFTWARE_UPDATE) && rf.hasComments()) {
+				handleSoftwareUpdate((SoftwareUpdateFile) rf);
+			}
+		}
+		return remoteFiles;
+	}
+
+	/**
+	 * Software updates are handled differently, since only the latest can be displayed at the time
+	 *
+	 * @param remoteFile
+	 * 		the software update file
+	 */
+	private void handleSoftwareUpdate(SoftwareUpdateFile remoteFile) throws ParseException {
+		var jsonObject = ((CommentFile) remoteFile.getCommentsFile()).getContents();
+
+		if (jsonObject.has("timeStamp")) {
+			final var timeStamp = jsonObject.get("timeStamp").getAsLong();
+			remoteFile.setNewStamp(timeStamp);
+			return;
+		}
+
+		if (jsonObject.has("dateStamp")) {
+			var dateString = jsonObject.get("dateStamp").getAsString();
+			final var newStamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").parse(dateString).getTime() / TO_MS;
+			remoteFile.setNewStamp(newStamp);
+		}
+	}
+
+	/**
+	 * Given list of files, load all the remote files
+	 *
+	 * @param fileDetails
+	 * 		the list of prospective remote files
+	 * @return a list of RemoteFiles
+	 */
+	private List<RemoteFile> getRemoteFileList(List<FileDetails> fileDetails) {
 		List<RemoteFile> remoteFiles = new ArrayList<>();
-		for (var f : files) {
+		for (var f : fileDetails) {
 			try {
 				if (validFile(f)) {
-					var type = getType(FilenameUtils.getExtension(f.getName()));
-					RemoteFile remoteFile;
-					switch (type) {
-						case TRANSACTION:
-							remoteFile = new TransactionFile(f);
-							break;
-						case LARGE_BINARY:
-							remoteFile = new LargeBinaryFile(f);
-							break;
-						case BATCH:
-							remoteFile = new BatchFile(f);
-							break;
-						case COMMENT:
-							remoteFile = new CommentFile(f);
-							break;
-						case ACCOUNT_INFO:
-							remoteFile = new InfoFile(f);
-							break;
-						case PUBLIC_KEY:
-							remoteFile = new PublicKeyFile(f);
-							break;
-						case SOFTWARE_UPDATE:
-						case CONFIG:
-							remoteFile = new SoftwareUpdateFile(f);
-
-							var splitVersion = (version).split(" ");
-							var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-							Date dateTime;
-							try {
-								dateTime = formatter.parse(splitVersion[3].replace(",", ""));
-							} catch (ParseException e) {
-								logger.error(e);
-								throw new HederaClientException(e);
-							}
-
-							((SoftwareUpdateFile) remoteFile).setOldVersion(splitVersion[1].replace(",", ""));
-							((SoftwareUpdateFile) remoteFile).setOldStamp(dateTime.getTime() / TO_MS);
-							break;
-						case METADATA:
-							remoteFile = new MetadataFile(f);
-							break;
-						default:
-							throw new HederaClientException(String.format("Unrecognized type %s", type));
-					}
-
+					RemoteFile remoteFile = getSingleRemoteFile(f);
 					if (remoteFile.isValid()) {
-						final var remoteLocation = new File(remoteFile.getParentPath() + "/History/" +
-								FilenameUtils.removeExtension(remoteFile.getName()).concat(".meta"));
-						if (remoteLocation.exists()) {
-							long lastDate = 0;
-							try {
-								var metadataActions =
-										new MetadataFile(remoteFile.getName()).getMetadataActions();
-
-								remoteFile.setParentPath(
-										FilenameUtils.removeExtension(remoteLocation.getPath()).concat(".").concat(
-												type.getExtension()));
-
-								for (var metadataAction : metadataActions) {
-									final var seconds = metadataAction.getTimestamp().asDuration().getSeconds();
-									if (seconds > lastDate) {
-										lastDate = seconds;
-									}
-								}
-							} catch (HederaClientException e) {
-								logger.error(e);
-							}
-							remoteFile.setSignDateInSecs(lastDate);
-						}
+						final var remoteLocation = new File(remoteFile.getParentPath() + File.separator + "History",
+								getBaseName(remoteFile.getName()) + "." + METADATA_EXTENSION);
+						validRemoteAction(remoteFile.getType(), remoteFile, remoteLocation);
 						remoteFiles.add(remoteFile);
 					}
 				}
@@ -206,31 +201,91 @@ public class RemoteFilesMap {
 				logger.error(exception);
 			}
 		}
+		return remoteFiles;
+	}
 
-		for (var rf :
-				remoteFiles) {
-			if (!rf.getType().equals(FileType.COMMENT)) {
-				var commentName = FilenameUtils.getBaseName(rf.getName()) + ".txt";
-				var linkedComments = findFile(remoteFiles, commentName);
-				rf.setComments((linkedComments != null));
-				rf.setCommentsFile(rf.hasComments() ? linkedComments : null);
-				if (rf.getType().equals(FileType.SOFTWARE_UPDATE) && rf.hasComments()) {
-					var jsonObject = ((CommentFile) rf.getCommentsFile()).getContents();
-					if (jsonObject.has("timeStamp")) {
-						((SoftwareUpdateFile) rf).setNewStamp(jsonObject.get("timeStamp").getAsLong());
-					} else if (jsonObject.has("dateStamp")) {
-						var dateString = jsonObject.get("dateStamp").getAsString();
-						try {
-							((SoftwareUpdateFile) rf).setNewStamp(
-									new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").parse(dateString).getTime() / TO_MS);
-						} catch (ParseException e) {
-							logger.error("Bad time format in text file");
-						}
+	/**
+	 * Load a file into a RemoteFile
+	 *
+	 * @param fileDetails
+	 * 		the remote file
+	 * @return a RemoteFile
+	 */
+	private RemoteFile getSingleRemoteFile(FileDetails fileDetails) throws HederaClientException {
+		RemoteFile remoteFile;
+		var type = getType(getExtension(fileDetails.getName()));
+		switch (type) {
+			case TRANSACTION:
+				remoteFile = new TransactionFile(fileDetails);
+				break;
+			case LARGE_BINARY:
+				remoteFile = new LargeBinaryFile(fileDetails);
+				break;
+			case BATCH:
+				remoteFile = new BatchFile(fileDetails);
+				break;
+			case COMMENT:
+				remoteFile = new CommentFile(fileDetails);
+				break;
+			case ACCOUNT_INFO:
+				remoteFile = new InfoFile(fileDetails);
+				break;
+			case PUBLIC_KEY:
+				remoteFile = new PublicKeyFile(fileDetails);
+				break;
+			case SOFTWARE_UPDATE:
+			case CONFIG:
+				remoteFile = getSoftwareUpdateFile(version, fileDetails);
+				break;
+			case METADATA:
+				remoteFile = new MetadataFile(fileDetails);
+				break;
+			default:
+				throw new HederaClientException(String.format("Unrecognized type %s", type));
+		}
+		return remoteFile;
+	}
+
+	private void validRemoteAction(FileType type, RemoteFile remoteFile, File remoteLocation) {
+		if (remoteLocation.exists()) {
+			long lastDate = 0;
+			try {
+				var metadataActions =
+						new MetadataFile(remoteFile.getName()).getMetadataActions();
+
+				remoteFile.setParentPath(
+						removeExtension(remoteLocation.getPath()).concat(".").concat(
+								type.getExtension()));
+
+				for (var metadataAction : metadataActions) {
+					final var seconds = metadataAction.getTimeStamp().asDuration().getSeconds();
+					if (seconds > lastDate) {
+						lastDate = seconds;
 					}
 				}
+			} catch (HederaClientException e) {
+				logger.error(e);
 			}
+			remoteFile.setSignDateInSecs(lastDate);
 		}
-		return new RemoteFilesMap(remoteFiles);
+	}
+
+	private RemoteFile getSoftwareUpdateFile(String version, FileDetails f) throws HederaClientException {
+		SoftwareUpdateFile remoteFile = new SoftwareUpdateFile(f);
+
+		var splitVersion = version.split(" ");
+		var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+		Date dateTime;
+		try {
+			dateTime = formatter.parse(splitVersion[3].replace(",", ""));
+		} catch (ParseException e) {
+			logger.error(e);
+			throw new HederaClientException(e);
+		}
+
+		remoteFile.setOldVersion(splitVersion[1].replace(",", ""));
+		remoteFile.setOldStamp(dateTime.getTime() / TO_MS);
+		return remoteFile;
 	}
 
 	private static FileType getType(String extension) throws HederaClientException {

@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -79,8 +62,8 @@ class ControllerTest {
 					Paths.get("").toAbsolutePath().toString() + "/src/test/resources/testDirectory/TransactionTools";
 			preferences.put(PREFERRED_STORAGE_DIRECTORY, defaultStorage);
 			controller = new Controller();
-			controller.properties = new UserAccessibleProperties(defaultStorage + "/Files/user.properties", "");
-			controller.properties.resetProperties();
+			controller.setProperties(new UserAccessibleProperties(defaultStorage + "/Files/user", ""));
+			controller.resetProperties();
 			controller.setVersionString(controller.getVersion());
 		} catch (Exception e) {
 			logger.error(e);
@@ -94,8 +77,8 @@ class ControllerTest {
 			testMap.put("test1@somewhere.com", "/here/there/everyWhere");
 			testMap.put("test2@somewhere.else.com", "somewhere/nowhere/everywhere");
 
-			controller.properties.setOneDriveCredentials(testMap);
-			Map<String, String> recoveredMap = controller.properties.getOneDriveCredentials();
+			controller.setOneDriveCredentials(testMap);
+			Map<String, String> recoveredMap = controller.getOneDriveCredentials();
 
 			for (String key :
 					testMap.keySet()) {
@@ -107,8 +90,6 @@ class ControllerTest {
 				assertEquals(recoveredMap.get(key), testMap.get(key));
 			}
 
-			// todo: Add different types to the test
-			// todo: Revisit names
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -137,8 +118,8 @@ class ControllerTest {
 	@Test
 	void defaultTxFee_test() {
 		try {
-			controller.properties.setDefaultTxFee(123456789);
-			assertEquals(123456789, controller.properties.getDefaultTxFee());
+			controller.setDefaultTxFee(123456789);
+			assertEquals(123456789, controller.getDefaultTxFee());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -147,9 +128,9 @@ class ControllerTest {
 	@Test
 	void defaultNodeID_test() {
 		try {
-			controller.properties.setDefaultNodeID(new Identifier(
+			controller.setDefaultNodeID(new Identifier(
 					AccountID.newBuilder().setRealmNum(2).setShardNum(1).setAccountNum(3).build()).toReadableString());
-			assertEquals("1.2.3", controller.properties.getDefaultNodeID());
+			assertEquals("1.2.3", controller.getDefaultNodeID());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -158,14 +139,14 @@ class ControllerTest {
 	@Test
 	void txValidDuration_test() {
 		try {
-			controller.properties.setTxValidDuration(120);
-			assertEquals(120, controller.properties.getTxValidDuration());
+			controller.setTxValidDuration(120);
+			assertEquals(120, controller.getTxValidDuration());
 
-			controller.properties.setTxValidDuration(-1);
-			assertEquals(120, controller.properties.getTxValidDuration());
+			controller.setTxValidDuration(-1);
+			assertEquals(120, controller.getTxValidDuration());
 
-			controller.properties.setTxValidDuration(200);
-			assertEquals(120, controller.properties.getTxValidDuration());
+			controller.setTxValidDuration(200);
+			assertEquals(120, controller.getTxValidDuration());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -186,9 +167,9 @@ class ControllerTest {
 	@Test
 	void generateRecord_test() {
 		try {
-			assertFalse(controller.properties.getGenerateRecord());
-			controller.properties.setGenerateRecord(true);
-			assertTrue(controller.properties.getGenerateRecord());
+			assertFalse(controller.getGenerateRecord());
+			controller.setGenerateRecord(true);
+			assertTrue(controller.getGenerateRecord());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -197,13 +178,13 @@ class ControllerTest {
 	@Test
 	void autoRenewPeriod_test() {
 		try {
-			assertEquals(7000000, controller.properties.getAutoRenewPeriod());
-			controller.properties.setAutoRenewPeriod(500);
-			assertEquals(7000000, controller.properties.getAutoRenewPeriod());
-			controller.properties.setAutoRenewPeriod(8000001);
-			assertEquals(7000000, controller.properties.getAutoRenewPeriod());
-			controller.properties.setAutoRenewPeriod(7500000);
-			assertEquals(7500000, controller.properties.getAutoRenewPeriod());
+			assertEquals(7000000, controller.getAutoRenewPeriod());
+			controller.setAutoRenewPeriod(500);
+			assertEquals(7000000, controller.getAutoRenewPeriod());
+			controller.setAutoRenewPeriod(8000001);
+			assertEquals(7000000, controller.getAutoRenewPeriod());
+			controller.setAutoRenewPeriod(7500000);
+			assertEquals(7500000, controller.getAutoRenewPeriod());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -213,36 +194,36 @@ class ControllerTest {
 	void defaultSubmissionTime_test() {
 
 		try {
-			assertEquals(1, controller.properties.getDefaultHours());
-			assertEquals(0, controller.properties.getDefaultMinutes());
-			assertEquals(0, controller.properties.getDefaultSeconds());
+			assertEquals(1, controller.getDefaultHours());
+			assertEquals(0, controller.getDefaultMinutes());
+			assertEquals(0, controller.getDefaultSeconds());
 
-			controller.properties.setDefaultHours(-1);
-			assertEquals(1, controller.properties.getDefaultHours());
+			controller.setDefaultHours(-1);
+			assertEquals(1, controller.getDefaultHours());
 
-			controller.properties.setDefaultMinutes(-1);
-			assertEquals(0, controller.properties.getDefaultMinutes());
+			controller.setDefaultMinutes(-1);
+			assertEquals(0, controller.getDefaultMinutes());
 
-			controller.properties.setDefaultSeconds(-1);
-			assertEquals(0, controller.properties.getDefaultSeconds());
+			controller.setDefaultSeconds(-1);
+			assertEquals(0, controller.getDefaultSeconds());
 
-			controller.properties.setDefaultHours(29);
-			assertEquals(1, controller.properties.getDefaultHours());
+			controller.setDefaultHours(29);
+			assertEquals(1, controller.getDefaultHours());
 
-			controller.properties.setDefaultMinutes(61);
-			assertEquals(0, controller.properties.getDefaultMinutes());
+			controller.setDefaultMinutes(61);
+			assertEquals(0, controller.getDefaultMinutes());
 
-			controller.properties.setDefaultSeconds(61);
-			assertEquals(0, controller.properties.getDefaultSeconds());
+			controller.setDefaultSeconds(61);
+			assertEquals(0, controller.getDefaultSeconds());
 
-			controller.properties.setDefaultHours(13);
-			assertEquals(13, controller.properties.getDefaultHours());
+			controller.setDefaultHours(13);
+			assertEquals(13, controller.getDefaultHours());
 
-			controller.properties.setDefaultMinutes(21);
-			assertEquals(21, controller.properties.getDefaultMinutes());
+			controller.setDefaultMinutes(21);
+			assertEquals(21, controller.getDefaultMinutes());
 
-			controller.properties.setDefaultSeconds(31);
-			assertEquals(31, controller.properties.getDefaultSeconds());
+			controller.setDefaultSeconds(31);
+			assertEquals(31, controller.getDefaultSeconds());
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -263,10 +244,10 @@ class ControllerTest {
 	void hash_test() {
 		try {
 			PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
-			assertEquals("", controller.properties.getHash());
+			assertEquals("", controller.getHash());
 
-			controller.properties.setHash("12345679".toCharArray());
-			String hash = controller.properties.getHash();
+			controller.setHash("12345679".toCharArray());
+			String hash = controller.getHash();
 			assertTrue(passwordAuthenticator.authenticate("12345679".toCharArray(), hash));
 		} catch (Exception e) {
 			logger.error(e);

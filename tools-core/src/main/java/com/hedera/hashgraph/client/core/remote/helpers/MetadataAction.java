@@ -25,19 +25,24 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import org.jetbrains.annotations.NotNull;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 
-public class MetadataAction implements Comparable {
-	private Timestamp timestamp;
-	private Actions action;
+public class MetadataAction implements Comparable<MetadataAction> {
+	private static final String TIMESTAMP_STRING = "timestamp";
+	private static final String KEY_NAME = "keyName";
+	private static final String USER_COMMENTS = "userComments";
+	private static final String ACTION_STRING = "action";
+	private Timestamp timeStamp;
+	private Actions actions;
 	private String userComments;
 	private String keyName;
 
-	public MetadataAction(Timestamp timestamp, Actions action, String userComments, String keyName) {
-		this.timestamp = new Timestamp(timestamp.getSeconds(), 0);
-		this.action = action;
+	public MetadataAction(Timestamp timestamp, Actions actions, String userComments, String keyName) {
+		this.timeStamp = new Timestamp(timestamp.getSeconds(), 0);
+		this.actions = actions;
 		this.userComments = userComments;
 		this.keyName = keyName;
 	}
@@ -50,31 +55,31 @@ public class MetadataAction implements Comparable {
 			throw new HederaClientException("Cannot parse object");
 		}
 
-		if (!metadata.has("timestamp") || !metadata.has("action")) {
+		if (!metadata.has(TIMESTAMP_STRING) || !metadata.has(ACTION_STRING)) {
 			throw new HederaClientException("Invalid metadata");
 		}
 
-		var time = metadata.getAsJsonObject("timestamp");
-		this.timestamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
-		this.action = Actions.valueOf(metadata.get("action").getAsString());
-		this.userComments = (metadata.has("userComments")) ? metadata.get("userComments").getAsString() : "";
-		this.keyName = metadata.has("keyName") ? metadata.get("keyName").getAsString() : "";
+		var time = metadata.getAsJsonObject(TIMESTAMP_STRING);
+		this.timeStamp = new Timestamp(time.get(JsonConstants.SECONDS).getAsLong(), 0);
+		this.actions = Actions.valueOf(metadata.get(ACTION_STRING).getAsString());
+		this.userComments = (metadata.has(USER_COMMENTS)) ? metadata.get(USER_COMMENTS).getAsString() : "";
+		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
 	}
 
-	public Timestamp getTimestamp() {
-		return timestamp;
+	public Timestamp getTimeStamp() {
+		return timeStamp;
 	}
 
-	public void setTimestamp(Timestamp timestamp) {
-		this.timestamp = timestamp;
+	public void setTimeStamp(Timestamp timeStamp) {
+		this.timeStamp = timeStamp;
 	}
 
-	public Actions getAction() {
-		return action;
+	public Actions getActions() {
+		return actions;
 	}
 
-	public void setAction(Actions action) {
-		this.action = action;
+	public void setActions(Actions actions) {
+		this.actions = actions;
 	}
 
 	public String getUserComments() {
@@ -95,10 +100,10 @@ public class MetadataAction implements Comparable {
 
 	public JsonObject toJson() {
 		var jsonObject = new JsonObject();
-		jsonObject.add("timestamp", this.timestamp.asJSON());
-		jsonObject.addProperty("action", this.action.getAction());
-		jsonObject.addProperty("userComments", this.userComments);
-		jsonObject.addProperty("keyName", this.keyName);
+		jsonObject.add(TIMESTAMP_STRING, this.timeStamp.asJSON());
+		jsonObject.addProperty(ACTION_STRING, this.actions.getAction());
+		jsonObject.addProperty(USER_COMMENTS, this.userComments);
+		jsonObject.addProperty(KEY_NAME, this.keyName);
 
 		return jsonObject;
 	}
@@ -109,7 +114,7 @@ public class MetadataAction implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object o) {
+	public boolean equals(Object o) {
 		if (o == null) {
 			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
 		}
@@ -118,10 +123,28 @@ public class MetadataAction implements Comparable {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
 
-		if (this.timestamp.getSeconds() != ((MetadataAction) o).getTimestamp().getSeconds()) {
-			return Long.compare(timestamp.getSeconds(), ((MetadataAction) o).getTimestamp().getSeconds());
+		if (this.timeStamp.getSeconds() != ((MetadataAction) o).getTimeStamp().getSeconds()) {
+			return false;
 		}
 
-		return this.keyName.compareTo(((MetadataAction) o).getKeyName());
+		return this.keyName.equals(((MetadataAction) o).getKeyName());
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + timeStamp.hashCode() + keyName.hashCode();
+	}
+
+	@Override
+	public int compareTo(@NotNull MetadataAction o) {
+		if (getClass() != o.getClass()) {
+			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
+		}
+
+		if (this.timeStamp.getSeconds() != o.getTimeStamp().getSeconds()) {
+			return Long.compare(timeStamp.getSeconds(), o.getTimeStamp().getSeconds());
+		}
+
+		return this.keyName.compareTo(o.getKeyName());
 	}
 }

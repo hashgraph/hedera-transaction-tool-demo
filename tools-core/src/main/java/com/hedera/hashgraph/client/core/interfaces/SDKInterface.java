@@ -94,7 +94,7 @@ public interface SDKInterface {
 	 *
 	 * @return the transaction receipt from the network
 	 */
-	TransactionReceipt submit() throws HederaClientRuntimeException;
+	TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException;
 
 	/**
 	 * Checks the input provided before attempting to build a transaction. Provides feedback to the user regarding

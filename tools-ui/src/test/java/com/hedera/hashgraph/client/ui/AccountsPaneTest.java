@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
@@ -190,7 +173,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 
 		JsonObject accountJson = readJsonObject(DEFAULT_STORAGE + "/Accounts/0.0.2.json");
-		assertFalse(accountJson == null);
+		assertNotNull(accountJson);
 
 		final File accountMapFile = new File(DEFAULT_STORAGE + "Files/.System/accountMapFile.json");
 		assertTrue(accountMapFile.exists());

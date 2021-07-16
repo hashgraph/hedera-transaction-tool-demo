@@ -50,6 +50,9 @@ public class TimeUtils {
 	private static final String DATE_TIME_FULL_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
 	private static final String DATE_TIME_SHORT_MM_FIRST_PATTERN = "MM/dd/yy";
 
+	private TimeUtils() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static Calendar excelDateTimeToCalendar(String excelDate) {
 

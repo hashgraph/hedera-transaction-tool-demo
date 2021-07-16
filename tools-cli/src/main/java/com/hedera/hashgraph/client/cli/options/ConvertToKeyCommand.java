@@ -31,6 +31,8 @@ import org.bouncycastle.util.encoders.Hex;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.KeyStoreException;
 import java.util.Arrays;
 
 import static com.hedera.hashgraph.client.core.security.PasswordInput.readPasswordFromStdIn;
@@ -45,7 +47,7 @@ public class ConvertToKeyCommand implements ToolCommand {
 	private boolean policy = false;
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws HederaClientException, IOException {
 		if (!new File(key).exists()) {
 			throw new HederaClientException(String.format("Cannot find key file %s", key));
 		}
@@ -97,17 +99,26 @@ public class ConvertToKeyCommand implements ToolCommand {
 			logger.info("Public Keys match");
 		}
 
-		var ed25519PrivateKey = Ed25519PrivateKey.fromBytes(operatorKey.toBytes());
-		var ed25519KeyStore = new Ed25519KeyStore.Builder().withPassword(password)
-				.build();
-
-		ed25519KeyStore.insertNewKeyPair(ed25519PrivateKey);
 		var pemName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
 				key) + "." + Constants.PK_EXTENSION;
 		var pubName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
 				key) + "." + Constants.PUB_EXTENSION;
-		ed25519KeyStore.write(pemName);
+
+		var ed25519PrivateKey = Ed25519PrivateKey.fromBytes(operatorKey.toBytes());
+		Ed25519KeyStore ed25519KeyStore;
+
+		try {
+			ed25519KeyStore = new Ed25519KeyStore.Builder().withPassword(password)
+					.build();
+			ed25519KeyStore.insertNewKeyPair(ed25519PrivateKey);
+			ed25519KeyStore.write(pemName);
+		} catch (KeyStoreException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientException(e);
+		}
+
 		EncryptionUtils.storePubKey(pubName, (EdDSAPublicKey) ed25519KeyStore.get(0).getPublic());
+
 
 		logger.info("Private key converted and stored");
 	}

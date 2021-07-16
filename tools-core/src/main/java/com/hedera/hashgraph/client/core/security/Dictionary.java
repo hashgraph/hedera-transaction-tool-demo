@@ -63,7 +63,7 @@ public class Dictionary {
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
 	}
 
-	private final static String[] words = new String[] {
+	private static final String[] words = new String[] {
 			"abandon",
 			"ability",
 			"able",

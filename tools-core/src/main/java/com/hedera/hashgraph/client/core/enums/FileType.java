@@ -16,37 +16,28 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.enums;
 
-import com.hedera.hashgraph.client.core.constants.Constants;
+import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONFIGURATION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SOFTWARE_UPDATE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 
 public enum FileType {
-	TRANSACTION(Constants.TRANSACTION_EXTENSION),
-	BATCH(Constants.BATCH_TRANSACTION_EXTENSION),
-	LARGE_BINARY(Constants.LARGE_BINARY_EXTENSION),
-	SOFTWARE_UPDATE(Constants.SOFTWARE_UPDATE_EXTENSION),
-	ACCOUNT_INFO(Constants.INFO_EXTENSION),
-	PUBLIC_KEY(Constants.PUB_EXTENSION),
-	COMMENT(Constants.COMMENT_EXTENSION),
-	CONFIG(Constants.CONFIGURATION_EXTENSION),
-	METADATA(Constants.METADATA_EXTENSION),
+	TRANSACTION(TRANSACTION_EXTENSION),
+	BATCH(BATCH_TRANSACTION_EXTENSION),
+	LARGE_BINARY(LARGE_BINARY_EXTENSION),
+	SOFTWARE_UPDATE(SOFTWARE_UPDATE_EXTENSION),
+	ACCOUNT_INFO(INFO_EXTENSION),
+	PUBLIC_KEY(PUB_EXTENSION),
+	COMMENT(COMMENT_EXTENSION),
+	CONFIG(CONFIGURATION_EXTENSION),
+	METADATA(METADATA_EXTENSION),
 	UNKNOWN("");
 
 	private final String extension;
@@ -92,8 +83,10 @@ public enum FileType {
 			case LARGE_BINARY:
 				return "File Contents Update";
 			case METADATA:
+			case UNKNOWN:
 				break;
-
+			default:
+				throw new IllegalStateException("Unexpected value: " + this);
 		}
 		return "";
 	}

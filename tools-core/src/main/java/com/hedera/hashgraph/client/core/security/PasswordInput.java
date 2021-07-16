@@ -27,6 +27,10 @@ public class PasswordInput {
 
 	private static final Logger logger = LogManager.getLogger(PasswordInput.class);
 
+	private PasswordInput() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Request a password from the user.If the console is not open, the method assumes that we are in a testing
 	 * environment and returns the default password
@@ -66,9 +70,9 @@ public class PasswordInput {
 			final char[] confirmedPassword;
 			logger.info("Getting password and confirmation");
 			if (System.console() != null) {
-				logger.info(String.format("Getting password with message: %s", message));
+				logger.info("Getting password with message: {}", message);
 				password = System.console().readPassword(message, args);
-				logger.info(String.format("Getting confirmation with message: %s", confirmation));
+				logger.info("Getting confirmation with message: {}", confirmation);
 				confirmedPassword = System.console().readPassword(confirmation, args);
 			} else {
 				logger.info("Cannot open console: Using test password");

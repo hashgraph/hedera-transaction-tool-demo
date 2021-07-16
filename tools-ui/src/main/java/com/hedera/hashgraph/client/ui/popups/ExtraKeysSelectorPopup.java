@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -65,7 +48,11 @@ import static java.lang.Math.sqrt;
 
 public class ExtraKeysSelectorPopup {
 	protected static final String PK_EXTENSION = ".pem";
-	private final static Logger logger = LogManager.getLogger(ExtraKeysSelectorPopup.class);
+	private static final Logger logger = LogManager.getLogger(ExtraKeysSelectorPopup.class);
+
+	private ExtraKeysSelectorPopup() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	/**
 	 * Displays a list of checkboxes corresponding to the keys that have been imported to the app.
@@ -87,7 +74,7 @@ public class ExtraKeysSelectorPopup {
 		assert knownKeys != null;
 		Arrays.sort(knownKeys);
 		var columns = (int) max(3, sqrt(knownKeys.length));
-		logger.info(String.format("Gridpanes will have %d columns", columns));
+		logger.info("Grid panes will have {} columns", columns);
 
 
 		var nonSignersVBox = new VBox();

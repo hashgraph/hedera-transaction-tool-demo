@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
@@ -100,6 +83,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 	public static final String UNBREAKABLE_SPACE = "\u00A0";
+	private static final Font COURIER_FONT = Font.font("Courier", 17);
 
 	private ToolTransaction transaction;
 	private TransactionType transactionType;
@@ -180,6 +164,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
+	@Override
 	public boolean isExpired() {
 		var now = new Timestamp();
 		return now.getSeconds() > getExpiration().getSeconds();
@@ -188,14 +177,38 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public GridPane buildGridPane() {
 		var detailsGridPane = super.buildGridPane();
-		var nicknames = new JsonObject();
-		var keysLink = new Hyperlink("Click for more details");
-		var sigReqLabel = new Label("Receiver signature required: ");
-		sigReqLabel.setWrapText(true);
+		handleTransactionCommonFields(detailsGridPane);
+		var count = detailsGridPane.getRowCount() + 1;
 
+		switch (transaction.getTransactionType()) {
+			case CRYPTO_TRANSFER:
+				handleCryptoTransferFields(detailsGridPane, count);
+				break;
+			case CRYPTO_CREATE:
+				handleCryptoCreateTransactionFields(detailsGridPane, count);
+				break;
+			case CRYPTO_UPDATE:
+				handleCryptoUpdateTransactionField(detailsGridPane, count);
+				break;
+			case SYSTEM_DELETE_UNDELETE:
+				handleSystemTransactionField(detailsGridPane, count);
+				break;
+			default:
+				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
+		}
+		return detailsGridPane;
+	}
+
+	/**
+	 * Add the common fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 */
+	private void handleTransactionCommonFields(GridPane detailsGridPane) {
 		try {
 			var map =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), map));
 			feePayerLabel.setWrapText(true);
 			detailsGridPane.add(feePayerLabel, 1, 0);
@@ -204,7 +217,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
-		text.setFont(Font.font("Courier", 17));
+		text.setFont(COURIER_FONT);
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
 
@@ -216,111 +229,144 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
+	}
 
-
+	/**
+	 * Add the CRYPTO TRANSFER exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoTransferFields(GridPane detailsGridPane, int count) {
+		var nicknames = new JsonObject();
 		try {
-			nicknames = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
-		var count = detailsGridPane.getRowCount() + 1;
-		switch (transaction.getTransactionType()) {
-			case CRYPTO_TRANSFER:
-				var accountAmountMap =
-						((ToolTransferTransaction) transaction).getAccountAmountMap();
-				List<Pair<String, String>> senders = new ArrayList<>();
-				List<Pair<String, String>> receivers = new ArrayList<>();
-				for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
-					var amount = entry.getValue();
-					var identifier = entry.getKey();
-					if (amount.toTinybars() < 0) {
-						senders.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
-								amount.toString().replace(" ", UNBREAKABLE_SPACE)));
-					} else {
-						receivers.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
-								amount.toString().replace(" ", UNBREAKABLE_SPACE)));
-					}
-				}
-
-				detailsGridPane.add(new Label("Senders: "), 0, count++);
-				setAccountAmounts(detailsGridPane, count++, senders);
-
-				detailsGridPane.add(new Label("Receivers: "), 0, count++);
-				setAccountAmounts(detailsGridPane, count++, receivers);
-				break;
-			case CRYPTO_CREATE:
-				var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
-				detailsGridPane.add(new Label("Key: "), 0, count);
-				keysLink.setOnAction(actionEvent -> displayKey(treeView));
-				detailsGridPane.add(keysLink, 1, count++);
-
-				detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-				detailsGridPane.add(
-						new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds()))
-						, 1, count++);
-
-				detailsGridPane.add(new Label("Initial balance: "), 0, count);
-				var initialBalance = new Label(createTransaction.getInitialBalance().toString());
-				initialBalance.setFont(Font.font("Courier", 17));
-				initialBalance.setStyle(DEBIT);
-				detailsGridPane.add(initialBalance, 1, count++);
-
-				detailsGridPane.add(sigReqLabel, 0, count);
-				detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
-						count);
-
-				break;
-			case CRYPTO_UPDATE:
-				var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
-
-				if (updateTransaction.getKey() != null) {
-					detailsGridPane.add(new Label("Key: "), 0, count);
-					keysLink.setOnAction(actionEvent -> displayKey(treeView));
-					detailsGridPane.add(keysLink, 1, count++);
-				}
-
-				if (updateTransaction.getAutoRenewDuration() != null) {
-					detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-					detailsGridPane.add(
-							new Label(String.format("%s seconds",
-									updateTransaction.getAutoRenewDuration().getSeconds()))
-							, 1, count++);
-				}
-
-
-				if (updateTransaction.isReceiverSignatureRequired() != null) {
-					detailsGridPane.add(sigReqLabel, 0, count);
-					detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
-							1,
-							count);
-				}
-				break;
-			case SYSTEM_DELETE_UNDELETE:
-				var toolSystemTransaction = (ToolSystemTransaction) transaction;
-				var isDelete = toolSystemTransaction.isDelete();
-				var isFile = toolSystemTransaction.isFile();
-
-				detailsGridPane.add(new Label(isFile ? "File ID: " : "Contract ID: "), 0, count);
-				detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
-						count++);
-
-				if (isDelete) {
-					var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
-					subLabel.setWrapText(true);
-					detailsGridPane.add(subLabel, 0, count);
-					var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
-							true);
-					expirationTimeLabel.setWrapText(true);
-					detailsGridPane.add(expirationTimeLabel, 1, count++);
-				}
-				break;
-
-			default:
-				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
+		var accountAmountMap =
+				((ToolTransferTransaction) transaction).getAccountAmountMap();
+		List<Pair<String, String>> senders = new ArrayList<>();
+		List<Pair<String, String>> receivers = new ArrayList<>();
+		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+			var amount = entry.getValue();
+			var identifier = entry.getKey();
+			if (amount.toTinybars() < 0) {
+				senders.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
+						amount.toString().replace(" ", UNBREAKABLE_SPACE)));
+			} else {
+				receivers.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
+						amount.toString().replace(" ", UNBREAKABLE_SPACE)));
+			}
 		}
 
-		return detailsGridPane;
+		detailsGridPane.add(new Label("Senders: "), 0, count++);
+		setAccountAmounts(detailsGridPane, count++, senders);
+
+		detailsGridPane.add(new Label("Receivers: "), 0, count++);
+		setAccountAmounts(detailsGridPane, count, receivers);
+	}
+
+	/**
+	 * Add the CRYPTO CREATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoCreateTransactionFields(GridPane detailsGridPane, int count) {
+		var keysLink = new Hyperlink("Click for more details");
+		var sigReqLabel = new Label("Receiver signature required: ");
+		sigReqLabel.setWrapText(true);
+
+		var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
+		detailsGridPane.add(new Label("Key: "), 0, count);
+		keysLink.setOnAction(actionEvent -> displayKey(treeView));
+		detailsGridPane.add(keysLink, 1, count++);
+
+		detailsGridPane.add(new Label("Auto renew period: "), 0, count);
+		detailsGridPane.add(
+				new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds()))
+				, 1, count++);
+
+		detailsGridPane.add(new Label("Initial balance: "), 0, count);
+		var initialBalance = new Label(createTransaction.getInitialBalance().toString());
+		initialBalance.setFont(COURIER_FONT);
+		initialBalance.setStyle(DEBIT);
+		detailsGridPane.add(initialBalance, 1, count++);
+
+		detailsGridPane.add(sigReqLabel, 0, count);
+		detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
+				count);
+	}
+
+	/**
+	 * Add the CRYPTO UPDATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleCryptoUpdateTransactionField(GridPane detailsGridPane, int count) {
+		var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
+		var sigReqLabel = new Label("Receiver signature required: ");
+		sigReqLabel.setWrapText(true);
+
+		var keysLink = new Hyperlink("Click for more details");
+		if (updateTransaction.getKey() != null) {
+			detailsGridPane.add(new Label("Key: "), 0, count);
+			keysLink.setOnAction(actionEvent -> displayKey(treeView));
+			detailsGridPane.add(keysLink, 1, count++);
+		}
+
+		if (updateTransaction.getAutoRenewDuration() != null) {
+			detailsGridPane.add(new Label("Auto renew period: "), 0, count);
+			detailsGridPane.add(
+					new Label(String.format("%s seconds",
+							updateTransaction.getAutoRenewDuration().getSeconds()))
+					, 1, count++);
+		}
+
+
+		if (updateTransaction.isReceiverSignatureRequired() != null) {
+			detailsGridPane.add(sigReqLabel, 0, count);
+			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
+					1,
+					count);
+		}
+	}
+
+	/**
+	 * Add the SYSTEM exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleSystemTransactionField(GridPane detailsGridPane, int count) {
+		var toolSystemTransaction = (ToolSystemTransaction) transaction;
+		var isDelete = toolSystemTransaction.isDelete();
+		var isFile = toolSystemTransaction.isFile();
+
+		detailsGridPane.add(new Label(isFile ? "File ID: " : "Contract ID: "), 0, count);
+		detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
+				count++);
+
+		if (isDelete) {
+			var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
+			subLabel.setWrapText(true);
+			detailsGridPane.add(subLabel, 0, count);
+			var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
+					true);
+			expirationTimeLabel.setWrapText(true);
+			detailsGridPane.add(expirationTimeLabel, 1, count);
+		}
 	}
 
 	@Override
@@ -334,10 +380,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		var keyName = FilenameUtils.getBaseName(pair.getLeft());
 		var tempStorage =
-				System.getProperty("java.io.tmpdir") + (LocalDate.now()).toString() + "/Transaction/" + keyName;
-		var finalZip = new File(
-				String.format("%s%s/%s-%s.zip", System.getProperty("java.io.tmpdir"),
-						(LocalDate.now()).toString(), this.getBaseName(), keyName));
+				System.getProperty("java.io.tmpdir") + LocalDate.now() + "/Transaction/" + keyName;
+		var finalZip = new File(System.getProperty("java.io.tmpdir") + LocalDate.now(),
+				this.getBaseName() + "-" + keyName + ".zip");
 
 		final var tempTxFile =
 				tempStorage + File.separator + this.getBaseName() + "." + Constants.TRANSACTION_EXTENSION;
@@ -355,7 +400,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			}
 
 			if (new File(tempStorage).mkdirs()) {
-				logger.info(String.format("Created temp folder %s", tempStorage));
+				logger.info("Created temp folder {}", tempStorage);
 			}
 
 			// Store a copy of the transaction
@@ -373,20 +418,19 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				assert file.isFile();
 			}
 
-			logger.info("Packing " + Arrays.toString(toPack) + " to " + tempStorage + ".zip");
+			final var packed = Arrays.toString(toPack);
+			logger.info("Packing {} to {}.zip", packed, tempStorage);
 			ZipUtil.packEntries(toPack, finalZip);
 
 			for (var file : toPack) {
 				Files.deleteIfExists(file.toPath());
-				logger.info("Delete " + file.getName());
+				logger.info("Delete {}", file.getName());
 			}
 
 			FileUtils.deleteDirectory(new File(tempStorage));
 
 			final var outputFile = new File(output + File.separator + user, finalZip.getName());
-			if (outputFile.exists()) {
-				outputFile.delete();
-			}
+			Files.deleteIfExists(outputFile.toPath());
 			FileUtils.moveFile(finalZip, outputFile);
 			return outputFile.getAbsolutePath();
 		} catch (IOException e) {
@@ -418,7 +462,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			accountText.setPadding(new Insets(0, 0, 0, 5));
 			detailsGridPane.add(accountText, 0, count);
 			var amountText = new Label(receiver.getRight());
-			amountText.setFont(Font.font("Courier", 17));
+			amountText.setFont(COURIER_FONT);
 			amountText.setStyle(CREDIT);
 			if (amountText.getText().contains("-")) {
 				amountText.setStyle(DEBIT);
@@ -428,7 +472,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 	}
 
-	private void displayKey(TreeView keyTreeView) {
+	private void displayKey(TreeView<String> keyTreeView) {
 		var window = new Stage();
 		keyTreeView.setStyle("-fx-font-size: 16");
 		var keysPane = new ScrollPane();

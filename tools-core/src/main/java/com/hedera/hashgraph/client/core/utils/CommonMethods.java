@@ -64,6 +64,10 @@ import static org.apache.commons.lang3.StringUtils.valueOf;
 public class CommonMethods implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CommonMethods.class);
 
+	private CommonMethods() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/**
 	 * Reads the network and fee payer properties of a json input and sets up a client for the transaction
 	 *
@@ -152,7 +156,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		Mnemonic mnemonic;
 
 		if (!mnemonicFile.exists()) {
-			throw new HederaClientException(String.format("Cannot open file %s", file));
+			final var message = String.format("Cannot open file %s", file);
+			throw new HederaClientException(message);
 		}
 		logger.info("File {} found", mnemonicFile.getAbsolutePath());
 
@@ -169,10 +174,10 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				SecurityUtilities.toEncryptedFile(SecurityUtilities.keyFromPasswordLegacy(password),
 						file + "/recovery.aes",
 						mnemonic.toString());
-				logger.info(String.format("Recovery phrase stored as: %s/recovery.aes", file));
+				logger.info("Recovery phrase stored as: {}/recovery.aes", file);
 
 				// Show it to the screen (don't save it to the logs)
-				System.out.println("A new recovery phrase has been generated. Please keep a copy it in a secure place");
+				logger.info("A new recovery phrase has been generated. Please keep a copy it in a secure place");
 				System.out.println(String.join(", ", mnemonic.words));
 			} else {
 				throw new HederaClientRuntimeException("Cannot store the recovery phrase with an empty password");
@@ -203,7 +208,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		the index of the key
 	 * @param location
 	 * 		storage directory for the key
-	 * @return a json object with a keylist of size one.
+	 * @return a json object with a key list of size one.
 	 * @throws HederaClientException
 	 * 		if there are problems generating the key or if there are issues with key retrieval.
 	 */
@@ -221,7 +226,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		var keyName = buildKeyName("KeyStore", location);
 		if (SecurityUtilities.generateAndStoreKey(keyName, "Hedera CLI Tool", mnemonic, index,
 				password)) {
-			logger.info(String.format("Key %s has been generated with index %d", keyName, index));
+			logger.info("Key {} has been generated with index {}", keyName, index);
 		} else {
 			logger.error("Could not generate key. Please check error log for details");
 			throw new HederaClientException("Key not generated");
@@ -251,7 +256,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	public static String buildKeyName(final String keyName, final String outputPath) {
 		var number = 0;
 		if (new File(outputPath).mkdirs()) {
-			logger.info(String.format("Output directory %s created", outputPath));
+			logger.info("Output directory {} created", outputPath);
 		}
 		while (true) {
 			var name = String.format("%s/%s-%d.%s", outputPath, keyName, number, Constants.PK_EXTENSION);
@@ -280,9 +285,9 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				missingFields.add(requiredField);
 			}
 		}
-		if (missingFields.size() > 0) {
+		if (!missingFields.isEmpty()) {
 			for (var s : missingFields) {
-				logger.info(String.format("Missing required field %s", s));
+				logger.info("Missing required field {}", s);
 			}
 		}
 		return missingFields;
@@ -335,14 +340,14 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		the timestamp in question
 	 * @param full
 	 * 		true if date is included
-	 * @return
+	 * @return a label
 	 */
 	public static Label getTimeLabel(Timestamp timestamp, boolean full) {
 		var utcTimeDate = timestamp.asUTCString().replace("_", " ");
 		var localTimeDate = timestamp.asReadableLocalString();
 		var gmt = localTimeDate.contains(utcTimeDate);
 		var fullTimeString =
-				(gmt) ? String.format("%s (UTC)", localTimeDate) : String.format("%s\n(%s UTC)", localTimeDate,
+				(gmt) ? String.format("%s (UTC)", localTimeDate) : String.format("%s%n(%s UTC)", localTimeDate,
 						utcTimeDate);
 
 
@@ -371,7 +376,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		var n = secondString.length();
 		var suffix = new int[m + 1][n + 1];
 		var len = 0;
-		int row = 0, col = 0;
+		int row = 0;
+		int col = 0;
 
 		for (var i = 0; i <= m; i++) {
 			for (var j = 0; j <= n; j++) {
@@ -395,15 +401,15 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return "";
 		}
 
-		var resultStr = "";
+		StringBuilder resultStr = new StringBuilder();
 		while (suffix[row][col] != 0) {
-			resultStr = firstString.charAt(row - 1) + resultStr;
+			resultStr.insert(0, firstString.charAt(row - 1));
 			--len;
 			row--;
 			col--;
 		}
 
-		return resultStr;
+		return resultStr.toString();
 	}
 
 	/**
@@ -426,7 +432,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * Calculate the longest common prefix of a list of words
 	 *
 	 * @param strings
-	 * @return
+	 * 		a list of strings
+	 * @return the longest string with which all the input starts (can be empty)
 	 */
 	public static String longestCommonPrefix(List<String> strings) {
 		if (strings.isEmpty()) {

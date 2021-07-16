@@ -16,25 +16,7 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.json;
-
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,14 +32,15 @@ import com.hedera.hashgraph.sdk.proto.ContractID;
 import com.hedera.hashgraph.sdk.proto.FileID;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
+public class Identifier implements Comparable<Identifier> {
 
-public class Identifier implements Comparable {
-
+	public static final String REALM_NUM = "realmNum";
+	public static final String SHARD_NUM = "shardNum";
+	public static final String ACCOUNT_NUM = "accountNum";
 	@JsonProperty(defaultValue = "0")
 	private long realmNum;
 
@@ -106,28 +89,25 @@ public class Identifier implements Comparable {
 	}
 
 	public static Identifier parse(JsonObject jsonObject) throws HederaClientException {
-		if (!jsonObject.has("realmNum")) {
-			jsonObject.addProperty("realmNum", 0);
-		} else {
-			var num = jsonObject.get("realmNum").getAsLong();
-			if (num < 0) {
-				throw new HederaClientException("Invalid realm number");
-			}
+		handleShardOrRealmNumber(jsonObject, REALM_NUM);
+		handleShardOrRealmNumber(jsonObject, SHARD_NUM);
+
+		long num = handleNumber(jsonObject);
+		if (num == -1) {
+			throw new HederaClientException("Invalid json object");
 		}
 
-		if (!jsonObject.has("shardNum")) {
-			jsonObject.addProperty("shardNum", 0);
-		} else {
-			var num = jsonObject.get("shardNum").getAsLong();
-			if (num < 0) {
-				throw new HederaClientException("Invalid shard number");
-			}
-		}
+		return Identifier.parse(String.format("%d.%d.%d",
+				jsonObject.get(REALM_NUM).getAsLong(),
+				jsonObject.get(SHARD_NUM).getAsLong(),
+				num));
+	}
 
+	private static long handleNumber(JsonObject jsonObject) throws HederaClientException {
 		long num = -1;
 		try {
-			if (jsonObject.has("accountNum")) {
-				num = jsonObject.get("accountNum").getAsLong();
+			if (jsonObject.has(ACCOUNT_NUM)) {
+				num = jsonObject.get(ACCOUNT_NUM).getAsLong();
 				if (num < 0) {
 					throw new HederaClientException("Invalid account number");
 				}
@@ -147,15 +127,18 @@ public class Identifier implements Comparable {
 		} catch (NumberFormatException e) {
 			throw new HederaClientException(e);
 		}
+		return num;
+	}
 
-		if (num == -1) {
-			throw new HederaClientException("Invalid json object");
+	private static void handleShardOrRealmNumber(JsonObject jsonObject, String field) throws HederaClientException {
+		if (jsonObject.has(field)) {
+			var num = jsonObject.get(field).getAsLong();
+			if (num < 0) {
+				throw new HederaClientException(String.format("Invalid field %s", field));
+			}
+		} else {
+			jsonObject.addProperty(field, 0);
 		}
-
-		return Identifier.parse(String.format("%d.%d.%d",
-				jsonObject.get("realmNum").getAsLong(),
-				jsonObject.get("shardNum").getAsLong(),
-				num));
 	}
 
 	public static Identifier parse(final String id) {
@@ -257,45 +240,38 @@ public class Identifier implements Comparable {
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
-				.append("realmNum", realmNum)
-				.append("shardNum", shardNum)
-				.append("accountNum", accountNum)
+				.append(REALM_NUM, realmNum)
+				.append(SHARD_NUM, shardNum)
+				.append(ACCOUNT_NUM, accountNum)
 				.toString();
 	}
 
 	public JsonElement asJSON() {
 		var id = new JsonObject();
-		id.addProperty("realmNum", realmNum);
-		id.addProperty("shardNum", shardNum);
-		id.addProperty("accountNum", accountNum);
+		id.addProperty(REALM_NUM, realmNum);
+		id.addProperty(SHARD_NUM, shardNum);
+		id.addProperty(ACCOUNT_NUM, accountNum);
 		return id;
 	}
 
 	@Override
-	public int compareTo(Object o) {
+	public int compareTo(@NotNull Identifier o) {
 		if (this == o) {
 			return 0;
-		}
-		if (o == null) {
-			throw new NullPointerException(NULL_OBJECT_COMPARISON_ERROR_MESSAGE);
-		}
-		if (getClass() != o.getClass()) {
-			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
 
 		if (this.equals(o)) {
 			return 0;
 		}
 
-		final var identifier = (Identifier) o;
-		if (this.realmNum != identifier.getRealmNum()) {
-			return Long.compare(this.realmNum, identifier.getRealmNum());
+		if (this.realmNum != o.getRealmNum()) {
+			return Long.compare(this.realmNum, o.getRealmNum());
 		}
 
-		if (this.shardNum != identifier.getShardNum()) {
-			return Long.compare(this.shardNum, identifier.getShardNum());
+		if (this.shardNum != o.getShardNum()) {
+			return Long.compare(this.shardNum, o.getShardNum());
 		}
 
-		return Long.compare(this.accountNum, identifier.getAccountNum());
+		return Long.compare(this.accountNum, o.getAccountNum());
 	}
 }

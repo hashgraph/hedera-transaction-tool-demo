@@ -47,7 +47,7 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NOT_EMPTY
 import static com.hedera.hashgraph.client.core.constants.Messages.OUTPUT_FILE_CREATED_MESSAGE;
 
 public class CollatorHelper implements GenericFileReadWriteAware {
-	private final static Logger logger = LogManager.getLogger(CollatorHelper.class);
+	private static final Logger logger = LogManager.getLogger(CollatorHelper.class);
 
 	private final Set<SignaturePair> signaturePairs = new HashSet<>();
 	private ToolTransaction transaction;

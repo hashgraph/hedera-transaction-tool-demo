@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -62,14 +45,21 @@ public class PasswordBox {
 					" " +
 					"again. When prompted to enter the recovery phrase, please use the one from your records.";
 	private static final String WARNING_MESSAGE =
-			"This process will change your password.\n You will need to have your recovery phrase at hand to enter it " +
+			"This process will change your password.\n You will need to have your recovery phrase at hand to enter it" +
+					" " +
 					"at the prompt.\n Please be advised that the Keys that were generated and stored with the old " +
-					"password will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts and " +
+					"password will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts " +
+					"and" +
+					" " +
 					"Keys\" page to change the password on your Keys";
 	public static final String NO_STRING = "CANCEL";
 	public static final String RESET = "RESET";
 	public static final String RESET_PASSWORD_TITLE = "Reset Password";
 	private static char[] answer;
+
+	private PasswordBox() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static char[] display(String title, String message, String defaultMessage, boolean inputPwd) {
 
@@ -153,9 +143,9 @@ public class PasswordBox {
 
 	private static void resetPassword() {
 		var answer = PopupMessage.display(RESET_PASSWORD_TITLE, WARNING_MESSAGE, true, RESET, NO_STRING);
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			var confirm = PopupMessage.display(RESET_PASSWORD_TITLE, "Are you sure?", true, RESET, NO_STRING);
-			if (confirm) {
+			if (Boolean.TRUE.equals(confirm)) {
 				var defaultStorage = System.getProperty(
 						"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 				var properties = new UserAccessibleProperties(defaultStorage + USER_PROPERTIES, "");

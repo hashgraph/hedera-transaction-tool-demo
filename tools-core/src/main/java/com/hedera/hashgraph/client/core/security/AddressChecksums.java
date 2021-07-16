@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.core.security;
 
 import java.util.regex.Pattern;
@@ -43,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class AddressChecksums {
 	/** regex accepting both no-checksum and with-checksum formats, with 4 capture groups: 3 numbers and a checksum */
-	final private static Pattern addressInputFormat = Pattern.compile(
+	private static final Pattern ADDRESS_INPUT_FORMAT = Pattern.compile(
 			"^[^a-zA-Z0-9.]*(\\d+)\\.(\\d+)\\.(\\d+)[^a-zA-Z0-9.]*([a-zA-Z]*)[^a-zA-Z0-9.]*$");
 
 	/** the status of an address parsed by parseAddress */
@@ -96,7 +79,7 @@ public class AddressChecksums {
 	 */
 	public static ParsedAddress parseAddress(String addr) {
 		var results = new ParsedAddress();
-		var match = addressInputFormat.matcher(addr);
+		var match = ADDRESS_INPUT_FORMAT.matcher(addr);
 		if (!match.matches()) {
 			results.isValid = false;
 			results.status = parseStatus.BAD_FORMAT; //when status==BAD_FORMAT, the rest of the fields should be ignored
@@ -107,9 +90,14 @@ public class AddressChecksums {
 		results.num3 = Integer.parseInt(match.group(3));
 		var ad = results.num1 + "." + results.num2 + "." + results.num3;
 		var c = checksum(ad);
-		results.status = ("".equals(match.group(4))) ? parseStatus.GOOD_NO_CHECKSUM
-				: (c.equals(match.group(4).toLowerCase())) ? parseStatus.GOOD_WITH_CHECKSUM
-				: parseStatus.BAD_CHECKSUM;
+		final var matchGroup = match.group(4).toLowerCase();
+		if ("".equals(matchGroup)) {
+			results.status = parseStatus.GOOD_NO_CHECKSUM;
+		} else if (c.equals(matchGroup)) {
+			results.status = parseStatus.GOOD_WITH_CHECKSUM;
+		} else {
+			results.status = parseStatus.BAD_CHECKSUM;
+		}
 		results.isValid = (results.status != parseStatus.BAD_CHECKSUM);
 		results.correctChecksum = c;
 		results.givenChecksum = match.group(4);

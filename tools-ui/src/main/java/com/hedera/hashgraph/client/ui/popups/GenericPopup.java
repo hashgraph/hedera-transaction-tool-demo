@@ -52,6 +52,10 @@ public class GenericPopup {
 
 	private static String answer = "";
 
+	private GenericPopup() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static String display(String title, String acceptMessage, String cancelMessage, boolean showTextField,
 			boolean isInteger, String... message) throws HederaClientException {
 		if ("".equals(acceptMessage) && "".equals(cancelMessage)) {

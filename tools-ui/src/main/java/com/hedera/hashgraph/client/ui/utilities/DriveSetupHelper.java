@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonArray;
@@ -478,11 +461,11 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 */
 	private boolean validatePathEmailPair(String path, String email) {
 
-		logger.info(String.format("Validating path %s, email %s", path, email));
+		logger.info("Validating path {}, email {}", path, email);
 		var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(email);
 		final var drive = new File(path);
 		if (!matcher.find()) {
-			logger.info(String.format("%s is not a valid email address", email));
+			logger.info("{} is not a valid email address", email);
 			return false;
 		}
 
@@ -497,24 +480,24 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		}
 
 		if (!drive.canWrite()) {
-			logger.info(String.format("Cannot create directories at: %s", USER_HOME));
+			logger.info("Cannot create directories at: {}", USER_HOME);
 			return false;
 		}
 
 		if (!input.exists()) {
 			if (input.mkdirs()) {
-				logger.info(String.format("Input folder created: %s", input.getAbsolutePath()));
+				logger.info("Input folder created: {}", input.getAbsolutePath());
 			} else {
-				logger.info(String.format("Cannot create input folder: %s", input.getAbsolutePath()));
+				logger.info("Cannot create input folder: {}", input.getAbsolutePath());
 				return false;
 			}
 		}
 
 		if (!output.exists()) {
 			if (output.mkdirs()) {
-				logger.info(String.format("Output directory created: %s", output.getAbsolutePath()));
+				logger.info("Output directory created: {}", output.getAbsolutePath());
 			} else {
-				logger.info(String.format("Cannot create output folder %s: ", output.getAbsolutePath()));
+				logger.info("Cannot create output folder {}: ", output.getAbsolutePath());
 				return false;
 			}
 		}
@@ -597,7 +580,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
 
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1 && emailGreenCheck.isVisible()) {
+			if (Boolean.TRUE.equals(t1) && emailGreenCheck.isVisible()) {
 				drivesErrorLabel.setVisible(false);
 			}
 		});
@@ -613,7 +596,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 
 		// If both green checks are on, there should be no error messages showing.
 		emailGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1 && pathGreenCheck.isVisible()) {
+			if (Boolean.TRUE.equals(t1) && pathGreenCheck.isVisible()) {
 				drivesErrorLabel.setVisible(false);
 			}
 		});
@@ -639,17 +622,15 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 */
 	private void keyReleasedEvent(KeyEvent keyEvent) {
 		emailGreenCheck.setVisible(validateEmail(emailTextField.getText()));
-		if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
-			if (validatePath(pathTextField.getText())) {
-				if (validateEmail(emailTextField.getText())) {
-					drivesErrorLabel.setVisible(false);
-					drivesErrorLabel.setText("");
-					validateEmailAction();
-				} else {
-					setDrivesErrorLabel("The email address entered is not valid");
-				}
-			}
+		if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) &&
+				validatePath(pathTextField.getText()) &&
+				validateEmail(emailTextField.getText())) {
+			drivesErrorLabel.setVisible(false);
+			drivesErrorLabel.setText("");
+			validateEmailAction();
+			return;
 		}
+		setDrivesErrorLabel("The email address entered is not valid");
 	}
 
 	public static final class Builder {
@@ -666,7 +647,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		private HBox addFolderPathHBox;
 		private VBox storageBox;
 		private VBox transactionFoldersVBox;
-		private GridPane storageGridPane;
 		private GridPane addPathGridPane;
 		private UserAccessibleProperties tempProperties;
 		private Image editImage;
@@ -785,7 +765,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			helper.addFolderPathHBox = addFolderPathHBox;
 			helper.storageBox = storageBox;
 			helper.transactionFoldersVBox = transactionFoldersVBox;
-			helper.storageGridPane = storageGridPane;
 			helper.addPathGridPane = addPathGridPane;
 			helper.tempProperties = tempProperties;
 			helper.driveLimit = driveLimit;
@@ -797,5 +776,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			helper.checkDefaultDrives(tempProperties);
 			return helper;
 		}
+
 	}
 }

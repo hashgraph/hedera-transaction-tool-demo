@@ -1,5 +1,3 @@
-
-
 /*
  * Hedera Transaction Tool
  *
@@ -47,12 +45,13 @@ public class ToolsMain {
 			}
 			verifyOrPrintHelp(args);
 
-			logger.info(String.format("Executing command [%s] with options [%s]",
+			logger.info("Executing command [{}] with options [{}]",
 					parsed.asCommandLineList().get(1).getCommandName(),
-					String.join(" ", parsed.subcommand().originalArgs())));
+					String.join(" ", parsed.subcommand().originalArgs()));
 			if (CommandLine.printHelpIfRequested(parsed)) {
 				return;
 			}
+
 			var toolCommand = (ToolCommand) parsed.asCommandLineList().get(1).getCommand();
 			commandCopy = toolCommand;
 			toolCommand.execute();
@@ -66,7 +65,8 @@ public class ToolsMain {
 
 	private static void verifyOrPrintHelp(String... args) {
 		if (args == null || args.length < 1) {
-			logger.info("invalid command argument. {}", Arrays.toString(args));
+			final var arguments = Arrays.toString(args);
+			logger.info("invalid command argument. {}", arguments);
 			CommandLine.usage(new ToolOptions(), System.out);
 			System.exit(1);
 		}

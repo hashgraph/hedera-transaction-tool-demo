@@ -42,6 +42,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -109,34 +110,41 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	 * 		the data required to build a transaction
 	 * @param keyPair
 	 * 		the key that will sign the transaction
-	 * @throws HederaClientException
 	 */
 	public void buildBundle(BatchLine distributionData, KeyPair keyPair) throws HederaClientException {
 		var tx = buildTransfer(distributionData);
 		var stx = buildSignature(tx, keyPair);
 		var signaturePair =
 				new SignaturePair(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()).getPublicKey(), stx);
-		if (new File(String.format("%s_transactions/", storageLocation)).mkdirs()) {
-			logger.info(String.format("Folder %s_transactions/ created", storageLocation));
+		final var transactionsStorage = String.format("%s_transactions", storageLocation);
+		if (new File(transactionsStorage).mkdirs()) {
+			logger.info("Folder {} created", transactionsStorage);
 		}
-		if (new File(String.format("%s_signatures/", storageLocation)).mkdirs()) {
-			logger.info(String.format("Folder %s_signatures/ created", storageLocation));
+		final var signaturesStorage = String.format("%s_signatures", storageLocation);
+		if (new File(signaturesStorage).mkdirs()) {
+			logger.info("Folder {} created", signaturesStorage);
 		}
 
 		var name = getFullTransactionName(distributionData, tx.getTransactionId().toString());
-		writeBytes(String.format("%s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION), tx.toBytes());
-		logger.info(String.format("Writing: %s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION));
-		signaturePair.write(String.format("%s_signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION));
-		logger.info(String.format("Writing: %s_signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION));
+		final var transactionFilePath =
+				String.format("%s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION);
+		writeBytes(transactionFilePath, tx.toBytes());
+		logger.info("Writing: {}", transactionFilePath);
+		final var signatureFilePath = String.format("%s_signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION);
+		signaturePair.write(signatureFilePath);
+		logger.info("Writing: {}", signatureFilePath);
 	}
 
 	/**
 	 * Summarizes the transactions and zips the transactions and signatures separately
 	 *
-	 * @throws HederaClientException
 	 */
 	public void pack() throws HederaClientException {
-		summarizeTransactions();
+		try {
+			summarizeTransactions();
+		} catch (IOException e) {
+			throw new HederaClientException(e);
+		}
 		zipMessages(TRANSACTIONS_SUFFIX, TRANSACTION_EXTENSION);
 		zipMessages(SIGNATURES_SUFFIX, SIGNATURE_EXTENSION);
 	}
@@ -178,7 +186,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		return new ToolTransferTransaction(input);
 	}
 
-	private void summarizeTransactions() throws HederaClientException {
+	private void summarizeTransactions() throws HederaClientException, IOException {
 		var transactions =
 				new File(storageLocation + TRANSACTIONS_SUFFIX).listFiles(
 						(dir, name) -> name.endsWith(TRANSACTION_EXTENSION));
@@ -188,9 +196,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 
 		var summary = new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) + "_summary.csv");
 
-		if (summary.exists() && summary.delete()) {
-			logger.info("Summary file deleted");
-		}
+		Files.deleteIfExists(summary.toPath());
 		PrintWriter printWriter;
 		try {
 			printWriter = new PrintWriter(summary);
@@ -231,12 +237,11 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			}
 
 			// Delete unzipped transactions
-			Arrays.stream(txToPack).forEach(File::delete);
-
-			if (new File(storageLocation + messages).delete()) {
-				logger.info(String.format("Folder %s deleted", messages));
+			for (File file : txToPack) {
+				Files.deleteIfExists(file.toPath());
 			}
 
+			Files.deleteIfExists(Path.of(storageLocation, messages));
 			FileUtils.moveFile(zipFile, new File(output, zipFile.getName()));
 		} catch (IOException e) {
 			throw new HederaClientException(e);
@@ -250,7 +255,6 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	private String getFullTransactionName(BatchLine distributionData, String id) {
 		return (id + "-" + distributionData.getReceiverAccountID().toReadableString()).replace(".", "_");
 	}
-
 
 
 }

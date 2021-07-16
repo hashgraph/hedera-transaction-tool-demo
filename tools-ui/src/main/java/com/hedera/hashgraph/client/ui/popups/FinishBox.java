@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.popups;
 
 import javafx.geometry.Insets;
@@ -58,6 +41,10 @@ public class FinishBox {
 
 	private static final Logger logger = LogManager.getLogger(FinishBox.class);
 
+	private FinishBox() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static void display(List<String> transactions) {
 		var window = new Stage();
 
@@ -75,14 +62,13 @@ public class FinishBox {
 		var vBox = new VBox();
 		vBox.getChildren().add(label1);
 
-		if (transactions.size() > 0) {
+		if (!transactions.isEmpty()) {
 			var label2 = new Label("The following keys were created as part of the setup");
 			label2.setWrapText(true);
 			label2.setStyle("-fx-font-size: 16");
 			vBox.getChildren().add(label2);
 
-			for (var t : transactions
-			) {
+			for (var t : transactions) {
 				var name = t.substring(t.lastIndexOf('/'));
 				var file = new Hyperlink(name);
 				file.setStyle("-fx-font-size: 16");
@@ -159,9 +145,6 @@ public class FinishBox {
 		label2.setStyle("-fx-font-size: 16");
 		vBox.getChildren().add(label2);
 
-
-//		String name = createdKeysFileName.substring(createdKeysFileName.lastIndexOf('/'));
-
 		var path = createdKeysFileName.getParentFile().getPath();
 		var file = new Hyperlink(path);
 		if (path.length() > 50) {
@@ -192,10 +175,6 @@ public class FinishBox {
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setSpacing(10);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
-
-
-		//	ScrollPane layout = new ScrollPane();
-		//	layout.setContent(vBox);
 
 		var scene = new Scene(vBox);
 

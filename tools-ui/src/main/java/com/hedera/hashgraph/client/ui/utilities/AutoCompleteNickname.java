@@ -16,31 +16,16 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,14 +37,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Class extends a textfield to allow for an "autocorrect" from a provided list. As the user types in the the textbox, a
- * list of suggestions will appear. These suggestions will originate in the provided list of words.
+ * Class extends a text field to allow for an "autocorrect" from a provided list. As the user types in the the text box,
+ * a list of suggestions will appear. These suggestions will originate in the provided list of words.
  * This class will be used to suggest to the user one of the nicknames of the accounts on record. If the user types a
  * word that is not in the list, it will show in red.
  */
 public class AutoCompleteNickname extends TextField {
 	private final ContextMenu entriesPopup;
-	private final String styleString =
+	private static final String STYLE_STRING =
 			"-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
 					"-fx-border-radius: 10;";
 	private final Set<String> names;
@@ -76,59 +61,33 @@ public class AutoCompleteNickname extends TextField {
 	public AutoCompleteNickname(Set<String> names) {
 		super();
 		this.names = names;
-		setStyle(styleString);
+		setStyle(STYLE_STRING);
 
 		entriesPopup = new ContextMenu();
-		textProperty().addListener((observableValue, s, s2) -> {
-			var text = s2.toLowerCase().replace(" ", "");
-			if (getText().length() == 0) {
-				entriesPopup.hide();
-			} else if (!noise.get()) {
-				var searchResult = suggestWords(text);
-				if (searchResult.size() > 0) {
-					setStyle(styleString + "-fx-text-fill: black");
-					valid.set(true);
-					populatePopup(searchResult);
-					if (!entriesPopup.isShowing()) {
-						entriesPopup.show(AutoCompleteNickname.this, Side.BOTTOM, 0, 0);
-					}
-					if (searchResult.size() == 1) {
-						if (text.equals(searchResult.get(0))) {
-							entriesPopup.hide();
-						} else {
-							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-						}
-					}
-				} else {
-					setStyle(styleString + "-fx-text-fill: red");
-					valid.set(false);
-					entriesPopup.hide();
-				}
-			}
-		});
+		textProperty().addListener(this::textPropertyListenerAction);
 
 		focusedProperty().addListener((observableValue, aBoolean, aBoolean2) -> entriesPopup.hide());
-		setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
-				entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-				noise.set(true);
+		setOnKeyReleased(this::keyReleasedAction);
+	}
+
+	private void keyReleasedAction(KeyEvent keyEvent) {
+		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
+			noise.set(true);
+		}
+		if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
+			if (!valid.get()) {
+				return;
 			}
-			if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
-				if (!valid.get()) {
-					return;
-				}
-				noise.set(false);
-				var text = this.getText().toLowerCase().replace(" ", "");
+			noise.set(false);
+			var text = this.getText().toLowerCase().replace(" ", "");
 
-				final var firstItem = getFirstItem();
-				if (!"".equals(text) && (text.equals(firstItem) || isSingleItem())) {
-					setText(firstItem);
-					nickname = firstItem;
-				}
+			final var firstItem = getFirstItem();
+			if (!"".equals(text) && (text.equals(firstItem) || isSingleItem())) {
+				setText(firstItem);
+				nickname = firstItem;
 			}
-		});
-
-
+		}
 	}
 
 	public void setDefault(String defaultName) {
@@ -142,7 +101,7 @@ public class AutoCompleteNickname extends TextField {
 	/**
 	 * Returns the chosen nickname
 	 *
-	 * @return
+	 * @return a string nickname
 	 */
 	public String getNickname() {
 		return nickname;
@@ -154,7 +113,7 @@ public class AutoCompleteNickname extends TextField {
 	 * @return the text of the first word in the popup
 	 */
 	public String getFirstItem() {
-		if (entriesPopup.getItems().size() > 0) {
+		if (!entriesPopup.getItems().isEmpty()) {
 			return ((Label) ((CustomMenuItem) entriesPopup.getItems().get(0)).getContent()).getText();
 		}
 		return "";
@@ -210,5 +169,48 @@ public class AutoCompleteNickname extends TextField {
 						Comparator.naturalOrder()).collect(Collectors.toList());
 
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
+	}
+
+	private void textPropertyListenerAction(ObservableValue<? extends String> observableValue, String s, String s2) {
+		var text = s2.toLowerCase().replace(" ", "");
+		if (getText().length() != 0) {
+			if (!noise.get()) {
+				var searchResult = suggestWords(text);
+				if (searchResult.isEmpty()) {
+					setStyle(STYLE_STRING + "-fx-text-fill: red");
+					valid.set(false);
+					entriesPopup.hide();
+				} else {
+					setStyle(STYLE_STRING + "-fx-text-fill: black");
+					valid.set(true);
+					populatePopup(searchResult);
+					if (!entriesPopup.isShowing()) {
+						entriesPopup.show(AutoCompleteNickname.this, Side.BOTTOM, 0, 0);
+					}
+					singleResultAction(text, searchResult);
+				}
+			}
+			return;
+		}
+		entriesPopup.hide();
+	}
+
+	/**
+	 * Hide the menu if there is there is only one match
+	 *
+	 * @param text
+	 * 		the input text
+	 * @param searchResult
+	 * 		the matching search results
+	 */
+	private void singleResultAction(String text, List<String> searchResult) {
+		if (searchResult.size() != 1) {
+			return;
+		}
+		if (text.equals(searchResult.get(0))) {
+			entriesPopup.hide();
+			return;
+		}
+		entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
 	}
 }

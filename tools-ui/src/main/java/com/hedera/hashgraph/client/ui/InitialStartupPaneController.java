@@ -16,25 +16,7 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
-
 
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
@@ -69,6 +51,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -150,7 +135,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Constructor
 	 */
 	public InitialStartupPaneController() {
-		logger.info(String.format("Default storage directory to: %s", DEFAULT_STORAGE));
+		logger.info("Default storage directory to: {}", DEFAULT_STORAGE);
 	}
 
 	/**
@@ -161,10 +146,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	private void setupTransactionDirectory(String location) {
 		var directory = new File(location);
-		if (!directory.exists()) {
-			if (!directory.mkdirs()) {
-				logger.info("Directory already exists");
-			}
+		if (!directory.exists() && !directory.mkdirs()) {
+			logger.info("Directory already exists");
 		}
 
 		if (new File(String.format("%s/Accounts/", location)).mkdirs()) {
@@ -223,7 +206,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				.withPhraseBox(phraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
 				.withCopyToClipBoardButton(copyToClipBoardButton)
-				.withPasteFromClipBoardButton(pasteFromClipBoardButton)
 				.withGenerateKeys(generateKeys)
 				.withFinishBox(finishBox)
 				.build();
@@ -283,7 +265,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		}
 
 		controller.setSetupPhase(SetupPhase.NORMAL_OPERATION_PHASE);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 		controller.homePane.setVisible(true);
 		controller.setDisableButtons(false);
 
@@ -292,9 +274,14 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		controller.keysPaneController.initializeKeysPane();
 		controller.createPaneController.initializeCreatePane();
 		controller.settingsPaneController.initializeSettingsPane();
-		if (new File(INITIAL_MAP_LOCATION).delete()) {
+
+		try {
+			Files.deleteIfExists(Path.of(INITIAL_MAP_LOCATION));
 			logger.info("Initial map file deleted");
+		} catch (IOException e) {
+			logger.error("Initial map cannot be deleted");
 		}
+
 		controller.changeTab(controller.homePane);
 		controller.menuButtonBar.setVisible(true);
 	}
@@ -303,10 +290,10 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * If the user presses the reset button at any time, the process should restart from a clean state
 	 */
 	public void resetSetup() {
-		if (PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes",
-				"No")) {
+		if (Boolean.TRUE.equals(
+				PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes", "No"))) {
 			deleteDirectory(new File(controller.getPreferredStorageDirectory()));
-			controller.properties.resetProperties();
+			controller.resetProperties();
 			initializeStartupPane();
 		}
 	}
@@ -315,7 +302,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Choose a directory (input folder)
 	 */
 	public void browseNewFolderAction() {
-		var directory = BrowserUtilities.browseDirectories("", controller.thisPane);
+		var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 		if (directory.isEmpty()) {
 			return;
 		}
@@ -390,7 +377,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	public void generatePassphraseEvent() {
 		mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), true);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 	}
 
 	/**
@@ -424,7 +411,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	private void resetDrivesBox() {
 		if (new File(controller.getPreferredStorageDirectory() + "/Files/user.properties").exists()) {
-			controller.properties.setOneDriveCredentials(new HashMap<>());
+			controller.setOneDriveCredentials(new HashMap<>());
 		}
 		drivesBox.setVisible(false);
 		transactionFoldersVBoxIS.getChildren().clear();
@@ -514,20 +501,18 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		if ((KeyCode.ENTER).equals(keyEvent.getCode())) {
 			var infoPath = (hiddenPathInitial.getText()).replace(" ", "");
 			var location = new File(infoPath);
-			if (location.exists()) {
-				if (location.isDirectory()) {
-					String directory;
-					if (hiddenPathInitial.getText().isEmpty()) {
-						directory = BrowserUtilities.browseDirectories("", controller.thisPane);
-					} else {
-						directory = hiddenPathInitial.getText();
-						hiddenPathInitial.clear();
-					}
-					controller.setPreferredStorageDirectory(directory);
-					keysGridPane.setVisible(true);
-					passphraseBox.setVisible(true);
-					setupTransactionDirectory(directory);
+			if (location.exists() && location.isDirectory()) {
+				String directory;
+				if (hiddenPathInitial.getText().isEmpty()) {
+					directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
+				} else {
+					directory = hiddenPathInitial.getText();
+					hiddenPathInitial.clear();
 				}
+				controller.setPreferredStorageDirectory(directory);
+				keysGridPane.setVisible(true);
+				passphraseBox.setVisible(true);
+				setupTransactionDirectory(directory);
 			}
 		}
 	}

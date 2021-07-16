@@ -83,7 +83,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public boolean checkInput(JsonObject input) {
 		var answer = super.checkInput(input);
-		if (!CommonMethods.verifyFieldExist(input,ACCOUNT_TO_UPDATE, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
+		if (!CommonMethods.verifyFieldExist(input, ACCOUNT_TO_UPDATE, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
 				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 			return false;
 		}
@@ -132,6 +132,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			accountUpdateTransaction.setKey(key);
 		}
 		if (autoRenewDuration != null) {
+			//noinspection deprecation
 			accountUpdateTransaction.setAutoRenewPeriod(autoRenewDuration);
 		}
 		if (receiverSignatureRequired != null) {
@@ -160,5 +161,15 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + account.hashCode() + key.hashCode() + autoRenewDuration.hashCode();
 	}
 }

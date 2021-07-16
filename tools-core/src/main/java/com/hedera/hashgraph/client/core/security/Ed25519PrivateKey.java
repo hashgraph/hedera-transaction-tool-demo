@@ -35,6 +35,7 @@
 
 package com.hedera.hashgraph.client.core.security;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.DEROctetString;
@@ -115,8 +116,7 @@ public final class Ed25519PrivateKey {
 
 				return new Ed25519PrivateKey(privateKeyParams, pubKeyParams);
 			} catch (IOException e) {
-				// TODO throw a better checked exception
-				throw new RuntimeException(e);
+				throw new HederaClientRuntimeException(e);
 			}
 		} else {
 			// decode a properly DER-encoded private key descriptor
@@ -133,8 +133,7 @@ public final class Ed25519PrivateKey {
 				}
 
 			} catch (IOException e) {
-				// TODO: throw a better checked exception
-				throw new RuntimeException(e);
+				throw new HederaClientRuntimeException(e);
 			}
 		}
 
@@ -168,7 +167,7 @@ public final class Ed25519PrivateKey {
 					new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519),
 					new DEROctetString(privateKeyParams.getEncoded()));
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		byte[] encoded;
@@ -176,7 +175,7 @@ public final class Ed25519PrivateKey {
 		try {
 			encoded = privateKeyInfo.getEncoded("DER");
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new HederaClientRuntimeException(e);
 		}
 
 		return Hex.toHexString(encoded);

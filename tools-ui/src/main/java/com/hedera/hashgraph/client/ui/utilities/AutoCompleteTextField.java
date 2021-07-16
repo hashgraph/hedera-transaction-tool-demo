@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.hedera.hashgraph.client.core.security.Dictionary;
@@ -64,32 +47,7 @@ public class AutoCompleteTextField extends TextField {
 		var dictionary = new Dictionary();
 		var noise = new AtomicBoolean(true);
 		entriesPopup = new ContextMenu();
-		textProperty().addListener((observableValue, s, s2) -> {
-			var text = s2.toLowerCase().replace(" ", "");
-			if (getText().length() == 0) {
-				entriesPopup.hide();
-			} else {
-				noise.set(false);
-				var searchResult = dictionary.suggestWords(text);
-				if (searchResult.size() > 0) {
-					setStyle(styleString + "-fx-text-fill: black");
-					populatePopup(searchResult);
-					if (!entriesPopup.isShowing()) {
-						entriesPopup.show(AutoCompleteTextField.this, Side.BOTTOM, 0, 0);
-					}
-					if (searchResult.size() == 1) {
-						if (text.equals(searchResult.get(0))) {
-							entriesPopup.hide();
-						} else {
-							entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-						}
-					}
-				} else {
-					setStyle(styleString + "-fx-text-fill: red");
-					entriesPopup.hide();
-				}
-			}
-		});
+		textProperty().addListener((observableValue, s, s2) -> handleTextPropertyListener(dictionary, noise, s2));
 
 		focusedProperty().addListener((observableValue, aBoolean, aBoolean2) -> entriesPopup.hide());
 
@@ -99,22 +57,60 @@ public class AutoCompleteTextField extends TextField {
 			}
 		});
 
-		setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+		setOnKeyReleased(keyEvent -> handleKeyReleasedEvent(noise, keyEvent));
+
+
+	}
+
+	private void handleKeyReleasedEvent(AtomicBoolean noise, KeyEvent keyEvent) {
+		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
+			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
+			noise.set(true);
+		}
+
+		if (!keyEvent.getCode().equals(KeyCode.ENTER) && !keyEvent.getCode().equals(KeyCode.TAB)) {
+			return;
+		}
+
+		var text = this.getText().toLowerCase().replace(" ", "");
+
+		if ("".equals(text) || (!text.equals(getFirstItem()) && !isSingleItem())) {
+			return;
+		}
+
+		setText(getFirstItem());
+		goToNextTextField();
+	}
+
+	private void handleTextPropertyListener(Dictionary dictionary, AtomicBoolean noise, String s2) {
+		var text = s2.toLowerCase().replace(" ", "");
+		if (getText().length() != 0) {
+			noise.set(false);
+			var searchResult = dictionary.suggestWords(text);
+			if (searchResult.isEmpty()) {
+				setStyle(styleString + "-fx-text-fill: red");
+				entriesPopup.hide();
+			} else {
+				handleNonEmptySearch(text, searchResult);
+			}
+		} else {
+			entriesPopup.hide();
+		}
+	}
+
+	private void handleNonEmptySearch(String text, List<String> searchResult) {
+		setStyle(styleString + "-fx-text-fill: black");
+		populatePopup(searchResult);
+		if (!entriesPopup.isShowing()) {
+			entriesPopup.show(AutoCompleteTextField.this, Side.BOTTOM, 0, 0);
+		}
+		if (searchResult.size() == 1) {
+			if (text.equals(searchResult.get(0))) {
+				entriesPopup.hide();
+			} else {
 				entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
-				noise.set(true);
 			}
-			if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
-				var text = this.getText().toLowerCase().replace(" ", "");
-
-				if (!"".equals(text) && (text.equals(getFirstItem()) || isSingleItem())) {
-					setText(getFirstItem());
-					goToNextTextField();
-				}
-			}
-		});
-
-
+		}
 	}
 
 	/**
@@ -141,7 +137,7 @@ public class AutoCompleteTextField extends TextField {
 	 * @return the text of the first word in the popup
 	 */
 	public String getFirstItem() {
-		if (entriesPopup.getItems().size() > 0) {
+		if (!entriesPopup.getItems().isEmpty()) {
 			return ((Label) ((CustomMenuItem) entriesPopup.getItems().get(0)).getContent()).getText();
 		}
 		return "";
@@ -183,9 +179,5 @@ public class AutoCompleteTextField extends TextField {
 
 	}
 
-	@Override
-	public void paste() {
-		super.paste();
-	}
 }
 

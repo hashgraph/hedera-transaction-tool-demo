@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonArray;
@@ -62,7 +45,11 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 
 public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtility.class);
-	private static final String KEYS_STRING = "/Keys/";
+	private static final String KEYS_STRING = File.separator + "Keys" + File.separator;
+	private static final String THRESHOLD_KEY = "thresholdKey";
+	private static final String THRESHOLD = "threshold";
+	private static final String KEYS = "keys";
+	private static final String KEY_LIST = "keyList";
 	private final Controller controller;
 	// contains all .pub files' content and file name
 	private Map<String, Path> pubFiles = new HashMap<>();
@@ -111,20 +98,20 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 			if ("".equals(key)) {
 				return KeyDesignErrorCodes.BAD_KEY;
 			}
-		} else if (jsonObject.has("thresholdKey")) {
-			var thresholdKey = jsonObject.getAsJsonObject("thresholdKey");
-			if (!thresholdKey.has("threshold") || !thresholdKey.has("keys")) {
+		} else if (jsonObject.has(THRESHOLD_KEY)) {
+			var thresholdKey = jsonObject.getAsJsonObject(THRESHOLD_KEY);
+			if (!thresholdKey.has(THRESHOLD) || !thresholdKey.has(KEYS)) {
 				return KeyDesignErrorCodes.INCOMPLETE_THRESHOLD_KEY;
 			}
-			var threshold = thresholdKey.get("threshold").getAsInt();
-			var list = thresholdKey.getAsJsonObject("keys").getAsJsonArray("keys");
+			var threshold = thresholdKey.get(THRESHOLD).getAsInt();
+			var list = thresholdKey.getAsJsonObject(KEYS).getAsJsonArray(KEYS);
 			if (threshold <= 0 || threshold > list.size()) {
 				return KeyDesignErrorCodes.BAD_THRESHOLD;
 			}
 			return checkKeyList(list);
-		} else if (jsonObject.has("keyList")) {
-			var keyList = jsonObject.getAsJsonObject("keyList");
-			var list = keyList.getAsJsonArray("keys");
+		} else if (jsonObject.has(KEY_LIST)) {
+			var keyList = jsonObject.getAsJsonObject(KEY_LIST);
+			var list = keyList.getAsJsonArray(KEYS);
 			return checkKeyList(list);
 		}
 		return KeyDesignErrorCodes.OK;
@@ -141,11 +128,14 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 	private TreeItem<String> showKey(JsonObject keyJson) {
-		TreeItem<String> node;
+		TreeItem<String> node = new TreeItem<>();
+		if (keyJson == null) {
+			return node;
+		}
 		if (hasThresholdKey(keyJson)) {
-			node = showThresholdKey(keyJson.getAsJsonObject("thresholdKey"));
+			node = showThresholdKey(keyJson.getAsJsonObject(THRESHOLD_KEY));
 		} else if (hasKeyList(keyJson)) {
-			node = showKeyList(keyJson.get("keyList").getAsJsonArray());
+			node = showKeyList(keyJson.get(KEY_LIST).getAsJsonArray());
 		} else {
 			node = showSimpleKey(keyJson);
 		}
@@ -170,16 +160,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		root.getChildren().add(keyItem);
 		keyTreeView.setRoot(root);
 		keyTreeView.setShowRoot(false);
-//		keyTreeView.setCellFactory(tc -> {
-//			TreeCell<String> cell = new TreeCell<>();
-//			Text text = new Text();
-//			cell.setGraphic(text);
-//			cell.setPrefHeight(Control.USE_COMPUTED_SIZE);
-//			text.textProperty().bind(cell.itemProperty());
-//			return cell;
-//		});
-
-
 		return keyTreeView;
 	}
 
@@ -206,16 +186,20 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 			return "Empty";
 		}
 
-		if (controller != null && controller.keyStructureUtility.pubFiles.containsKey(hexString)) {
+		if (controller != null && controller.getPubFiles().containsKey(hexString)) {
 			// If local machine has this pubKey file, show its file name
-			return controller.keyStructureUtility.pubFiles.get(hexString).getFileName().toString();
+			return controller.getPubFiles().get(hexString).getFileName().toString();
 		} else {
 			return hexString;
 		}
 	}
 
+	public Map<String, Path> getPubFiles() {
+		return pubFiles;
+	}
+
 	private TreeItem<String> showThresholdKey(JsonObject thresholdKeyJson) {
-		var keyListJson = thresholdKeyJson.get("keyList").getAsJsonArray();
+		var keyListJson = thresholdKeyJson.get(KEY_LIST).getAsJsonArray();
 		var node = new TreeItem<>(getThresholdKeyDescription(thresholdKeyJson));
 		node.getChildren().addAll(getKeyListElements(keyListJson));
 		node.setExpanded(true);
@@ -223,9 +207,9 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 	private String getThresholdKeyDescription(JsonObject thresholdKeyJson) {
-		if (thresholdKeyJson.has("threshold")) {
-			return "ThresholdKey (" + thresholdKeyJson.get("threshold").getAsString()
-					+ "/" + thresholdKeyJson.get("keyList").getAsJsonArray().size() + ")";
+		if (thresholdKeyJson.has(THRESHOLD)) {
+			return "ThresholdKey (" + thresholdKeyJson.get(THRESHOLD).getAsString()
+					+ "/" + thresholdKeyJson.get(KEY_LIST).getAsJsonArray().size() + ")";
 		}
 		throw new HederaClientRuntimeException("The threshold cannot be found. Likely it was set to zero");
 	}
@@ -254,11 +238,11 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	// endregion
 
 	private boolean hasThresholdKey(JsonObject jsonObject) {
-		return jsonObject != null && jsonObject.has("thresholdKey");
+		return jsonObject != null && jsonObject.has(THRESHOLD_KEY);
 	}
 
 	private boolean hasKeyList(JsonObject jsonObject) {
-		return jsonObject != null && jsonObject.has("keyList");
+		return jsonObject != null && jsonObject.has(KEY_LIST);
 	}
 
 }

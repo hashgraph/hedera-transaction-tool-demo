@@ -33,6 +33,10 @@ public class BrowserUtilities {
 
 	private static final Logger logger = LogManager.getLogger(BrowserUtilities.class);
 
+	private BrowserUtilities() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	/***
 	 *
 	 * Brings up a file window to allow the user to select a directory (Not used for files)
@@ -75,24 +79,24 @@ public class BrowserUtilities {
 	}
 
 	/***
-	 *
-	 * @param initialPath
-	 * @param localPane
-	 * @param type
-	 * @param ext
-	 * @return
+	 * Open a browser popup to a single file
+	 * @param initialPath the path where the browsing starts
+	 * @param localPane the pane from which the browser will appear
+	 * @param type the type of files to browse
+	 * @param ext the allowed extensions
+	 * @return a file
 	 */
 	public static File browseFiles(String initialPath, Pane localPane, String type, String... ext) {
 		return browseFiles(initialPath, localPane.getScene(), type, ext);
 	}
 
 	/***
-	 *
-	 * @param initialPath
-	 * @param scene
-	 * @param type
-	 * @param ext
-	 * @return
+	 * Open a browser popup to a single file
+	 * @param initialPath the path where the browsing starts
+	 * @param scene the scene from which the browser will appear
+	 * @param type the type of files to browse
+	 * @param ext the allowed extensions
+	 * @return a file
 	 */
 	public static File browseFiles(String initialPath, Scene scene, String type, String... ext) {
 
@@ -104,19 +108,15 @@ public class BrowserUtilities {
 		var fileChooser = new FileChooser();
 
 
-		for (var e :
-				ext) {
+		for (var e : ext) {
 			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(type, String.format("*.%s", e)));
 		}
-
 
 		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));
 
 		var initialPathFile = new File(initialPath);
-		if (!initialPathFile.exists()) {
-			if (initialPathFile.mkdirs()) {
-				logger.info(String.format("%s does not exist. Directory has been created", initialPath));
-			}
+		if (!initialPathFile.exists() && initialPathFile.mkdirs()) {
+			logger.info("{} does not exist. Directory has been created", initialPath);
 		}
 
 		fileChooser.setInitialDirectory(new File((initialPath)));
@@ -125,20 +125,19 @@ public class BrowserUtilities {
 	}
 
 	/***
-	 *
-	 * @param initialPath
-	 * @param localPane
-	 * @param type
-	 * @param ext
-	 * @return
+	 *Open a browser popup to a multiple files
+	 * @param initialPath the path where the browsing starts
+	 * @param localPane the pane from which the browser will appear
+	 * @param type the type of files to browse
+	 * @param ext the allowed extensions
+	 * @return a list of files
 	 */
 	public static List<File> browseMultiFiles(String initialPath, Pane localPane, String type, String... ext) {
 		initialPath = (initialPath != null) ?
 				initialPath :
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 		var fileChooser = new FileChooser();
-		for (var e :
-				ext) {
+		for (var e : ext) {
 			fileChooser.getExtensionFilters().add(
 					new FileChooser.ExtensionFilter(type + "-" + e, String.format("*.%s", e)));
 		}
@@ -148,20 +147,4 @@ public class BrowserUtilities {
 		return fileChooser.showOpenMultipleDialog(localPane.getScene().getWindow());
 	}
 
-	/***
-	 *
-	 * @param initialPath
-	 * @param localPane
-	 * @return
-	 */
-	static List<File> chooseMultipleFiles(String initialPath, Pane localPane) {
-		initialPath = (initialPath != null) ?
-				initialPath :
-				new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
-
-		var fileChooser = new FileChooser();
-		fileChooser.setInitialDirectory(new File((initialPath)));
-
-		return fileChooser.showOpenMultipleDialog(localPane.getScene().getWindow());
-	}
 }

@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.codahale.passpol.BreachDatabase;
@@ -126,9 +109,6 @@ public class RecoverPasswordPaneController {
 
 	private MnemonicPhraseHelper mnemonicPhraseHelper;
 
-	public RecoverPasswordPaneController() {
-	}
-
 	void injectMainController(Controller controller) {
 		this.controller = controller;
 	}
@@ -138,7 +118,6 @@ public class RecoverPasswordPaneController {
 				.withMnemonicErrorMessage(recoverMnemonicErrorMessage)
 				.withPhraseBox(recoverPhraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
-				.withPasteFromClipBoardButton(pasteFromClipBoardButton)
 				.withGenerateKeys(recoverPhraseButton)
 				.withFinishBox(recoverPasswordVBox)
 				.build();
@@ -235,7 +214,7 @@ public class RecoverPasswordPaneController {
 		for (var key : keys) {
 			var index = getIndex(key);
 			if (index >= 0) {
-				logger.info(String.format("%s -> %d", key, index));
+				logger.info("{} -> {}", key, index);
 				var row = recoverKeysListGridPane.getRowCount();
 				recoverKeysListGridPane.add(new Label(FilenameUtils.removeExtension(key)), 0, row);
 				recoverKeysListGridPane.add(new Label(Integer.toString(index)), 1, row);
@@ -272,7 +251,7 @@ public class RecoverPasswordPaneController {
 		recoverPhraseBox.getChildren().add(mnemonicGridPane);
 	}
 
-	public void acceptPassword(){
+	public void acceptPassword() {
 		password = recoverAppPasswordField.getText().toCharArray();
 		recoverChangePasswordButton.setVisible(false);
 		recoverChangePasswordButton.setDisable(true);
@@ -285,13 +264,13 @@ public class RecoverPasswordPaneController {
 		recoverAppPasswordField.setDisable(true);
 		recoverReEnterPasswordField.setDisable(true);
 		recoverChangePasswordButton.setDisable(true);
-		controller.properties.setLegacy(false);
+		controller.setLegacy(false);
 
 		// Store the mnemonic and password hash
 		Platform.runLater(() -> {
 			recoverChangePasswordButton.setVisible(false);
 			try {
-				controller.properties.setHash(password);
+				controller.setHash(password);
 				mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
 			} catch (HederaClientException e) {
 				logger.error(e.getMessage());
@@ -306,9 +285,7 @@ public class RecoverPasswordPaneController {
 			if (indexMap.size() > 0) {
 				recoverSelectedKeysVBox.setVisible(true);
 				if (indexMap.size() > 0) {
-					for (int index : indexMap.keySet()) {
-						recoverKey(index, indexMap.get(index));
-					}
+					indexMap.forEach(this::recoverKey);
 				}
 			} else {
 				recoverNoKeysVBox.setVisible(true);
@@ -337,7 +314,7 @@ public class RecoverPasswordPaneController {
 				true,
 				"CONTINUE", "CANCEL");
 
-		if (!answer) {
+		if (Boolean.FALSE.equals(answer)) {
 			return;
 		}
 

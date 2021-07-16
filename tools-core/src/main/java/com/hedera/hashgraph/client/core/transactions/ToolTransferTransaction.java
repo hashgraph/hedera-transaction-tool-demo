@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.core.transactions;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -54,6 +53,16 @@ public class ToolTransferTransaction extends ToolTransaction {
 	public ToolTransferTransaction(JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.CRYPTO_TRANSFER;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + accountAmountMap.hashCode();
 	}
 
 	public ToolTransferTransaction(File location) throws HederaClientException {
@@ -137,11 +146,6 @@ public class ToolTransferTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
-		return super.getSigningKeys(accountsInfoFolder);
-	}
-
-	@Override
 	public Set<AccountId> getSigningAccounts() {
 		var accountsSet = super.getSigningAccounts();
 		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
@@ -152,6 +156,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 		return accountsSet;
 	}
 
+	@Override
 	public JsonObject asJson() {
 		var output = super.asJson();
 		var array = new JsonArray();

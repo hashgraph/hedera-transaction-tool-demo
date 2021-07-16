@@ -40,7 +40,7 @@
 	<properties>
 		<log4j2.version>2.14.1</log4j2.version>
 		<slf4j.version>1.7.30</slf4j.version>
-		<javafx.version>15.0.1 </javafx.version>
+		<javafx.version>15.0.1</javafx.version>
 		<jackson.version>2.12.2</jackson.version>
 		<junit.version>5.8.0-M1</junit.version>
 		<ztzip.version>1.14</ztzip.version>
@@ -63,6 +63,7 @@
 		<google.code.gson.version>2.8.6</google.code.gson.version>
 		<opencsv.version>5.4</opencsv.version>
 		<hedera.hashgraph.sdk.version>2.0.5</hedera.hashgraph.sdk.version>
+		<org.jetbrains.version>13.0</org.jetbrains.version>
 	</properties>
 
 	<!-- Dependency Configuration -->
@@ -305,6 +306,13 @@
 				<groupId>net.i2p.crypto</groupId>
 				<artifactId>eddsa</artifactId>
 				<version>${i2p.eddsa.version}</version>
+			</dependency>
+
+			<!-- Annotations -->
+			<dependency>
+				<groupId>org.jetbrains</groupId>
+				<artifactId>annotations</artifactId>
+				<version>${org.jetbrains.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

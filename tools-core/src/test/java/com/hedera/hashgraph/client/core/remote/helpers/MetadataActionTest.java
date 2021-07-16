@@ -43,9 +43,9 @@ class MetadataActionTest {
 		var actionJson = actionLine.toJson();
 		assertTrue(actionJson.has("timestamp"));
 		assertEquals(1610038031L, actionJson.get("timestamp").getAsJsonObject().get("seconds").getAsLong());
-		assertEquals(1610038031L, actionLine.getTimestamp().getSeconds());
+		assertEquals(1610038031L, actionLine.getTimeStamp().getSeconds());
 		assertEquals(0, actionJson.get("timestamp").getAsJsonObject().get("nanos").getAsLong());
-		assertEquals(0, actionLine.getTimestamp().getNanos());
+		assertEquals(0, actionLine.getTimeStamp().getNanos());
 
 
 		assertTrue(actionJson.has("userComments"));
@@ -54,7 +54,7 @@ class MetadataActionTest {
 
 		assertTrue(actionJson.has("action"));
 		assertEquals("ACCEPT", actionJson.get("action").getAsString());
-		assertEquals(Actions.ACCEPT, actionLine.getAction());
+		assertEquals(Actions.ACCEPT, actionLine.getActions());
 
 		assertTrue(actionJson.has("keyName"));
 		assertEquals("keyStore.pem", actionJson.get("keyName").getAsString());
@@ -99,13 +99,6 @@ class MetadataActionTest {
 		assertTrue(action0.compareTo(new MetadataAction(new Timestamp(1610038031L, 0), Actions.DECLINE, "user comments",
 				"someOtherKey")) < 0);
 		assertEquals(0, action0.compareTo(action0));
-
-		Exception exception = assertThrows(NullPointerException.class, () -> action0.compareTo(null));
-		assertEquals(NULL_OBJECT_COMPARISON_ERROR_MESSAGE, exception.getMessage());
-		exception = assertThrows(HederaClientRuntimeException.class, () -> action0.compareTo("test"));
-		assertEquals("Hedera Client Runtime: " + INCOMPATIBLE_TYPES_ERROR_MESSAGE, exception.getMessage());
-
-
 	}
 
 }

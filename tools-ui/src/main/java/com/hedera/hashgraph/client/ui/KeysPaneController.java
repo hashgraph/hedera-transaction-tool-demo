@@ -16,35 +16,17 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.fileServices.FileAdapterFactory;
+import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
@@ -81,6 +63,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
@@ -91,6 +74,7 @@ import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -98,6 +82,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyPair;
@@ -115,12 +100,16 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static java.util.Arrays.fill;
 import static java.util.Arrays.stream;
+import static org.apache.commons.io.FileUtils.contentEquals;
+import static org.apache.commons.io.FileUtils.copyFile;
 import static org.apache.commons.io.FileUtils.moveFile;
 
 public class KeysPaneController implements GenericFileReadWriteAware {
@@ -140,6 +129,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private static final String DUPLICATED_KEY_NAME_MESSAGE =
 			"Cannot replace a public key that is associated with an existing private key.";
 	public static final String KEYS_STRING = "/Keys/";
+	private static final String ACCEPT_MESSAGE = "CONTINUE";
+	private static final String MNEMONIC_IS_NULL = "Mnemonic is null";
 
 	public StackPane keysPane;
 	public ScrollPane mainKeysScrollPane;
@@ -205,7 +196,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	// key: Key name; value: location of the file
 	private Map<String, String> privateKeysMap = new HashMap<>();
 
-	private List<FileService> outputDirectories = new ArrayList<>();
 	private boolean startup = true;
 	private String currentHashCode = null;
 
@@ -217,8 +207,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void initializeKeysPane() {
 		try {
 
-			currentHashCode = String.valueOf(controller.properties.getMnemonicHashCode());
-			if (startup && SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.properties.getSetupPhase())) {
+			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
+			if (startup && SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 				initializeWordsGridPane();
 			}
 
@@ -249,101 +239,21 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 
 			// Events
-			nicknameTextBox.setOnKeyReleased(keyEvent -> {
-				if (nicknameTextBox.getText().equals("")) {
-					nicknameErrorLabel.setVisible(false);
-					createKeysButton.setDisable(true);
-					return;
-				}
+			nicknameTextBox.setOnKeyReleased(this::nickNameTextBoxEvent);
 
-				var pathToKeys = controller.getPreferredStorageDirectory() + KEYS_STRING + nicknameTextBox.getText();
-				var exists =
-						new File(pathToKeys + "." + PK_EXTENSION).exists() || new File(
-								pathToKeys + "." + PUB_EXTENSION).exists();
+			recoverIndexField.textProperty().addListener(this::recoverIndexFieldListenerAction);
 
-				if (exists) {
-					nicknameErrorLabel.setVisible(true);
-					createKeysButton.setDisable(true);
-				} else {
-					createKeysButton.setDisable(false);
-					nicknameErrorLabel.setVisible(false);
-				}
-				switch (keyEvent.getCode()) {
-					case ENTER:
-						if (!exists) {
-							try {
-								generateKeysEvent();
-							} catch (HederaClientException e) {
-								logger.error(e);
-								controller.displaySystemMessage(e);
-							}
-						}
-						break;
-					case TAB:
-						createKeysButton.requestFocus();
-						break;
-				}
-			});
+			recoverIndexField.focusedProperty().addListener(this::recoverIndexFieldFocusedAction);
 
-			recoverIndexField.textProperty().addListener((observable, oldValue, newValue) -> {
-				if (!newValue.matches("\\d*")) {
-					recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
-				}
-			});
+			recoverNicknameField.focusedProperty().addListener(this::recoverNickNameFieldFocusedAction);
 
-			recoverIndexField.focusedProperty().addListener(
-					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (!newValue) {
-							if (!recoverIndexField.getText().isEmpty()) {
-								var index = Integer.parseInt(recoverIndexField.getText());
-
-								List<String> values = new ArrayList<>();
-								for (Map.Entry<String, Integer> entry : indexMap.entrySet()) {
-									if (entry.getValue() == index) {
-										values.add(entry.getKey());
-									}
-								}
-
-								// We will only populate the nickname field if the key index is not duplicated
-								if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
-									recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
-								}
-							}
-						}
-					});
-
-			recoverNicknameField.focusedProperty().addListener(
-					(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
-						if (!newValue) {
-							if (!recoverNicknameField.getText().isEmpty() &&
-									indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
-									recoverIndexField.getText().isEmpty() &&
-									indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
-								recoverIndexField.setText(
-										indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
-							}
-						}
-					});
-
-			recoverNicknameField.setOnKeyReleased(keyEvent -> {
-				if (!recoverNicknameField.getText().isEmpty() &&
-						indexMap.containsKey(recoverNicknameField.getText() + PK_EXTENSION) &&
-						recoverIndexField.getText().isEmpty() &&
-						indexMap.get(recoverNicknameField.getText() + PK_EXTENSION) >= 0) {
-					recoverIndexField.setText(indexMap.get(recoverNicknameField.getText() + PK_EXTENSION).toString());
-				}
-			});
+			recoverNicknameField.setOnKeyReleased(this::recoverNicknameFieldKeyAction);
 
 			recoveryPasswordVBox.managedProperty().bind(recoveryPasswordVBox.visibleProperty());
 
 			recoveryVBox.managedProperty().bind(recoveryVBox.visibleProperty());
 
-			recoveryPasswordField.setOnKeyReleased(keyEvent -> {
-				phrasePasswordErrorLabel.setVisible(false);
-				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-					recoveryPassword();
-				}
-			});
+			recoveryPasswordField.setOnKeyReleased(this::recoveryPasswordKeyAction);
 
 			// region Tooltips
 			publicKeyToolTip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, publicKeyToolTip,
@@ -365,12 +275,49 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	}
 
-	public Map<String, String> getPublicKeysMap() {
-		return publicKeysMap;
+	private void recoveryPasswordKeyAction(KeyEvent keyEvent) {
+		phrasePasswordErrorLabel.setVisible(false);
+		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+			recoveryPassword();
+		}
 	}
 
-	public List<FileService> getOutputDirectories() {
-		return outputDirectories;
+	private void nickNameTextBoxEvent(KeyEvent keyEvent) {
+		if (nicknameTextBox.getText().equals("")) {
+			nicknameErrorLabel.setVisible(false);
+			createKeysButton.setDisable(true);
+			return;
+		}
+
+		var pathToKeys = controller.getPreferredStorageDirectory() + KEYS_STRING + nicknameTextBox.getText();
+		var exists =
+				new File(pathToKeys + "." + PK_EXTENSION).exists() || new File(
+						pathToKeys + "." + PUB_EXTENSION).exists();
+
+		if (exists) {
+			nicknameErrorLabel.setVisible(true);
+			createKeysButton.setDisable(true);
+		} else {
+			createKeysButton.setDisable(false);
+			nicknameErrorLabel.setVisible(false);
+		}
+
+		if (keyEvent.getCode() == KeyCode.ENTER) {
+			if (!exists) {
+				try {
+					generateKeysEvent();
+				} catch (HederaClientException e) {
+					logger.error(e);
+					controller.displaySystemMessage(e);
+				}
+			}
+		} else if (keyEvent.getCode() == KeyCode.TAB) {
+			createKeysButton.requestFocus();
+		}
+	}
+
+	public Map<String, String> getPublicKeysMap() {
+		return publicKeysMap;
 	}
 
 	private void cleanTextFields() {
@@ -395,7 +342,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private void populatePublicKeysMap() {
 		Map<String, List<String>> accountKeyMap = new HashMap<>();
 		try {
-			controller.keyStructureUtility.loadPubKeys();
+			controller.loadPubKeys();
 			if (new File(controller.getPreferredStorageDirectory() + "/Accounts").mkdirs()) {
 				logger.info("Accounts folder created");
 			}
@@ -403,7 +350,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 					(dir, name) -> name.endsWith(INFO_EXTENSION));
 			assert accounts != null;
 			var nicknames =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			for (var account : accounts) {
 				var name = FilenameUtils.getBaseName(account.getName());
@@ -429,7 +376,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		keysAccountsMap.clear();
 		for (var publicKey : publicKeysMap.keySet()) {
 			List<String> accounts = new ArrayList<>();
-			for (Map.Entry<String, List<String>> entry : accountKeyMap.entrySet()) {
+			for (var entry : accountKeyMap.entrySet()) {
 				if (entry.getValue().contains(publicKey)) {
 					accounts.add(entry.getKey());
 				}
@@ -438,7 +385,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void populateKeysTables() throws HederaClientException {
 
 		try {
@@ -447,84 +393,28 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			Collections.sort(keys);
 
 			for (var key : keys) {
-				final var pemLocation = publicKeysMap.get(key).replace(PUB_EXTENSION, PK_EXTENSION);
-				// if pemLocation points to a pem file and it exists
-				if (new File(pemLocation).exists() && isPEMFile(new File(pemLocation).toPath())) {
-					var index = getIndex(pemLocation);
-					final var equals =
-							(currentHashCode != null) && currentHashCode.equals(hashAsString(pemLocation));
-					keysTableRows.add(
-							new KeysTableRow(FilenameUtils.removeExtension(key), keysAccountsMap.get(key),
-									index, true, equals));
-				} else {
-					keysTableRows.add(
-							new KeysTableRow(FilenameUtils.removeExtension(key), keysAccountsMap.get(key),
-									"public key", false, false));
-				}
+				addKeyToTableRowsList(keysTableRows, key);
 			}
 
 			// Add PEMs without public key
-			for (Map.Entry<String, String> entry : privateKeysMap.entrySet()) {
-				var key = entry.getKey();
-				var value = entry.getValue();
-				if (!publicKeysMap.containsKey(key.replace(PK_EXTENSION, PUB_EXTENSION))) {
-					var index = getIndex(value);
-					final var mnemonic = (currentHashCode != null) && currentHashCode.equals(hashAsString(value));
-					keysTableRows.add(
-							new KeysTableRow(FilenameUtils.removeExtension(key), "Missing public key", index, true,
-									mnemonic));
-				}
+			for (var entry : privateKeysMap.entrySet()) {
+				addOrphanPEMSToTable(keysTableRows, entry);
 			}
 
 			keysTableRows.sort(Comparator.comparing(KeysTableRow::getKeyName));
 
 			var signingKeysTableView = new TableView<KeysTableRow>();
 
-			var iconsColumn = new TableColumn<KeysTableRow, String>("");
-			iconsColumn.setCellValueFactory(new PropertyValueFactory<>("iconFile"));
-			iconsColumn.prefWidthProperty().bind(signingKeysTableView.widthProperty().divide(20).multiply(1));
+			var iconsColumn = getKeysIconsColumn(signingKeysTableView);
 
-			iconsColumn.setCellFactory(
-					publicKeysTableRowStringTableColumn -> new TableCell<>() {
-						@Override
-						public void updateItem(String item, boolean empty) {
-							if (item != null) {
-								var imageView = new ImageView();
-								imageView.setFitHeight(20);
-								imageView.setPreserveRatio(true);
-								imageView.setImage(new Image(item));
-								setGraphic(imageView);
-							}
-						}
-					});
+			var nameColumn = getNamesTableColumn(signingKeysTableView);
 
-			iconsColumn.setStyle("-fx-alignment: CENTER");
-
-			var nameColumn = new TableColumn<KeysTableRow, String>("Key nickname");
-			nameColumn.setCellValueFactory(new PropertyValueFactory<>("keyName"));
-			nameColumn.prefWidthProperty().bind(signingKeysTableView.widthProperty().divide(5));
-
-			var linkedAccountsColumn = new TableColumn<KeysTableRow, String>("Associated accounts");
-			linkedAccountsColumn.setCellValueFactory(new PropertyValueFactory<>("accountList"));
-			linkedAccountsColumn.prefWidthProperty().bind(
-					signingKeysTableView.widthProperty().divide(4).multiply(3).subtract(5));
+			var linkedAccountsColumn = getLinkedAccountsTableColumn(signingKeysTableView);
 
 
 			signingKeysTableView.getColumns().addAll(iconsColumn, nameColumn, linkedAccountsColumn);
 
-			signingKeysTableView.setRowFactory(
-					signingKeyTableRowTableView -> {
-						final TableRow<KeysTableRow> row = new TableRow<>() {
-						};
-
-						row.setOnMouseClicked(mouseEvent -> {
-							if (mouseEvent.getClickCount() == 2 && !row.isEmpty()) {
-								var rowData = row.getItem();
-								showPrivateKeyCompletePopup(rowData);
-							}
-						});
-						return row;
-					});
+			setSigningKeysRowFactory(signingKeysTableView);
 
 			signingKeysTableView.getItems().addAll(keysTableRows);
 
@@ -540,15 +430,104 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				}
 			});
 
-			if (signingKeysTableView.getItems().size() > 0) {
+			if (!signingKeysTableView.getItems().isEmpty()) {
 				signingKeysVBox.getChildren().add(signingKeysTableView);
 			}
 
 		} catch (KeyStoreException e) {
 			throw new HederaClientException(e);
 		}
+	}
 
+	private void setSigningKeysRowFactory(TableView<KeysTableRow> signingKeysTableView) {
+		signingKeysTableView.setRowFactory(
+				signingKeyTableRowTableView -> {
+					final TableRow<KeysTableRow> row = new TableRow<>() {
+					};
 
+					row.setOnMouseClicked(mouseEvent -> {
+						if (mouseEvent.getClickCount() == 2 && !row.isEmpty()) {
+							var rowData = row.getItem();
+							showPrivateKeyCompletePopup(rowData);
+						}
+					});
+					return row;
+				});
+	}
+
+	@NotNull
+	private TableColumn<KeysTableRow, String> getLinkedAccountsTableColumn(
+			TableView<KeysTableRow> signingKeysTableView) {
+		var linkedAccountsColumn = new TableColumn<KeysTableRow, String>("Associated accounts");
+		linkedAccountsColumn.setCellValueFactory(new PropertyValueFactory<>("accountList"));
+		linkedAccountsColumn.prefWidthProperty().bind(
+				signingKeysTableView.widthProperty().divide(4).multiply(3).subtract(5));
+		return linkedAccountsColumn;
+	}
+
+	@NotNull
+	private TableColumn<KeysTableRow, String> getNamesTableColumn(
+			TableView<KeysTableRow> signingKeysTableView) {
+		var nameColumn = new TableColumn<KeysTableRow, String>("Key nickname");
+		nameColumn.setCellValueFactory(new PropertyValueFactory<>("keyName"));
+		nameColumn.prefWidthProperty().bind(signingKeysTableView.widthProperty().divide(5));
+		return nameColumn;
+	}
+
+	@NotNull
+	private TableColumn<KeysTableRow, String> getKeysIconsColumn(
+			TableView<KeysTableRow> signingKeysTableView) {
+		var iconsColumn = new TableColumn<KeysTableRow, String>("");
+		iconsColumn.setCellValueFactory(new PropertyValueFactory<>("iconFile"));
+		iconsColumn.prefWidthProperty().bind(signingKeysTableView.widthProperty().divide(20).multiply(1));
+
+		iconsColumn.setCellFactory(
+				publicKeysTableRowStringTableColumn -> new TableCell<>() {
+					@Override
+					public void updateItem(String item, boolean empty) {
+						if (item != null) {
+							var imageView = new ImageView();
+							imageView.setFitHeight(20);
+							imageView.setPreserveRatio(true);
+							imageView.setImage(new Image(item));
+							setGraphic(imageView);
+						}
+					}
+				});
+
+		iconsColumn.setStyle("-fx-alignment: CENTER");
+		return iconsColumn;
+	}
+
+	private void addOrphanPEMSToTable(List<KeysTableRow> keysTableRows,
+			Map.Entry<String, String> entry) throws KeyStoreException {
+		var key = entry.getKey();
+		var value = entry.getValue();
+		if (publicKeysMap.containsKey(key.replace(PK_EXTENSION, PUB_EXTENSION))) {
+			return;
+		}
+		var index = getIndex(value);
+		final var mnemonic = currentHashCode != null && currentHashCode.equals(hashAsString(value));
+		keysTableRows.add(
+				new KeysTableRow(FilenameUtils.removeExtension(key), "Missing public key", index, true,
+						mnemonic));
+	}
+
+	private void addKeyToTableRowsList(List<KeysTableRow> keysTableRows, String key) throws KeyStoreException {
+		final var pemLocation = publicKeysMap.get(key).replace(PUB_EXTENSION, PK_EXTENSION);
+		// if pemLocation points to a pem file and it exists
+		var signer = false;
+		var mnemonic = false;
+		var index = "public key";
+		if (new File(pemLocation).exists() && isPEMFile(new File(pemLocation).toPath())) {
+			index = getIndex(pemLocation);
+			mnemonic = currentHashCode != null && currentHashCode.equals(hashAsString(pemLocation));
+			signer = true;
+		}
+
+		keysTableRows.add(
+				new KeysTableRow(FilenameUtils.removeExtension(key), keysAccountsMap.get(key),
+						index, signer, mnemonic));
 	}
 
 	private String hashAsString(String pemLocation) throws KeyStoreException {
@@ -566,14 +545,14 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	 * 		if loafing the key fails
 	 */
 	private String getIndex(String pemFileLocation) throws KeyStoreException {
-		return (Ed25519KeyStore.getIndex(pemFileLocation)) < 0 ? "none" : String.valueOf(
+		return Ed25519KeyStore.getIndex(pemFileLocation) < 0 ? "none" : String.valueOf(
 				Ed25519KeyStore.getIndex(pemFileLocation));
 	}
 
 	private void showPrivateKeyCompletePopup(KeysTableRow rowData) {
 		var pubKeyAddress = publicKeysMap.get(rowData.getKeyName() + "." + PUB_EXTENSION);
 		var answer = CompleteKeysPopup.display(pubKeyAddress, true);
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			initializeKeysPane();
 		}
 	}
@@ -584,7 +563,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
 		List<String> knownKeys = new ArrayList<>();
 		for (var key : flatKey) {
-			var keyName = controller.keyStructureUtility.showKeyString(key);
+			var keyName = controller.showKeyString(key);
 			if (keyName.endsWith(PUB_EXTENSION)) {
 				knownKeys.add(keyName);
 			}
@@ -594,17 +573,16 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void populatePrivateKeysMap() {
 		privateKeysMap = new HashMap<>();
-		try {
-			if (new File(controller.getPreferredStorageDirectory() + KEYS_STRING).mkdirs()) {
-				logger.info("Keys folder created");
-			}
-			var pems = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
-					(dir, name) -> isPEMFile(new File(name).toPath()));
-			assert pems != null;
-			stream(pems).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
-		} catch (Exception ex) {
-			logger.error(ex);
+
+		final var keysDirectory = new File(controller.getPreferredStorageDirectory(), KEYS_STRING);
+		if (keysDirectory.mkdirs()) {
+			logger.info("Keys folder created");
 		}
+		var pemFiles = keysDirectory.listFiles((dir, name) -> isPEMFile(new File(name).toPath()));
+		if (pemFiles != null) {
+			stream(pemFiles).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
+		}
+
 
 		populatePemMaps();
 
@@ -613,84 +591,106 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 						Collectors.toList());
 
 		if (orphanPEMs.size() > 0 && mainKeysScrollPane.isVisible()) {
-			try {
-				GenericPopup.display("Missing Public Keys", "CONTINUE", "", false, false,
-						MISSING_PUBLIC_KEY_MESSAGE);
-			} catch (HederaClientException exception) {
-				logger.error(exception);
-			}
-
-			for (Map.Entry<String, String> entry : orphanPEMs.entrySet()) {
-				var key = entry.getKey();
-				var value = entry.getValue();
-				var keyPair = getKeyPair(key);
-				final var pubKey_filename = value.replace(PK_EXTENSION, PUB_EXTENSION);
-				if (keyPair != null) {
-					try {
-						EncryptionUtils.storePubKey(pubKey_filename, (EdDSAPublicKey) keyPair.getPublic());
-					} catch (IOException e) {
-						logger.error(e);
-						logger.error("Cannot store the public key");
-					}
-				} else {
-					try {
-						var empty = new File(pubKey_filename);
-						if (empty.createNewFile()) {
-							logger.info(String.format("Created empty file %s", pubKey_filename));
-						}
-					} catch (IOException e) {
-						logger.error(e);
-						logger.error("Cannot create empty file");
-					}
-				}
-			}
-			orphanPEMs.clear();
+			handleOrphanPem();
 		}
 
-		if (missingHashPemList.size() > 0) {
-			try {
-				GenericPopup.display("Unknown recovery phrase", "CONTINUE", "", false, false,
-						MISSING_HASHCODE_MESSAGE);
-				var password = getPassword();
-				if (password != null) {
-					var mnemonic = getMnemonicFromFile(password);
-					if (mnemonic != null) {
-						if (currentHashCode == null) {
-							currentHashCode = String.valueOf(mnemonic.words.hashCode());
-						}
-						for (var key : missingHashPemList) {
-							var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
-							final var originalPath = privateKeysMap.get(key);
-							final var pubName0 = originalPath.replace(PK_EXTENSION, PUB_EXTENSION);
-							final var index = Ed25519KeyStore.getIndex(originalPath);
-							if (index < 0) {
-								addEmptyHashToPem(originalPath);
-								continue;
-							}
-							var pk = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
-							var keyPair = keyStore.insertNewKeyPair(pk);
-							if (verifyWithPublicKey(pubName0, (EdDSAPublicKey) keyPair.getPublic())) {
-								moveFile(new File(originalPath), new File(getArchivePathname(key)));
-								keyStore.write(originalPath, "Transaction Tool UI", index, controller.getVersion(),
-										mnemonic.words.hashCode());
-							} else {
-								addEmptyHashToPem(originalPath);
-							}
-						}
-					}
-					populatePemMaps();
-				}
-			} catch (HederaClientException | KeyStoreException | IOException exception) {
-				logger.error(exception);
-			}
-
+		if (!missingHashPemList.isEmpty()) {
+			handleMissingHashPem(missingHashPemList);
 			missingHashPemList.clear();
 		}
 
 	}
 
+	private void handleMissingHashPem(List<String> missingHashPemList) {
+		try {
+			GenericPopup.display("Unknown recovery phrase", ACCEPT_MESSAGE, "", false, false,
+					MISSING_HASHCODE_MESSAGE);
+			var password = getPassword();
+			if (password.length == 0) {
+				return;
+			}
+			var mnemonic = getMnemonicFromFile(password);
+			if (mnemonic == null) {
+				return;
+			}
+			if (currentHashCode == null) {
+				currentHashCode = String.valueOf(mnemonic.words.hashCode());
+			}
+			handleMissingHashPemList(missingHashPemList, password, mnemonic);
+			populatePemMaps();
+		} catch (HederaClientException | KeyStoreException | IOException exception) {
+			logger.error(exception);
+		}
+	}
+
+	private void handleOrphanPem() {
+		try {
+			GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
+					MISSING_PUBLIC_KEY_MESSAGE);
+		} catch (HederaClientException exception) {
+			logger.error(exception);
+		}
+
+		for (var entry : orphanPEMs.entrySet()) {
+			var key = entry.getKey();
+			var value = entry.getValue();
+			var keyPair = getKeyPair(key);
+			final var pubKey_filename = value.replace(PK_EXTENSION, PUB_EXTENSION);
+			if (keyPair == null) {
+				handleNullKeyPair(pubKey_filename);
+				continue;
+			}
+			handleExistingKeyPair(keyPair, pubKey_filename);
+		}
+		orphanPEMs.clear();
+	}
+
+	private void handleMissingHashPemList(List<String> missingHashPemList, char[] password,
+			Mnemonic mnemonic) throws KeyStoreException, IOException {
+		for (var key : missingHashPemList) {
+			var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
+			final var originalPath = privateKeysMap.get(key);
+			final var pubName0 = originalPath.replace(PK_EXTENSION, PUB_EXTENSION);
+			final var index = Ed25519KeyStore.getIndex(originalPath);
+			if (index < 0) {
+				addEmptyHashToPem(originalPath);
+				continue;
+			}
+			var pk = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
+			var keyPair = keyStore.insertNewKeyPair(pk);
+			if (verifyWithPublicKey(pubName0, (EdDSAPublicKey) keyPair.getPublic())) {
+				moveFile(new File(originalPath), new File(getArchivePathname(key)));
+				keyStore.write(originalPath, "Transaction Tool UI", index, controller.getVersion(),
+						mnemonic.words.hashCode());
+			} else {
+				addEmptyHashToPem(originalPath);
+			}
+		}
+	}
+
+	private void handleExistingKeyPair(KeyPair keyPair, String pubKeyFilename) {
+		try {
+			EncryptionUtils.storePubKey(pubKeyFilename, (EdDSAPublicKey) keyPair.getPublic());
+		} catch (IOException e) {
+			logger.error(e);
+			logger.error("Cannot store the public key");
+		}
+	}
+
+	private void handleNullKeyPair(String pubKeyFilename) {
+		try {
+			var empty = new File(pubKeyFilename);
+			if (empty.createNewFile()) {
+				logger.info("Created empty file {}", pubKeyFilename);
+			}
+		} catch (IOException e) {
+			logger.error(e);
+			logger.error("Cannot create empty file");
+		}
+	}
+
 	private void populatePemMaps() {
-		for (Map.Entry<String, String> entry : privateKeysMap.entrySet()) {
+		for (var entry : privateKeysMap.entrySet()) {
 			try {
 				var key = entry.getKey();
 				var value = entry.getValue();
@@ -754,9 +754,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void initializeOutputDirectories() {
 		try {
-			if (controller.properties.getOneDriveCredentials() != null) {
-				var inputs = controller.properties.getOneDriveCredentials().keySet();
-				outputDirectories = new ArrayList<>();
+			if (controller.getOneDriveCredentials() != null) {
+				var inputs = controller.getOneDriveCredentials().keySet();
+				List<FileService> outputDirectories = new ArrayList<>();
 				for (var s :
 						inputs) {
 					var fs = FileAdapterFactory.getAdapter(s);
@@ -774,7 +774,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void initializeIndexMap() throws HederaClientException {
 		var maxIndex = -1;
-		for (Map.Entry<String, String> entry : privateKeysMap.entrySet()) {
+		for (var entry : privateKeysMap.entrySet()) {
 			try {
 				var index = Ed25519KeyStore.getIndex(entry.getValue());
 				indexMap.put(entry.getKey(), index);
@@ -795,7 +795,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		startup = false;
 		var mnemonic = getMnemonic();
 		if (mnemonic == null) {
-			throw new HederaClientException("Mnemonic is null");
+			throw new HederaClientException(MNEMONIC_IS_NULL);
 		}
 		setupMnemonicHBox(mnemonic);
 		currentHashCode = String.valueOf(mnemonic.words.hashCode());
@@ -828,13 +828,13 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public void generateKeysEvent() throws HederaClientException {
 		var password = getPassword();
-		if (password == null) {
+		if (password.length == 0) {
 			return;
 		}
 
 		var mnemonic = getMnemonicFromFile(password);
 		if (mnemonic == null) {
-			logger.error("Mnemonic is null");
+			logger.error(MNEMONIC_IS_NULL);
 			return;
 		}
 		setupMnemonicHBox(mnemonic);
@@ -847,7 +847,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 
 			var lastIndex = -1;
-			for (Map.Entry<String, String> entry : pemMnemonicMap.entrySet()) {
+			for (var entry : pemMnemonicMap.entrySet()) {
 				if (currentHashCode.equals(entry.getValue())) {
 					if (!privateKeysMap.containsKey(entry.getKey())) {
 						throw new HederaClientRuntimeException("Could not find key in map");
@@ -885,90 +885,105 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	public void recoverKeysEvent() throws HederaClientException {
-		var overwrite = false;
-
 		if (indexMap.isEmpty()) {
 			initializeIndexMap();
 		}
 
-		var index = (!"".equals(recoverIndexField.getText())) ? Integer.parseInt(recoverIndexField.getText()) : -1;
+		var index = !"".equals(recoverIndexField.getText()) ? Integer.parseInt(recoverIndexField.getText()) : -1;
 		var nick = recoverNicknameField.getText() + "." + PK_EXTENSION;
 
 		if (!indexMap.containsKey(nick) && index == -1) {
-			PopupMessage.display("Missing Index",
-					"Cannot recover a key without an index.",
-					"OK");
+			PopupMessage.display("Missing Index", "Cannot recover a key without an index.", "OK");
 			return;
 		}
 
-		if (!indexMap.containsKey(nick)) {
-			indexMap.put(nick, index);
-		} else {
-			overwrite = true;
-		}
-
-		if (indexMap.get(nick) == -1) {
-			PopupMessage.display("Wrong version",
-					"The private key specified was created with a previous version of the app and cannot be recovered",
-					"OK");
+		if (handleOverwrite(index, nick)) {
 			return;
-		}
-
-		if (indexMap.get(nick) != index) {
-			PopupMessage.display("Wrong index", "The index specified does not correspond to the private key.", "OK");
-			return;
-		}
-
-		if (overwrite) {
-			var answer = PopupMessage.display("Alert!",
-					"This operation will overwrite the existing KeyPair. Are you sure you want to do that? This " +
-							"operation is irreversible", true,
-					"CONTINUE", "CANCEL");
-
-			if (!answer) {
-				return;
-			}
 		}
 
 		var password = getPassword();
-		if (password == null) {
+		if (password.length == 0) {
 			return;
 		}
 		var mnemonic = getMnemonicFromFile(password);
 		if (mnemonic == null) {
-			PopupMessage.display("Error in recovery phrase", "The recovery phrase could not be found.", "CONTINUE");
+			PopupMessage.display("Error in recovery phrase", "The recovery phrase could not be found.", ACCEPT_MESSAGE);
 			return;
 		}
 
 		// Create key store for account
-		try {
-			var nickname = recoverNicknameField.getText();
-			if (nickname.equals("")) {
-				return;
-			}
-
-			var keyStoreName = generateAndStoreKeyPair(password, getBaseName(nickname), index, true);
-
-			if (!"".equals(keyStoreName)) {
-				// Update the current index in preferences
-				if (controller.getLastIndex() < index) {
-					controller.setLastIndex(index + 1);
-				}
-				FinishBox.display(new File(keyStoreName), "Keys Recovered",
-						"The private and public key pair has been recovered. It can be found at...");
-			}
-
-		} catch (Exception e) {
-			logger.error(e);
+		if (createKeyStoreForAccount(index, password)) {
+			return;
 		}
 
 		fill(password, 'x');
+		resetPanes();
+	}
+
+	private void resetPanes() throws HederaClientException {
 		closeRecoverKeys();
 		closeBoxes();
 		resetKeyRecoveryBox();
 		populatePrivateKeysMap();
 		initializeIndexMap();
 		initializeKeysPane();
+	}
+
+	private boolean createKeyStoreForAccount(int index, char[] password) {
+		try {
+			var nickname = recoverNicknameField.getText();
+			if (nickname.equals("")) {
+				return true;
+			}
+
+			var keyStoreName = generateAndStoreKeyPair(password, getBaseName(nickname), index, true);
+
+			if ("".equals(keyStoreName)) {
+				return false;
+			}
+
+			// Update the current index in preferences
+			if (controller.getLastIndex() < index) {
+				controller.setLastIndex(index + 1);
+			}
+
+			FinishBox.display(new File(keyStoreName), "Keys Recovered",
+					"The private and public key pair has been recovered. It can be found at...");
+
+		} catch (Exception e) {
+			logger.error(e);
+		}
+		return false;
+	}
+
+	private boolean handleOverwrite(int index, String nick) {
+		var overwrite = false;
+		if (indexMap.containsKey(nick)) {
+			overwrite = true;
+		} else {
+			indexMap.put(nick, index);
+		}
+
+		if (indexMap.get(nick) == -1) {
+			PopupMessage.display("Wrong version",
+					"The private key specified was created with a previous version of the app and cannot be recovered",
+					"OK");
+			return true;
+		}
+
+		if (indexMap.get(nick) != index) {
+			PopupMessage.display("Wrong index", "The index specified does not correspond to the private key.", "OK");
+			return true;
+		}
+
+		if (overwrite) {
+			var answer = PopupMessage.display("Alert!",
+					"This operation will overwrite the existing KeyPair. Are you sure you want to do that? This " +
+							"operation is irreversible", true, ACCEPT_MESSAGE, "CANCEL");
+
+			return Boolean.FALSE.equals(answer);
+		}
+		return false;
 	}
 
 	public void closeRecoverKeys() {
@@ -994,7 +1009,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void recoveryPassword() {
 		var password = recoveryPasswordField.getText().toCharArray();
 		var passwordAuthenticator = new PasswordAuthenticator();
-		if (passwordAuthenticator.authenticate(password, controller.properties.getHash())) {
+		if (passwordAuthenticator.authenticate(password, controller.getHash())) {
 			recoveryPasswordField.clear();
 			phrasePasswordErrorLabel.setVisible(false);
 			recoveryPasswordVBox.setVisible(false);
@@ -1002,8 +1017,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			copyMnemonicToClipboard.setVisible(true);
 			var mnemonic = getMnemonicFromFile(password);
 			setupMnemonicHBox(mnemonic);
-
-
 		} else {
 			recoveryPasswordField.clear();
 			phrasePasswordErrorLabel.setVisible(true);
@@ -1017,6 +1030,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupMnemonicHBox(Mnemonic mnemonic) {
+		if (mnemonic == null) {
+			logger.error(MNEMONIC_IS_NULL);
+			return;
+		}
 		var mnemonicLabel = new Label();
 		var counter = 0;
 		var phrase = "";
@@ -1078,18 +1095,18 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		while (true) {
 			password = PasswordBox.display("Password", "Please enter your password", "password", true);
 			if (password == null) {
-				return null;
+				return new char[0];
 			}
 			try {
-				boolean authenticate = (controller.properties.hasSalt()) ?
-						passwordAuthenticator.authenticate(password, controller.properties.getHash()) :
-						passwordAuthenticator.authenticateLegacy(password, controller.properties.getHash());
+				var authenticate = controller.hasSalt() ?
+						passwordAuthenticator.authenticate(password, controller.getHash()) :
+						passwordAuthenticator.authenticateLegacy(password, controller.getHash());
 				if (authenticate) {
-					if (!controller.properties.hasSalt()) {
-						// handle password migration
+					if (!controller.hasSalt()) {
+						// recoverNicknameFieldKeyAction password migration
 						logger.info("Handling password hash migration");
-						controller.properties.setHash(password);
-						controller.properties.setSalt(true);
+						controller.setHash(password);
+						controller.setSalt(true);
 					}
 					break;
 				} else {
@@ -1118,18 +1135,22 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		final Ed25519KeyStore keyStore;
 		KeyPair keyPair;
 		var keyStoreName =
-				(overwrite) ? String.format("%s%s.pem", keysDir, nickname) : String.valueOf(findFileName(
+				overwrite ? String.format("%s%s.pem", keysDir, nickname) : String.valueOf(findFileName(
 						Paths.get(prefDir, "Keys"), nickname, PK_EXTENSION));
 
 		try {
 			keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
 			var mnemonic = getMnemonicFromFile(password);
+			if (mnemonic == null) {
+				controller.displaySystemMessage(MNEMONIC_IS_NULL);
+				throw new HederaClientException(MNEMONIC_IS_NULL);
+			}
 			var pk = Ed25519PrivateKey.fromMnemonic(mnemonic, index);
 
 			final var pubName = String.valueOf(findFileName(Paths.get(prefDir, "Keys"), nickname, PUB_EXTENSION));
 			keyPair = keyStore.insertNewKeyPair(pk);
 			if (!verifyWithPublicKey(pubName, (EdDSAPublicKey) keyPair.getPublic())) {
-				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, "CONTINUE");
+				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, ACCEPT_MESSAGE);
 				return "";
 			}
 			keyStore.write(keyStoreName, "Transaction Tool UI", index, controller.getVersion(),
@@ -1153,7 +1174,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		var tempPub = System.getProperty("java.io.tmpdir") + "/tempPublic.pub";
 		EncryptionUtils.storePubKey(tempPub, publicKey);
 
-		return org.apache.commons.io.FileUtils.contentEquals(new File(pubName), new File(tempPub));
+		return contentEquals(new File(pubName), new File(tempPub));
 	}
 
 	private Mnemonic getMnemonic() throws HederaClientException {
@@ -1161,18 +1182,21 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		// Testing only!
 		if (controller.getSetupPhase() == SetupPhase.TEST_PHASE) {
 			var m = getMnemonicFromFile(TEST_PASSWORD.toCharArray());
-			currentHashCode = (m != null) ? String.valueOf(m.words.hashCode()) : "0";
+			currentHashCode = m != null ? String.valueOf(m.words.hashCode()) : "0";
 			return m;
 		}
 
 		Mnemonic mnemonic = null;
 		try {
 			var password = getPassword();
-			if (password == null) {
+			if (password.length == 0) {
 				// If we don't enter the password, the application should exit
 				Platform.exit();
 			} else {
 				mnemonic = getMnemonicFromFile(password);
+				if (mnemonic == null) {
+					throw new HederaClientException(MNEMONIC_IS_NULL);
+				}
 				fill(password, 'x');
 			}
 		} catch (HederaClientException e) {
@@ -1183,8 +1207,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		if ("0".equals(currentHashCode)) {
 			assert mnemonic != null;
-			controller.properties.setMnemonicHashCode(mnemonic.words.hashCode());
-			currentHashCode = String.valueOf(controller.properties.getMnemonicHashCode());
+			controller.setMnemonicHashCode(mnemonic.words.hashCode());
+			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
 		}
 
 		return mnemonic;
@@ -1195,7 +1219,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		Mnemonic mnemonic = null;
 		try {
 			if (mnemonicFile.exists()) {
-				byte[] salt = (controller.isLegacyMnemonic()) ? new byte[Constants.SALT_LENGTH] : controller.getSalt();
+				var salt = controller.isLegacyMnemonic() ? new byte[SALT_LENGTH] : controller.getSalt();
 
 				final var path = new File(controller.getPreferredStorageDirectory(), MNEMONIC_PATH);
 				mnemonic = SecurityUtilities.fromEncryptedFile(password, salt, path.getAbsolutePath());
@@ -1251,23 +1275,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		List<File> publicKeys = new ArrayList<>();
 		List<File> privateKeys = new ArrayList<>();
 
-		for (var importedKey : importedKeys) {
-			if (isPEMFile(importedKey.toPath())) {
-				privateKeys.add(importedKey);
-			}
-			if (isPUBFile(importedKey.toPath())) {
-				var testPem =
-						(importedKey.getAbsolutePath().endsWith(PUB_EXTENSION)) ?
-								importedKey.getName().replace(PUB_EXTENSION, PK_EXTENSION) :
-								importedKey.getName().replace(TXT_EXTENSION, PK_EXTENSION);
-				if (new File(controller.getPreferredStorageDirectory() + KEYS_STRING + testPem).exists()) {
-					PopupMessage.display("Duplicate", DUPLICATED_KEY_NAME_MESSAGE);
-					logger.info("Public key not imported because there is a pem file with the same name");
-				} else {
-					publicKeys.add(importedKey);
-				}
-			}
-		}
+		importedKeys.forEach(importedKey -> importSingleKey(publicKeys, privateKeys, importedKey));
 
 		var counter = 0;
 
@@ -1275,35 +1283,28 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		logger.info("Importing public keys first");
 		Map<File, String> duplicates = new HashMap<>();
 		for (var publicKey : publicKeys) {
-			final var dupIfExists = checkIfDuplicate(publicKey, pubKeys);
-			if (!"".equals(dupIfExists)) {
-				duplicates.put(publicKey, dupIfExists);
-			} else {
-				org.apache.commons.io.FileUtils.copyFile(publicKey,
-						new File(controller.getPreferredStorageDirectory() + KEYS_STRING + publicKey.getName()));
-				counter++;
-			}
+			counter += handlePublicKeys(duplicates, publicKey, checkIfDuplicate(publicKey, pubKeys));
 		}
 
 		assert pemKeys != null;
 		logger.info("Importing private keys second");
 		for (var importedKey : privateKeys) {
-
-			final var dupIfExists = checkIfPEMDuplicate(importedKey, pemKeys);
-			if (!"".equals(dupIfExists)) {
-				duplicates.put(importedKey, dupIfExists);
-			} else {
-				org.apache.commons.io.FileUtils.copyFile(importedKey,
-						new File(controller.getPreferredStorageDirectory() + KEYS_STRING + importedKey.getName()));
-				counter++;
-			}
+			counter += handlePublicKeys(duplicates, importedKey, checkIfPEMDuplicate(importedKey, pemKeys));
 		}
 
+		counter += handleDuplicates(duplicates);
+
+		if (counter > 0) {
+			initializeKeysPane();
+		}
+	}
+
+	private int handleDuplicates(Map<File, String> duplicates) throws IOException {
 		var popupResponse = ResponseEnum.UNKNOWN;
 		var keepAsking = true;
-
+		var counter = 0;
 		if (duplicates.size() > 0) {
-			for (Map.Entry<File, String> entry : duplicates.entrySet()) {
+			for (var entry : duplicates.entrySet()) {
 				var key = entry.getKey();
 				var value = entry.getValue();
 				if (keepAsking) {
@@ -1340,18 +1341,42 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		}
+		return counter;
+	}
 
-		if (counter > 0) {
-			initializeKeysPane();
+	private int handlePublicKeys(Map<File, String> duplicates, File publicKey, String duplicate) throws IOException {
+		if ("".equals(duplicate)) {
+			copyFile(publicKey, new File(KEYS_FOLDER, publicKey.getName()));
+			return 1;
+		}
+		duplicates.put(publicKey, duplicate);
+		return 0;
+	}
+
+	private void importSingleKey(List<File> publicKeys, List<File> privateKeys, File importedKey) {
+		if (isPEMFile(importedKey.toPath())) {
+			privateKeys.add(importedKey);
+		}
+		if (isPUBFile(importedKey.toPath())) {
+			var ext = importedKey.getAbsolutePath().endsWith(PUB_EXTENSION) ? PUB_EXTENSION : TXT_EXTENSION;
+
+			var pemFileName = importedKey.getName().replace(ext, PK_EXTENSION);
+
+			if (new File(KEYS_FOLDER, pemFileName).exists()) {
+				PopupMessage.display("Duplicate", DUPLICATED_KEY_NAME_MESSAGE);
+				logger.info("Public key not imported because there is a pem file with the same name");
+				return;
+			}
+			publicKeys.add(importedKey);
 		}
 	}
 
 	private void replaceOnce(File duplicate, String oldFile) throws IOException {
 		if (!duplicate.getName().equals(FilenameUtils.getName(oldFile))) {
-			if (new File(oldFile).delete()) {
-				logger.info(String.format("Old file %s deleted", oldFile));
-			}
-			org.apache.commons.io.FileUtils.copyFile(duplicate,
+			Files.deleteIfExists(Path.of(oldFile));
+			logger.info("Old file {} deleted", oldFile);
+
+			copyFile(duplicate,
 					new File(
 							controller.getPreferredStorageDirectory() + KEYS_STRING + duplicate.getName()));
 		}
@@ -1360,11 +1385,11 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private void keepBoth(File duplicate, String duplicatePath) throws IOException {
 		if (getBaseName(duplicatePath).equals(getBaseName(duplicate.getAbsolutePath()))) {
 			var newName = getBaseName(duplicate.getAbsolutePath()) + "_0";
-			org.apache.commons.io.FileUtils.copyFile(duplicate,
+			copyFile(duplicate,
 					new File(String.format("%s/Keys/%s.%s", controller.getPreferredStorageDirectory(), newName,
 							FilenameUtils.getExtension(duplicate.getAbsolutePath()))));
 		} else {
-			org.apache.commons.io.FileUtils.copyFile(duplicate, new File(
+			copyFile(duplicate, new File(
 					String.format("%s/Keys/%s", controller.getPreferredStorageDirectory(),
 							FilenameUtils.getName(duplicate.getAbsolutePath()))));
 		}
@@ -1380,9 +1405,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			var hashBoolean = Objects.equals(Ed25519KeyStore.getMnemonicHashCode(pemFile.getAbsolutePath()),
 					Ed25519KeyStore.getMnemonicHashCode(pemKey.getAbsolutePath()));
 			if (indexBoolean && hashBoolean) {
-				logger.info(String.format(
-						"Found duplicated private key: PEMs %s and %s have the same mnemonic hash and index",
-						pemFile.getAbsolutePath(), pemKey.getAbsolutePath()));
+				logger.info("Found duplicated private key: PEMs {} and {} have the same mnemonic hash and index",
+						pemFile.getAbsolutePath(), pemKey.getAbsolutePath());
 				return pemKey.getAbsolutePath();
 			}
 		}
@@ -1391,13 +1415,60 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private String checkIfDuplicate(File publicKey, File[] pubKeys) throws IOException {
 		for (var pubKey : pubKeys) {
-			if (org.apache.commons.io.FileUtils.contentEquals(publicKey, pubKey)) {
-				logger.info(String.format("Found duplicated public key: Contents of %s identical to %s",
-						publicKey.getAbsolutePath(), pubKey.getAbsolutePath()));
+			if (contentEquals(publicKey, pubKey)) {
+				logger.info("Found duplicated public key: Contents of {} identical to {}",
+						publicKey.getAbsolutePath(), pubKey.getAbsolutePath());
 				return pubKey.getAbsolutePath();
 			}
 		}
 		return "";
+	}
+
+	private void recoverIndexFieldListenerAction(ObservableValue<? extends String> observable, String oldValue,
+			String newValue) {
+		if (!newValue.matches("\\d*")) {
+			recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
+		}
+	}
+
+	private void recoverIndexFieldFocusedAction(ObservableValue<? extends Boolean> observable, Boolean oldValue,
+			Boolean newValue) {
+		if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
+			var index = Integer.parseInt(recoverIndexField.getText());
+
+			List<String> values = new ArrayList<>();
+			for (var entry : indexMap.entrySet()) {
+				if (entry.getValue() == index) {
+					values.add(entry.getKey());
+				}
+			}
+
+			// We will only populate the nickname field if the key index is not duplicated
+			if (values.size() == 1 && recoverNicknameField.getText().isEmpty()) {
+				recoverNicknameField.setText(values.get(0).replace("." + PK_EXTENSION, ""));
+			}
+		}
+	}
+
+	private void recoverNickNameFieldFocusedAction(ObservableValue<? extends Boolean> observable, Boolean oldValue,
+			Boolean newValue) {
+		if (Boolean.FALSE.equals(newValue) &&
+				!recoverNicknameField.getText().isEmpty() &&
+				indexMap.containsKey(recoverNicknameField.getText() + "." + PK_EXTENSION) &&
+				recoverIndexField.getText().isEmpty() &&
+				indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION) >= 0) {
+			recoverIndexField.setText(
+					indexMap.get(recoverNicknameField.getText() + "." + PK_EXTENSION).toString());
+		}
+	}
+
+	private void recoverNicknameFieldKeyAction(KeyEvent keyEvent) {
+		if (!recoverNicknameField.getText().isEmpty() &&
+				indexMap.containsKey(recoverNicknameField.getText() + PK_EXTENSION) &&
+				recoverIndexField.getText().isEmpty() &&
+				indexMap.get(recoverNicknameField.getText() + PK_EXTENSION) >= 0) {
+			recoverIndexField.setText(indexMap.get(recoverNicknameField.getText() + PK_EXTENSION).toString());
+		}
 	}
 
 	// endregion

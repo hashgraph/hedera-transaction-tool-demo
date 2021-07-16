@@ -24,6 +24,9 @@ import javafx.beans.property.SimpleDoubleProperty;
 import java.io.File;
 
 public class Constants {
+	private Constants() {
+		throw new IllegalStateException("Constants class");
+	}
 
 	// region FILE EXTENSIONS
 	public static final String PK_EXTENSION = "pem";
@@ -71,7 +74,7 @@ public class Constants {
 	// endregion
 
 	// region APP DEFAULTS
-	public static final boolean DEVELOPMENT = false; // change this boolean to false before release build
+	public static final boolean DEVELOPMENT = false;
 	public static final int DRIVE_LIMIT = 5;
 	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
@@ -83,8 +86,8 @@ public class Constants {
 	// region TRANSACTION DEFAULTS
 	public static final int VAL_NUM_TRANSACTION_VALID_DURATION = 180;
 	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 100000000;
-	public final static int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
-	public final static int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
+	public static final int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
+	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
 	// endregion

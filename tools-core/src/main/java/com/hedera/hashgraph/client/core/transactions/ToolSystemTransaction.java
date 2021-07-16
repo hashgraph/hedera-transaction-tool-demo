@@ -59,6 +59,16 @@ public class ToolSystemTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + entity.hashCode() + expiration.hashCode();
+	}
+
 	public ToolSystemTransaction(File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.isDelete = transaction instanceof SystemDeleteTransaction;

@@ -30,6 +30,7 @@ import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.Arrays;
 
 import java.util.Collections;
 
@@ -46,6 +47,15 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.FILE_APPEND;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + file.hashCode() + Arrays.hashCode(bytes);
+	}
 
 	@Override
 	public boolean checkInput(JsonObject input) {
