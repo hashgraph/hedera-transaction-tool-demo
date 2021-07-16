@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
 import org.jetbrains.annotations.NotNull;

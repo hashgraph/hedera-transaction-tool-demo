@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.OUT_OF_RANGE_EXCEPTION_MESSAGE;
 
 public class BatchLine implements Comparable<BatchLine> {
