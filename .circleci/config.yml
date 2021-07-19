@@ -43,7 +43,7 @@ workflows:
             branches:
               only:
                 - main
-                - main-candidate
+                - develop
       - prepare_semver_release:
           name: prepare_semver_release
           runtime: macos_medium
@@ -53,8 +53,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
-                - main-candidate
+                - develop
       - package_macos_installer:
           name: package_macos_installer
           context: SonarCloud
@@ -64,8 +63,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
-                - main-candidate
+                - develop
       - publish_github_release:
           name: publish_github_release
           runtime: openjdk_14_large
@@ -75,8 +73,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
-                - main-candidate
+                - develop
 
 
   ######################################################################################################################
@@ -144,8 +141,7 @@ workflows:
           filters:
             branches:
               ignore:
-                - main
-                - main-candidate
+                - develop
 
 
 executors:
