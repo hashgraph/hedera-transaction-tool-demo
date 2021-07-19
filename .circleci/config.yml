@@ -1304,6 +1304,8 @@ jobs:
           paths:
             - tools-ui/target/*.zip
             - tools-cli/target/*.zip
+            - tools-ui/installation-resources/*
+            - tools-ui/src/main/resources/license.txt
             - installer.sh
 
   package_macos_installer:

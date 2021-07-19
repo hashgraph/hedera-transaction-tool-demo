@@ -72,6 +72,14 @@ mv TransactionTools.icns ../TransactionTools-volume.icns
 mv resources/TransactionTools-dmg-setup.scpt  ../TransactionTools-dmg-setup.scpt
 
 
+RESOURCE_DIR="../../../../../tools-ui/installation-resources"
+LICENSE_FILE="../../../../../tools-ui/src/main/resources/license.txt"
+
+if [[ "${CI}" == true || "${CIRCLECI}" == true ]]; then
+  RESOURCE_DIR="../../../../../tools-ui/installation-resources"
+  LICENSE_FILE="../../../../../tools-ui/src/main/resources/license.txt"
+fi
+
 $JPACKAGE \
       --input ./ \
       --name TransactionTools \
@@ -82,9 +90,9 @@ $JPACKAGE \
       --app-version "${version}" \
       --vendor "Hedera Hashgraph LLC." \
       --dest ../../../../../Release \
-      --license-file ../../../../../tools-ui/src/main/resources/license.txt \
+      --license-file ${LICENSE_FILE} \
       --verbose \
-      --resource-dir ../../../../../tools-ui/installation-resources
+      --resource-dir ${RESOURCE_DIR}
 
 
 
