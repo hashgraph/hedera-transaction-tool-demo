@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.core.fileservices;
+package com.hedera.hashgraph.client.core.fileServices;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;

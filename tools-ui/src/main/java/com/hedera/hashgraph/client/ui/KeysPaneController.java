@@ -26,7 +26,7 @@ import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
+import com.hedera.hashgraph.client.core.fileServices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;

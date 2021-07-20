@@ -24,7 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
+import com.hedera.hashgraph.client.core.fileServices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;

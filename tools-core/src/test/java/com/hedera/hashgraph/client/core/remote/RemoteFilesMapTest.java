@@ -21,7 +21,7 @@ package com.hedera.hashgraph.client.core.remote;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
+import com.hedera.hashgraph.client.core.fileServices.FileAdapterFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

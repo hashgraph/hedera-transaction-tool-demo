@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.core.fileservices;
+package com.hedera.hashgraph.client.core.fileServices;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
@@ -54,14 +54,10 @@ class FileAdapterFactoryTest {
 
 	@Test
 	void getAdapterExceptions_Test() {
-		Exception exception0 = assertThrows(HederaClientException.class, () -> {
-			FileAdapterFactory.getAdapter("");
-		});
+		Exception exception0 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(""));
 		assertEquals("Hedera Client: Path cannot be null", exception0.getMessage());
 
-		Exception exception1 = assertThrows(HederaClientException.class, () -> {
-			FileAdapterFactory.getAdapter(null);
-		});
+		Exception exception1 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(null));
 		assertEquals("Hedera Client: Path cannot be null", exception1.getMessage());
 	}
 
