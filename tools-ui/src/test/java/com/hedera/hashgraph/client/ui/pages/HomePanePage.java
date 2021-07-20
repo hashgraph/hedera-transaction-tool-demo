@@ -98,7 +98,7 @@ public class HomePanePage {
 		for (var node : testingKey) {
 			if (node instanceof CheckBox) {
 				driver.clickOn(node);
-				logger.info(String.format("Clicked on key %s", keyName));
+				logger.info("Clicked on key {}", keyName);
 				return this;
 			}
 		}
