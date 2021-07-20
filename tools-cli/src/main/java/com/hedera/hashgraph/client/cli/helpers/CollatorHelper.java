@@ -151,7 +151,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		signaturePairs.add(signaturePair);
 	}
 
-	public Transaction<?> collate() {
+	public Transaction<? extends Transaction<?>> collate() {
 		return transaction.collate(signaturePairs);
 	}
 

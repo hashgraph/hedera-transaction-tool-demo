@@ -96,7 +96,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LO
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_ACTIVE;
 import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_INACTIVE;
-import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.*;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 
@@ -684,7 +684,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (exitCode == 0) {
 				System.exit(0);
 			} else {
-				logger.error(String.format("The update finished with exit code %d", exitCode));
+				logger.error("The update finished with exit code {}", exitCode);
 				PopupMessage.display("Error opening update file",
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
@@ -1015,12 +1015,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var next = buildMoveByOneButton("Next", Math.min(pages, page + 1));
 
 		if (pages < NUMBER_OF_SINGLE_BOXES) {
-			var i = 0;
-			while (i < pages) {
-				Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
-				pagesHBox.getChildren().add(b);
-				i++;
-			}
+			handleLessThanPages(pages);
 			return;
 		}
 
@@ -1050,6 +1045,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			start = pages - NUMBER_OF_SINGLE_BOXES;
 		}
 
+		setButtonInBox(pages, next, start, end);
+	}
+
+	private void setButtonInBox(int pages, Button next, int start, int end) {
 		for (var i = start + 1; i <= end; i++) {
 			if (page == i - 1) {
 				pagesHBox.getChildren().add(buildDummyButton(i));
@@ -1065,6 +1064,16 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (page < pages - 1) {
 			pagesHBox.getChildren().add(next);
 		}
+	}
+
+	private void handleLessThanPages(int pages) {
+		var i = 0;
+		while (i < pages) {
+			Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
+			pagesHBox.getChildren().add(b);
+			i++;
+		}
+		return;
 	}
 
 	private Button buildMoveByOneButton(String title, int limit) {

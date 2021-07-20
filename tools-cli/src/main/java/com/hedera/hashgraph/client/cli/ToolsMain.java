@@ -45,9 +45,10 @@ public class ToolsMain {
 			}
 			verifyOrPrintHelp(args);
 
-			logger.info("Executing command [{}] with options [{}]",
-					parsed.asCommandLineList().get(1).getCommandName(),
-					String.join(" ", parsed.subcommand().originalArgs()));
+			final var commandName = parsed.asCommandLineList().get(1).getCommandName();
+			final var joinedCommand = String.join(" ", parsed.subcommand().originalArgs());
+			logger.info("Executing command [{}] with options [{}]", commandName, joinedCommand);
+
 			if (CommandLine.printHelpIfRequested(parsed)) {
 				return;
 			}
@@ -56,9 +57,8 @@ public class ToolsMain {
 			commandCopy = toolCommand;
 			toolCommand.execute();
 		} catch (Exception cause) {
-			logger.error(String.format("Error in executing command: %s, message: %s",
-					commandCopy != null ? commandCopy.getClass() : null,
-					cause.getMessage()));
+			logger.error("Error in executing command: {}, message: {}",
+					commandCopy != null ? commandCopy.getClass() : null, cause.getMessage());
 			throw cause;
 		}
 	}

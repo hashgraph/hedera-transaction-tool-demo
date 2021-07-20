@@ -49,27 +49,34 @@ public interface SDKInterface {
 
 	/**
 	 * Adds all signatures to a transaction
-	 * @param signatures list of signatures of the transaction
+	 *
+	 * @param signatures
+	 * 		list of signatures of the transaction
 	 * @return a signed transaction
 	 */
-	Transaction<?> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException;
 
 
 	/**
 	 * Adds all signatures to a transaction
-	 * @param signaturePairs a set of signature pairs
+	 *
+	 * @param signaturePairs
+	 * 		a set of signature pairs
 	 * @return a signed transaction
 	 * @throws HederaClientRuntimeException
 	 */
-	Transaction<?> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException;
 
 	/**
 	 * Collates two transactions.
-	 * @param otherTransaction the other transaction
+	 *
+	 * @param otherTransaction
+	 * 		the other transaction
 	 * @return a transaction that has all the signatures of both transactions
 	 * @throws HederaClientRuntimeException
 	 */
-	Transaction<?> collate(Transaction<?> otherTransaction) throws HederaClientRuntimeException;
+	Transaction<? extends Transaction<?>> collate(
+			Transaction<? extends Transaction<?>> otherTransaction) throws HederaClientRuntimeException;
 
 	/**
 	 * Verifies the transaction has been signed with the key provided
@@ -108,6 +115,7 @@ public interface SDKInterface {
 
 	/**
 	 * Gets the transaction id from the main transaction
+	 *
 	 * @return a TransactionId corresponding to the created object
 	 */
 	TransactionId getTransactionId();
@@ -133,12 +141,14 @@ public interface SDKInterface {
 
 	/**
 	 * Converts a transaction to a json file for ease of interpretation
+	 *
 	 * @return a json object with the relevant fields of the transaction
 	 */
 	JsonObject asJson();
 
 	/**
 	 * Converts the transaction into bytes
+	 *
 	 * @return a byte array
 	 */
 	byte[] toBytes();
