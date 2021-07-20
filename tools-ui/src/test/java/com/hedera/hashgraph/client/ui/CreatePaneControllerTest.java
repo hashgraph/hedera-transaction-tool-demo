@@ -804,8 +804,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f :
-				transactions) {
+		for (var f : transactions) {
 			if (f.getName().contains("1019")) {
 				if (f.getName().endsWith(".tx")) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);

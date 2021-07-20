@@ -316,7 +316,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	public static boolean verifyOneOfExists(JsonObject input, String... fields){
 		var count = 0;
 		for (var field : fields) {
-			if (!input.has(field)) {
+			if (input.has(field)) {
 				count++;
 				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
 			}
