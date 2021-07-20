@@ -113,6 +113,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			"The following threshold key values have not been set. Please enter a valid threshold value and try again" +
 					".\n";
 	public static final String DESIGNER_TITLE = "Key";
+	public static final String REMOVE_BUTTON_STYLE =
+			"-fx-background-color: transparent; -fx-text-fill: red;-fx-border-color: indianred; " +
+					"-fx-border-radius: 5";
 
 	private final Map<String, PublicKey> publicKeys;
 	private final Map<String, PublicKey> orphanKeys = new HashMap<>();
@@ -448,7 +451,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			var destination =
 					(treeView.getSelectionModel().getSelectedItem() != null) ?
 							treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
-			logger.info(String.format("Copying %s to %s", source, destination.getValue()));
+			logger.info("Copying {} to {}", source, destination.getValue());
 			final var value = destination.getValue();
 			if (!value.contains(" key")) {
 				destination.setValue(THRESHOLD_KEY_X_OF_X);
@@ -461,9 +464,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 		var remove = new Button("\u2718");
 		remove.setOnAction(event -> removeFromTree(treeView.getSelectionModel().getSelectedItem()));
-		remove.setStyle(
-				"-fx-background-color: transparent; -fx-text-fill: red;-fx-border-color: indianred; " +
-						"-fx-border-radius: 5");
+		remove.setStyle(REMOVE_BUTTON_STYLE);
 		remove.setMinWidth(50);
 
 		buttonsKeys.getChildren().addAll(add, remove);

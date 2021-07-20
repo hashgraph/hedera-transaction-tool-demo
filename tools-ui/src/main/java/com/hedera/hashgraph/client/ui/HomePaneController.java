@@ -667,8 +667,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			try {
 				signTransactionAndComment(rf, pair);
 			} catch (Exception exception) {
-				logger.error(String.format("Transaction %s could not be signed with key %s.", rf.getName(),
-						FilenameUtils.getBaseName(pair.getLeft())));
+				logger.error("Transaction {} could not be signed with key {}.", rf.getName(),
+						FilenameUtils.getBaseName(pair.getLeft()));
 				logger.error(exception);
 			}
 		}

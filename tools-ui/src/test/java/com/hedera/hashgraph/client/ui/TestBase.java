@@ -16,22 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.ui;/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
+package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
@@ -116,6 +101,7 @@ public class TestBase extends ApplicationTest {
 	public boolean exists(final String query) {
 		try {
 			Node x = lookup(query).queryAll().iterator().next();
+			assert x != null;
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -125,16 +111,16 @@ public class TestBase extends ApplicationTest {
 	public void remakeTransactionTools() {
 		String toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
-		if (!(new File(toolsFolder)).exists()) {
-			new File(toolsFolder).mkdirs();
+		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
+			logger.info("Directory {} created", toolsFolder);
 		}
 
 		try {
-			if (!new File(toolsFolder + "/Accounts").exists()) {
-				new File(toolsFolder + "/Accounts").mkdirs();
+			if (!new File(toolsFolder, "Accounts").exists() && new File(toolsFolder, "Accounts").mkdirs()) {
+				logger.info("Directory {}/Accounts created", toolsFolder);
 			}
-			if (!new File(toolsFolder + KEYS_STRING).exists()) {
-				new File(toolsFolder + KEYS_STRING).mkdirs();
+			if (!new File(toolsFolder, KEYS_STRING).exists() && new File(toolsFolder, KEYS_STRING).mkdirs()) {
+				logger.info("Directory {}/{} created", toolsFolder, KEYS_STRING);
 			}
 		} catch (Exception cause) {
 			logger.error("Unable to remake Transaction folders.", cause);
@@ -145,22 +131,21 @@ public class TestBase extends ApplicationTest {
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
 	 *
 	 * @param defaultStorage
-	 * @throws KeyStoreException
-	 * @throws IOException
+	 * 		Storage location
 	 */
 	public static void fixMissingMnemonicHashCode(String defaultStorage) throws KeyStoreException, IOException {
-		File[] keyFiles = new File(defaultStorage + "/Keys/").listFiles((dir, name) -> name.endsWith("pem"));
+		File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
+		assert keyFiles != null;
 		for (File keyFile : keyFiles) {
 			final Integer mnemonicHash =
 					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
-			logger.info(String.format("%s has hash %s", keyFile.getAbsolutePath(),
-					mnemonicHash));
+			logger.info("{} has hash {}", keyFile.getAbsolutePath(), mnemonicHash);
 			if (mnemonicHash == null) {
 				BufferedWriter output =
 						new BufferedWriter(new FileWriter(keyFile.getAbsolutePath(), true));
 				output.append("Recovery Phrase Hash: -915976044");
 				output.close();
-				logger.info(String.format("Added dummy hash to: %s", keyFile.getName()));
+				logger.info("Added dummy hash to: {}", keyFile.getName());
 			}
 		}
 	}
