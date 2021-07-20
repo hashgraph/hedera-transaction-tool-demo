@@ -227,7 +227,7 @@ public class RecoverPasswordPaneController {
 		try {
 			index = Ed25519KeyStore.getIndex(privateKeysMap.get(key));
 		} catch (KeyStoreException e) {
-			logger.error(String.format("Cannot read index from %s", privateKeysMap.get(key)));
+			logger.error("Cannot read index from {}", privateKeysMap.get(key));
 			controller.displaySystemMessage(e);
 			controller.displaySystemMessage(String.format("Cannot read index from %s", privateKeysMap.get(key)));
 		}

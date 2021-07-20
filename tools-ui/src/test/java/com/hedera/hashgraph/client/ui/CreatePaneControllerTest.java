@@ -547,7 +547,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setDate(datePickerFormat.format(date));
 
 		assertTrue(find(CREATE_LOCAL_TIME_LABEL).isVisible());
-		logger.info(String.format("CREATE: Local date label =>>> %s", dateLabel.getText()));
+		logger.info("CREATE: Local date label =>>> {}", dateLabel.getText());
 		assertTrue(dateLabel.getText().contains(":00:00"));
 
 		createPanePage.setHours(2)
@@ -646,7 +646,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var utcDate = find(CREATE_LOCAL_TIME_LABEL);
 		assertTrue(utcDate.isVisible());
 		//	assertTrue(dateLabel.getText().contains(sdf.format(date)));
-		logger.info(String.format("TRANSFER: Local date label =>>> %s", dateLabel.getText()));
+		logger.info("TRANSFER: Local date label =>>> {}", dateLabel.getText());
 		assertTrue(dateLabel.getText().contains(":00:00"));
 
 		createPanePage.setHours(3)
@@ -804,8 +804,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f :
-				transactions) {
+		for (var f : transactions) {
 			if (f.getName().contains("1019")) {
 				if (f.getName().endsWith(".tx")) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);

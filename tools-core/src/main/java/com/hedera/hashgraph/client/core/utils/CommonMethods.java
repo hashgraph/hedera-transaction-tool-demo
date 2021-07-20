@@ -313,6 +313,17 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return (count == 0);
 	}
 
+	public static boolean verifyOneOfExists(JsonObject input, String... fields){
+		var count = 0;
+		for (var field : fields) {
+			if (input.has(field)) {
+				count++;
+				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
+			}
+		}
+		return (count > 0);
+	}
+
 	/**
 	 * If the account corresponding to the id provided has a nickname, this method returns it. Otherwise it returns the
 	 * account id as a readable String

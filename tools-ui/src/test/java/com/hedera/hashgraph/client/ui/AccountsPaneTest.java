@@ -432,7 +432,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	// region AUXILIARY METHODS
 	private AccountsPanePage loadAccountInfo(String name, String location) {
-		logger.info(String.format("Loading account %s from %s", name, location));
+		logger.info("Loading account {} from {}", name, location);
 		return accountsPanePage.loadInfoFromHiddenTextField(location)
 				.enterAccountNickName(name)
 				.closeNicknamePopup();

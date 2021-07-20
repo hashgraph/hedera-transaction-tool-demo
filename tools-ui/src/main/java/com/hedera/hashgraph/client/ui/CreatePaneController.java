@@ -1240,8 +1240,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
-		if (new File(jsonName).delete()) {
-			logger.info("Old file deleted");
+		try {
+			Files.deleteIfExists(Path.of(jsonName));
+		} catch (IOException e) {
+			throw new HederaClientException(e);
 		}
 
 		writeJsonObject(jsonName, outputObject);
@@ -2060,7 +2062,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanFields() {
-		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField, memoField);
+		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
+				memoField);
 
 		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));

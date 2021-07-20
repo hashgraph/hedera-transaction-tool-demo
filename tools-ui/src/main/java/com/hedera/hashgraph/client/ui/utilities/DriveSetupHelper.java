@@ -474,8 +474,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		var output = new File(String.format("%s/%s/%s/", path, OUTPUT_FILES, email));
 
 		if (input.exists() && output.exists()) {
-			logger.info(
-					String.format("Input %s and output %s exist", input.getAbsolutePath(), output.getAbsolutePath()));
+			logger.info("Input {} and output {} exist", input.getAbsolutePath(), output.getAbsolutePath());
 			return true;
 		}
 

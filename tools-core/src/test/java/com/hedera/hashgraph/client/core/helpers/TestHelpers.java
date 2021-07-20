@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.helpers.TestConstants;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.sdk.Key;
 
 import java.io.File;
 import java.time.Instant;
@@ -194,6 +195,36 @@ public class TestHelpers {
 		testJson.add(ACCOUNT_ID_FIELD_NAME, accountArray);
 		testJson.add(NODE_ID_FIELD_NAME, node);
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
+		return testJson;
+	}
+
+	public static JsonObject buildUpdateJson(int feePayer, Instant startInstant) {
+		JsonObject testJson = new JsonObject();
+		File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+
+		JsonObject feeJson = new JsonObject();
+		feeJson.addProperty(H_BARS, 0);
+		feeJson.addProperty(TINY_BARS, 100000000);
+
+		JsonObject feePayerAccount = new JsonObject();
+		feePayerAccount.addProperty(REALM_NUMBER, 0);
+		feePayerAccount.addProperty(SHARD_NUMBER, 0);
+		feePayerAccount.addProperty(ACCOUNT_NUMBER, feePayer);
+
+		JsonObject node = new JsonObject();
+		node.addProperty(REALM_NUMBER, 0);
+		node.addProperty(SHARD_NUMBER, 0);
+		node.addProperty(ACCOUNT_NUMBER, 3);
+
+		testJson.addProperty(FEE_PAYER_KEY_LOCATION, key.getAbsolutePath());
+		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
+		testJson.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(10).asRFCString());
+		testJson.add(NODE_ID_FIELD_NAME, node);
+		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
+		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(startInstant).asRFCString());
+		testJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, 120);
+		testJson.addProperty(MEMO_FIELD_NAME, "a memo to go with the transaction");
 		return testJson;
 	}
 }

@@ -198,7 +198,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return memo;
 	}
 
-	public Transaction<? extends Transaction<?>> getTransaction() {
+	public Transaction<?> getTransaction() {
 		return transaction;
 	}
 
@@ -213,7 +213,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<? extends Transaction<?>> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(
+			Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}

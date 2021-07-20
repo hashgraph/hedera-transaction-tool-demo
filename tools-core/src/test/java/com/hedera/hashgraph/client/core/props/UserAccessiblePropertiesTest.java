@@ -16,22 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.core.props;/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
+package com.hedera.hashgraph.client.core.props;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -41,16 +26,15 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,8 +55,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UserAccessiblePropertiesTest {
 
-	private static final Logger logger = LogManager.getLogger(UserAccessibleProperties.class);
-
 	UserAccessibleProperties properties;
 
 	@BeforeEach
@@ -81,11 +63,8 @@ class UserAccessiblePropertiesTest {
 	}
 
 	@AfterEach
-	void tearDown() {
-		if (new File("src/test/resources/test.properties").exists()) {
-			logger.info(String.format("Test properties deleted :%s",
-					new File("src/test/resources/test.properties").delete()));
-		}
+	void tearDown() throws IOException {
+		Files.deleteIfExists(Path.of("src/test/resources/test.properties"));
 	}
 
 	@Test
@@ -176,7 +155,7 @@ class UserAccessiblePropertiesTest {
 	}
 
 	@Test
-	void setHash_Test() throws InvalidKeySpecException, NoSuchAlgorithmException, HederaClientException {
+	void setHash_Test() throws HederaClientException {
 		char[] pass = "testPassword".toCharArray();
 		properties.setHash(pass);
 		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();

@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
