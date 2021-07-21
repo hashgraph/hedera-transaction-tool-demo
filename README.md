@@ -40,3 +40,6 @@ This project is governed by the Contributor Covenant Code of Conduct. By partici
 
 ## License
 Apache License 2.0
+
+## Audit
+ NCC Group Cryptography Services reviewed the code and all reported findings as of this date were fixed.
