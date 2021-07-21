@@ -2077,6 +2077,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		createSignatureRequired.setSelected(false);
 		updateReceiverSignatureRequired.setSelected(false);
 		createCommentsTextArea.clear();
+		createInitialBalance.clear();
 		setupNewKeyObject();
 
 		createNewKey.setContent(new HBox());
