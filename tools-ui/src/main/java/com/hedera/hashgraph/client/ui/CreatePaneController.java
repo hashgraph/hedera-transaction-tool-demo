@@ -43,6 +43,7 @@ import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PublicKey;
@@ -133,6 +134,14 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkAccount;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.showTooltip;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.textFieldToTinyBars;
 
 public class CreatePaneController implements GenericFileReadWriteAware {
 
@@ -226,8 +235,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public TextField intervalTextField;
 	public TextField createAutoRenew;
 	public TextField contentsTextField;
-	public TextField fileUpdateTransactionFee;
-
+	public TextField nanosField;
+	public TextField transactionFee;
 
 	public TableView<AccountAmountStrings> fromTransferTable;
 	public TableView<AccountAmountStrings> toTransferTable;
@@ -249,6 +258,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label expirationLabel;
 	public Label systemCreateLocalTimeLabel;
 	public Label shaLabel;
+	public Label invalidTransactionFee;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -270,7 +280,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label invalidChunkSizeLabel;
 	public Label invalidIntervalLabel;
 	public Label contentsFilePathError;
-	public Label invalidFileTransactionFee;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -502,7 +511,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setupIntNumberField(chunkSizeTextField, 4095);
 		setupIntNumberField(intervalTextField, Integer.MAX_VALUE);
-		setupHbarNumberField(fileUpdateTransactionFee);
+
 	}
 
 	private void setupSystemFields() {
@@ -559,7 +568,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupTooltips() {
 		// All tooltips will be added here
 		nowTimeToolTip.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.settingsPane, nowTimeToolTip,
+				actionEvent -> showTooltip(controller.settingsPane, nowTimeToolTip,
 						ToolTipMessages.NOW_TOOLTIP_TEXT));
 	}
 
@@ -863,7 +872,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		if (event.getCode() == KeyCode.ENTER) {
-			if (Utilities.checkAccount(start.getText())) {
+			if (checkAccount(start.getText())) {
 				var id = Identifier.parse(start.getText());
 				start.setText(id.toReadableString());
 				start.setStyle(null);
@@ -905,7 +914,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void cleanAllTransferFields() {
 
 		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField);
+				memoField, transactionFee);
 		createCommentsTextArea.clear();
 
 		toTransferTable.getItems().clear();
@@ -988,17 +997,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		amount.setStyle(START_STYLE);
 
 		var newTransaction =
-				new AccountAmountStrings(account.getText(), Utilities.stripHBarFormat(amount.getText()));
+				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		if (!Utilities.checkAccount(newTransaction.getAccountID())) {
-			account.setStyle(Utilities.RED_BORDER_STYLE);
+		if (!checkAccount(newTransaction.getAccountID())) {
+			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
 			account.requestFocus();
 			return;
 		}
 
-		if (Utilities.isNotLong(Utilities.stripHBarFormat(amount.getText()))) {
-			amount.setStyle(Utilities.RED_BORDER_STYLE);
+		if (isNotLong(stripHBarFormat(amount.getText()))) {
+			amount.setStyle(RED_BORDER_STYLE);
 			amount.selectAll();
 			amount.requestFocus();
 			return;
@@ -1056,7 +1065,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	// region SYSTEM
 	public void cleanAllSystemFields() {
 		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField);
+				memoField, transactionFee);
 		hourFieldSystem.setText("01");
 		minuteFieldSystem.setText("00");
 		secondsField.setText("00");
@@ -1129,7 +1138,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 */
 	public void cleanAllFileUpdateContentsFields() {
 		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField);
+				memoField, transactionFee);
 		updateFileID.clear();
 		contentsLink.setText("");
 		contentsLink.setVisible(false);
@@ -1235,7 +1244,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		outputObject.addProperty("transactionValidDuration", controller.getTxValidDuration());
 		outputObject.addProperty("memo", memoField.getText() == null ? "" : memoField.getText());
 		outputObject.addProperty("transactionFee",
-				Long.parseLong(Utilities.stripHBarFormat(fileUpdateTransactionFee.getText())));
+				Long.parseLong(stripHBarFormat(transactionFee.getText())));
 
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
@@ -1385,8 +1394,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Use default fee for transactions (note: Large binary files might override this)
 		var feeJson = new JsonObject();
+		var fee = Utilities.string2Hbar(transactionFee.getText());
 		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, controller.getDefaultTxFee());
+		feeJson.addProperty(TINY_BARS, fee.to(HbarUnit.TINYBAR));
 		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
 
 		// Use default for transaction valid duration
@@ -1404,7 +1414,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!"".equals(createInitialBalance.getText())) {
 			var balanceJson = new JsonObject();
 			balanceJson.addProperty(H_BARS, 0);
-			balanceJson.addProperty(TINY_BARS, Utilities.string2Hbar(createInitialBalance.getText()).toTinybars());
+			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
 			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
 		}
 		// Auto renew
@@ -1438,14 +1448,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		//Get transfers from tables
 		if (!fromTransferTable.getItems().isEmpty() && !toTransferTable.getItems().isEmpty()) {
 			List<AccountAmountStrings> transfers = new ArrayList<>();
-			for (var a :
-					fromTransferTable.getItems()) {
+			for (var a : fromTransferTable.getItems()) {
 				transfers.add(a.negate());
 			}
 			transfers.addAll(toTransferTable.getItems());
 			var jsonArray = new JsonArray();
-			for (var a :
-					transfers) {
+			for (var a : transfers) {
 				var accountAmountPair = new JsonObject();
 				accountAmountPair.add(ACCOUNT, new Identifier(a.getAccountIDAsAccountID()).asJSON());
 				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
@@ -2063,7 +2071,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void cleanFields() {
 		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField);
+				memoField, transactionFee);
 
 		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
@@ -2080,13 +2088,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanCommonFields(TextField hour, TextField minute, TextField seconds, DatePicker date,
-			TextField feePayer, TextField node, TextArea memo) {
+			TextField feePayer, TextField node, TextArea memo, TextField transactionFee) {
 		hour.setText(String.format("%02d", controller.getDefaultHours()));
 		minute.setText(String.format("%02d", controller.getDefaultMinutes()));
 		seconds.setText(String.format("%02d", controller.getDefaultSeconds()));
 		date.setValue(null);
 		feePayer.clear();
 		node.setText(controller.getDefaultNodeID());
+		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
+		setupHbarNumberField(transactionFee);
 		memo.clear();
 		createUTCTimeLabel.setText("");
 	}
@@ -2191,11 +2201,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static void setHBarFormat(TextField currencyTextField) {
 		long hBarsLong = 0;
 		try {
-			hBarsLong = Utilities.textFieldToTinyBars(currencyTextField);
+			hBarsLong = textFieldToTinyBars(currencyTextField);
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
-		logger.info("Currency text field changed to: {}", currencyTextField.getText());
+		logger.debug("Currency text field changed to: {}", currencyTextField.getText());
 		var hBarsString = Utilities.setHBarFormat(hBarsLong);
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
 	}

@@ -148,8 +148,11 @@ public class Utilities {
 		} else {
 			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars) + " \u0127";
 		}
+	}
 
-
+	public static String setCurrencyFormat(long amount) {
+		var currency = setHBarFormat(amount);
+		return currency.replace(" \u0127", "");
 	}
 
 	public static String stripHBarFormat(String hBars) {
