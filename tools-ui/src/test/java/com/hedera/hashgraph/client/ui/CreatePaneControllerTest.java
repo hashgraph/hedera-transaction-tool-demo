@@ -107,6 +107,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SECONDS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_EXPIRATION_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TO_TABLE;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSACTION_FEE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_FROM_ACCOUNT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_FROM_AMOUNT;
@@ -255,6 +256,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
+		assertNotNull(find(CREATE_TRANSACTION_FEE));
 		assertNotNull(find(CREATE_FEE_PAYER_FIELD));
 		assertNotNull(find(CREATE_DATE_PICKER));
 		assertNotNull(find(CREATE_HOURS));
@@ -263,6 +265,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertNotNull(find(CREATE_COMMENTS_AREA));
 		assertTrue(find(CREATE_MEMO_FIELD).isVisible());
 		assertTrue(find(CREATE_NODE_FIELD).isVisible());
+		assertTrue(find(CREATE_TRANSACTION_FEE).isVisible());
 		assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
 		assertTrue(find(CREATE_DATE_PICKER).isVisible());
 		assertTrue(find(CREATE_HOURS).isVisible());
@@ -277,6 +280,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
+		assertNotNull(find(CREATE_TRANSACTION_FEE));
 		assertNotNull(find(CREATE_FEE_PAYER_FIELD));
 		assertNotNull(find(CREATE_DATE_PICKER));
 		assertNotNull(find(CREATE_HOURS));
@@ -285,6 +289,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertNotNull(find(CREATE_COMMENTS_AREA));
 		assertTrue(find(CREATE_MEMO_FIELD).isVisible());
 		assertTrue(find(CREATE_NODE_FIELD).isVisible());
+		assertTrue(find(CREATE_TRANSACTION_FEE).isVisible());
 		assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
 		assertTrue(find(CREATE_DATE_PICKER).isVisible());
 		assertTrue(find(CREATE_HOURS).isVisible());
@@ -300,6 +305,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 			assertNotNull(find(CREATE_MEMO_FIELD));
 			assertNotNull(find(CREATE_NODE_FIELD));
+			assertNotNull(find(CREATE_TRANSACTION_FEE));
 			assertNotNull(find(CREATE_FEE_PAYER_FIELD));
 			assertNotNull(find(CREATE_DATE_PICKER));
 			assertNotNull(find(CREATE_HOURS));
@@ -308,6 +314,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			assertNotNull(find(CREATE_COMMENTS_AREA));
 			assertTrue(find(CREATE_MEMO_FIELD).isVisible());
 			assertTrue(find(CREATE_NODE_FIELD).isVisible());
+			assertTrue(find(CREATE_TRANSACTION_FEE).isVisible());
 			assertTrue(find(CREATE_FEE_PAYER_FIELD).isVisible());
 			assertTrue(find(CREATE_DATE_PICKER).isVisible());
 			assertTrue(find(CREATE_HOURS).isVisible());
@@ -560,6 +567,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.setMemo("A memo")
 				.setFeePayerAccount(1009)
 				.setNodeAccount(42)
+				.setTransactionFee(1.2345678911)
 				.setInitialBalance(1000)
 				.setCreateKey()
 				.clickOnAccountKey("treasury")
@@ -575,7 +583,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
@@ -583,13 +591,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolCryptoCreateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f :
-				transactions) {
+		for (var f : transactions) {
 			if (f.getName().contains("1009")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoCreateTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -603,6 +610,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);
 		assertEquals(100000000000L, toolTransaction.getInitialBalance().toTinybars());
+
+		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
+		assertEquals(123456789, toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
 
 
 		assertEquals(new Identifier(0, 0, 1009).asAccount(),
@@ -642,7 +652,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setComment("this is a comment that will go with the transfer")
 				.setDate(datePickerFormat.format(date));
 
-//		assertFalse(find(CREATE_CHOICE_BOX).isVisible());
 		var utcDate = find(CREATE_LOCAL_TIME_LABEL);
 		assertTrue(utcDate.isVisible());
 		//	assertTrue(dateLabel.getText().contains(sdf.format(date)));
@@ -681,7 +690,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
@@ -689,13 +698,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolTransferTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f :
-				transactions) {
+		for (var f : transactions) {
 			if (f.getName().contains("10019")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolTransferTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -712,6 +720,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		var transferMap = toolTransaction.getAccountAmountMap();
 
+		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
+		assertEquals(100000000, toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
 
 		assertEquals(4, transferMap.size());
 
@@ -796,7 +806,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
@@ -806,10 +816,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		for (var f : transactions) {
 			if (f.getName().contains("1019")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -893,7 +903,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 
@@ -904,10 +914,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		for (var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -964,7 +974,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 
@@ -974,10 +984,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		for (var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -1034,7 +1044,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var transactions = outputDirectory.listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 		assertEquals(0, transactions.length);
@@ -1049,7 +1059,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		transactions = outputDirectory.listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 
@@ -1082,7 +1092,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 
@@ -1093,10 +1103,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		for (var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}
@@ -1150,7 +1160,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 				pathname -> {
 					var name = pathname.getName();
-					return name.endsWith(".tx") || name.endsWith(".txt");
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
 
@@ -1161,10 +1171,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		for (var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
-				if (f.getName().endsWith(".tx")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);
 				}
-				if (f.getName().endsWith(".txt")) {
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
 					comment = readJsonObject(f.getAbsolutePath());
 				}
 			}

@@ -718,7 +718,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-
 	private boolean checkAndFlagCreateFields() {
 		var flag = checkAndFlagCommonFields();
 

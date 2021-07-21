@@ -60,6 +60,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SECONDS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_HOURS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_MINUTES;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_SECONDS;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSACTION_FEE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_ACCEPT_FROM_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_ACCEPT_TO_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_FROM_ACCOUNT;
@@ -558,6 +559,15 @@ public class CreatePanePage {
 		}
 		return this;
 
+	}
+
+	public CreatePanePage setTransactionFee(double transactionFee) {
+		Node n = driver.find(CREATE_TRANSACTION_FEE);
+		assert n instanceof TextField;
+		((TextField) n).setText(Double.toString(transactionFee));
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		return this;
 	}
 
 	public enum OperationType {
