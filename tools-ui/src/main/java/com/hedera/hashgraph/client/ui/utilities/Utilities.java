@@ -114,12 +114,18 @@ public class Utilities {
 	 * @return true if the string can be parsed to an account
 	 */
 	public static boolean checkAccount(String accountID) {
+		if (accountID.contains("(")) {
+			return checkAccount(accountID.substring(accountID.indexOf("(") + 1, accountID.indexOf("-")));
+		}
+		if (accountID.contains("-")) {
+			return checkAccount(accountID.substring(0, accountID.indexOf("-")));
+		}
+
 		var tokens = accountID.split("[.]");
 		if (tokens.length > 3 || tokens.length == 2) {
 			return false;
 		}
-		for (var t : tokens
-		) {
+		for (var t : tokens) {
 			if (isNotLong(t)) {
 				return false;
 			}

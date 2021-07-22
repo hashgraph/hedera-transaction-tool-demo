@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.ContractId;
 import com.hedera.hashgraph.sdk.FileId;
@@ -147,6 +148,14 @@ public class Identifier implements Comparable<Identifier> {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
 
+		if (id.contains("(")) {
+			return parse(id.substring(id.indexOf("(") + 1, id.indexOf("-")));
+		}
+
+		if (id.contains("-")) {
+			return parse(id.substring(0, id.indexOf("-")));
+		}
+
 		if (!id.contains(".")) {
 			return new Identifier(0, 0, componentToLong(id));
 		}
@@ -201,7 +210,6 @@ public class Identifier implements Comparable<Identifier> {
 		return realmNum >= 0 && shardNum >= 0 && accountNum > 0;
 	}
 
-
 	public AccountId asAccount() {
 		return new AccountId(shardNum, realmNum, accountNum);
 	}
@@ -216,6 +224,10 @@ public class Identifier implements Comparable<Identifier> {
 
 	public String toReadableString() {
 		return String.format("%d.%d.%d", shardNum, realmNum, accountNum);
+	}
+
+	public String toNicknameAndChecksum(JsonObject accounts) {
+		return CommonMethods.nicknameOrNumber(this, accounts);
 	}
 
 	@Override

@@ -362,23 +362,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				acceptToAccountButton, errorInvalidToAccount);
 		toTransferTable.prefWidthProperty().bind(toHBox.widthProperty());
 		toTransferTable.prefHeightProperty().bind(toTransferTable.heightProperty().multiply(.4));
-
-		setupTextListener(transferFromAccountIDTextField, transferFromAmountTextField);
-
-		setupTextListener(transferToAccountIDTextField, transferToAmountTextField);
+		transferFromAmountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(transferFromAmountTextField, newValue, "\\d*",
+						"[^\\d.]"));
+		transferToAmountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixTimeTextField(transferToAmountTextField, newValue, "\\d*",
+						"[^\\d.]"));
 
 		BooleanProperty transferBoolean = new SimpleBooleanProperty();
 		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
 
 		invalidTransferList.visibleProperty().bind(transferBoolean);
-	}
-
-	private void setupTextListener(TextField accountTextField, TextField amountTextField) {
-		accountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(accountTextField, newValue, "\\d*", "[^\\d.]"));
-
-		amountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(amountTextField, newValue, "\\d*", "[^\\d.]"));
 	}
 
 	private void setupCreateFields() {
@@ -698,7 +692,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		try {
 			var tx = new ToolCryptoCreateTransaction(input);
-			displayAndLogInformation(TRANSACTION_CREATED_MESSAGE);
+			displayAndLogInformation("Create Account " + TRANSACTION_CREATED_MESSAGE);
 			return getUserCommentsTransactionPair(tx);
 		} catch (HederaClientException e) {
 			logger.error(e);
@@ -744,7 +738,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		try {
 			var input = buildJsonInput();
 			var tx = new ToolCryptoUpdateTransaction(input);
-			displayAndLogInformation(TRANSACTION_CREATED_MESSAGE);
+			displayAndLogInformation("Update Account " + TRANSACTION_CREATED_MESSAGE);
 			return getUserCommentsTransactionPair(tx);
 		} catch (HederaClientException e) {
 			logger.error(e);
@@ -759,7 +753,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		try {
 			if (!"".equals(updateAccountID.getText())) {
 				var account = Identifier.parse(updateAccountID.getText());
-				updateAccountID.setText(account.toReadableString());
+				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 			}
 		} catch (Exception e) {
 			invalidUpdateAccountToUpdate.setVisible(true);
@@ -833,7 +827,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 		var input = buildJsonInput();
 		var tx = new ToolTransferTransaction(input);
-		displayAndLogInformation(TRANSACTION_CREATED_MESSAGE);
+		displayAndLogInformation("Transfer " + TRANSACTION_CREATED_MESSAGE);
 		return getUserCommentsTransactionPair(tx);
 	}
 
@@ -872,8 +866,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		if (event.getCode() == KeyCode.ENTER) {
 			if (checkAccount(start.getText())) {
-				var id = Identifier.parse(start.getText());
-				start.setText(id.toReadableString());
+				var id = Identifier.parse(start.getText()).toNicknameAndChecksum(controller.getAccountsList());
+				start.setText(id);
 				start.setStyle(null);
 				start.setStyle(START_STYLE);
 				errorLabel.setVisible(false);
@@ -1451,7 +1445,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			var jsonArray = new JsonArray();
 			for (var a : transfers) {
 				var accountAmountPair = new JsonObject();
-				accountAmountPair.add(ACCOUNT, new Identifier(a.getAccountIDAsAccountID()).asJSON());
+				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
 				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
 				jsonArray.add(accountAmountPair);
 			}
@@ -1919,7 +1913,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				var account = textField.getText();
 				try {
 					var id = Identifier.parse(account);
-					textField.setText(id.toReadableString());
+					textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
 					// in order to make this generic.
 					if (updateAccountVBox.isVisible()) {
 						findAccountInfoAndPreloadFields();
@@ -1945,7 +1939,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 			var account = textField.getText();
 			var id = Identifier.parse(account);
-			textField.setText(id.toReadableString());
+			textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
 			// in order to make this generic.
 			if (updateAccountVBox.isVisible()) {
 				findAccountInfoAndPreloadFields();
@@ -2090,7 +2084,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		nanosField.setText("000000000");
 		datePicker.setValue(null);
 		feePayerAccountField.clear();
-		nodeAccountField.setText(controller.getDefaultNodeID());
+		final var defaultNodeID =
+				Identifier.parse(controller.getDefaultNodeID()).toNicknameAndChecksum(controller.getAccountsList());
+		nodeAccountField.setText(defaultNodeID);
 		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
 		setupHbarNumberField(transactionFee);
 		memoField.clear();

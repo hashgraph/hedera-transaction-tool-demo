@@ -81,6 +81,7 @@ import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
@@ -836,5 +837,15 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	public Map<String, Path> getPubFiles() {
 		return keyStructureUtility.getPubFiles();
+	}
+
+	public JsonObject getAccountsList() {
+		JsonObject object = new JsonObject();
+		try {
+			object = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+		return object;
 	}
 }
