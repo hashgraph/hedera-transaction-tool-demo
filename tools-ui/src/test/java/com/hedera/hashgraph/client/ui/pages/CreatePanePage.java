@@ -55,6 +55,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_INITIAL_BALANCE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MAIN_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MEMO_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MINUTES;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NANOS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SECONDS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_HOURS;
@@ -565,6 +566,15 @@ public class CreatePanePage {
 		Node n = driver.find(CREATE_TRANSACTION_FEE);
 		assert n instanceof TextField;
 		((TextField) n).setText(Double.toString(transactionFee));
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setNanos(String nanosString) {
+		Node n = driver.find(CREATE_NANOS);
+		assert n instanceof TextField;
+		((TextField)n).setText(nanosString);
 		driver.clickOn(n);
 		driver.press(KeyCode.ENTER);
 		return this;

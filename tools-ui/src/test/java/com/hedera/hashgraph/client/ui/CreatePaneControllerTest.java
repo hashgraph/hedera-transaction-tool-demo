@@ -103,6 +103,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_LOCAL_TIME_LABEL;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MAIN_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MEMO_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MINUTES;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NANOS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SECONDS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_EXPIRATION_VBOX;
@@ -481,11 +482,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(localDateTime.getMonth(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getMonth());
 		assertEquals(localDateTime.getYear(), ((DatePicker) find(CREATE_DATE_PICKER)).getValue().getYear());
 
-		assertEquals(localDateTime.getHour(), Long.parseLong(((TextField) find(CREATE_HOURS)).getText()));
-		assertEquals(localDateTime.getMinute(), Long.parseLong(((TextField) find(CREATE_MINUTES)).getText()));
-		assertTrue(
-				Math.abs(localDateTime.getSecond() - Long.parseLong(
-						((TextField) find(CREATE_SECONDS)).getText())) <= 2);
+		final var textFieldHours = (TextField) find(CREATE_HOURS);
+		final var textFieldMinutes = (TextField) find(CREATE_MINUTES);
+		final var textFieldSeconds = (TextField) find(CREATE_SECONDS);
+		final var textFieldNanos = (TextField) find(CREATE_NANOS);
+
+		assertEquals(localDateTime.getHour(), Long.parseLong(textFieldHours.getText()));
+		assertEquals(localDateTime.getMinute(), Long.parseLong(textFieldMinutes.getText()));
+		assertTrue(Math.abs(localDateTime.getSecond() - Long.parseLong(textFieldSeconds.getText())) <= 2);
+		assertTrue(Long.parseLong(textFieldNanos.getText()) > 0);
 	}
 
 	@Test
@@ -551,7 +556,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setComment("this is a comment that will go with the transaction")
-				.setDate(datePickerFormat.format(date));
+				.setDate(datePickerFormat.format(date))
+				.setNanos("123456789");
 
 		assertTrue(find(CREATE_LOCAL_TIME_LABEL).isVisible());
 		logger.info("CREATE: Local date label =>>> {}", dateLabel.getText());
@@ -604,7 +610,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertNotNull(toolTransaction);
 
-
 		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
@@ -614,12 +619,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
 		assertEquals(123456789, toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
 
-
 		assertEquals(new Identifier(0, 0, 1009).asAccount(),
 				toolTransaction.getTransactionId().accountId);
 
 		assertEquals(transactionValidStart.getTime() / 1000,
 				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
+
+		assertEquals(123456789, toolTransaction.getTransactionId().validStart.getNano());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 

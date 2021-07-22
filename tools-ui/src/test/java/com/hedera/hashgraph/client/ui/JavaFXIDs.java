@@ -93,6 +93,7 @@ public class JavaFXIDs {
 	public final static String CREATE_HOURS = "#hourField";
 	public final static String CREATE_MINUTES = "#minuteField";
 	public final static String CREATE_SECONDS = "#secondsField";
+	public final static String CREATE_NANOS = "#nanosField";
 	public final static String CREATE_SYSTEM_HOURS = "#hourFieldSystem";
 	public final static String CREATE_SYSTEM_MINUTES = "#minuteFieldSystem";
 	public final static String CREATE_SYSTEM_SECONDS = "#secondsFieldSystem";

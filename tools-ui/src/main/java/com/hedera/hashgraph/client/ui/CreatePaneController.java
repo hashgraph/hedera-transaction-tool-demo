@@ -600,7 +600,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				return;
 			}
 			if (date.getValue() != null) {
-				var instant = getDate(date, hour, minute, seconds, ZoneId.of(zone.getID())).toInstant();
+				var instant = getDate(date, hour, minute, seconds, ZoneId.of(zone.getID())).asInstant();
 				var ldt = LocalDateTime.ofInstant(instant, ZoneId.of(chooser.getText()));
 				date.setValue(ldt.toLocalDate());
 				hour.setText(String.valueOf(ldt.getHour()));
@@ -912,8 +912,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void cleanAllTransferFields() {
 
-		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField, transactionFee);
+		cleanCommonFields();
 		createCommentsTextArea.clear();
 
 		toTransferTable.getItems().clear();
@@ -1063,8 +1062,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// region SYSTEM
 	public void cleanAllSystemFields() {
-		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField, transactionFee);
+		cleanCommonFields();
 		hourFieldSystem.setText("01");
 		minuteFieldSystem.setText("00");
 		secondsField.setText("00");
@@ -1136,8 +1134,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * Reset the form
 	 */
 	public void cleanAllFileUpdateContentsFields() {
-		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField, transactionFee);
+		cleanCommonFields();
 		updateFileID.clear();
 		contentsLink.setText("");
 		contentsLink.setVisible(false);
@@ -1236,9 +1233,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		outputObject.add("feePayerAccountId", Identifier.parse(feePayerAccountField.getText()).asJSON());
 		outputObject.add("nodeID", Identifier.parse(nodeAccountField.getText()).asJSON());
 		outputObject.addProperty("chunkSize", Integer.parseInt(chunkSizeTextField.getText()));
-		outputObject.add("firsTransactionValidStart",
-				new Timestamp(getDate(datePicker, hourField, minuteField, secondsField,
-						ZoneId.of(timeZone.getID())).toInstant()).asJSON());
+		final var date = getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
+		date.plusNanos(Integer.parseInt(nanosField.getText()));
+		outputObject.add("firsTransactionValidStart", date.asJSON());
 		outputObject.addProperty("validIncrement", Integer.parseInt(intervalTextField.getText()));
 		outputObject.addProperty("transactionValidDuration", controller.getTxValidDuration());
 		outputObject.addProperty("memo", memoField.getText() == null ? "" : memoField.getText());
@@ -1374,12 +1371,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private JsonObject buildJsonInput() {
 		var input = new JsonObject();
 		var transactionValidStart =
-				getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
+				getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID())).plusNanos(
+						Integer.parseInt(nanosField.getText()));
 
 		// Common elements
 		// Transaction valid start
-		input.addProperty(TRANSACTION_VALID_START_FIELD_NAME,
-				new Timestamp(transactionValidStart.toInstant()).asRFCString());
+		input.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
 
 		// memo field
 		if (!"".equals(memoField.getText())) {
@@ -1475,9 +1472,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Expiration time
 		if (datePickerSystem != null) {
-			input.addProperty(EXPIRATION_DATE_TIME, new Timestamp(
+			input.addProperty(EXPIRATION_DATE_TIME,
 					getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-							ZoneId.of(timeZoneSystem.getID())).toInstant()).asRFCString());
+							ZoneId.of(timeZoneSystem.getID())).asRFCString());
 		}
 		return input;
 	}
@@ -1692,12 +1689,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var answer = true;
 		var date = getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
 		var now = new Date();
-		var millis = date.getTime() - now.getTime();
-		if (millis / 1000 < 120) {
+		var secs = date.getSeconds() - now.getTime() / 1000;
+		if (secs < 120) {
 			answer = PopupMessage.display("Warning", String.format(
 					"The transaction will expire in %d seconds. This might not be enough time to sign, collate, and " +
 							"submit it",
-					millis / 1000), true,
+					secs / 1000), true,
 					"CONTINUE",
 					"CANCEL");
 
@@ -1760,6 +1757,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			this.hourField.setText(String.format("%02d", zonedDateTime.getHour()));
 			this.minuteField.setText(String.format("%02d", zonedDateTime.getMinute()));
 			this.secondsField.setText(String.format("%02d", zonedDateTime.getSecond()));
+			this.nanosField.setText(String.format("%09d", now.getNano()));
 			datePicker.setValue(zonedDateTime.toLocalDate());
 			// Also set the expiration date for System Modify at the same time
 			final var zonedDateTimeSystem = now.atZone(ZoneId.of(timeZoneSystem.getID()));
@@ -2069,15 +2067,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanFields() {
-		cleanCommonFields(hourField, minuteField, secondsField, datePicker, feePayerAccountField, nodeAccountField,
-				memoField, transactionFee);
-
+		cleanCommonFields();
 		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		createSignatureRequired.setSelected(false);
 		updateReceiverSignatureRequired.setSelected(false);
 		createCommentsTextArea.clear();
-		createInitialBalance.clear();
+		createInitialBalance.setText("0");
 		setupNewKeyObject();
 
 		createNewKey.setContent(new HBox());
@@ -2087,17 +2083,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateNewKey.setVisible(false);
 	}
 
-	private void cleanCommonFields(TextField hour, TextField minute, TextField seconds, DatePicker date,
-			TextField feePayer, TextField node, TextArea memo, TextField transactionFee) {
-		hour.setText(String.format("%02d", controller.getDefaultHours()));
-		minute.setText(String.format("%02d", controller.getDefaultMinutes()));
-		seconds.setText(String.format("%02d", controller.getDefaultSeconds()));
-		date.setValue(null);
-		feePayer.clear();
-		node.setText(controller.getDefaultNodeID());
+	private void cleanCommonFields() {
+		hourField.setText(String.format("%02d", controller.getDefaultHours()));
+		minuteField.setText(String.format("%02d", controller.getDefaultMinutes()));
+		secondsField.setText(String.format("%02d", controller.getDefaultSeconds()));
+		nanosField.setText("000000000");
+		datePicker.setValue(null);
+		feePayerAccountField.clear();
+		nodeAccountField.setText(controller.getDefaultNodeID());
 		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
 		setupHbarNumberField(transactionFee);
-		memo.clear();
+		memoField.clear();
 		createUTCTimeLabel.setText("");
 	}
 
@@ -2126,14 +2122,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		label.setText(dateTimeFormatter.format(transactionValidStart.toInstant()) + " Coordinated Universal Time");
 	}
 
-	private Date getDate(DatePicker dates, TextField hours, TextField minutes, TextField seconds, ZoneId zoneId) {
+	private Timestamp getDate(DatePicker dates, TextField hours, TextField minutes, TextField seconds, ZoneId zoneId) {
 		var hour = Integer.parseInt(hours.getText());
 		var minute = Integer.parseInt(minutes.getText());
 		var second = Integer.parseInt(seconds.getText());
 		var localDateTime = LocalDateTime.of(dates.getValue() != null ? dates.getValue() :
 				LocalDate.now(), LocalTime.of(hour, minute, second));
 
-		return Date.from(localDateTime.atZone(zoneId).toInstant());
+		return new Timestamp(localDateTime.atZone(zoneId).toInstant());
 	}
 
 	private void setupNumberField(TextField timeField, int limit) {
