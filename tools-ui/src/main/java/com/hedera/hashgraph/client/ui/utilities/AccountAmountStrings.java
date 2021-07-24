@@ -20,10 +20,7 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.json.Identifier;
-import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.proto.AccountID;
 
 
 public class AccountAmountStrings {

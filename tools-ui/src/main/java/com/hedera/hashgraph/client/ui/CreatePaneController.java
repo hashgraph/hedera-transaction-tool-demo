@@ -160,6 +160,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String MENU_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
+	public static final String FILE_ID_PROPERTIES = "fileID";
+	public static final String FILENAME_PROPERTY = "filename";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
+	public static final String NODE_ID_PROPERTIES = "nodeID";
+	public static final String CHUNK_SIZE_PROPERTIES = "chunkSize";
+	public static final String FIRS_TRANSACTION_VALID_START_PROPERTY = "firsTransactionValidStart";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 
@@ -1221,19 +1231,18 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// setup json file
 		var outputObject = new JsonObject();
-		outputObject.addProperty("filename", contents.getName());
-		outputObject.add("fileID", Identifier.parse(updateFileID.getText()).asJSON());
-		outputObject.add("feePayerAccountId", Identifier.parse(feePayerAccountField.getText()).asJSON());
-		outputObject.add("nodeID", Identifier.parse(nodeAccountField.getText()).asJSON());
-		outputObject.addProperty("chunkSize", Integer.parseInt(chunkSizeTextField.getText()));
+		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
+		outputObject.add(FILE_ID_PROPERTIES, Identifier.parse(updateFileID.getText()).asJSON());
+		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, Identifier.parse(feePayerAccountField.getText()).asJSON());
+		outputObject.add(NODE_ID_PROPERTIES, Identifier.parse(nodeAccountField.getText()).asJSON());
+		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
 		final var date = getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
 		date.plusNanos(Integer.parseInt(nanosField.getText()));
-		outputObject.add("firsTransactionValidStart", date.asJSON());
-		outputObject.addProperty("validIncrement", Integer.parseInt(intervalTextField.getText()));
-		outputObject.addProperty("transactionValidDuration", controller.getTxValidDuration());
-		outputObject.addProperty("memo", memoField.getText() == null ? "" : memoField.getText());
-		outputObject.addProperty("transactionFee",
-				Long.parseLong(stripHBarFormat(transactionFee.getText())));
+		outputObject.add(FIRS_TRANSACTION_VALID_START_PROPERTY, date.asJSON());
+		outputObject.addProperty(VALID_INCREMENT_PROPERTY, Integer.parseInt(intervalTextField.getText()));
+		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
+		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
+		outputObject.addProperty(TRANSACTION_FEE_PROPERTY, Long.parseLong(stripHBarFormat(transactionFee.getText())));
 
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
@@ -2339,9 +2348,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			throw new HederaClientException("Cannot delete directory", e.getCause());
 		}
 
-		if (details.has("fileID")) {
+		if (details.has(FILE_ID_PROPERTIES)) {
 			updateFileID.setText(
-					Identifier.parse(details.get("fileID").getAsJsonObject()).toNicknameAndChecksum(
+					Identifier.parse(details.get(FILE_ID_PROPERTIES).getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
 		if (details.has("feePayerAccountId")) {
@@ -2349,25 +2358,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					Identifier.parse(details.get("feePayerAccountId").getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
-		if (details.has("nodeID")) {
+		if (details.has(NODE_ID_PROPERTIES)) {
 			nodeAccountField.setText(
-					Identifier.parse(details.get("nodeID").getAsJsonObject()).toNicknameAndChecksum(
+					Identifier.parse(details.get(NODE_ID_PROPERTIES).getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
-		if (details.has("chunkSize")) {
-			chunkSizeTextField.setText(String.valueOf(details.get("chunkSize").getAsInt()));
+		if (details.has(CHUNK_SIZE_PROPERTIES)) {
+			chunkSizeTextField.setText(String.valueOf(details.get(CHUNK_SIZE_PROPERTIES).getAsInt()));
 		}
-		if (details.has("firsTransactionValidStart")) {
-			setNowTime(new Timestamp(details.get("firsTransactionValidStart").getAsJsonObject()).asInstant());
+		if (details.has(FIRS_TRANSACTION_VALID_START_PROPERTY)) {
+			setNowTime(new Timestamp(details.get(FIRS_TRANSACTION_VALID_START_PROPERTY).getAsJsonObject()).asInstant());
 		}
-		if (details.has("validIncrement")) {
-			intervalTextField.setText(String.valueOf(details.get("validIncrement").getAsInt()));
+		if (details.has(VALID_INCREMENT_PROPERTY)) {
+			intervalTextField.setText(String.valueOf(details.get(VALID_INCREMENT_PROPERTY).getAsInt()));
 		}
-		if (details.has("memo")) {
-			memoField.setText(details.get("memo").getAsString());
+		if (details.has(MEMO_PROPERTY)) {
+			memoField.setText(details.get(MEMO_PROPERTY).getAsString());
 		}
-		if (details.has("transactionFee")) {
-			transactionFee.setText(Utilities.setCurrencyFormat(details.get("transactionFee").getAsLong()));
+		if (details.has(TRANSACTION_FEE_PROPERTY)) {
+			transactionFee.setText(Utilities.setCurrencyFormat(details.get(TRANSACTION_FEE_PROPERTY).getAsLong()));
 		}
 	}
 

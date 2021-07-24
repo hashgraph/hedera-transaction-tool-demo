@@ -23,24 +23,14 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -59,6 +49,7 @@ public class Utilities {
 
 	private static final Logger logger = LogManager.getLogger(Utilities.class);
 	public static final String RED_BORDER_STYLE = "-fx-border-color: red";
+	public static final String HBAR_STRING = "\u0127";
 
 	private Utilities() {
 		throw new IllegalStateException("Utility class");
@@ -150,15 +141,15 @@ public class Utilities {
 		var amountTinyBars = (double) (amount % 100000000);
 
 		if (amount % 100000000 == 0) {
-			return formatInt.format(amountHBars).trim() + " \u0127";
+			return formatInt.format(amountHBars).trim() + " " + HBAR_STRING;
 		} else {
-			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars) + " \u0127";
+			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars) + " " + HBAR_STRING;
 		}
 	}
 
 	public static String setCurrencyFormat(long amount) {
 		var currency = setHBarFormat(amount);
-		return currency.replace(" \u0127", "");
+		return currency.replace(" " + HBAR_STRING, "");
 	}
 
 	public static String stripHBarFormat(String hBars) {
@@ -167,7 +158,7 @@ public class Utilities {
 		}
 
 		var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
-		var amount = Long.parseLong(tiny.replace("\u0127", "")
+		var amount = Long.parseLong(tiny.replace(HBAR_STRING, "")
 				.replace(".", "")
 				.replace(" ", ""));
 		return String.valueOf(amount);
@@ -181,7 +172,7 @@ public class Utilities {
 	 * @return the number of Hbars represented by the string
 	 */
 	public static Hbar string2Hbar(String hBars) {
-		var bars = hBars.replace(" ", "").replace("\u0127", "");
+		var bars = hBars.replace(" ", "").replace(HBAR_STRING, "");
 		return Hbar.from(BigDecimal.valueOf(Double.parseDouble(bars)));
 	}
 
@@ -326,62 +317,4 @@ public class Utilities {
 		}
 	}
 
-	/**
-	 * Creates an "Encrypting..." progress popup
-	 *
-	 * @param bar
-	 * 		a progress bar that is linked to the task
-	 * @param cancelButton
-	 * 		a button that cancels the task
-	 * @return a popup stage.
-	 */
-	public static Stage setupProgressPopup(ProgressBar bar, Button cancelButton) {
-		VBox layout = new VBox();
-		layout.setAlignment(Pos.CENTER);
-		layout.setSpacing(10);
-		layout.setPadding(new Insets(20, 20, 20, 20));
-		layout.setMaxWidth(400);
-
-		Stage window = new Stage();
-
-		window.initModality(Modality.APPLICATION_MODAL);
-		window.setTitle("Encrypting");
-
-		window.sizeToScene();
-		window.setWidth(450);
-
-
-		Label label1 = new Label();
-		label1.setText("Encrypting tasks");
-		label1.setStyle("-fx-font-size: 20");
-
-		Label label2 = new Label("The recovery phrase is being encrypted. This might take a few minutes.");
-		label2.setWrapText(true);
-		label2.setStyle("-fx-font-size: 16");
-
-		HBox box = new HBox();
-		box.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		box.setPrefHeight(Region.USE_COMPUTED_SIZE);
-		box.setAlignment(Pos.CENTER);
-		box.getChildren().addAll(label2);
-
-		cancelButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; " +
-						"-fx-border-radius: 10; -fx-background-radius: 10;");
-		cancelButton.setMinWidth(200);
-
-		bar.setPrefWidth(375);
-
-		layout.getChildren().addAll(label1, box, bar, cancelButton);
-
-		Scene scene = new Scene(layout);
-
-		scene.getStylesheets().add("tools.css");
-
-		window.setScene(scene);
-
-		window.show();
-
-		return window;
-	}
 }
