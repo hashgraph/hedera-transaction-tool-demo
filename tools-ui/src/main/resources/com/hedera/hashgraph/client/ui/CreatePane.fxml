@@ -46,12 +46,22 @@
 			<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction" prefWidth="300.0" style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;" />
 			<Region HBox.hgrow="ALWAYS" />
 			<HBox fx:id="createChoiceHBox" prefHeight="100.0" prefWidth="200.0" />
+			<HBox fx:id="browseToTransactionHBox" alignment="CENTER" spacing="2.0">
+				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false" onAction="#loadFormFromTransaction" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="Browse" />
+				<Button fx:id="browseTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
+					<graphic>
+						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+							<Image url="@../../../../../icons/helpIcon.png" />
+						</ImageView>
+					</graphic>
+					<padding>
+						<Insets bottom="7.0" />
+					</padding>
+				</Button>
+			</HBox>
 			<VBox.margin>
 				<Insets bottom="10.0" left="15.0" right="15.0" />
 			</VBox.margin>
-			<padding>
-				<Insets right="20.0" />
-			</padding>
 		</HBox>
 		<ScrollPane fx:id="createScrollPane" fitToHeight="true" fitToWidth="true" style="-fx-background-color: white; -fx-border-color: white;">
 			<VBox spacing="20.0" style="-fx-background-color: white; -fx-border-color: white;">
@@ -418,12 +428,19 @@
 						</HBox>
 					</VBox>
 				</VBox>
+				<HBox alignment="CENTER_RIGHT">
+					<padding>
+						<Insets right="15.0" />
+					</padding>
+					<Button fx:id="resetFormButton" mnemonicParsing="false" onAction="#cleanForm" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9bfd; -fx-text-fill: #0B9DFD; -fx-border-radius: 10; -fx-background-radius: 10;" text="RESET FORM" textAlignment="CENTER" />
+				</HBox>
 				<padding>
 					<Insets top="15.0" />
 				</padding>
 			</VBox>
 		</ScrollPane>
 		<TextField fx:id="keyLoadingField" maxHeight="1.0" minHeight="1.0" prefHeight="1.0" style="-fx-background-color: #0b9dfd;" visible="false" />
+				<TextField fx:id="loadTransactionTextField" maxHeight="1.0" minHeight="1.0" onKeyReleased="#loadFormFromTransactionTest" prefHeight="1.0" />
 		<padding>
 			<Insets top="20.0" />
 		</padding>

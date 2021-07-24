@@ -202,6 +202,14 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transaction;
 	}
 
+	public TransactionType getTransactionType() {
+		return transactionType;
+	}
+
+	public void setTransactionType(TransactionType transactionType) {
+		this.transactionType = transactionType;
+	}
+
 	@Override
 	public byte[] sign(PrivateKey key) throws HederaClientRuntimeException {
 		var signedTransaction = transaction.sign(key);
@@ -445,13 +453,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction != null) ? transaction.toBytes() : new byte[0];
 	}
 
-	public TransactionType getTransactionType() {
-		return transactionType;
-	}
-
-	public void setTransactionType(TransactionType transactionType) {
-		this.transactionType = transactionType;
-	}
 
 	/**
 	 * Uses a verified json input to build a transaction

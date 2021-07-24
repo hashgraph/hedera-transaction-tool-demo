@@ -493,10 +493,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getLastBrowsedDirectory();
 	}
 
-	public void setLastTransactionsDirectory(File directory) {
-		properties.setLastBrowsedDirectory(directory);
-	}
-
 	public String getPreferredStorageDirectory() {
 		return properties.getPreferredStorageDirectory();
 	}
@@ -847,5 +843,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 		}
 		return object;
+	}
+
+	public void setLastBrowsedDirectory(File file) {
+		if (file.isDirectory()) {
+			properties.setLastBrowsedDirectory(file);
+		}
+		if (file.isFile()) {
+			properties.setLastBrowsedDirectory(file.getParentFile());
+		}
 	}
 }

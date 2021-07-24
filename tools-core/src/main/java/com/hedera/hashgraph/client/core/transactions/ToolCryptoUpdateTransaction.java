@@ -80,6 +80,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return receiverSignatureRequired;
 	}
 
+	public Identifier getAccount() {
+		return account;
+	}
+
 	@Override
 	public boolean checkInput(JsonObject input) {
 		var answer = super.checkInput(input);

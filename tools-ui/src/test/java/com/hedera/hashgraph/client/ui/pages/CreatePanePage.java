@@ -97,6 +97,16 @@ public class CreatePanePage {
 		return this;
 	}
 
+	public CreatePanePage loadTransaction(String path) {
+		Node n = driver.find("#loadTransactionTextField");
+		assert n instanceof TextField;
+		((TextField) n).setText(path);
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		driver.release(KeyCode.ENTER);
+		return this;
+	}
+
 	public CreatePanePage setComment(String text) {
 		driver.clickOn(CREATE_COMMENTS_AREA);
 		driver.write(text);
@@ -574,7 +584,7 @@ public class CreatePanePage {
 	public CreatePanePage setNanos(String nanosString) {
 		Node n = driver.find(CREATE_NANOS);
 		assert n instanceof TextField;
-		((TextField)n).setText(nanosString);
+		((TextField) n).setText(nanosString);
 		driver.clickOn(n);
 		driver.press(KeyCode.ENTER);
 		return this;

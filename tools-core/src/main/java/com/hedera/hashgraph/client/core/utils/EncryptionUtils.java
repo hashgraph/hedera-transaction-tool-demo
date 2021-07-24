@@ -123,7 +123,7 @@ public class EncryptionUtils {
 	 * 		a key
 	 * @return a json object representing the key
 	 */
-	public static JsonObject keyToJson(Key keyObject) throws IOException {
+	public static JsonObject keyToJson(Key keyObject){
 		var jsonObject = new JsonObject();
 
 		if (keyObject instanceof PublicKey) {
@@ -154,7 +154,7 @@ public class EncryptionUtils {
 	 * 		a key list key
 	 * @return a json object representing the threshold key
 	 */
-	private static JsonArray keyListToJsonArray(KeyList keyList) throws IOException {
+	private static JsonArray keyListToJsonArray(KeyList keyList) {
 
 		var jsonArray = new JsonArray();
 		for (var key : keyList) {
@@ -170,7 +170,7 @@ public class EncryptionUtils {
 	 * 		a threshold key
 	 * @return a json object representing the threshold key
 	 */
-	private static JsonObject keyListToThreshold(KeyList key) throws IOException {
+	private static JsonObject keyListToThreshold(KeyList key) {
 		var jsonObject = new JsonObject();
 		jsonObject.addProperty(THRESHOLD, key.getThreshold());
 		jsonObject.add(KEY_LIST, keyListToJsonArray(key));

@@ -249,7 +249,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertNotNull(find(CREATE_ANCHOR_PANE));
 		assertNotNull(find(CREATE_MAIN_CHOICE_BOX));
 		sleep(THREAD_PAUSE_TIME);
-
 	}
 
 	@Test
