@@ -2353,9 +2353,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					Identifier.parse(details.get(FILE_ID_PROPERTIES).getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
-		if (details.has("feePayerAccountId")) {
+		if (details.has(FEE_PAYER_ACCOUNT_ID_PROPERTY)) {
 			feePayerAccountField.setText(
-					Identifier.parse(details.get("feePayerAccountId").getAsJsonObject()).toNicknameAndChecksum(
+					Identifier.parse(details.get(FEE_PAYER_ACCOUNT_ID_PROPERTY).getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
 		if (details.has(NODE_ID_PROPERTIES)) {
