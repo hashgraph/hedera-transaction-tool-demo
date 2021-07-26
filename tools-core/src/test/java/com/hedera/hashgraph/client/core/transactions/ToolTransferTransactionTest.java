@@ -22,30 +22,33 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
-import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
-import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.AccountInfo;
-import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.PrecheckStatusException;
-import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.ReceiptStatusException;
-import com.hedera.hashgraph.sdk.TransactionReceipt;
-import com.hedera.hashgraph.sdk.TransactionResponse;
+import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStoreException;
-import java.util.concurrent.TimeoutException;
+import java.time.Duration;
+import java.util.Collections;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCA;
 import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,11 +56,49 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
-	private final long sender = 2;
-	private final long receiver = 50;
+	private static final Logger logger = LogManager.getLogger(ToolTransferTransactionTest.class);
+
+	@BeforeEach
+	void setUp() throws IOException {
+		final var storage = new File(DEFAULT_STORAGE);
+		if (storage.exists()) {
+			FileUtils.deleteDirectory(storage);
+		}
+
+		if (storage.mkdirs()) {
+			logger.info("Tools folder created");
+		}
+
+		if (new File(DEFAULT_KEYS).mkdirs()) {
+			logger.info("Keys folder created");
+		}
+		final var files = new File("src/test/resources/PublicKeys").listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(PUB_EXTENSION));
+		assert files != null;
+		for (File file : files) {
+			final var destFile = new File(DEFAULT_KEYS, file.getName());
+			if (!destFile.exists()) {
+				FileUtils.copyFile(file, destFile);
+			}
+		}
+		if (new File(DEFAULT_ACCOUNTS).mkdirs()) {
+			logger.info("Keys folder created");
+		}
+		final var accounts = new File("src/test/resources/AccountInfos").listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
+		assert accounts != null;
+		for (File file : accounts) {
+			final var destFile = new File(DEFAULT_ACCOUNTS, file.getName());
+			if (!destFile.exists()) {
+				FileUtils.copyFile(file, destFile);
+			}
+		}
+	}
 
 	@Test
 	void build_test() throws HederaClientException {
+		long sender = 2;
+		long receiver = 50;
 		JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
 
 		ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
@@ -94,32 +135,78 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
-	void receiverRequiredAccounts_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
-			ReceiptStatusException, HederaClientException {
-		var generalPrivateKey = PrivateKey.generate();
-		var generalPublicKey = generalPrivateKey.getPublicKey();
-		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		var keyStore =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+	void receiverSigRequired_test() throws HederaClientException, IOException {
+		var transactionValidStart = new Timestamp(5).asInstant();
+		var transactionId =
+				new TransactionId(new Identifier(0, 0, 2).asAccount(), transactionValidStart);
+
+		var transferTransaction = new TransferTransaction();
+
+		Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
+		transferTransaction.setMaxTransactionFee(new Hbar(1))
+				.setTransactionId(transactionId)
+				.setNodeAccountIds(Collections.singletonList(new Identifier(0, 0, 3).asAccount()))
+				.setTransactionValidDuration(transactionValidDuration);
+
+		// Add transfers
+
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 2).asAccount(), new Hbar(-3));
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 1469).asAccount(), new Hbar(1));
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 1470).asAccount(), new Hbar(2));
+
+		transferTransaction.freeze();
+
+		var transactionBytes = transferTransaction.toBytes();
+		writeBytes("src/test/resources/Files/testTransaction.tx", transactionBytes);
 
 
-		for (int i = 0; i < 2; i++) {
-			TransactionResponse transactionResponse = new AccountCreateTransaction()
-					// The only _required_ property here is `key`
-					.setKey(generalPublicKey)
-					.setInitialBalance(Hbar.fromTinybars(1000000000))
-					.execute(client);
+		var toolTransaction = new ToolTransaction();
+		var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
 
-			// This will wait for the receipt to become available
-			TransactionReceipt receipt = transactionResponse.getReceipt(client);
+		// Accounts 1469 and 1470 have the Receiver Sig Required flag
+		
+		var signers = transaction.getSigningAccounts();
+		assertEquals(3, signers.size());
+		assertTrue(signers.contains(new AccountId(0, 0, 2)));
+		assertTrue(signers.contains(new AccountId(0, 0, 1469)));
+		assertTrue(signers.contains(new AccountId(0, 0, 1470)));
 
-			AccountId newAccountId = receipt.accountId;
-			assert newAccountId != null;
-			AccountInfo info = new AccountInfoQuery().setAccountId(newAccountId).execute(client);
-			writeBytes("src/test/resources/AccountInfos/" + newAccountId + ".info", info.toBytes());
-		}
+		Files.deleteIfExists(Path.of("src/test/resources/Files/testTransaction.tx"));
+	}
 
+	@Test
+	void getSigners_test() throws HederaClientException, IOException {
+		var transactionValidStart = new Timestamp(5).asInstant();
+		var transactionId =
+				new TransactionId(new Identifier(0, 0, 2).asAccount(), transactionValidStart);
+
+		var transferTransaction = new TransferTransaction();
+
+		Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
+		transferTransaction.setMaxTransactionFee(new Hbar(1))
+				.setTransactionId(transactionId)
+				.setNodeAccountIds(Collections.singletonList(new Identifier(0, 0, 3).asAccount()))
+				.setTransactionValidDuration(transactionValidDuration);
+
+		// Add transfers
+
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 2).asAccount(), new Hbar(-3));
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 1057).asAccount(), new Hbar(1));
+		transferTransaction.addHbarTransfer(new Identifier(0, 0, 29255).asAccount(), new Hbar(2));
+
+		transferTransaction.freeze();
+
+		var transactionBytes = transferTransaction.toBytes();
+		writeBytes("src/test/resources/Files/testTransaction.tx", transactionBytes);
+
+
+		var toolTransaction = new ToolTransaction();
+		var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
+
+		var signers = transaction.getSigningAccounts();
+		assertEquals(1, signers.size());
+		assertTrue(signers.contains(new AccountId(0, 0, 2)));
+
+		Files.deleteIfExists(Path.of("src/test/resources/Files/testTransaction.tx"));
 	}
 }
