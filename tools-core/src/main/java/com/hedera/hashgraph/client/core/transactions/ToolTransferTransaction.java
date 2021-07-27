@@ -156,7 +156,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 		try {
 			infos = loadAccountInfos();
 		} catch (HederaClientException | InvalidProtocolBufferException e) {
-			logger.error(e.getMessage());
+			logger.warn("Unable to load account information, some required receiver signatures may be omitted", e);
 		}
 		var accountsSet = super.getSigningAccounts();
 		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
