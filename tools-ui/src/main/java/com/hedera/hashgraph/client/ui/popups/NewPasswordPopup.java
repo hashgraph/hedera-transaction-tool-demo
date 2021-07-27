@@ -64,7 +64,7 @@ public class NewPasswordPopup {
 		Label check1 = new Label("✓");
 		check1.setStyle("-fx-text-fill: green");
 		check1.visibleProperty().bind(
-				Bindings.createBooleanBinding(() -> Status.OK.equals(policy.check(passwordField1.getText()))));
+				Bindings.createBooleanBinding(() -> policy.check(passwordField1.getText()).equals(Status.OK)));
 
 		passwordField1.setOnKeyPressed(event -> {
 			logger.info("Status for {} -> {}", passwordField1.getText(), policy.check(passwordField1.getText()));
@@ -91,7 +91,6 @@ public class NewPasswordPopup {
 				if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
 					window.close();
 				}
-
 			}
 		});
 
