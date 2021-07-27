@@ -21,10 +21,12 @@ package com.hedera.hashgraph.client.ui.popups;
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.input.KeyCode;
@@ -55,19 +57,21 @@ public class NewPasswordPopup {
 		window.sizeToScene();
 		window.setMaxWidth(400);
 
-		var label = new Label("Please enter the new password. The password must be at least 10 characters long.");
-		label.setMaxWidth(360);
-		label.setWrapText(true);
+		var label1 = new Label("Please enter the new password. The password must be at least 10 characters long.");
+		label1.setMaxWidth(360);
+		label1.setWrapText(true);
+
+		var label2 = new Label("Please verify the password");
+		label2.setMaxWidth(360);
+		label2.setWrapText(true);
 
 		var passwordField1 = new PasswordField();
-
 		Label check1 = new Label("✓");
 		check1.setStyle("-fx-text-fill: green");
-		check1.visibleProperty().bind(
-				Bindings.createBooleanBinding(() -> policy.check(passwordField1.getText()).equals(Status.OK)));
+		check1.setVisible(false);
 
 		passwordField1.setOnKeyPressed(event -> {
-			logger.info("Status for {} -> {}", passwordField1.getText(), policy.check(passwordField1.getText()));
+			check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));
 			if (event.getCode().equals(KeyCode.ENTER)) {
 				answer = passwordField1.getText().toCharArray();
 			}
@@ -82,11 +86,9 @@ public class NewPasswordPopup {
 
 		Label check2 = new Label("✓");
 		check2.setStyle("-fx-text-fill: green");
-		check2.visibleProperty().bind(
-				Bindings.createBooleanBinding(
-						() -> check1.isVisible() && passwordField1.getText().equals(passwordField2.getText())));
-
-		passwordField2.setOnKeyPressed(event -> {
+		check2.setVisible(false);
+		passwordField2.setOnKeyReleased(event -> {
+			check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
 			if (event.getCode().equals(KeyCode.ENTER)) {
 				if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
 					window.close();
@@ -102,8 +104,11 @@ public class NewPasswordPopup {
 				Bindings.createBooleanBinding(() -> Status.OK.equals(policy.check(passwordField1.getText()))));
 
 
+		Button continueButton = new Button("CONTINUE");
+		continueButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+
 		var vBox = new VBox();
-		vBox.getChildren().addAll(label, box1, box2);
+		vBox.getChildren().addAll(label1, box1, label2, box2, continueButton);
 		vBox.setSpacing(20);
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
