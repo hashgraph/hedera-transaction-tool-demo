@@ -109,7 +109,8 @@ public class BrowserUtilities {
 
 
 		for (var e : ext) {
-			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(type, String.format("*.%s", e)));
+			fileChooser.getExtensionFilters().add(
+					new FileChooser.ExtensionFilter(String.format("%s [*.%s]", type, e), String.format("*.%s", e)));
 		}
 
 		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));

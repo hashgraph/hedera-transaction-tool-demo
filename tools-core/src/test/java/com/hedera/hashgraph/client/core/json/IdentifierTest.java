@@ -239,4 +239,22 @@ class IdentifierTest {
 		Identifier id2 = new Identifier(1, 2, 3);
 		assertEquals(30817, id2.hashCode());
 	}
+
+	@Test
+	void toNicknameAndChecksum() {
+		JsonObject accounts = new JsonObject();
+		accounts.addProperty("0.0.1", "first");
+		accounts.addProperty("0.0.2", "second");
+		accounts.addProperty("0.0.3", "third");
+		accounts.addProperty("0.0.4", "fourth");
+		accounts.addProperty("0.0.5", "fifth");
+		accounts.addProperty("0.0.6", "sixth");
+
+		var account = Identifier.parse("0.0.3");
+		String accountString = account.toNicknameAndChecksum(accounts);
+		assertEquals("third (0.0.3-tzfmz)", accountString);
+
+		account = Identifier.parse("0.0.78");
+		assertEquals("0.0.78-wjvid", account.toNicknameAndChecksum(accounts));
+	}
 }

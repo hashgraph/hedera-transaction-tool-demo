@@ -55,11 +55,13 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_INITIAL_BALANCE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MAIN_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MEMO_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MINUTES;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NANOS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SECONDS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_HOURS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_MINUTES;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_SYSTEM_SECONDS;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSACTION_FEE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_ACCEPT_FROM_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_ACCEPT_TO_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_FROM_ACCOUNT;
@@ -92,6 +94,16 @@ public class CreatePanePage {
 	public CreatePanePage selectTransaction(String txType) {
 		driver.clickOn(CREATE_MAIN_CHOICE_BOX);
 		driver.clickOn(txType);
+		return this;
+	}
+
+	public CreatePanePage loadTransaction(String path) {
+		Node n = driver.find("#loadTransactionTextField");
+		assert n instanceof TextField;
+		((TextField) n).setText(path);
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		driver.release(KeyCode.ENTER);
 		return this;
 	}
 
@@ -558,6 +570,24 @@ public class CreatePanePage {
 		}
 		return this;
 
+	}
+
+	public CreatePanePage setTransactionFee(double transactionFee) {
+		Node n = driver.find(CREATE_TRANSACTION_FEE);
+		assert n instanceof TextField;
+		((TextField) n).setText(Double.toString(transactionFee));
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setNanos(String nanosString) {
+		Node n = driver.find(CREATE_NANOS);
+		assert n instanceof TextField;
+		((TextField) n).setText(nanosString);
+		driver.clickOn(n);
+		driver.press(KeyCode.ENTER);
+		return this;
 	}
 
 	public enum OperationType {

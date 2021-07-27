@@ -47,7 +47,7 @@ public class Messages {
 			"Your application credentials cannot be verified. You will be prompted to restore your " +
 					"application. You will need your 24 word recovery phrase.";
 	public static final String INITIAL_SETUP_RESET_MESSAGE = "Are you sure you want to reset the application setup?";
-	public static final String TRANSACTION_CREATED_MESSAGE = "Create Account transaction has been successfully created";
+	public static final String TRANSACTION_CREATED_MESSAGE = "transaction has been successfully created";
 	public static final String RESET_PASSWORD_MESSAGE =
 			"The application will close now. Please restart the application manually and go through the initial setup" +
 					" " +

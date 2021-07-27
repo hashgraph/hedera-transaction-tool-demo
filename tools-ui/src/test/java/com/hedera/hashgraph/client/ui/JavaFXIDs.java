@@ -17,6 +17,7 @@
  */
 
 package com.hedera.hashgraph.client.ui;
+
 public class JavaFXIDs {
 	// Initial Startup Window
 	public final static String USERNAME_BUTTON_BAR = "#usernameButtonBar";
@@ -92,10 +93,11 @@ public class JavaFXIDs {
 	public final static String CREATE_HOURS = "#hourField";
 	public final static String CREATE_MINUTES = "#minuteField";
 	public final static String CREATE_SECONDS = "#secondsField";
+	public final static String CREATE_NANOS = "#nanosField";
 	public final static String CREATE_SYSTEM_HOURS = "#hourFieldSystem";
 	public final static String CREATE_SYSTEM_MINUTES = "#minuteFieldSystem";
 	public final static String CREATE_SYSTEM_SECONDS = "#secondsFieldSystem";
-
+	public final static String CREATE_TRANSACTION_FEE = "#transactionFee";
 	public final static String CREATE_INITIAL_BALANCE = "#createInitialBalance";
 	public final static String CREATE_TRANSFER_TO_ACCOUNT = "#transferToAccountIDTextField";
 	public final static String CREATE_TRANSFER_TO_AMOUNT = "#transferToAmountTextField";
@@ -128,8 +130,8 @@ public class JavaFXIDs {
 	public final static String CREATE_TRANSFER_TOTAL_LABEL = "#totalTransferLabel";
 	public final static String CREATE_LOCAL_TIME_LABEL = "#createUTCTimeLabel";
 	public final static String SYSTEM_ENTITY_ID_LABEL = "#entityLabel";
-	public final static String SYSTEM_TIMEZONE_HBOX= "#timeZoneSystemHBox";
-	public final static String SYSTEM_LOCAL_TIME_LABEL="#systemCreateLocalTimeLabel";
+	public final static String SYSTEM_TIMEZONE_HBOX = "#timeZoneSystemHBox";
+	public final static String SYSTEM_LOCAL_TIME_LABEL = "#systemCreateLocalTimeLabel";
 	// Error messages
 	public final static String CREATE_INVALID_DATE = "#invalidDate";
 	public final static String CREATE_INVALID_FEE_PAYER = "#invalidFeePayer";
@@ -155,12 +157,6 @@ public class JavaFXIDs {
 	public final static String CREATE_CREATE_KEY = "#createNewKey";
 
 	public final static String PUBLIC_KEYS_VBOX = "#signingKeysVBox";
-
-	//Sign pane page
-	public final static String BROWSE_FILES_BUTTON = "#browseFilesButton";
-	public final static String HIDDEN_BROWSE_TEXTFIELD = "#hiddenPathSignSelectFolder";
-	public final static String HIDDEN_KEYS_TEXTFIELD = "#hiddenPathSign";
-
 
 	public final static String KEYS_GENERATE_KEYS = "#btnCreateKeys";
 	public final static String KEYS_EXPORT_KEYS = "#btnExportKeys";
@@ -228,13 +224,9 @@ public class JavaFXIDs {
 	public static final String ACCEPT_APP_PASSWORD = "#acceptPasswordButton";
 	public static final String SIGNING_KEYS_VBOX = "#signingKeysVBox";
 
-
 	// load keys
 	public static final String CREATE_EDIT_KEY = "#createKeyButton";
 	public static final String UPDATE_EDIT_KEY = "#updateKeyButton";
-
-
-
 
 	// Time
 	public static final String SET_NOW_BUTTON = "#setNowValidStart";

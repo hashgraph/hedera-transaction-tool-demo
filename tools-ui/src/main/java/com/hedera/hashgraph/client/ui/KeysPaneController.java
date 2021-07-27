@@ -1271,7 +1271,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 
-		controller.setLastTransactionsDirectory(importedKeys.get(0));
+		controller.setLastBrowsedDirectory(importedKeys.get(0));
 		List<File> publicKeys = new ArrayList<>();
 		List<File> privateKeys = new ArrayList<>();
 

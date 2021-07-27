@@ -220,12 +220,8 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			missingThresholds.clear();
 			var keyList = treeToKeyList(treeView.getRoot());
 			if (keyList != null) {
-				try {
-					jsonKey = EncryptionUtils.keyToJson(keyList);
-					window.close();
-				} catch (IOException e) {
-					logger.error(e);
-				}
+				jsonKey = EncryptionUtils.keyToJson(keyList);
+				window.close();
 			} else {
 				PopupMessage.display("Thresholds not set", getErrorMessage(), CONTINUE_MESSAGE);
 			}
