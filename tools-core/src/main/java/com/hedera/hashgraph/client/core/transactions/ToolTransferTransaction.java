@@ -20,16 +20,20 @@ package com.hedera.hashgraph.client.core.transactions;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
@@ -147,10 +152,24 @@ public class ToolTransferTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
+		Map<AccountId, AccountInfo> infos = new HashMap<>();
+		try {
+			infos = loadAccountInfos();
+		} catch (HederaClientException | InvalidProtocolBufferException e) {
+			logger.warn("Unable to load account information, some required receiver signatures may be omitted", e);
+		}
 		var accountsSet = super.getSigningAccounts();
 		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+			final var accountId = entry.getKey().asAccount();
 			if (entry.getValue().toTinybars() < 0) {
-				accountsSet.add(entry.getKey().asAccount());
+				accountsSet.add(accountId);
+				continue;
+			}
+			if (infos.containsKey(accountId)) {
+				var info = infos.get(accountId);
+				if (info.isReceiverSignatureRequired) {
+					accountsSet.add(accountId);
+				}
 			}
 		}
 		return accountsSet;
@@ -168,5 +187,23 @@ public class ToolTransferTransaction extends ToolTransaction {
 		}
 		output.add(TRANSFERS, array);
 		return output;
+	}
+
+	/**
+	 * Load accounts into a map
+	 *
+	 * @return a Map<AccountId, AccountInfo>
+	 */
+	private Map<AccountId, AccountInfo> loadAccountInfos() throws HederaClientException,
+			InvalidProtocolBufferException {
+		Map<AccountId, AccountInfo> map = new HashMap<>();
+		var files = new File(Constants.ACCOUNTS_INFO_FOLDER).listFiles(
+				(dir, name) -> INFO_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert files != null;
+		for (File file : files) {
+			var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
+			map.put(info.accountId, info);
+		}
+		return map;
 	}
 }
