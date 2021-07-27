@@ -66,8 +66,6 @@ import static java.util.Arrays.stream;
 public class RecoverPasswordPaneController {
 
 	private static final Logger logger = LogManager.getLogger(RecoverPasswordPaneController.class);
-	private static final int MIN_PASSWORD_LENGTH = 10;
-	private static final int MAX_PASSWORD_LENGTH = 1024;
 
 	Map<String, String> privateKeysMap = new HashMap<>();
 	Map<Integer, String> indexMap = new HashMap<>();
@@ -149,7 +147,7 @@ public class RecoverPasswordPaneController {
 	}
 
 	private void initializePasswordVBox() {
-		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
+		var policy = new PasswordPolicy(BreachDatabase.top100K(), Constants.MIN_PASSWORD_LENGTH, Constants.MAX_PASSWORD_LENGTH);
 		recoverAppPasswordField.setOnKeyReleased(keyEvent -> {
 			final var length = recoverAppPasswordField.getText().length();
 			recoverCharacterCount.setText(String.valueOf(length));
