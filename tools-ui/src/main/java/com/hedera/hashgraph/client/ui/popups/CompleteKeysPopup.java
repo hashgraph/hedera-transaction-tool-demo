@@ -294,13 +294,22 @@ public class CompleteKeysPopup {
 		var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
 				String.format("Please enter the password for key %s", keyName));
 		char[] password = NewPasswordPopup.display();
+
+		if (password == null || Arrays.equals(password, new char[0])) {
+			PopupMessage.display("Password",
+					String.format("The password for %s has not been changed", FilenameUtils.getBaseName(privateKey)));
+			return;
+		}
+
 		try {
-			Ed25519KeyStore store = new Ed25519KeyStore.Builder().withPassword("fsdfs0".toCharArray()).build();
+			Ed25519KeyStore store = new Ed25519KeyStore.Builder().withPassword(password).build();
 			var index = Ed25519KeyStore.getIndex(privateKey);
 			var version = Ed25519KeyStore.getVersion(privateKey);
 			var hashCode = Ed25519KeyStore.getMnemonicHashCode(privateKey);
 			store.add(keyPair);
 			store.write(privateKey, "Transaction Tool UI", index, version, hashCode);
+			PopupMessage.display("Password",
+					String.format("The password for %s has been changed", FilenameUtils.getBaseName(privateKey)));
 		} catch (KeyStoreException e) {
 			e.printStackTrace();
 		}
