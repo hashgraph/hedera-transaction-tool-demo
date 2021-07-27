@@ -848,8 +848,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public void setLastBrowsedDirectory(File file) {
 		if (file.isDirectory()) {
 			properties.setLastBrowsedDirectory(file);
-		}
-		if (file.isFile()) {
+		} else {
 			properties.setLastBrowsedDirectory(file.getParentFile());
 		}
 	}

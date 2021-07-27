@@ -2228,11 +2228,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void processKey(JsonObject key, ScrollPane keyPane) {
 
-		if (!key.equals(new JsonObject())) {
+		final var emptyKey = new JsonObject();
+		if (!key.equals(emptyKey)) {
 			newKeyJSON = key;
 		}
 
-		if (!key.equals(new JsonObject()) && !key.toString().equals("{\"keyList\":{\"keys\":[]}}")) {
+		if (!key.equals(emptyKey) && !key.toString().equals("{\"keyList\":{\"keys\":[]}}")) {
 			setKeyTreeInBox(key, keyPane);
 		}
 	}
@@ -2312,8 +2313,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				selectTransactionType.setValue("Admin Modify Content");
 				loadSystemTransactionToForm((ToolSystemTransaction) transaction);
 				break;
-			case FILE_UPDATE:
-			case FILE_APPEND:
+			default:
 				PopupMessage.display("Unsupported transaction", "The transaction is not yet supported by the tool.");
 				break;
 		}

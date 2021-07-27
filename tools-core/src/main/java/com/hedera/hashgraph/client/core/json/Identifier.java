@@ -142,6 +142,18 @@ public class Identifier implements Comparable<Identifier> {
 		}
 	}
 
+	/**
+	 * Parses a String into an Identifier.
+	 *
+	 * @param id
+	 * 		a String object that should represent an identifier. The following patterns are allowed:
+	 * 		- "N" where N is a number
+	 * 		- "N1.N2.N3" where N1, N2 and N3 are numbers
+	 * 		- "N1.N2.N3-xxxxx" where where N1, N2 and N3 are numbers and "xxxxx" is the checksum of the entity
+	 * 		- "nickname (N1.N2.N3-xxxxx)" where nickname is a string name assigned to the account, where N1, N2 and N3
+	 * 		are numbers and xxxx is the entity checksum
+	 * @return an Identifier
+	 */
 	public static Identifier parse(final String id) {
 
 		if (id == null || id.isEmpty()) {
