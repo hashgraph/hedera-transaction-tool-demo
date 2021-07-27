@@ -537,7 +537,7 @@ public class SettingsPaneController {
 		}
 		var previous = new File(controller.getPreferredStorageDirectory());
 		var newDir = new File(directory + "/TransactionTools");
-		controller.setLastTransactionsDirectory(newDir);
+		controller.setLastBrowsedDirectory(newDir);
 
 		FileUtils.moveDirectory(previous, newDir);
 		loadStorageTextField.setText(directory + "/TransactionTools");

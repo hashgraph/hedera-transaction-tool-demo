@@ -831,7 +831,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			return new ArrayList<>();
 		}
 
-		controller.setLastTransactionsDirectory(files.get(0));
+		controller.setLastBrowsedDirectory(files.get(0));
 		return files;
 	}
 

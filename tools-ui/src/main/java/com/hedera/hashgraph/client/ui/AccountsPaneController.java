@@ -786,7 +786,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				return;
 			}
 			folder = new File(BrowserUtilities.browseDirectories(directory, controller.getThisPane()));
-			controller.setLastTransactionsDirectory(folder);
+			controller.setLastBrowsedDirectory(folder);
 		}
 
 		var files = folder.listFiles((dir, name) -> name.endsWith(INFO_EXTENSION));
@@ -833,7 +833,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (files == null) {
 			return;
 		}
-		controller.setLastTransactionsDirectory(files.get(0));
+		controller.setLastBrowsedDirectory(files.get(0));
 		importInfoFiles(files);
 
 
