@@ -114,7 +114,7 @@ public class KeysPaneTest extends TestBase {
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-		if (new File(currentRelativePath.toAbsolutePath().toString() + OUTPUT_PATH).mkdirs()) {
+		if (new File(currentRelativePath.toAbsolutePath() + OUTPUT_PATH).mkdirs()) {
 			logger.info("Output path created");
 		}
 
@@ -124,7 +124,7 @@ public class KeysPaneTest extends TestBase {
 		Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 

@@ -75,17 +75,6 @@ public class NewPasswordPopup {
 		check1.setStyle("-fx-text-fill: green");
 		check1.setVisible(false);
 
-		passwordField1.setOnKeyPressed(event -> {
-			check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));
-			if (check1.isVisible()) {
-				passwordField2.setDisable(false);
-			}
-			if (event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(KeyCode.TAB)) {
-				answer = passwordField1.getText().toCharArray();
-				passwordField1.setDisable(true);
-			}
-		});
-
 		HBox box1 = new HBox();
 		box1.setSpacing(10);
 		box1.getChildren().addAll(passwordField1, check1);
@@ -94,14 +83,7 @@ public class NewPasswordPopup {
 		Label check2 = new Label("✓");
 		check2.setStyle("-fx-text-fill: green");
 		check2.setVisible(false);
-		passwordField2.setOnKeyReleased(event -> {
-			check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
-			if (event.getCode().equals(KeyCode.ENTER)) {
-				if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
-					window.close();
-				}
-			}
-		});
+
 
 		HBox box2 = new HBox();
 		box2.setSpacing(10);
@@ -112,19 +94,7 @@ public class NewPasswordPopup {
 		Button cancelButton = new Button("CANCEL");
 		cancelButton.setStyle(WHITE_BUTTON_STYLE);
 
-		continueButton.setOnAction(actionEvent -> {
-			answer = passwordField1.getText().toCharArray();
-			if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
-				window.close();
-			} else {
-				PopupMessage.display("Password mismatch", "The passwords don't match. Please try again.");
-			}
-		});
 
-		cancelButton.setOnAction(actionEvent -> {
-			answer = new char[0];
-			window.close();
-		});
 		var vBox = new VBox();
 		ButtonBar buttonBar = new ButtonBar();
 		buttonBar.getButtons().addAll(cancelButton, continueButton);
@@ -137,6 +107,39 @@ public class NewPasswordPopup {
 		vBox.setSpacing(20);
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
+
+		// region EVENTS
+		passwordField1.setOnKeyPressed(event -> {
+			check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));
+			if (check1.isVisible()) {
+				passwordField2.setDisable(false);
+			}
+			if (event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(KeyCode.TAB)) {
+				answer = passwordField1.getText().toCharArray();
+				passwordField1.setDisable(true);
+			}
+		});
+		passwordField2.setOnKeyReleased(event -> {
+			check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
+			if (event.getCode().equals(KeyCode.ENTER)) {
+				if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
+					window.close();
+				}
+			}
+		});
+		continueButton.setOnAction(actionEvent -> {
+			answer = passwordField1.getText().toCharArray();
+			if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
+				window.close();
+			} else {
+				PopupMessage.display("Password mismatch", "The passwords don't match. Please try again.");
+			}
+		});
+		cancelButton.setOnAction(actionEvent -> {
+			answer = new char[0];
+			window.close();
+		});
+		// endregion
 
 		var scene = new Scene(vBox);
 		scene.getStylesheets().add("tools.css");

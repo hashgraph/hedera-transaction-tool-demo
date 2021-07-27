@@ -39,8 +39,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-
 
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
@@ -256,13 +257,82 @@ public class KeysPanePage {
 
 	public Label getPopupLabel() {
 		VBox vBox = (VBox) getPopupNodes().get(0);
-		for (Node node :
-				vBox.getChildren()) {
+		for (Node node : vBox.getChildren()) {
 			if (node instanceof Label) {
 				return (Label) node;
 			}
 		}
 		return new Label();
+	}
+
+	public List<Label> getPopupLabels() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		return getAllLabels(popupNodes);
+	}
+
+	List<Label> getAllLabels(ObservableList<Node> nodes) {
+		List<Label> labels = new ArrayList<>();
+		for (Node node : nodes) {
+			if (node instanceof HBox) {
+				labels.addAll(getAllLabels(((HBox) node).getChildren()));
+			}
+			if (node instanceof VBox) {
+				labels.addAll(getAllLabels(((VBox) node).getChildren()));
+			}
+			if (node instanceof Label) {
+				labels.add((Label) node);
+			}
+		}
+		return labels;
+	}
+
+	public List<Button> getPopupButtons() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		return getAllButtons(popupNodes);
+	}
+
+	List<Button> getAllButtons(ObservableList<Node> nodes) {
+		List<Button> buttons = new ArrayList<>();
+		for (Node node : nodes) {
+			if (node instanceof HBox) {
+				buttons.addAll(getAllButtons(((HBox) node).getChildren()));
+			}
+			if (node instanceof VBox) {
+				buttons.addAll(getAllButtons(((VBox) node).getChildren()));
+			}
+			if (node instanceof ButtonBar) {
+				buttons.addAll(getAllButtons(((ButtonBar) node).getButtons()));
+			}
+			if (node instanceof Button) {
+				buttons.add((Button) node);
+			}
+		}
+		return buttons;
+	}
+
+
+	public List<PasswordField> getPopupPasswordFields() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		return getAllPasswordFields(popupNodes);
+	}
+
+	List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
+		List<PasswordField> buttons = new ArrayList<>();
+		for (Node node : nodes) {
+			if (node instanceof HBox) {
+				buttons.addAll(getAllPasswordFields(((HBox) node).getChildren()));
+			}
+			if (node instanceof VBox) {
+				buttons.addAll(getAllPasswordFields(((VBox) node).getChildren()));
+			}
+			if (node instanceof PasswordField) {
+				buttons.add((PasswordField) node);
+			}
+		}
+		return buttons;
 	}
 
 	public KeysPanePage enterMnemonicPasswordAndEnter(String password) {
@@ -291,8 +361,7 @@ public class KeysPanePage {
 
 	public KeysPanePage pressPopupButton(String legend) {
 		ObservableList<Node> nodes = getPopupNodes();
-		for (Node n :
-				nodes) {
+		for (Node n : nodes) {
 			if (n instanceof Button && legend.equals(((Button) n).getText())) {
 				driver.clickOn(n);
 			}
