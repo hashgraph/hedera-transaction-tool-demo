@@ -543,7 +543,7 @@ public class KeysPaneTest extends TestBase {
 		Pattern pattern = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
 
 		VBox vBox = (VBox) privateKeyNodes.get(1);
-		assertEquals(2, vBox.getChildren().size());
+		assertEquals(3, vBox.getChildren().size());
 		Node show = vBox.getChildren().get(0);
 		Node hide = vBox.getChildren().get(1);
 		assertTrue(show instanceof Button);

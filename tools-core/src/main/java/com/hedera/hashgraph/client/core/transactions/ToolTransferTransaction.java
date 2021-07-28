@@ -199,10 +199,11 @@ public class ToolTransferTransaction extends ToolTransaction {
 		Map<AccountId, AccountInfo> map = new HashMap<>();
 		var files = new File(Constants.ACCOUNTS_INFO_FOLDER).listFiles(
 				(dir, name) -> INFO_EXTENSION.equals(FilenameUtils.getExtension(name)));
-		assert files != null;
-		for (File file : files) {
-			var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
-			map.put(info.accountId, info);
+		if (files != null) {
+			for (File file : files) {
+				var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
+				map.put(info.accountId, info);
+			}
 		}
 		return map;
 	}

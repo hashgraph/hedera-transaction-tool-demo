@@ -50,7 +50,7 @@ public class TestBase extends ApplicationTest {
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
-		//Comment this line while testing on local system. All tests on circle ci should run headless. 
+		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
 
 
@@ -151,7 +151,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Setup the required folder structure for the tools
+	 * Set up the required folder structure for the tools
 	 *
 	 * @param location
 	 * 		root folder
@@ -191,7 +191,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Get a salt from the the token
+	 * Get a salt from the token
 	 *
 	 * @param token
 	 * 		a string that contains a salt and a password salt
