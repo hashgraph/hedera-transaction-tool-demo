@@ -50,18 +50,25 @@ public class NewPasswordPopup {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 
 		window.initModality(Modality.APPLICATION_MODAL);
-		window.setTitle("Password reset");
+		window.setTitle("New Password");
 
 		window.sizeToScene();
 		window.setMaxWidth(400);
 
-		var label1 = new Label("Please enter the new password. The password must be at least 10 characters long.");
-		label1.setMaxWidth(360);
-		label1.setWrapText(true);
+		var titleLabel = new Label("Change your key's password");
+		titleLabel.setStyle("-fx-font-size: 20");
 
-		var label2 = new Label("Please verify the password");
-		label2.setMaxWidth(360);
-		label2.setWrapText(true);
+		var warningLabel = new Label(
+				"Your new password will be checked against a list of common passwords, to increase your security.");
+		warningLabel.setMaxWidth(360);
+		warningLabel.setWrapText(true);
+		VBox passwordBox = new VBox();
+		Label firstTitle = new Label("Password");
+		Label firstExplanation = new Label("Must be at least 10 characters.");
+
+		VBox confirmBox = new VBox();
+		Label secondTitle = new Label("Confirm password");
+		Label secondExplanation = new Label("Both passwords must match.");
 
 		var passwordField1 = new PasswordField();
 		var passwordField2 = new PasswordField();
@@ -79,31 +86,39 @@ public class NewPasswordPopup {
 		box1.setSpacing(10);
 		box1.getChildren().addAll(passwordField1, check1);
 
+		passwordBox.getChildren().addAll(firstTitle, box1, firstExplanation);
+		passwordBox.setSpacing(3);
 
 		Label check2 = new Label("✓");
 		check2.setStyle("-fx-text-fill: green");
 		check2.setVisible(false);
-
 
 		HBox box2 = new HBox();
 		box2.setSpacing(10);
 		box2.getChildren().addAll(passwordField2, check2);
 
 		Button continueButton = new Button("CONTINUE");
+		continueButton.setMinWidth(150);
 		continueButton.setStyle(WHITE_BUTTON_STYLE);
 		Button cancelButton = new Button("CANCEL");
+		cancelButton.setMinWidth(150);
 		cancelButton.setStyle(WHITE_BUTTON_STYLE);
 
+		confirmBox.getChildren().addAll(secondTitle, box2, secondExplanation);
+		confirmBox.setSpacing(3);
 
 		var vBox = new VBox();
-		ButtonBar buttonBar = new ButtonBar();
-		buttonBar.getButtons().addAll(cancelButton, continueButton);
-		buttonBar.setButtonMinWidth(150);
+		HBox buttonBar = new HBox();
+		buttonBar.getChildren().addAll(cancelButton, continueButton);
+		HBox.setHgrow(buttonBar, Priority.ALWAYS);
+		buttonBar.setSpacing(20);
+		buttonBar.setAlignment(Pos.CENTER);
+
 
 		continueButton.visibleProperty().bind(check2.visibleProperty());
 		continueButton.managedProperty().bind(continueButton.visibleProperty());
 
-		vBox.getChildren().addAll(label1, box1, label2, box2, buttonBar);
+		vBox.getChildren().addAll(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar);
 		vBox.setSpacing(20);
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
