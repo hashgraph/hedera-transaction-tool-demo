@@ -152,7 +152,8 @@ public class NewPasswordPopupTest extends TestBase {
 			if (new File(DEFAULT_STORAGE).exists()) {
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
-
+			FxToolkit.hideStage();
+			FxToolkit.cleanupStages();
 		} catch (Exception e) {
 			logger.error(e);
 			assertNull(e);
@@ -178,6 +179,7 @@ public class NewPasswordPopupTest extends TestBase {
 		assertFalse(buttons.get(2).isVisible());
 		assertEquals("CHANGE PASSWORD", buttons.get(3).getText());
 		assertEquals("CLOSE", buttons.get(4).getText());
+		clickOn(buttons.get(4).getText());
 	}
 
 	@Test
@@ -220,6 +222,7 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(1));
 		keysPanePage.enterPopupPassword(PASSWORD);
 		assertTrue(buttons.get(2).isVisible());
+		clickOn(buttons.get(4).getText());
 	}
 
 	@Test
@@ -254,7 +257,7 @@ public class NewPasswordPopupTest extends TestBase {
 			exception.printStackTrace();
 		}
 		assertNotNull(keyStore);
-
+		clickOn(buttons.get(4).getText());
 	}
 
 	private void typePassword(String s, PasswordField field) {
