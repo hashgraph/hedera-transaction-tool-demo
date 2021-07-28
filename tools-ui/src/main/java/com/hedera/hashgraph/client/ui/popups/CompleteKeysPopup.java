@@ -311,7 +311,7 @@ public class CompleteKeysPopup {
 			PopupMessage.display("Password",
 					String.format("The password for %s has been changed", FilenameUtils.getBaseName(privateKey)));
 		} catch (KeyStoreException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 

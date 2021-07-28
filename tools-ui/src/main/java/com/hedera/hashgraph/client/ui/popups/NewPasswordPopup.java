@@ -25,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.input.KeyCode;
@@ -43,6 +42,10 @@ import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_
 
 public class NewPasswordPopup {
 	private static char[] answer;
+
+	private NewPasswordPopup() {
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static char[] display() {
 
@@ -136,10 +139,9 @@ public class NewPasswordPopup {
 		});
 		passwordField2.setOnKeyReleased(event -> {
 			check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
-			if (event.getCode().equals(KeyCode.ENTER)) {
-				if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
-					window.close();
-				}
+			if (event.getCode().equals(KeyCode.ENTER) &&
+					Arrays.equals(answer, passwordField2.getText().toCharArray())) {
+				window.close();
 			}
 		});
 		continueButton.setOnAction(actionEvent -> {
