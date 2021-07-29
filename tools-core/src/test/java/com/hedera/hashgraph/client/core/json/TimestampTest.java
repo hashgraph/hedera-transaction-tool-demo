@@ -18,9 +18,13 @@
 
 package com.hedera.hashgraph.client.core.json;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import org.junit.jupiter.api.Test;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -30,9 +34,40 @@ import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TimestampTest {
+
+	@Test
+	void constructors_test() throws ParseException {
+		Timestamp t0 = new Timestamp(123654, 11111);
+
+		JsonObject t1 = new JsonObject();
+		t1.addProperty("seconds", 123654);
+		t1.addProperty("nanos", 11111);
+		assertEquals(t0, new Timestamp(t1));
+
+		Duration t2 = Duration.ofSeconds(123654, 11111);
+		assertEquals(t0, new Timestamp(t2));
+
+		String t3 = t0.asRFCString();
+		assertEquals(t0.getSeconds(), new Timestamp(t3).getSeconds());
+
+		JsonArray array = new JsonArray();
+		array.add(t1);
+		array.add(t3);
+
+		JsonElement t4 = array.get(0);
+		assertEquals(t0, new Timestamp(t4));
+		JsonElement t5 = array.get(0);
+		assertEquals(t0.getSeconds(), new Timestamp(t5).getSeconds());
+
+		JsonObject t6 = new JsonObject();
+		t6.addProperty("seconds", 123654);
+		Exception e = assertThrows(HederaClientRuntimeException.class, () -> new Timestamp(t6));
+		assertEquals("Hedera Client Runtime: Cannot load json timestamp object", e.getMessage());
+	}
 
 	@Test
 	void seconds_Test() {
@@ -47,18 +82,18 @@ class TimestampTest {
 	}
 
 	@Test
-	void plusUnit_Test(){
+	void plusUnit_Test() {
 		Timestamp timestamp0 = new Timestamp(1603506625, 0);
 		Timestamp timestamp1 = timestamp0.plusSeconds(100);
-		assertEquals(100, timestamp1.getSeconds()-timestamp0.getSeconds());
+		assertEquals(100, timestamp1.getSeconds() - timestamp0.getSeconds());
 
 		timestamp0.setNanos(999999990);
-		Timestamp timestamp2= timestamp0.plusNanos(5);
+		Timestamp timestamp2 = timestamp0.plusNanos(5);
 		assertEquals(timestamp0.getSeconds(), timestamp2.getSeconds());
 		assertEquals(999999995, timestamp2.getNanos());
 
 		Timestamp timestamp3 = timestamp0.plusNanos(15);
-		assertEquals(timestamp0.getSeconds()+1, timestamp3.getSeconds());
+		assertEquals(timestamp0.getSeconds() + 1, timestamp3.getSeconds());
 		assertEquals(5, timestamp3.getNanos());
 
 		timestamp3.tick();
@@ -66,7 +101,7 @@ class TimestampTest {
 
 		Timestamp timestamp4 = timestamp0.plusNanos(9);
 		timestamp4.tick();
-		assertEquals(timestamp0.getSeconds()+1, timestamp4.getSeconds());
+		assertEquals(timestamp0.getSeconds() + 1, timestamp4.getSeconds());
 		assertEquals(0, timestamp4.getNanos());
 	}
 
@@ -88,6 +123,13 @@ class TimestampTest {
 		Timestamp timestamp0 = new Timestamp(1603506625, 0);
 		Duration duration = Duration.ofMillis(1603506625000L);
 		assertEquals(timestamp0, new Timestamp(duration));
+	}
+
+	@Test
+	void asDuration_Test() {
+		Duration duration = Duration.ofSeconds(979898997, 78787);
+		Timestamp t = new Timestamp(duration);
+		assertEquals(duration, t.asDuration());
 	}
 
 	@Test
@@ -130,7 +172,7 @@ class TimestampTest {
 	}
 
 	@Test
-	void equals_Test(){
+	void equals_Test() {
 		Timestamp timestamp = new Timestamp();
 		assertTrue(timestamp.equals(timestamp));
 		assertFalse(timestamp.equals(null));
@@ -138,7 +180,7 @@ class TimestampTest {
 	}
 
 	@Test
-	void hash_Test(){
+	void hash_Test() {
 		Timestamp timestamp = new Timestamp(1603506625, 123654447);
 		assertEquals(-1707246769, timestamp.hashCode());
 	}

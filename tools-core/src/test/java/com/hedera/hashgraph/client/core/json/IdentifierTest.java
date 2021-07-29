@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -65,6 +66,33 @@ class IdentifierTest {
 		HederaClientRuntimeException exception3 =
 				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse("0.notANumber.23"));
 		assertEquals("java.lang.NumberFormatException: For input string: \"notANumber\"", exception3.getMessage());
+	}
+
+	@Test
+	void parseTextWithChecksum_test() {
+		/*
+		Possible strings:
+		- "N" where N is a number
+		- "N1.N2.N3" where N1, N2 and N3 are numbers
+		- "N1.N2.N3-xxxxx" where where N1, N2 and N3 are numbers and "xxxxx" is the checksum of the entity
+		- "nickname (N1.N2.N3-xxxxx)" where nickname is a string name assigned to the account, where N1, N2
+		   and N3
+		 */
+
+		String acct1 = "75798";
+		String acct2 = "0.0.75798";
+		String acct3 = "0.0.75798-arbyi";
+		String acct4 = "payer (0.0.75798-arbyi)";
+
+		Identifier id = new Identifier(0, 0, 75798);
+		assertEquals(id, Identifier.parse(acct1));
+		assertEquals(id, Identifier.parse(acct2));
+		assertEquals(id, Identifier.parse(acct3));
+		assertEquals(id, Identifier.parse(acct4));
+
+		String acct5 = "payer (0.0.something-arbyi)";
+		Exception e = assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse(acct5));
+		assertEquals("java.lang.NumberFormatException: For input string: \"something\"", e.getMessage());
 	}
 
 	@Test
@@ -226,9 +254,9 @@ class IdentifierTest {
 		Identifier id2 = new Identifier(1, 2, 3);
 		Identifier id3 = new Identifier(3, 6, 9);
 
-		assertTrue(id1.equals(id2));
-		assertTrue(id1.equals(id1));
-		assertFalse(id1.equals(id3));
+		assertEquals(id1, id2);
+		assertEquals(id1, id1);
+		assertNotEquals(id1, id3);
 
 		assertFalse(id1.equals("1.2.3"));
 		assertFalse(id1.equals(null));
@@ -256,5 +284,19 @@ class IdentifierTest {
 
 		account = Identifier.parse("0.0.78");
 		assertEquals("0.0.78-wjvid", account.toNicknameAndChecksum(accounts));
+	}
+
+	@Test
+	void compare_test() {
+		Identifier id0 = new Identifier(1, 2, 369);
+		assertEquals(0, id0.compareTo(id0));
+		assertEquals(0, id0.compareTo(new Identifier(1,2,369)));
+		assertEquals(-1, id0.compareTo(new Identifier(2,2,369)));
+		assertEquals(-1, id0.compareTo(new Identifier(1,3,369)));
+		assertEquals(-1, id0.compareTo(new Identifier(1,2,370)));
+		assertEquals(1, id0.compareTo(new Identifier(0,2,369)));
+		assertEquals(1, id0.compareTo(new Identifier(1,1,369)));
+		assertEquals(1, id0.compareTo(new Identifier(1,2,360)));
+
 	}
 }

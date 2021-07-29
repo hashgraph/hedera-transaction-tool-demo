@@ -168,15 +168,14 @@ public class Identifier implements Comparable<Identifier> {
 			return parse(id.substring(0, id.indexOf("-")));
 		}
 
-		if (!id.contains(".")) {
-			return new Identifier(0, 0, componentToLong(id));
-		}
 
 		var parts = id.split("\\.");
 
 		if (parts.length == 1) {
 			return new Identifier(0, 0, componentToLong(parts[0]));
-		} else if (parts.length == 3) {
+		}
+
+		if (parts.length == 3) {
 			final var realmId = componentToLong(parts[0]);
 			final var shardId = componentToLong(parts[1]);
 			final var accountId = componentToLong(parts[2]);
