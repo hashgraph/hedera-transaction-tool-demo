@@ -262,10 +262,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	private void replacePublicKey() {
+		try {
+			Files.deleteIfExists(Path.of(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION));
+		} catch (IOException e) {
+			logger.error(e);
+		}
 		InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
 		try (OutputStream outputStream = new FileOutputStream(key)) {
-			Files.deleteIfExists(key.toPath());
 			assert readStream != null;
 			IOUtils.copy(readStream, outputStream);
 		} catch (IOException exception) {

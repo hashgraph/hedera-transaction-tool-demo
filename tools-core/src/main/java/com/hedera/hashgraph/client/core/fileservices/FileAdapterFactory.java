@@ -83,9 +83,10 @@ public class FileAdapterFactory {
 			logger.debug("Found {} volumes", roots.length);
 			if (roots.length > 0) {
 				for (var volumes : roots) {
-					if (!volumes.getName().contains("HD")) {
-						return volumes.getAbsolutePath();
+					if (volumes.getName().contains("HD") || volumes.getName().equalsIgnoreCase("MACOS")) {
+						continue;
 					}
+					return volumes.getAbsolutePath();
 				}
 			}
 		}
