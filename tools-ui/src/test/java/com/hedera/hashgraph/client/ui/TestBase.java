@@ -151,7 +151,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Setup the required folder structure for the tools
+	 * Set up the required folder structure for the tools
 	 *
 	 * @param location
 	 * 		root folder
@@ -191,7 +191,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Get a salt from the the token
+	 * Get a salt from the token
 	 *
 	 * @param token
 	 * 		a string that contains a salt and a password salt

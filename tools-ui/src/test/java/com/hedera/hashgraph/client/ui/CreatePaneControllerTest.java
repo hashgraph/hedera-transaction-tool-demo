@@ -435,33 +435,39 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setDate(sdf.format(date))
 				.setHours(31);
-
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(23, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 
 		createPanePage.setHours(-12);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 
 		createPanePage.setHours(9);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(9, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 
 		createPanePage.setMinutes(99);
-
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(59, Integer.parseInt(((TextField) find(CREATE_MINUTES)).getText()));
 
 		createPanePage.setMinutes(-12);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_MINUTES)).getText()));
 
 		createPanePage.setMinutes(9);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(9, Integer.parseInt(((TextField) find(CREATE_MINUTES)).getText()));
 
 		createPanePage.setSeconds(99);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(59, Integer.parseInt(((TextField) find(CREATE_SECONDS)).getText()));
 
 		createPanePage.setSeconds(-12);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_SECONDS)).getText()));
 
 		createPanePage.setSeconds(9);
-		sleep(100);
+		sleep(THREAD_PAUSE_TIME);
 		assertEquals(9, Integer.parseInt(((TextField) find(CREATE_SECONDS)).getText()));
 	}
 
