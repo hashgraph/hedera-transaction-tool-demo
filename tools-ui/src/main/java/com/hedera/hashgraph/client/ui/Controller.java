@@ -261,12 +261,18 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		this.drivesChanged = drivesChanged;
 	}
 
+	/**
+	 * This method will run only when the application first starts after update. It will replace the existing gpg key
+	 * with the one provided by the new application. We are always assuming that the key could have changed.
+	 */
 	private void replacePublicKey() {
+		// First delete the old key if it exists.
 		try {
 			Files.deleteIfExists(Path.of(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION));
 		} catch (IOException e) {
 			logger.error(e);
 		}
+		// Then replace it with the key provided in the app resources.
 		InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
 		try (OutputStream outputStream = new FileOutputStream(key)) {
