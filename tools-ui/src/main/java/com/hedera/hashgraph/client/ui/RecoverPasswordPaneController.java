@@ -239,7 +239,6 @@ public class RecoverPasswordPaneController {
 
 	public void acceptPassword() {
 		password = recoverAppPasswordField.getText().toCharArray();
-		recoverChangePasswordButton.setVisible(false);
 		recoverChangePasswordButton.setDisable(true);
 		var filler = new char[password.length];
 		Arrays.fill(filler, 'x');
@@ -254,7 +253,6 @@ public class RecoverPasswordPaneController {
 
 		// Store the mnemonic and password hash
 		Platform.runLater(() -> {
-			recoverChangePasswordButton.setVisible(false);
 			try {
 				controller.setHash(password);
 				mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
