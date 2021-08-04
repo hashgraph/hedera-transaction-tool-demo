@@ -64,11 +64,16 @@ public class FileAdapterFactory {
 			var roots = volume.listFiles();
 			assert roots != null;
 			logger.debug("Found {} volumes", roots.length);
+			//Scan all volumes (MAC only)
 			if (roots.length > 0) {
 				for (var volumes : roots) {
-					if (!volumes.getName().contains("HD")) {
-						return volumes.getAbsolutePath();
+					// The volume containing the string "HD" is the default name for the laptop's hard drive
+					// Added MACOS to the ignored volumes list, as rebuilt laptops might use it as the name for the
+					// hard drive (08/03/2021)
+					if (volumes.getName().contains("HD") || volumes.getName().equalsIgnoreCase("MACOS")) {
+						continue;
 					}
+					return volumes.getAbsolutePath();
 				}
 			}
 		}
