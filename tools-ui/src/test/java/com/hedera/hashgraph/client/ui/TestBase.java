@@ -16,22 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.ui;/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
+package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
@@ -61,7 +46,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 public class TestBase extends ApplicationTest {
 
 	private static final Logger logger = LogManager.getLogger(TestBase.class);
-	public static final String KEYS_STRING = "/Keys/";
+	public static final String KEYS_STRING = "Keys";
+	public static final String ACCOUNTS_STRING = "Accounts";
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
@@ -116,7 +102,7 @@ public class TestBase extends ApplicationTest {
 	public boolean exists(final String query) {
 		try {
 			Node x = lookup(query).queryAll().iterator().next();
-			return true;
+			return x != null;
 		} catch (Exception e) {
 			return false;
 		}
@@ -125,16 +111,18 @@ public class TestBase extends ApplicationTest {
 	public void remakeTransactionTools() {
 		String toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
-		if (!(new File(toolsFolder)).exists()) {
-			new File(toolsFolder).mkdirs();
+		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
+			logger.info("Folder {} created", toolsFolder);
 		}
 
 		try {
-			if (!new File(toolsFolder + "/Accounts").exists()) {
-				new File(toolsFolder + "/Accounts").mkdirs();
+			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
+					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
+				logger.info("Accounts folder created");
 			}
-			if (!new File(toolsFolder + KEYS_STRING).exists()) {
-				new File(toolsFolder + KEYS_STRING).mkdirs();
+			if (!new File(toolsFolder, KEYS_STRING).exists() &&
+					new File(toolsFolder, KEYS_STRING).mkdirs()) {
+				logger.info("{} folder created", KEYS_STRING);
 			}
 		} catch (Exception cause) {
 			logger.error("Unable to remake Transaction folders.", cause);
@@ -143,13 +131,10 @@ public class TestBase extends ApplicationTest {
 
 	/**
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
-	 *
-	 * @param defaultStorage
-	 * @throws KeyStoreException
-	 * @throws IOException
 	 */
 	public static void fixMissingMnemonicHashCode(String defaultStorage) throws KeyStoreException, IOException {
 		File[] keyFiles = new File(defaultStorage + "/Keys/").listFiles((dir, name) -> name.endsWith("pem"));
+		assert keyFiles != null;
 		for (File keyFile : keyFiles) {
 			final Integer mnemonicHash =
 					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
@@ -166,7 +151,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Setup the required folder structure for the tools
+	 * Set up the required folder structure for the tools
 	 *
 	 * @param location
 	 * 		root folder
@@ -206,7 +191,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	/**
-	 * Get a salt from the the token
+	 * Get a salt from the token
 	 *
 	 * @param token
 	 * 		a string that contains a salt and a password salt

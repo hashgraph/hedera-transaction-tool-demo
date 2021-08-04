@@ -77,6 +77,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCEPT_APP_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_1;
@@ -225,6 +227,38 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.error(e);
 		}
 
+	}
+
+	@Test
+	public void passwordBehavior_test() {
+		initialStartupPage.enterPassword("tempurasoju");
+
+		assertTrue(find("#checkPassword").isVisible());
+		assertFalse(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
+
+		initialStartupPage.reEnterPassword("tempurasoju");
+		assertTrue(find("#reCheckPassword").isVisible());
+		assertTrue(find("#acceptPasswordButton").isVisible());
+
+		clickOn("#appPasswordField");
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+
+		assertFalse(find("#checkPassword").isVisible());
+		assertTrue(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
+
+		type(KeyCode.S);
+		type(KeyCode.O);
+		type(KeyCode.J);
+		type(KeyCode.U);
+
+		assertTrue(find("#checkPassword").isVisible());
+		assertFalse(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
 	}
 
 	@Test
@@ -618,7 +652,9 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@Test
 	public void passwordPolicy_test() {
-		final PasswordPolicy passwordPolicy = new PasswordPolicy(BreachDatabase.top100K(), 10, 256);
+		final PasswordPolicy passwordPolicy =
+				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+						MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		assertEquals(Status.TOO_SHORT, passwordPolicy.check("password"));
 		assertEquals(Status.BREACHED, passwordPolicy.check("1234567890"));
 	}
