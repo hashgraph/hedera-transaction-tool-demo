@@ -63,8 +63,6 @@ import static java.util.Arrays.stream;
 public class RecoverPasswordPaneController {
 
 	private static final Logger logger = LogManager.getLogger(RecoverPasswordPaneController.class);
-	private static final int MIN_PASSWORD_LENGTH = 10;
-	private static final int MAX_PASSWORD_LENGTH = 1024;
 
 	Map<String, String> privateKeysMap = new HashMap<>();
 	Map<Integer, String> indexMap = new HashMap<>();

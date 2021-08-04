@@ -27,7 +27,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -57,7 +56,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
+import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static org.apache.commons.lang3.StringUtils.valueOf;
@@ -142,7 +145,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 
 	/**
 	 * Return a mnemonic object, either by loading it from file or generating it. If the mnemonic is generated, it is
-	 * then stored in a password protected file.
+	 * then stored in a password-protected file.
 	 *
 	 * @param file
 	 * 		file where the mnemonic is stored, or the output directory where the new file will be stored
@@ -315,7 +318,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * If the account corresponding to the id provided has a nickname, this method returns it. Otherwise it returns the
+	 * If the account corresponding to the id provided has a nickname, this method returns it. Otherwise, it returns the
 	 * account id as a readable String
 	 *
 	 * @param accountNumber
@@ -491,7 +494,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 
 	public static boolean badPassword(char[] password) {
 		var passwordPolicy =
-				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()), MIN_PASSWORD_LENGTH,
+				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+						MIN_PASSWORD_LENGTH,
 						MAX_PASSWORD_LENGTH);
 		final var check = passwordPolicy.check(valueOf(password));
 		if (check.equals(Status.TOO_LONG)) {
