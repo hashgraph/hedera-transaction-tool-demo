@@ -280,8 +280,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.clickContinueTwo();
 
 		assertTrue(find("#recoverFinishVBox").isVisible());
-
-
 	}
 
 	@Test
