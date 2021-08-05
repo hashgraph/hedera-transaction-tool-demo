@@ -434,9 +434,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.setHours(-12);
 		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 
-		createPanePage.setHours(9);
-		assertEquals(9, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
-
 		createPanePage.setMinutes(99);
 
 		assertEquals(59, Integer.parseInt(((TextField) find(CREATE_MINUTES)).getText()));

@@ -105,14 +105,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private final Logger logger = LogManager.getLogger(InitialStartupPage.class);
 	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive/";
-	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString() + File.separator;
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 
 	private InitialStartupPage initialStartupPage;
 	private UserAccessibleProperties properties;
 
-	private String storedMnemonic =
+	private final String storedMnemonic =
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
@@ -184,7 +184,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@Test
 	public void enterAppPassword_Test() {
-
 		try {
 			initialStartupPage.enterPassword("123");
 			assertTrue(find(APP_PASSWORD_FIELD_2).isDisabled());
@@ -480,37 +479,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	}
 
-	//@Test
-	public void finishSetup_test() {
-		try {
-			initialStartupPage.enterPassword(PASSWORD)
-					.reEnterPassword(PASSWORD)
-					.acceptPassword()
-					.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
-					.enterStringUsername("test1.council2@hederacouncil.org")
-					.acceptOneDrive()
-					.clickOnGenerateMnemonic()
-					.clickMnemonicPopupButton("OK")
-					.clickOnFinishSetup();
-
-			logger.info("App setup complete");
-
-			assertEquals(SetupPhase.NORMAL_OPERATION_PHASE, properties.getSetupPhase());
-
-			properties.setSetupPhase(SetupPhase.TEST_PHASE);
-
-			logger.info("Restarting stage");
-			FxToolkit.registerPrimaryStage();
-			FxToolkit.setupApplication(StartUI.class);
-
-			Node home = find("#homePane");
-			assertTrue(home.isVisible());
-			logger.info("After initial setup is done, home pane is visible");
-		} catch (Exception e) {
-			logger.error(e);
-		}
-	}
-
 	@Test
 	public void testCreateLocalOneDriveFolders_Test() throws IOException {
 		logger.info("Setup password, then enter path and email");
@@ -626,7 +594,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	@AfterEach
 	public void tearDown() throws IOException {
 		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+		String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
