@@ -56,6 +56,7 @@ import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
@@ -69,6 +70,9 @@ import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public static final int MNEMONIC_SIZE = 24;
+	public static final String STYLE =
+			"-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
+					"-fx-border-radius: 10;";
 	private static final Logger logger = LogManager.getLogger(MnemonicPhraseHelper.class);
 	private static final Dictionary dictionary = new Dictionary();
 
@@ -81,9 +85,8 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	private final VBox finishBox;
 	GridPane mnemonicGridPane;
 
-	public MnemonicPhraseHelper(Label mnemonicErrorMessage, String storageDirectory,
-			VBox phraseBox, Button generateKeys, Button copyToClipBoardButton,
-			VBox finishBox) {
+	public MnemonicPhraseHelper(Label mnemonicErrorMessage, String storageDirectory, VBox phraseBox,
+			Button generateKeys, Button copyToClipBoardButton, VBox finishBox) {
 		this.mnemonicErrorMessage = mnemonicErrorMessage;
 		this.storageDirectory = storageDirectory;
 		this.phraseBox = phraseBox;
@@ -96,8 +99,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		mnemonicGridPane = (GridPane) phraseBox.getChildren().get(0);
 		var nodes = mnemonicGridPane.getChildren();
 		List<CharSequence> words = new ArrayList<>();
-		for (var n :
-				nodes) {
+		for (var n : nodes) {
 			var text = (((TextField) n).getText().replace(" ", ""));
 			if (!"".equals(text)) {
 				words.add(text);
@@ -235,16 +237,23 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	}
 
 	public void setupEmptyMnemonicBox(GridPane mnemonicWordsGridPane) {
-		var style = "-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
-				"-fx-border-radius: 10;";
 		for (var i = 0; i < MNEMONIC_SIZE; i++) {
-			var
-					t = new AutoCompleteTextField();
+			var t = new AutoCompleteTextField() {
+				@Override
+				public void paste() {
+					String[] words = getWords();
+					if (words.length == 1) {
+						setText(words[0]);
+					} else {
+						pastePhraseFromClipBoard();
+					}
+				}
+			};
 			t.setMinWidth(150);
 			t.setMaxWidth(150);
 			t.setPrefHeight(USE_COMPUTED_SIZE);
-			t.setStyle(style);
-			t.setStyleString(style);
+			t.setStyle(STYLE);
+			t.setStyleString(STYLE);
 
 			t.textProperty().addListener((observableValue, s, t1) -> {
 				var words = getWordsFromGridPane();
@@ -305,20 +314,28 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public void pastePhraseFromClipBoard() {
 		mnemonicErrorMessage.setVisible(false);
+		String[] words = getWords();
+		if (words.length != MNEMONIC_SIZE) {
+			logger.error("Incorrect size of recovery phrase");
+			mnemonicErrorMessage.setText("The recovery phase pasted does not have the right number of words.");
+			mnemonicErrorMessage.setVisible(true);
+			return;
+		}
+		if (setWordsInGridPane(words) && copyToClipBoardButton != null) {
+			copyToClipBoardButton.setVisible(true);
+		}
+
+	}
+
+	@NotNull
+	private String[] getWords() {
+		String[] words = new String[0];
 		var clipboard = Clipboard.getSystemClipboard();
 		if (clipboard.hasString()) {
 			var content = clipboard.getString().toLowerCase().replaceAll("[^A-Za-z0-9 ]", "").replaceAll(" +", " ");
-			var words = content.split(" ");
-			if (words.length != MNEMONIC_SIZE) {
-				logger.error("Incorrect size of recovery phrase");
-				mnemonicErrorMessage.setText("The recovery phase pasted does not have the right number of words.");
-				mnemonicErrorMessage.setVisible(true);
-				return;
-			}
-			if (setWordsInGridPane(words) && copyToClipBoardButton != null) {
-				copyToClipBoardButton.setVisible(true);
-			}
+			words = content.split(" ");
 		}
+		return words;
 	}
 
 	private boolean spellCheck(String word) {
