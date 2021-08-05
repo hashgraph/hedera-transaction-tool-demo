@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.MnemonicPhraseHelper;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -247,7 +248,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		setManagedProperties(drivesErrorLabel, addFolderPathHBox, addToEmailMapButton, drivesBox, passphraseBox,
 				finishBox, generateKeyPairButtonBar, generateKeyPairButtonBar, mnemonicErrorMessage,
 				copyToClipboardLabel, copyToClipBoardButton, pasteFromClipBoardButton);
-
 		pasteFromClipBoardButton.visibleProperty().bind(copyToClipBoardButton.visibleProperty().not());
 
 		// Auto scroll always to the bottom
@@ -377,6 +377,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	public void generatePassphraseEvent() {
 		mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), true);
+		copyToClipBoardButton.setVisible(true);
 		controller.setLegacy(false);
 	}
 

@@ -219,9 +219,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		}
 
 		generateKeys.setVisible(false);
-		if (copyToClipBoardButton != null) {
-			copyToClipBoardButton.setVisible(true);
-		}
 		finishBox.setVisible(true);
 	}
 
@@ -321,10 +318,9 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			mnemonicErrorMessage.setVisible(true);
 			return;
 		}
-		if (setWordsInGridPane(words) && copyToClipBoardButton != null) {
-			copyToClipBoardButton.setVisible(true);
+		if (setWordsInGridPane(words)) {
+			logger.info("Words set in text boxes");
 		}
-
 	}
 
 	@NotNull
