@@ -33,7 +33,6 @@ import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.MnemonicPhraseHelper;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -206,7 +205,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				.withMnemonicErrorMessage(mnemonicErrorMessage)
 				.withPhraseBox(phraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
-				.withCopyToClipBoardButton(copyToClipBoardButton)
 				.withGenerateKeys(generateKeys)
 				.withFinishBox(finishBox)
 				.build();
@@ -430,7 +428,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Event setup for the password fields and the accept password button
+	 * Event setup for the password fields and the "accept password" button
 	 */
 	private void setupPasswordEvents() {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), 10, 1024);

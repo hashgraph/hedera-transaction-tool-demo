@@ -81,17 +81,15 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	private final String storageDirectory;
 	private final VBox phraseBox;
 	private final Button generateKeys;
-	private final Button copyToClipBoardButton;
 	private final VBox finishBox;
 	GridPane mnemonicGridPane;
 
 	public MnemonicPhraseHelper(Label mnemonicErrorMessage, String storageDirectory, VBox phraseBox,
-			Button generateKeys, Button copyToClipBoardButton, VBox finishBox) {
+			Button generateKeys, VBox finishBox) {
 		this.mnemonicErrorMessage = mnemonicErrorMessage;
 		this.storageDirectory = storageDirectory;
 		this.phraseBox = phraseBox;
 		this.generateKeys = generateKeys;
-		this.copyToClipBoardButton = copyToClipBoardButton;
 		this.finishBox = finishBox;
 	}
 
@@ -339,7 +337,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	}
 
 	public static final class Builder {
-		private Button copyToClipBoardButton;
 		private Label mnemonicErrorMessage;
 		private String storageDirectory;
 		private VBox phraseBox;
@@ -373,11 +370,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			return this;
 		}
 
-		public Builder withCopyToClipBoardButton(Button copyToClipBoardButton) {
-			this.copyToClipBoardButton = copyToClipBoardButton;
-			return this;
-		}
-
 		public Builder withFinishBox(VBox finishBox) {
 			this.finishBox = finishBox;
 			return this;
@@ -385,7 +377,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		public MnemonicPhraseHelper build() {
 			return new MnemonicPhraseHelper(mnemonicErrorMessage, storageDirectory, phraseBox, generateKeys,
-					copyToClipBoardButton, finishBox);
+					finishBox);
 		}
 	}
 }
