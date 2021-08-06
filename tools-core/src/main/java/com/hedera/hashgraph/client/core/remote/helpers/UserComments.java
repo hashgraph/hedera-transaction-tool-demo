@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.remote.helpers;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

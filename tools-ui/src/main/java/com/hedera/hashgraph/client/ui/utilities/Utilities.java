@@ -18,7 +18,9 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
+import com.codahale.passpol.Status;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -44,6 +46,11 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
 
 public class Utilities {
 
@@ -274,8 +281,6 @@ public class Utilities {
 	/**
 	 * Checks that the password policy is followed
 	 *
-	 * @param policy
-	 * 		the password policy
 	 * @param appPasswordField
 	 * 		the password field where the user enters his new password
 	 * @param checkPassword
@@ -283,10 +288,12 @@ public class Utilities {
 	 * @param passwordErrorLabel
 	 * 		a label where an informative text will be displayed in case the password does not pass the policy
 	 * @param reEnterPasswordField
-	 * 		a password field where the user needs to re enter is new password for confirmation
+	 * 		a password field where the user needs to re-enter is new password for confirmation
 	 */
-	public static void checkPasswordPolicy(PasswordPolicy policy, PasswordField appPasswordField,
-			ImageView checkPassword, Label passwordErrorLabel, PasswordField reEnterPasswordField) {
+	public static void checkPasswordPolicy(PasswordField appPasswordField, ImageView checkPassword,
+			Label passwordErrorLabel, PasswordField reEnterPasswordField) {
+		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var password1 = appPasswordField.getText();
 		switch (policy.check(password1)) {
 			case OK:

@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.utils;
 
 import org.apache.logging.log4j.LogManager;

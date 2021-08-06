@@ -17,7 +17,6 @@
  */
 
 package com.hedera.hashgraph.client.core.remote;
-
 import javafx.scene.Node;
 import javafx.stage.Stage;
 import org.junit.AfterClass;

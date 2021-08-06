@@ -17,7 +17,6 @@
  */
 
 package com.hedera.hashgraph.client.core.props;
-
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;

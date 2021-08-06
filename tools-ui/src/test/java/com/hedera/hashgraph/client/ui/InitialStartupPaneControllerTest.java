@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.ui;
 
 import com.codahale.passpol.BreachDatabase;
@@ -62,6 +61,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCEPT_APP_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_1;
@@ -90,14 +91,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private final Logger logger = LogManager.getLogger(InitialStartupPage.class);
 	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive/";
-	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString() + File.separator;
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 
 	private InitialStartupPage initialStartupPage;
 	private UserAccessibleProperties properties;
 
-	private String storedMnemonic =
+	private final String storedMnemonic =
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
@@ -169,7 +170,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@Test
 	public void enterAppPassword_Test() {
-
 		try {
 			initialStartupPage.enterPassword("123");
 			assertTrue(find(APP_PASSWORD_FIELD_2).isDisabled());
@@ -210,6 +210,38 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.error(e);
 		}
 
+	}
+
+	@Test
+	public void passwordBehavior_test() {
+		initialStartupPage.enterPassword("tempurasoju");
+
+		assertTrue(find("#checkPassword").isVisible());
+		assertFalse(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
+
+		initialStartupPage.reEnterPassword("tempurasoju");
+		assertTrue(find("#reCheckPassword").isVisible());
+		assertTrue(find("#acceptPasswordButton").isVisible());
+
+		clickOn("#appPasswordField");
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+
+		assertFalse(find("#checkPassword").isVisible());
+		assertTrue(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
+
+		type(KeyCode.S);
+		type(KeyCode.O);
+		type(KeyCode.J);
+		type(KeyCode.U);
+
+		assertTrue(find("#checkPassword").isVisible());
+		assertFalse(find("#reEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
 	}
 
 	@Test
@@ -465,37 +497,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	}
 
-	//@Test
-	public void finishSetup_test() {
-		try {
-			initialStartupPage.enterPassword(PASSWORD)
-					.reEnterPassword(PASSWORD)
-					.acceptPassword()
-					.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
-					.enterStringUsername("test1.council2@hederacouncil.org")
-					.acceptOneDrive()
-					.clickOnGenerateMnemonic()
-					.clickMnemonicPopupButton("OK")
-					.clickOnFinishSetup();
-
-			logger.info("App setup complete");
-
-			assertEquals(SetupPhase.NORMAL_OPERATION_PHASE, properties.getSetupPhase());
-
-			properties.setSetupPhase(SetupPhase.TEST_PHASE);
-
-			logger.info("Restarting stage");
-			FxToolkit.registerPrimaryStage();
-			FxToolkit.setupApplication(StartUI.class);
-
-			Node home = find("#homePane");
-			assertTrue(home.isVisible());
-			logger.info("After initial setup is done, home pane is visible");
-		} catch (Exception e) {
-			logger.error(e);
-		}
-	}
-
 	@Test
 	public void testCreateLocalOneDriveFolders_Test() throws IOException {
 		logger.info("Setup password, then enter path and email");
@@ -603,7 +604,9 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@Test
 	public void passwordPolicy_test() {
-		final PasswordPolicy passwordPolicy = new PasswordPolicy(BreachDatabase.top100K(), 10, 256);
+		final PasswordPolicy passwordPolicy =
+				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+						MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		assertEquals(Status.TOO_SHORT, passwordPolicy.check("password"));
 		assertEquals(Status.BREACHED, passwordPolicy.check("1234567890"));
 	}
@@ -611,7 +614,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	@AfterEach
 	public void tearDown() throws IOException {
 		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+		String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}

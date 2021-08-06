@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.remote.helpers;
 
 import org.apache.commons.io.FilenameUtils;

@@ -136,6 +136,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
 
 	private static final long THREAD_PAUSE_TIME = 1000;
+	public static final int TENTH_OF_A_SECOND = 100;
 	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
 			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
@@ -435,6 +436,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setDate(sdf.format(date))
 				.setHours(31);
+		sleep(TENTH_OF_A_SECOND);
+		assertEquals(23, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
+
+		createPanePage.setHours(-12);
+		sleep(TENTH_OF_A_SECOND);
+		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
+
+		createPanePage.setMinutes(99);
+		sleep(TENTH_OF_A_SECOND);
 		sleep(THREAD_PAUSE_TIME);
 		assertEquals(23, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 

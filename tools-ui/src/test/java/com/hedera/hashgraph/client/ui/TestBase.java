@@ -46,7 +46,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 public class TestBase extends ApplicationTest {
 
 	private static final Logger logger = LogManager.getLogger(TestBase.class);
-	public static final String KEYS_STRING = "/Keys/";
+	public static final String KEYS_STRING = "Keys";
+	public static final String ACCOUNTS_STRING = "Accounts";
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
@@ -101,8 +102,7 @@ public class TestBase extends ApplicationTest {
 	public boolean exists(final String query) {
 		try {
 			Node x = lookup(query).queryAll().iterator().next();
-			assert x != null;
-			return true;
+			return x != null;
 		} catch (Exception e) {
 			return false;
 		}
@@ -112,15 +112,17 @@ public class TestBase extends ApplicationTest {
 		String toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
 		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
-			logger.info("Directory {} created", toolsFolder);
+			logger.info("Folder {} created", toolsFolder);
 		}
 
 		try {
-			if (!new File(toolsFolder, "Accounts").exists() && new File(toolsFolder, "Accounts").mkdirs()) {
-				logger.info("Directory {}/Accounts created", toolsFolder);
+			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
+					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
+				logger.info("Accounts folder created");
 			}
-			if (!new File(toolsFolder, KEYS_STRING).exists() && new File(toolsFolder, KEYS_STRING).mkdirs()) {
-				logger.info("Directory {}/{} created", toolsFolder, KEYS_STRING);
+			if (!new File(toolsFolder, KEYS_STRING).exists() &&
+					new File(toolsFolder, KEYS_STRING).mkdirs()) {
+				logger.info("{} folder created", KEYS_STRING);
 			}
 		} catch (Exception cause) {
 			logger.error("Unable to remake Transaction folders.", cause);

@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.JavaFXIDs;

@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.security;
 
 import java.security.KeyPair;

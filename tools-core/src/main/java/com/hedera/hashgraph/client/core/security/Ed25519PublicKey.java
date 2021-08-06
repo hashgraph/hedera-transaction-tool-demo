@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.security;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;

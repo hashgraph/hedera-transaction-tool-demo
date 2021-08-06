@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;

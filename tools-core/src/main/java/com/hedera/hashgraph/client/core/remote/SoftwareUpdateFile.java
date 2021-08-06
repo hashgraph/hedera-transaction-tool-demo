@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;

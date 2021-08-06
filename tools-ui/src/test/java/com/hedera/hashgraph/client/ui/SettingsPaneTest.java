@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.enums.SetupPhase;

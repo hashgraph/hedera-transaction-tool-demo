@@ -17,7 +17,6 @@
  */
 
 
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;

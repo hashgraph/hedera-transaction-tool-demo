@@ -381,7 +381,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		sleep(ONE_SECOND);
 
 		homePanePage.enterStringInPopup("testAccount");
-
 		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
