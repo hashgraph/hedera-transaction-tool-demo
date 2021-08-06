@@ -18,29 +18,21 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
+import com.codahale.passpol.Status;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,6 +46,11 @@ import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
 
 public class Utilities {
 
@@ -157,7 +154,7 @@ public class Utilities {
 			return "0";
 		}
 
-		var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
+		var tiny = hBars.contains(".") ? hBars : hBars.concat(".00000000");
 		var amount = Long.parseLong(tiny.replace("\u0127", "")
 				.replace(".", "")
 				.replace(" ", ""));
@@ -274,8 +271,6 @@ public class Utilities {
 	/**
 	 * Checks that the password policy is followed
 	 *
-	 * @param policy
-	 * 		the password policy
 	 * @param appPasswordField
 	 * 		the password field where the user enters his new password
 	 * @param checkPassword
@@ -283,10 +278,12 @@ public class Utilities {
 	 * @param passwordErrorLabel
 	 * 		a label where an informative text will be displayed in case the password does not pass the policy
 	 * @param reEnterPasswordField
-	 * 		a password field where the user needs to re enter is new password for confirmation
+	 * 		a password field where the user needs to re-enter is new password for confirmation
 	 */
-	public static void checkPasswordPolicy(PasswordPolicy policy, PasswordField appPasswordField,
-			ImageView checkPassword, Label passwordErrorLabel, PasswordField reEnterPasswordField) {
+	public static void checkPasswordPolicy(PasswordField appPasswordField, ImageView checkPassword,
+			Label passwordErrorLabel, PasswordField reEnterPasswordField) {
+		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var password1 = appPasswordField.getText();
 		switch (policy.check(password1)) {
 			case OK:
@@ -317,62 +314,24 @@ public class Utilities {
 		}
 	}
 
-	/**
-	 * Creates an "Encrypting..." progress popup
-	 *
-	 * @param bar
-	 * 		a progress bar that is linked to the task
-	 * @param cancelButton
-	 * 		a button that cancels the task
-	 * @return a popup stage.
-	 */
-	public static Stage setupProgressPopup(ProgressBar bar, Button cancelButton) {
-		VBox layout = new VBox();
-		layout.setAlignment(Pos.CENTER);
-		layout.setSpacing(10);
-		layout.setPadding(new Insets(20, 20, 20, 20));
-		layout.setMaxWidth(400);
-
-		Stage window = new Stage();
-
-		window.initModality(Modality.APPLICATION_MODAL);
-		window.setTitle("Encrypting");
-
-		window.sizeToScene();
-		window.setWidth(450);
-
-
-		Label label1 = new Label();
-		label1.setText("Encrypting tasks");
-		label1.setStyle("-fx-font-size: 20");
-
-		Label label2 = new Label("The recovery phrase is being encrypted. This might take a few minutes.");
-		label2.setWrapText(true);
-		label2.setStyle("-fx-font-size: 16");
-
-		HBox box = new HBox();
-		box.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		box.setPrefHeight(Region.USE_COMPUTED_SIZE);
-		box.setAlignment(Pos.CENTER);
-		box.getChildren().addAll(label2);
-
-		cancelButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; " +
-						"-fx-border-radius: 10; -fx-background-radius: 10;");
-		cancelButton.setMinWidth(200);
-
-		bar.setPrefWidth(375);
-
-		layout.getChildren().addAll(label1, box, bar, cancelButton);
-
-		Scene scene = new Scene(layout);
-
-		scene.getStylesheets().add("tools.css");
-
-		window.setScene(scene);
-
-		window.show();
-
-		return window;
+	public static void setupCharacterCount(PasswordField recoverAppPasswordField, Label recoverCharacterCount,
+			ImageView recoverCheckPassword, Label recoverPasswordErrorLabel,
+			PasswordField recoverReEnterPasswordField) {
+		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
+		final var length = recoverAppPasswordField.getText().length();
+		recoverCharacterCount.setText(String.valueOf(length));
+		recoverCheckPassword.setVisible(false);
+		String style = length >= MIN_PASSWORD_LENGTH && length <= MAX_PASSWORD_LENGTH ? GREEN_STYLE : RED_STYLE;
+		recoverCharacterCount.setStyle(style);
+		if (Status.OK.equals(policy.check(recoverAppPasswordField.getText()))) {
+			recoverCheckPassword.setVisible(true);
+			recoverPasswordErrorLabel.setVisible(false);
+			recoverReEnterPasswordField.setDisable(false);
+		} else {
+			recoverCheckPassword.setVisible(false);
+			recoverPasswordErrorLabel.setVisible(true);
+			recoverReEnterPasswordField.setDisable(true);
+		}
 	}
 }

@@ -18,10 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.codahale.passpol.BreachDatabase;
-import com.codahale.passpol.PasswordPolicy;
-import com.codahale.passpol.Status;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
@@ -60,14 +56,13 @@ import java.util.Map;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkPasswordPolicy;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.setupCharacterCount;
 import static java.lang.System.exit;
 import static java.util.Arrays.stream;
 
 public class RecoverPasswordPaneController {
 
 	private static final Logger logger = LogManager.getLogger(RecoverPasswordPaneController.class);
-	private static final int MIN_PASSWORD_LENGTH = 10;
-	private static final int MAX_PASSWORD_LENGTH = 1024;
 
 	Map<String, String> privateKeysMap = new HashMap<>();
 	Map<Integer, String> indexMap = new HashMap<>();
@@ -149,36 +144,22 @@ public class RecoverPasswordPaneController {
 	}
 
 	private void initializePasswordVBox() {
-		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		recoverAppPasswordField.setOnKeyReleased(keyEvent -> {
-			final var length = recoverAppPasswordField.getText().length();
-			recoverCharacterCount.setText(String.valueOf(length));
-			recoverCharacterCount.setStyle(Constants.RED_STYLE);
-			recoverCheckPassword.setVisible(false);
-			if (Status.OK.equals(policy.check(recoverAppPasswordField.getText()))) {
-				recoverCharacterCount.setStyle(Constants.GREEN_STYLE);
-				recoverCheckPassword.setVisible(true);
-				recoverPasswordErrorLabel.setVisible(false);
-				recoverReEnterPasswordField.setDisable(false);
-			}
+			recoverReCheckPassword.setVisible(false);
+			recoverReEnterPasswordField.setText("");
+			setupCharacterCount(recoverAppPasswordField, recoverCharacterCount, recoverCheckPassword,
+					recoverPasswordErrorLabel, recoverReEnterPasswordField);
 			if (!keyEvent.getCode().equals(KeyCode.TAB) && !keyEvent.getCode().equals(KeyCode.ENTER)) {
 				recoverPasswordErrorLabel.setVisible(false);
 				return;
 			}
-			checkPasswordPolicy(policy, recoverAppPasswordField, recoverCheckPassword, recoverPasswordErrorLabel,
+			checkPasswordPolicy(recoverAppPasswordField, recoverCheckPassword, recoverPasswordErrorLabel,
 					recoverReEnterPasswordField);
 		});
 
-
-		recoverReEnterPasswordField.textProperty().addListener(((observableValue, s, t1) -> {
-			if (t1.equals(recoverAppPasswordField.getText())) {
-				recoverReCheckPassword.setVisible(true);
-				recoverChangePasswordButton.setVisible(true);
-			} else {
-				recoverReCheckPassword.setVisible(false);
-				recoverChangePasswordButton.setVisible(false);
-			}
-		}));
+		recoverReEnterPasswordField.textProperty().addListener(
+				((observableValue, s, t1) -> recoverReCheckPassword.setVisible(
+						t1.equals(recoverAppPasswordField.getText()))));
 
 		recoverReEnterPasswordField.setOnKeyReleased(keyEvent -> {
 			if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(
@@ -186,6 +167,9 @@ public class RecoverPasswordPaneController {
 				acceptPassword();
 			}
 		});
+
+		recoverChangePasswordButton.visibleProperty().bind(
+				recoverCheckPassword.visibleProperty().and(recoverReCheckPassword.visibleProperty()));
 	}
 
 	private void initializeKeysVBox() {
@@ -253,7 +237,6 @@ public class RecoverPasswordPaneController {
 
 	public void acceptPassword() {
 		password = recoverAppPasswordField.getText().toCharArray();
-		recoverChangePasswordButton.setVisible(false);
 		recoverChangePasswordButton.setDisable(true);
 		var filler = new char[password.length];
 		Arrays.fill(filler, 'x');
@@ -268,7 +251,6 @@ public class RecoverPasswordPaneController {
 
 		// Store the mnemonic and password hash
 		Platform.runLater(() -> {
-			recoverChangePasswordButton.setVisible(false);
 			try {
 				controller.setHash(password);
 				mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);

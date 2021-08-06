@@ -31,6 +31,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -123,7 +124,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 
 	@Test
 	public void enterWords_Test() throws TimeoutException {
-
 		setStage();
 		Node phraseButton = find("#recoverPhraseButton");
 		assert phraseButton instanceof Button;
@@ -171,7 +171,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertFalse(find("#recoverChangePasswordButton").isVisible());
 
 	}
-
 
 	@Test
 	public void enterWordsNoKeys_Test() throws TimeoutException {
@@ -280,6 +279,43 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.clickContinueTwo();
 
 		assertTrue(find("#recoverFinishVBox").isVisible());
+	}
+
+	@Test
+	public void passwordBehavior_test() throws TimeoutException {
+		setStage();
+
+		recoverPasswordPage.clearWords()
+				.setWords(testWords)
+				.acceptWords()
+				.enterNewPassword("tempurasoju");
+
+		assertTrue(find("#recoverCheckPassword").isVisible());
+		assertFalse(find("#recoverReEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#recoverReEnterPasswordField")).getText().isEmpty());
+
+		recoverPasswordPage.reEnterNewPassword("tempurasoju");
+		assertTrue(find("#recoverReCheckPassword").isVisible());
+		assertTrue(find("#recoverChangePasswordButton").isVisible());
+
+		clickOn("#recoverAppPasswordField");
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+		type(KeyCode.BACK_SPACE);
+
+		assertFalse(find("#recoverCheckPassword").isVisible());
+		assertTrue(find("#recoverReEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#recoverReEnterPasswordField")).getText().isEmpty());
+
+		type(KeyCode.S);
+		type(KeyCode.O);
+		type(KeyCode.J);
+		type(KeyCode.U);
+
+		assertTrue(find("#recoverCheckPassword").isVisible());
+		assertFalse(find("#recoverReEnterPasswordField").isDisabled());
+		assertTrue(((TextField) find("#recoverReEnterPasswordField")).getText().isEmpty());
 	}
 
 	@Test

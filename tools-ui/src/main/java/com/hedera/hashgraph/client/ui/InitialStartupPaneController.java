@@ -18,12 +18,8 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.codahale.passpol.BreachDatabase;
-import com.codahale.passpol.PasswordPolicy;
-import com.codahale.passpol.Status;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -64,6 +60,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_L
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkPasswordPolicy;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.deleteDirectory;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.setupCharacterCount;
 
 public class InitialStartupPaneController implements GenericFileReadWriteAware {
 
@@ -431,25 +428,16 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Event setup for the password fields and the "accept password" button
 	 */
 	private void setupPasswordEvents() {
-		var policy = new PasswordPolicy(BreachDatabase.top100K(), 10, 1024);
-
 		appPasswordField.setOnKeyReleased(keyEvent -> {
-			final var length = appPasswordField.getText().length();
-			characterCount.setText(String.valueOf(length));
-			characterCount.setStyle(Constants.RED_STYLE);
 			checkPassword.setVisible(false);
-			if (Status.OK.equals(policy.check(appPasswordField.getText()))) {
-				characterCount.setStyle(Constants.GREEN_STYLE);
-				checkPassword.setVisible(true);
-				passwordErrorLabel.setVisible(false);
-				reEnterPasswordField.setDisable(false);
-			}
+			reEnterPasswordField.setText("");
+			setupCharacterCount(appPasswordField, characterCount, checkPassword, passwordErrorLabel,
+					reEnterPasswordField);
 			if (isTabOrEnter(keyEvent)) {
 				passwordErrorLabel.setVisible(false);
 				return;
 			}
-
-			checkPasswordPolicy(policy, appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+			checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
 		});
 
 		reEnterPasswordField.setOnKeyReleased(keyEvent -> {

@@ -27,7 +27,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -57,6 +56,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static org.apache.commons.lang3.StringUtils.valueOf;
@@ -105,7 +109,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				break;
 			case INTEGRATION:
 				Map<String, AccountId> network = new HashMap<>();
-				var jsonArray = getIntegrationIPs(Constants.INTEGRATION_NODES_JSON);
+				var jsonArray = getIntegrationIPs(INTEGRATION_NODES_JSON);
 				for (var jsonElement : jsonArray) {
 					var node = jsonElement.getAsJsonObject();
 					network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
@@ -141,7 +145,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 
 	/**
 	 * Return a mnemonic object, either by loading it from file or generating it. If the mnemonic is generated, it is
-	 * then stored in a password protected file.
+	 * then stored in a password-protected file.
 	 *
 	 * @param file
 	 * 		file where the mnemonic is stored, or the output directory where the new file will be stored
@@ -235,7 +239,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		String pubKey;
 		try {
 			pubKey = new String(
-					Files.readAllBytes(Path.of(keyName.replace(Constants.PK_EXTENSION, Constants.PUB_EXTENSION))));
+					Files.readAllBytes(Path.of(keyName.replace(PK_EXTENSION, PUB_EXTENSION))));
 		} catch (IOException e) {
 			logger.error(e);
 			throw new HederaClientException("Could not load public key from file");
@@ -259,7 +263,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			logger.info("Output directory {} created", outputPath);
 		}
 		while (true) {
-			var name = String.format("%s/%s-%d.%s", outputPath, keyName, number, Constants.PK_EXTENSION);
+			var name = String.format("%s/%s-%d.%s", outputPath, keyName, number, PK_EXTENSION);
 			if (!new File(name).exists()) {
 				return name;
 			}
@@ -314,7 +318,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * If the account corresponding to the id provided has a nickname, this method returns it. Otherwise it returns the
+	 * If the account corresponding to the id provided has a nickname, this method returns it. Otherwise, it returns the
 	 * account id as a readable String
 	 *
 	 * @param accountNumber
@@ -490,8 +494,9 @@ public class CommonMethods implements GenericFileReadWriteAware {
 
 	public static boolean badPassword(char[] password) {
 		var passwordPolicy =
-				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()), 9,
-						1024);
+				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+						MIN_PASSWORD_LENGTH,
+						MAX_PASSWORD_LENGTH);
 		final var check = passwordPolicy.check(valueOf(password));
 		if (check.equals(Status.TOO_LONG)) {
 			logger.info("The password length exceeds the upper limit of 1024 characters. Please try again");
