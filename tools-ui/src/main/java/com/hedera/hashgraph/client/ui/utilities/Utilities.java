@@ -323,5 +323,24 @@ public class Utilities {
 				break;
 		}
 	}
-
+	public static void setupCharacterCount(PasswordField recoverAppPasswordField, Label recoverCharacterCount,
+			ImageView recoverCheckPassword, Label recoverPasswordErrorLabel,
+			PasswordField recoverReEnterPasswordField) {
+		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
+				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
+		final var length = recoverAppPasswordField.getText().length();
+		recoverCharacterCount.setText(String.valueOf(length));
+		recoverCheckPassword.setVisible(false);
+		String style = length >= MIN_PASSWORD_LENGTH && length <= MAX_PASSWORD_LENGTH ? GREEN_STYLE : RED_STYLE;
+		recoverCharacterCount.setStyle(style);
+		if (Status.OK.equals(policy.check(recoverAppPasswordField.getText()))) {
+			recoverCheckPassword.setVisible(true);
+			recoverPasswordErrorLabel.setVisible(false);
+			recoverReEnterPasswordField.setDisable(false);
+		} else {
+			recoverCheckPassword.setVisible(false);
+			recoverPasswordErrorLabel.setVisible(true);
+			recoverReEnterPasswordField.setDisable(true);
+		}
+	}
 }
