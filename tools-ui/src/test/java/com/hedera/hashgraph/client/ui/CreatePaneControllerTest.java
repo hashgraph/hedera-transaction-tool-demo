@@ -443,7 +443,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		sleep(TENTH_OF_A_SECOND);
 		assertEquals(12, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
 
-		createPanePage.setMinutes(99);
+		createPanePage.setHours(99);
 		sleep(TENTH_OF_A_SECOND);
 		sleep(THREAD_PAUSE_TIME);
 		assertEquals(23, Integer.parseInt(((TextField) find(CREATE_HOURS)).getText()));
