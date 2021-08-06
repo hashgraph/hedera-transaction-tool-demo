@@ -431,13 +431,21 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		appPasswordField.setOnKeyReleased(keyEvent -> {
 			checkPassword.setVisible(false);
 			reEnterPasswordField.setText("");
+			acceptPasswordButton.setVisible(false);
+			reCheckPassword.setVisible(false);
 			setupCharacterCount(appPasswordField, characterCount, checkPassword, passwordErrorLabel,
 					reEnterPasswordField);
-			if (isTabOrEnter(keyEvent)) {
+			if (isNotTabOrEnter(keyEvent)) {
 				passwordErrorLabel.setVisible(false);
 				return;
 			}
 			checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+		});
+
+		appPasswordField.setOnKeyPressed(keyEvent -> {
+			if (!isNotTabOrEnter(keyEvent)) {
+				checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+			}
 		});
 
 		reEnterPasswordField.setOnKeyReleased(keyEvent -> {
@@ -461,7 +469,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private boolean isTabOrEnter(KeyEvent keyEvent) {
+	private boolean isNotTabOrEnter(KeyEvent keyEvent) {
 		return !(keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
 	}
 
