@@ -16,23 +16,6 @@
  * limitations under the License.
  */
 
-/*
- * (c) 2016-2020 Swirlds, Inc.
- *
- * This software is the confidential and proprietary information of
- * Swirlds, Inc. ("Confidential Information"). You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Swirlds.
- *
- * SWIRLDS MAKES NO REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF
- * THE SOFTWARE, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE, OR NON-INFRINGEMENT. SWIRLDS SHALL NOT BE LIABLE FOR
- * ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING OR
- * DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
- */
-
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -81,17 +64,15 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	private final String storageDirectory;
 	private final VBox phraseBox;
 	private final Button generateKeys;
-	private final Button copyToClipBoardButton;
 	private final VBox finishBox;
 	GridPane mnemonicGridPane;
 
 	public MnemonicPhraseHelper(Label mnemonicErrorMessage, String storageDirectory, VBox phraseBox,
-			Button generateKeys, Button copyToClipBoardButton, VBox finishBox) {
+			Button generateKeys, VBox finishBox) {
 		this.mnemonicErrorMessage = mnemonicErrorMessage;
 		this.storageDirectory = storageDirectory;
 		this.phraseBox = phraseBox;
 		this.generateKeys = generateKeys;
-		this.copyToClipBoardButton = copyToClipBoardButton;
 		this.finishBox = finishBox;
 	}
 
@@ -219,9 +200,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		}
 
 		generateKeys.setVisible(false);
-		if (copyToClipBoardButton != null) {
-			copyToClipBoardButton.setVisible(true);
-		}
 		finishBox.setVisible(true);
 	}
 
@@ -321,10 +299,9 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			mnemonicErrorMessage.setVisible(true);
 			return;
 		}
-		if (setWordsInGridPane(words) && copyToClipBoardButton != null) {
-			copyToClipBoardButton.setVisible(true);
+		if (setWordsInGridPane(words)) {
+			logger.info("Words set in text boxes");
 		}
-
 	}
 
 	@NotNull
@@ -343,7 +320,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	}
 
 	public static final class Builder {
-		private Button copyToClipBoardButton;
 		private Label mnemonicErrorMessage;
 		private String storageDirectory;
 		private VBox phraseBox;
@@ -377,11 +353,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			return this;
 		}
 
-		public Builder withCopyToClipBoardButton(Button copyToClipBoardButton) {
-			this.copyToClipBoardButton = copyToClipBoardButton;
-			return this;
-		}
-
 		public Builder withFinishBox(VBox finishBox) {
 			this.finishBox = finishBox;
 			return this;
@@ -389,7 +360,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		public MnemonicPhraseHelper build() {
 			return new MnemonicPhraseHelper(mnemonicErrorMessage, storageDirectory, phraseBox, generateKeys,
-					copyToClipBoardButton, finishBox);
+					finishBox);
 		}
 	}
 }

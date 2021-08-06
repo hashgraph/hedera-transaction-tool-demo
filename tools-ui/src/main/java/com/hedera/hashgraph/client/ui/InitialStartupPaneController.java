@@ -205,7 +205,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				.withMnemonicErrorMessage(mnemonicErrorMessage)
 				.withPhraseBox(phraseBox)
 				.withStorageDirectory(controller.getPreferredStorageDirectory())
-				.withCopyToClipBoardButton(copyToClipBoardButton)
 				.withGenerateKeys(generateKeys)
 				.withFinishBox(finishBox)
 				.build();
@@ -247,7 +246,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		setManagedProperties(drivesErrorLabel, addFolderPathHBox, addToEmailMapButton, drivesBox, passphraseBox,
 				finishBox, generateKeyPairButtonBar, generateKeyPairButtonBar, mnemonicErrorMessage,
 				copyToClipboardLabel, copyToClipBoardButton, pasteFromClipBoardButton);
-
 		pasteFromClipBoardButton.visibleProperty().bind(copyToClipBoardButton.visibleProperty().not());
 
 		// Auto scroll always to the bottom
@@ -377,6 +375,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	public void generatePassphraseEvent() {
 		mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), true);
+		copyToClipBoardButton.setVisible(true);
 		controller.setLegacy(false);
 	}
 
@@ -429,7 +428,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Event setup for the password fields and the accept password button
+	 * Event setup for the password fields and the "accept password" button
 	 */
 	private void setupPasswordEvents() {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), 10, 1024);
