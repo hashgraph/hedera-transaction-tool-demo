@@ -622,15 +622,15 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 */
 	private void keyReleasedEvent(KeyEvent keyEvent) {
 		emailGreenCheck.setVisible(validateEmail(emailTextField.getText()));
-		if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) &&
-				validatePath(pathTextField.getText()) &&
-				validateEmail(emailTextField.getText())) {
-			drivesErrorLabel.setVisible(false);
-			drivesErrorLabel.setText("");
-			validateEmailAction();
-			return;
+		if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB))) {
+			if (validatePath(pathTextField.getText()) && validateEmail(emailTextField.getText())) {
+				drivesErrorLabel.setVisible(false);
+				drivesErrorLabel.setText("");
+				validateEmailAction();
+				return;
+			}
+			setDrivesErrorLabel("The email address entered is not valid");
 		}
-		setDrivesErrorLabel("The email address entered is not valid");
 	}
 
 	public static final class Builder {
