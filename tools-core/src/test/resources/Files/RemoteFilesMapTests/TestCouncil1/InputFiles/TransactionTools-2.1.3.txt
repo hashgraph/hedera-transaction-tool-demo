@@ -4,7 +4,7 @@
     {"title":"Improvements","contents":"We have made incredible improvements throughout the world of apps"},
     {"title":"Bug Fixes","contents":"Bugs would have been fixed, if there were any to begin with. Which there weren't!"}
   ],
-  "link":"https://github.com/swirlds/hedera-transaction-tools/releases",
+  "link":"https://github.com/hashgraph/hedera-transaction-tool-demo/releases",
   "version":"2.1",
-  "dateStamp":"2020-07-14T14:02:51+0000"
+  "dateStamp":"2025-07-14T14:02:51+0000"
 }
