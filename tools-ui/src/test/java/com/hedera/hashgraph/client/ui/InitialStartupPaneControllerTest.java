@@ -39,7 +39,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
@@ -74,6 +73,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.MNEMONIC_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_CHECK_IMAGE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
 import static java.lang.Boolean.parseBoolean;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -108,7 +108,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("Default drives file deleted");
 		}
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 		if (new File(DEFAULT_STORAGE + "/Files/").mkdirs()) {
 			logger.info("Files directory created");
@@ -137,7 +137,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 
 		if ((new File(DEFAULT_STORAGE)).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
 		var controller = new Controller();
@@ -527,10 +527,10 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		var ou = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles");
 
 		if (in.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(in);
+			deleteDirectory(in);
 		}
 		if (ou.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(ou);
+			deleteDirectory(ou);
 		}
 	}
 
@@ -568,11 +568,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(box.isVisible());
 
 		if (in.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(in);
+			deleteDirectory(in);
 		}
 
 		if (out.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(out);
+			deleteDirectory(out);
 		}
 
 		if (initialMap.exists()) {
@@ -653,13 +653,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		var currentRelativePath = Paths.get("");
 		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
-			FileUtils.deleteDirectory(new File(s));
+			deleteDirectory(new File(s));
 		}
 
 		var toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
 		if (new File(toolsFolder).exists()) {
-			FileUtils.deleteDirectory(new File(toolsFolder));
+			deleteDirectory(new File(toolsFolder));
 		}
 
 		if (new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE).exists()) {
@@ -669,7 +669,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		properties.resetProperties();
 		logger.info("Preferences cleared");
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 		release(new KeyCode[] { });
 		release(new MouseButton[] { });
@@ -755,7 +755,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("Deleting up dummy one drive");
 		final var directory = new File(DIR_TEST_ONE_DRIVE + i);
 		if (directory.exists()) {
-			FileUtils.deleteDirectory(directory);
+			deleteDirectory(directory);
 		}
 	}
 }
