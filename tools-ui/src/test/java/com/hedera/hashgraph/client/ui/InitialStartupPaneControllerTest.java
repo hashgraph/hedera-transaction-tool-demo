@@ -578,6 +578,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		if (initialMap.exists()) {
 			initialMap.deleteOnExit();
 		}
+		deleteDummyDrive(0);
 	}
 
 	@Test
