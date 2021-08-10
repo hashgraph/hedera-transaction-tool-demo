@@ -411,7 +411,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 			var linkedAccountsColumn = getLinkedAccountsTableColumn(signingKeysTableView);
 
-
 			signingKeysTableView.getColumns().addAll(iconsColumn, nameColumn, linkedAccountsColumn);
 
 			setSigningKeysRowFactory(signingKeysTableView);
@@ -531,8 +530,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	private String hashAsString(String pemLocation) throws KeyStoreException {
-		return String.valueOf(Ed25519KeyStore.getMnemonicHashCode(
-				pemLocation));
+		return String.valueOf(Ed25519KeyStore.getMnemonicHashCode(pemLocation));
 	}
 
 	/**

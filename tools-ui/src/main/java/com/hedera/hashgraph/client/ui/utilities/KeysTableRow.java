@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import javafx.beans.property.SimpleStringProperty;
 
+import java.util.Collections;
 import java.util.List;
 
 public class KeysTableRow {
@@ -129,7 +130,8 @@ public class KeysTableRow {
 	}
 
 	private String getStringAccountList(List<String> accounts) {
-		if (accounts == null || accounts.isEmpty()) {
+		Collections.sort(accounts);
+		if (accounts.isEmpty()) {
 			return "No account found";
 		}
 

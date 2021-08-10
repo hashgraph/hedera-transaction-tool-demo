@@ -391,7 +391,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(4).subtract(24));
+		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(4));
 		balanceColumn.setStyle("-fx-alignment: TOP-RIGHT; -fx-padding: 10");
 		return balanceColumn;
 	}
