@@ -949,8 +949,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		table.getColumns().clear();
 		table.getColumns().addAll(accountColumn, amountColumn);
 
-		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.35));
-		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.61));
+		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
+		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.60));
 
 		accountColumn.setResizable(false);
 		amountColumn.setResizable(false);
@@ -975,7 +975,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 
 		table.prefHeightProperty().bind(
-				table.fixedCellSizeProperty().multiply(Bindings.size(table.getItems()).add(1.1)).add(10));
+				table.fixedCellSizeProperty().multiply(Bindings.size(table.getItems()).add(1.1)));
 		table.minHeightProperty().bind(table.prefHeightProperty());
 		table.maxHeightProperty().bind(table.prefHeightProperty());
 		table.managedProperty().bind(table.visibleProperty());
