@@ -829,7 +829,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return keyStructureUtility.showKeyString(key);
 	}
 
-	public TreeView<String> buildKeyTreeView(Key key) throws IOException {
+	public TreeView<String> buildKeyTreeView(Key key) {
 		return keyStructureUtility.buildKeyTreeView(key);
 	}
 
