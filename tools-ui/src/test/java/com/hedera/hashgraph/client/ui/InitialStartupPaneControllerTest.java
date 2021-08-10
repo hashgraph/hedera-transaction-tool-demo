@@ -637,57 +637,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 	}
 
-	private File buildDrivesJson(int k) throws HederaClientException {
-		final var initialMap = new File(USER_HOME + "Documents", "initialMap.json");
-		if (k == 0) {
-			writeJsonObject(initialMap.getAbsolutePath(), new JsonObject());
-			return initialMap;
-		}
-
-		var one = new File(DIR_TEST_ONE_DRIVE);
-		logger.info(one.getAbsolutePath());
-		var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
-		var user = new File(home);
-		logger.info(user.getAbsolutePath());
-		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));
-
-		var map = new JsonObject();
-		var array = new JsonArray();
-		final var drive = one.getAbsolutePath().replace(user.getAbsolutePath(), "");
-
-		for (var i = 0; i < k; i++) {
-			var element = new JsonObject();
-			element.addProperty("drive", drive + i);
-			element.addProperty("email", String.format("test1.council%d@hederacouncil.org", i));
-			setupDummyOneDrive(i);
-			array.add(element);
-		}
-		map.add("map", array);
-
-
-		writeJsonObject(initialMap.getAbsolutePath(), map);
-		return initialMap;
-	}
-
-	private void setupDummyOneDrive(int i) {
-		logger.info("Setting up dummy one drive");
-
-		if (!new File(DIR_TEST_ONE_DRIVE + i).exists()) {
-			if (new File(DIR_TEST_ONE_DRIVE + i, "InputFiles").mkdirs() && new File(DIR_TEST_ONE_DRIVE + i,
-					String.format("OutputFiles/test1.council%d@hederacouncil.org", i)).mkdirs()) {
-				logger.info("Drive created");
-			}
-		}
-	}
-
-	private void deleteDummyDrive(int i) throws IOException {
-		logger.info("Deleting up dummy one drive");
-		final var directory = new File(DIR_TEST_ONE_DRIVE + i);
-		if (directory.exists()) {
-			FileUtils.deleteDirectory(directory);
-		}
-
-	}
 
 	@Test
 	public void passwordPolicy_test() {
@@ -737,5 +686,75 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 		return mnemonic;
 
+	}
+
+	/**
+	 * Builds a json file containing drive/email pairs for testing
+	 *
+	 * @param k
+	 * 		the number of drives
+	 * @return the json file
+	 */
+	private File buildDrivesJson(int k) throws HederaClientException {
+		final var initialMap = new File(USER_HOME + "Documents", "initialMap.json");
+		if (k == 0) {
+			writeJsonObject(initialMap.getAbsolutePath(), new JsonObject());
+			return initialMap;
+		}
+
+		var one = new File(DIR_TEST_ONE_DRIVE);
+		logger.info(one.getAbsolutePath());
+		var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
+		var user = new File(home);
+		logger.info(user.getAbsolutePath());
+		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));
+
+		var map = new JsonObject();
+		var array = new JsonArray();
+		final var drive = one.getAbsolutePath().replace(user.getAbsolutePath(), "");
+
+		for (var i = 0; i < k; i++) {
+			var element = new JsonObject();
+			element.addProperty("drive", drive + i);
+			element.addProperty("email", String.format("test1.council%d@hederacouncil.org", i));
+			setupDummyOneDrive(i);
+			array.add(element);
+		}
+		map.add("map", array);
+
+
+		writeJsonObject(initialMap.getAbsolutePath(), map);
+		return initialMap;
+	}
+
+	/**
+	 * Creates a dummy drive in the test resources directory
+	 *
+	 * @param i
+	 * 		the ordinal number of the drive
+	 */
+	private void setupDummyOneDrive(int i) {
+		logger.info("Setting up dummy one drive");
+
+		if (!new File(DIR_TEST_ONE_DRIVE + i).exists()) {
+			if (new File(DIR_TEST_ONE_DRIVE + i, "InputFiles").mkdirs() && new File(DIR_TEST_ONE_DRIVE + i,
+					String.format("OutputFiles/test1.council%d@hederacouncil.org", i)).mkdirs()) {
+				logger.info("Drive created");
+			}
+		}
+	}
+
+	/**
+	 * Deletes a dummy drive
+	 *
+	 * @param i
+	 * 		the ordinal number of the drive
+	 */
+	private void deleteDummyDrive(int i) throws IOException {
+		logger.info("Deleting up dummy one drive");
+		final var directory = new File(DIR_TEST_ONE_DRIVE + i);
+		if (directory.exists()) {
+			FileUtils.deleteDirectory(directory);
+		}
 	}
 }
