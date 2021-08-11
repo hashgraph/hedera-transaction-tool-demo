@@ -25,13 +25,13 @@ import com.codahale.passpol.Status;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.pages.InitialStartupPage;
 import com.hedera.hashgraph.sdk.Mnemonic;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -39,7 +39,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
@@ -51,12 +50,11 @@ import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
@@ -75,6 +73,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.MNEMONIC_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_CHECK_IMAGE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
 import static java.lang.Boolean.parseBoolean;
+import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -90,7 +89,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	public static final String PASSWORD = "tempura hopscotch";
 	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private final Logger logger = LogManager.getLogger(InitialStartupPage.class);
-	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive/";
+	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive";
 	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
@@ -109,7 +108,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("Default drives file deleted");
 		}
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 		if (new File(DEFAULT_STORAGE + "/Files/").mkdirs()) {
 			logger.info("Files directory created");
@@ -138,10 +137,10 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 
 		if ((new File(DEFAULT_STORAGE)).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
-		Controller controller = new Controller();
+		var controller = new Controller();
 		var version = controller.getVersion();
 		properties.setVersionString(version);
 
@@ -249,7 +248,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		try {
 			logger.info("Setup password, then enter path and email");
-			InitialStartupPage pane = initialStartupPage
+			var pane = initialStartupPage
 					.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
 					.acceptPassword()
@@ -276,11 +275,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
-		GridPane emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		ObservableList<Node> empty = emptyGrid.getChildren();
+		var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		var empty = emptyGrid.getChildren();
 		assertEquals(24, empty.size());
 		// Check all fields are empty
-		for (Node n :
+		for (var n :
 				empty) {
 			assertTrue(n instanceof TextField);
 			assertEquals("", ((TextField) n).getText());
@@ -288,14 +287,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("The grid is empty");
 
 		initialStartupPage.clickOnGenerateMnemonic();
-		GridPane fullGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		ObservableList<Node> full = fullGrid.getChildren();
+		var fullGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		var full = fullGrid.getChildren();
 		assertEquals(24, full.size());
 		logger.info("Mnemonic is generated: the grid has been populated");
 		// Check all fields are full and collect them in one string
 
-		String words = "";
-		for (Node n : full) {
+		var words = "";
+		for (var n : full) {
 			assertTrue(n instanceof TextField);
 			assertNotEquals("", ((TextField) n).getText());
 			words = words.concat(((TextField) n).getText()).concat(" ");
@@ -313,11 +312,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(find("FINISH").isVisible());
 		logger.info("Next step is visible");
 
-		byte[] salt = getSalt(properties.getHash(), properties.isLegacy());
-		Mnemonic mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
+		var salt = getSalt(properties.getHash(), properties.isLegacy());
+		var mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
 				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-		String storedWords = mnemonic.toString();
+		var storedWords = mnemonic.toString();
 
 		assertEquals(storedWords.concat(" ").toLowerCase(), words.toLowerCase());
 		logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using password");
@@ -337,7 +336,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("generatePassphraseFromProvidedWords_Text");
 			logger.info("Load stored mnemonic for testing");
 
-			String[] storedWords = storedMnemonic.toLowerCase().split(" ");
+			var storedWords = storedMnemonic.toLowerCase().split(" ");
 
 			initialStartupPage.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
@@ -348,12 +347,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
 
-			GridPane emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-			ObservableList<Node> empty = emptyGrid.getChildren();
+			var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+			var empty = emptyGrid.getChildren();
 			assertEquals(24, empty.size());
 			// Check all fields are empty
-			int count = 0;
-			for (Node n :
+			var count = 0;
+			for (var n :
 					empty) {
 				assertTrue(n instanceof TextField);
 				assertEquals("", ((TextField) n).getText());
@@ -377,11 +376,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			assertTrue(find("FINISH").isVisible());
 			logger.info("Next step is visible");
 
-			Mnemonic mnemonic =
+			var mnemonic =
 					getMnemonicFromFile(PASSWORD.toCharArray(), getSalt(properties.getHash(), properties.isLegacy()),
 							properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-			String[] recoveredWords = mnemonic.toString().split(" ");
+			var recoveredWords = mnemonic.toString().split(" ");
 
 			assertArrayEquals(storedWords, recoveredWords);
 			logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using " +
@@ -408,15 +407,15 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 		assertTrue(find("PASTE").isVisible());
 
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		StringSelection longStringSelection = new StringSelection("test " + storedMnemonic);
-		StringSelection shortStringSelection =
+		var longStringSelection = new StringSelection("test " + storedMnemonic);
+		var shortStringSelection =
 				new StringSelection("Dignity domain involve report sail middle rhythm husband usage pretty");
-		StringSelection latinStringSelection = new StringSelection(
+		var latinStringSelection = new StringSelection(
 				"magna di curant, parva neglegunt. magna di curant, parva neglegunt. magna di curant, parva neglegunt" +
 						". magna di curant, parva neglegunt. magna di curant, parva");
-		StringSelection goodStringSelection = new StringSelection(storedMnemonic);
+		var goodStringSelection = new StringSelection(storedMnemonic);
 
 		clipboard.setContents(longStringSelection, longStringSelection);
 		initialStartupPage.pressPaste();
@@ -456,13 +455,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
-		GridPane emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		ObservableList<Node> empty = emptyGrid.getChildren();
+		var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		var empty = emptyGrid.getChildren();
 		assertEquals(24, empty.size());
 
 
 		assertTrue(empty.get(0) instanceof TextField);
-		TextField textField = (TextField) empty.get(0);
+		var textField = (TextField) empty.get(0);
 		assertEquals("", textField.getText());
 		clickOn(textField);
 
@@ -500,46 +499,45 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	@Test
 	public void testCreateLocalOneDriveFolders_Test() throws IOException {
 		logger.info("Setup password, then enter path and email");
-		InitialStartupPage pane = initialStartupPage
+		var pane = initialStartupPage
 				.enterPassword(PASSWORD)
 				.reEnterPassword(PASSWORD)
 				.acceptPassword()
 				.enterOneDriveFolder(DIR_TEST_ONE_DRIVE);
 
-		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "InputFiles").exists());
-		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "OutputFiles").exists());
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles").exists());
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles").exists());
 
-		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "InputFiles").isDirectory());
-		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "OutputFiles").isDirectory());
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles").isDirectory());
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles").isDirectory());
 
 		initialStartupPage.enterStringUsername("test1.council2@hederacouncil.org");
 
 		assertTrue(find("#confirmAddFolderButton").isVisible());
 		pane.acceptOneDrive();
 
-		assertTrue(new File(
-				CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "OutputFiles/test1.council2@hederacouncil.org").isDirectory());
-		assertTrue(new File(
-				CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "OutputFiles/test1.council2@hederacouncil.org").exists());
-
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE,
+				"OutputFiles/test1.council2@hederacouncil.org").exists());
+		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE,
+				"OutputFiles/test1.council2@hederacouncil.org").isDirectory());
 
 		logger.info("Path and email are verified: Add OneDrive folder button is visible");
 
-		File in = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "InputFiles");
-		File ou = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE + "OutputFiles");
+		var in = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles");
+		var ou = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles");
 
 		if (in.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(in);
+			deleteDirectory(in);
 		}
 		if (ou.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(ou);
+			deleteDirectory(ou);
 		}
 	}
 
 	@Test
 	public void testDefaultDrivesSetup_test() throws TimeoutException, HederaClientException, IOException {
 
-		final File initialMap = buildDrivesJson();
+		final var initialMap = buildDrivesJson(1);
 
 		logger.info("Restarting stage");
 		FxToolkit.registerPrimaryStage();
@@ -550,9 +548,9 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 				.reEnterPassword(PASSWORD)
 				.acceptPassword();
 
-		String oneDrive = new File(DIR_TEST_ONE_DRIVE).getAbsolutePath();
-		File in = new File(oneDrive + "/InputFiles");
-		File out = new File(oneDrive + "/OutputFiles");
+		var oneDrive = new File(DIR_TEST_ONE_DRIVE).getAbsolutePath();
+		var in = new File(oneDrive + "/InputFiles");
+		var out = new File(oneDrive + "/OutputFiles");
 
 		logger.info(in.getAbsolutePath());
 
@@ -566,45 +564,84 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		logger.info("Path and email are verified");
 
-		Node box = find("#passphraseBox");
+		var box = find("#passphraseBox");
 		assertTrue(box.isVisible());
 
 		if (in.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(in);
+			deleteDirectory(in);
 		}
 
 		if (out.exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(out);
+			deleteDirectory(out);
 		}
 
 		if (initialMap.exists()) {
 			initialMap.deleteOnExit();
 		}
-	}
-
-	private File buildDrivesJson() throws HederaClientException {
-		File one = new File(DIR_TEST_ONE_DRIVE);
-		logger.info(one.getAbsolutePath());
-		String home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
-		File user = new File(home);
-		logger.info(user.getAbsolutePath());
-		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));
-
-		JsonObject map = new JsonObject();
-		JsonArray array = new JsonArray();
-		JsonObject element = new JsonObject();
-		element.addProperty("drive", one.getAbsolutePath().replace(user.getAbsolutePath(), ""));
-		element.addProperty("email", "test1.council2@hederacouncil.org");
-		array.add(element);
-		map.add("map", array);
-		final File initialMap = new File(USER_HOME + "Documents" + File.separator + "initialMap.json");
-		writeJsonObject(initialMap.getAbsolutePath(), map);
-		return initialMap;
+		deleteDummyDrive(0);
 	}
 
 	@Test
+	public void testDefaultDrivesSetupOverLimit_test() throws TimeoutException, HederaClientException, IOException {
+
+		final var initialMap = buildDrivesJson(10);
+		logger.info("Restarting stage");
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		logger.info("Setup password, then enter verify path and email exist");
+		initialStartupPage.enterPassword(PASSWORD)
+				.reEnterPassword(PASSWORD)
+				.acceptPassword();
+
+		if (initialMap.exists()) {
+			initialMap.deleteOnExit();
+		}
+
+		var map = properties.getOneDriveCredentials();
+		assertEquals(Constants.DRIVE_LIMIT, map.size());
+		for (Map.Entry<String, String> entry : map.entrySet()) {
+			String drive = entry.getKey();
+			String email = entry.getValue();
+			int index = Integer.parseInt(drive.substring(drive.length() - 1));
+			assertEquals(String.format("test1.council%d@hederacouncil.org", index), email);
+		}
+
+		var box = find("#passphraseBox");
+		assertTrue(box.isVisible());
+
+		for (int i = 0; i < 10; i++) {
+			deleteDummyDrive(i);
+		}
+	}
+
+	@Test
+	public void testDefaultDrivesSetupUnderLimit_test() throws TimeoutException, HederaClientException, IOException {
+
+		final var initialMap = buildDrivesJson(0);
+		logger.info("Restarting stage");
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		logger.info("Setup password, then enter verify path and email exist");
+		initialStartupPage.enterPassword(PASSWORD)
+				.reEnterPassword(PASSWORD)
+				.acceptPassword();
+		var box = find("#passphraseBox");
+		assertFalse(box.isVisible());
+
+		if (initialMap.exists()) {
+			initialMap.deleteOnExit();
+		}
+		for (int i = 0; i < 10; i++) {
+			deleteDummyDrive(i);
+		}
+	}
+
+
+	@Test
 	public void passwordPolicy_test() {
-		final PasswordPolicy passwordPolicy =
+		final var passwordPolicy =
 				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
 						MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		assertEquals(Status.TOO_SHORT, passwordPolicy.check("password"));
@@ -613,16 +650,16 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@AfterEach
 	public void tearDown() throws IOException {
-		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		var currentRelativePath = Paths.get("");
+		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
-			FileUtils.deleteDirectory(new File(s));
+			deleteDirectory(new File(s));
 		}
 
-		String toolsFolder =
+		var toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
 		if (new File(toolsFolder).exists()) {
-			FileUtils.deleteDirectory(new File(toolsFolder));
+			deleteDirectory(new File(toolsFolder));
 		}
 
 		if (new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE).exists()) {
@@ -632,14 +669,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		properties.resetProperties();
 		logger.info("Preferences cleared");
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 		release(new KeyCode[] { });
 		release(new MouseButton[] { });
 	}
 
 	private Mnemonic getMnemonicFromFile(final char[] password, byte[] salt, String path) {
-		File mnemonicFile = new File(path);
+		var mnemonicFile = new File(path);
 		Mnemonic mnemonic = null;
 		try {
 			if (mnemonicFile.exists()) {
@@ -650,5 +687,75 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 		return mnemonic;
 
+	}
+
+	/**
+	 * Builds a json file containing drive/email pairs for testing
+	 *
+	 * @param k
+	 * 		the number of drives
+	 * @return the json file
+	 */
+	private File buildDrivesJson(int k) throws HederaClientException {
+		final var initialMap = new File(USER_HOME + "Documents", "initialMap.json");
+		if (k == 0) {
+			writeJsonObject(initialMap.getAbsolutePath(), new JsonObject());
+			return initialMap;
+		}
+
+		var one = new File(DIR_TEST_ONE_DRIVE);
+		logger.info(one.getAbsolutePath());
+		var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
+		var user = new File(home);
+		logger.info(user.getAbsolutePath());
+		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));
+
+		var map = new JsonObject();
+		var array = new JsonArray();
+		final var drive = one.getAbsolutePath().replace(user.getAbsolutePath(), "");
+
+		for (var i = 0; i < k; i++) {
+			var element = new JsonObject();
+			element.addProperty("drive", drive + i);
+			element.addProperty("email", String.format("test1.council%d@hederacouncil.org", i));
+			setupDummyOneDrive(i);
+			array.add(element);
+		}
+		map.add("map", array);
+
+
+		writeJsonObject(initialMap.getAbsolutePath(), map);
+		return initialMap;
+	}
+
+	/**
+	 * Creates a dummy drive in the test resources directory
+	 *
+	 * @param i
+	 * 		the ordinal number of the drive
+	 */
+	private void setupDummyOneDrive(int i) {
+		logger.info("Setting up dummy one drive");
+
+		if (!new File(DIR_TEST_ONE_DRIVE + i).exists()) {
+			if (new File(DIR_TEST_ONE_DRIVE + i, "InputFiles").mkdirs() && new File(DIR_TEST_ONE_DRIVE + i,
+					String.format("OutputFiles/test1.council%d@hederacouncil.org", i)).mkdirs()) {
+				logger.info("Drive created");
+			}
+		}
+	}
+
+	/**
+	 * Deletes a dummy drive
+	 *
+	 * @param i
+	 * 		the ordinal number of the drive
+	 */
+	private void deleteDummyDrive(int i) throws IOException {
+		logger.info("Deleting up dummy one drive");
+		final var directory = new File(DIR_TEST_ONE_DRIVE + i);
+		if (directory.exists()) {
+			deleteDirectory(directory);
+		}
 	}
 }

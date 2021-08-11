@@ -420,7 +420,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return boxes;
 	}
 
-	private void setupKeyTree(TransactionFile rf) throws HederaClientException {
+	private void setupKeyTree(TransactionFile rf) {
 		final var transactionType = rf.getTransaction().getTransactionType();
 		if (transactionType == null) {
 			// old style transaction
@@ -434,11 +434,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
-		try {
-			rf.setTreeView(controller.buildKeyTreeView(key));
-		} catch (IOException e) {
-			throw new HederaClientException(e);
-		}
+		rf.setTreeView(controller.buildKeyTreeView(key));
 	}
 
 	private VBox getButtonsBox(RemoteFile rf) {

@@ -138,7 +138,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Check the output drive is valid (exists and the user has write permission)
+	 * Check the output drive is valid (exists and the user has "write-permission")
 	 */
 	public void validateEmailAction() {
 		var path = pathTextField.getText();
@@ -226,7 +226,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the "add folder" grid pane
+	 * Set up the "add folder" grid pane
 	 *
 	 * @param inputPath
 	 * 		The path to the input folder
@@ -424,7 +424,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 *
 	 * @param emailStr
 	 * 		the email string
-	 * @return true if the email exists and the user has write permission to it
+	 * @return true if the email exists and the user has "write-permission" to it
 	 */
 	private boolean checkOutputEmail(String emailStr) {
 		var path = String.format("%s/" + OUTPUT_FILES + "/%s/", pathTextField.getText(), emailStr);
@@ -528,8 +528,12 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			return;
 		}
 
-		if (map.size() == 0 || map.size() > driveLimit) {
+		if (map.size() == 0) {
 			return;
+		}
+
+		while (map.size() > driveLimit) {
+			map.remove(map.size() - 1);
 		}
 
 		// check the initial map is correct
@@ -573,7 +577,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the bindings for multiple ui elements
+	 * Set up the bindings for multiple ui elements
 	 */
 	private void setupBindings() {
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
