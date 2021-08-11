@@ -362,9 +362,9 @@
 							   text="ABOUT"/>
 					<GridPane hgap="10.0" vgap="10.0">
 						<columnConstraints>
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
-							<ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="10.0"/>
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
+							<ColumnConstraints hgrow="ALWAYS" maxWidth="414.0" minWidth="10.0" prefWidth="166.0"/>
+							<ColumnConstraints halignment="CENTER" hgrow="ALWAYS" maxWidth="821.0" minWidth="10.0"
+											   prefWidth="765.0"/>
 						</columnConstraints>
 						<rowConstraints>
 							<RowConstraints minHeight="30.0" vgrow="ALWAYS"/>
@@ -378,7 +378,8 @@
 						<Button mnemonicParsing="false" onAction="#resetApplication" prefWidth="200.0"
 								style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
 								text="RESET" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="1"/>
-						<Label fx:id="versionLabel" wrapText="true" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
+						<TextField fx:id="versionLabel" editable="false" minHeight="0.0" minWidth="0.0"
+								   GridPane.columnIndex="1" GridPane.columnSpan="2"/>
 					</GridPane>
 				</VBox>
 				<ImageView fx:id="deleteImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true"
