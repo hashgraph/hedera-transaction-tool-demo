@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.Controller;
-import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -46,8 +45,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +53,7 @@ import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Messages.REMOVE_DRIVE_MESSAGE;
+import static com.hedera.hashgraph.client.ui.popups.PopupMessage.display;
 import static java.lang.Boolean.parseBoolean;
 import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 
@@ -91,7 +89,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	private VBox storageBox = null;
 	private VBox transactionFoldersVBox = null;
 
-	private GridPane storageGridPane = null;
 	private GridPane addPathGridPane = null;
 
 	private UserAccessibleProperties tempProperties = null;
@@ -125,9 +122,9 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			return;
 		}
 
-		if (checkInvalidFolderStructure(new File(text + File.separator + INPUT_FILES)) || checkInvalidFolderStructure(
-				new File(text + File.separator + OUTPUT_FILES))) {
+		if (missingInnerDrives(text)) {
 			pathGreenCheck.setVisible(false);
+			drivesErrorLabel.setVisible(true);
 			return;
 		}
 
@@ -141,39 +138,42 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Check the output drive is valid (exists and the user has "write-permission")
 	 */
 	public void validateEmailAction() {
-		var path = pathTextField.getText();
+		var drivePath = pathTextField.getText();
 		var email = emailTextField.getText();
+		var outDrive = new File(drivePath, OUTPUT_FILES);
 
-		var out = new File(path + File.separator + OUTPUT_FILES + File.separator + email);
+		var out = new File(outDrive, email);
+
 		if (!out.exists() || !out.isDirectory()) {
-			if (Files.isWritable(Paths.get(path + File.separator + OUTPUT_FILES + File.separator))) {
-				if (out.mkdirs()) {
-					logger.info("Output path created");
-				}
-			} else {
-				PopupMessage.display("Folder not found",
-						"The email address entered is not valid. You will not be able to submit signed transactions. " +
-								"Please enter a valid email address.",
-						"OK");
+			if (cannotAdd(outDrive, out)) {
 				return;
 			}
 		}
-		credentials.put(path, email);
+		credentials.put(drivePath, email);
 		tempProperties.setOneDriveCredentials(credentials);
 		controller.setDrivesChanged(true);
 		clearGridPane();
 		try {
 			refreshTransactionsFolderVBox();
 			addFolderPathHBox.setVisible(false);
-			if (storageGridPane != null) {
-				storageGridPane.setVisible(true);
-			}
 			if (storageBox != null) {
 				storageBox.setVisible(true);
 			}
 		} catch (Exception e) {
 			logger.error(e);
 		}
+	}
+
+	private boolean cannotAdd(File outDrive, File out) {
+		if (outDrive.canWrite() && display("Output drive",
+				"The output folder does not exist. Do you want to create it?", true, "CREATE", "CANCEL")) {
+			return !out.mkdirs();
+		}
+		display("Folder not found",
+				"The email address entered is not valid. You will not be able to submit signed transactions. " +
+						"Please enter a valid email address.",
+				"OK");
+		return true;
 	}
 
 	/**
@@ -217,9 +217,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		drivesErrorLabel.setVisible(false);
 		drivesErrorLabel.setText("");
 		credentials = tempProperties.getOneDriveCredentials();
-		if (storageGridPane != null) {
-			storageGridPane.setVisible(true);
-		}
 		if (storageBox != null) {
 			storageBox.setVisible(true);
 		}
@@ -332,7 +329,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 */
 	private void deleteDriveAction(String inputPath) {
 		boolean deleteDrive =
-				PopupMessage.display("Warning", REMOVE_DRIVE_MESSAGE, true, "CONTINUE", "CANCEL");
+				display("Warning", REMOVE_DRIVE_MESSAGE, true, "CONTINUE", "CANCEL");
 		if (deleteDrive) {
 			tempProperties.removeOneDriveCredential(inputPath);
 			credentials.remove(inputPath);
@@ -384,17 +381,23 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Check if the drive doesn't have the correct folder structure or if the structure cannot be created
+	 * Verifies if the inner drives are missing. If they are, and the user has write-permissions to the folder, it asks
+	 * the user for permission to create them.
 	 *
-	 * @param output
-	 * 		the input drive
-	 * @return false if the structure exists or can be created by the app
+	 * @param text
+	 * 		the selected location
+	 * @return true if the inner structure is missing
 	 */
-	private boolean checkInvalidFolderStructure(File output) {
-		if (output.exists()) {
+	private boolean missingInnerDrives(String text) {
+		if (new File(text, INPUT_FILES).exists() && new File(text, OUTPUT_FILES).exists()) {
 			return false;
 		}
-		if (output.mkdirs()) {
+		if (new File(text).canWrite() && display("Invalid folder",
+				"The chosen drive is missing a critical subdirectory. Would you like to create it?", true, "CREATE",
+				"CANCEL")) {
+			if (!new File(text, INPUT_FILES).mkdirs() || !new File(text, OUTPUT_FILES).mkdirs()) {
+				return true;
+			}
 			logger.info("Local files folder created");
 			return false;
 		}
@@ -404,6 +407,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		return true;
 	}
 
+
 	/**
 	 * Check a string is a valid email
 	 *
@@ -411,27 +415,9 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the string
 	 * @return true if the string represents a valid email
 	 */
-	private boolean validateEmail(String emailStr) {
+	private boolean isEmail(String emailStr) {
 		var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr);
-		if (matcher.find()) {
-			return checkOutputEmail(emailStr);
-		}
-		return false;
-	}
-
-	/**
-	 * Check an email exists in among the Output folders
-	 *
-	 * @param emailStr
-	 * 		the email string
-	 * @return true if the email exists and the user has "write-permission" to it
-	 */
-	private boolean checkOutputEmail(String emailStr) {
-		var path = String.format("%s/" + OUTPUT_FILES + "/%s/", pathTextField.getText(), emailStr);
-		if (new File(path).exists() && new File(path).isDirectory()) {
-			return true;
-		}
-		return new File(String.format("%s/%s/", pathTextField.getText(), OUTPUT_FILES)).canWrite();
+		return matcher.find();
 	}
 
 	/**
@@ -445,7 +431,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		if (new File(path).exists() && new File(path).isDirectory()) {
 			var input = new File(path, INPUT_FILES);
 			var output = new File(path, OUTPUT_FILES);
-			return (input.exists() && input.isDirectory()) && (output.exists() && output.isDirectory());
+			return input.exists() && input.isDirectory() && output.exists() && output.isDirectory();
 		}
 		return false;
 	}
@@ -501,7 +487,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			}
 		}
 
-		return (output.exists() && output.isDirectory());
+		return output.exists() && output.isDirectory();
 
 	}
 
@@ -522,7 +508,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		JsonArray map;
 		try {
 			var initialMap = readJsonObject(initialMapFile);
-			map = (initialMap.has("map")) ? initialMap.getAsJsonArray("map") : new JsonArray();
+			map = initialMap.has("map") ? initialMap.getAsJsonArray("map") : new JsonArray();
 		} catch (HederaClientException exception) {
 			logger.error(exception.getMessage());
 			return;
@@ -567,7 +553,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			logger.error("Incomplete pair. Skipping {}", jsonObject);
 			return;
 		}
-		var home = (isInCircleCi.getAsBoolean()) ? "/repo/" : USER_HOME;
+		var home = isInCircleCi.getAsBoolean() ? "/repo/" : USER_HOME;
 		var drive = home + driveString;
 
 		if (validatePathEmailPair(drive, email)) {
@@ -580,7 +566,9 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Set up the bindings for multiple ui elements
 	 */
 	private void setupBindings() {
-		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
+		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
+			emailTextField.setDisable(!t1);
+		});
 
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.TRUE.equals(t1) && emailGreenCheck.isVisible()) {
@@ -611,7 +599,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 				emailGreenCheck.visibleProperty().and(pathGreenCheck.visibleProperty()));
 
 		emailTextField.textProperty().addListener(
-				(observableValue, aBoolean, t1) -> emailGreenCheck.setVisible(validateEmail(emailTextField.getText())));
+				(observableValue, aBoolean, t1) -> emailGreenCheck.setVisible(isEmail(emailTextField.getText())));
 
 		emailTextField.setOnKeyReleased(this::keyReleasedEvent);
 
@@ -624,9 +612,9 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the event
 	 */
 	private void keyReleasedEvent(KeyEvent keyEvent) {
-		emailGreenCheck.setVisible(validateEmail(emailTextField.getText()));
-		if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB))) {
-			if (validatePath(pathTextField.getText()) && validateEmail(emailTextField.getText())) {
+		emailGreenCheck.setVisible(isEmail(emailTextField.getText()));
+		if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
+			if (validatePath(pathTextField.getText()) && isEmail(emailTextField.getText())) {
 				drivesErrorLabel.setVisible(false);
 				drivesErrorLabel.setText("");
 				validateEmailAction();

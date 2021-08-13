@@ -54,7 +54,6 @@ public class TestBase extends ApplicationTest {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
 
-
 		if (Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
 			System.setProperty("testfx.headless", "true");

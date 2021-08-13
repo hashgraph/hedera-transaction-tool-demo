@@ -25,374 +25,300 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.ToggleSwitch?>
-<AnchorPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
-			fx:controller="com.hedera.hashgraph.client.ui.SettingsPaneController">
-	<VBox maxHeight="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-		  AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-		<ScrollPane fx:id="settingScrollPane" fitToWidth="true" pannable="true"
-					style="-fx-background-color: transparent;">
+
+<AnchorPane xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.SettingsPaneController">
+	<VBox maxHeight="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+		<ScrollPane fx:id="settingScrollPane" fitToWidth="true" pannable="true" style="-fx-background-color: transparent;">
 			<VBox spacing="10.0">
 				<padding>
-					<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+					<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 				</padding>
-				<VBox fx:id="storageBox" spacing="10.0"
-					  style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
+				<VBox fx:id="storageBox" spacing="10.0" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
 					<padding>
-						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 					</padding>
-					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0"
-							   prefWidth="300.0"
-							   style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;"
-							   text="STORAGE AND DRIVES"/>
+					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;" text="STORAGE AND DRIVES" />
 					<GridPane hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
 						<columnConstraints>
-							<ColumnConstraints maxWidth="200.0" minWidth="10.0" prefWidth="200.0"/>
-							<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
-							<ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0"/>
+							<ColumnConstraints maxWidth="200.0" minWidth="10.0" prefWidth="200.0" />
+							<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+							<ColumnConstraints hgrow="SOMETIMES" maxWidth="200.0" minWidth="10.0" />
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="30.0" vgrow="SOMETIMES"/>
-							<RowConstraints minHeight="30.0" vgrow="ALWAYS"/>
-							<RowConstraints maxHeight="-Infinity" minHeight="0.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="30.0" vgrow="ALWAYS" />
+							<RowConstraints maxHeight="-Infinity" minHeight="0.0" vgrow="SOMETIMES" />
 						</rowConstraints>
 						<padding>
-							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 						</padding>
-						<Label fx:id="loadStorageLabel" text="App storage directory" wrapText="true"/>
-						<TextField fx:id="loadStorageTextField" disable="true" editable="false" focusTraversable="false"
-								   prefWidth="500.0"
-								   style="-fx-opacity: 1; -fx-border-radius: 10; -fx-background-radius: 10;"
-								   GridPane.columnIndex="1">
+						<Label fx:id="loadStorageLabel" text="App storage directory" wrapText="true" />
+						<TextField fx:id="loadStorageTextField" disable="true" editable="false" focusTraversable="false" prefWidth="500.0" style="-fx-opacity: 1; -fx-border-radius: 10; -fx-background-radius: 10;" GridPane.columnIndex="1">
 						</TextField>
-						<Button disable="true" mnemonicParsing="false" onAction="#browseStorageIconPressed"
-								prefWidth="200.0"
-								style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
-								text="CHANGE" visible="false" GridPane.columnIndex="2"/>
-						<Label text="Transactions and files folders" wrapText="true" GridPane.rowIndex="1"/>
-						<HBox alignment="BOTTOM_LEFT" fillHeight="false" spacing="15.0" GridPane.columnIndex="1"
-							  GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"
-							  GridPane.vgrow="ALWAYS">
-							<VBox fx:id="transactionFoldersVBoxSP" alignment="BOTTOM_LEFT" spacing="5.0"
-								  HBox.hgrow="ALWAYS"/>
-							<Button fx:id="addFolderButton" mnemonicParsing="false" onAction="#addNewFolderAction"
-									style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;"
-									visible="false">
+						<Button disable="true" mnemonicParsing="false" onAction="#browseStorageIconPressed" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;" text="CHANGE" visible="false" GridPane.columnIndex="2" />
+						<Label text="Transactions and files folders" wrapText="true" GridPane.rowIndex="1" />
+						<HBox alignment="BOTTOM_LEFT" fillHeight="false" spacing="15.0" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.vgrow="ALWAYS">
+							<VBox fx:id="transactionFoldersVBoxSP" alignment="BOTTOM_LEFT" spacing="5.0" HBox.hgrow="ALWAYS" />
+							<Button fx:id="addFolderButton" mnemonicParsing="false" onAction="#addNewFolderAction" style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;" visible="false">
 								<graphic>
-									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/plus.png"/>
+									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/plus.png" />
 									</ImageView>
 								</graphic>
 							</Button>
 						</HBox>
-						<HBox fx:id="addFolderPathHBoxSP" alignment="TOP_CENTER" GridPane.columnIndex="1"
-							  GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"
-							  GridPane.vgrow="ALWAYS">
+						<HBox fx:id="addFolderPathHBoxSP" alignment="TOP_CENTER" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
 							<GridPane fx:id="addPathGridPane" hgap="5.0" vgap="5.0" HBox.hgrow="ALWAYS">
 								<columnConstraints>
-									<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
-									<ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+									<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+									<ColumnConstraints hgrow="ALWAYS" minWidth="200.0" />
 
 								</columnConstraints>
 								<rowConstraints>
-									<RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
-									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-									<RowConstraints valignment="CENTER" vgrow="SOMETIMES"/>
-									<RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER"
-													vgrow="SOMETIMES"/>
+									<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+									<RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" prefHeight="30.0" valignment="CENTER" vgrow="SOMETIMES" />
 								</rowConstraints>
 								<VBox GridPane.rowIndex="4">
-									<Label fx:id="drivesErrorLabelSP" style="-fx-text-fill: red; -fx-font-size: 12;"
-										   visible="false" wrapText="true"/>
+									<Label fx:id="drivesErrorLabelSP" style="-fx-text-fill: red; -fx-font-size: 12;" visible="false" wrapText="true" />
 								</VBox>
 
-								<TextField fx:id="pathTextFieldSP" minHeight="27.0"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"
-										   GridPane.rowIndex="1"/>
-								<ImageView fx:id="emailGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
-										   preserveRatio="true" visible="false" GridPane.columnIndex="1"
-										   GridPane.rowIndex="3">
-									<Image url="@../../../../../icons/greencheck.png"/>
+								<TextField fx:id="pathTextFieldSP" minHeight="27.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.rowIndex="1" />
+								<ImageView fx:id="emailGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3">
+									<Image url="@../../../../../icons/greencheck.png" />
 
 								</ImageView>
 								<HBox alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
-									<ImageView fx:id="pathGreenCheck" fitHeight="20.0" fitWidth="20.0"
-											   pickOnBounds="true" preserveRatio="true" visible="false">
-										<Image url="@../../../../../icons/greencheck.png"/>
+									<ImageView fx:id="pathGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+										<Image url="@../../../../../icons/greencheck.png" />
 									</ImageView>
-									<Button fx:id="browseNewFolderButton" mnemonicParsing="false"
-											onAction="#browseNewFolderAction"
-											style="-fx-background-color: transparent; -fx-border-color: transparent;">
+									<Button fx:id="browseNewFolderButton" mnemonicParsing="false" onAction="#browseNewFolderAction" style="-fx-background-color: transparent; -fx-border-color: transparent;">
 										<graphic>
 
-											<ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true"
-													   preserveRatio="true" rotate="-90.0">
-												<Image url="@../../../../../icons/browse.png"/>
+											<ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true" rotate="-90.0">
+												<Image url="@../../../../../icons/browse.png" />
 
 											</ImageView>
 										</graphic>
 									</Button>
 								</HBox>
 
-								<TextField fx:id="emailTextFieldSP" layoutX="10.0" layoutY="12.0"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"
-										   GridPane.rowIndex="3"/>
+								<TextField fx:id="emailTextFieldSP" disable="true" layoutX="10.0" layoutY="12.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.rowIndex="3" />
 								<HBox alignment="CENTER_LEFT" spacing="5.0">
-									<Label text="Please start by selecting the folder where transactions will be shared:"
-										   wrapText="true"/>
-									<Button fx:id="folderTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-											style="-fx-background-color: white; -fx-border-color: white;">
+									<Label text="Please start by selecting the folder where transactions will be shared:" wrapText="true" />
+									<Button fx:id="folderTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 										<graphic>
-											<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-													   preserveRatio="true">
-												<Image url="@../../../../../icons/helpIcon.png"/>
+											<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+												<Image url="@../../../../../icons/helpIcon.png" />
 											</ImageView>
 										</graphic>
 										<padding>
-											<Insets bottom="7.0"/>
+											<Insets bottom="7.0" />
 										</padding>
 									</Button>
 								</HBox>
-								<Label text="Please enter the email associated with the selected OneDrive folder:"
-									   GridPane.rowIndex="2"/>
+								<Label text="Please enter the email associated with the selected OneDrive folder:" GridPane.rowIndex="2" />
 								<HBox alignment="CENTER" spacing="20.0" GridPane.rowIndex="5">
-									<Button fx:id="cancelAddToEmailMapButton" mnemonicParsing="false"
-											onAction="#cancelAddToEmailMap" prefWidth="200.0"
-											style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: #0b9dfd;"
-											text="CANCEL" visible="false"/>
-									<Button fx:id="confirmAddFolderButton" mnemonicParsing="false"
-											onAction="#addFolderEmailToMapAction" prefWidth="200.0"
-											style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: white;"
-											text="SAVE" visible="false"/>
+									<Button fx:id="cancelAddToEmailMapButton" mnemonicParsing="false" onAction="#cancelAddToEmailMap" prefWidth="200.0" style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: #0b9dfd;" text="CANCEL" visible="false" />
+									<Button fx:id="confirmAddFolderButtonSP" mnemonicParsing="false" onAction="#addFolderEmailToMapAction" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: white;" text="SAVE" visible="false" />
 								</HBox>
 
 								<padding>
-									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 								</padding>
 							</GridPane>
-							<Region HBox.hgrow="ALWAYS"/>
+							<Region HBox.hgrow="ALWAYS" />
 						</HBox>
 					</GridPane>
 				</VBox>
-				<VBox fx:id="transactionBox" layoutX="10.0" layoutY="285.0" spacing="10.0"
-					  style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
+				<VBox fx:id="transactionBox" layoutX="10.0" layoutY="285.0" spacing="10.0" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
 					<padding>
-						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 					</padding>
-					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0"
-							   prefWidth="300.0"
-							   style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;"
-							   text="TRANSACTION CREATION"/>
+					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;" text="TRANSACTION CREATION" />
 					<GridPane hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
 						<columnConstraints>
-							<ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" prefWidth="350.0"/>
-							<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
-							<ColumnConstraints/>
+							<ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" prefWidth="350.0" />
+							<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+							<ColumnConstraints />
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-							<RowConstraints minHeight="30.0"/>
-							<RowConstraints minHeight="30.0"/>
-							<RowConstraints minHeight="30.0"/>
-							<RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-							<RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="30.0" />
+							<RowConstraints minHeight="30.0" />
+							<RowConstraints minHeight="30.0" />
+							<RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
 						</rowConstraints>
 						<padding>
-							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 						</padding>
 						<HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1">
-							<TextField fx:id="nodeIDTextField" focusTraversable="false" maxWidth="200.0"
-									   minWidth="200.0" prefWidth="200.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;">
+							<TextField fx:id="nodeIDTextField" focusTraversable="false" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
 							</TextField>
-							<Label fx:id="accountIDErrorLabel" style="-fx-text-fill: red;"
-								   text="The input value cannot be resolved to an account ID. Please try again."
-								   visible="false"/>
+							<Label fx:id="accountIDErrorLabel" style="-fx-text-fill: red;" text="The input value cannot be resolved to an account ID. Please try again." visible="false" />
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0">
-							<Label fx:id="nodeIDLabel" text="Node ID:"/>
-							<Button fx:id="nodeIDTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label fx:id="nodeIDLabel" text="Node ID:" />
+							<Button fx:id="nodeIDTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="1">
-							<Label fx:id="txValidDurationLabel" text="Transaction Valid Duration:" wrapText="true"/>
-							<Button fx:id="validDurationTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label fx:id="txValidDurationLabel" text="Transaction Valid Duration:" wrapText="true" />
+							<Button fx:id="validDurationTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
 							<GridPane.margin>
-								<Insets right="10.0"/>
+								<Insets right="10.0" />
 							</GridPane.margin>
-							<TextField fx:id="txValidDurationTextField" maxWidth="200.0" minWidth="200.0"
-									   prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
+							<TextField fx:id="txValidDurationTextField" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
 							</TextField>
-							<Label minWidth="50.0" prefWidth="50.0" text="s"/>
-							<Label fx:id="tvsErrorLabel" style="-fx-text-fill: red;"
-								   text="Must be a number between 1 and 180" visible="false" wrapText="true"/>
+							<Label minWidth="50.0" prefWidth="50.0" text="s" />
+							<Label fx:id="tvsErrorLabel" style="-fx-text-fill: red;" text="Must be a number between 1 and 180" visible="false" wrapText="true" />
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="5">
-							<Label text="Generate Record" wrapText="true"/>
-							<Button fx:id="generateRecordTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label text="Generate Record" wrapText="true" />
+							<Button fx:id="generateRecordTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
 							<ToggleSwitch fx:id="generateRecordSlider">
 							</ToggleSwitch>
-							<Label fx:id="generateRecordLabel" text="no"/>
+							<Label fx:id="generateRecordLabel" text="no" />
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="3">
-							<Label text="Transactions Start Time:" wrapText="true"/>
-							<Button fx:id="startTimeTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label text="Transactions Start Time:" wrapText="true" />
+							<Button fx:id="startTimeTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
 
-							<TextField fx:id="hoursTextField" alignment="CENTER" minWidth="-Infinity" prefWidth="50.0"
-									   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00"/>
-							<Label text=":"/>
-							<TextField fx:id="minutesTextField" alignment="CENTER" prefWidth="50.0"
-									   style="-fx-background-radius: 5; -fx-border-radius: 5;" text="00"/>
-							<Label layoutX="62.0" layoutY="17.0" text=":"/>
-							<TextField fx:id="secondsTextField" alignment="CENTER" layoutX="68.0" layoutY="12.0"
-									   prefWidth="50.0" style="-fx-background-radius: 5; -fx-border-radius: 5;"
-									   text="00"/>
-							<Label text="  (24H) UTC   /   "/>
-							<Label fx:id="localTimeLabel" text="local time"/>
+							<TextField fx:id="hoursTextField" alignment="CENTER" minWidth="-Infinity" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+							<Label text=":" />
+							<TextField fx:id="minutesTextField" alignment="CENTER" prefWidth="50.0" style="-fx-background-radius: 5; -fx-border-radius: 5;" text="00" />
+							<Label layoutX="62.0" layoutY="17.0" text=":" />
+							<TextField fx:id="secondsTextField" alignment="CENTER" layoutX="68.0" layoutY="12.0" prefWidth="50.0" style="-fx-background-radius: 5; -fx-border-radius: 5;" text="00" />
+							<Label text="  (24H) UTC   /   " />
+							<Label fx:id="localTimeLabel" text="local time" />
 
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="4">
-							<Label text="Maximum Transaction Fee"/>
-							<Button fx:id="maxFeeTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label text="Maximum Transaction Fee" />
+							<Button fx:id="maxFeeTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
-							<TextField fx:id="defaultTransactionFee" focusTraversable="false" maxWidth="200.0"
-									   prefWidth="200.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
+							<TextField fx:id="defaultTransactionFee" focusTraversable="false" maxWidth="200.0" prefWidth="200.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
 							</TextField>
-							<Label text="ћ"/>
+							<Label text="ћ" />
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">
-							<Label text="Auto Renew Period (new accounts)" wrapText="true"/>
-							<Button fx:id="autoRenewTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
-									style="-fx-background-color: white; -fx-border-color: white;">
+							<Label text="Auto Renew Period (new accounts)" wrapText="true" />
+							<Button fx:id="autoRenewTooltip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
-									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/helpIcon.png"/>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png" />
 									</ImageView>
 								</graphic>
 								<padding>
-									<Insets bottom="7.0"/>
+									<Insets bottom="7.0" />
 								</padding>
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
-							<TextField fx:id="autoRenewPeriodTextField" maxWidth="200.0" minWidth="200.0"
-									   prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
+							<TextField fx:id="autoRenewPeriodTextField" maxWidth="200.0" minWidth="200.0" prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
 							</TextField>
-							<Label minWidth="50.0" prefWidth="50.0" text="s"/>
-							<Label fx:id="arpErrorLabel" style="-fx-text-fill: red;"
-								   text="Must be a number between 6999999 and 8000000." visible="false"
-								   wrapText="true"/>
+							<Label minWidth="50.0" prefWidth="50.0" text="s" />
+							<Label fx:id="arpErrorLabel" style="-fx-text-fill: red;" text="Must be a number between 6999999 and 8000000." visible="false" wrapText="true" />
 						</HBox>
 					</GridPane>
 				</VBox>
-				<VBox fx:id="aboutBox" layoutX="20.0" layoutY="305.0" spacing="10.0"
-					  style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
+				<VBox fx:id="aboutBox" layoutX="20.0" layoutY="305.0" spacing="10.0" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;">
 					<padding>
-						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
 					</padding>
-					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0"
-							   prefWidth="300.0"
-							   style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;"
-							   text="ABOUT"/>
+					<TextField editable="false" focusTraversable="false" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-background-color: #eeeeee; -fx-background-radius: 10; -fx-border-radius: 10;" text="ABOUT" />
 					<GridPane hgap="10.0" vgap="10.0">
 						<columnConstraints>
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
-							<ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="10.0"/>
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
+							<ColumnConstraints halignment="CENTER" hgrow="ALWAYS" minWidth="10.0" />
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="30.0" vgrow="ALWAYS"/>
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="30.0" vgrow="ALWAYS" />
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 						</rowConstraints>
 						<padding>
-							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 						</padding>
-						<Label text="Version Details "/>
-						<Label text="Reset Application" GridPane.rowIndex="1"/>
-						<Button mnemonicParsing="false" onAction="#resetApplication" prefWidth="200.0"
-								style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
-								text="RESET" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="1"/>
-						<Label fx:id="versionLabel" wrapText="true" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
+						<Label text="Version Details " />
+						<Label text="Reset Application" GridPane.rowIndex="1" />
+						<Button mnemonicParsing="false" onAction="#resetApplication" prefWidth="200.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;" text="RESET" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.rowIndex="1" />
+						<Label fx:id="versionLabel" wrapText="true" GridPane.columnIndex="1" GridPane.columnSpan="2" />
 					</GridPane>
 				</VBox>
-				<ImageView fx:id="deleteImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true"
-						   preserveRatio="true" visible="false">
-					<Image url="@../../../../../icons/delete.png"/>
+				<ImageView fx:id="deleteImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" visible="false">
+					<Image url="@../../../../../icons/delete.png" />
 				</ImageView>
-				<ImageView fx:id="editImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true"
-						   visible="false">
-					<Image url="@../../../../../icons/edit.png"/>
+				<ImageView fx:id="editImage" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" visible="false">
+					<Image url="@../../../../../icons/edit.png" />
 				</ImageView>
 			</VBox>
 		</ScrollPane>
 		<padding>
-			<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+			<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 		</padding>
 	</VBox>
 </AnchorPane>
