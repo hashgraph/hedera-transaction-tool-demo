@@ -58,6 +58,8 @@ import static java.lang.Boolean.parseBoolean;
 import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 
 public class DriveSetupHelper implements GenericFileReadWriteAware {
+	public static final String CANCEL_STRING = "CANCEL";
+	public static final String CREATE_STRING = "CREATE";
 	@FXML
 	private Controller controller = null;
 
@@ -144,10 +146,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 
 		var out = new File(outDrive, email);
 
-		if (!out.exists() || !out.isDirectory()) {
-			if (cannotAdd(outDrive, out)) {
-				return;
-			}
+		if ((!out.exists() || !out.isDirectory()) && cannotAdd(outDrive, out)) {
+			return;
 		}
 		credentials.put(drivePath, email);
 		tempProperties.setOneDriveCredentials(credentials);
@@ -165,8 +165,9 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	private boolean cannotAdd(File outDrive, File out) {
-		if (outDrive.canWrite() && display("Output drive",
-				"The output folder does not exist. Do you want to create it?", true, "CREATE", "CANCEL")) {
+		final var display = display("Output drive",
+				"The output folder does not exist. Do you want to create it?", true, CREATE_STRING, CANCEL_STRING);
+		if (outDrive.canWrite() && Boolean.TRUE.equals(display)) {
 			return !out.mkdirs();
 		}
 		display("Folder not found",
@@ -329,7 +330,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 */
 	private void deleteDriveAction(String inputPath) {
 		boolean deleteDrive =
-				display("Warning", REMOVE_DRIVE_MESSAGE, true, "CONTINUE", "CANCEL");
+				display("Warning", REMOVE_DRIVE_MESSAGE, true, "CONTINUE", CANCEL_STRING);
 		if (deleteDrive) {
 			tempProperties.removeOneDriveCredential(inputPath);
 			credentials.remove(inputPath);
@@ -392,9 +393,10 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		if (new File(text, INPUT_FILES).exists() && new File(text, OUTPUT_FILES).exists()) {
 			return false;
 		}
-		if (new File(text).canWrite() && display("Invalid folder",
-				"The chosen drive is missing a critical subdirectory. Would you like to create it?", true, "CREATE",
-				"CANCEL")) {
+		final var invalidFolder = display("Invalid folder",
+				"The chosen drive is missing a critical subdirectory. Would you like to create it?", true,
+				CREATE_STRING, CANCEL_STRING);
+		if (new File(text).canWrite() && Boolean.TRUE.equals(invalidFolder)) {
 			if (!new File(text, INPUT_FILES).mkdirs() || !new File(text, OUTPUT_FILES).mkdirs()) {
 				return true;
 			}
@@ -566,9 +568,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Set up the bindings for multiple ui elements
 	 */
 	private void setupBindings() {
-		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
-			emailTextField.setDisable(!t1);
-		});
+		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
 
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.TRUE.equals(t1) && emailGreenCheck.isVisible()) {
