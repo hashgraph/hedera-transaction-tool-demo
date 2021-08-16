@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.1.0-alpha.1</version>
+		<version>0.2.0-alpha.1</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -69,7 +69,6 @@
 	<!-- Dependency Configuration -->
 	<dependencyManagement>
 		<dependencies>
-
 			<dependency>
 				<groupId>com.hedera.hashgraph</groupId>
 				<artifactId>sdk</artifactId>
