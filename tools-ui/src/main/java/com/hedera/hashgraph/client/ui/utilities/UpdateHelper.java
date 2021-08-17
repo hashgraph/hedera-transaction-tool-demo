@@ -94,8 +94,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	 * Translates the old style directory (v2.x) to the new one (v0.x). Creates the nicknames json file, stores files
 	 * for each account containing info and json and zips the old folders into an Archive.zip
 	 *
-	 * @throws HederaClientException
-	 * @throws IOException
 	 */
 	public void handleAccounts() throws HederaClientException, IOException {
 		// if the folder is not valid, nothing to do. return
@@ -151,7 +149,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	/**
 	 * Moves the recovery phrase to the new location in Files/.System
 	 *
-	 * @throws IOException
 	 */
 	public void handleKeys() throws IOException {
 		// if the folder is not valid, nothing to do. return
@@ -183,8 +180,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	 * Removes all transaction files that cannot be read from the History and moves them to a zipped archive in the
 	 * Files folder.
 	 *
-	 * @throws HederaClientException
-	 * @throws IOException
 	 */
 	public void handleHistory() throws HederaClientException, IOException {
 		// if the folder is not valid, nothing to do. return
@@ -247,8 +242,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	/**
 	 * Given a file in the history folder, move it to the archive, as well as any other files associated with it.
 	 *
-	 * @param transaction
-	 * @throws IOException
 	 */
 	private void moveFileAndAssociates(File transaction) throws IOException {
 		final var historyFolder = new File(toolFolder, "History");
@@ -278,8 +271,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	 * @param directory
 	 * 		the account directory
 	 * @return a json object that contains the account number and nickname.
-	 * @throws HederaClientException
-	 * @throws IOException
 	 */
 	private JsonObject handleDirectory(File directory) throws HederaClientException, IOException {
 		var object = new JsonObject();
@@ -327,7 +318,7 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Given a file path, it checks if a file of the same name exists. If it does returns a new path with a subscript
+	 * Given a file path, it checks if a file of the same name exists. If it does, it returns a new path with a subscript
 	 *
 	 * @param path
 	 * 		the path to a file

@@ -1292,7 +1292,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			logger.error("Json file could not be deleted");
 		}
 
-		controller.homePaneController.initializeHomePane();
+		controller.homePaneController.setForceUpdate(true);
 		initializeCreatePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
