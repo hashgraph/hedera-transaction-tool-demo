@@ -28,7 +28,6 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
-import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
@@ -252,7 +251,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the nickname column in the table
+	 * Set up the nickname column in the table
 	 *
 	 * @param table
 	 * 		a table containing account information
@@ -268,7 +267,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the Account ID column
+	 * Set up the Account ID column
 	 *
 	 * @param table
 	 * 		a table containing account information
@@ -295,7 +294,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the action column
+	 * Set up the action column
 	 *
 	 * @param table
 	 * 		a table containing account information
@@ -333,6 +332,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							logger.info("Deleting {}", accountLineInformation1.getNickname());
 							deleteAccount(accountLineInformation1);
 							table.getItems().remove(getIndex());
+							controller.homePaneController.setForceUpdate(true);
 						}
 					}
 				};
@@ -341,7 +341,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the expander column
+	 * Set up the expander column
 	 *
 	 * @return a formatted column
 	 */
@@ -353,7 +353,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the "Can Sign?" column
+	 * Set up the "Can Sign?" column
 	 *
 	 * @param table
 	 * 		a table containing account information
@@ -369,7 +369,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup the Balance column
+	 * Set up the Balance column
 	 *
 	 * @param table
 	 * 		a table containing account information
@@ -471,23 +471,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Finds out if any of the pem files in the keys folder can be used to sign for this account
+	 * Finds out if any of the pem files in the "Keys" folder can be used to sign for this account
 	 *
 	 * @param accountInfo
 	 * 		the proto that contains the account information
 	 * @return true if any of the private keys in the app corresponds to one of the public keys in the account
 	 */
 	private boolean isSigner(AccountInfo accountInfo) {
-		var flatKey =
-				EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key));
-		List<String> knownKeys = new ArrayList<>();
-		for (var key : flatKey) {
-			var keyName = controller.showKeyString(key);
+		List<String> knownKeys = Utilities.getKeysFromInfo(accountInfo, controller);
 
-			if (keyName.endsWith(PUB_EXTENSION)) {
-				knownKeys.add(keyName);
-			}
-		}
 		if (knownKeys.isEmpty()) {
 			return false;
 		}
@@ -642,7 +634,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * if the user double clicks on a tree item display the keys popup
+	 * if the user double-clicks on a tree item display the keys popup
 	 *
 	 * @param item
 	 * 		the selected item in the tree
@@ -752,7 +744,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 *
 	 * @param accountInfo
 	 * 		the proto that contains the account information
-	 * @return A human readable date, or "never" if the account doesn't expire (system accounts)
+	 * @return A human-readable date, or "never" if the account doesn't expire (system accounts)
 	 */
 	private String getExpirationTimeString(AccountInfo accountInfo) {
 		var d = new Date(accountInfo.expirationTime.getEpochSecond() * 1000);
@@ -806,7 +798,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	/**
 	 * Import account info from either a .info file
-	 * 1. for .info file, the user should set this account's nick name; corresponding file directory would be created;
+	 * 1. for .info file, the user should set this account's nickname; corresponding file directory would be created;
 	 * account.json and accountInfo.info would be saved in corresponding directory;
 	 *
 	 * @throws HederaClientException
@@ -892,7 +884,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				}
 				switch (Objects.requireNonNull(responseEnum)) {
 					case IGNORE_ONCE:
-						keepAsking = true;
+					case UNKNOWN:
 						break;
 					case IGNORE_ALWAYS:
 						keepAsking = false;
@@ -900,14 +892,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					case REPLACE_ONCE:
 						replaceInfo(file);
 						counter++;
-						keepAsking = true;
 						break;
 					case REPLACE_ALWAYS:
 						replaceInfo(file);
 						counter++;
 						keepAsking = false;
-						break;
-					case UNKNOWN:
 						break;
 					default:
 						throw new IllegalStateException("Unexpected value: " + Objects.requireNonNull(responseEnum));
@@ -945,7 +934,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			switch (responseEnum) {
 				case IGNORE_ONCE:
-					keepAsking = true;
 					break;
 				case IGNORE_ALWAYS:
 					keepAsking = false;
@@ -953,7 +941,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				case REPLACE_ONCE:
 					importFromFile(file, newNickname);
 					counter++;
-					keepAsking = true;
 					break;
 				case REPLACE_ALWAYS:
 					importFromFile(file, FilenameUtils.getBaseName(file.getName()));
@@ -1134,7 +1121,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	// endregion
 
 	/**
-	 * Testing only: if a the enter key is pressed in the hidden field, the address is accepted as the new account info
+	 * Testing only: if the enter key is pressed in the hidden field, the address is accepted as the new account info
 	 * file
 	 *
 	 * @param keyEvent

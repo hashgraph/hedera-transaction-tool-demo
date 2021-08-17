@@ -115,7 +115,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
 	private boolean disableButtons = false;
-	private boolean drivesChanged = true;
+	private boolean drivesChanged = false;
 
 	public AnchorPane centerPane;
 	public BorderPane borderPane;

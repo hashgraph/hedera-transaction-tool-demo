@@ -26,8 +26,6 @@ import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
-import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
@@ -206,7 +204,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public void initializeKeysPane() {
 		try {
-
 			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
 			if (startup && SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 				initializeWordsGridPane();
@@ -230,7 +227,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			populatePublicKeysMap();
 			populateKeysTables();
 			initializeIndexMap();
-			initializeOutputDirectories();
+			//initializeOutputDirectories();
 
 			createKeysVBox.setVisible(false);
 			reGenerateKeysVBox.setVisible(false);
@@ -267,6 +264,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 					actionEvent -> Utilities.showTooltip(controller.settingsPane, unlinkedPrivateToolTip,
 							Messages.UNLINKED_PK_TOOLTIP_TEXT));
 
+			controller.homePaneController.setForceUpdate(true);
 
 			//endregion
 		} catch (HederaClientException e) {
@@ -558,15 +556,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private List<String> getKnownKeysFromAccountInfo(
 			Path path) throws InvalidProtocolBufferException, HederaClientException {
 		var info = AccountInfo.fromBytes(readBytes(path.toString()));
-		var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
-		List<String> knownKeys = new ArrayList<>();
-		for (var key : flatKey) {
-			var keyName = controller.showKeyString(key);
-			if (keyName.endsWith(PUB_EXTENSION)) {
-				knownKeys.add(keyName);
-			}
-		}
-		return knownKeys;
+		return Utilities.getKeysFromInfo(info, controller);
 	}
 
 	private void populatePrivateKeysMap() {
@@ -748,26 +738,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private KeyPair getKeyPair(String key) {
 		return controller.keyPairUtility.getKeyPairFromPEM(new File(orphanPEMs.get(key)),
 				String.format("Please enter the password for key %s", key));
-	}
-
-	private void initializeOutputDirectories() {
-		try {
-			if (controller.getOneDriveCredentials() != null) {
-				var inputs = controller.getOneDriveCredentials().keySet();
-				List<FileService> outputDirectories = new ArrayList<>();
-				for (var s :
-						inputs) {
-					var fs = FileAdapterFactory.getAdapter(s);
-					assert fs != null;
-					if (fs.exists()) {
-						outputDirectories.add(fs);
-					}
-				}
-			}
-		} catch (HederaClientException e) {
-			logger.error(e);
-			controller.displaySystemMessage(e);
-		}
 	}
 
 	private void initializeIndexMap() throws HederaClientException {
@@ -1311,16 +1281,13 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				switch (popupResponse) {
 					case KEEP_BOTH_ONCE:
 						keepBoth(key, value);
-						keepAsking = true;
 						counter++;
 						break;
 					case IGNORE_ONCE:
-						keepAsking = true;
 						break;
 					case REPLACE_ONCE:
 						replaceOnce(key, value);
 						counter++;
-						keepAsking = true;
 						break;
 					case KEEP_BOTH_ALWAYS:
 						keepBoth(key, value);
