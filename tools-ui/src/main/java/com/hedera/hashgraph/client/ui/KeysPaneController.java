@@ -227,7 +227,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			populatePublicKeysMap();
 			populateKeysTables();
 			initializeIndexMap();
-			//initializeOutputDirectories();
 
 			createKeysVBox.setVisible(false);
 			reGenerateKeysVBox.setVisible(false);
