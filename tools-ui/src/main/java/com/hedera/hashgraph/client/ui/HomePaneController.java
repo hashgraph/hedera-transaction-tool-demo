@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
-import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
@@ -40,7 +39,6 @@ import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.KeyList;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -110,7 +108,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
-	private final Map<Identifier, AccountInfo> accountsInfoMap = new HashMap<>();
 	private final List<FileType> filterOut = new ArrayList<>();
 
 	private Map<String, String> publicKeyMap;
@@ -152,8 +149,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public void initializeHomePane() {
 		loadPubKeys();
 		loadPKMap();
-		accountsInfoMap.putAll(controller.getAccountInfoMap());
-
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		historyFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
@@ -1195,6 +1190,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			final var filesMap = filterHistory(historyFiles);
 			allHistoryBoxes = filesMap.size();
+			page = 0; // When a filter changes the page should reset to the first one.
 			loadHistoryVBox(filesMap);
 			buildPagingHBox();
 			buildAdvanceHBox();
