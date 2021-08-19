@@ -807,10 +807,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		properties.setSalt(b);
 	}
 
-	public void setMnemonicHashCode(int hashCode) {
-		properties.setMnemonicHashCode(hashCode);
-	}
-
 	public String getEmailFromMap(String path) {
 		return properties.getEmailFromMap(path);
 	}

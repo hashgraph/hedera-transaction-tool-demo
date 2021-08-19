@@ -341,31 +341,8 @@ public class KeysPaneTest extends TestBase {
 	@Test
 	public void showRecoveryPhrase_Test() {
 		logger.info("Recovery phrase button testing");
-
-		keysPanePage.pressRecoveryPhrase();
-		assertTrue(find("#recoveryPasswordVBox").isVisible());
-		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
-		assertFalse(find("#recoveryVBox").isVisible());
-		assertFalse(find("#phrasePasswordErrorLabel").isVisible());
-
-		logger.info("Wrong password test");
-		keysPanePage.enterMnemonicPasswordAndEnter("123");
-		sleep(5000);
-		assertTrue(find("#phrasePasswordErrorLabel").isVisible());
-		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
-
-		logger.info("Close view test");
-		keysPanePage.pressCloseViewMnemonic();
-		assertTrue(find("#btnShowMnemonicWords").isVisible());
-
-		logger.info("Correct password");
-		keysPanePage.pressRecoveryPhrase()
-				.enterMnemonicPasswordAndEnter(PASSWORD);
-
-
+		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
 		assertTrue(find("#recoveryVBox").isVisible());
-		assertFalse(find("#recoveryPasswordVBox").isVisible());
-
 		VBox gridPaneVBox1 = find("#recoveryVBox");
 		assertNotNull(gridPaneVBox1);
 		Label text = (Label) ((HBox) gridPaneVBox1.getChildren().get(1)).getChildren().get(0);
@@ -376,30 +353,12 @@ public class KeysPaneTest extends TestBase {
 		logger.info("Test view is reset after closing it");
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase();
-		assertTrue(find("#recoveryPasswordVBox").isVisible());
-		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
 		assertFalse(find("#recoveryVBox").isVisible());
-		assertFalse(find("#phrasePasswordErrorLabel").isVisible());
 
-		logger.info("Wrong password test");
-		keysPanePage.enterMnemonicPassword("123")
-				.pressEnterPassword();
-		assertTrue(find("#phrasePasswordErrorLabel").isVisible());
-		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
+		keysPanePage.pressCancelPassword();
+		assertFalse(find("#recoveryVBox").isVisible());
 
-		logger.info("Close view test");
-		keysPanePage.pressCloseViewMnemonic();
-		assertTrue(find("#btnShowMnemonicWords").isVisible());
 
-		logger.info("Correct password");
-		keysPanePage.pressRecoveryPhrase()
-				.enterMnemonicPassword(PASSWORD)
-				.pressEnterPassword();
-		assertTrue(find("#recoveryVBox").isVisible());
-		assertFalse(find("#recoveryPasswordVBox").isVisible());
-
-		VBox gridPaneVBox2 = find("#recoveryVBox");
-		assertNotNull(gridPaneVBox2);
 
 	}
 
