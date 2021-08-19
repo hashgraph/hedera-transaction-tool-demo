@@ -925,8 +925,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		initializeTable(fromTransferTable);
 		initializeTable(toTransferTable);
-//		fromTransferTable.visibleProperty().bind(Bindings.size(fromTransferTable.getItems()).greaterThan(0));
-//		toTransferTable.visibleProperty().bind(Bindings.size(toTransferTable.getItems()).greaterThan(0));
 	}
 
 	private void initializeTable(TableView<AccountAmountStrings> table) {
@@ -974,10 +972,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 
 
-		table.getItems().addListener((ListChangeListener<AccountAmountStrings>) change -> {
-			table.setMinHeight(table.getFixedCellSize() * (
-					!change.getList().isEmpty() ? (table.getItems().size() + 1.1) : 2.1));
-		});
+		table.getItems().addListener(
+				(ListChangeListener<AccountAmountStrings>) change -> table.setMinHeight(table.getFixedCellSize() * (
+						!change.getList().isEmpty() ? (table.getItems().size() + 1.1) : 2.1)));
 		table.prefHeightProperty().bind(
 				table.fixedCellSizeProperty().multiply(Bindings.size(table.getItems()).add(1.1)));
 
@@ -2143,7 +2140,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of(timeZone.getID())).toInstant());
 
 		final var beforeNowBoolean = transactionValidStart.toInstant().isBefore(Instant.now());
-		label.setStyle(beforeNowBoolean ? "-fx-text-fill: red" : "-fx-text-fill: black");
+		label.setStyle("-fx-text-fill: " + (beforeNowBoolean ? "red" : "black"));
 		invalidDate.setVisible(beforeNowBoolean);
 
 		var dateTimeFormatter =
