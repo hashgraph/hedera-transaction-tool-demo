@@ -407,8 +407,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_TRANSFER_TO_AMOUNT).isVisible());
 		assertTrue(find(CREATE_TRANSFER_FROM_ACCOUNT).isVisible());
 		assertTrue(find(CREATE_TRANSFER_FROM_AMOUNT).isVisible());
-		assertFalse(find(CREATE_FROM_TABLE).isVisible());
-		assertFalse(find(CREATE_TO_TABLE).isVisible());
+		assertTrue(find(CREATE_FROM_TABLE).isVisible());
+		assertTrue(find(CREATE_TO_TABLE).isVisible());
 
 		assertFalse(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
