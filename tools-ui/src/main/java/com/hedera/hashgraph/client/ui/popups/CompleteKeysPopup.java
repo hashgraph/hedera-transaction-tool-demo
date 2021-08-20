@@ -293,6 +293,9 @@ public class CompleteKeysPopup {
 		var utility = new KeyPairUtility();
 		var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
 				String.format("Please enter the password for key %s", keyName));
+		if (keyPair == null) {
+			return;
+		}
 		char[] password = NewPasswordPopup.display();
 
 		if (password == null || Arrays.equals(password, new char[0])) {

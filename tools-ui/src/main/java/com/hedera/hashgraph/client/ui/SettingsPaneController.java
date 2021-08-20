@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import com.hedera.hashgraph.sdk.proto.AccountID;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -170,7 +171,8 @@ public class SettingsPaneController {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
-			nodeIDTextField.setText(controller.getDefaultNodeID());
+			Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
 			nodeIDTextField.setEditable(true);
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));

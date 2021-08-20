@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -34,6 +35,7 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.FinishBox;
 import com.hedera.hashgraph.client.ui.popups.GenericPopup;
+import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PasswordBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
@@ -41,9 +43,11 @@ import com.hedera.hashgraph.client.ui.utilities.KeysTableRow;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -89,6 +93,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -163,6 +168,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public Button publicKeyToolTip;
 	public Button linkedPrivateToolTip;
 	public Button unlinkedPrivateToolTip;
+	public Button changePasswordKP;
 
 	@FXML
 	private Controller controller;
@@ -958,7 +964,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		var mnemonicLabel = new Label();
 		var counter = 0;
 		var phrase = "";
-		for (var word :	mnemonic.toString().split(" ")) {
+		for (var word : mnemonic.toString().split(" ")) {
 			phrase = phrase.concat(word.toUpperCase());
 			if (counter < 23) {
 				phrase = counter % 4 == 3 ? phrase.concat("\n") : phrase.concat("   ");
@@ -1344,6 +1350,36 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 				indexMap.get(recoverNicknameField.getText() + PK_EXTENSION) >= 0) {
 			recoverIndexField.setText(indexMap.get(recoverNicknameField.getText() + PK_EXTENSION).toString());
 		}
+	}
+
+	public void changePasswordAction(ActionEvent actionEvent) throws HederaClientException, BadMnemonicException {
+		final var mnemonicFromBox = getMnemonicFromBox();
+		if (mnemonicFromBox == null || mnemonicFromBox.size() < Constants.MNEMONIC_SIZE) {
+			return;
+		}
+
+		var password = NewPasswordPopup.display();
+		if (password == null) {
+			return;
+		}
+		controller.setHash(password);
+		var salt = controller.getSalt();
+
+		Mnemonic mnemonic = Mnemonic.fromWords(mnemonicFromBox);
+		var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
+		SecurityUtilities.toEncryptedFile(passwordBytes,
+				Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
+				mnemonic.toString());
+
+	}
+
+	private List<String> getMnemonicFromBox() {
+		if (phraseHBox.getChildren().size() != 1) {
+			return new ArrayList<>();
+		}
+		Label phrase = (Label) phraseHBox.getChildren().get(0);
+		var text = phrase.getText().toLowerCase(Locale.ROOT).split("[ \n]");
+		return stream(text).filter(s -> !"".equals(s)).collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	// endregion

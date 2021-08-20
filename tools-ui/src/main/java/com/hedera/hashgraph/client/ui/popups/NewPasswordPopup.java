@@ -98,7 +98,7 @@ public class NewPasswordPopup {
 		continueButton.managedProperty().bind(continueButton.visibleProperty());
 
 		// region EVENTS
-		passwordField1.setOnKeyPressed(event -> keyPressedEvent(passwordField1, passwordField2, check1, event));
+		passwordField1.setOnKeyReleased(event -> password1KeyReleasedEvent(passwordField1, passwordField2, check1, event));
 		passwordField2.setOnKeyReleased(
 				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, event));
 		continueButton.setOnAction(actionEvent -> continueActionEvent(window, passwordField1, passwordField2));
@@ -201,7 +201,7 @@ public class NewPasswordPopup {
 		}
 	}
 
-	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
+	private static void password1KeyReleasedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
 			KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));

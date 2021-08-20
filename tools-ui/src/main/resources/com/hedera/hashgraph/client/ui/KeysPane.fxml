@@ -205,8 +205,12 @@
 						<HBox alignment="CENTER_RIGHT" spacing="5.0">
 							<Button fx:id="copyMnemonicToClipboard" minWidth="200.0" mnemonicParsing="false"
 									onAction="#copyPhraseToClipBoard"
-									style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
+									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
 									text="COPY"/>
+							<Button fx:id="changePasswordKP" minWidth="200.0" mnemonicParsing="false"
+									onAction="#changePasswordAction"
+									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
+									text="CHANGE PASSWORD"/>
 							<Button fx:id="cancelEditMnemonicButton" minWidth="200.0" mnemonicParsing="false"
 									onAction="#closeMnemonicBox"
 									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
