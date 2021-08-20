@@ -2139,9 +2139,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						Integer.parseInt(secondsField.getText())));
 		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of(timeZone.getID())).toInstant());
 
-		final var beforeNowBoolean = transactionValidStart.toInstant().isBefore(Instant.now());
-		label.setStyle("-fx-text-fill: " + (beforeNowBoolean ? "red" : "black"));
-		invalidDate.setVisible(beforeNowBoolean);
+		final var beforeNow = transactionValidStart.toInstant().isBefore(Instant.now());
+		label.setStyle("-fx-text-fill: " + (beforeNow ? "red" : "black"));
+		invalidDate.setVisible(beforeNow);
 
 		var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
