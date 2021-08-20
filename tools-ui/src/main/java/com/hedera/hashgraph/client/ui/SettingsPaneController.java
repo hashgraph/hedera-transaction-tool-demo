@@ -170,7 +170,8 @@ public class SettingsPaneController {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
-			nodeIDTextField.setText(controller.getDefaultNodeID());
+			Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
 			nodeIDTextField.setEditable(true);
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
@@ -383,12 +384,6 @@ public class SettingsPaneController {
 	}
 
 	private void setupNodeIDTextField() {
-		nodeIDTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches(REGEX1)) {
-				nodeIDTextField.setText(newValue.replaceAll("[^\\d.]", ""));
-			}
-		});
-
 		nodeIDTextField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				checkNodeID();
@@ -504,7 +499,9 @@ public class SettingsPaneController {
 			if (accountID.isValid()) {
 				controller.setDefaultNodeID(accountID.toReadableString());
 				nodeIDTextField.clear();
-				nodeIDTextField.setText(controller.getDefaultNodeID());
+				Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+				final var s = defaultNodeID.toNicknameAndChecksum(controller.getAccountsList());
+				nodeIDTextField.setText(s);
 				settingScrollPane.requestFocus();
 				accountIDErrorLabel.setVisible(false);
 			} else {
