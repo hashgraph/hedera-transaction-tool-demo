@@ -50,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -59,6 +58,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkPasswordPolicy;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.clearPasswordFields;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.deleteDirectory;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setupCharacterCount;
 
@@ -349,15 +349,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public void acceptPassword() throws HederaClientException {
 		password = appPasswordField.getText().toCharArray();
 		acceptPasswordButton.setVisible(false);
-		acceptPasswordButton.setDisable(true);
-		var filler = new char[password.length];
-		Arrays.fill(filler, 'x');
-		appPasswordField.clear();
-		reEnterPasswordField.clear();
-		appPasswordField.setText(String.valueOf(filler));
-		reEnterPasswordField.setText(String.valueOf(filler));
-		appPasswordField.setDisable(true);
-		reEnterPasswordField.setDisable(true);
+		clearPasswordFields(acceptPasswordButton, password, appPasswordField,
+				reEnterPasswordField);
 		properties.setHash(password);
 
 		// Show the next box

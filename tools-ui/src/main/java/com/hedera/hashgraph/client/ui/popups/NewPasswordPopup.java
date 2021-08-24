@@ -43,7 +43,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class NewPasswordPopup {
-	public static final String TITLE_LABEL = "Change your key's password";
+	public static final String TITLE_LABEL = "Change your password";
 	public static final String WARNING_LABEL =
 			"Your new password will be checked against a list of common passwords, to increase your security.";
 	public static final String PASSWORD_LENGTH_LABEL = "Must be at least 10 characters.";
