@@ -81,6 +81,12 @@ public class KeysPanePage {
 		this.driver = driver;
 	}
 
+	public void typePassword(String s, PasswordField field) {
+		field.setText(s);
+		driver.clickOn(field);
+		driver.type(KeyCode.SHIFT);
+	}
+
 	public KeysPanePage pressGenerateKeyButton() {
 		driver.clickOn(KEYS_GENERATE_KEYS);
 		return this;

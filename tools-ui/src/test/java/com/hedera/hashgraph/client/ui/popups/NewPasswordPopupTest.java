@@ -28,8 +28,6 @@ import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
-import javafx.scene.control.PasswordField;
-import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -197,19 +195,19 @@ public class NewPasswordPopupTest extends TestBase {
 
 		var passwordFields = keysPanePage.getPopupPasswordFields();
 		assertEquals(2, passwordFields.size());
-		typePassword("tempura", passwordFields.get(0));
+		keysPanePage.typePassword("tempura", passwordFields.get(0));
 		assertTrue(passwordFields.get(1).isDisable());
 
 		passwordFields.get(0).clear();
-		typePassword("tempura sushi", passwordFields.get(0));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
 		assertFalse(passwordFields.get(1).isDisable());
 
-		typePassword("sushi tempura", passwordFields.get(1));
+		keysPanePage.typePassword("sushi tempura", passwordFields.get(1));
 
 		var newPopupButtons = keysPanePage.getPopupButtons();
 		assertFalse(newPopupButtons.get(1).isVisible());
 
-		typePassword("tempura sushi", passwordFields.get(1));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		assertTrue(newPopupButtons.get(1).isVisible());
 
 		clickOn(newPopupButtons.get(0));
@@ -232,10 +230,10 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons0.get(0));
 		keysPanePage.enterPopupPassword(PASSWORD);
 		var passwordFields = keysPanePage.getPopupPasswordFields();
-		typePassword("tempura sushi", passwordFields.get(0));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
 		assertFalse(passwordFields.get(1).isDisable());
 		var newPopupButtons = keysPanePage.getPopupButtons();
-		typePassword("tempura sushi", passwordFields.get(1));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		clickOn(newPopupButtons.get(1));
 		var labels = keysPanePage.getPopupLabels();
 		assertEquals("The password for principalTestingKey has been changed", labels.get(0).getText());
@@ -260,10 +258,4 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(4).getText());
 	}
 
-	private void typePassword(String s, PasswordField field) {
-		field.setText(s);
-		clickOn(field);
-		type(KeyCode.SHIFT);
-
-	}
 }
