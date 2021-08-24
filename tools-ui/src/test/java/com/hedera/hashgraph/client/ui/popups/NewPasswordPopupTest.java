@@ -175,19 +175,19 @@ public class NewPasswordPopupTest extends TestBase {
 		assertFalse(buttons.get(2).isVisible());
 		assertEquals("CHANGE PASSWORD", buttons.get(3).getText());
 		assertEquals("CLOSE", buttons.get(4).getText());
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
 	@Test
 	public void changePasswordCancel_test() {
 		doubleClickOn("principalTestingKey");
 		var buttons = keysPanePage.getPopupButtons();
-		clickOn(buttons.get(3).getText());
+		clickOn(buttons.get(3));
 
 		var buttons0 = keysPanePage.getPopupButtons();
 		assertEquals(2, buttons0.size());
 
-		clickOn(buttons0.get(0).getText());
+		clickOn(buttons0.get(0));
 		var enterPassword = keysPanePage.getPopupLabels();
 		assertEquals("Please enter the password for key principalTestingKey", enterPassword.get(0).getText());
 
@@ -218,7 +218,7 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(1));
 		keysPanePage.enterPopupPassword(PASSWORD);
 		assertTrue(buttons.get(2).isVisible());
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
 	@Test
@@ -255,7 +255,7 @@ public class NewPasswordPopupTest extends TestBase {
 			exception.printStackTrace();
 		}
 		assertNotNull(keyStore);
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
 }

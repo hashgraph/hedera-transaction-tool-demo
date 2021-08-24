@@ -203,7 +203,7 @@ public class KeysPaneTest extends TestBase {
 		clickOn(newPopupButtons1.get(1));
 		var mnemonicBox = find("#mnemonicWordsVBox");
 		assertFalse(mnemonicBox.isVisible());
-		
+
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword("tempura sushi");
 		var mnemonicAfterChange = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
