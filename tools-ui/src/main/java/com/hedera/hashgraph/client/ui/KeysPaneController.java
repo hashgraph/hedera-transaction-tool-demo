@@ -756,7 +756,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public void showMnemonic() throws HederaClientException {
 		final var password = getPassword();
-		if (password == null || password.length == 0) {
+		if (password.length == 0) {
 			return;
 		}
 		showMnemonicPhrase(password);
@@ -952,7 +952,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		recoveryVBox.setVisible(true);
 		copyMnemonicToClipboard.setVisible(true);
 		var mnemonic = getMnemonicFromFile(password);
-		if (controller.isLegacyMnemonic()) {
+		if (controller.isLegacyMnemonic() && mnemonic != null) {
 			logger.info("Handling legacy mnemonic");
 			var passwordBytes = SecurityUtilities.keyFromPassword(password, controller.getSalt());
 			SecurityUtilities.toEncryptedFile(passwordBytes, DEFAULT_STORAGE + File.separator + MNEMONIC_PATH,
