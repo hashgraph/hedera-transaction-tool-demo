@@ -330,7 +330,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordButton();
-		sleep(5000);
 
 		recoverPasswordPage.clickContinue()
 				.clickContinueTwo();

@@ -21,6 +21,8 @@ package com.hedera.hashgraph.client.ui.popups;
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -98,9 +100,20 @@ public class NewPasswordPopup {
 		continueButton.managedProperty().bind(continueButton.visibleProperty());
 
 		// region EVENTS
-		passwordField1.setOnKeyReleased(event -> password1KeyReleasedEvent(passwordField1, passwordField2, check1, event));
+		passwordField1.setOnKeyReleased(
+				event -> password1KeyReleasedEvent(passwordField1, passwordField2, check1, event));
 		passwordField2.setOnKeyReleased(
 				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, event));
+		passwordField2.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				continueActionEvent(window, passwordField1, passwordField2);
+			}
+		});
+		passwordField2.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				passwordField1.setDisable(true);
+			}
+		});
 		continueButton.setOnAction(actionEvent -> continueActionEvent(window, passwordField1, passwordField2));
 		cancelButton.setOnAction(actionEvent -> cancelActionEvent(window));
 		// endregion
@@ -201,7 +214,8 @@ public class NewPasswordPopup {
 		}
 	}
 
-	private static void password1KeyReleasedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
+	private static void password1KeyReleasedEvent(PasswordField passwordField1, PasswordField passwordField2,
+			Label check1,
 			KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));
@@ -210,7 +224,6 @@ public class NewPasswordPopup {
 		}
 		if (event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(KeyCode.TAB)) {
 			answer = passwordField1.getText().toCharArray();
-			passwordField1.setDisable(true);
 		}
 	}
 }

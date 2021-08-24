@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.ui;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -47,7 +46,6 @@ import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -99,9 +97,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
@@ -759,7 +759,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		if (password == null || password.length == 0) {
 			return;
 		}
-		showMnemonicTest(password);
+		showMnemonicPhrase(password);
 		phrasePasswordErrorLabel.setVisible(false);
 		btnCreateKeys.setVisible(false);
 		btnRegenerateKeys.setVisible(false);
@@ -947,11 +947,18 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private void showMnemonicTest(char[] password) {
+	private void showMnemonicPhrase(char[] password) throws HederaClientException {
 		phrasePasswordErrorLabel.setVisible(false);
 		recoveryVBox.setVisible(true);
 		copyMnemonicToClipboard.setVisible(true);
 		var mnemonic = getMnemonicFromFile(password);
+		if (controller.isLegacyMnemonic()) {
+			logger.info("Handling legacy mnemonic");
+			var passwordBytes = SecurityUtilities.keyFromPassword(password, controller.getSalt());
+			SecurityUtilities.toEncryptedFile(passwordBytes, DEFAULT_STORAGE + File.separator + MNEMONIC_PATH,
+					mnemonic.toString());
+			controller.setLegacy(false);
+		}
 		setupMnemonicHBox(mnemonic);
 	}
 
@@ -1104,7 +1111,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			if (mnemonicFile.exists()) {
 				var salt = controller.isLegacyMnemonic() ? new byte[SALT_LENGTH] : controller.getSalt();
-
 				final var path = new File(controller.getPreferredStorageDirectory(), MNEMONIC_PATH);
 				mnemonic = SecurityUtilities.fromEncryptedFile(password, salt, path.getAbsolutePath());
 			}
@@ -1352,14 +1358,14 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	public void changePasswordAction(ActionEvent actionEvent) throws HederaClientException, BadMnemonicException {
+	public void changePasswordAction() throws HederaClientException, BadMnemonicException {
 		final var mnemonicFromBox = getMnemonicFromBox();
-		if (mnemonicFromBox == null || mnemonicFromBox.size() < Constants.MNEMONIC_SIZE) {
+		if (mnemonicFromBox == null || mnemonicFromBox.size() < MNEMONIC_SIZE) {
 			return;
 		}
 
 		var password = NewPasswordPopup.display();
-		if (password == null) {
+		if (password == null || password.length == 0) {
 			return;
 		}
 		controller.setHash(password);
@@ -1367,9 +1373,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 		Mnemonic mnemonic = Mnemonic.fromWords(mnemonicFromBox);
 		var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
-		SecurityUtilities.toEncryptedFile(passwordBytes,
-				Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
+		SecurityUtilities.toEncryptedFile(passwordBytes, DEFAULT_STORAGE + File.separator + MNEMONIC_PATH,
 				mnemonic.toString());
+		closeBoxes();
 
 	}
 
