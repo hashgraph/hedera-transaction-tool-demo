@@ -185,8 +185,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.setWords(testWords)
 				.acceptWords();
 
-		assertFalse(find("#recoverSelectedKeysVBox").isVisible());
-		assertFalse(find("#recoverNoKeysVBox").isVisible());
 
 		assertTrue(find("#recoverPasswordVBox").isVisible());
 
@@ -239,15 +237,12 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter();
 
-		assertFalse(find("#recoverSelectedKeysVBox").isVisible());
-		assertTrue(find("#recoverNoKeysVBox").isVisible());
+		assertTrue(find("#recoverFinishVBox").isVisible());
 	}
 
 	@Test
 	public void enterNewPassword_Test() throws TimeoutException {
-
 		setStage();
-
 		recoverPasswordPage.clearWords()
 				.setWords(testWords)
 				.acceptWords()
@@ -274,9 +269,7 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertTrue(find("#recoverReCheckPassword").isVisible());
 		assertTrue(find("#recoverChangePasswordButton").isVisible());
 
-		recoverPasswordPage.acceptPasswordEnter()
-				.clickContinue()
-				.clickContinueTwo();
+		recoverPasswordPage.acceptPasswordEnter();
 
 		assertTrue(find("#recoverFinishVBox").isVisible());
 	}
@@ -351,8 +344,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
-				.clickContinue()
-				.clickContinueTwo()
 				.pressFinishButton();
 
 		String newHash = properties.getHash();
@@ -364,21 +355,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertTrue(passwordAuthenticator.authenticate(PASSWORD.toCharArray(), newHash));
 
 		recoverPasswordPage.finish("CONTINUE");
-
-		closeUI();
-
-		properties.setSetupPhase(SetupPhase.TEST_PHASE);
-		FxToolkit.registerPrimaryStage();
-		FxToolkit.setupApplication(StartUI.class);
-
-		mainWindowPage = new MainWindowPage(this);
-		mainWindowPage.clickOnKeysButton();
-
-		VBox signingBox = find("#signingKeysVBox");
-		ObservableList<Node> signing = signingBox.getChildren();
-		assertEquals(2, signing.size());
-		TableView signingTable = (TableView) signing.get(1);
-		assertTrue(signingTable.isVisible());
 	}
 
 	@Test
@@ -398,25 +374,6 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
-				.clickContinue();
-
-
-		ObservableList<Node> popupNodes =
-				((VBox) Objects.requireNonNull(TestUtil.getPopupNodes()).get(0)).getChildren();
-		Label label = new Label();
-
-		for (Node n :
-				popupNodes) {
-			if (n instanceof Label) {
-				label = (Label) n;
-			}
-		}
-
-		assertFalse(label.getText().isEmpty());
-		assertEquals("The key recovery could not be verified using the public key. Key testKey will not be recovered",
-				label.getText());
-
-		recoverPasswordPage.clickContinueThree()
 				.pressFinishButton();
 
 		String newHash = properties.getHash();
