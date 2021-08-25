@@ -72,7 +72,6 @@ public class RecoverPasswordPaneController {
 
 	@FXML
 	private Controller controller;
-	private char[] password;
 
 	private MnemonicPhraseHelper mnemonicPhraseHelper;
 
@@ -147,9 +146,10 @@ public class RecoverPasswordPaneController {
 		recoverPhraseBox.getChildren().add(mnemonicGridPane);
 	}
 
-	public void acceptPassword() {
-		password = recoverAppPasswordField.getText().toCharArray();
-		clearPasswordFields(recoverChangePasswordButton, password, recoverAppPasswordField, recoverReEnterPasswordField);
+	private void acceptPassword() {
+		char[] password = recoverAppPasswordField.getText().toCharArray();
+		clearPasswordFields(recoverChangePasswordButton, password, recoverAppPasswordField,
+				recoverReEnterPasswordField);
 		recoverChangePasswordButton.setDisable(true);
 		controller.setLegacy(false);
 

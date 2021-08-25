@@ -22,14 +22,12 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
-import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.RecoverPasswordPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
@@ -47,7 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.ui.InitialStartupPaneControllerTest.PASSWORD;
@@ -59,7 +56,6 @@ import static org.junit.Assert.assertTrue;
 public class RecoverPasswordPaneControllerTest extends TestBase {
 
 	private RecoverPasswordPage recoverPasswordPage;
-	private MainWindowPage mainWindowPage;
 	private UserAccessibleProperties properties;
 	private final Logger logger = LogManager.getLogger(RecoverPasswordPaneControllerTest.class);
 
