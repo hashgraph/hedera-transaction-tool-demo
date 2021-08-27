@@ -766,7 +766,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var flag = checkAndFlagCommonFields();
 
 		try {
-			if (!"".equals(updateAccountID.getText())) {
+			if ("".equals(updateAccountID.getText())) {
+				invalidUpdateAccountToUpdate.setVisible(true);
+			} else {
 				var account = Identifier.parse(updateAccountID.getText());
 				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 			}
@@ -1568,6 +1570,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var flag =
 				isDateValid(hourField, minuteField, secondsField, datePicker, ZoneId.of(timeZone.getID()),
 						timeZoneHBox);
+		if (!flag) {
+			invalidDate.setVisible(true);
+		}
 
 		// Check and flag the fee payer
 		try {
@@ -2216,17 +2221,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupManagedProperty(Node... nodes) {
-		for (var n :
-				nodes) {
+		for (var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
 	}
 
 	private void processKey(JsonObject key, ScrollPane keyPane) {
-
 		final var emptyKey = new JsonObject();
 		if (!key.equals(emptyKey)) {
 			newKeyJSON = key;
+			invalidCreateNewKey.setVisible(false);
+			invalidUpdateNewKey.setVisible(false);
 		}
 
 		if (!key.equals(emptyKey) && !key.toString().equals("{\"keyList\":{\"keys\":[]}}")) {
