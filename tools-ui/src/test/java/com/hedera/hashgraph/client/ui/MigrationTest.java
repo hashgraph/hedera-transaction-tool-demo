@@ -129,7 +129,6 @@ public class MigrationTest extends TestBase {
 
 		assertEquals(accountFolders.length, accountFiles.length);
 
-		sleep(1000);
 		var accounts = accountsPanePage.getAccounts();
 		assertEquals(accounts.size(), accountFolders.length);
 
@@ -147,6 +146,6 @@ public class MigrationTest extends TestBase {
 						Objects.requireNonNull(tempDir.toFile().listFiles())[0].listFiles()).length : 0);
 
 		assertEquals(sizeBefore, after);
-
+		assertTrue(new File(Constants.PUBLIC_KEY_LOCATION).exists());
 	}
 }
