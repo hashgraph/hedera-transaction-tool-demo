@@ -222,6 +222,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			logger.info("Application directory needs to be updated");
 			try {
 				updateHelper.handleMigration();
+				replacePublicKey();
 			} catch (HederaClientException | IOException e) {
 				logger.error("Cannot complete migration {}", e.toString());
 			}
