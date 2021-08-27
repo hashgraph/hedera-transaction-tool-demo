@@ -1224,6 +1224,77 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
+
+	@Test
+	public void errorMessagesCreate_Test() throws InterruptedException {
+		final var headless = System.getProperty("headless");
+		if (headless != null && headless.equals("true")) {
+			// Test will not work on headless mode
+			return;
+		}
+		
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.createAndExport(resources)
+				.clickOnPopupButton("CONTINUE");
+
+		assertTrue(find(CREATE_INVALID_DATE).isVisible());
+		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setStartDate(LocalDateTime.now().plusMinutes(2));
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setCreateKey()
+				.clickOnAccountKey("treasury")
+				.saveKey();
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setFeePayerAccount(22);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+	}
+
+	@Test
+	public void errorMessagesUpdate_Test() throws InterruptedException {
+		final var headless = System.getProperty("headless");
+		if (headless != null && headless.equals("true")) {
+			// Test will not work on headless mode
+			return;
+		}
+
+		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
+				.createAndExport(resources)
+				.clickOnPopupButton("CONTINUE");
+
+		assertTrue(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setStartDate(LocalDateTime.now().plusMinutes(2));
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setFeePayerAccount(22);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setUpdateAccount(50);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+	}
+
 	@After
 	public void tearDown() {
 		try {
