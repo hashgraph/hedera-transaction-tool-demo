@@ -455,7 +455,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate);
 
 		updateAccountID.setOnKeyPressed(keyEvent -> {
-			var keyCode = keyEvent.getCode();
+			final var keyCode = keyEvent.getCode();
 			if (keyCode.equals(KeyCode.TAB) || keyCode.equals(KeyCode.ENTER)) {
 				findAccountInfoAndPreloadFields();
 			}
@@ -818,7 +818,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 					updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
 					newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
-					var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+					final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 					setupKeyPane(newKeyTreeView, updateNewKey);
 				}
 				// in case they were visible before
