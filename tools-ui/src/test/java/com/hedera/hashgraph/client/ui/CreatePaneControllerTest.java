@@ -594,7 +594,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnAccountKey("treasury")
 				.saveKey();
 
-
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
@@ -629,6 +628,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);
+
+
 		assertEquals(100000000000L, toolTransaction.getInitialBalance().toTinybars());
 
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;

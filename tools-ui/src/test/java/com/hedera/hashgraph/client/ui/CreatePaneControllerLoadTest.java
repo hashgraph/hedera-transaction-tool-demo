@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
@@ -33,7 +34,6 @@ import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.CreatePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -248,6 +248,57 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	}
 
 	@Test
+	public void loadTransferAccountMakeChanges_test() throws HederaClientException {
+		createPanePage.loadTransaction("src/test/resources/createTransactions/transfer.tx")
+						.setFeePayerAccount(10006);
+		createPanePage.createAndExport(resources);
+
+
+		var transactions = (new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
+				pathname -> {
+					var name = pathname.getName();
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
+				});
+
+		assert transactions != null;
+
+		ToolTransferTransaction original =
+				new ToolTransferTransaction(new File("src/test/resources/createTransactions/transfer.tx"));
+		ToolTransferTransaction toolTransaction = null;
+		var comment = new JsonObject();
+
+		for (var f : transactions) {
+			if (f.getName().contains("0_0_10006")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
+					toolTransaction = new ToolTransferTransaction(f);
+				}
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
+					comment = readJsonObject(f.getAbsolutePath());
+				}
+			}
+		}
+
+
+		assertNotNull(toolTransaction);
+		assertEquals(Identifier.parse("10006").asAccount(), toolTransaction.getTransactionId().accountId);
+
+		assertEquals(Objects.requireNonNull(original.getTransactionId().validStart).getEpochSecond(),
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
+		assertEquals(original.getMemo(), toolTransaction.getMemo());
+
+		var originalTransferMap = original.getAccountAmountMap();
+		var transferMap = toolTransaction.getAccountAmountMap();
+
+		assert original.getTransaction().getMaxTransactionFee() != null;
+		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
+		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
+				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
+		assertEquals(originalTransferMap.size(), transferMap.size());
+	}
+
+
+	@Test
 	public void loadCreateAccount_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/createAccount.tx");
 		createPanePage.createAndExport(resources);
@@ -329,6 +380,114 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assertNotNull(toolTransaction);
 
 		assertEquals(original.getAccount().asAccount(), toolTransaction.getAccount().asAccount());
+
+		assertEquals(original.getTransactionId().accountId, toolTransaction.getTransactionId().accountId);
+
+		assertEquals(Objects.requireNonNull(original.getTransactionId().validStart).getEpochSecond(),
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
+		assertEquals(original.getMemo(), toolTransaction.getMemo());
+
+		var originalKey = original.getKey();
+		var transferKey = toolTransaction.getKey();
+
+		assert original.getTransaction().getMaxTransactionFee() != null;
+		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
+		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
+				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
+		assertEquals(originalKey.size(), transferKey.size());
+	}
+
+	@Test
+	public void loadUpdateAccountMakeChanges_test() throws HederaClientException {
+		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx")
+				.setMemo("A memo")
+				.setFeePayerAccount(1009);
+
+		createPanePage.createAndExport(resources);
+
+		var transactions = (new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
+				pathname -> {
+					var name = pathname.getName();
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
+				});
+
+		assert transactions != null;
+
+		ToolCryptoUpdateTransaction original =
+				new ToolCryptoUpdateTransaction(new File("src/test/resources/createTransactions/accountUpdate.tx"));
+		ToolCryptoUpdateTransaction toolTransaction = null;
+		var comment = new JsonObject();
+
+		for (var f : transactions) {
+			if (f.getName().contains("0_0_1009")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
+					toolTransaction = new ToolCryptoUpdateTransaction(f);
+				}
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
+					comment = readJsonObject(f.getAbsolutePath());
+				}
+			}
+		}
+
+
+		assertNotNull(toolTransaction);
+
+		assertEquals(original.getAccount().asAccount(), toolTransaction.getAccount().asAccount());
+
+		assertEquals(Identifier.parse("1009").asAccount(), toolTransaction.getTransactionId().accountId);
+
+		assertEquals(Objects.requireNonNull(original.getTransactionId().validStart).getEpochSecond(),
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
+		assertEquals("A memo", toolTransaction.getMemo());
+
+		var originalKey = original.getKey();
+		var transferKey = toolTransaction.getKey();
+
+		assert original.getTransaction().getMaxTransactionFee() != null;
+		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
+		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
+				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
+		assertEquals(originalKey.size(), transferKey.size());
+
+	}
+
+	@Test
+	public void loadUpdateAccountChangeAccount_test() throws HederaClientException {
+		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx")
+				.setUpdateAccount(10006);
+
+		createPanePage.createAndExport(resources);
+
+		var transactions = (new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
+				pathname -> {
+					var name = pathname.getName();
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
+				});
+
+		assert transactions != null;
+
+		ToolCryptoUpdateTransaction original =
+				new ToolCryptoUpdateTransaction(new File("src/test/resources/createTransactions/accountUpdate.tx"));
+		ToolCryptoUpdateTransaction toolTransaction = null;
+		var comment = new JsonObject();
+
+		for (var f : transactions) {
+			if (f.getName().contains("0_0_89")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
+					toolTransaction = new ToolCryptoUpdateTransaction(f);
+				}
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
+					comment = readJsonObject(f.getAbsolutePath());
+				}
+			}
+		}
+
+
+		assertNotNull(toolTransaction);
+
+		assertEquals(Identifier.parse("10006").asAccount(), toolTransaction.getAccount().asAccount());
 
 		assertEquals(original.getTransactionId().accountId, toolTransaction.getTransactionId().accountId);
 
