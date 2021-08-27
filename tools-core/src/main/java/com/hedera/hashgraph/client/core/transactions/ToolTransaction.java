@@ -471,19 +471,16 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
 		Set<ByteString> keysSet = new HashSet<>();
 		var accounts = getSigningAccounts();
-		for (var account : accounts) {
-			var accountString =
-					new Identifier(Objects.requireNonNull(account)).toReadableString();
-			var accountFile = new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION);
-			if (accountFile.exists()) {
-				try {
-					var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
-					keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-				} catch (InvalidProtocolBufferException | HederaClientException e) {
-					logger.error(e);
-				}
+		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
+				accountString -> new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION)).filter(
+				File::exists).forEach(accountFile -> {
+			try {
+				var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
+			} catch (InvalidProtocolBufferException | HederaClientException e) {
+				logger.error(e);
 			}
-		}
+		});
 
 		return keysSet;
 	}
