@@ -113,7 +113,6 @@ public class SettingsPaneController {
 	public ScrollPane settingScrollPane;
 	public Label drivesErrorLabelSP;
 	public HBox addFolderPathHBoxSP;
-	public Label versionLabel;
 	public ImageView deleteImage;
 	public ImageView editImage;
 	public Button nodeIDTooltip;
@@ -123,6 +122,8 @@ public class SettingsPaneController {
 	public Button maxFeeTooltip;
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
+	public TextField versionLabel;
+
 
 	@FXML
 	private Controller controller;
@@ -140,8 +141,6 @@ public class SettingsPaneController {
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButton, cancelAddToEmailMapButton,
 					browseNewFolderButton, deleteImage, editImage);
-
-			versionLabel.setPrefWidth(USE_COMPUTED_SIZE);
 
 			//Initialize drive builder
 			driveSetupHelper = DriveSetupHelper.Builder.aDriveSetupHelper()
@@ -565,7 +564,11 @@ public class SettingsPaneController {
 	 * Version, Time the last build is done in UTC, Last commit ID in the build.
 	 */
 	public void readVersion() {
-		versionLabel.setText(controller.getVersion());
+		final var version = controller.getVersion();
+		versionLabel.setText(version.replace("Version: ", "v"));
+		versionLabel.setStyle("-fx-background-color: white; -fx-border-color: white");
+		versionLabel.setPrefWidth(USE_COMPUTED_SIZE);
+		versionLabel.setPrefHeight(USE_COMPUTED_SIZE);
 	}
 
 	// endregion Save or Cancel
