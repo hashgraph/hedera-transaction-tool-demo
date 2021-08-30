@@ -71,7 +71,6 @@ public class RecoverPasswordPage {
 				break;
 			}
 		}
-//		driver.type(KeyCode.TAB);
 		return this;
 	}
 

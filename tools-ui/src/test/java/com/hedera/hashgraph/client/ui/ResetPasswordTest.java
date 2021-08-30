@@ -1,0 +1,226 @@
+/*
+ * Hedera Transaction Tool
+ *
+ * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.hedera.hashgraph.client.ui;
+
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.testfx.api.FxToolkit;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.KeyStoreException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
+import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class ResetPasswordTest extends TestBase implements GenericFileReadWriteAware {
+	private static final Logger logger = LogManager.getLogger(ResetPasswordTest.class);
+
+	private static final String OUTPUT_PATH =
+			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
+	private KeysPanePage keysPanePage;
+	private MainWindowPage mainWindowPage;
+
+	private final Path currentRelativePath = Paths.get("");
+	public UserAccessibleProperties properties;
+	private static final String PASSWORD = "tempurasushi";
+	private static final String DEFAULT_STORAGE = System.getProperty(
+			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
+	private static final List<String> testWords =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
+
+	@Before
+	public void setUp() throws Exception {
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
+		if (new File(DEFAULT_STORAGE).mkdirs()) {
+			logger.info("TransactionTools folder created");
+		}
+
+		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
+
+		if (new File(currentRelativePath.toAbsolutePath() + OUTPUT_PATH).mkdirs()) {
+			logger.info("Output path created");
+		}
+
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
+		properties.setMnemonicHashCode(-915976044);
+
+		Map<String, String> emailMap = new HashMap<>();
+
+		emailMap.put(
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
+				"test1.council2@hederacouncil.org");
+
+		properties.setOneDriveCredentials(emailMap);
+		properties.setHash(PASSWORD.toCharArray());
+		properties.setSalt(true);
+		properties.setLegacy(true);
+
+		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
+
+		Controller controller = new Controller();
+		var version = controller.getVersion();
+		properties.setVersionString(version);
+
+		setupTransactionDirectory(DEFAULT_STORAGE);
+
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
+				new File(DEFAULT_STORAGE, MNEMONIC_PATH));
+
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+
+		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+		if (new File(DEFAULT_STORAGE + "History").exists()) {
+			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
+		}
+
+		keysPanePage = new KeysPanePage(this);
+		mainWindowPage = new MainWindowPage(this);
+		mainWindowPage.clickOnKeysButton();
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		final var storage = new File(Constants.DEFAULT_STORAGE);
+		if (storage.exists()) {
+			FileUtils.deleteDirectory(storage);
+		}
+	}
+
+
+	@Test
+	public void forgottenMnemonicPassword_test() {
+		keysPanePage.pressRecoveryPhrase()
+				.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET")
+				.setWords(testWords)
+				.clickOnPopupButton("RECOVER")
+				.enterPasswordAndConfirm(PASSWORD)
+				.clickOnPopupButton("CONTINUE");
+		assertFalse(find("#recoveryVBox").isVisible());
+
+		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
+		final var recoveryBox = find("#recoveryVBox");
+		assertTrue(recoveryBox instanceof VBox);
+		assertTrue(recoveryBox.isVisible());
+
+		var children = ((VBox) recoveryBox).getChildren();
+		assertEquals(2, children.size());
+		assertTrue(children.get(1) instanceof HBox);
+		var labels = ((HBox) children.get(1)).getChildren();
+		assertEquals(1, labels.size());
+		assertTrue(labels.get(0) instanceof Label);
+
+		String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (String testWord : testWords) {
+			assertTrue(words.contains(testWord));
+		}
+	}
+
+	@Test
+	public void forgottenPasswordKey_test() throws KeyStoreException {
+
+		keysPanePage.pressRecoveryPhrase()
+				.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET")
+				.setWords(testWords)
+				.clickOnPopupButton("RECOVER")
+				.enterPasswordAndConfirm(PASSWORD)
+				.clickOnPopupButton("CONTINUE").pressCloseViewMnemonic();
+
+
+		keysPanePage.createKey("testKey", PASSWORD);
+		doubleClickOn("testKey");
+
+		File pem = new File(DEFAULT_KEYS, "testKey.pem");
+		var keyStoreBefore = Ed25519KeyStore.read(PASSWORD.toCharArray(), pem.getAbsolutePath());
+
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
+		assertTrue(privateKeyNodes.get(1) instanceof VBox);
+
+		VBox vBox = (VBox) privateKeyNodes.get(1);
+		assertEquals(3, vBox.getChildren().size());
+		Node show = vBox.getChildren().get(0);
+		assertTrue(show instanceof Button);
+		assertEquals("SHOW", ((Button) show).getText());
+		clickOn(show);
+
+		keysPanePage.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET")
+				.enterPopupPassword(PASSWORD)
+				.enterPasswordAndConfirm("penthouseart")
+				.clickOnPopupButton("CONTINUE");
+
+		var keyStoreAfter = Ed25519KeyStore.read("penthouseart".toCharArray(), pem.getAbsolutePath());
+		assertArrayEquals(keyStoreBefore.get(0).getPrivate().getEncoded(),
+				keyStoreAfter.get(0).getPrivate().getEncoded());
+
+	}
+}

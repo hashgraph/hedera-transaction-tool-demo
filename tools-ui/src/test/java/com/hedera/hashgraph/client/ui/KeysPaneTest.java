@@ -403,7 +403,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateMissingPublicKey_Test() throws IOException {
-		createKey("test", PASSWORD);
+		keysPanePage.createKey("test", PASSWORD);
 		mainWindowPage.clickOnHomeButton();
 		FileUtils.moveFile(new File(DEFAULT_STORAGE + "/Keys/test.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/test_copy.pub"));
@@ -418,11 +418,11 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateMultipleMissingPublicKeys_Test() throws IOException {
-		createKey("test1", PASSWORD);
-		createKey("test2", PASSWORD);
-		createKey("test3", PASSWORD);
-		createKey("test4", PASSWORD);
-		createKey("test5", PASSWORD);
+		keysPanePage.createKey("test1", PASSWORD);
+		keysPanePage.createKey("test2", PASSWORD);
+		keysPanePage.createKey("test3", PASSWORD);
+		keysPanePage.createKey("test4", PASSWORD);
+		keysPanePage.createKey("test5", PASSWORD);
 
 		mainWindowPage.clickOnHomeButton();
 
@@ -454,11 +454,11 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void showKeyDetails_test() throws IOException {
-		createKey("test1", PASSWORD);
-		createKey("test2", PASSWORD);
-		createKey("test3", PASSWORD);
-		createKey("test4", PASSWORD);
-		createKey("test5", PASSWORD);
+		keysPanePage.createKey("test1", PASSWORD);
+		keysPanePage.createKey("test2", PASSWORD);
+		keysPanePage.createKey("test3", PASSWORD);
+		keysPanePage.createKey("test4", PASSWORD);
+		keysPanePage.createKey("test5", PASSWORD);
 
 		mainWindowPage.clickOnHomeButton();
 
@@ -584,7 +584,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void linkPhraseToKey_Test() throws IOException, KeyStoreException {
-		createKey("test1", PASSWORD);
+		keysPanePage.createKey("test1", PASSWORD);
 		removeLineFromPem(DEFAULT_STORAGE + "Keys/test1.pem");
 
 		mainWindowPage.clickOnHomeButton().clickOnKeysButton();
@@ -649,16 +649,6 @@ public class KeysPaneTest extends TestBase {
 	}
 
 	// region AUXILIARY METHODS
-
-	private KeysPanePage createKey(String name, String password) {
-		return keysPanePage
-				.pressGenerateKeyButton()
-				.enterNickName(name)
-				.pressOnCreateKeysButton()
-				.enterPopupPassword(password)
-				.closePasswordPopup();
-
-	}
 
 	private void removeLineFromPem(String pemFile) throws FileNotFoundException {
 		List<String> lines = new ArrayList<>();

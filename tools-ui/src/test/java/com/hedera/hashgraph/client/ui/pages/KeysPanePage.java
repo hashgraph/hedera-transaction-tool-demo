@@ -25,12 +25,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
@@ -41,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
@@ -65,9 +68,12 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_RECOVER_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.RETYPE_PASSWORD_BOX;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.applyPath;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Boolean.parseBoolean;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class KeysPanePage {
@@ -88,6 +94,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage pressGenerateKeyButton() {
+		driver.ensureVisible(driver.find(KEYS_GENERATE_KEYS));
 		driver.clickOn(KEYS_GENERATE_KEYS);
 		return this;
 	}
@@ -106,8 +113,8 @@ public class KeysPanePage {
 
 	public KeysPanePage enterPopupPassword(String password) {
 		ObservableList<Node> nodes = getPopupNodes();
-		for (Node n :
-				nodes) {
+		assert nodes != null;
+		for (Node n : nodes) {
 			if (n instanceof PasswordField) {
 				driver.clickOn(n);
 				driver.write(password);
@@ -120,6 +127,7 @@ public class KeysPanePage {
 
 	public KeysPanePage pressCancelPassword() {
 		ObservableList<Node> nodes = getPopupNodes();
+		assert nodes != null;
 		ObservableList<Node> buttons = ((HBox) nodes.get(3)).getChildren();
 		for (Node button : buttons) {
 			if (((Button) button).getText().equalsIgnoreCase("cancel")) {
@@ -421,9 +429,75 @@ public class KeysPanePage {
 		} else {
 			driver.clickOn("#btnImportKeys");
 			String fullPath = keyFile.getAbsolutePath();
-			TestUtil.applyPath(fullPath);
+			applyPath(fullPath);
 			driver.push(KeyCode.CONTROL, KeyCode.A);
 			driver.push(KeyCode.ENTER);
 		}
+	}
+
+	public KeysPanePage pressPopupHyperlink() {
+		ObservableList<Node> popupNodes;
+		popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		popupNodes.stream().filter(popupNode -> popupNode instanceof HBox && ((HBox) popupNode).getChildren().get(
+				0) instanceof Hyperlink).map(popupNode -> (Hyperlink) ((HBox) popupNode).getChildren().get(0)).forEach(
+				driver::clickOn);
+		return this;
+	}
+
+	public KeysPanePage clickOnPopupButton(String buttonName) {
+		var button = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), buttonName);
+		clickOn(button);
+		return this;
+	}
+
+	public KeysPanePage setWords(List<String> words) {
+
+		assertNotNull(words);
+
+		for (String w : words) {
+			setNextWord(w);
+		}
+		return this;
+	}
+
+	public KeysPanePage acceptWords() {
+		driver.clickOn("#recoverPhraseButton");
+		return this;
+	}
+
+	public KeysPanePage setNextWord(String word) {
+
+		assertNotNull(word);
+		var nodes = getPopupNodes();
+		assert nodes != null;
+		GridPane fullGrid = (GridPane) ((VBox) nodes.get(1)).getChildren().get(0);
+		ObservableList<Node> full = fullGrid.getChildren();
+		for (Node n : full) {
+			assert n instanceof TextField;
+			if (((TextField) n).getText().isEmpty()) {
+				driver.clickOn(n);
+				driver.write(word);
+				break;
+			}
+		}
+		return this;
+	}
+
+	public KeysPanePage enterPasswordAndConfirm(String password) {
+		var passwordFields = getPopupPasswordFields();
+		passwordFields.get(0).clear();
+		typePassword(password, passwordFields.get(0));
+		typePassword(password, passwordFields.get(1));
+		return this;
+	}
+
+	public KeysPanePage createKey(String name, String password) {
+		return pressGenerateKeyButton()
+				.enterNickName(name)
+				.pressOnCreateKeysButton()
+				.enterPopupPassword(password)
+				.closePasswordPopup();
+
 	}
 }
