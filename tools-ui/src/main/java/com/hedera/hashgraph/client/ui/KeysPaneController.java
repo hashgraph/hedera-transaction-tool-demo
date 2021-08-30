@@ -1021,7 +1021,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		var passwordAuthenticator = new PasswordAuthenticator();
 		char[] password;
 		while (true) {
-			password = PasswordBox.display("Password", "Please enter your password", "password", true);
+			password = PasswordBox.display("Password", "Please enter your password", "", false);
 			if (password == null) {
 				return new char[0];
 			}
@@ -1119,7 +1119,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			controller.displaySystemMessage(e);
 		}
 		return mnemonic;
-
 	}
 
 	// endregion

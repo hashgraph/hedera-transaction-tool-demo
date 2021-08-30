@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.utilities.MnemonicPhraseHelper;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.geometry.Insets;
@@ -38,12 +39,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Base64;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.keyFromPassword;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
@@ -54,12 +51,13 @@ public class MnemonicInputPopup {
 	public static final String MESSAGE_LABEL =
 			"Please use the spaces below to enter your recovery phrase. The recovery phrase is the list of 24 words" +
 					" that was created during the application initial setup.";
-	private static Mnemonic mnemonic = null;
 	private static MnemonicPhraseHelper mnemonicPhraseHelper;
 
 	private static final Logger logger = LogManager.getLogger(MnemonicInputPopup.class);
 
-	public static void display(String storageDirectory) {
+	private static char[] answer;
+
+	public static char[] display(String storageDirectory) {
 		var window = new Stage();
 		window.setTitle("Recovery phrase reset");
 		window.sizeToScene();
@@ -126,6 +124,7 @@ public class MnemonicInputPopup {
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();
+		return answer;
 	}
 
 	private static void recoverEvent(String storageDirectory, Stage window, Label recoverMnemonicErrorMessage) {
@@ -143,7 +142,7 @@ public class MnemonicInputPopup {
 		}
 
 		try {
-			mnemonic = Mnemonic.fromWords(words);
+			Mnemonic mnemonic = Mnemonic.fromWords(words);
 			recoverMnemonicErrorMessage.setVisible(false);
 			var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
@@ -165,22 +164,13 @@ public class MnemonicInputPopup {
 		UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setLegacy(false);
-		if (properties.hasSalt()) {
-			var token = properties.getHash();
-			var decoder = Base64.getDecoder();
-
-			var tokenBytes = decoder.decode(token);
-			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
-				logger.error("Token size check failed");
-			}
-			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-		}
-		return new byte[SALT_LENGTH];
+		return Utilities.getSaltBytes(properties);
 	}
 
 	private static void setPassword(char[] password) throws HederaClientException {
 		UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setHash(password);
+		answer = password;
 	}
 }
