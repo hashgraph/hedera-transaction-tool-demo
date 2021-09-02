@@ -50,6 +50,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -338,7 +339,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @param output
 	 * 		The location where files will be stored
 	 * @return The path to the produced files.
-	 * @throws HederaClientException
 	 */
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
 		return null;
@@ -353,7 +353,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * 		Any comments the user might have left
 	 * @param keyName
 	 * 		The key used if the action was SIGN
-	 * @throws HederaClientException
 	 */
 	public void moveToHistory(Actions action, String userComment, String keyName) throws HederaClientException {
 		final var historyFile = new File(DEFAULT_HISTORY + File.separator + name);
@@ -384,7 +383,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	/**
 	 * Bring back the file from the history to active. Used if more signatures are required
 	 *
-	 * @throws HederaClientException
 	 */
 	public void moveFromHistory() throws HederaClientException {
 		setHistory(false);
@@ -429,7 +427,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * Builds the VBox "card" that will be displayed to the user.
 	 *
 	 * @return a VBOX with a view of the file for display on the home page
-	 * @throws HederaClientException
 	 */
 	public VBox buildDetailsBox() throws HederaClientException {
 		var fileVBox = buildFileVBox(isHistory());
@@ -449,7 +446,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		hBox.getChildren().add(detailsGridPane);
 
-		if (!SOFTWARE_UPDATE.equals(this.getType())) {
+		if (getType().equals(TRANSACTION) || getType().equals(BATCH) || getType().equals(LARGE_BINARY)) {
 			hBox.getChildren().add(commentsVBox);
 			detailsGridPane.maxWidthProperty().bind(fileVBox.widthProperty().divide(2));
 		}
@@ -469,19 +466,16 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		if (accounts == null) {
 			return new HashSet<>();
 		}
-		for (var account : accounts) {
-			var accountString =
-					new Identifier(Objects.requireNonNull(account)).toReadableString();
-			var accountFile = new File(ACCOUNTS_INFO_FOLDER, accountString + "." + INFO_EXTENSION);
-			if (accountFile.exists()) {
-				try {
-					var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
-					keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-				} catch (InvalidProtocolBufferException | HederaClientException e) {
-					logger.error(e);
-				}
+		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
+				accountString -> new File(ACCOUNTS_INFO_FOLDER, accountString + "." + INFO_EXTENSION)).filter(
+				File::exists).forEach(accountFile -> {
+			try {
+				var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
+			} catch (InvalidProtocolBufferException | HederaClientException e) {
+				logger.error(e);
 			}
-		}
+		});
 
 		return keysSet;
 	}
@@ -502,7 +496,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @param entity
 	 * 		the name of the key or file id
 	 * @return a label with a message appropriate to the situation
-	 * @throws HederaClientException
 	 */
 	public List<Label> getHistory(String entity) throws HederaClientException {
 		List<Label> messages = new ArrayList<>();
@@ -524,7 +517,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * Finds the associated metadata file (if it exists) and reads the action history of the file
 	 *
 	 * @return a list of the previous actions on the file
-	 * @throws HederaClientException
 	 */
 	public List<MetadataAction> getSigningHistory() throws HederaClientException {
 		List<MetadataAction> signingHistory = new ArrayList<>();
@@ -752,7 +744,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	}
 
 	@Override
-	public int compareTo(RemoteFile o) {
+	public int compareTo(@NotNull RemoteFile o) {
 		// when both files are in the history, the ordering is backwards.
 		if (isHistory() && o.isHistory()) {
 			return -Long.compare(this.getSignDateInSecs(), o.getSignDateInSecs());

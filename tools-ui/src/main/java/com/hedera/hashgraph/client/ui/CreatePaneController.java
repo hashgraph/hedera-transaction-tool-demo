@@ -314,6 +314,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public Hyperlink contentsLink;
 	protected static final int MEMO_LENGTH = 99;
+	private boolean fromFile = false;
 
 
 	// endregion
@@ -425,7 +426,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createNewKey));
 	}
 
-
 	private Map<String, PublicKey> getStringPublicKeyMap() {
 		Map<String, PublicKey> publicKeys = new HashMap<>();
 		var keys =
@@ -453,6 +453,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateCopyFromAccountHBox.getChildren().clear();
 		updateCopyFromAccountHBox.getChildren().add(updateFromNickName);
 		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate);
+
+		updateAccountID.setOnKeyPressed(keyEvent -> {
+			final var keyCode = keyEvent.getCode();
+			if (keyCode.equals(KeyCode.TAB) || keyCode.equals(KeyCode.ENTER)) {
+				findAccountInfoAndPreloadFields();
+			}
+		});
 
 		updateKeyButton.setOnAction(e -> {
 			updateFromNickName.setVisible(false);
@@ -759,7 +766,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var flag = checkAndFlagCommonFields();
 
 		try {
-			if (!"".equals(updateAccountID.getText())) {
+			if ("".equals(updateAccountID.getText())) {
+				invalidUpdateAccountToUpdate.setVisible(true);
+			} else {
 				var account = Identifier.parse(updateAccountID.getText());
 				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 			}
@@ -799,23 +808,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			var account = Identifier.parse(updateAccountID.getText());
 			if (accountsInfoMap.containsKey(account)) {
 				var accountInfo = accountsInfoMap.get(account);
-				updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
 				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
-				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
 				controller.loadPubKeys();
 				var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
 				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
-				newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
 				var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 				setupKeyPane(oldKeyTreeView, updateOriginalKey);
-				var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-				setupKeyPane(newKeyTreeView, updateNewKey);
 
+				if (!fromFile) {
+					updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
+					updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
+					newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
+					final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+					setupKeyPane(newKeyTreeView, updateNewKey);
+				}
 				// in case they were visible before
 				clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
 						invalidNode, invalidUpdateAccountToUpdate);
-
 
 			}
 		} catch (Exception e) {
@@ -1560,6 +1570,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var flag =
 				isDateValid(hourField, minuteField, secondsField, datePicker, ZoneId.of(timeZone.getID()),
 						timeZoneHBox);
+		if (!flag) {
+			invalidDate.setVisible(true);
+		}
 
 		// Check and flag the fee payer
 		try {
@@ -1648,6 +1661,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * 		the file service that will be used to store the transaction
 	 */
 	private void storeToOutput(CreateTransactionType type, FileService fileService) {
+		fromFile = false;
 		if (fileService == null) {
 			return;
 		}
@@ -1931,10 +1945,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				try {
 					var id = Identifier.parse(account);
 					textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-					// in order to make this generic.
-					if (updateAccountVBox.isVisible()) {
-						findAccountInfoAndPreloadFields();
-					}
 					textField.getParent().requestFocus();
 					errorLabel.setVisible(false);
 				} catch (Exception e) {
@@ -1957,10 +1967,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			var account = textField.getText();
 			var id = Identifier.parse(account);
 			textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-			// in order to make this generic.
-			if (updateAccountVBox.isVisible()) {
-				findAccountInfoAndPreloadFields();
-			}
 			errorLabel.setVisible(false);
 		} catch (Exception e) {
 			logger.error(e);
@@ -2215,17 +2221,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupManagedProperty(Node... nodes) {
-		for (var n :
-				nodes) {
+		for (var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
 	}
 
 	private void processKey(JsonObject key, ScrollPane keyPane) {
-
 		final var emptyKey = new JsonObject();
 		if (!key.equals(emptyKey)) {
 			newKeyJSON = key;
+			invalidCreateNewKey.setVisible(false);
+			invalidUpdateNewKey.setVisible(false);
 		}
 
 		if (!key.equals(emptyKey) && !key.toString().equals("{\"keyList\":{\"keys\":[]}}")) {
@@ -2264,6 +2270,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanFields();
 		if (SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 			transactionFile = loadTransaction();
+			fromFile = true;
 		}
 		if (SetupPhase.TEST_PHASE.equals(controller.getSetupPhase()) && !"".equals(loadTransactionTextField.getText())) {
 			transactionFile = new File(loadTransactionTextField.getText());
@@ -2438,6 +2445,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	public void cleanForm() {
+		fromFile = false;
 		var type = selectTransactionType.getValue();
 		initializeCreatePane();
 		selectTransactionType.setValue(type);

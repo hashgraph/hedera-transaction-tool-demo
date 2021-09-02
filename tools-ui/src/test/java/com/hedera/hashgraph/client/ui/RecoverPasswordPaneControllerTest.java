@@ -265,7 +265,9 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertTrue(find("#recoverReCheckPassword").isVisible());
 		assertTrue(find("#recoverChangePasswordButton").isVisible());
 
-		recoverPasswordPage.acceptPasswordEnter();
+		recoverPasswordPage.acceptPasswordEnter()
+				.clickOnPopupButton("CONTINUE")
+				.clickOnPopupButton("CONTINUE");
 
 		assertTrue(find("#recoverFinishVBox").isVisible());
 	}
@@ -340,6 +342,8 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
+				.clickOnPopupButton("CONTINUE")
+				.clickOnPopupButton("CONTINUE")
 				.pressFinishButton();
 
 		String newHash = properties.getHash();
@@ -370,6 +374,8 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
+				.clickOnPopupButton("CONTINUE")
+				.clickOnPopupButton("CONTINUE")
 				.pressFinishButton();
 
 		String newHash = properties.getHash();

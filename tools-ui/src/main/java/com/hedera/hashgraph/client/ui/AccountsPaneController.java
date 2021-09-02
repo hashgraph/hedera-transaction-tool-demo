@@ -120,6 +120,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					"lightgray";
 	public static final String CONTINUE_LABEL = "CONTINUE";
 	public static final String CANCEL_LABEL = "CANCEL";
+	public static final String FX_TEXT_FILL_BLACK = "-fx-text-fill: black";
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -537,7 +538,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					});
 
 			var nickNameBox = new HBox();
-			nickNameBox.getChildren().addAll(new Label("Nickname"), region, nickname);
+			final var nicknameLabel = new Label("Nickname");
+			nicknameLabel.setStyle(FX_TEXT_FILL_BLACK);
+			nickNameBox.getChildren().addAll(nicknameLabel, region, nickname);
 			nickNameBox.setSpacing(10);
 			nickNameBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -590,7 +593,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			allBoxes.setPrefHeight(Region.USE_COMPUTED_SIZE);
 			allBoxes.setPrefWidth(Region.USE_COMPUTED_SIZE);
-			allBoxes.getChildren().addAll(returnBox, new Label("Key"), keyTreeView);
+			final var keyLabel = new Label("Key");
+			keyLabel.setStyle(FX_TEXT_FILL_BLACK);
+			allBoxes.getChildren().addAll(returnBox, keyLabel, keyTreeView);
 
 		} catch (Exception e) {
 			logger.error(e);
@@ -721,6 +726,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private HBox setupTextField(String field, String text) {
 		var hBox = new HBox();
 		var fieldLabel = new Label(field);
+		fieldLabel.setStyle(FX_TEXT_FILL_BLACK);
+		fieldLabel.setVisible(true);
 		fieldLabel.setWrapText(true);
 		var textField = new TextField(text);
 		textField.setPrefWidth(300);

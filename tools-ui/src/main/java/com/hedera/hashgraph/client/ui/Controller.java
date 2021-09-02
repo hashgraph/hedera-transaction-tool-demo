@@ -89,6 +89,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_H
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
+import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -219,6 +220,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			logger.info("Application directory needs to be updated");
 			try {
 				updateHelper.handleMigration();
+				replacePublicKey();
 			} catch (HederaClientException | IOException e) {
 				logger.error("Cannot complete migration {}", e.toString());
 			}
@@ -273,7 +275,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 		// Then replace it with the key provided in the app resources.
 		InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
+
+		if (new File(SYSTEM_FOLDER).mkdirs()) {
+			logger.info("System folder created");
+		}
+
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
+
 		try (OutputStream outputStream = new FileOutputStream(key)) {
 			assert readStream != null;
 			IOUtils.copy(readStream, outputStream);

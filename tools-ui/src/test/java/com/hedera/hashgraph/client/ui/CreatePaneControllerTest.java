@@ -594,7 +594,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnAccountKey("treasury")
 				.saveKey();
 
-
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
@@ -629,6 +628,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);
+
+
 		assertEquals(100000000000L, toolTransaction.getInitialBalance().toTinybars());
 
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
@@ -1221,6 +1222,77 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				comment.get("Contents").getAsString());
 		assertTrue(comment.has("Timestamp"));
 
+	}
+
+
+	@Test
+	public void errorMessagesCreate_Test() throws InterruptedException {
+		final var headless = System.getProperty("headless");
+		if (headless != null && headless.equals("true")) {
+			// Test will not work on headless mode
+			return;
+		}
+		
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.createAndExport(resources)
+				.clickOnPopupButton("CONTINUE");
+
+		assertTrue(find(CREATE_INVALID_DATE).isVisible());
+		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setStartDate(LocalDateTime.now().plusMinutes(2));
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setCreateKey()
+				.clickOnAccountKey("treasury")
+				.saveKey();
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+
+		createPanePage.setFeePayerAccount(22);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+	}
+
+	@Test
+	public void errorMessagesUpdate_Test() throws InterruptedException {
+		final var headless = System.getProperty("headless");
+		if (headless != null && headless.equals("true")) {
+			// Test will not work on headless mode
+			return;
+		}
+
+		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
+				.createAndExport(resources)
+				.clickOnPopupButton("CONTINUE");
+
+		assertTrue(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setStartDate(LocalDateTime.now().plusMinutes(2));
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
+		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setFeePayerAccount(22);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertTrue(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+
+		createPanePage.setUpdateAccount(50);
+		assertFalse(find(CREATE_INVALID_DATE).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
+		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
+		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
 	}
 
 	@After
