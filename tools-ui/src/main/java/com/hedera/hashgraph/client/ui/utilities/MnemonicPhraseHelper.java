@@ -29,6 +29,7 @@ import com.hedera.hashgraph.client.ui.popups.MnemonicBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -266,6 +267,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 				rowConstraints, rowConstraints);
 		mnemonicWordsGridPane.setHgap(10);
 		mnemonicWordsGridPane.setVgap(10);
+		mnemonicWordsGridPane.setAlignment(Pos.CENTER);
 	}
 
 	private TextField styleTextField(CharSequence c) {

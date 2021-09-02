@@ -158,10 +158,12 @@ public class CompleteKeysPopup {
 			var utility = new KeyPairUtility();
 			var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
 					String.format("Please enter the password for key %s", keyName));
-			privateKeyLabel.setText(Hex.toHexString(keyPair.getPrivate().getEncoded()));
-			privateKeyLabel.setDisable(false);
-			showPrivateButton.setVisible(false);
-			hidePrivateButton.setVisible(true);
+			if (keyPair != null) {
+				privateKeyLabel.setText(Hex.toHexString(keyPair.getPrivate().getEncoded()));
+				privateKeyLabel.setDisable(false);
+				showPrivateButton.setVisible(false);
+				hidePrivateButton.setVisible(true);
+			}
 		});
 		showPrivateButton.managedProperty().bind(showPrivateButton.visibleProperty());
 

@@ -39,6 +39,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.util.List;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -128,13 +129,18 @@ public class MnemonicInputPopup {
 	}
 
 	private static void recoverEvent(String storageDirectory, Stage window, Label recoverMnemonicErrorMessage) {
+		var words = mnemonicPhraseHelper.getWordsFromGridPane();
+		if (!checkWordsMatch(words)) {
+			return;
+		}
+
 		var password = NewPasswordPopup.display();
 		try {
 			setPassword(password);
 		} catch (HederaClientException e) {
 			logger.error(e.getMessage());
 		}
-		var words = mnemonicPhraseHelper.getWordsFromGridPane();
+
 
 		if (words.size() < Constants.MNEMONIC_SIZE) {
 			recoverMnemonicErrorMessage.setVisible(true);
@@ -154,6 +160,24 @@ public class MnemonicInputPopup {
 			logger.error(e);
 			recoverMnemonicErrorMessage.setVisible(true);
 		}
+	}
+
+	private static boolean checkWordsMatch(List<CharSequence> words) {
+		var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		var storedHashCode = properties.getMnemonicHashCode();
+		var newHashCode = words.hashCode();
+		if (storedHashCode == newHashCode) {
+			return true;
+		}
+		var mismatch = PopupMessage.display("Recovery phrase mismatch",
+				"The recovery phrase entered does not match what is stored in the app. If this is intended, please " +
+						"press \"CONTINUE\", otherwise \"CANCEL\"", true,
+				"CONTINUE", "CANCEL");
+		if (!mismatch) {
+			return false;
+		}
+
+		return PopupMessage.display("Confirm", "Are you sure?", true, "CONTINUE", "CANCEL");
 	}
 
 	public static void pastePhraseFromClipBoard() {

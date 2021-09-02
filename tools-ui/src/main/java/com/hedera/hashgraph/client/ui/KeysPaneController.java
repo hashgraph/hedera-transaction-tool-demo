@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.common.collect.Sets;
+import com.google.common.primitives.Chars;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -87,6 +89,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -584,6 +587,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 			handleMissingHashPemList(missingHashPemList, password, mnemonic);
 			populatePemMaps();
+			Arrays.fill(password, 'x');
 		} catch (HederaClientException | KeyStoreException | IOException exception) {
 			logger.error(exception);
 		}
@@ -755,16 +759,21 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	public void showMnemonic() throws HederaClientException {
-		final var password = getPassword();
-		if (password.length == 0) {
+		var password = getPassword();
+		if (password.length == 0 || passwordIdentical(password)) {
 			return;
 		}
 		showMnemonicPhrase(password);
+		Arrays.fill(password, 'x');
 		phrasePasswordErrorLabel.setVisible(false);
 		btnCreateKeys.setVisible(false);
 		btnRegenerateKeys.setVisible(false);
 		btnShowMnemonicWords.setVisible(false);
 		mnemonicWordsVBox.setVisible(true);
+	}
+
+	private boolean passwordIdentical(char[] password) {
+		return Sets.newHashSet(Chars.asList(password)).size() == 1;
 	}
 
 	public void generateKeysEvent() throws HederaClientException {
@@ -1022,13 +1031,14 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		char[] password;
 		while (true) {
 			password = PasswordBox.display("Password", "Please enter your password", "", false);
-			if (password == null) {
+			if (password == null || passwordIdentical(password)) {
 				return new char[0];
 			}
 			try {
 				var authenticate = controller.hasSalt() ?
 						passwordAuthenticator.authenticate(password, controller.getHash()) :
 						passwordAuthenticator.authenticateLegacy(password, controller.getHash());
+
 				if (authenticate) {
 					if (!controller.hasSalt()) {
 						// recoverNicknameFieldKeyAction password migration

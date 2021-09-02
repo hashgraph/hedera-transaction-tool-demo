@@ -25,6 +25,8 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -52,6 +54,9 @@ import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
+import static com.hedera.hashgraph.client.core.security.SecurityUtilities.keyFromPassword;
+import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -64,7 +69,6 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
 	private KeysPanePage keysPanePage;
-	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
 	public UserAccessibleProperties properties;
@@ -79,6 +83,13 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 					"account", "side", "extra", "outer",
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
+	private static final List<String> testWords2 =
+			Arrays.asList("hurry", "rib", "magnet", "advance",
+					"mirror", "gift", "token", "border",
+					"slogan", "universe", "local", "appear",
+					"add", "art", "away", "flush",
+					"myth", "normal", "profit", "trim",
+					"fault", "decide", "kiss", "afford");
 
 	@Before
 	public void setUp() throws Exception {
@@ -126,6 +137,15 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
+		Mnemonic mnemonic = Mnemonic.fromWords(testWords);
+		properties.setMnemonicHashCode(mnemonic.words.hashCode());
+		properties.setHash(TEST_PASSWORD.toCharArray());
+		properties.setLegacy(false);
+		var salt = Utilities.getSaltBytes(properties);
+		var passwordBytes = keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
+		toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
+				mnemonic.toString());
+
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
 		FxToolkit.registerPrimaryStage();
@@ -135,7 +155,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		}
 
 		keysPanePage = new KeysPanePage(this);
-		mainWindowPage = new MainWindowPage(this);
+		MainWindowPage mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnKeysButton();
 	}
 
@@ -147,7 +167,6 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		}
 	}
 
-
 	@Test
 	public void forgottenMnemonicPassword_test() {
 		keysPanePage.pressRecoveryPhrase()
@@ -156,9 +175,11 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.clickOnPopupButton("RESET")
 				.setWords(testWords)
 				.clickOnPopupButton("RECOVER")
+				.clickOnPopupButton("CONTINUE")
 				.enterPasswordAndConfirm(PASSWORD)
 				.clickOnPopupButton("CONTINUE");
-		assertFalse(find("#recoveryVBox").isVisible());
+		assertTrue(find("#recoveryVBox").isVisible());
+		keysPanePage.pressCloseViewMnemonic();
 
 		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
 		final var recoveryBox = find("#recoveryVBox");
@@ -180,22 +201,11 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 	@Test
 	public void forgottenPasswordKey_test() throws KeyStoreException {
-
-		keysPanePage.pressRecoveryPhrase()
-				.pressPopupHyperlink()
-				.clickOnPopupButton("RESET")
-				.clickOnPopupButton("RESET")
-				.setWords(testWords)
-				.clickOnPopupButton("RECOVER")
-				.enterPasswordAndConfirm(PASSWORD)
-				.clickOnPopupButton("CONTINUE").pressCloseViewMnemonic();
-
-
-		keysPanePage.createKey("testKey", PASSWORD);
+		keysPanePage.createKey("testKey", TEST_PASSWORD);
 		doubleClickOn("testKey");
 
 		File pem = new File(DEFAULT_KEYS, "testKey.pem");
-		var keyStoreBefore = Ed25519KeyStore.read(PASSWORD.toCharArray(), pem.getAbsolutePath());
+		var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 
 		ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
@@ -214,13 +224,108 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		keysPanePage.pressPopupHyperlink()
 				.clickOnPopupButton("RESET")
 				.clickOnPopupButton("RESET")
-				.enterPopupPassword(PASSWORD)
+				.enterPopupPassword(TEST_PASSWORD)
 				.enterPasswordAndConfirm("penthouseart")
 				.clickOnPopupButton("CONTINUE");
 
 		var keyStoreAfter = Ed25519KeyStore.read("penthouseart".toCharArray(), pem.getAbsolutePath());
 		assertArrayEquals(keyStoreBefore.get(0).getPrivate().getEncoded(),
 				keyStoreAfter.get(0).getPrivate().getEncoded());
+
+	}
+
+	@Test
+	public void forgottenPasswordKeyDifferentMnemonic_test() throws KeyStoreException {
+		doubleClickOn("principalTestingKey");
+
+		File pem = new File(DEFAULT_KEYS, "principalTestingKey.pem");
+		var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
+
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
+		assertTrue(privateKeyNodes.get(1) instanceof VBox);
+
+		VBox vBox = (VBox) privateKeyNodes.get(1);
+		assertEquals(3, vBox.getChildren().size());
+		Node show = vBox.getChildren().get(0);
+		assertTrue(show instanceof Button);
+		assertEquals("SHOW", ((Button) show).getText());
+		clickOn(show);
+
+		keysPanePage.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET");
+		keysPanePage.clickOnPopupButton("CONTINUE");
+
+		var keyStoreAfter = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
+		assertArrayEquals(keyStoreBefore.get(0).getPrivate().getEncoded(),
+				keyStoreAfter.get(0).getPrivate().getEncoded());
+		keysPanePage.clickOnPopupButton("CLOSE");
+	}
+
+	@Test
+	public void mnemonicsDontMatchReplace_test() {
+		keysPanePage.pressRecoveryPhrase().enterPopupPassword(TEST_PASSWORD);
+		final var recoveryBox = find("#recoveryVBox");
+		assertTrue(recoveryBox instanceof VBox);
+		assertTrue(recoveryBox.isVisible());
+		var children = ((VBox) recoveryBox).getChildren();
+		var labels = ((HBox) children.get(1)).getChildren();
+		assertEquals(1, labels.size());
+		assertTrue(labels.get(0) instanceof Label);
+
+
+		String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (String testWord : testWords) {
+			assertTrue(words.contains(testWord));
+		}
+		keysPanePage.pressCloseViewMnemonic();
+		keysPanePage.pressRecoveryPhrase()
+				.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET")
+				.setWords(testWords2)
+				.clickOnPopupButton("RECOVER")
+				.clickOnPopupButton("CONTINUE")
+				.clickOnPopupButton("CANCEL")
+				.clickOnPopupButton("CANCEL");
+
+		final var recoveryBox2 = find("#recoveryVBox");
+		assertTrue(recoveryBox2 instanceof VBox);
+		assertFalse(recoveryBox2.isVisible());
+
+
+		keysPanePage.pressRecoveryPhrase()
+				.pressPopupHyperlink()
+				.clickOnPopupButton("RESET")
+				.clickOnPopupButton("RESET")
+				.setWords(testWords2)
+				.clickOnPopupButton("RECOVER")
+				.clickOnPopupButton("CONTINUE")
+				.clickOnPopupButton("CONTINUE")
+				.enterPasswordAndConfirm(PASSWORD)
+				.clickOnPopupButton("CONTINUE");
+		assertTrue(find("#recoveryVBox").isVisible());
+		keysPanePage.pressCloseViewMnemonic();
+
+		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
+		final var recoveryBox3 = find("#recoveryVBox");
+		assertTrue(recoveryBox3 instanceof VBox);
+		assertTrue(recoveryBox3.isVisible());
+
+
+		children = ((VBox) recoveryBox3).getChildren();
+		labels = ((HBox) children.get(1)).getChildren();
+		assertEquals(1, labels.size());
+		assertTrue(labels.get(0) instanceof Label);
+
+		words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (String testWord : testWords2) {
+			assertTrue(words.contains(testWord));
+		}
 
 	}
 }

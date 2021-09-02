@@ -89,7 +89,7 @@ public class KeyPairUtility {
 				Arrays.fill(pwd, 'x');
 			} catch (HederaClientException e) {
 				pwd = askForPasswordAgain(pemFile);
-				if (pwd == null) {
+				if (pwd == null || Arrays.equals(new char[0], pwd)) {
 					return null;
 				}
 			}
@@ -99,39 +99,50 @@ public class KeyPairUtility {
 
 	/**
 	 * Given a pemFile, resets the password and returns it
-	 * @param pemFile the file where the pem file is stored;
+	 *
+	 * @param pemFile
+	 * 		the file where the pem file is stored;
 	 * @return the new password
 	 */
 	public static char[] resetPassword(String pemFile) throws HederaClientException, KeyStoreException {
-		var mnemonicPwd = PasswordBox.display("Password", "Please enter your recovery phrase password", "",false);
-		var newPassword = NewPasswordPopup.display();
 		var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		var token = properties.getHash();
-		var decoder = Base64.getDecoder();
-		var index = Ed25519KeyStore.getIndex(pemFile);
-		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
-		var tokenBytes = decoder.decode(token);
-		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
-			logger.error("Token size check failed");
-		}
-		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-		var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
-				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-		if (hashCode != null && hashCode != mnemonic.words.hashCode()) {
+		// Check Hashcode
+		var storedHashCode = properties.getMnemonicHashCode();
+		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
+		if (hashCode != null && hashCode != storedHashCode) {
 			logger.info("The key is not associated with the current mnemonic");
 			PopupMessage.display("Error recovering password",
 					"The key is not associated with the current recovery phrase. The password cannot be changed",
 					"CONTINUE");
 			return null;
 		}
+
+		// get password bytes
+		var token = properties.getHash();
+		var decoder = Base64.getDecoder();
+		var index = Ed25519KeyStore.getIndex(pemFile);
+		var tokenBytes = decoder.decode(token);
+		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
+			logger.error("Token size check failed");
+		}
+		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+
+		// load mnemonic
+		var mnemonicPwd = PasswordBox.display("Password", "Please enter your recovery phrase password", "", false);
+		var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
+				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
+
+		// Store key with new password
+		var newPassword = NewPasswordPopup.display();
 		SecurityUtilities.generateAndStoreKey(pemFile, "Transaction Tool UI", mnemonic, index, newPassword);
 		return newPassword;
 	}
 
 	@Nullable
 	private char[] askForPasswordAgain(File pemFile) {
-		return display("Error", "The password entered does not match " + pemFile.getName() + ". Please try again.", pemFile.getAbsolutePath(),
+		return display("Error", "The password entered does not match " + pemFile.getName() + ". Please try again.",
+				pemFile.getAbsolutePath(),
 				true);
 	}
 

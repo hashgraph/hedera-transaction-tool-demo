@@ -38,6 +38,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.security.KeyStoreException;
+import java.util.Arrays;
 
 public class PasswordBox {
 	private static final Logger logger = LogManager.getLogger(PasswordBox.class);
@@ -55,7 +56,6 @@ public class PasswordBox {
 	public static final String RESET = "RESET";
 	public static final String RESET_PASSWORD_TITLE = "Reset Password";
 	private static char[] answer;
-
 
 
 	private PasswordBox() {
@@ -154,7 +154,11 @@ public class PasswordBox {
 				if (!isKey) {
 					var defaultStorage = System.getProperty(
 							"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-					MnemonicInputPopup.display(defaultStorage);
+					var newPwd = MnemonicInputPopup.display(defaultStorage);
+					if (newPwd == null || newPwd.length == 0) {
+						return;
+					}
+					answer = Arrays.copyOf(newPwd, newPwd.length);
 					logger.info("Mnemonic password reset");
 				} else {
 					answer = KeyPairUtility.resetPassword(pemFile);
