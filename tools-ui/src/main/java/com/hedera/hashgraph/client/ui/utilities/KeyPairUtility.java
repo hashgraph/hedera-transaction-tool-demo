@@ -115,7 +115,7 @@ public class KeyPairUtility {
 			PopupMessage.display("Error recovering password",
 					"The key is not associated with the current recovery phrase. The password cannot be changed",
 					"CONTINUE");
-			return null;
+			return new char[0];
 		}
 
 		// get password bytes

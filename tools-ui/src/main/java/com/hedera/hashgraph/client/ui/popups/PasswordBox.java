@@ -43,15 +43,10 @@ import java.util.Arrays;
 public class PasswordBox {
 	private static final Logger logger = LogManager.getLogger(PasswordBox.class);
 	private static final String WARNING_MESSAGE =
-			"This process will change your password.\n " +
-					"You will need to have your recovery phrase at hand to enter it at the prompt.\n " +
-					"Please be advised that the Keys that were generated and stored with the old password will have " +
-					"to" +
-					" " +
-					"be recovered. Please press the \"Recover Key\" button in the \"Accounts and Keys\" page to " +
-					"change" +
-					" " +
-					"the password on your Keys";
+			"This process will change your password. You will need to have your recovery phrase at hand to enter it at " +
+					"the prompt. Please be advised that the Keys that were generated and stored with the old password " +
+					"will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts and Keys\" " +
+					"page to change the password on your Keys";
 	public static final String NO_STRING = "CANCEL";
 	public static final String RESET = "RESET";
 	public static final String RESET_PASSWORD_TITLE = "Reset Password";

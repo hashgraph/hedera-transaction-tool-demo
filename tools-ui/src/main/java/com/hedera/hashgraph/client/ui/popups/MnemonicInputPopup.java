@@ -52,11 +52,17 @@ public class MnemonicInputPopup {
 	public static final String MESSAGE_LABEL =
 			"Please use the spaces below to enter your recovery phrase. The recovery phrase is the list of 24 words" +
 					" that was created during the application initial setup.";
+	public static final String CANCEL = "CANCEL";
+	public static final String CONTINUE = "CONTINUE";
 	private static MnemonicPhraseHelper mnemonicPhraseHelper;
 
 	private static final Logger logger = LogManager.getLogger(MnemonicInputPopup.class);
 
 	private static char[] answer;
+
+	private MnemonicInputPopup() {
+		throw new IllegalStateException("Popup class");
+	}
 
 	public static char[] display(String storageDirectory) {
 		var window = new Stage();
@@ -84,7 +90,7 @@ public class MnemonicInputPopup {
 		pasteFromClipboard.setStyle(Constants.WHITE_BUTTON_STYLE);
 		pasteFromClipboard.setOnAction(actionEvent -> pastePhraseFromClipBoard());
 
-		Button cancelButton = new Button("CANCEL");
+		Button cancelButton = new Button(CANCEL);
 		cancelButton.setStyle(Constants.BLUE_BUTTON_STYLE);
 		cancelButton.setOnAction(actionEvent -> window.close());
 
@@ -172,12 +178,12 @@ public class MnemonicInputPopup {
 		var mismatch = PopupMessage.display("Recovery phrase mismatch",
 				"The recovery phrase entered does not match what is stored in the app. If this is intended, please " +
 						"press \"CONTINUE\", otherwise \"CANCEL\"", true,
-				"CONTINUE", "CANCEL");
-		if (!mismatch) {
+				CONTINUE, CANCEL);
+		if (Boolean.FALSE.equals(mismatch)) {
 			return false;
 		}
 
-		return PopupMessage.display("Confirm", "Are you sure?", true, "CONTINUE", "CANCEL");
+		return PopupMessage.display("Confirm", "Are you sure?", true, CONTINUE, CANCEL);
 	}
 
 	public static void pastePhraseFromClipBoard() {
