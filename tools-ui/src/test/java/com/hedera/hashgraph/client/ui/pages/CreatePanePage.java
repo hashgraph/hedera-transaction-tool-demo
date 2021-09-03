@@ -151,7 +151,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setFeePayerAccount(long accountID) {
-		driver.clickOn(CREATE_FEE_PAYER_FIELD);
+		driver.doubleClickOn(CREATE_FEE_PAYER_FIELD);
 		driver.write(String.valueOf(accountID));
 		driver.type(KeyCode.ENTER);
 		return this;
@@ -165,6 +165,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setInitialBalance(long amount) {
+		ensureVisible(driver.find(CREATE_INITIAL_BALANCE));
 		driver.doubleClickOn(CREATE_INITIAL_BALANCE);
 		driver.write(String.valueOf(amount));
 		driver.type(KeyCode.TAB);
@@ -343,7 +344,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setUpdateAccount(long accountNumber) {
-		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
+		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
 		driver.write(Long.toString(accountNumber));
 		driver.type(KeyCode.TAB);
 		return this;

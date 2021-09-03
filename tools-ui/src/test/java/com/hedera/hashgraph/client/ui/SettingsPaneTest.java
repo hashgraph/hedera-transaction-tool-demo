@@ -19,7 +19,9 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
@@ -31,7 +33,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
@@ -81,7 +82,7 @@ public class SettingsPaneTest extends TestBase {
 	public void setUp() throws Exception {
 
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
 		if (!new File(DEFAULT_STORAGE + "/Files/").exists()) {
@@ -93,22 +94,20 @@ public class SettingsPaneTest extends TestBase {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
-						"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
+				"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 			logger.info("Output path created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/OneDrive/SecondDrive" +
-						"/InputFiles" +
-						"/").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+						"/InputFiles/").mkdirs()) {
 			logger.info("Second input folder created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/OneDrive/SecondDrive" +
-						"/OutputFiles" +
-						"/test@testemail.net").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+						"/OutputFiles/test@testemail.net").mkdirs()) {
 			logger.info("Second output folder created");
 		}
 
@@ -116,7 +115,7 @@ public class SettingsPaneTest extends TestBase {
 		Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + "src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();
@@ -129,21 +128,20 @@ public class SettingsPaneTest extends TestBase {
 		var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
-		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
-		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
 
 		if (new File(DEFAULT_STORAGE + "/History").exists()) {
-			org.apache.commons.io.FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "/History"));
+			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "/History"));
 		}
 
 		settingsPanePage = new SettingsPanePage(this);
 		mainWindowPage = new MainWindowPage(this);
-		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
 		properties.setHash("123456789".toCharArray());
 		startApplication();
 		mainWindowPage.clickOnSettingsButton();
@@ -176,7 +174,9 @@ public class SettingsPaneTest extends TestBase {
 			assertFalse(((TextField) find(TRANSACTION_FEE_TF)).getText().isEmpty());
 
 			assertEquals(properties.getPreferredStorageDirectory(), ((TextField) find(LOAD_STORAGE_TF)).getText());
-			assertEquals(properties.getDefaultNodeID(), ((TextField) find(NODE_ID_TF)).getText());
+			final var defaultNodeID =
+					Identifier.parse(properties.getDefaultNodeID()).toNicknameAndChecksum(new JsonObject());
+			assertEquals(defaultNodeID, ((TextField) find(NODE_ID_TF)).getText());
 			assertEquals(properties.getTxValidDuration(),
 					Integer.parseInt(((TextField) find(TX_VALID_DURATION_TF)).getText().replaceAll(" ", "")));
 			assertEquals(properties.getAutoRenewPeriod(), Long.parseLong(
@@ -309,12 +309,14 @@ public class SettingsPaneTest extends TestBase {
 		assertTrue(buttons.get(1) instanceof Button);
 
 		clickOn(buttons.get(1));
+
 		assertTrue(find(ONEDRIVE_EMAIL_TF).isDisabled());
 
 		assertFalse(new File("src/test/resources/InputFiles").exists());
 		assertFalse(new File("src/test/resources/OutputFiles").exists());
 		assertFalse(new File("src/test/resources/OutputFiles/test@testemail.net").exists());
 	}
+
 	@Test
 	public void addFolderNoStructureCreate_Tests() {
 		Node node = find("#transactionFoldersVBoxSP");
@@ -343,12 +345,12 @@ public class SettingsPaneTest extends TestBase {
 		String out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
-		org.apache.commons.io.FileUtils.cleanDirectory(new File(out));
+		FileUtils.cleanDirectory(new File(out));
 
 		properties.resetProperties();
 
 		if (new File(DEFAULT_STORAGE).exists()) {
-			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
 		if (new File("src/test/resources/InputFiles").exists()) {

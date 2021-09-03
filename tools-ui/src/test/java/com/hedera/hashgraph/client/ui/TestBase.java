@@ -165,12 +165,6 @@ public class TestBase extends ApplicationTest {
 			}
 		}
 
-		if (new File(String.format("%s/Accounts/Infos", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
-		if (new File(String.format("%s/Accounts/Archive", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
 		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
 			logger.info("User files folder has been created");
 		}

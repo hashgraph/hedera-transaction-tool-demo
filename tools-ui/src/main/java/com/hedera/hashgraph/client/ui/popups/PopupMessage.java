@@ -55,18 +55,6 @@ public class PopupMessage {
 		throw new IllegalStateException("Utility class");
 	}
 
-	/**
-	 * Adopt Open-Close Principal here, to close its implementation, but open for any other public methods to adapt in.
-	 * <br/>
-	 *
-	 * @param title
-	 * @param message
-	 * @param confirm
-	 * @param yesString
-	 * @param noString
-	 * @param buttonName
-	 * @return
-	 */
 	private static Boolean display(String title, String message, boolean confirm, String yesString, String noString,
 			String buttonName) {
 		var window = new Stage();

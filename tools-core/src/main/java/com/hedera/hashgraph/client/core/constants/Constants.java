@@ -109,6 +109,7 @@ public class Constants {
 	public static final String ACCOUNTS_MAP_FILE = DEFAULT_STORAGE + "Files/.System/accountMapFile.json";
 	public static final String ACCOUNTS_INFO_FOLDER = DEFAULT_STORAGE + "Accounts/";
 	public static final String KEYS_FOLDER = DEFAULT_STORAGE + "Keys/";
+	public static final String SYSTEM_FOLDER = DEFAULT_STORAGE + "Files/.System/";
 
 	// endregion
 

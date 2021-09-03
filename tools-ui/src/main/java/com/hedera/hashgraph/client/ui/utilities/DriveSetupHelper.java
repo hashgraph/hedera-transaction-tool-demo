@@ -174,6 +174,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 				"The email address entered is not valid. You will not be able to submit signed transactions. " +
 						"Please enter a valid email address.",
 				"OK");
+
 		return true;
 	}
 
@@ -403,6 +404,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			logger.info("Local files folder created");
 			return false;
 		}
+
 		setDrivesErrorLabel(
 				"The chosen drive is missing a critical subdirectory. Please check the path or contact the " +
 						"administrator");
@@ -568,7 +570,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Set up the bindings for multiple ui elements
 	 */
 	private void setupBindings() {
-		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> emailTextField.setDisable(!t1));
+		emailTextField.disableProperty().bind(pathGreenCheck.visibleProperty().not());
 
 		pathGreenCheck.visibleProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.TRUE.equals(t1) && emailGreenCheck.isVisible()) {

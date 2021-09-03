@@ -49,7 +49,9 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage setNodeID(String node) {
-		driver.doubleClickOn(NODE_ID_TF);
+		TextField nodeID = driver.find(NODE_ID_TF);
+		nodeID.clear();
+		driver.clickOn(NODE_ID_TF);
 		driver.write(node);
 		driver.type(KeyCode.ENTER);
 		return this;

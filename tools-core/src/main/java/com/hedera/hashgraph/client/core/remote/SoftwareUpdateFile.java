@@ -39,6 +39,7 @@ import javafx.scene.text.Text;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -296,7 +297,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	@Override
-	public int compareTo(RemoteFile otherFile) {
+	public int compareTo(@NotNull RemoteFile otherFile) {
 		if (otherFile instanceof SoftwareUpdateFile) {
 			var oldV = ((SoftwareUpdateFile) otherFile).getVersion().split("\\.");
 			var newV = version.split("\\.");

@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -86,10 +87,6 @@ public class MigrationTest extends TestBase {
 	@After
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS));
-		if (new File(DOCUMENTS, TRANSACTION_TOOLS + "_test").exists()) {
-			FileUtils.moveDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS + "_test"),
-					new File(DOCUMENTS, TRANSACTION_TOOLS));
-		}
 	}
 
 	@Test
@@ -107,7 +104,7 @@ public class MigrationTest extends TestBase {
 
 		var sizeBefore = Objects.requireNonNull(
 				new File(TRANSACTION_TOOL_PATH, "History").listFiles(
-						(dir, name) -> Constants.TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
+						(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
 
 
 		FxToolkit.registerPrimaryStage();
@@ -129,13 +126,12 @@ public class MigrationTest extends TestBase {
 
 		assertEquals(accountFolders.length, accountFiles.length);
 
-		sleep(1000);
 		var accounts = accountsPanePage.getAccounts();
 		assertEquals(accounts.size(), accountFolders.length);
 
 		var sizeAfter = Objects.requireNonNull(
 				new File(TRANSACTION_TOOL_PATH, "History").listFiles(
-						(dir, name) -> Constants.TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
+						(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
 
 		final var archive = new File(TRANSACTION_TOOL_PATH + "Files/History_Archive.zip");
 		assertTrue(archive.exists());
@@ -147,6 +143,6 @@ public class MigrationTest extends TestBase {
 						Objects.requireNonNull(tempDir.toFile().listFiles())[0].listFiles()).length : 0);
 
 		assertEquals(sizeBefore, after);
-
+		assertTrue(new File(DEFAULT_STORAGE, PUBLIC_KEY_LOCATION).exists());
 	}
 }
