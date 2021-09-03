@@ -79,7 +79,7 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 
 		this.toolFolder = folder.toString();
 		this.valid = true;
-		this.updated = new File(this.toolFolder, "Files/.System").exists();
+		this.updated = new File(this.toolFolder, "Files/.System/recovery.aes").exists();
 	}
 
 	public boolean isUpdated() {
