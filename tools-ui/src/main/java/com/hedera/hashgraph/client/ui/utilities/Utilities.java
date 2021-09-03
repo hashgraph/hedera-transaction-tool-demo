@@ -307,7 +307,6 @@ public class Utilities {
 				checkPassword.setVisible(true);
 				passwordErrorLabel.setVisible(false);
 				reEnterPasswordField.setDisable(false);
-				reEnterPasswordField.requestFocus();
 				break;
 			case TOO_SHORT:
 				passwordErrorLabel.setText("Passwords should be at least 10 characters long");
@@ -331,24 +330,24 @@ public class Utilities {
 		}
 	}
 
-	public static void setupCharacterCount(PasswordField recoverAppPasswordField, Label recoverCharacterCount,
-			ImageView recoverCheckPassword, Label recoverPasswordErrorLabel,
-			PasswordField recoverReEnterPasswordField) {
+	public static void setupCharacterCount(PasswordField passwordField, Label characterCount, ImageView imageCheck,
+			Label errorLabel, PasswordField passwordFieldCopy) {
 		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
 				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
-		final var length = recoverAppPasswordField.getText().length();
-		recoverCharacterCount.setText(String.valueOf(length));
-		recoverCheckPassword.setVisible(false);
+		final var length = passwordField.getText().length();
+		characterCount.setText(String.valueOf(length));
+		imageCheck.setVisible(false);
 		String style = length >= MIN_PASSWORD_LENGTH && length <= MAX_PASSWORD_LENGTH ? GREEN_STYLE : RED_STYLE;
-		recoverCharacterCount.setStyle(style);
-		if (Status.OK.equals(policy.check(recoverAppPasswordField.getText()))) {
-			recoverCheckPassword.setVisible(true);
-			recoverPasswordErrorLabel.setVisible(false);
-			recoverReEnterPasswordField.setDisable(false);
+		characterCount.setStyle(style);
+		final var check = policy.check(passwordField.getText());
+		if (Status.OK.equals(check)) {
+			imageCheck.setVisible(true);
+			errorLabel.setVisible(false);
+			passwordFieldCopy.setDisable(false);
 		} else {
-			recoverCheckPassword.setVisible(false);
-			recoverPasswordErrorLabel.setVisible(true);
-			recoverReEnterPasswordField.setDisable(true);
+			imageCheck.setVisible(false);
+			errorLabel.setVisible(true);
+			passwordFieldCopy.setDisable(true);
 		}
 	}
 
@@ -360,7 +359,7 @@ public class Utilities {
 	 * @param controller
 	 * 		the controller
 	 * @return a List of strings: If the controller has information about the public key, it uses the nickname,
-	 * otherwise
+	 * 		otherwise
 	 * 		it shows the complete hex.
 	 */
 	public static List<String> getKeysFromInfo(AccountInfo info, Controller controller) {
