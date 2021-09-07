@@ -31,6 +31,8 @@
 		  style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;"
 		  AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0"
 		  AnchorPane.topAnchor="5.0">
+		<TextField fx:id="loadTransactionTextField" maxHeight="1.0" minHeight="1.0"
+				   onKeyReleased="#loadFormFromTransactionTest" prefHeight="1.0" style="-fx-background-color: white;"/>
 		<HBox alignment="CENTER_LEFT" fillHeight="false" minHeight="80.0" spacing="20.0">
 			<GridPane hgap="5.0" vgap="5.0">
 				<columnConstraints>
@@ -41,17 +43,15 @@
 					<RowConstraints minHeight="30.0" vgrow="SOMETIMES"/>
 					<RowConstraints maxHeight="30.0" minHeight="30.0" vgrow="SOMETIMES"/>
 				</rowConstraints>
-				<children>
-					<Label text="Transaction Type"/>
-					<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction"
-							   prefWidth="300.0"
-							   style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;"
-							   GridPane.columnIndex="1"/>
-					<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false"
-							onAction="#loadFormFromTransaction" prefWidth="300.0"
-							style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
-							text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-				</children>
+				<Label text="Transaction Type"/>
+				<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction"
+						   prefWidth="300.0"
+						   style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;"
+						   GridPane.columnIndex="1"/>
+				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false"
+						onAction="#loadFormFromTransaction" prefWidth="300.0"
+						style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
+						text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
 			</GridPane>
 			<Region HBox.hgrow="ALWAYS"/>
 			<HBox fx:id="createChoiceHBox"/>
@@ -550,8 +550,6 @@
 		</ScrollPane>
 		<TextField fx:id="keyLoadingField" maxHeight="1.0" minHeight="1.0" prefHeight="1.0"
 				   style="-fx-background-color: #0b9dfd;" visible="false"/>
-		<TextField fx:id="loadTransactionTextField" maxHeight="1.0" minHeight="1.0"
-				   onKeyReleased="#loadFormFromTransactionTest" prefHeight="1.0"/>
 		<padding>
 			<Insets top="20.0"/>
 		</padding>
