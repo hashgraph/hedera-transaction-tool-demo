@@ -128,10 +128,6 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 
 	/**
 	 * Issue #139, load from a pem file without a password.
-	 *
-	 * @param source
-	 * @return
-	 * @throws KeyStoreException
 	 */
 	public static Ed25519KeyStore read(final File source) throws KeyStoreException {
 		final var keyStore = new Builder().build();
@@ -336,11 +332,10 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	 * Returns the index used to create the keystore. If the file was created without a mnemonic phrase, it returns -1
 	 *
 	 * @param sourceFile
-	 * @return
-	 * @throws KeyStoreException
+	 * 		the location of the PEM file
+	 * @return a String
 	 */
 	public static int getIndex(final String sourceFile) throws KeyStoreException {
-
 		try (var reader = new BufferedReader(new FileReader(sourceFile))) {
 			var line = reader.readLine();
 			while (line != null) {
@@ -357,12 +352,36 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	}
 
 	/**
+	 * Returns the version of the app used to generate the key. If the key was created with an older version of the app,
+	 * it returns an empty string.
+	 *
+	 * @param sourceFile
+	 * 		the location of the PEM file
+	 * @return a String
+	 */
+	public static String getVersion(final String sourceFile) throws KeyStoreException {
+		try (var reader = new BufferedReader(new FileReader(sourceFile))) {
+			var line = reader.readLine();
+			while (line != null) {
+				if (line.contains("Version:")) {
+					var parsedLine = line.split(":");
+					return parsedLine[1].replace(" ", "");
+				}
+				line = reader.readLine();
+			}
+		} catch (IOException e) {
+			throw new KeyStoreException(e);
+		}
+		return "";
+	}
+
+	/**
 	 * Returns the hash code of the mnemonic phrase used to create the keystore. If the hashcode is missing, it returns
 	 * null
 	 *
 	 * @param sourceFile
-	 * @return
-	 * @throws KeyStoreException
+	 * 		the location of the PEM file
+	 * @return a String
 	 */
 	public static Integer getMnemonicHashCode(final String sourceFile) throws KeyStoreException {
 

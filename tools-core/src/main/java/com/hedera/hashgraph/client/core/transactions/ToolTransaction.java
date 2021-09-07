@@ -198,8 +198,16 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return memo;
 	}
 
-	public Transaction<? extends Transaction<?>> getTransaction() {
+	public Transaction<?> getTransaction() {
 		return transaction;
+	}
+
+	public TransactionType getTransactionType() {
+		return transactionType;
+	}
+
+	public void setTransactionType(TransactionType transactionType) {
+		this.transactionType = transactionType;
 	}
 
 	@Override
@@ -213,7 +221,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public Transaction<? extends Transaction<?>> collate(Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(
+			Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}
@@ -444,13 +453,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction != null) ? transaction.toBytes() : new byte[0];
 	}
 
-	public TransactionType getTransactionType() {
-		return transactionType;
-	}
-
-	public void setTransactionType(TransactionType transactionType) {
-		this.transactionType = transactionType;
-	}
 
 	/**
 	 * Uses a verified json input to build a transaction
@@ -469,19 +471,16 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
 		Set<ByteString> keysSet = new HashSet<>();
 		var accounts = getSigningAccounts();
-		for (var account : accounts) {
-			var accountString =
-					new Identifier(Objects.requireNonNull(account)).toReadableString();
-			var accountFile = new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION);
-			if (accountFile.exists()) {
-				try {
-					var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
-					keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-				} catch (InvalidProtocolBufferException | HederaClientException e) {
-					logger.error(e);
-				}
+		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
+				accountString -> new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION)).filter(
+				File::exists).forEach(accountFile -> {
+			try {
+				var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
+			} catch (InvalidProtocolBufferException | HederaClientException e) {
+				logger.error(e);
 			}
-		}
+		});
 
 		return keysSet;
 	}

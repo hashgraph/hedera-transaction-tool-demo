@@ -19,7 +19,9 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
@@ -35,7 +37,6 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.ToggleSwitch;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -172,7 +173,8 @@ public class SettingsPaneTest extends TestBase {
 			assertFalse(((TextField) find(TRANSACTION_FEE_TF)).getText().isEmpty());
 
 			assertEquals(properties.getPreferredStorageDirectory(), ((TextField) find(LOAD_STORAGE_TF)).getText());
-			assertEquals(properties.getDefaultNodeID(), ((TextField) find(NODE_ID_TF)).getText());
+			final var defaultNodeID = Identifier.parse(properties.getDefaultNodeID()).toNicknameAndChecksum(new JsonObject());
+			assertEquals(defaultNodeID, ((TextField) find(NODE_ID_TF)).getText());
 			assertEquals(properties.getTxValidDuration(),
 					Integer.parseInt(((TextField) find(TX_VALID_DURATION_TF)).getText().replaceAll(" ", "")));
 			assertEquals(properties.getAutoRenewPeriod(), Long.parseLong(

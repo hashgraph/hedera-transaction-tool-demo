@@ -113,7 +113,6 @@ public class SettingsPaneController {
 	public ScrollPane settingScrollPane;
 	public Label drivesErrorLabelSP;
 	public HBox addFolderPathHBoxSP;
-	public Label versionLabel;
 	public ImageView deleteImage;
 	public ImageView editImage;
 	public Button nodeIDTooltip;
@@ -123,6 +122,8 @@ public class SettingsPaneController {
 	public Button maxFeeTooltip;
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
+	public TextField versionLabel;
+
 
 	@FXML
 	private Controller controller;
@@ -140,8 +141,6 @@ public class SettingsPaneController {
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButton, cancelAddToEmailMapButton,
 					browseNewFolderButton, deleteImage, editImage);
-
-			versionLabel.setPrefWidth(USE_COMPUTED_SIZE);
 
 			//Initialize drive builder
 			driveSetupHelper = DriveSetupHelper.Builder.aDriveSetupHelper()
@@ -170,7 +169,8 @@ public class SettingsPaneController {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
-			nodeIDTextField.setText(controller.getDefaultNodeID());
+			Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
 			nodeIDTextField.setEditable(true);
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
@@ -383,12 +383,6 @@ public class SettingsPaneController {
 	}
 
 	private void setupNodeIDTextField() {
-		nodeIDTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches(REGEX1)) {
-				nodeIDTextField.setText(newValue.replaceAll("[^\\d.]", ""));
-			}
-		});
-
 		nodeIDTextField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				checkNodeID();
@@ -504,7 +498,9 @@ public class SettingsPaneController {
 			if (accountID.isValid()) {
 				controller.setDefaultNodeID(accountID.toReadableString());
 				nodeIDTextField.clear();
-				nodeIDTextField.setText(controller.getDefaultNodeID());
+				Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+				final var s = defaultNodeID.toNicknameAndChecksum(controller.getAccountsList());
+				nodeIDTextField.setText(s);
 				settingScrollPane.requestFocus();
 				accountIDErrorLabel.setVisible(false);
 			} else {
@@ -537,7 +533,7 @@ public class SettingsPaneController {
 		}
 		var previous = new File(controller.getPreferredStorageDirectory());
 		var newDir = new File(directory + "/TransactionTools");
-		controller.setLastTransactionsDirectory(newDir);
+		controller.setLastBrowsedDirectory(newDir);
 
 		FileUtils.moveDirectory(previous, newDir);
 		loadStorageTextField.setText(directory + "/TransactionTools");
@@ -568,7 +564,11 @@ public class SettingsPaneController {
 	 * Version, Time the last build is done in UTC, Last commit ID in the build.
 	 */
 	public void readVersion() {
-		versionLabel.setText(controller.getVersion());
+		final var version = controller.getVersion();
+		versionLabel.setText(version.replace("Version: ", "v"));
+		versionLabel.setStyle("-fx-background-color: white; -fx-border-color: white");
+		versionLabel.setPrefWidth(USE_COMPUTED_SIZE);
+		versionLabel.setPrefHeight(USE_COMPUTED_SIZE);
 	}
 
 	// endregion Save or Cancel

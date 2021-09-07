@@ -172,13 +172,13 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		systemBoxes.clear();
 
 		var currentRelativePath = Paths.get("");
-		var s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
 		var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 		if (new File(out).exists()) {
 			FileUtils.cleanDirectory(new File(out));
@@ -197,7 +197,6 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		var historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
 		assertTrue(historyFiles.get(1) instanceof HBox);
 		assertTrue(historyFiles.get(historyFiles.size() - 1) instanceof HBox);
-		var topBox = (HBox) historyFiles.get(1);
 		var pagesBox = (HBox) historyFiles.get(historyFiles.size() - 1);
 		var historyVBox = (VBox) historyFiles.get(historyFiles.size() - 2);
 
@@ -231,7 +230,6 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
 		assertTrue(historyFiles.get(1) instanceof HBox);
 		assertTrue(historyFiles.get(historyFiles.size() - 1) instanceof HBox);
-		topBox = (HBox) historyFiles.get(1);
 		pagesBox = (HBox) historyFiles.get(historyFiles.size() - 1);
 		historyVBox = (VBox) historyFiles.get(historyFiles.size() - 2);
 		files = historyVBox.getChildren();
@@ -273,7 +271,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 			}
 			final var node = ((VBox) file).getChildren().get(0);
 			assertTrue(node instanceof Label);
-			logger.info(String.format("Currently shown box: %s", ((Label) node).getText()));
+			logger.info("Currently shown box: {}", ((Label) node).getText());
 		}
 
 		separateBoxes(files, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
@@ -282,7 +280,6 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		assertEquals(3,
 				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + fileUpdateBoxes.size());
 
-		topBox = (HBox) historyFiles.get(1);
 		top = ((HBox) find("#chooseLength")).getChildren();
 		one = findButton(1, top);
 		clickOn(one);
@@ -341,7 +338,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 			}
 			final var node = ((VBox) file).getChildren().get(0);
 			assertTrue(node instanceof Label);
-			logger.info(String.format("Currently shown box: %s", ((Label) node).getText()));
+			logger.info("Currently shown box: {}", ((Label) node).getText());
 		}
 
 		assertEquals(1,

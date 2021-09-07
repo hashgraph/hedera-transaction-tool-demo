@@ -20,7 +20,7 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonElement;
-import com.hedera.hashgraph.sdk.proto.AccountID;
+import com.hedera.hashgraph.client.core.json.Identifier;
 
 
 public class AccountAmountStrings {
@@ -50,10 +50,8 @@ public class AccountAmountStrings {
 		return accountID;
 	}
 
-	public AccountID getAccountIDAsAccountID() {
-		var strings = accountID.split("\\.");
-		return AccountID.newBuilder().setShardNum(Long.parseLong(strings[0])).setRealmNum(
-				Long.parseLong(strings[1])).setAccountNum(Long.parseLong(strings[2])).build();
+	public JsonElement getAccountAsJSON() {
+		return Identifier.parse(accountID).asJSON();
 	}
 
 	public void setAccountID(String accountID) {

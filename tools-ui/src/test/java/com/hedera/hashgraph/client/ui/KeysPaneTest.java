@@ -113,7 +113,7 @@ public class KeysPaneTest extends TestBase {
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-		if (new File(currentRelativePath.toAbsolutePath().toString() + OUTPUT_PATH).mkdirs()) {
+		if (new File(currentRelativePath.toAbsolutePath() + OUTPUT_PATH).mkdirs()) {
 			logger.info("Output path created");
 		}
 
@@ -123,7 +123,7 @@ public class KeysPaneTest extends TestBase {
 		Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 
@@ -542,7 +542,7 @@ public class KeysPaneTest extends TestBase {
 		Pattern pattern = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
 
 		VBox vBox = (VBox) privateKeyNodes.get(1);
-		assertEquals(2, vBox.getChildren().size());
+		assertEquals(3, vBox.getChildren().size());
 		Node show = vBox.getChildren().get(0);
 		Node hide = vBox.getChildren().get(1);
 		assertTrue(show instanceof Button);

@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.ui.TestBase;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 
@@ -46,7 +47,9 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage setNodeID(String node) {
-		driver.doubleClickOn(NODE_ID_TF);
+		TextField nodeID = driver.find(NODE_ID_TF);
+		nodeID.clear();
+		driver.clickOn(NODE_ID_TF);
 		driver.write(node);
 		driver.type(KeyCode.ENTER);
 		return this;

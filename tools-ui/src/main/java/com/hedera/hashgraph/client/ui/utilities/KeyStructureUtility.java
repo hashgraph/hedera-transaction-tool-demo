@@ -34,7 +34,6 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -163,7 +162,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return keyTreeView;
 	}
 
-	public TreeView<String> buildKeyTreeView(Key key) throws IOException {
+	public TreeView<String> buildKeyTreeView(Key key) {
 		return buildKeyTreeView(EncryptionUtils.keyToJson(key));
 	}
 

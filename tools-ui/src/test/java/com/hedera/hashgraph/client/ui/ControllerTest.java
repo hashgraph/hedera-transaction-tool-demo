@@ -98,7 +98,7 @@ class ControllerTest {
 	@Test
 	void lastTransactionsDirectory_test() {
 		try {
-			controller.setLastTransactionsDirectory(new File(CURRENT_RELATIVE_PATH));
+			controller.setLastBrowsedDirectory(new File(CURRENT_RELATIVE_PATH));
 			assertEquals(CURRENT_RELATIVE_PATH, controller.getLastTransactionsDirectory());
 		} catch (Exception e) {
 			logger.error(e);

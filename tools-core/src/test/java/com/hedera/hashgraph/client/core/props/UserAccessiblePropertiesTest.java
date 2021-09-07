@@ -25,16 +25,15 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,8 +54,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UserAccessiblePropertiesTest {
 
-	private static final Logger logger = LogManager.getLogger(UserAccessibleProperties.class);
-
 	UserAccessibleProperties properties;
 
 	@BeforeEach
@@ -65,11 +62,8 @@ class UserAccessiblePropertiesTest {
 	}
 
 	@AfterEach
-	void tearDown() {
-		if (new File("src/test/resources/test.properties").exists()) {
-			logger.info(String.format("Test properties deleted :%s",
-					new File("src/test/resources/test.properties").delete()));
-		}
+	void tearDown() throws IOException {
+		Files.deleteIfExists(Path.of("src/test/resources/test.properties"));
 	}
 
 	@Test
@@ -160,7 +154,7 @@ class UserAccessiblePropertiesTest {
 	}
 
 	@Test
-	void setHash_Test() throws InvalidKeySpecException, NoSuchAlgorithmException, HederaClientException {
+	void setHash_Test() throws HederaClientException {
 		char[] pass = "testPassword".toCharArray();
 		properties.setHash(pass);
 		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();

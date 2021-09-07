@@ -137,6 +137,9 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	public void generatePassphraseEvent(char[] password, byte[] salt, boolean showPopup) {
 		var words = getWordsFromGridPane();
 
+		final var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
+
+
 		if (words.isEmpty()) {
 			mnemonic = Mnemonic.generate24();
 			words = mnemonic.words;
@@ -150,7 +153,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		try {
 			mnemonic = Mnemonic.fromWords(words);
 			mnemonicErrorMessage.setVisible(false);
-			var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 		} catch (BadMnemonicException e) {
 			logger.error(e);

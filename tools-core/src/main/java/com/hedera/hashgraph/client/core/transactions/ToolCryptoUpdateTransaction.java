@@ -80,10 +80,19 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return receiverSignatureRequired;
 	}
 
+	public Identifier getAccount() {
+		return account;
+	}
+
 	@Override
 	public boolean checkInput(JsonObject input) {
 		var answer = super.checkInput(input);
-		if (!CommonMethods.verifyFieldExist(input, ACCOUNT_TO_UPDATE, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
+		if (!input.has(ACCOUNT_TO_UPDATE)) {
+			logger.error("The input json does not contain the account ID to update");
+			return false;
+		}
+
+		if (!CommonMethods.verifyOneOfExists(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
 				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 			return false;
 		}
@@ -91,14 +100,16 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			var accountIdJson = input.getAsJsonObject(ACCOUNT_TO_UPDATE);
 			account = Identifier.parse(accountIdJson);
-		} catch (HederaClientException e) {
+		} catch (HederaClientException | ClassCastException e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, ACCOUNT_TO_UPDATE);
 			answer = false;
 		}
 
 		try {
-			var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
-			this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
+			if (input.has(NEW_KEY_FIELD_NAME)) {
+				var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
+				this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
+			}
 		} catch (Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, NEW_KEY_FIELD_NAME);
 			answer = false;
@@ -106,14 +117,18 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 
 		try {
-			this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
+			if (input.has(AUTO_RENEW_PERIOD_FIELD_NAME)) {
+				this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
+			}
 		} catch (Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
-			this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
+			if (input.has(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
+				this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
+			}
 		} catch (Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
 			answer = false;

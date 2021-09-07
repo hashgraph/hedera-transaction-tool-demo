@@ -23,6 +23,9 @@ import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Alert;
@@ -44,18 +47,24 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+
 import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
 
 public class Utilities {
 
 	private static final Logger logger = LogManager.getLogger(Utilities.class);
 	public static final String RED_BORDER_STYLE = "-fx-border-color: red";
+	public static final String HBAR_STRING = "\u0127";
 
 	private Utilities() {
 		throw new IllegalStateException("Utility class");
@@ -111,12 +120,18 @@ public class Utilities {
 	 * @return true if the string can be parsed to an account
 	 */
 	public static boolean checkAccount(String accountID) {
+		if (accountID.contains("(")) {
+			return checkAccount(accountID.substring(accountID.indexOf("(") + 1, accountID.indexOf("-")));
+		}
+		if (accountID.contains("-")) {
+			return checkAccount(accountID.substring(0, accountID.indexOf("-")));
+		}
+
 		var tokens = accountID.split("[.]");
 		if (tokens.length > 3 || tokens.length == 2) {
 			return false;
 		}
-		for (var t : tokens
-		) {
+		for (var t : tokens) {
 			if (isNotLong(t)) {
 				return false;
 			}
@@ -141,12 +156,15 @@ public class Utilities {
 		var amountTinyBars = (double) (amount % 100000000);
 
 		if (amount % 100000000 == 0) {
-			return formatInt.format(amountHBars).trim() + " \u0127";
+			return formatInt.format(amountHBars).trim() + " " + HBAR_STRING;
 		} else {
-			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars) + " \u0127";
+			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars) + " " + HBAR_STRING;
 		}
+	}
 
-
+	public static String setCurrencyFormat(long amount) {
+		var currency = setHBarFormat(amount);
+		return currency.replace(" " + HBAR_STRING, "");
 	}
 
 	public static String stripHBarFormat(String hBars) {
@@ -154,8 +172,8 @@ public class Utilities {
 			return "0";
 		}
 
-		var tiny = hBars.contains(".") ? hBars : hBars.concat(".00000000");
-		var amount = Long.parseLong(tiny.replace("\u0127", "")
+		var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
+		var amount = Long.parseLong(tiny.replace(HBAR_STRING, "")
 				.replace(".", "")
 				.replace(" ", ""));
 		return String.valueOf(amount);
@@ -169,7 +187,7 @@ public class Utilities {
 	 * @return the number of Hbars represented by the string
 	 */
 	public static Hbar string2Hbar(String hBars) {
-		var bars = hBars.replace(" ", "").replace("\u0127", "");
+		var bars = hBars.replace(" ", "").replace(HBAR_STRING, "");
 		return Hbar.from(BigDecimal.valueOf(Double.parseDouble(bars)));
 	}
 
@@ -333,5 +351,28 @@ public class Utilities {
 			recoverPasswordErrorLabel.setVisible(true);
 			recoverReEnterPasswordField.setDisable(true);
 		}
+	}
+
+	/**
+	 * Given an account info, returns a list of string keys
+	 *
+	 * @param info
+	 * 		the account info
+	 * @param controller
+	 * 		the controller
+	 * @return a List of strings: If the controller has information about the public key, it uses the nickname,
+	 * otherwise
+	 * 		it shows the complete hex.
+	 */
+	public static List<String> getKeysFromInfo(AccountInfo info, Controller controller) {
+		var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
+		List<String> knownKeys = new ArrayList<>();
+		for (var key : flatKey) {
+			var keyName = controller.showKeyString(key);
+			if (keyName.endsWith(PUB_EXTENSION)) {
+				knownKeys.add(keyName);
+			}
+		}
+		return knownKeys;
 	}
 }

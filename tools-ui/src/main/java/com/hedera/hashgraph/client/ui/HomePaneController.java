@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
-import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
@@ -40,7 +39,6 @@ import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.KeyList;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -96,7 +94,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LO
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_ACTIVE;
 import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_INACTIVE;
-import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.*;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 
@@ -110,7 +108,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
-	private final Map<Identifier, AccountInfo> accountsInfoMap = new HashMap<>();
 	private final List<FileType> filterOut = new ArrayList<>();
 
 	private Map<String, String> publicKeyMap;
@@ -152,8 +149,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public void initializeHomePane() {
 		loadPubKeys();
 		loadPKMap();
-		accountsInfoMap.putAll(controller.getAccountInfoMap());
-
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		historyFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
@@ -420,7 +415,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return boxes;
 	}
 
-	private void setupKeyTree(TransactionFile rf) throws HederaClientException {
+	private void setupKeyTree(TransactionFile rf) {
 		final var transactionType = rf.getTransaction().getTransactionType();
 		if (transactionType == null) {
 			// old style transaction
@@ -434,11 +429,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
-		try {
-			rf.setTreeView(controller.buildKeyTreeView(key));
-		} catch (IOException e) {
-			throw new HederaClientException(e);
-		}
+		rf.setTreeView(controller.buildKeyTreeView(key));
 	}
 
 	private VBox getButtonsBox(RemoteFile rf) {
@@ -667,8 +658,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			try {
 				signTransactionAndComment(rf, pair);
 			} catch (Exception exception) {
-				logger.error(String.format("Transaction %s could not be signed with key %s.", rf.getName(),
-						FilenameUtils.getBaseName(pair.getLeft())));
+				logger.error("Transaction {} could not be signed with key {}.", rf.getName(),
+						FilenameUtils.getBaseName(pair.getLeft()));
 				logger.error(exception);
 			}
 		}
@@ -684,7 +675,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (exitCode == 0) {
 				System.exit(0);
 			} else {
-				logger.error(String.format("The update finished with exit code %d", exitCode));
+				logger.error("The update finished with exit code {}", exitCode);
 				PopupMessage.display("Error opening update file",
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
@@ -831,7 +822,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			return new ArrayList<>();
 		}
 
-		controller.setLastTransactionsDirectory(files.get(0));
+		controller.setLastBrowsedDirectory(files.get(0));
 		return files;
 	}
 
@@ -1015,12 +1006,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var next = buildMoveByOneButton("Next", Math.min(pages, page + 1));
 
 		if (pages < NUMBER_OF_SINGLE_BOXES) {
-			var i = 0;
-			while (i < pages) {
-				Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
-				pagesHBox.getChildren().add(b);
-				i++;
-			}
+			handleLessThanPages(pages);
 			return;
 		}
 
@@ -1050,6 +1036,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			start = pages - NUMBER_OF_SINGLE_BOXES;
 		}
 
+		setButtonInBox(pages, next, start, end);
+	}
+
+	private void setButtonInBox(int pages, Button next, int start, int end) {
 		for (var i = start + 1; i <= end; i++) {
 			if (page == i - 1) {
 				pagesHBox.getChildren().add(buildDummyButton(i));
@@ -1064,6 +1054,15 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 		if (page < pages - 1) {
 			pagesHBox.getChildren().add(next);
+		}
+	}
+
+	private void handleLessThanPages(int pages) {
+		var i = 0;
+		while (i < pages) {
+			Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
+			pagesHBox.getChildren().add(b);
+			i++;
 		}
 	}
 
@@ -1191,6 +1190,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			final var filesMap = filterHistory(historyFiles);
 			allHistoryBoxes = filesMap.size();
+			page = 0; // When a filter changes the page should reset to the first one.
 			loadHistoryVBox(filesMap);
 			buildPagingHBox();
 			buildAdvanceHBox();

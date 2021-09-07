@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
@@ -109,7 +108,7 @@ public class CompleteKeysPopup {
 
 		window.setTitle("Key details");
 		window.sizeToScene();
-		window.setMaxWidth(500);
+		window.setMaxWidth(600);
 		window.initModality(Modality.APPLICATION_MODAL);
 
 		var chars = new char[96];
@@ -151,9 +150,10 @@ public class CompleteKeysPopup {
 		showPrivateButton.setVisible(true);
 		var hidePrivateButton = new Button("HIDE");
 		hidePrivateButton.setVisible(false);
+		var changePasswordButton = new Button("CHANGE PASSWORD");
 
 		showPrivateButton.setStyle(WHITE_BUTTON_STYLE);
-		showPrivateButton.setMinWidth(110);
+		showPrivateButton.setMinWidth(200);
 		showPrivateButton.setOnAction(actionEvent -> {
 			var utility = new KeyPairUtility();
 			var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
@@ -166,7 +166,7 @@ public class CompleteKeysPopup {
 		showPrivateButton.managedProperty().bind(showPrivateButton.visibleProperty());
 
 		hidePrivateButton.setStyle(WHITE_BUTTON_STYLE);
-		hidePrivateButton.setMinWidth(110);
+		hidePrivateButton.setMinWidth(200);
 		hidePrivateButton.setOnAction(actionEvent -> {
 			privateKeyLabel.setText(new String(chars));
 			privateKeyLabel.setDisable(true);
@@ -174,49 +174,67 @@ public class CompleteKeysPopup {
 			hidePrivateButton.setVisible(false);
 		});
 		hidePrivateButton.managedProperty().bind(hidePrivateButton.visibleProperty());
+		showPrivateButton.setMinWidth(200);
+
+		changePasswordButton.setStyle(WHITE_BUTTON_STYLE);
+		changePasswordButton.setMinWidth(200);
+		changePasswordButton.setOnAction(actionEvent -> {
+			var answer =
+					PopupMessage.display("Change password", "This will change the key's password.", true, "CONTINUE",
+							"DECLINE");
+			if (Boolean.TRUE.equals(answer)) {
+				changeKeyPassword();
+
+			}
+		});
 
 		var updateButton = new Button("CHANGE");
 		updateButton.setStyle(WHITE_BUTTON_STYLE);
-		updateButton.setMinWidth(110);
+		updateButton.setMinWidth(200);
 		updateButton.setOnAction(event -> updateNickname(nick.getText()));
 		updateButton.setVisible(showNicknameEdit);
 
 		var buttonBox = new VBox();
-		buttonBox.getChildren().addAll(showPrivateButton, hidePrivateButton);
+		buttonBox.getChildren().addAll(showPrivateButton, hidePrivateButton, changePasswordButton);
+		buttonBox.setSpacing(5);
 
 		var menuButton = new MenuButton("EXPORT");
+		menuButton.setAlignment(Pos.CENTER);
 		menuButton.setStyle(WHITE_BUTTON_STYLE);
-		menuButton.setMinWidth(110);
+		menuButton.setMinWidth(200);
 		initializeExportPublicKeysMenuButton(menuButton, layout);
 
 		var nicknameBox = new HBox();
 		nicknameBox.getChildren().addAll(nick, updateButton);
 		nicknameBox.setSpacing(10);
-		nicknameBox.setPrefWidth(450);
+		nicknameBox.setMinWidth(500);
+		nicknameBox.setMaxWidth(500);
 
 		var publicKeyBox = new HBox();
 		publicKeyBox.getChildren().addAll(publicKeyLabel, menuButton);
 		publicKeyBox.setSpacing(10);
-		publicKeyBox.setPrefWidth(450);
+		publicKeyBox.setMinWidth(500);
+		publicKeyBox.setMaxWidth(500);
 
 		var privateKeyBox = new HBox();
 		privateKeyBox.getChildren().addAll(privateKeyLabel, buttonBox);
 		privateKeyBox.setSpacing(10);
-		privateKeyBox.setPrefWidth(450);
+		privateKeyBox.setMinWidth(500);
+		privateKeyBox.setMaxWidth(500);
 
 		var nickTitle = new Label(NICKNAME_EXPLANATION);
 		nickTitle.setStyle(FX_FONT_SIZE);
-		nickTitle.setMaxWidth(450);
+		nickTitle.setMaxWidth(500);
 		nickTitle.setWrapText(true);
 
 		var publicKeyTitle = new Label(PUBLIC_KEY_EXPLANATION);
 		publicKeyTitle.setStyle(FX_FONT_SIZE);
-		publicKeyTitle.setMaxWidth(450);
+		publicKeyTitle.setMaxWidth(500);
 		publicKeyTitle.setWrapText(true);
 
 		var privateKeyTitle = new Label(PRIVATE_KEY_EXPLANATION);
 		privateKeyTitle.setStyle(FX_FONT_SIZE);
-		privateKeyTitle.setMaxWidth(450);
+		privateKeyTitle.setMaxWidth(500);
 		privateKeyTitle.setWrapText(true);
 
 
@@ -249,7 +267,7 @@ public class CompleteKeysPopup {
 		privateKeyVBox.setSpacing(5);
 
 		address = new Label(pubKeyAddress);
-		address.setMaxWidth(450);
+		address.setMaxWidth(500);
 		address.setWrapText(true);
 
 		layout.getChildren().addAll(nickNameVBox, address, publicKeyVBox, privateKeyVBox, continueButton);
@@ -268,6 +286,33 @@ public class CompleteKeysPopup {
 		window.showAndWait();
 
 		return reloadTable;
+	}
+
+	private static void changeKeyPassword() {
+		logger.info("Changing the password for key \"{}\"", privateKey);
+		var utility = new KeyPairUtility();
+		var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
+				String.format("Please enter the password for key %s", keyName));
+		char[] password = NewPasswordPopup.display();
+
+		if (password == null || Arrays.equals(password, new char[0])) {
+			PopupMessage.display("Password",
+					String.format("The password for %s has not been changed", FilenameUtils.getBaseName(privateKey)));
+			return;
+		}
+
+		try {
+			Ed25519KeyStore store = new Ed25519KeyStore.Builder().withPassword(password).build();
+			var index = Ed25519KeyStore.getIndex(privateKey);
+			var version = Ed25519KeyStore.getVersion(privateKey);
+			var hashCode = Ed25519KeyStore.getMnemonicHashCode(privateKey);
+			store.add(keyPair);
+			store.write(privateKey, "Transaction Tool UI", index, version, hashCode);
+			PopupMessage.display("Password",
+					String.format("The password for %s has been changed", FilenameUtils.getBaseName(privateKey)));
+		} catch (KeyStoreException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	private static void updateNickname(String text) {

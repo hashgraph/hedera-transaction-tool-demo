@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -131,21 +132,23 @@ public class TestBase extends ApplicationTest {
 
 	/**
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
+	 *
+	 * @param defaultStorage
+	 * 		Storage location
 	 */
 	public static void fixMissingMnemonicHashCode(String defaultStorage) throws KeyStoreException, IOException {
-		File[] keyFiles = new File(defaultStorage + "/Keys/").listFiles((dir, name) -> name.endsWith("pem"));
+		File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
 		assert keyFiles != null;
 		for (File keyFile : keyFiles) {
 			final Integer mnemonicHash =
 					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
-			logger.info(String.format("%s has hash %s", keyFile.getAbsolutePath(),
-					mnemonicHash));
+			logger.info("{} has hash {}", keyFile.getAbsolutePath(), mnemonicHash);
 			if (mnemonicHash == null) {
 				BufferedWriter output =
 						new BufferedWriter(new FileWriter(keyFile.getAbsolutePath(), true));
 				output.append("Recovery Phrase Hash: -915976044");
 				output.close();
-				logger.info(String.format("Added dummy hash to: %s", keyFile.getName()));
+				logger.info("Added dummy hash to: {}", keyFile.getName());
 			}
 		}
 	}
@@ -156,7 +159,7 @@ public class TestBase extends ApplicationTest {
 	 * @param location
 	 * 		root folder
 	 */
-	public static void setupTransactionDirectory(String location) {
+	public static void setupTransactionDirectory(String location) throws IOException {
 		File directory = new File(location);
 		if (!directory.exists()) {
 			if (!directory.mkdirs()) {
@@ -164,20 +167,11 @@ public class TestBase extends ApplicationTest {
 			}
 		}
 
-		if (new File(String.format("%s/Accounts/Infos", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
-		if (new File(String.format("%s/Accounts/Archive", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
 		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
 			logger.info("User files folder has been created");
 		}
 		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
 			logger.info("System files folder has been created");
-		}
-		if (new File(String.format("%s/Keys/KeyFiles", location)).mkdirs()) {
-			logger.info("Keys folder has been created");
 		}
 		if (new File(String.format("%s/Keys/Archive", location)).mkdirs()) {
 			logger.info("Keys archive folder has been created");
@@ -188,6 +182,8 @@ public class TestBase extends ApplicationTest {
 		if (new File(String.format("%s/logs/", location)).mkdirs()) {
 			logger.info("Log folder has been created");
 		}
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
+				new File(location, "Files/.System/recovery.aes"));
 	}
 
 	/**

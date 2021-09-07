@@ -26,7 +26,6 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.FinishBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.MnemonicPhraseHelper;
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -47,7 +46,6 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -158,18 +156,20 @@ public class RecoverPasswordPaneController {
 		});
 
 		recoverReEnterPasswordField.textProperty().addListener(
-				((observableValue, s, t1) -> recoverReCheckPassword.setVisible(
-						t1.equals(recoverAppPasswordField.getText()))));
+				(observableValue, s, t1) -> recoverReCheckPassword.setVisible(
+						t1.equals(recoverAppPasswordField.getText())));
+
 
 		recoverReEnterPasswordField.setOnKeyReleased(keyEvent -> {
-			if ((keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(
-					KeyCode.TAB)) && recoverChangePasswordButton.isVisible()) {
+			if (keyEvent.getCode().equals(KeyCode.ENTER) && recoverChangePasswordButton.isVisible()) {
 				acceptPassword();
 			}
 		});
 
 		recoverChangePasswordButton.visibleProperty().bind(
 				recoverCheckPassword.visibleProperty().and(recoverReCheckPassword.visibleProperty()));
+		recoverChangePasswordButton.setOnAction(event -> acceptPassword());
+
 	}
 
 	private void initializeKeysVBox() {
@@ -211,7 +211,7 @@ public class RecoverPasswordPaneController {
 		try {
 			index = Ed25519KeyStore.getIndex(privateKeysMap.get(key));
 		} catch (KeyStoreException e) {
-			logger.error(String.format("Cannot read index from %s", privateKeysMap.get(key)));
+			logger.error("Cannot read index from {}", privateKeysMap.get(key));
 			controller.displaySystemMessage(e);
 			controller.displaySystemMessage(String.format("Cannot read index from %s", privateKeysMap.get(key)));
 		}
@@ -238,26 +238,19 @@ public class RecoverPasswordPaneController {
 	public void acceptPassword() {
 		password = recoverAppPasswordField.getText().toCharArray();
 		recoverChangePasswordButton.setDisable(true);
-		var filler = new char[password.length];
-		Arrays.fill(filler, 'x');
-		recoverAppPasswordField.clear();
-		recoverReEnterPasswordField.clear();
-		recoverAppPasswordField.setText(String.valueOf(filler));
-		recoverReEnterPasswordField.setText(String.valueOf(filler));
 		recoverAppPasswordField.setDisable(true);
 		recoverReEnterPasswordField.setDisable(true);
 		recoverChangePasswordButton.setDisable(true);
 		controller.setLegacy(false);
 
 		// Store the mnemonic and password hash
-		Platform.runLater(() -> {
-			try {
-				controller.setHash(password);
-				mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
-			} catch (HederaClientException e) {
-				logger.error(e.getMessage());
-			}
-		});
+		try {
+			controller.setHash(password);
+			mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+
 
 
 		// Show the next box and recover keys
