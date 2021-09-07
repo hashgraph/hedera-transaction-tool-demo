@@ -57,6 +57,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+
 import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
 
 public class Utilities {

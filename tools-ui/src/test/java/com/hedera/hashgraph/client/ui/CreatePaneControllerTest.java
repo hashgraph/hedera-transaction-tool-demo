@@ -458,6 +458,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.setMinutes(99);
 		sleep(THREAD_PAUSE_TIME);
+
 		assertEquals(59, Integer.parseInt(((TextField) find(CREATE_MINUTES)).getText()));
 
 		createPanePage.setMinutes(-12);
