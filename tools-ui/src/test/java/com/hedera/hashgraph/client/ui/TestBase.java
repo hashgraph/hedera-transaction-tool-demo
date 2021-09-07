@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -159,7 +160,7 @@ public class TestBase extends ApplicationTest {
 	 * @param location
 	 * 		root folder
 	 */
-	public static void setupTransactionDirectory(String location) {
+	public static void setupTransactionDirectory(String location) throws IOException {
 		File directory = new File(location);
 		if (!directory.exists()) {
 			if (!directory.mkdirs()) {
@@ -167,20 +168,11 @@ public class TestBase extends ApplicationTest {
 			}
 		}
 
-		if (new File(String.format("%s/Accounts/Infos", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
-		if (new File(String.format("%s/Accounts/Archive", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
 		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
 			logger.info("User files folder has been created");
 		}
 		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
 			logger.info("System files folder has been created");
-		}
-		if (new File(String.format("%s/Keys/KeyFiles", location)).mkdirs()) {
-			logger.info("Keys folder has been created");
 		}
 		if (new File(String.format("%s/Keys/Archive", location)).mkdirs()) {
 			logger.info("Keys archive folder has been created");
@@ -191,6 +183,8 @@ public class TestBase extends ApplicationTest {
 		if (new File(String.format("%s/logs/", location)).mkdirs()) {
 			logger.info("Log folder has been created");
 		}
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
+				new File(location, "Files/.System/recovery.aes"));
 	}
 
 	/**
