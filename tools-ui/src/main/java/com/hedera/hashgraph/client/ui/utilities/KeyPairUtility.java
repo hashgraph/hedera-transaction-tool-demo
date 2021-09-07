@@ -110,7 +110,14 @@ public class KeyPairUtility {
 		// Check Hashcode
 		var storedHashCode = properties.getMnemonicHashCode();
 		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
-		if (hashCode != null && hashCode != storedHashCode) {
+		if (hashCode == null) {
+			logger.error("Hashcode is null");
+			PopupMessage.display("Error recovering password",
+					"The key is not associated with the current recovery phrase. The password cannot be changed",
+					"CONTINUE");
+			return new char[0];
+		}
+		if (hashCode != storedHashCode) {
 			logger.info("The key is not associated with the current mnemonic");
 			PopupMessage.display("Error recovering password",
 					"The key is not associated with the current recovery phrase. The password cannot be changed",
@@ -125,6 +132,7 @@ public class KeyPairUtility {
 		var tokenBytes = decoder.decode(token);
 		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 			logger.error("Token size check failed");
+			return new char[0];
 		}
 		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 
