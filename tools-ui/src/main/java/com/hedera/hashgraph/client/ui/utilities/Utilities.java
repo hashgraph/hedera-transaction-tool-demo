@@ -23,6 +23,7 @@ import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -48,16 +49,20 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 
 public class Utilities {
 
@@ -373,4 +378,27 @@ public class Utilities {
 		}
 		return knownKeys;
 	}
+
+	/**
+	 * Retrieves the salt from the properties
+	 *
+	 * @param properties
+	 * 		the properties file
+	 * @return the salt
+	 */
+	public static byte[] getSaltBytes(UserAccessibleProperties properties) {
+		if (properties.hasSalt()) {
+			var token = properties.getHash();
+			var decoder = Base64.getDecoder();
+
+			var tokenBytes = decoder.decode(token);
+			if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+				logger.error("Token size check failed");
+			}
+			return Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH);
+		}
+		return new byte[SALT_LENGTH];
+	}
+
+
 }
