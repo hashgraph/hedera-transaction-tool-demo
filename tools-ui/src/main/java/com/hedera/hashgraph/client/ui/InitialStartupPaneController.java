@@ -108,6 +108,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public Label drivesErrorLabel;
 	public Label mnemonicErrorMessage;
 	public Label copyToClipboardLabel;
+	public Label matchPassword;
 
 	public TextField hiddenPathInitial;
 	public TextField pathTextField;
@@ -435,16 +436,16 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 			reCheckPassword.setVisible(false);
 			setupCharacterCount(appPasswordField, characterCount, checkPassword, passwordErrorLabel,
 					reEnterPasswordField);
-			if (isNotTabOrEnter(keyEvent)) {
-				passwordErrorLabel.setVisible(false);
-				return;
-			}
 			checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+
 		});
 
 		appPasswordField.setOnKeyPressed(keyEvent -> {
-			if (!isNotTabOrEnter(keyEvent)) {
+			if (isTabOrEnter(keyEvent)) {
 				checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+				if (checkPassword.isVisible()) {
+					reEnterPasswordField.requestFocus();
+				}
 			}
 		});
 
@@ -453,8 +454,10 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				reCheckPassword.setVisible(true);
 				acceptPasswordButton.setVisible(true);
 				acceptPasswordButton.setDisable(false);
+				matchPassword.setVisible(false);
 			} else {
 				reCheckPassword.setVisible(false);
+				matchPassword.setVisible(true);
 				acceptPasswordButton.setVisible(false);
 				acceptPasswordButton.setDisable(true);
 			}
@@ -469,8 +472,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private boolean isNotTabOrEnter(KeyEvent keyEvent) {
-		return !(keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
+	private boolean isTabOrEnter(KeyEvent keyEvent) {
+		return (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
 	}
 
 	/**
