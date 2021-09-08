@@ -28,7 +28,6 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.input.KeyCode;
@@ -165,7 +164,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setInitialBalance(long amount) {
-		ensureVisible(driver.find(CREATE_INITIAL_BALANCE));
+		driver.ensureVisible(driver.find(CREATE_INITIAL_BALANCE));
 		driver.doubleClickOn(CREATE_INITIAL_BALANCE);
 		driver.write(String.valueOf(amount));
 		driver.type(KeyCode.TAB);
@@ -173,13 +172,13 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setCreateKey() {
-		ensureVisible(driver.find(CREATE_EDIT_KEY));
+		driver.ensureVisible(driver.find(CREATE_EDIT_KEY));
 		driver.clickOn(CREATE_EDIT_KEY);
 		return this;
 	}
 
 	public CreatePanePage setUpdateKey(String account) {
-		ensureVisible(driver.find(UPDATE_EDIT_KEY));
+		driver.ensureVisible(driver.find(UPDATE_EDIT_KEY));
 		driver.clickOn(UPDATE_EDIT_KEY);
 		return clickOnAccountKey(account);
 	}
@@ -258,38 +257,6 @@ public class CreatePanePage {
 		return inner2.get(paneEnum.value);
 	}
 
-	private void ensureVisible(Node node) {
-		Node p = node.getParent();
-		while (!(p instanceof ScrollPane)) {
-			try {
-				p = p.getParent();
-			} catch (Exception e) {
-				//not inside a scroll pane
-				logger.error(e);
-				return;
-			}
-		}
-
-		var scrollPane = (ScrollPane) p;
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
-				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
-
-		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
-
-		if (nodeMaxY < 0) {
-			// currently located above (remember, top left is (0,0))
-			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
-		} else if (nodeMinY > viewport.getHeight()) {
-			// currently located below
-			vValueDelta = (nodeMinY) / contentHeight;
-		}
-		scrollPane.setVvalue(vValueCurrent + vValueDelta);
-	}
-
 	public CreatePanePage createAndExport(String folder) {
 		logger.info("Exporting transaction to {}", folder);
 		HBox hBox = driver.find(CREATE_CHOICE_BOX);
@@ -316,7 +283,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage addDebit(long accountNum, double amount) {
-		ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
 		driver.write(Long.toString(accountNum));
@@ -330,7 +297,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage addCredit(long accountNum, double amount) {
-		ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
 		driver.write(Long.toString(accountNum));
@@ -402,7 +369,7 @@ public class CreatePanePage {
 		datePickerFormat.setTimeZone(TimeZone.getDefault());
 		var localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
-		ensureVisible(driver.find(datePicker));
+		driver.ensureVisible(driver.find(datePicker));
 		driver.clickOn(datePicker);
 		driver.write(datePickerFormat.format(date));
 		driver.type(KeyCode.ENTER);
@@ -430,7 +397,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setEntityID(long id) {
-		ensureVisible(driver.find(ENTITY_ID_FIELD));
+		driver.ensureVisible(driver.find(ENTITY_ID_FIELD));
 		driver.doubleClickOn(ENTITY_ID_FIELD);
 		driver.write(String.valueOf(id));
 		driver.type(KeyCode.ENTER);
@@ -438,7 +405,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setContents(String contentsPath) {
-		ensureVisible(driver.find(CREATE_FILE_UPDATE_CONTENTS));
+		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_CONTENTS));
 		driver.clickOn(CREATE_FILE_UPDATE_CONTENTS);
 		driver.write(contentsPath);
 		driver.type(KeyCode.ENTER);
@@ -497,7 +464,7 @@ public class CreatePanePage {
 	public CreatePanePage setStartTimezone(String timezone) {
 		HBox timeBox = driver.find(TIME_ZONE_HBOX);
 		var children = timeBox.getChildren();
-		ensureVisible(timeBox);
+		driver.ensureVisible(timeBox);
 		for (var child : children) {
 			if (child instanceof AutoCompleteNickname) {
 				((AutoCompleteNickname) child).clear();
@@ -512,7 +479,7 @@ public class CreatePanePage {
 
 	public CreatePanePage setSystemTimezone(String timezone) {
 		HBox timeBox = driver.find(SYSTEM_TIMEZONE_HBOX);
-		ensureVisible(timeBox);
+		driver.ensureVisible(timeBox);
 		var children = timeBox.getChildren();
 		for (var child : children) {
 			if (child instanceof AutoCompleteNickname) {

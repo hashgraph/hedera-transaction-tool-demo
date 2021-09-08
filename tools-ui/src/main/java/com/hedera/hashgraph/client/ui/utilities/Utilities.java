@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -30,6 +31,7 @@ import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
@@ -380,6 +382,31 @@ public class Utilities {
 	}
 
 	/**
+	 * Retrieves the password from the PasswordFields and destroys the arrays.
+	 *
+	 * @param accept
+	 * 		button
+	 * @param password
+	 * 		the char array containing the password
+	 * @param passwordField
+	 * 		the field that contains the password
+	 * @param confirmField
+	 * 		the field that confirms the password
+	 */
+	public static void clearPasswordFields(Button accept, char[] password, PasswordField passwordField,
+			PasswordField confirmField) {
+		accept.setDisable(true);
+		var filler = new char[password.length];
+		Arrays.fill(filler, 'x');
+		passwordField.clear();
+		confirmField.clear();
+		passwordField.setText(String.valueOf(filler));
+		confirmField.setText(String.valueOf(filler));
+		passwordField.setDisable(true);
+		confirmField.setDisable(true);
+	}
+
+	/**
 	 * Retrieves the salt from the properties
 	 *
 	 * @param properties
@@ -392,13 +419,11 @@ public class Utilities {
 			var decoder = Base64.getDecoder();
 
 			var tokenBytes = decoder.decode(token);
-			if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 				logger.error("Token size check failed");
 			}
-			return Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH);
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 		}
 		return new byte[SALT_LENGTH];
 	}
-
-
 }
