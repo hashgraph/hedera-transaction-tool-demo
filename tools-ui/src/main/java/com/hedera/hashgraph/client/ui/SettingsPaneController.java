@@ -23,14 +23,18 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -70,10 +74,11 @@ public class SettingsPaneController {
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
-	public static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
+	private static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
 			"The period of time in which the account will renew in seconds.\n" +
 					"Min:7000000 seconds \n" +
 					"Max: 8000000 seconds";
+	private boolean noise = false;
 
 	public TextField loadStorageTextField;
 	public TextField pathTextFieldSP;
@@ -124,6 +129,8 @@ public class SettingsPaneController {
 	public Button folderTooltip;
 	public TextField versionLabel;
 	public Button confirmAddFolderButton;
+	public Button networkTooltip;
+	public ComboBox networkCombobox;
 
 
 	@FXML
@@ -187,6 +194,8 @@ public class SettingsPaneController {
 			// region Events
 			setupNodeIDTextField();
 
+			setupNetworkBox();
+
 			setupTxValidDurationTextField();
 
 			setupAutoRenewTextField();
@@ -229,6 +238,35 @@ public class SettingsPaneController {
 			logger.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
+	}
+
+	private void setupNetworkBox() {
+		noise = true;
+		networkCombobox.getItems().clear();
+		networkCombobox.getItems().addAll(controller.getDefaultNetworks());
+		networkCombobox.getItems().add(new Separator());
+		var customNetworks = controller.getCustomNetworks();
+		if (!customNetworks.isEmpty()) {
+			networkCombobox.getItems().addAll(customNetworks);
+			networkCombobox.getItems().add(new Separator());
+		}
+		networkCombobox.getItems().add("BROWSE");
+		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
+		noise = false;
+		networkCombobox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
+			@Override
+			public void changed(ObservableValue observableValue, Object o, Object t1) {
+				if (!noise && t1 instanceof String) {
+					final var selectedNetwork = (String) t1;
+					if (selectedNetwork.equals("BROWSE")) {
+						// load network
+						return;
+					}
+					controller.setCurrentNetwork(selectedNetwork);
+				}
+			}
+		});
+
 	}
 
 	private void setupDefaultTransactionFeeTextField() {

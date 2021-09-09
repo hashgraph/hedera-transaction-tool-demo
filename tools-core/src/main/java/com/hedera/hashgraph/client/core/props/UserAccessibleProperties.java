@@ -29,9 +29,13 @@ import com.hedera.hashgraph.sdk.Hbar;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
+import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HOURS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_MINUTES;
@@ -45,7 +49,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.LEGACY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_HASH_CODE;
-import static com.hedera.hashgraph.client.core.constants.Constants.NETWORK;
+import static com.hedera.hashgraph.client.core.constants.Constants.NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.PREFERRED_STORAGE_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
@@ -111,11 +115,11 @@ public class UserAccessibleProperties {
 	}
 
 	public String getNetworkProperty() {
-		return properties.getProperty(NETWORK, "MAINNET");
+		return properties.getProperty(CUSTOM_NETWORK, "MAINNET");
 	}
 
 	public void setNetworkProperty(NetworkEnum network) {
-		properties.setProperty(NETWORK, network.toString());
+		properties.setProperty(CUSTOM_NETWORK, network.toString());
 	}
 
 	public Hbar getTransactionFeeProperty() {
@@ -405,6 +409,51 @@ public class UserAccessibleProperties {
 
 	public void setLegacy(boolean legacy) {
 		properties.setProperty(LEGACY, legacy);
+	}
+
+	/**
+	 * Gets the set of networks
+	 *
+	 * @return a Set of strings
+	 */
+	public Set<String> getCustomNetworks() {
+		return properties.getSetProperty(NETWORKS, new HashSet<>());
+	}
+
+	/**
+	 * Sets the networks
+	 *
+	 * @param networks
+	 * 		a set of strings
+	 */
+	public void setCustomNetworks(Set<String> networks) {
+		properties.setSetProperty(CUSTOM_NETWORK, networks);
+	}
+
+	public void setCurrentNetwork(String network, Set<String> defaulNetworks) {
+		var networks = getCustomNetworks();
+		if (!(networks.contains(network) || defaulNetworks.contains(network))) {
+			return;
+		}
+		properties.setProperty(CURRENT_NETWORK, network);
+	}
+
+	public String getCurrentNetwork() {
+		return properties.getProperty(CURRENT_NETWORK, "MAINNET");
+	}
+
+	public void addCustomNetwork(String nickname, JsonObject nodes) {
+		var networks = getCustomNetworks();
+		networks.add(nickname);
+		setCustomNetworks(networks);
+		properties.setProperty(nickname, nodes);
+	}
+
+	private boolean removeCustomNetwork(String nickname) {
+		var networks = getCustomNetworks();
+		networks.remove(nickname);
+		setCustomNetworks(networks);
+		return properties.removeProperty(nickname);
 	}
 
 	// endregion

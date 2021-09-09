@@ -73,9 +73,11 @@ public class Constants {
 	public static final String USER_NAME = "userName";
 	public static final String SETUP_PHASE = "setupPhase";
 	public static final String GENERATE_RECORD = "generateRecord";
-	public static final String NETWORK = "network";
+	public static final String CUSTOM_NETWORK = "network";
 	public static final String SALT_PROPERTY = "salt";
 	public static final String LEGACY = "legacy";
+	public static final String NETWORKS = "networks";
+	public static final String CURRENT_NETWORK = "currentNetwork";
 	// endregion
 
 	// region APP DEFAULTS

@@ -72,10 +72,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -853,5 +855,25 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		} else {
 			properties.setLastBrowsedDirectory(file.getParentFile());
 		}
+	}
+
+	public Set<String> getCustomNetworks() {
+		return properties.getCustomNetworks();
+	}
+
+	public Set<String> getDefaultNetworks() {
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+		return defaultNetworks;
+	}
+
+	public String getCurrentNetwork() {
+		return properties.getCurrentNetwork();
+	}
+
+	public void setCurrentNetwork(String network) {
+		properties.setCurrentNetwork(network, getDefaultNetworks());
 	}
 }
