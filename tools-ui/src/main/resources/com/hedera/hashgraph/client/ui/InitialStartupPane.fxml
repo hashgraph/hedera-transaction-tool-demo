@@ -87,7 +87,7 @@
 								<Font size="14.0"/>
 							</font>
 						</Label>
-						<Label prefWidth="800.0" style="-fx-font-size: 16;"
+					<Label prefWidth="800.0" style="-fx-font-size: 16;"
 							   text="Please create an application password. You will be required to enter this password every time you open the application, create a new key, or sign a transaction."
 							   wrapText="true" GridPane.rowIndex="1"/>
 						<Label style="-fx-font-size: 12; -fx-font-weight: bold;" text="STEP 1 OF 3"
@@ -128,19 +128,17 @@
 							<Label text="Please re-enter your password:" GridPane.rowIndex="1"/>
 							<VBox GridPane.columnIndex="1">
 								<HBox alignment="CENTER_LEFT" spacing="20.0">
-									<PasswordField fx:id="appPasswordField" minWidth="300.0"
-												   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
-									<ImageView fx:id="checkPassword" fitHeight="20.0" fitWidth="20.0"
-											   pickOnBounds="true" preserveRatio="true" visible="false">
-										<Image url="@../../../../../icons/greencheck.png"/>
+									<PasswordField fx:id="appPasswordField" minWidth="300.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+									<ImageView fx:id="checkPassword" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
+										<Image url="@../../../../../icons/greencheck.png" />
 									</ImageView>
 								</HBox>
 								<TextFlow>
 									<padding>
-										<Insets left="10.0"/>
+										<Insets left="10.0" />
 									</padding>
-									<Label fx:id="characterCount" style="-fx-text-fill: red;" text="0"/>
-									<Label text=" characters"/>
+									<Label fx:id="characterCount" style="-fx-text-fill: red;" text="0" />
+									<Label text=" characters" />
 								</TextFlow>
 							</VBox>
 							<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">

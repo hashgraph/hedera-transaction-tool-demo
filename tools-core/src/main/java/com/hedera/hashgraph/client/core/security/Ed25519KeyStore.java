@@ -274,7 +274,6 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 		}
 	}
 
-
 	private KeyPair decodeKeyPair(Object rawObject) throws KeyStoreException {
 		try {
 			KeyPair kp;

@@ -29,6 +29,7 @@ import com.hedera.hashgraph.client.ui.popups.MnemonicBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -52,7 +53,6 @@ import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 
 public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
-	public static final int MNEMONIC_SIZE = 24;
 	public static final String STYLE =
 			"-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
 					"-fx-border-radius: 10;";
@@ -96,14 +96,14 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public boolean setWordsInGridPane(String[] words) {
 		var flag = true;
-		if (words.length > MNEMONIC_SIZE) {
+		if (words.length > Constants.MNEMONIC_SIZE) {
 			throw new HederaClientRuntimeException("Incorrect number of words in mnemonic");
 		}
 		var gridPane = (GridPane) phraseBox.getChildren().get(0);
 		var nodes = gridPane.getChildren();
 		var counter = 0;
 
-		if (nodes.size() != MNEMONIC_SIZE) {
+		if (nodes.size() != Constants.MNEMONIC_SIZE) {
 			logger.error("Mnemonic pane does not have the correct number of spots");
 			return false;
 		}
@@ -145,7 +145,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			words = mnemonic.words;
 		}
 
-		if (words.size() < MNEMONIC_SIZE) {
+		if (words.size() < Constants.MNEMONIC_SIZE) {
 			mnemonicErrorMessage.setVisible(true);
 			return;
 		}
@@ -217,7 +217,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	}
 
 	public void setupEmptyMnemonicBox(GridPane mnemonicWordsGridPane) {
-		for (var i = 0; i < MNEMONIC_SIZE; i++) {
+		for (var i = 0; i < Constants.MNEMONIC_SIZE; i++) {
 			var t = new AutoCompleteTextField() {
 				@Override
 				public void paste() {
@@ -238,7 +238,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			t.textProperty().addListener((observableValue, s, t1) -> {
 				var words = getWordsFromGridPane();
 
-				var valid = words.size() == MNEMONIC_SIZE;
+				var valid = words.size() == Constants.MNEMONIC_SIZE;
 				try {
 					Mnemonic.fromWords(words);
 				} catch (BadMnemonicException e) {
@@ -269,6 +269,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 				rowConstraints, rowConstraints);
 		mnemonicWordsGridPane.setHgap(10);
 		mnemonicWordsGridPane.setVgap(10);
+		mnemonicWordsGridPane.setAlignment(Pos.CENTER);
 	}
 
 	private TextField styleTextField(CharSequence c) {
@@ -295,7 +296,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	public void pastePhraseFromClipBoard() {
 		mnemonicErrorMessage.setVisible(false);
 		String[] words = getWords();
-		if (words.length != MNEMONIC_SIZE) {
+		if (words.length != Constants.MNEMONIC_SIZE) {
 			logger.error("Incorrect size of recovery phrase");
 			mnemonicErrorMessage.setText("The recovery phase pasted does not have the right number of words.");
 			mnemonicErrorMessage.setVisible(true);
