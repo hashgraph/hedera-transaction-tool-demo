@@ -69,8 +69,12 @@ public class AddressChecksums {
 					givenChecksum, noChecksumFormat, withChecksumFormat);
 		}
 
-		public parseStatus getStatus(){
+		public parseStatus getStatus() {
 			return status;
+		}
+
+		public String getCorrectChecksum() {
+			return correctChecksum;
 		}
 	}
 

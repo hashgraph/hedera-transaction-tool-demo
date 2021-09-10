@@ -53,6 +53,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
@@ -136,6 +137,7 @@ import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.SystemEntity.f
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class CreatePaneControllerTest extends TestBase implements Supplier<TestBase>, GenericFileReadWriteAware {
@@ -454,7 +456,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void checkTimeDate_Test() throws InterruptedException {
+	public void checkTimeDate_Test() {
 		var date = DateUtils.addDays(new Date(), 2);
 		var sdf = new SimpleDateFormat("MM/dd/yyyy");
 
@@ -581,7 +583,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void createAccount_Test() throws InterruptedException, HederaClientException {
+	public void createAccount_Test() throws HederaClientException {
 		var date = DateUtils.addDays(new Date(), 2);
 		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -682,7 +684,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void createTransfer_Test() throws HederaClientException, InterruptedException {
+	public void createTransfer_Test() throws HederaClientException {
 		var date = DateUtils.addDays(new Date(), 2);
 		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -799,7 +801,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void createUpdateAccount_Test() throws HederaClientException, InterruptedException {
+	public void createUpdateAccount_Test() throws HederaClientException {
 		var date = DateUtils.addDays(new Date(), 2);
 		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -1322,42 +1324,204 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums_test() {
-		//payer
-		//node
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setFeePayerAccount("0.1");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidFeePayer").isVisible());
 
+		createPanePage.setFeePayerAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setNodeAccount("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidNode").isVisible());
 	}
 
 	@Test
 	public void updateAccountFieldsChecksums_test() {
-		//account
-		//payer
-		//node
 
+		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
+				.setFeePayerAccount("0.1");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setNodeAccount("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.setUpdateAccount("0.66");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidUpdateAccountToUpdate").isVisible());
+
+		createPanePage.setUpdateAccount("0.0.888888-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidUpdateAccountToUpdate").isVisible());
+
+		createPanePage.setUpdateAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidUpdateAccountToUpdate").isVisible());
 	}
 
 	@Test
 	public void systemAccountFieldsChecksums_test() {
-		//entity
-		//payer
-		//node
+		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
+				.setFeePayerAccount("0.1");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setNodeAccount("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.setEntityID("0.66");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidEntity").isVisible());
+
+		createPanePage.setEntityID("0.0.888888-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidEntity").isVisible());
+
+		createPanePage.setEntityID(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidEntity").isVisible());
 
 	}
 
 	@Test
 	public void fileAccountFieldsChecksums_test() {
-		//entity
-		//payer
-		//node
+		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
+				.setUpdateFileID("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidUpdateFileToUpdate").isVisible());
 
+		createPanePage.setUpdateFileID("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidUpdateFileToUpdate").isVisible());
+
+		createPanePage.setUpdateFileID(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidUpdateFileToUpdate").isVisible());
+
+		createPanePage.setFeePayerAccount("0.1");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setNodeAccount("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidNode").isVisible());
 	}
 
 	@Test
 	public void transferAccountFieldsChecksums_test() {
-		//payer
-		//node
-		//fromAccount, table
-		//toAccount, table
+		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
+				.setFeePayerAccount("0.1");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidFeePayer").isVisible());
 
+		createPanePage.setFeePayerAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setFeePayerAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidFeePayer").isVisible());
+
+		createPanePage.setNodeAccount("0.3");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.setFromAccountTransfer("0.33");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#errorInvalidFromAccount").isVisible());
+
+		createPanePage.setFromAccountTransfer("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#errorInvalidFromAccount").isVisible());
+
+		createPanePage.setFromAccountTransfer(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#errorInvalidFromAccount").isVisible());
+
+		createPanePage.setToAccountTransfer("0.33");
+		checkBadChecksum("e.g.");
+		assertTrue(find("#errorInvalidToAccount").isVisible());
+
+		createPanePage.setToAccountTransfer("0.0.1-aaaaa");
+		checkBadChecksum("The checksum entered does not correspond to the account.");
+		assertTrue(find("#errorInvalidToAccount").isVisible());
+
+		createPanePage.setToAccountTransfer(123);
+		assertNull(TestUtil.getPopupNodes());
+		assertFalse(find("#errorInvalidToAccount").isVisible());
 	}
 
 	@After
@@ -1426,4 +1590,17 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	public TestBase get() {
 		return this;
 	}
+
+	private void checkBadChecksum(String s) {
+		var popupNodes = TestUtil.getPopupNodes();
+		Assert.assertNotNull(popupNodes);
+		assertEquals(1, popupNodes.size());
+
+		var children = ((VBox) popupNodes.get(0)).getChildren();
+		assertTrue(children.get(0) instanceof Label);
+		var label = (Label) children.get(0);
+		assertTrue(label.getText().contains(s));
+		clickOn(children.get(1));
+	}
+
 }
