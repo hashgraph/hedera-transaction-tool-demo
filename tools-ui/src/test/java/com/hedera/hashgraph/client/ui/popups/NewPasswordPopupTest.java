@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.ui.popups;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.ui.Controller;
@@ -29,9 +28,6 @@ import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
-import com.hedera.hashgraph.sdk.PrivateKey;
-import javafx.scene.control.PasswordField;
-import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,7 +56,6 @@ public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
 	private KeysPanePage keysPanePage;
-	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
 	public UserAccessibleProperties properties;
@@ -98,6 +93,7 @@ public class NewPasswordPopupTest extends TestBase {
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		String mapAsString = objectMapper.writeValueAsString(emailMap);
+		logger.info(mapAsString);
 
 		properties.setOneDriveCredentials(emailMap);
 		properties.setHash(PASSWORD.toCharArray());
@@ -129,7 +125,7 @@ public class NewPasswordPopupTest extends TestBase {
 		}
 
 		keysPanePage = new KeysPanePage(this);
-		mainWindowPage = new MainWindowPage(this);
+		MainWindowPage mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnKeysButton();
 	}
 
@@ -179,19 +175,19 @@ public class NewPasswordPopupTest extends TestBase {
 		assertFalse(buttons.get(2).isVisible());
 		assertEquals("CHANGE PASSWORD", buttons.get(3).getText());
 		assertEquals("CLOSE", buttons.get(4).getText());
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
 	@Test
 	public void changePasswordCancel_test() {
 		doubleClickOn("principalTestingKey");
 		var buttons = keysPanePage.getPopupButtons();
-		clickOn(buttons.get(3).getText());
+		clickOn(buttons.get(3));
 
 		var buttons0 = keysPanePage.getPopupButtons();
 		assertEquals(2, buttons0.size());
 
-		clickOn(buttons0.get(0).getText());
+		clickOn(buttons0.get(0));
 		var enterPassword = keysPanePage.getPopupLabels();
 		assertEquals("Please enter the password for key principalTestingKey", enterPassword.get(0).getText());
 
@@ -199,19 +195,19 @@ public class NewPasswordPopupTest extends TestBase {
 
 		var passwordFields = keysPanePage.getPopupPasswordFields();
 		assertEquals(2, passwordFields.size());
-		typePassword("tempura", passwordFields.get(0));
+		keysPanePage.typePassword("tempura", passwordFields.get(0));
 		assertTrue(passwordFields.get(1).isDisable());
 
 		passwordFields.get(0).clear();
-		typePassword("tempura sushi", passwordFields.get(0));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
 		assertFalse(passwordFields.get(1).isDisable());
 
-		typePassword("sushi tempura", passwordFields.get(1));
+		keysPanePage.typePassword("sushi tempura", passwordFields.get(1));
 
 		var newPopupButtons = keysPanePage.getPopupButtons();
 		assertFalse(newPopupButtons.get(1).isVisible());
 
-		typePassword("tempura sushi", passwordFields.get(1));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		assertTrue(newPopupButtons.get(1).isVisible());
 
 		clickOn(newPopupButtons.get(0));
@@ -222,22 +218,22 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(1));
 		keysPanePage.enterPopupPassword(PASSWORD);
 		assertTrue(buttons.get(2).isVisible());
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
 	@Test
 	public void changePasswordAccept_test() {
 		doubleClickOn("principalTestingKey");
 		var buttons = keysPanePage.getPopupButtons();
-		clickOn(buttons.get(3).getText());
+		clickOn(buttons.get(3));
 		var buttons0 = keysPanePage.getPopupButtons();
-		clickOn(buttons0.get(0).getText());
+		clickOn(buttons0.get(0));
 		keysPanePage.enterPopupPassword(PASSWORD);
 		var passwordFields = keysPanePage.getPopupPasswordFields();
-		typePassword("tempura sushi", passwordFields.get(0));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
 		assertFalse(passwordFields.get(1).isDisable());
 		var newPopupButtons = keysPanePage.getPopupButtons();
-		typePassword("tempura sushi", passwordFields.get(1));
+		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		clickOn(newPopupButtons.get(1));
 		var labels = keysPanePage.getPopupLabels();
 		assertEquals("The password for principalTestingKey has been changed", labels.get(0).getText());
@@ -249,21 +245,17 @@ public class NewPasswordPopupTest extends TestBase {
 		File pemFile = new File(KEYS_FOLDER, "principalTestingKey.pem");
 		assertTrue(pemFile.exists());
 		Ed25519KeyStore keyStore = null;
-		Exception e = assertThrows(KeyStoreException.class, ()->Ed25519KeyStore.read(PASSWORD.toCharArray(), pemFile));
-		assertEquals("org.bouncycastle.pkcs.PKCSException: unable to read encrypted data: Error finalising cipher", e.getMessage());
+		Exception e = assertThrows(KeyStoreException.class, () -> Ed25519KeyStore.read(PASSWORD.toCharArray(),
+				pemFile));
+		assertEquals("org.bouncycastle.pkcs.PKCSException: unable to read encrypted data: Error finalising cipher",
+				e.getMessage());
 		try {
 			keyStore = Ed25519KeyStore.read("tempura sushi".toCharArray(), pemFile);
 		} catch (KeyStoreException exception) {
 			exception.printStackTrace();
 		}
 		assertNotNull(keyStore);
-		clickOn(buttons.get(4).getText());
+		clickOn(buttons.get(4));
 	}
 
-	private void typePassword(String s, PasswordField field) {
-		field.setText(s);
-		clickOn(field);
-		type(KeyCode.SHIFT);
-
-	}
 }

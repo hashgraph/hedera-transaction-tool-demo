@@ -120,7 +120,8 @@ public class TestUtil {
 		return null;
 	}
 
-	public static Button findButtonFromPopup(String buttonName) {
+	public static Button findButtonFromPopup(ObservableList<Node> popupNodes,
+			String buttonName) {
 		for (var node : getPopupNodes()) {
 			if (node.getClass().isAssignableFrom(Button.class) || node.toString().equalsIgnoreCase(buttonName)) {
 				return (Button) node;
@@ -231,8 +232,7 @@ public class TestUtil {
 			leaves.add(treeItem);
 		} else {
 			List<TreeItem> children = treeItem.getChildren();
-			for (var child :
-					children) {
+			for (var child : children) {
 				leaves.addAll(getChildren(child));
 			}
 		}

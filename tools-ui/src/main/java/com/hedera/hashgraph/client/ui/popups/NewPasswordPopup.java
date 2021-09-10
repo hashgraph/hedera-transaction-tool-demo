@@ -43,7 +43,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class NewPasswordPopup {
-	public static final String TITLE_LABEL = "Change your key's password";
+	public static final String TITLE_LABEL = "Change your password";
 	public static final String WARNING_LABEL =
 			"Your new password will be checked against a list of common passwords, to increase your security.";
 	public static final String PASSWORD_LENGTH_LABEL = "Must be at least 10 characters.";
@@ -110,6 +110,7 @@ public class NewPasswordPopup {
 
 
 		// region EVENTS
+
 		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1,
 				event));
 		passwordField2.setOnKeyReleased(
@@ -216,6 +217,7 @@ public class NewPasswordPopup {
 		}
 	}
 
+
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
 			Label error1,
 			KeyEvent event) {
@@ -233,7 +235,6 @@ public class NewPasswordPopup {
 		if ((event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(
 				KeyCode.TAB)) && check1.isVisible()) {
 			answer = passwordField1.getText().toCharArray();
-			passwordField1.setDisable(true);
 		}
 	}
 
