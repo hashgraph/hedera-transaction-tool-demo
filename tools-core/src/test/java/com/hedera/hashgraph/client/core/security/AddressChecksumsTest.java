@@ -52,4 +52,13 @@ class AddressChecksumsTest {
 		assertEquals(parseStatus.BAD_CHECKSUM, parseAddress("0.0.123(abcde)").status);
 		assertEquals(parseStatus.BAD_FORMAT, parseAddress("0.0.123.").status);
 	}
+
+	@Test
+	void getStatus_test() {
+		assertEquals(parseStatus.GOOD_NO_CHECKSUM, parseAddress("===0.0.000123   ()===").getStatus());
+		assertEquals(parseStatus.BAD_CHECKSUM, parseAddress("0.0.123(la)").getStatus());
+		assertEquals(parseStatus.BAD_CHECKSUM, parseAddress("0.0.123(vfmkwxxx)").getStatus());
+		assertEquals(parseStatus.BAD_CHECKSUM, parseAddress("0.0.123(abcde)").getStatus());
+		assertEquals(parseStatus.BAD_FORMAT, parseAddress("0.0.123.").getStatus());
+	}
 }

@@ -400,5 +400,18 @@ public class Utilities {
 		return new byte[SALT_LENGTH];
 	}
 
+	public static boolean isNumeric(String string) {
+		if (string == null) {
+			return false;
+		}
+		try {
+			var l = Long.parseLong(string);
+			logger.info("Parsed {}", l);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		return true;
+	}
+
 
 }

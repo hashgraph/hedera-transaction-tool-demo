@@ -158,7 +158,11 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setNodeAccount(long accountID) {
-		driver.doubleClickOn(CREATE_NODE_FIELD);
+		driver.clickOn(CREATE_NODE_FIELD);
+		var node = driver.find(CREATE_NODE_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
 		driver.write(String.valueOf(accountID));
 		driver.type(KeyCode.TAB);
 		return this;
