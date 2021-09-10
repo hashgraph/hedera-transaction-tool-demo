@@ -119,14 +119,14 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setHours(int hours) throws InterruptedException {
+	public CreatePanePage setHours(int hours) {
 		driver.doubleClickOn(CREATE_HOURS);
 		driver.write(String.valueOf(hours));
 		driver.type(KeyCode.TAB);
 		return this;
 	}
 
-	public CreatePanePage setMinutes(int minutes) throws InterruptedException {
+	public CreatePanePage setMinutes(int minutes) {
 		driver.doubleClickOn(CREATE_MINUTES);
 		driver.write(String.valueOf(minutes));
 		driver.type(KeyCode.TAB);
@@ -150,7 +150,11 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setFeePayerAccount(long accountID) {
-		driver.doubleClickOn(CREATE_FEE_PAYER_FIELD);
+		driver.clickOn(CREATE_FEE_PAYER_FIELD);
+		var node = driver.find(CREATE_FEE_PAYER_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
 		driver.write(String.valueOf(accountID));
 		driver.type(KeyCode.ENTER);
 		return this;
@@ -316,6 +320,10 @@ public class CreatePanePage {
 
 	public CreatePanePage setUpdateAccount(long accountNumber) {
 		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
+		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
+		var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
 		driver.write(Long.toString(accountNumber));
 		driver.type(KeyCode.TAB);
 		return this;

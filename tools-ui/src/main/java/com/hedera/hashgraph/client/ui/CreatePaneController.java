@@ -1976,9 +1976,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				errorLabel.setVisible(true);
 				PopupMessage.display("Account format error",
 						"The account format cannot be parsed. Acceptable formats are:\n" +
-								" \u2022 XX (i.e. 12345),\n" +
-								" \u2022 XX.XX.XX (i.e. 1.2.345), or\n" +
-								" \u2022 XX.XX.XX-CCCCC (i.e. 1.2.345-abcde)");
+								" \u2022 XX (e.g. 12345),\n" +
+								" \u2022 XX.XX.XX (e.g. 1.2.345), or\n" +
+								" \u2022 XX.XX.XX-CCCCC (e.g. 1.2.345-abcde)");
 				errorLabel.requestFocus();
 				break;
 			case BAD_CHECKSUM:

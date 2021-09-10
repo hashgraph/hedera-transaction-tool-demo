@@ -1250,7 +1250,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-
 	@Test
 	public void errorMessagesCreate_Test() throws InterruptedException {
 		final var headless = System.getProperty("headless");
@@ -1258,7 +1257,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			// Test will not work on headless mode
 			return;
 		}
-		
+
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
@@ -1319,6 +1318,46 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
 		assertFalse(find(CREATE_INVALID_FEE_PAYER).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
+	}
+
+	@Test
+	public void createAccountFieldsChecksums_test() {
+		//payer
+		//node
+
+	}
+
+	@Test
+	public void updateAccountFieldsChecksums_test() {
+		//account
+		//payer
+		//node
+
+	}
+
+	@Test
+	public void systemAccountFieldsChecksums_test() {
+		//entity
+		//payer
+		//node
+
+	}
+
+	@Test
+	public void fileAccountFieldsChecksums_test() {
+		//entity
+		//payer
+		//node
+
+	}
+
+	@Test
+	public void transferAccountFieldsChecksums_test() {
+		//payer
+		//node
+		//fromAccount, table
+		//toAccount, table
+
 	}
 
 	@After
