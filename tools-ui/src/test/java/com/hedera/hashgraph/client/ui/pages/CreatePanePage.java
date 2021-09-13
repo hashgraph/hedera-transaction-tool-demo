@@ -49,6 +49,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_DATE_PICKER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_EDIT_KEY;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FEE_PAYER_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_CONTENTS;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_FILE_UPDATE_FILE_ID;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_HOURS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_INITIAL_BALANCE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_MAIN_CHOICE_BOX;
@@ -119,14 +120,14 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setHours(int hours) throws InterruptedException {
+	public CreatePanePage setHours(int hours) {
 		driver.doubleClickOn(CREATE_HOURS);
 		driver.write(String.valueOf(hours));
 		driver.type(KeyCode.TAB);
 		return this;
 	}
 
-	public CreatePanePage setMinutes(int minutes) throws InterruptedException {
+	public CreatePanePage setMinutes(int minutes) {
 		driver.doubleClickOn(CREATE_MINUTES);
 		driver.write(String.valueOf(minutes));
 		driver.type(KeyCode.TAB);
@@ -150,15 +151,46 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setFeePayerAccount(long accountID) {
-		driver.doubleClickOn(CREATE_FEE_PAYER_FIELD);
+		driver.clickOn(CREATE_FEE_PAYER_FIELD);
+		var node = driver.find(CREATE_FEE_PAYER_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
 		driver.write(String.valueOf(accountID));
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
+	public CreatePanePage setFeePayerAccount(String accountID) {
+		driver.clickOn(CREATE_FEE_PAYER_FIELD);
+		var node = driver.find(CREATE_FEE_PAYER_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
+		driver.write(accountID);
+
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
 	public CreatePanePage setNodeAccount(long accountID) {
-		driver.doubleClickOn(CREATE_NODE_FIELD);
+		driver.clickOn(CREATE_NODE_FIELD);
+		var node = driver.find(CREATE_NODE_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
 		driver.write(String.valueOf(accountID));
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+
+	public CreatePanePage setNodeAccount(String accountID) {
+		driver.clickOn(CREATE_NODE_FIELD);
+		var node = driver.find(CREATE_NODE_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
+		driver.write(accountID);
 		driver.type(KeyCode.TAB);
 		return this;
 	}
@@ -296,6 +328,38 @@ public class CreatePanePage {
 		return this;
 	}
 
+	public CreatePanePage setFromAccountTransfer(long accountNum) {
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
+		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
+		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
+		driver.write(Long.toString(accountNum));
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+	public CreatePanePage setFromAccountTransfer(String accountNum) {
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
+		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
+		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
+		driver.write(accountNum);
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+	public CreatePanePage setToAccountTransfer(long accountNum) {
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
+		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
+		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
+		driver.write(Long.toString(accountNum));
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+	public CreatePanePage setToAccountTransfer(String accountNum) {
+		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
+		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
+		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
+		driver.write(accountNum);
+		driver.type(KeyCode.TAB);
+		return this;
+	}
 	public CreatePanePage addCredit(long accountNum, double amount) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
@@ -312,6 +376,46 @@ public class CreatePanePage {
 
 	public CreatePanePage setUpdateAccount(long accountNumber) {
 		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
+		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
+		var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.write(Long.toString(accountNumber));
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+
+	public CreatePanePage setUpdateAccount(String accountNumber) {
+		driver.ensureVisible(driver.find(CREATE_UPDATE_ACCOUNT_ID));
+		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
+		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
+		var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.write(accountNumber);
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+
+	public CreatePanePage setUpdateFileID(String accountNumber) {
+		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_FILE_ID));
+		driver.doubleClickOn(CREATE_FILE_UPDATE_FILE_ID);
+		driver.clickOn(CREATE_FILE_UPDATE_FILE_ID);
+		var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.write(accountNumber);
+		driver.type(KeyCode.TAB);
+		return this;
+	}
+
+	public CreatePanePage setUpdateFileID(long accountNumber) {
+		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_FILE_ID));
+		driver.doubleClickOn(CREATE_FILE_UPDATE_FILE_ID);
+		driver.clickOn(CREATE_FILE_UPDATE_FILE_ID);
+		var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
 		driver.write(Long.toString(accountNumber));
 		driver.type(KeyCode.TAB);
 		return this;
@@ -398,8 +502,20 @@ public class CreatePanePage {
 
 	public CreatePanePage setEntityID(long id) {
 		driver.ensureVisible(driver.find(ENTITY_ID_FIELD));
-		driver.doubleClickOn(ENTITY_ID_FIELD);
+		driver.clickOn(ENTITY_ID_FIELD);
+		var node = driver.find(ENTITY_ID_FIELD);
+		assert node instanceof TextField;
+		((TextField) node).selectAll();
+		driver.type(KeyCode.BACK_SPACE);
 		driver.write(String.valueOf(id));
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setEntityID(String id) {
+		driver.ensureVisible(driver.find(ENTITY_ID_FIELD));
+		driver.doubleClickOn(ENTITY_ID_FIELD);
+		driver.write(id);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
