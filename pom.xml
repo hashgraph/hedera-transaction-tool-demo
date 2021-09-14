@@ -34,6 +34,7 @@
 		<module>tools-core</module>
 		<module>tools-cli</module>
 		<module>tools-ui</module>
+		<module>tools-integration</module>
 	</modules>
 
 	<packaging>pom</packaging>
