@@ -138,13 +138,13 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "0.50", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
 						"/test/resources/infos_temp", "-n", "integration" };
 		Exception exception1 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args1));
-		assertEquals("Hedera Client Runtime: 0.50 cannot be parsed as an account ID", exception1.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.50\" cannot be parsed", exception1.getMessage());
 
 		final String[] args2 =
 				{ "get-account-info", "-a", "0.0.50", "-p", "0.02", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
 						"/test/resources/infos_temp", "-n", "integration" };
 		Exception exception2 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args2));
-		assertEquals("Hedera Client Runtime: 0.02 cannot be parsed as an account ID", exception2.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.02\" cannot be parsed", exception2.getMessage());
 	}
 
 
@@ -186,7 +186,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "account", "-p", "2", "-k", "src/test/resources/Keys/genesis.pem", "-o",
 						"src/test/resources/infos_temp", "-n", "integration" };
 		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
-		assertEquals("java.lang.NumberFormatException: For input string: \"account\"", e.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"account\" cannot be parsed", e.getMessage());
 	}
 
 	@Test
@@ -196,7 +196,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 						"src/test/resources/infos_temp", "-n", "integration" };
 
 		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
-		assertEquals("java.lang.NumberFormatException: For input string: \"account\"", e.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"account\" cannot be parsed", e.getMessage());
 	}
 
 	@Test
