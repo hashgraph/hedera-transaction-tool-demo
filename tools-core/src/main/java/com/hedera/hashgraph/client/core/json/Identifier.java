@@ -171,13 +171,14 @@ public class Identifier implements Comparable<Identifier> {
 		}
 
 		var address = AddressChecksums.parseAddress(idC);
-		switch (address.getStatus()) {
-			case BAD_FORMAT:
-				throw new HederaClientRuntimeException(String.format("Bad account format: Address \"%s\" cannot be parsed", id));
-			case BAD_CHECKSUM:
-				throw new HederaClientRuntimeException(
-						String.format("Bad account checksum: Provided \"%s\", should be \"%s\"", address.getChecksum(),
-								address.getCorrectChecksum()));
+		if (address.getStatus() == AddressChecksums.parseStatus.BAD_FORMAT) {
+			throw new HederaClientRuntimeException(
+					String.format("Bad account format: Address \"%s\" cannot be parsed", id));
+		}
+		if (address.getStatus() == AddressChecksums.parseStatus.BAD_CHECKSUM) {
+			throw new HederaClientRuntimeException(
+					String.format("Bad account checksum: Provided \"%s\", should be \"%s\"", address.getChecksum(),
+							address.getCorrectChecksum()));
 		}
 		return new Identifier(address.getNum1(), address.getNum2(), address.getNum3());
 	}

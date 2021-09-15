@@ -880,29 +880,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		totalTransferLabel.setText(sign + totalString);
 	}
 
-	private void checkAccountIDAndMove(KeyEvent event, TextField start, TextField end, Label errorLabel) {
-		if (start.getText().equals("")) {
-			// This might happen due to the ENTER key "bouncing"
-			return;
-		}
-
-		if (event.getCode() == KeyCode.ENTER) {
-			if (checkAccount(start.getText())) {
-				var id = Identifier.parse(start.getText()).toNicknameAndChecksum(controller.getAccountsList());
-				start.setText(id);
-				start.setStyle(null);
-				start.setStyle(START_STYLE);
-				errorLabel.setVisible(false);
-				end.requestFocus();
-				return;
-			}
-			errorLabel.setVisible(true);
-			start.selectAll();
-		} else if (event.getCode() == KeyCode.ESCAPE) {
-			start.getParent().requestFocus();
-		}
-	}
-
 	private boolean checkAndFlagTransferFields() {
 
 		var flag = checkAndFlagCommonFields();
@@ -1040,17 +1017,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void transferTableEvents(TextField accountIDTextField, TextField amountTextField,
 			TableView<AccountAmountStrings> table, Button acceptButton, Label errorLabel) {
 
-		//poop
-//		accountIDTextField.setOnKeyReleased((KeyEvent event) -> checkAccountIDAndMove(event, accountIDTextField,
-//				amountTextField, errorLabel));
-//
-//		accountIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-//			if (Boolean.FALSE.equals(newPropertyValue)) {
-//				accountTFRemoveFocus(accountIDTextField, errorLabel);
-//			} else {
-//				errorLabel.setVisible(false);
-//			}
-//		});
 		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
 
 		amountTextField.setOnKeyReleased((KeyEvent event) -> {

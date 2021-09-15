@@ -29,7 +29,6 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
@@ -41,6 +40,7 @@ import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.opencsv.CSVWriter;
+import javafx.scene.Node;
 import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -75,9 +75,9 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static junit.framework.TestCase.assertEquals;
 
-public class BatchTransactionEndToEnd extends TestBase implements GenericFileReadWriteAware {
+public class BatchTransactionEndToEndTest extends TestBase implements GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEnd.class);
+	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
 	public static final String TRANSACTIONS = "src/test/resources/TempTransactions";
 	public static final String RECEIPTS = "src/test/resources/TempReceipts";
 	private static final int TEST_SIZE = 5;
@@ -193,7 +193,9 @@ public class BatchTransactionEndToEnd extends TestBase implements GenericFileRea
 		for (int i = 0; i < 9; i++) {
 			clickOn(keys.get(i));
 		}
-		clickOn("SIGN\u2026");
+		Node sign = find("SIGN\u2026");
+		ensureVisible(sign);
+		clickOn(sign);
 		enterPasswordInPopup();
 
 		while (true) {
@@ -202,11 +204,16 @@ public class BatchTransactionEndToEnd extends TestBase implements GenericFileRea
 			}
 		}
 
-		clickOn("ADD SIGNATURE");
+		Node addSignature = find("ADD SIGNATURE");
+		ensureVisible(addSignature);
+		clickOn(addSignature);
 		for (int i = 0; i < 8; i++) {
 			clickOn(keys.get(i));
 		}
-		clickOn("SIGN\u2026");
+		sign = find("SIGN\u2026");
+		ensureVisible(sign);
+		clickOn(sign);
+
 		enterPasswordInPopup();
 
 		while (true) {
@@ -215,11 +222,15 @@ public class BatchTransactionEndToEnd extends TestBase implements GenericFileRea
 			}
 		}
 
-		clickOn("ADD SIGNATURE");
+		addSignature = find("ADD SIGNATURE");
+		ensureVisible(addSignature);
+		clickOn(addSignature);
 		for (int i = 0; i < 7; i++) {
 			clickOn(keys.get(i));
 		}
-		clickOn("SIGN\u2026");
+		sign = find("SIGN\u2026");
+		ensureVisible(sign);
+		clickOn(sign);
 		enterPasswordInPopup();
 
 		while (true) {
@@ -228,7 +239,9 @@ public class BatchTransactionEndToEnd extends TestBase implements GenericFileRea
 			}
 		}
 
-		clickOn("ADD SIGNATURE");
+		addSignature = find("ADD SIGNATURE");
+		ensureVisible(addSignature);
+		clickOn(addSignature);
 
 		File[] summaryFiles = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -438,10 +451,6 @@ public class BatchTransactionEndToEnd extends TestBase implements GenericFileRea
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
-
-		Controller controller = new Controller();
-		var version = controller.getVersion();
-		properties.setVersionString(version);
 
 		if (new File(DEFAULT_STORAGE + "History").exists()) {
 			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
