@@ -43,7 +43,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class NewPasswordPopup {
-	public static final String TITLE_LABEL = "Change your password";
+	public static final String TITLE_LABEL = "Change your key's password";
 	public static final String WARNING_LABEL =
 			"Your new password will be checked against a list of common passwords, to increase your security.";
 	public static final String PASSWORD_LENGTH_LABEL = "Must be at least 10 characters.";
@@ -70,24 +70,13 @@ public class NewPasswordPopup {
 		var secondTitle = new Label("Confirm password");
 		Label secondExplanation = getLabel(MATCH_LABEL);
 
-		// Error Labels
-		Label error1 = getLabel(PASSWORD_LENGTH_LABEL);
-		error1.setStyle("-fx-text-fill: red");
-		error1.setWrapText(true);
-		error1.setVisible(false);
-
-		Label error2 = getLabel(MATCH_LABEL);
-		error2.setStyle("-fx-text-fill: red");
-		error2.setWrapText(true);
-		error2.setVisible(false);
-
 		// Setup enter password box and contents
 		var passwordField1 = new PasswordField();
 		HBox.setHgrow(passwordField1, Priority.ALWAYS);
 		var check1 = getCheck();
 		var bundlePassword = bundlePasswordAndCheck(passwordField1, check1);
 		var passwordBox = new VBox();
-		passwordBox.getChildren().addAll(firstTitle, bundlePassword, error1);
+		passwordBox.getChildren().addAll(firstTitle, bundlePassword, firstExplanation);
 		passwordBox.setSpacing(3);
 
 		// Setup confirm password box and contents
@@ -97,7 +86,7 @@ public class NewPasswordPopup {
 		var check2 = getCheck();
 		var bundleConfirmation = bundlePasswordAndCheck(passwordField2, check2);
 		var confirmBox = new VBox();
-		confirmBox.getChildren().addAll(secondTitle, bundleConfirmation, error2);
+		confirmBox.getChildren().addAll(secondTitle, bundleConfirmation, secondExplanation);
 		confirmBox.setSpacing(3);
 
 
@@ -108,17 +97,13 @@ public class NewPasswordPopup {
 		continueButton.visibleProperty().bind(check2.visibleProperty());
 		continueButton.managedProperty().bind(continueButton.visibleProperty());
 
-
 		// region EVENTS
-
-		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1,
-				event));
+		passwordField1.setOnKeyPressed(event -> keyPressedEvent(passwordField1, passwordField2, check1, event));
 		passwordField2.setOnKeyReleased(
-				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, error2, event));
+				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, event));
 		continueButton.setOnAction(actionEvent -> continueActionEvent(window, passwordField1, passwordField2));
 		cancelButton.setOnAction(actionEvent -> cancelActionEvent(window));
 		// endregion
-
 
 		var scene = new Scene(getMainBox(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar));
 		scene.getStylesheets().add("tools.css");
@@ -141,7 +126,7 @@ public class NewPasswordPopup {
 		var vBox = new VBox();
 
 		vBox.getChildren().addAll(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar);
-		vBox.setSpacing(10);
+		vBox.setSpacing(20);
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
 		return vBox;
@@ -208,51 +193,24 @@ public class NewPasswordPopup {
 	}
 
 	private static void keyReleasedEvent(Stage window, PasswordField passwordField1, PasswordField passwordField2,
-			Label check1, Label check2, Label error, KeyEvent event) {
+			Label check1, Label check2, KeyEvent event) {
 		check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
-		error.setVisible(!check2.isVisible());
 		if (event.getCode().equals(KeyCode.ENTER) &&
 				Arrays.equals(answer, passwordField2.getText().toCharArray())) {
 			window.close();
 		}
 	}
 
-
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1,
 			KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
-		final var status = policy.check(passwordField1.getText());
-		check1.setVisible(status.equals(Status.OK));
+		check1.setVisible(policy.check(passwordField1.getText()).equals(Status.OK));
 		if (check1.isVisible()) {
-			error1.setVisible(false);
 			passwordField2.setDisable(false);
-		} else {
-			error1.setText(getLegend(status));
-			error1.setWrapText(true);
-			error1.setVisible(true);
 		}
-		if ((event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(
-				KeyCode.TAB)) && check1.isVisible()) {
+		if (event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(KeyCode.TAB)) {
 			answer = passwordField1.getText().toCharArray();
+			passwordField1.setDisable(true);
 		}
-	}
-
-	private static String getLegend(Status status) {
-		var legend = "";
-		switch (status) {
-			case OK:
-				break;
-			case TOO_SHORT:
-				legend = PASSWORD_LENGTH_LABEL;
-				break;
-			case TOO_LONG:
-				legend = "The password must be at most 1024 characters long.";
-				break;
-			case BREACHED:
-				legend = "The password has been breached.";
-				break;
-		}
-		return legend;
 	}
 }

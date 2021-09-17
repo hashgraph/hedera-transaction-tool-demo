@@ -31,18 +31,21 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -57,6 +60,7 @@ import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,53 +170,6 @@ public class KeysPaneTest extends TestBase {
 	}
 
 	@Test
-	public void changeMnemonicPassword_test() {
-		keysPanePage.pressRecoveryPhrase()
-				.enterPopupPassword(PASSWORD);
-		VBox gridPaneVBox = find("#recoveryVBox");
-		assertNotNull(gridPaneVBox);
-		assertTrue(gridPaneVBox.isVisible());
-
-		var mnemonic = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
-
-		var change = find("CHANGE PASSWORD");
-		assertTrue(change.isVisible());
-		clickOn(change);
-		var passwordFields = keysPanePage.getPopupPasswordFields();
-		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
-		Assertions.assertFalse(passwordFields.get(1).isDisable());
-		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
-		var newPopupButtons = keysPanePage.getPopupButtons();
-		clickOn(newPopupButtons.get(0));
-		clickOn("CLOSE");
-		keysPanePage.pressRecoveryPhrase()
-				.enterPopupPassword(PASSWORD);
-		gridPaneVBox = find("#recoveryVBox");
-		assertNotNull(gridPaneVBox);
-		assertTrue(gridPaneVBox.isVisible());
-
-		var mnemonicAfterCancel = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
-		assertEquals(mnemonic, mnemonicAfterCancel);
-		assertTrue(change.isVisible());
-		clickOn(change);
-		passwordFields = keysPanePage.getPopupPasswordFields();
-		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
-		Assertions.assertFalse(passwordFields.get(1).isDisable());
-		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
-		var newPopupButtons1 = keysPanePage.getPopupButtons();
-		clickOn(newPopupButtons1.get(1));
-		var mnemonicBox = find("#mnemonicWordsVBox");
-		assertFalse(mnemonicBox.isVisible());
-
-		keysPanePage.pressRecoveryPhrase()
-				.enterPopupPassword("tempura sushi");
-		var mnemonicAfterChange = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
-
-		assertEquals(mnemonic, mnemonicAfterChange);
-
-	}
-
-	@Test
 	public void generateKeyWorkflow_Test() throws KeyStoreException {
 		logger.info("Generate keys test");
 		assertTrue(find(KEYS_GENERATE_KEYS).isVisible());
@@ -315,6 +272,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void recoverKey_Test() throws KeyStoreException {
+
 		logger.info("Recover keys test");
 		Ed25519KeyStore oldKeyStore = Ed25519KeyStore.read(PASSWORD.toCharArray(),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
@@ -383,8 +341,31 @@ public class KeysPaneTest extends TestBase {
 	@Test
 	public void showRecoveryPhrase_Test() {
 		logger.info("Recovery phrase button testing");
-		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
+
+		keysPanePage.pressRecoveryPhrase();
+		assertTrue(find("#recoveryPasswordVBox").isVisible());
+		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
+		assertFalse(find("#recoveryVBox").isVisible());
+		assertFalse(find("#phrasePasswordErrorLabel").isVisible());
+
+		logger.info("Wrong password test");
+		keysPanePage.enterMnemonicPasswordAndEnter("123");
+		sleep(5000);
+		assertTrue(find("#phrasePasswordErrorLabel").isVisible());
+		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
+
+		logger.info("Close view test");
+		keysPanePage.pressCloseViewMnemonic();
+		assertTrue(find("#btnShowMnemonicWords").isVisible());
+
+		logger.info("Correct password");
+		keysPanePage.pressRecoveryPhrase()
+				.enterMnemonicPasswordAndEnter(PASSWORD);
+
+
 		assertTrue(find("#recoveryVBox").isVisible());
+		assertFalse(find("#recoveryPasswordVBox").isVisible());
+
 		VBox gridPaneVBox1 = find("#recoveryVBox");
 		assertNotNull(gridPaneVBox1);
 		Label text = (Label) ((HBox) gridPaneVBox1.getChildren().get(1)).getChildren().get(0);
@@ -395,15 +376,36 @@ public class KeysPaneTest extends TestBase {
 		logger.info("Test view is reset after closing it");
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase();
+		assertTrue(find("#recoveryPasswordVBox").isVisible());
+		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
 		assertFalse(find("#recoveryVBox").isVisible());
+		assertFalse(find("#phrasePasswordErrorLabel").isVisible());
 
-		keysPanePage.pressCancelPassword();
-		assertFalse(find("#recoveryVBox").isVisible());
+		logger.info("Wrong password test");
+		keysPanePage.enterMnemonicPassword("123")
+				.pressEnterPassword();
+		assertTrue(find("#phrasePasswordErrorLabel").isVisible());
+		assertTrue(((PasswordField) find("#recoveryPasswordField")).getText().isEmpty());
+
+		logger.info("Close view test");
+		keysPanePage.pressCloseViewMnemonic();
+		assertTrue(find("#btnShowMnemonicWords").isVisible());
+
+		logger.info("Correct password");
+		keysPanePage.pressRecoveryPhrase()
+				.enterMnemonicPassword(PASSWORD)
+				.pressEnterPassword();
+		assertTrue(find("#recoveryVBox").isVisible());
+		assertFalse(find("#recoveryPasswordVBox").isVisible());
+
+		VBox gridPaneVBox2 = find("#recoveryVBox");
+		assertNotNull(gridPaneVBox2);
+
 	}
 
 	@Test
 	public void generateMissingPublicKey_Test() throws IOException {
-		keysPanePage.createKey("test", PASSWORD);
+		createKey("test", PASSWORD);
 		mainWindowPage.clickOnHomeButton();
 		FileUtils.moveFile(new File(DEFAULT_STORAGE + "/Keys/test.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/test_copy.pub"));
@@ -418,11 +420,11 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateMultipleMissingPublicKeys_Test() throws IOException {
-		keysPanePage.createKey("test1", PASSWORD);
-		keysPanePage.createKey("test2", PASSWORD);
-		keysPanePage.createKey("test3", PASSWORD);
-		keysPanePage.createKey("test4", PASSWORD);
-		keysPanePage.createKey("test5", PASSWORD);
+		createKey("test1", PASSWORD);
+		createKey("test2", PASSWORD);
+		createKey("test3", PASSWORD);
+		createKey("test4", PASSWORD);
+		createKey("test5", PASSWORD);
 
 		mainWindowPage.clickOnHomeButton();
 
@@ -454,11 +456,11 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void showKeyDetails_test() throws IOException {
-		keysPanePage.createKey("test1", PASSWORD);
-		keysPanePage.createKey("test2", PASSWORD);
-		keysPanePage.createKey("test3", PASSWORD);
-		keysPanePage.createKey("test4", PASSWORD);
-		keysPanePage.createKey("test5", PASSWORD);
+		createKey("test1", PASSWORD);
+		createKey("test2", PASSWORD);
+		createKey("test3", PASSWORD);
+		createKey("test4", PASSWORD);
+		createKey("test5", PASSWORD);
 
 		mainWindowPage.clickOnHomeButton();
 
@@ -582,9 +584,70 @@ public class KeysPaneTest extends TestBase {
 
 	}
 
+	private void changeNickname(String newName) {
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		assertTrue(popupNodes.get(popupNodes.size() - 1) instanceof Button);
+		Button continueButton = (Button) popupNodes.get(popupNodes.size() - 1);
+
+		// Change Nickname
+		ObservableList<Node> nicknameNodes = ((VBox) popupNodes.get(0)).getChildren();
+		assertTrue(nicknameNodes.get(0) instanceof Label);
+		assertTrue(nicknameNodes.get(1) instanceof HBox);
+
+		ObservableList<Node> nodes = ((HBox) nicknameNodes.get(1)).getChildren();
+
+		assertTrue(nodes.get(0) instanceof TextField);
+		assertTrue(nodes.get(1) instanceof Button);
+
+		((TextField) nodes.get(0)).setText(newName);
+		clickOn(nodes.get(1));
+		continuePopup();
+		clickOn(continueButton);
+	}
+
+	private void continuePopup() {
+		ObservableList<Node> popupContinueNodes = getPopupNodes();
+		assert popupContinueNodes != null;
+		VBox vBox = (VBox) popupContinueNodes.get(0);
+		for (Node popupContinueNode : vBox.getChildren()) {
+			if (popupContinueNode instanceof HBox) {
+				clickOn(popupContinueNode);
+			}
+		}
+	}
+
+	private boolean doesNameExist(String testString) {
+		VBox tableBox = find(SIGNING_KEYS_VBOX);
+		assertNotNull(tableBox);
+		ObservableList<Node> nodes = tableBox.getChildren();
+		assertEquals(2, nodes.size());
+		assertTrue(nodes.get(1) instanceof TableView);
+		TableView keysTable = (TableView) nodes.get(1);
+		List<KeysTableRow> tableRows = getPublicKeysTableRows(keysTable);
+		boolean stringExists = false;
+		for (KeysTableRow tableRow : tableRows) {
+			if (testString.equals(tableRow.getKeyName())) {
+				stringExists = true;
+			}
+		}
+		return stringExists;
+	}
+
+	private List<KeysTableRow> getPublicKeysTableRows(TableView keysTable) {
+		List<KeysTableRow> tableRows = new ArrayList<>();
+		ObservableList rowData = keysTable.getItems();
+		for (Object rowDatum : rowData) {
+			assertTrue(rowDatum instanceof KeysTableRow);
+			tableRows.add((KeysTableRow) rowDatum);
+		}
+		return tableRows;
+	}
+
+
 	@Test
 	public void linkPhraseToKey_Test() throws IOException, KeyStoreException {
-		keysPanePage.createKey("test1", PASSWORD);
+		createKey("test1", PASSWORD);
 		removeLineFromPem(DEFAULT_STORAGE + "Keys/test1.pem");
 
 		mainWindowPage.clickOnHomeButton().clickOnKeysButton();
@@ -650,6 +713,30 @@ public class KeysPaneTest extends TestBase {
 
 	// region AUXILIARY METHODS
 
+	private KeysPanePage createKey(String name, String password) {
+		return keysPanePage
+				.pressGenerateKeyButton()
+				.enterNickName(name)
+				.pressOnCreateKeysButton()
+				.enterPopupPassword(password)
+				.closePasswordPopup();
+
+	}
+
+	private Stage getTopModalStage() {
+		// Get a list of windows but ordered from top[0] to bottom[n] ones.
+		// It is needed to get the first found modal window.
+		final List<Window> allWindows = new ArrayList<>(robotContext().getWindowFinder().listWindows());
+		Collections.reverse(allWindows);
+
+		return (Stage) allWindows
+				.stream()
+				.filter(window -> window instanceof Stage)
+				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
+				.findFirst()
+				.orElse(null);
+	}
+
 	private void removeLineFromPem(String pemFile) throws FileNotFoundException {
 		List<String> lines = new ArrayList<>();
 		BufferedReader reader;
@@ -675,67 +762,6 @@ public class KeysPaneTest extends TestBase {
 		}
 
 	}
-
-	private void changeNickname(String newName) {
-		ObservableList<Node> popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		assertTrue(popupNodes.get(popupNodes.size() - 1) instanceof Button);
-		Button continueButton = (Button) popupNodes.get(popupNodes.size() - 1);
-
-		// Change Nickname
-		ObservableList<Node> nicknameNodes = ((VBox) popupNodes.get(0)).getChildren();
-		assertTrue(nicknameNodes.get(0) instanceof Label);
-		assertTrue(nicknameNodes.get(1) instanceof HBox);
-
-		ObservableList<Node> nodes = ((HBox) nicknameNodes.get(1)).getChildren();
-
-		assertTrue(nodes.get(0) instanceof TextField);
-		assertTrue(nodes.get(1) instanceof Button);
-
-		((TextField) nodes.get(0)).setText(newName);
-		clickOn(nodes.get(1));
-		continuePopup();
-		clickOn(continueButton);
-	}
-
-	private void continuePopup() {
-		ObservableList<Node> popupContinueNodes = getPopupNodes();
-		assert popupContinueNodes != null;
-		VBox vBox = (VBox) popupContinueNodes.get(0);
-		for (Node popupContinueNode : vBox.getChildren()) {
-			if (popupContinueNode instanceof HBox) {
-				clickOn(popupContinueNode);
-			}
-		}
-	}
-
-	private boolean doesNameExist(String testString) {
-		VBox tableBox = find(SIGNING_KEYS_VBOX);
-		assertNotNull(tableBox);
-		ObservableList<Node> nodes = tableBox.getChildren();
-		assertEquals(2, nodes.size());
-		assertTrue(nodes.get(1) instanceof TableView);
-		TableView keysTable = (TableView) nodes.get(1);
-		List<KeysTableRow> tableRows = getPublicKeysTableRows(keysTable);
-		boolean stringExists = false;
-		for (KeysTableRow tableRow : tableRows) {
-			if (testString.equals(tableRow.getKeyName())) {
-				stringExists = true;
-			}
-		}
-		return stringExists;
-	}
-
-	private List<KeysTableRow> getPublicKeysTableRows(TableView keysTable) {
-		List<KeysTableRow> tableRows = new ArrayList<>();
-		ObservableList rowData = keysTable.getItems();
-		for (Object rowDatum : rowData) {
-			assertTrue(rowDatum instanceof KeysTableRow);
-			tableRows.add((KeysTableRow) rowDatum);
-		}
-		return tableRows;
-	}
-
 	// endregion
 
 }

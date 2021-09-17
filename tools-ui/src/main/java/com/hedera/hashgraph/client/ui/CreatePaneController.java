@@ -30,7 +30,6 @@ import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
@@ -172,9 +171,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
 	public static final String MEMO_PROPERTY = "memo";
 	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
-	public static final String TEXTFIELD_ERROR = "-fx-text-fill: red; -fx-background-radius: 10;-fx-border-radius: 10";
-	public static final String TEXTFIELD_DEFAULT =
-			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 
@@ -456,7 +452,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateFromNickName.managedProperty().bind(updateFromNickName.visibleProperty());
 		updateCopyFromAccountHBox.getChildren().clear();
 		updateCopyFromAccountHBox.getChildren().add(updateFromNickName);
-		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate, updateAccountID.getParent());
+		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate);
 
 		updateAccountID.setOnKeyPressed(keyEvent -> {
 			final var keyCode = keyEvent.getCode();
@@ -504,7 +500,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		formatAccountTextField(updateFileID, invalidUpdateFileToUpdate, updateFileID.getParent());
+		formatAccountTextField(updateFileID, invalidUpdateFileToUpdate);
 
 		contentsLink.setOnAction(actionEvent -> {
 			final var destFile =
@@ -580,7 +576,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		systemActionChoiceBox.getSelectionModel().selectedIndexProperty().addListener(
 				(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
 
-		formatAccountTextField(entityID, invalidEntity, entityID.getParent());
+		formatAccountTextField(entityID, invalidEntity);
 	}
 
 	private void setupTooltips() {
@@ -1039,19 +1035,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void transferTableEvents(TextField accountIDTextField, TextField amountTextField,
 			TableView<AccountAmountStrings> table, Button acceptButton, Label errorLabel) {
+		accountIDTextField.setOnKeyReleased((KeyEvent event) -> checkAccountIDAndMove(event, accountIDTextField,
+				amountTextField, errorLabel));
 
-		//poop
-//		accountIDTextField.setOnKeyReleased((KeyEvent event) -> checkAccountIDAndMove(event, accountIDTextField,
-//				amountTextField, errorLabel));
-//
-//		accountIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-//			if (Boolean.FALSE.equals(newPropertyValue)) {
-//				accountTFRemoveFocus(accountIDTextField, errorLabel);
-//			} else {
-//				errorLabel.setVisible(false);
-//			}
-//		});
-		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
+		accountIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				accountTFRemoveFocus(accountIDTextField, errorLabel);
+			} else {
+				errorLabel.setVisible(false);
+			}
+		});
 
 		amountTextField.setOnKeyReleased((KeyEvent event) -> {
 			if (event.getCode() == KeyCode.TAB) {
@@ -1777,8 +1770,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				minuteFieldSystem, secondsFieldSystem, systemCreateLocalTimeLabel);
 
 		// endregion
-		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
-		formatAccountTextField(feePayerAccountField, invalidFeePayer, feePayerAccountField.getParent());
+		formatAccountTextField(nodeAccountField, invalidNode);
+		formatAccountTextField(feePayerAccountField, invalidFeePayer);
 
 		createCommentsTextArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
 			setTextSizeLimit(createCommentsTextArea, LIMIT, oldValue, newValue);
@@ -1945,12 +1938,18 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return flag;
 	}
 
-	private void formatAccountTextField(TextField textField, Label errorLabel, Node nextNode) {
+	private void formatAccountTextField(TextField textField, Label errorLabel) {
 		textField.setOnKeyReleased((KeyEvent event) -> {
-			textField.setStyle(TEXTFIELD_DEFAULT);
-			errorLabel.setVisible(false);
 			if (event.getCode() == KeyCode.ENTER) {
-				nextNode.requestFocus();
+				var account = textField.getText();
+				try {
+					var id = Identifier.parse(account);
+					textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+					textField.getParent().requestFocus();
+					errorLabel.setVisible(false);
+				} catch (Exception e) {
+					errorLabel.setVisible(true);
+				}
 			}
 		});
 		textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
@@ -1961,45 +1960,19 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void accountTFRemoveFocus(TextField textField, Label errorLabel) {
-		var account = textField.getText();
-		if ("".equals(account)) {
-			return;
+		try {
+			if ("".equals(textField.getText())) {
+				return;
+			}
+			var account = textField.getText();
+			var id = Identifier.parse(account);
+			textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+			errorLabel.setVisible(false);
+		} catch (Exception e) {
+			logger.error(e);
+			controller.displaySystemMessage(e);
+			errorLabel.setVisible(true);
 		}
-		if (Utilities.isNumeric(account)) {
-			account = "0.0." + account;
-		}
-
-		var parsedAddress = AddressChecksums.parseAddress(account);
-		switch (parsedAddress.getStatus()) {
-			case BAD_FORMAT:
-				textField.setStyle(TEXTFIELD_ERROR);
-				errorLabel.setVisible(true);
-				PopupMessage.display("Account format error",
-						"The account format cannot be parsed. Acceptable formats are:\n" +
-								" \u2022 XX (e.g. 12345),\n" +
-								" \u2022 XX.XX.XX (e.g. 1.2.345), or\n" +
-								" \u2022 XX.XX.XX-CCCCC (e.g. 1.2.345-abcde)");
-				errorLabel.requestFocus();
-				break;
-			case BAD_CHECKSUM:
-				textField.setStyle(TEXTFIELD_ERROR);
-				errorLabel.setVisible(true);
-				PopupMessage.display("Incorrect Checksum",
-						String.format(
-								"The checksum entered does not correspond to the account. Please check and try again" +
-										".\nThe correct checkum is \"%s\"",
-								parsedAddress.getCorrectChecksum()));
-				errorLabel.requestFocus();
-				break;
-			case GOOD_NO_CHECKSUM:
-			case GOOD_WITH_CHECKSUM:
-				textField.setStyle(TEXTFIELD_DEFAULT);
-				var id = Identifier.parse(account);
-				textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-				errorLabel.setVisible(false);
-		}
-
-
 	}
 
 	private void formatHBarTextField(TextField textField) {

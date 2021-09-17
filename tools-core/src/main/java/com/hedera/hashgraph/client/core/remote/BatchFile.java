@@ -127,7 +127,7 @@ public class BatchFile extends RemoteFile {
 			return;
 		}
 
-		// Submission-time line
+		// Submission time line
 		if (checkTime(fileDetails, csvList)) {
 			return;
 		}

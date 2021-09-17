@@ -77,8 +77,16 @@ public class MainWindowPage {
 		return new MainWindowPage(driver);
 	}
 
-	public MainWindowPage clickPopupContinue(){
-		var nodes = TestUtil.getPopupNodes();
-		return this;
+	public MainWindowPage clickOnBatchButton() {
+
+		driver.find(BATCH_BUTTON);
+		driver.clickOn(BATCH_BUTTON);
+		return new MainWindowPage(driver);
 	}
+
+	public String getTitle() {
+		Label title = driver.find(TITLE_LABEL);
+		return title.getText();
+	}
+
 }

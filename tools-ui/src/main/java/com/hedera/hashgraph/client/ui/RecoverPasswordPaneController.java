@@ -159,6 +159,7 @@ public class RecoverPasswordPaneController {
 				(observableValue, s, t1) -> recoverReCheckPassword.setVisible(
 						t1.equals(recoverAppPasswordField.getText())));
 
+
 		recoverReEnterPasswordField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER) && recoverChangePasswordButton.isVisible()) {
 				acceptPassword();
@@ -167,8 +168,8 @@ public class RecoverPasswordPaneController {
 
 		recoverChangePasswordButton.visibleProperty().bind(
 				recoverCheckPassword.visibleProperty().and(recoverReCheckPassword.visibleProperty()));
-
 		recoverChangePasswordButton.setOnAction(event -> acceptPassword());
+
 	}
 
 	private void initializeKeysVBox() {

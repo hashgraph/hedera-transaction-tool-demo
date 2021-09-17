@@ -70,6 +70,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -83,11 +84,13 @@ import java.util.prefs.Preferences;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_HIGHLIGHT_COLOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
@@ -98,7 +101,6 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.getSaltBytes;
 import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
 import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
@@ -222,7 +224,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				updateHelper.handleMigration();
 				replacePublicKey();
 			} catch (HederaClientException | IOException e) {
-				logger.error("Cannot complete migration {}", e.getMessage());
+				logger.error("Cannot complete migration {}", e.toString());
 			}
 		}
 
@@ -271,7 +273,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		try {
 			Files.deleteIfExists(Path.of(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION));
 		} catch (IOException e) {
-			logger.error(e.getMessage());
+			logger.error(e);
 		}
 		// Then replace it with the key provided in the app resources.
 		InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
@@ -286,7 +288,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			assert readStream != null;
 			IOUtils.copy(readStream, outputStream);
 		} catch (IOException exception) {
-			logger.error(exception.getMessage());
+			logger.error(exception);
 		}
 	}
 
@@ -406,7 +408,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					org.apache.commons.io.FileUtils.moveFile(new File(hardCodedMnemonic),
 							new File(getPreferredStorageDirectory(), MNEMONIC_PATH));
 				} catch (IOException e) {
-					logger.error(e.getMessage());
+					logger.error(e);
 					displaySystemMessage(Arrays.toString(e.getStackTrace()));
 				}
 				return true;
@@ -416,7 +418,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	public void logAndDisplayError(Exception e) {
-		logger.error(e.getMessage());
+		logger.error(e);
 		displaySystemMessage(e.toString());
 	}
 	//region NAVIGATION
@@ -619,7 +621,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var d = new Date();
 		systemMessagesTextField.appendText(
 				d + ": " + exception.toString() + System.getProperty("line.separator"));
-		logger.error(exception.getMessage());
+		logger.error(exception);
 	}
 
 	/**
@@ -667,7 +669,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 						String.format("Software updated from version %s to version %s on %s", oldVersion, newVersion,
 								new Date()));
 			} catch (IOException e) {
-				logger.error(e.getMessage());
+				logger.error(e);
 			}
 		}
 	}
@@ -685,7 +687,17 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 	public byte[] getSalt() {
-		return getSaltBytes(properties);
+		if (properties.hasSalt()) {
+			var token = properties.getHash();
+			var decoder = Base64.getDecoder();
+
+			var tokenBytes = decoder.decode(token);
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
+				logger.error("Token size check failed");
+			}
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+		}
+		return new byte[SALT_LENGTH];
 	}
 
 	//region PROPERTIES
@@ -801,6 +813,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	public void setSalt(boolean b) {
 		properties.setSalt(b);
+	}
+
+	public void setMnemonicHashCode(int hashCode) {
+		properties.setMnemonicHashCode(hashCode);
 	}
 
 	public String getEmailFromMap(String path) {

@@ -19,10 +19,13 @@
 package com.hedera.hashgraph.client.core.remote.helpers;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import org.junit.jupiter.api.Test;
 
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,16 +42,14 @@ class BatchLineTest {
 
 		var parsed = BatchLine.parse(line, hours, minutes);
 		assertEquals("{\"receiverAccountID\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":15299}," +
-						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"," +
-						"\"memo" +
-						"\":\"\"}",
+						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"}",
 				parsed.toString());
 
 		assertEquals(new Timestamp(1830926100, 0), parsed.getDate());
 		assertEquals(new Identifier(0, 0, 15299), parsed.getReceiverAccountID());
 		assertEquals(16666700000000L, parsed.getAmount());
 
-		assertEquals(1074973882, parsed.hashCode());
+		assertEquals(1281602566, parsed.hashCode());
 
 		Exception exception = assertThrows(HederaClientException.class, () -> BatchLine.parse(line, 30, minutes));
 		assertEquals("Hedera Client: Out of range exception: hour", exception.getMessage());
@@ -63,9 +64,6 @@ class BatchLineTest {
 		parsed.setDate(new Timestamp(1830826100, 1000));
 		assertEquals(new Timestamp(1830826100, 1000), parsed.getDate());
 		assertNotEquals(1281602566, parsed.hashCode());
-
-		parsed.setMemo("memo line");
-		assertEquals("memo line", parsed.getMemo());
 
 	}
 
@@ -95,35 +93,5 @@ class BatchLineTest {
 		assertTrue(parsed0.compareTo(BatchLine.parse(line1, hours0, minutes0)) < 0);
 		assertTrue(parsed0.compareTo(BatchLine.parse(line2, hours0, minutes0)) > 0);
 		assertTrue(parsed0.compareTo(BatchLine.parse(line3, hours0, minutes0)) < 0);
-	}
-
-	@Test
-	void newParse_test() throws HederaClientException {
-		var line = "0.0.15299,16666700000000,1/8/28, \"memo line\"";
-		var hours = 6;
-		var minutes = 35;
-
-		var parsed = BatchLine.parse(line, hours, minutes);
-		assertEquals("{\"receiverAccountID\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":15299}," +
-						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"," +
-						"\"memo" +
-						"\":\"memo line\"}",
-				parsed.toString());
-
-		assertEquals(new Timestamp(1830926100, 0), parsed.getDate());
-		assertEquals(new Identifier(0, 0, 15299), parsed.getReceiverAccountID());
-		assertEquals(16666700000000L, parsed.getAmount());
-		assertEquals("memo line", parsed.getMemo());
-
-		var line0 = "0.0.15299,16666700000000,1/8/28, another memo ";
-		var hours0 = 6;
-		var minutes0 = 35;
-
-		var line1 = "0.0.15299,16666700000000,1/8/28, yet another memo ";
-		final var parsed0 = BatchLine.parse(line0, hours0, minutes0);
-		final var parsed1 = BatchLine.parse(line1, hours0, minutes0);
-		assertNotEquals(parsed0, parsed1);
-		assertTrue(parsed0.compareTo(parsed1) < 0);
-
 	}
 }

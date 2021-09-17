@@ -64,7 +64,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 			BatchLine line =
 					new BatchLine.Builder().withAmount("123654").withReceiverAccountID(
 							new Identifier(0, 0, 1003 + i).toReadableString()).withTimeStamp("12/12/21"
-							, 3, 45).withMemo(String.format("memo line %d", i)).build();
+							, 3, 45).build();
 			maker.buildBundle(line, (!keyPairs.isEmpty()) ? keyPairs.get(0) : null);
 		}
 

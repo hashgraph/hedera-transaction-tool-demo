@@ -32,8 +32,6 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 import java.util.Objects;
 
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertNotNull;
 
 public class RecoverPasswordPage {
@@ -73,6 +71,7 @@ public class RecoverPasswordPage {
 				break;
 			}
 		}
+//		driver.type(KeyCode.TAB);
 		return this;
 	}
 
@@ -137,12 +136,6 @@ public class RecoverPasswordPage {
 
 	public RecoverPasswordPage pressFinishButton() {
 		driver.clickOn("#recoverFinishButton");
-		return this;
-	}
-
-	public RecoverPasswordPage clickOnPopupButton(String buttonName) {
-		var button = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), buttonName);
-		driver.clickOn(button);
 		return this;
 	}
 

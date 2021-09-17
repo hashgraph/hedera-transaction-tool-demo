@@ -22,12 +22,14 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.RecoverPasswordPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.VBox;
@@ -45,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.ui.InitialStartupPaneControllerTest.PASSWORD;
@@ -56,6 +59,7 @@ import static org.junit.Assert.assertTrue;
 public class RecoverPasswordPaneControllerTest extends TestBase {
 
 	private RecoverPasswordPage recoverPasswordPage;
+	private MainWindowPage mainWindowPage;
 	private UserAccessibleProperties properties;
 	private final Logger logger = LogManager.getLogger(RecoverPasswordPaneControllerTest.class);
 
@@ -181,6 +185,8 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.setWords(testWords)
 				.acceptWords();
 
+		assertFalse(find("#recoverSelectedKeysVBox").isVisible());
+		assertFalse(find("#recoverNoKeysVBox").isVisible());
 
 		assertTrue(find("#recoverPasswordVBox").isVisible());
 
@@ -233,12 +239,15 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter();
 
-		assertTrue(find("#recoverFinishVBox").isVisible());
+		assertFalse(find("#recoverSelectedKeysVBox").isVisible());
+		assertTrue(find("#recoverNoKeysVBox").isVisible());
 	}
 
 	@Test
 	public void enterNewPassword_Test() throws TimeoutException {
+
 		setStage();
+
 		recoverPasswordPage.clearWords()
 				.setWords(testWords)
 				.acceptWords()
@@ -266,8 +275,8 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertTrue(find("#recoverChangePasswordButton").isVisible());
 
 		recoverPasswordPage.acceptPasswordEnter()
-				.clickOnPopupButton("CONTINUE")
-				.clickOnPopupButton("CONTINUE");
+				.clickContinue()
+				.clickContinueTwo();
 
 		assertTrue(find("#recoverFinishVBox").isVisible());
 	}
@@ -321,6 +330,7 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordButton();
+		sleep(5000);
 
 		recoverPasswordPage.clickContinue()
 				.clickContinueTwo();
@@ -342,8 +352,8 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
-				.clickOnPopupButton("CONTINUE")
-				.clickOnPopupButton("CONTINUE")
+				.clickContinue()
+				.clickContinueTwo()
 				.pressFinishButton();
 
 		String newHash = properties.getHash();
@@ -355,6 +365,21 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 		assertTrue(passwordAuthenticator.authenticate(PASSWORD.toCharArray(), newHash));
 
 		recoverPasswordPage.finish("CONTINUE");
+
+		closeUI();
+
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		mainWindowPage = new MainWindowPage(this);
+		mainWindowPage.clickOnKeysButton();
+
+		VBox signingBox = find("#signingKeysVBox");
+		ObservableList<Node> signing = signingBox.getChildren();
+		assertEquals(2, signing.size());
+		TableView signingTable = (TableView) signing.get(1);
+		assertTrue(signingTable.isVisible());
 	}
 
 	@Test
@@ -374,8 +399,25 @@ public class RecoverPasswordPaneControllerTest extends TestBase {
 				.enterNewPassword(PASSWORD)
 				.reEnterNewPassword(PASSWORD)
 				.acceptPasswordEnter()
-				.clickOnPopupButton("CONTINUE")
-				.clickOnPopupButton("CONTINUE")
+				.clickContinue();
+
+
+		ObservableList<Node> popupNodes =
+				((VBox) Objects.requireNonNull(TestUtil.getPopupNodes()).get(0)).getChildren();
+		Label label = new Label();
+
+		for (Node n :
+				popupNodes) {
+			if (n instanceof Label) {
+				label = (Label) n;
+			}
+		}
+
+		assertFalse(label.getText().isEmpty());
+		assertEquals("The key recovery could not be verified using the public key. Key testKey will not be recovered",
+				label.getText());
+
+		recoverPasswordPage.clickContinueThree()
 				.pressFinishButton();
 
 		String newHash = properties.getHash();

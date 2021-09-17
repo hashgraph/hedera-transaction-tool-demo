@@ -164,7 +164,7 @@
 											onAction="#cancelAddToEmailMap" prefWidth="200.0"
 											style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: #0b9dfd;"
 											text="CANCEL" visible="false"/>
-									<Button fx:id="confirmAddFolderButtonSP" mnemonicParsing="false"
+									<Button fx:id="confirmAddFolderButton" mnemonicParsing="false"
 											onAction="#addFolderEmailToMapAction" prefWidth="200.0"
 											style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: white;"
 											text="SAVE" visible="false"/>

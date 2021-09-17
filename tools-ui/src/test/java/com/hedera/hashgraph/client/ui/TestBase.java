@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.ui;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
-import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +54,7 @@ public class TestBase extends ApplicationTest {
 	public static void setupHeadlessMode() {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
+
 
 		if (Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
@@ -206,37 +206,5 @@ public class TestBase extends ApplicationTest {
 			logger.error("Token size check failed");
 		}
 		return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-	}
-
-	public void ensureVisible(Node node) {
-		Node p = node.getParent();
-		while (!(p instanceof ScrollPane)) {
-			try {
-				p = p.getParent();
-			} catch (Exception e) {
-				//not inside a scroll pane
-				logger.error(e.getMessage());
-				return;
-			}
-		}
-
-		var scrollPane = (ScrollPane) p;
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
-				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
-
-		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
-
-		if (nodeMaxY < 0) {
-			// currently, located above (remember, top left is (0,0))
-			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
-		} else if (nodeMinY > viewport.getHeight()) {
-			// currently, located below
-			vValueDelta = (nodeMinY) / contentHeight;
-		}
-		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
 }

@@ -27,11 +27,7 @@ import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.SettingsPanePage;
-import com.hedera.hashgraph.client.ui.pages.TestUtil;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -82,7 +78,7 @@ public class SettingsPaneTest extends TestBase {
 	public void setUp() throws Exception {
 
 		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
 		if (!new File(DEFAULT_STORAGE + "/Files/").exists()) {
@@ -94,20 +90,22 @@ public class SettingsPaneTest extends TestBase {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
-				"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 			logger.info("Output path created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
-						"/InputFiles/").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/OneDrive/SecondDrive" +
+						"/InputFiles" +
+						"/").mkdirs()) {
 			logger.info("Second input folder created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
-						"/OutputFiles/test@testemail.net").mkdirs()) {
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/OneDrive/SecondDrive" +
+						"/OutputFiles" +
+						"/test@testemail.net").mkdirs()) {
 			logger.info("Second output folder created");
 		}
 
@@ -115,7 +113,7 @@ public class SettingsPaneTest extends TestBase {
 		Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();
@@ -128,20 +126,21 @@ public class SettingsPaneTest extends TestBase {
 		var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
+		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
-		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
+		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
-		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
+		org.apache.commons.io.FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
 
 		if (new File(DEFAULT_STORAGE + "/History").exists()) {
-			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "/History"));
+			org.apache.commons.io.FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "/History"));
 		}
 
 		settingsPanePage = new SettingsPanePage(this);
 		mainWindowPage = new MainWindowPage(this);
+		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
 		properties.setHash("123456789".toCharArray());
 		startApplication();
 		mainWindowPage.clickOnSettingsButton();
@@ -174,8 +173,7 @@ public class SettingsPaneTest extends TestBase {
 			assertFalse(((TextField) find(TRANSACTION_FEE_TF)).getText().isEmpty());
 
 			assertEquals(properties.getPreferredStorageDirectory(), ((TextField) find(LOAD_STORAGE_TF)).getText());
-			final var defaultNodeID =
-					Identifier.parse(properties.getDefaultNodeID()).toNicknameAndChecksum(new JsonObject());
+			final var defaultNodeID = Identifier.parse(properties.getDefaultNodeID()).toNicknameAndChecksum(new JsonObject());
 			assertEquals(defaultNodeID, ((TextField) find(NODE_ID_TF)).getText());
 			assertEquals(properties.getTxValidDuration(),
 					Integer.parseInt(((TextField) find(TX_VALID_DURATION_TF)).getText().replaceAll(" ", "")));
@@ -240,125 +238,75 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	public void cancelAddFolder_Tests() {
-		Node node = find("#transactionFoldersVBoxSP");
+		try {
+			Node node;
 
-		assertTrue(node instanceof VBox);
-		settingsPanePage.pressEditFolder((HBox) (((VBox) find("#transactionFoldersVBoxSP")).getChildren()).get(0));
+			settingsPanePage.pressEditFolder((HBox) (((VBox) find("#transactionFoldersVBox")).getChildren()).get(0));
+			node = find("#transactionFoldersVBox");
 
-		assertEquals(1, ((VBox) node).getChildren().size());
-		assertTrue(find("#cancelAddToEmailMapButton").isVisible());
+			assertTrue(node instanceof VBox);
+			assertEquals(0, ((VBox) node).getChildren().size());
+			assertTrue(find("#cancelAddToEmailMapButton").isVisible());
 
-		settingsPanePage.cancelAddToMap()
-				.pressAddFolder();
+			settingsPanePage.cancelAddToMap()
+					.pressAddFolder();
 
-		node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
-		assertEquals(1, ((VBox) node).getChildren().size());
-		assertTrue(find("#cancelAddToEmailMapButton").isVisible());
+			node = find("#transactionFoldersVBox");
+			assertTrue(node instanceof VBox);
+			assertEquals(1, ((VBox) node).getChildren().size());
+			assertTrue(find("#cancelAddToEmailMapButton").isVisible());
 
-		settingsPanePage.cancelAddToMap();
-		assertFalse(find("#addPathGridPane").isVisible());
+			settingsPanePage.cancelAddToMap();
+			assertFalse(find("#addPathGridPane").isVisible());
 
-		node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
-		assertEquals(1, ((VBox) node).getChildren().size());
+			node = find("#transactionFoldersVBox");
+			assertTrue(node instanceof VBox);
+			assertEquals(1, ((VBox) node).getChildren().size());
 
-		settingsPanePage.pressAddFolder()
-				.setPathAndEmail("src/test/resources/OneDrive/SecondDrive/", "test@testemail.net")
-				.pressConfirmAddFolder();
+			settingsPanePage.pressAddFolder()
+					.setPathAndEmail("src/test/resources/OneDrive/SecondDrive/", "test@testemail.net")
+					.pressConfirmAddFolder();
 
-		node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
+			node = find("#transactionFoldersVBox");
+			assertTrue(node instanceof VBox);
 
-		assertEquals(2, ((VBox) node).getChildren().size());
+			assertEquals(2, ((VBox) node).getChildren().size());
 
-		settingsPanePage.pressEditFolder((HBox) (((VBox) find("#transactionFoldersVBoxSP")).getChildren()).get(0));
-		node = find("#transactionFoldersVBoxSP");
+			settingsPanePage.pressEditFolder((HBox) (((VBox) find("#transactionFoldersVBox")).getChildren()).get(0));
+			node = find("#transactionFoldersVBox");
 
-		assertTrue(node instanceof VBox);
-		assertEquals(2, ((VBox) node).getChildren().size());
+			assertTrue(node instanceof VBox);
+			assertEquals(1, ((VBox) node).getChildren().size());
 
-		settingsPanePage.cancelAddToMap();
-		assertFalse(find("#addPathGridPane").isVisible());
+			settingsPanePage.cancelAddToMap();
+			assertFalse(find("#addPathGridPane").isVisible());
 
-		node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
+			node = find("#transactionFoldersVBox");
+			assertTrue(node instanceof VBox);
 
-		assertEquals(2, ((VBox) node).getChildren().size());
-
-	}
-
-	@Test
-	public void addFolderNoStructureCancel_Tests() {
-		Node node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
-		settingsPanePage.pressAddFolder()
-				.setPath("src/test/resources");
-		ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
-		assert popupNodes != null;
-		assertEquals(1, popupNodes.size());
-		assertTrue(popupNodes.get(0) instanceof VBox);
-		var children = ((VBox) popupNodes.get(0)).getChildren();
-
-		assertTrue(children.get(0) instanceof Label);
-		assertTrue(children.get(1) instanceof HBox);
-
-		var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
-		assertEquals(2, buttons.size());
-		assertTrue(buttons.get(0) instanceof Button);
-		assertTrue(buttons.get(1) instanceof Button);
-
-		clickOn(buttons.get(1));
-
-		assertTrue(find(ONEDRIVE_EMAIL_TF).isDisabled());
-
-		assertFalse(new File("src/test/resources/InputFiles").exists());
-		assertFalse(new File("src/test/resources/OutputFiles").exists());
-		assertFalse(new File("src/test/resources/OutputFiles/test@testemail.net").exists());
-	}
-
-	@Test
-	public void addFolderNoStructureCreate_Tests() {
-		Node node = find("#transactionFoldersVBoxSP");
-		assertTrue(node instanceof VBox);
-		settingsPanePage.pressAddFolder()
-				.setPath("src/test/resources")
-				.createPopup();
-
-		assertFalse(find(ONEDRIVE_EMAIL_TF).isDisabled());
-
-		settingsPanePage.setEmail("test@testemail.net").pressConfirmAddFolder().createPopup();
-		assertTrue(new File("src/test/resources/InputFiles").exists());
-		assertTrue(new File("src/test/resources/OutputFiles").exists());
-		assertTrue(new File("src/test/resources/OutputFiles/test@testemail.net").exists());
-
+			assertEquals(2, ((VBox) node).getChildren().size());
+		} catch (Exception e) {
+			logger.error(e);
+		}
 	}
 
 	@After
 	public void tearDown() throws IOException {
 		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		String s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
 		String out =
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
-		FileUtils.cleanDirectory(new File(out));
+		org.apache.commons.io.FileUtils.cleanDirectory(new File(out));
 
 		properties.resetProperties();
 
 		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
-
-		if (new File("src/test/resources/InputFiles").exists()) {
-			FileUtils.deleteDirectory(new File("src/test/resources/InputFiles"));
-		}
-		if (new File("src/test/resources/OutputFiles").exists()) {
-			FileUtils.deleteDirectory(new File("src/test/resources/OutputFiles"));
-		}
-
 	}
 }

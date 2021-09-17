@@ -24,14 +24,12 @@ import javafx.beans.property.SimpleDoubleProperty;
 import java.io.File;
 
 public class Constants {
+	public static final int MIN_PASSWORD_LENGTH = 10;
+	public static final int MAX_PASSWORD_LENGTH = 1024;
+
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
-
-	public static final int MIN_PASSWORD_LENGTH = 10;
-	public static final int MAX_PASSWORD_LENGTH = 1024;
-	public static final int MNEMONIC_SIZE = 24;
-
 
 	// region FILE EXTENSIONS
 	public static final String PK_EXTENSION = "pem";

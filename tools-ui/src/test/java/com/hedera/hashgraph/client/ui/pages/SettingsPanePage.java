@@ -19,17 +19,16 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ADD_FOLDER_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CANCEL_ADD_FOLDER_BUTTON;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CONFIRM_ADD_FOLDER_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NODE_ID_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ONEDRIVE_EMAIL_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ONEDRIVE_PATH_TF;
@@ -38,7 +37,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_HOURS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_MINUTES_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_SECONDS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SettingsPanePage {
@@ -119,46 +117,13 @@ public class SettingsPanePage {
 	public SettingsPanePage setPathAndEmail(String path, String email) {
 		driver.clickOn(ONEDRIVE_PATH_TF);
 		driver.write(path);
-		driver.clickOn(ONEDRIVE_PATH_TF);
-		driver.press(KeyCode.ENTER);
-		driver.release(KeyCode.ENTER);
 		driver.clickOn(ONEDRIVE_EMAIL_TF);
 		driver.write(email);
 		return this;
 	}
 
 	public SettingsPanePage pressConfirmAddFolder() {
-		driver.clickOn("#confirmAddFolderButtonSP");
-		return this;
-	}
-
-	public SettingsPanePage setPath(String path) {
-		Node pathField = driver.find(ONEDRIVE_PATH_TF);
-		((TextField) pathField).clear();
-		driver.clickOn(ONEDRIVE_PATH_TF);
-		driver.write(path);
-		driver.clickOn(ONEDRIVE_PATH_TF);
-		driver.press(KeyCode.ENTER);
-		driver.release(KeyCode.ENTER);
-		return this;
-	}
-
-	public SettingsPanePage setEmail(String email) {
-		driver.clickOn(ONEDRIVE_EMAIL_TF);
-		driver.write(email);
-		return this;
-	}
-
-	public SettingsPanePage createPopup() {
-		ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
-		assert popupNodes != null;
-		var children = ((VBox) popupNodes.get(0)).getChildren();
-
-
-		var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
-		assertEquals(2, buttons.size());
-
-		driver.clickOn(buttons.get(0));
+		driver.clickOn(CONFIRM_ADD_FOLDER_BUTTON);
 		return this;
 	}
 }

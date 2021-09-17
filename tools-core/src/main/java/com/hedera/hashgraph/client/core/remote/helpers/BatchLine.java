@@ -40,14 +40,12 @@ public class BatchLine implements Comparable<BatchLine> {
 	private final Identifier receiverAccountID;
 	private final long amount;
 	private Timestamp date;
-	private String memo;
 
 
-	private BatchLine(Identifier receiverAccountID, long amount, Timestamp date, String memo) {
+	private BatchLine(Identifier receiverAccountID, long amount, Timestamp date) {
 		this.receiverAccountID = receiverAccountID;
 		this.amount = amount;
 		this.date = date;
-		this.memo = memo;
 	}
 
 	public static BatchLine parse(String line, int hour, int minutes) throws HederaClientException {
@@ -59,18 +57,15 @@ public class BatchLine implements Comparable<BatchLine> {
 			throw new HederaClientException(OUT_OF_RANGE_EXCEPTION_MESSAGE + "minute");
 		}
 
-		var fields = line.replace("\"", "").split("[,]");
+		var fields = line.replace("\"", "").replace(" ", "").split("[,]");
 		if (fields.length < 3) {
 			throw new HederaClientRuntimeException(String.format("Missing fields in: %s", line));
 		}
 
-		String lineMemo = fields.length > 3 ? fields[3] : "";
-
 		return new BatchLine.Builder()
-				.withReceiverAccountID(fields[0].replace(" ", ""))
-				.withAmount(fields[1].replace(" ", ""))
-				.withTimeStamp(fields[2].replace(" ", ""), hour, minutes)
-				.withMemo(lineMemo)
+				.withReceiverAccountID(fields[0])
+				.withAmount(fields[1])
+				.withTimeStamp(fields[2], hour, minutes)
 				.build();
 	}
 
@@ -90,21 +85,12 @@ public class BatchLine implements Comparable<BatchLine> {
 		this.date = date;
 	}
 
-	public String getMemo() {
-		return memo;
-	}
-
-	public void setMemo(String memo) {
-		this.memo = memo;
-	}
-
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
 				.append("receiverAccountID", receiverAccountID)
 				.append("amount", amount)
 				.append("dateTime", date.toString())
-				.append("memo", memo)
 				.toString();
 	}
 
@@ -119,14 +105,13 @@ public class BatchLine implements Comparable<BatchLine> {
 		var batchLine = (BatchLine) o;
 		return amount == batchLine.amount &&
 				receiverAccountID.equals(batchLine.receiverAccountID) &&
-				date.equals(batchLine.date) &&
-				memo.equals(batchLine.memo);
+				date.equals(batchLine.date);
 	}
 
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(receiverAccountID, amount, date, memo);
+		return Objects.hash(receiverAccountID, amount, date);
 	}
 
 	@Override
@@ -147,18 +132,13 @@ public class BatchLine implements Comparable<BatchLine> {
 			return this.getReceiverAccountID().compareTo(o.getReceiverAccountID());
 		}
 
-		if (this.getAmount() != o.getAmount()) {
-			return Long.compare(this.getAmount(), o.getAmount());
-		}
-
-		return this.getMemo().compareTo(o.getMemo());
+		return Long.compare(this.getAmount(), o.getAmount());
 	}
 
 	public static final class Builder {
 		private Identifier receiverAccountID;
 		private long amount;
 		private Timestamp timestamp;
-		private String memo;
 
 		public Builder() {
 			// Empty default constructor
@@ -211,13 +191,8 @@ public class BatchLine implements Comparable<BatchLine> {
 			return this;
 		}
 
-		public Builder withMemo(String memo) {
-			this.memo = memo.trim();
-			return this;
-		}
-
 		public BatchLine build() {
-			return new BatchLine(receiverAccountID, amount, timestamp, memo);
+			return new BatchLine(receiverAccountID, amount, timestamp);
 		}
 
 
