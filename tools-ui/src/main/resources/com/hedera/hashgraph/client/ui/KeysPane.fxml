@@ -21,7 +21,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.Cursor?>
@@ -189,13 +188,6 @@
 					</VBox>
 					<VBox fx:id="mnemonicWordsVBox" spacing="5.0" style="-fx-background-color: white;"
 						  HBox.hgrow="ALWAYS">
-						<VBox fx:id="recoveryPasswordVBox" alignment="CENTER_LEFT" spacing="20.0">
-							<Label text="In order to view your recovery phrase, please enter your password:"/>
-							<HBox alignment="CENTER" spacing="30.0">
-								<PasswordField fx:id="recoveryPasswordField" maxWidth="250.0" minWidth="250.0"
-											   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							</HBox>
-						</VBox>
 						<VBox fx:id="recoveryVBox" minWidth="0.0" spacing="20.0" visible="false">
 							<Label text="This is a unique group of words that will serve as a backup in case you ever need to recover your keys. A copy of this recovery phrase should be kept separately from the application."
 								   wrapText="true"/>
@@ -213,12 +205,12 @@
 						<HBox alignment="CENTER_RIGHT" spacing="5.0">
 							<Button fx:id="copyMnemonicToClipboard" minWidth="200.0" mnemonicParsing="false"
 									onAction="#copyPhraseToClipBoard"
-									style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
+									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
 									text="COPY"/>
-							<Button fx:id="acceptRecoveryPassword" minWidth="200.0" mnemonicParsing="false"
-									onAction="#recoveryPassword"
-									style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;"
-									text="ACCEPT"/>
+							<Button fx:id="changePasswordKP" minWidth="200.0" mnemonicParsing="false"
+									onAction="#changePasswordAction"
+									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
+									text="CHANGE PASSWORD"/>
 							<Button fx:id="cancelEditMnemonicButton" minWidth="200.0" mnemonicParsing="false"
 									onAction="#closeMnemonicBox"
 									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"

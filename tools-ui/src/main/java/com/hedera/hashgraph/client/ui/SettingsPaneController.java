@@ -96,7 +96,7 @@ public class SettingsPaneController {
 	public Label accountIDErrorLabel;
 
 	public Button addFolderButton;
-	public Button confirmAddFolderButton;
+	public Button confirmAddFolderButtonSP;
 	public Button browseNewFolderButton;
 	public Button cancelAddToEmailMapButton;
 
@@ -123,6 +123,7 @@ public class SettingsPaneController {
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
 	public TextField versionLabel;
+	public Button confirmAddFolderButton;
 
 
 	@FXML
@@ -139,7 +140,7 @@ public class SettingsPaneController {
 			settingScrollPane.setFitToWidth(true);
 			// bindings
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
-					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButton, cancelAddToEmailMapButton,
+					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButtonSP, cancelAddToEmailMapButton,
 					browseNewFolderButton, deleteImage, editImage);
 
 			//Initialize drive builder
@@ -152,7 +153,7 @@ public class SettingsPaneController {
 					.withEmailTextField(emailTextFieldSP)
 					.withDrivesErrorLabel(drivesErrorLabelSP)
 					.withAddToEmailMapButton(addFolderButton)
-					.withConfirmAddFolderButton(confirmAddFolderButton)
+					.withConfirmAddFolderButton(confirmAddFolderButtonSP)
 					.withBrowseNewFolderButton(browseNewFolderButton)
 					.withAddFolderPathHBox(addFolderPathHBoxSP)
 					.withCancelAddToEmailMapButton(cancelAddToEmailMapButton)

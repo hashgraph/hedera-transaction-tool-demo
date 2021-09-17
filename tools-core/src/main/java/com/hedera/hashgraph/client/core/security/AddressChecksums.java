@@ -68,6 +68,14 @@ public class AddressChecksums {
 					isValid, status, num1, num2, num3, correctChecksum,
 					givenChecksum, noChecksumFormat, withChecksumFormat);
 		}
+
+		public parseStatus getStatus() {
+			return status;
+		}
+
+		public String getCorrectChecksum() {
+			return correctChecksum;
+		}
 	}
 
 

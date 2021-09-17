@@ -50,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -59,6 +58,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkPasswordPolicy;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.clearPasswordFields;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.deleteDirectory;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setupCharacterCount;
 
@@ -108,6 +108,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public Label drivesErrorLabel;
 	public Label mnemonicErrorMessage;
 	public Label copyToClipboardLabel;
+	public Label matchPassword;
 
 	public TextField hiddenPathInitial;
 	public TextField pathTextField;
@@ -349,15 +350,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public void acceptPassword() throws HederaClientException {
 		password = appPasswordField.getText().toCharArray();
 		acceptPasswordButton.setVisible(false);
-		acceptPasswordButton.setDisable(true);
-		var filler = new char[password.length];
-		Arrays.fill(filler, 'x');
-		appPasswordField.clear();
-		reEnterPasswordField.clear();
-		appPasswordField.setText(String.valueOf(filler));
-		reEnterPasswordField.setText(String.valueOf(filler));
-		appPasswordField.setDisable(true);
-		reEnterPasswordField.setDisable(true);
+		clearPasswordFields(acceptPasswordButton, password, appPasswordField,
+				reEnterPasswordField);
 		properties.setHash(password);
 
 		// Show the next box
@@ -435,16 +429,16 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 			reCheckPassword.setVisible(false);
 			setupCharacterCount(appPasswordField, characterCount, checkPassword, passwordErrorLabel,
 					reEnterPasswordField);
-			if (isNotTabOrEnter(keyEvent)) {
-				passwordErrorLabel.setVisible(false);
-				return;
-			}
 			checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+
 		});
 
 		appPasswordField.setOnKeyPressed(keyEvent -> {
-			if (!isNotTabOrEnter(keyEvent)) {
+			if (isTabOrEnter(keyEvent)) {
 				checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
+				if (checkPassword.isVisible()) {
+					reEnterPasswordField.requestFocus();
+				}
 			}
 		});
 
@@ -453,8 +447,10 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				reCheckPassword.setVisible(true);
 				acceptPasswordButton.setVisible(true);
 				acceptPasswordButton.setDisable(false);
+				matchPassword.setVisible(false);
 			} else {
 				reCheckPassword.setVisible(false);
+				matchPassword.setVisible(true);
 				acceptPasswordButton.setVisible(false);
 				acceptPasswordButton.setDisable(true);
 			}
@@ -469,8 +465,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private boolean isNotTabOrEnter(KeyEvent keyEvent) {
-		return !(keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
+	private boolean isTabOrEnter(KeyEvent keyEvent) {
+		return (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
 	}
 
 	/**
