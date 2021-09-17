@@ -55,6 +55,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
@@ -167,6 +168,9 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 
 		// Node ID
 		input.add(NODE_ID_FIELD_NAME, new Identifier(node).asJSON());
+
+		// Memo
+		input.addProperty(MEMO_FIELD_NAME, distributionData.getMemo());
 
 		// Transfer
 		var jsonArray = new JsonArray();
