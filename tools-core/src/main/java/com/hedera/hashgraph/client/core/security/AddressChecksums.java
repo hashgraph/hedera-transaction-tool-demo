@@ -77,7 +77,7 @@ public class AddressChecksums {
 			return correctChecksum;
 		}
 
-		public String getChecksum() {
+    public String getChecksum() {
 			return givenChecksum;
 		}
 
@@ -92,6 +92,7 @@ public class AddressChecksums {
 		public int getNum3() {
 			return num3;
 		}
+
 	}
 
 
