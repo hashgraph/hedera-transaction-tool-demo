@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -157,10 +158,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	private Map<String, List<String>> verifyTransactions() throws HederaClientException {
-		Map<String, List<String>> verifyWithFiles = new HashMap<>();
+		Map<String, Set<String>> verifyWithFiles = new HashMap<>();
 
 		Set<AccountId> requiredIds = new HashSet<>();
-		List<String> ids = new ArrayList<>();
+		Set<String> ids = new HashSet<>();
 
 
 		for (var entry : transactions.entrySet()) {
@@ -173,7 +174,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			ids.addAll(getAccountIds(helper));
 			ids.addAll(getPublicKeyNames(helper));
-			verifyWithFiles.put(helper.getTransactionFile(), ids);
+
+			List<String> sortedIDs = new ArrayList<>(ids);
+			Collections.sort(sortedIDs);
+			verifyWithFiles.put(FilenameUtils.getBaseName(helper.getTransactionFile()), ids);
 		}
 
 		for (AccountId requiredId : requiredIds) {
@@ -184,7 +188,17 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 		}
 
-		return verifyWithFiles;
+		Map<String, List<String>> verifyTransactions = new HashMap<>();
+		for (Map.Entry<String, Set<String>> entry : verifyWithFiles.entrySet()) {
+			var key = entry.getKey();
+			var value = entry.getValue();
+			List<String> sortedIDs = new ArrayList<>(value);
+			Collections.sort(sortedIDs);
+			verifyTransactions.put(key, sortedIDs);
+		}
+
+
+		return verifyTransactions;
 	}
 
 	private List<String> getPublicKeyNames(CollatorHelper helper) {
