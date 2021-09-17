@@ -24,6 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.ContractId;
@@ -36,6 +37,8 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+
+import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 public class Identifier implements Comparable<Identifier> {
 
@@ -160,37 +163,24 @@ public class Identifier implements Comparable<Identifier> {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
 
-		if (id.contains("(")) {
-			return parse(id.substring(id.indexOf("(") + 1, id.indexOf("-")));
+		// If it has a nickname, remove it.
+		var idC = id.contains("(") ? id.substring(id.indexOf("(") + 1, id.indexOf(")")) : id;
+
+		if (isNumeric(idC)) {
+			return new Identifier(0, 0, Long.parseLong(idC));
 		}
 
-		if (id.contains("-")) {
-			return parse(id.substring(0, id.indexOf("-")));
+		var address = AddressChecksums.parseAddress(idC);
+		if (address.getStatus() == AddressChecksums.parseStatus.BAD_FORMAT) {
+			throw new HederaClientRuntimeException(
+					String.format("Bad account format: Address \"%s\" cannot be parsed", id));
 		}
-
-
-		var parts = id.split("\\.");
-
-		if (parts.length == 1) {
-			return new Identifier(0, 0, componentToLong(parts[0]));
+		if (address.getStatus() == AddressChecksums.parseStatus.BAD_CHECKSUM) {
+			throw new HederaClientRuntimeException(
+					String.format("Bad account checksum: Provided \"%s\", should be \"%s\"", address.getChecksum(),
+							address.getCorrectChecksum()));
 		}
-
-		if (parts.length == 3) {
-			final var realmId = componentToLong(parts[0]);
-			final var shardId = componentToLong(parts[1]);
-			final var accountId = componentToLong(parts[2]);
-			return new Identifier(realmId, shardId, accountId);
-		}
-
-		throw new HederaClientRuntimeException(String.format("%s cannot be parsed as an account ID", id));
-	}
-
-	private static long componentToLong(final String component) {
-		try {
-			return Long.parseLong(component);
-		} catch (NumberFormatException ex) {
-			throw new HederaClientRuntimeException(ex);
-		}
+		return new Identifier(address.getNum1(), address.getNum2(), address.getNum3());
 	}
 
 	public long getRealmNum() {

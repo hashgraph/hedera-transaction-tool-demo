@@ -100,8 +100,7 @@ public class GetAccountInfoCommand implements ToolCommand {
 					continue;
 				}
 				var id = Identifier.parse(account).asAccount();
-				AccountInfo accountInfo;
-				accountInfo = getAccountInfo(client, id);
+				AccountInfo accountInfo = getAccountInfo(client, id);
 				writeJsonObject(String.format("%s/%s.json", directory, id), JsonUtils.accountInfoToJson(accountInfo));
 				writeBytes(String.format("%s/%s.info", directory, id), accountInfo.toBytes());
 

@@ -211,6 +211,11 @@ public class BatchLine implements Comparable<BatchLine> {
 			return this;
 		}
 
+		public Builder withTimeStamp(Timestamp timestamp){
+			this.timestamp = timestamp;
+			return this;
+		}
+
 		public Builder withMemo(String memo) {
 			this.memo = memo.trim();
 			return this;

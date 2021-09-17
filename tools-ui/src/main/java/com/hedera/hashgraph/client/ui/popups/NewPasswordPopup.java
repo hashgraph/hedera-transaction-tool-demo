@@ -65,10 +65,8 @@ public class NewPasswordPopup {
 
 		Label warningLabel = getLabel(WARNING_LABEL);
 		var firstTitle = new Label("Password");
-		Label firstExplanation = getLabel(PASSWORD_LENGTH_LABEL);
 
 		var secondTitle = new Label("Confirm password");
-		Label secondExplanation = getLabel(MATCH_LABEL);
 
 		// Error Labels
 		Label error1 = getLabel(PASSWORD_LENGTH_LABEL);
