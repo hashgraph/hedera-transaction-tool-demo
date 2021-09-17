@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.integration;
 
 import com.hedera.hashgraph.client.cli.ToolsMain;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -72,7 +71,9 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static junit.framework.TestCase.assertEquals;
 
 public class BatchTransactionEndToEndTest extends TestBase implements GenericFileReadWriteAware {
@@ -300,7 +301,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		assertEquals(12, files.length);
 
 
-		final String[] args = { "collate", "-f", TRANSACTIONS, "-a", Constants.ACCOUNTS_INFO_FOLDER };
+		final String[] args = { "collate", "-f", TRANSACTIONS, "-a", ACCOUNTS_INFO_FOLDER, "-k", KEYS_FOLDER };
 		ToolsMain.main(args);
 
 		for (File file : files) {
@@ -344,7 +345,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			PrecheckStatusException, ReceiptStatusException {
 		// create payer account
 		var keyStore =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
 		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
