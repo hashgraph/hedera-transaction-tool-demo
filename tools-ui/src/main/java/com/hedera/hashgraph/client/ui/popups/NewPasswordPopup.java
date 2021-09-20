@@ -109,7 +109,7 @@ public class NewPasswordPopup {
 
 		// region EVENTS
 
-		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1,
+		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1, check2,
 				event));
 		passwordField2.setOnKeyReleased(
 				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, error2, event));
@@ -217,8 +217,7 @@ public class NewPasswordPopup {
 
 
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1,
-			KeyEvent event) {
+			Label error1, Label check2, KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var status = policy.check(passwordField1.getText());
 		check1.setVisible(status.equals(Status.OK));
@@ -229,11 +228,15 @@ public class NewPasswordPopup {
 			error1.setText(getLegend(status));
 			error1.setWrapText(true);
 			error1.setVisible(true);
+			check2.setVisible(false);
 		}
 		if ((event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(
 				KeyCode.TAB)) && check1.isVisible()) {
 			answer = passwordField1.getText().toCharArray();
 		}
+
+		check2.setVisible(passwordField1.getText().equals(passwordField2.getText()));
+
 	}
 
 	private static String getLegend(Status status) {
