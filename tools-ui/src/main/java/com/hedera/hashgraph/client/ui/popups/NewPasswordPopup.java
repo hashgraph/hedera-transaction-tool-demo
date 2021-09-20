@@ -54,16 +54,22 @@ public class NewPasswordPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static char[] display() {
+	public static char[] display(){
+		return display(TITLE_LABEL, WARNING_LABEL);
+	}
 
+	public static char[] display(String title){
+		return display(title, WARNING_LABEL);
+	}
 
+	public static char[] display(String title, String message) {
 		Stage window = getStage();
 
 		// Setup labels
-		var titleLabel = new Label(TITLE_LABEL);
+		var titleLabel = new Label(title);
 		titleLabel.setStyle("-fx-font-size: 20");
 
-		Label warningLabel = getLabel(WARNING_LABEL);
+		Label warningLabel = getLabel(message);
 		var firstTitle = new Label("Password");
 
 		var secondTitle = new Label("Confirm password");
@@ -215,10 +221,8 @@ public class NewPasswordPopup {
 		}
 	}
 
-
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1,
-			KeyEvent event) {
+			Label error1, KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var status = policy.check(passwordField1.getText());
 		check1.setVisible(status.equals(Status.OK));

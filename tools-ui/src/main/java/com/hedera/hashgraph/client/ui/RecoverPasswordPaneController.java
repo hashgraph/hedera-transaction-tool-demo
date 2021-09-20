@@ -245,7 +245,7 @@ public class RecoverPasswordPaneController {
 		// Store the mnemonic and password hash
 		try {
 			controller.setHash(password);
-			mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), false);
+			mnemonicPhraseHelper.generatePassphraseEvent(controller.getSalt(), false);
 		} catch (HederaClientException e) {
 			logger.error(e.getMessage());
 		}

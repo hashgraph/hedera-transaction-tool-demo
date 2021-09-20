@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Dictionary;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.popups.MnemonicBox;
+import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
@@ -134,7 +135,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	public void generatePassphraseEvent(char[] password, byte[] salt, boolean showPopup) {
+	public void generatePassphraseEvent(byte[] salt, boolean showPopup) {
 		var words = getWordsFromGridPane();
 
 		final var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
@@ -159,15 +160,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			mnemonicErrorMessage.setVisible(true);
 		}
 
-		try {
-			if (password != null) {
-				storeMnemonic(password, salt);
-				Arrays.fill(password, 'x');
-			}
-		} catch (Exception e) {
-			logger.error(e);
-			mnemonic = null;
-		}
 
 		try {
 			var gridPane = new GridPane();
@@ -201,6 +193,17 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		}
 
+		var password = NewPasswordPopup.display("Recovery phrase password");
+		try {
+			if (password != null) {
+				storeMnemonic(password, salt);
+				properties.setHash(password);
+				Arrays.fill(password, 'x');
+			}
+		} catch (Exception e) {
+			logger.error(e);
+			mnemonic = null;
+		}
 		generateKeys.setVisible(false);
 		finishBox.setVisible(true);
 	}
