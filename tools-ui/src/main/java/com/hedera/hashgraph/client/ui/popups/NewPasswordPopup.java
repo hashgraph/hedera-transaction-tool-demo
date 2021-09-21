@@ -58,10 +58,6 @@ public class NewPasswordPopup {
 		return display(TITLE_LABEL, WARNING_LABEL);
 	}
 
-	public static char[] display(String title){
-		return display(title, WARNING_LABEL);
-	}
-
 	public static char[] display(String title, String message) {
 		Stage window = getStage();
 

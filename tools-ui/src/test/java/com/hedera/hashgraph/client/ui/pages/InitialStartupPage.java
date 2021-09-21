@@ -30,9 +30,13 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCEPT_APP_PASSWORD;
@@ -53,6 +57,8 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_FIELD_TWO;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.STORAGE_BUTTON_BAR;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.USERNAME_BUTTON_BAR;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 
 
 public class InitialStartupPage {
@@ -281,4 +287,43 @@ public class InitialStartupPage {
 		driver.clickOn(paste);
 		return this;
 	}
+
+	public InitialStartupPage enterNewPasswordInPopup(String password) {
+		var passwordFields = getPopupPasswordFields();
+		passwordFields.get(0).clear();
+		typePassword(password, passwordFields.get(0));
+		typePassword(password, passwordFields.get(1));
+		var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
+		driver.clickOn(continueButton);
+		return this;
+	}
+
+	public void typePassword(String s, PasswordField field) {
+		field.setText(s);
+		driver.clickOn(field);
+		driver.type(KeyCode.SHIFT);
+	}
+
+	private List<PasswordField> getPopupPasswordFields() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		return getAllPasswordFields(popupNodes);
+	}
+
+	private List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
+		List<PasswordField> passwordFields = new ArrayList<>();
+		for (Node node : nodes) {
+			if (node instanceof HBox) {
+				passwordFields.addAll(getAllPasswordFields(((HBox) node).getChildren()));
+			}
+			if (node instanceof VBox) {
+				passwordFields.addAll(getAllPasswordFields(((VBox) node).getChildren()));
+			}
+			if (node instanceof PasswordField) {
+				passwordFields.add((PasswordField) node);
+			}
+		}
+		return passwordFields;
+	}
+
 }

@@ -183,6 +183,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		hiddenPathInitial.clear();
 
 		resetPassphraseBox();
+
 		drivesBox.setVisible(true);
 		finishBox.setVisible(false);
 
@@ -294,7 +295,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Generate the mnemonic passphrase and display it for the user in the designated area
 	 */
 	public void generatePassphraseEvent() {
-		mnemonicPhraseHelper.generatePassphraseEvent(controller.getSalt(), true);
+		mnemonicPhraseHelper.generatePassphraseEvent(true);
 		copyToClipBoardButton.setVisible(true);
 		controller.setLegacy(false);
 	}
@@ -303,7 +304,9 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Clean up the mnemonic passphrase box after a reset
 	 */
 	private void resetPassphraseBox() {
-		passphraseBox.setVisible(false);
+		if (properties.getOneDriveCredentials().isEmpty()) {
+			passphraseBox.setVisible(false);
+		}
 		phraseBox.getChildren().clear();
 		var mnemonicGridPane = new GridPane();
 		mnemonicPhraseHelper.setupEmptyMnemonicBox(mnemonicGridPane);
