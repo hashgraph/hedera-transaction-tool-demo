@@ -1953,7 +1953,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				PopupMessage.display("Incorrect Checksum",
 						String.format(
 								"The checksum entered does not correspond to the account. Please check and try again" +
-										".\nThe correct checkum is \"%s\"",
+										".\nThe correct checkum is \"%s\".",
 								parsedAddress.getCorrectChecksum()));
 				errorLabel.requestFocus();
 				break;
