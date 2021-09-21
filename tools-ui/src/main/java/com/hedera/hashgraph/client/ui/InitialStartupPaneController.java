@@ -359,23 +359,23 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 			logger.info("Directory already exists");
 		}
 
-		if (new File(String.format("%s/Accounts/", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
-		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
-			logger.info("User files folder has been created");
-		}
-		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
-			logger.info("System files folder has been created");
-		}
-		if (new File(String.format("%s/Keys/", location)).mkdirs()) {
-			logger.info("Keys folder has been created");
-		}
-		if (new File(String.format("%s/History/", location)).mkdirs()) {
-			logger.info("History folder has been created");
-		}
-		if (new File(String.format("%s/logs/", location)).mkdirs()) {
-			logger.info("Log folder has been created");
+		setupDirectory(location, "Accounts", "Files/UserFiles", "Files/.System", "Keys", "History", "logs");
+	}
+
+
+	/**
+	 * Creates a series of directories if they don't exist
+	 *
+	 * @param location
+	 * 		the root of the directories
+	 * @param s
+	 * 		a set of strings
+	 */
+	private void setupDirectory(String location, String... s) {
+		for (String s1 : s) {
+			if (new File(location, s1).mkdirs()) {
+				logger.info("{} folder has been created", s1);
+			}
 		}
 	}
 
