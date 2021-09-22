@@ -247,8 +247,7 @@ public class NewPasswordPopupTest extends TestBase {
 		Ed25519KeyStore keyStore = null;
 		Exception e = assertThrows(KeyStoreException.class, () -> Ed25519KeyStore.read(PASSWORD.toCharArray(),
 				pemFile));
-		assertEquals("org.bouncycastle.pkcs.PKCSException: unable to read encrypted data: Error finalising cipher",
-				e.getMessage());
+		assertTrue(e.getMessage().contains("PKCSException"));
 		try {
 			keyStore = Ed25519KeyStore.read("tempura sushi".toCharArray(), pemFile);
 		} catch (KeyStoreException exception) {
