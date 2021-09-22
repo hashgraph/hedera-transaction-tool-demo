@@ -80,6 +80,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -154,16 +155,17 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
 		try {
+			// Only refresh if there have been changes in the remotes or the history
+			var countFiles = countTotalFiles();
+			if (updateNotNeeded(countFiles)) {
+				setForceUpdate(false);
+				return;
+			}
+			setForceUpdate(true);
+			remoteFilesMap.clearMap();
 			loadHistory();
 			loadRemoteFilesMap();
 
-			// Only refresh if there have been changes in the remotes or the history
-			var countFiles = remoteFilesMap.size();
-			if (updateNotNeeded(countFiles)) {
-				return;
-			}
-
-			setForceUpdate(false);
 			lastCount = countFiles;
 
 			loadHistoryBox(historyFiles);
@@ -198,6 +200,16 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		Platform.runLater(() -> homeFilesScrollPane.setVvalue(0.0));
 		logger.info("Home pane initialized");
 		historyChanged = false;
+		setForceUpdate(false);
+	}
+
+	private int countTotalFiles() {
+		var count = 0;
+		final var outs = controller.getOneDriveCredentials();
+		for (var inputLocation : outs.keySet()) {
+			count += Objects.requireNonNull(new File(inputLocation, "InputFiles").listFiles()).length;
+		}
+		return count;
 	}
 
 	public boolean updateNotNeeded(int countFiles) {
@@ -265,7 +277,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	 */
 	private void loadInputFolderIntoMap(List<String> inputFolder) throws HederaClientException {
 		var version = controller.getVersion();
-
 		for (var s : inputFolder) {
 			var count = remoteFilesMap.size();
 			var fileService = FileAdapterFactory.getAdapter(s);
@@ -670,7 +681,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			var processBuilder = new ProcessBuilder("/usr/bin/open", localLocation);
 			var process = processBuilder.start();
-			int exitCode = process.waitFor();
+			var exitCode = process.waitFor();
 
 			if (exitCode == 0) {
 				System.exit(0);
@@ -1060,7 +1071,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private void handleLessThanPages(int pages) {
 		var i = 0;
 		while (i < pages) {
-			Button b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
+			var b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
 			pagesHBox.getChildren().add(b);
 			i++;
 		}
@@ -1125,7 +1136,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var imageView = new ImageView(image);
 		imageView.setPreserveRatio(true);
 		imageView.setFitHeight(15);
-		Button toolTipButton = getToolTipButton(imageView);
+		var toolTipButton = getToolTipButton(imageView);
 
 		var titleBox = new HBox();
 		titleBox.getChildren().addAll(title, toolTipButton);
@@ -1135,7 +1146,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		vBox.setVisible(true);
 
 		vBox.managedProperty().bind(vBox.visibleProperty());
-		GridPane gridPane = getCheckboxesGridPane();
+		var gridPane = getCheckboxesGridPane();
 		vBox.getChildren().add(gridPane);
 
 		filterVBox.getChildren().clear();
