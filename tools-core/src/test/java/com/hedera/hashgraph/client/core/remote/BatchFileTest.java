@@ -34,11 +34,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.zip.ZipInputStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static junit.framework.TestCase.assertNotNull;
@@ -135,6 +132,21 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
+	public void checksums_test() throws IOException {
+		var badFile = new File("src/test/resources/Files/batchFileTests/badSender2.csv");
+		var badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+
+		badFile = new File("src/test/resources/Files/batchFileTests/badNode2.csv");
+		badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+
+		badFile = new File("src/test/resources/Files/batchFileTests/badTransferId2.csv");
+		badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+	}
+
+	@Test
 	public void getters_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		var info = FileDetails.parse(file);
@@ -211,26 +223,4 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 	}
 
-	private void unzip(File zip) throws IOException {
-		var fileZip = zip.getAbsolutePath();
-		var destDir = new File(fileZip.replace(".zip", ""));
-		if (destDir.mkdirs()) {
-			logger.info("Destination directory created");
-		}
-		var buffer = new byte[1024];
-		var zis = new ZipInputStream(new FileInputStream(fileZip));
-		var zipEntry = zis.getNextEntry();
-		while (zipEntry != null) {
-			var newFile = new File(destDir, zipEntry.getName());
-			var fos = new FileOutputStream(newFile);
-			int len;
-			while ((len = zis.read(buffer)) > 0) {
-				fos.write(buffer, 0, len);
-			}
-			fos.close();
-			zipEntry = zis.getNextEntry();
-		}
-		zis.closeEntry();
-		zis.close();
-	}
 }

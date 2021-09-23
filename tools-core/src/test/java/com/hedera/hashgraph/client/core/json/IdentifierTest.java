@@ -57,15 +57,19 @@ class IdentifierTest {
 
 		var exception1 =
 				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse("notANumber"));
-		assertEquals("java.lang.NumberFormatException: For input string: \"notANumber\"", exception1.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"notANumber\" cannot be parsed", exception1.getMessage());
 
 		var exception2 =
 				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse(".5655"));
-		assertEquals("Hedera Client Runtime: .5655 cannot be parsed as an account ID", exception2.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \".5655\" cannot be parsed", exception2.getMessage());
 
 		var exception3 =
 				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse("0.notANumber.23"));
-		assertEquals("java.lang.NumberFormatException: For input string: \"notANumber\"", exception3.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.notANumber.23\" cannot be parsed", exception3.getMessage());
+
+		var exception4 =
+				assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse("0.0.23-abcde"));
+		assertEquals("Hedera Client Runtime: Bad account checksum: Provided \"abcde\", should be \"armfn\"", exception4.getMessage());
 	}
 
 	@Test
@@ -92,7 +96,8 @@ class IdentifierTest {
 
 		var acct5 = "payer (0.0.something-arbyi)";
 		Exception e = assertThrows(HederaClientRuntimeException.class, () -> Identifier.parse(acct5));
-		assertEquals("java.lang.NumberFormatException: For input string: \"something\"", e.getMessage());
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"payer (0.0.something-arbyi)\" cannot be " +
+				"parsed", e.getMessage());
 	}
 
 	@Test
@@ -101,12 +106,12 @@ class IdentifierTest {
 		var accountJson1 = new JsonObject();
 		accountJson1.addProperty("realmNum", 789L);
 		accountJson1.addProperty("shardNum", 98498L);
-		accountJson1.addProperty("accountNum", 5131584984613L);
+		accountJson1.addProperty("accountNum", 513158498L);
 
 		var identifierFromJson1 = Identifier.parse(accountJson1);
 		assertEquals(789L, identifierFromJson1.getShardNum());
 		assertEquals(98498L, identifierFromJson1.getRealmNum());
-		assertEquals(5131584984613L, identifierFromJson1.getAccountNum());
+		assertEquals(513158498L, identifierFromJson1.getAccountNum());
 
 		var accountJson2 = new JsonObject();
 		accountJson2.addProperty("accountNum", 98984L);

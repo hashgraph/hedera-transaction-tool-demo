@@ -55,7 +55,6 @@ public class JavaFXIDs {
 	public final static String ACCOUNTS_BUTTON = "#accountsButton";
 	public final static String KEYS_BUTTON = "#keysButton";
 	public final static String SETTINGS_BUTTON = "#settingsButton";
-	public final static String MAIN_MENU_BUTTON = "#mainMenuButton";
 	public final static String CREATE_ANCHOR_PANE = "#createAnchorPane";
 
 	//Label
@@ -72,8 +71,6 @@ public class JavaFXIDs {
 
 	public final static String CREATE_MAIN_CHOICE_BOX = "#selectTransactionType";
 
-	// Buttons
-	public final static String CREATE_CREATE_KEY_BUTTON = "#createKeyButton";
 	public final static String CREATE_TRANSFER_ACCEPT_FROM_BUTTON = "#acceptFromAccountButton";
 	public final static String CREATE_TRANSFER_ACCEPT_TO_BUTTON = "#acceptToAccountButton";
 	public final static String CREATE_COMMENTS_BOX = "#commentsVBox";
@@ -82,7 +79,6 @@ public class JavaFXIDs {
 	public final static String CREATE_UPDATE_BOX = "#updateAccountVBox";
 	public final static String CREATE_TRANSFER_BOX = "#transferCurrencyVBox";
 	public final static String CREATE_CHOICE_BOX = "#createChoiceHBox";
-	public final static String CREATE_UPDATE_KEY_BUTTON = "#updateKeyButton";
 
 	public final static String CREATE_SYSTEM_EXPIRATION_VBOX = "#systemExpirationVBox";
 
@@ -105,8 +101,6 @@ public class JavaFXIDs {
 	public final static String CREATE_TRANSFER_FROM_AMOUNT = "#transferFromAmountTextField";
 	public final static String CREATE_UPDATE_ACCOUNT_ID = "#updateAccountID";
 	public final static String CREATE_UPDATE_AUTO_RENEW = "#updateAutoRenew";
-	public final static String CREATE_UPDATE_SRTO_O = "#updateSRTOriginal";
-	public final static String CREATE_UPDATE_RRTO_O = "#updateRRTOriginal";
 	public final static String CREATE_UPDATE_ARPO_O = "#updateARPOriginal";
 	public final static String CREATE_AUTO_RENEW = "#createAutoRenew";
 	public final static String SYSTEM_TRANSACTION_ACTION_CHOICE_BOX = "#systemActionChoiceBox";
@@ -114,10 +108,6 @@ public class JavaFXIDs {
 	public final static String SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER = "#datePickerSystem";
 	public final static String CREATE_FILE_UPDATE_FILE_ID = "#updateFileID";
 	public final static String CREATE_FILE_UPDATE_CONTENTS = "#contentsTextField";
-	public final static String CREATE_FILE_UPDATE_CHUNK_SIZE = "#chunkSizeTextField";
-	public final static String CREATE_FILE_UPDATE_INTERVAL = "#intervalTextField";
-
-	public final static String KEY_LOADING_FIELD = "#keyLoadingField";
 
 	public final static String CREATE_FROM_TABLE = "#fromTransferTable";
 	public final static String CREATE_TO_TABLE = "#toTransferTable";
@@ -131,19 +121,14 @@ public class JavaFXIDs {
 	public final static String CREATE_LOCAL_TIME_LABEL = "#createUTCTimeLabel";
 	public final static String SYSTEM_ENTITY_ID_LABEL = "#entityLabel";
 	public final static String SYSTEM_TIMEZONE_HBOX = "#timeZoneSystemHBox";
-	public final static String SYSTEM_LOCAL_TIME_LABEL = "#systemCreateLocalTimeLabel";
 	// Error messages
 	public final static String CREATE_INVALID_DATE = "#invalidDate";
 	public final static String CREATE_INVALID_FEE_PAYER = "#invalidFeePayer";
 	public final static String CREATE_INVALID_NODE = "#invalidNode";
 	public final static String CREATE_INVALID_CREATE_INITIAL_BALANCE = "#invalidCreateInitialBalance";
-	public final static String CREATE_INVALID_CREATE_SEND_RECORD = "#invalidCreateSendRecord";
-	public final static String CREATE_INVALID_CREATE_RECEIVE_RECORD = "#invalidCreateReceiveThreshold";
 	public final static String CREATE_INVALID_CREATE_AUTO_RENEW = "#invalidCreateAutoRenew";
 	public final static String CREATE_INVALID_CREATE_NEW_KEY = "#invalidCreateNewKey";
-	public final static String CREATE_INVALID_UPDATE_SEND_RECORD = "#invalidUpdateSendRecord";
 	public final static String CREATE_INVALID_UPDATE_AUTO_RENEW = "#invalidUpdatedAutoRenew";
-	public final static String CREATE_INVALID_UPDATE_RECEIVE_RECORD = "#invalidUpdateReceiveRecord";
 	public final static String CREATE_INVALID_UPDATE_NEW_KEY = "#invalidUpdateNewKey";
 	public final static String CREATE_INVALID_TRANSFER_FROM_ACCOUNT = "#errorInvalidFromAccount";
 	public final static String CREATE_INVALID_TRANSFER_TO_ACCOUNT = "#errorInvalidToAccount";
@@ -168,21 +153,10 @@ public class JavaFXIDs {
 	public final static String KEYS_MNEMONIC_CLOSE_VIEW = "#cancelEditMnemonicButton";
 	public final static String KEYS_MNEMONIC_ACCEPT_PASSWORD = "#acceptRecoveryPassword";
 
-	public final static String PROXY_ACCOUNT_ID = "#proxyAccountID";
-	public final static String SEND_THRESHOLD = "#sendRecThreshold";
-	public final static String RECEIVE_THRESHOLD = "#recRecordThreshold";
-	public final static String SIGNATURE_REQUIRED = "#recSigRequired";
-	public final static String EXPIRATION_TIME = "#expirationTime";
-	public final static String AUTO_RENEW = "#autoRenew";
-
 	public final static String CREATE_KEYS_VBOX = "#createKeysVBox";
 	public final static String NICKNAME = "#nicknameTextBox";
-	public final static String NICKNAME_DROPDOWN = "#accountNicknameBox";
-	public final static String ACCOUNT_ID_LABEL_ACCOUNTS = "#accountIDLabelAccounts";
-	public final static String KEYS_DETAILS = "#keyDetailsPane";
 	public final static String PASSWORD_BOX = "#passwordBox";
 	public final static String RETYPE_PASSWORD_BOX = "#retypePasswordBox";
-	public final static String REMOVE_ACCOUNT_BUTTON = "#removeAccountButton";
 	public final static String HIDDEN_ACCOUNT_INFO_TEXTFIELD = "#hiddenPathAccount";
 	public final static String CURRENT_ACCOUNT_PANE = "#currentAccountPane";
 	public final static String CHOOSE_EXPORT_LOCATION = "#chooseExportLocationBtn";
@@ -194,9 +168,6 @@ public class JavaFXIDs {
 	public final static String ACCOUNTS_NICKNAME_ERROR_LABEL = "#nicknameErrorLabel";
 	public final static String ACCOUNTS_SCROLL_PANE = "#accountsScrollPane";
 
-	//SettingsPane page
-	public final static String PARENT_GRID_PANE = "#parentGridPane";
-	public final static String RESET_HBOX = "#resetHBox";
 	public final static String LOAD_STORAGE_TF = "#loadStorageTextField";
 	public final static String ONEDRIVE_PATH_TF = "#pathTextFieldSP";
 	public final static String ONEDRIVE_EMAIL_TF = "#emailTextFieldSP";
@@ -210,15 +181,7 @@ public class JavaFXIDs {
 	public final static String GENERATE_RECORD_SLIDER = "#generateRecordSlider";
 	public final static String ADD_FOLDER_BUTTON = "#addFolderButton";
 	public final static String CANCEL_ADD_FOLDER_BUTTON = "#cancelAddToEmailMapButton";
-	public final static String CONFIRM_ADD_FOLDER_BUTTON = "#confirmAddFolderButton";
 	public final static String IMPORT_ACCOUNT_BUTTON = "#importAccountButton";
-	public final static String IMPORT_FOLDER_BUTTON = "#importFolderButton";
-
-	// ZippedTransactions Pane
-	public final static String VERIFY_CSV_NAME = "#verifyCSVNameField";
-	public final static String CREATE_AND_SIGN_BUTTON = "#createAndSignButton";
-	public final static String BATCH_FINISH_BUTTON = "#batchFinishButton";
-	public final static String HIDDEN_CSV_INFO_TEXTFIELD = "#hiddenPathBatch";
 
 	public static final String PASSWORD_CHECK_IMAGE = "#checkPassword";
 	public static final String ACCEPT_APP_PASSWORD = "#acceptPasswordButton";

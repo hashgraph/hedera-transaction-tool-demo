@@ -68,12 +68,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -125,7 +121,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Pane createPane;
 	public Pane settingsPane;
 	public StackPane initialStartupPane;
-	public StackPane recoverPasswordPane;
 	public StackPane keysPane;
 
 	public Button homeButton;
@@ -168,8 +163,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public CreatePaneController createPaneController;
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
-	@FXML
-	public RecoverPasswordPaneController recoverPasswordPaneController;
 
 
 	// Utility
@@ -235,7 +228,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			service.start();
 		}
 		initialStartupPaneController.injectMainController(this);
-		recoverPasswordPaneController.injectMainController(this);
 		homePaneController.injectMainController(this);
 		settingsPaneController.injectMainController(this);
 		createPaneController.injectMainController(this);
@@ -307,34 +299,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private void startupPhaseInitialization() {
 		switch (getSetupPhase()) {
-			case PASSWORD_RECOVERY_PHASE:
-				if (!checkRecoveryPhraseExists()) {
-					setSetupPhase(INITIAL_SETUP_PHASE);
-					try {
-						resetPreferences();
-					} catch (BackingStoreException | IOException e) {
-						logAndDisplayError(e);
-					}
-				}
-				properties =
-						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
-								"");
-
-				setDisableButtons(true);
-				homePane.setVisible(false);
-				thisPane = recoverPasswordPane;
-				recoverPasswordPane.setVisible(true);
-
-				try {
-					recoverPasswordPaneController.initializeRecoveryPane();
-				} catch (Exception e) {
-					logger.error("Unable to initialize recovery pane controller.", e);
-					displaySystemMessage("Unable to initialize recovery pane controller.");
-				}
-				break;
 			case INITIAL_SETUP_PHASE:
 				setDisableButtons(true);
-				recoverPasswordPane.setVisible(false);
 				homePane.setVisible(false);
 				thisPane = initialStartupPane;
 				initialStartupPane.setVisible(true);
@@ -352,7 +318,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
 								"");
-				recoverPasswordPane.setVisible(false);
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
@@ -366,7 +331,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
 								"");
-				recoverPasswordPane.setVisible(false);
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
@@ -381,41 +345,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 	}
 
-
-	private boolean checkRecoveryPhraseExists() {
-		if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists()) {
-			return true;
-		}
-
-		// For backwards compatibility with V2.0: search hardcoded paths to old mnemonic.txt file
-		if (!new File(System.getProperty("user.home") + "/Hedera Applications/").exists()) {
-			return false;
-		}
-
-		var ms = new File(Constants.KEYS_FOLDER).listFiles((dir, name) -> name.contains("mnemonic"));
-		assert ms != null;
-		List<File> mnemonics = new ArrayList<>(Arrays.asList(ms));
-
-		// If there is more than one mnemonic file, we cannot say which one is the correct one
-		if (mnemonics.size() != 1) {
-			return false;
-		}
-
-		for (var mnemonicFile : mnemonics) {
-			var hardCodedMnemonic = mnemonicFile.getAbsolutePath();
-			if (new File(hardCodedMnemonic).exists()) {
-				try {
-					org.apache.commons.io.FileUtils.moveFile(new File(hardCodedMnemonic),
-							new File(getPreferredStorageDirectory(), MNEMONIC_PATH));
-				} catch (IOException e) {
-					logger.error(e.getMessage());
-					displaySystemMessage(Arrays.toString(e.getStackTrace()));
-				}
-				return true;
-			}
-		}
-		return false;
-	}
 
 	public void logAndDisplayError(Exception e) {
 		logger.error(e.getMessage());
@@ -495,8 +424,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		createPane.setVisible(false);
 		settingsPane.setVisible(false);
 		initialStartupPane.setVisible(false);
-		recoverPasswordPane.setVisible(false);
-
 		Pane lastPane = thisPane;
 		lastPane.setVisible(false);
 		thisPane = next;

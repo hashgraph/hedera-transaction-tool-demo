@@ -168,82 +168,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	}
 
 	@Test
-	public void enterAppPassword_Test() {
-		try {
-			initialStartupPage.enterPassword("123");
-			assertTrue(find(APP_PASSWORD_FIELD_2).isDisabled());
-			assertEquals("Passwords should be at least 10 characters long",
-					((Label) find("#passwordErrorLabel")).getText());
-
-			initialStartupPage.enterPassword("1234567890");
-			assertTrue(find(APP_PASSWORD_FIELD_2).isDisabled());
-			assertEquals("The password selected has been breached. Please select a more unique password",
-					((Label) find("#passwordErrorLabel")).getText());
-
-			initialStartupPage.enterPassword(
-					"ukU1r5VQoYL7WB00JG6pM2k4NApoopZsjNdwvfdcpWkaClSGr9k9hAufjHDyLNF6wxfDnBlvW6OzPcLNVuo32wAo7ZP7hlghtFPBkQaKgeYY1PzIiiQagWU41HP4cOSauasophHgwgFabwC83Ufm0HXm1oQ6k65RvZGREh2LoSOlLd27H08crj5nMTikQjEvRMOdUcNCkQnNGEpsCaU53SpChyGii51BLsRIAuKoHtspugMGx5XjFopNsVO1Z10nTq6nlsy5hm4o9yPojxrP4B3agphSo9A3A8K8L0KkPronZZMZPWxxxbMUIqvcOaFiesyaj1BvTSTME2TU1zuq6nsAtW4rcfOQnt9FmLaGGxkyOiVej7XnCWeWjU403hvjiiWiVB7UWU9z9F7HjeMQpSGoesd5XiGEMH5DHP36cllXyzBrsd0IQSuPO6cGcYjiG8cCZwdATd5vJLrdLvuabkahw6QFw8CPosy81brplArtbxN6HGgFLQvxH3GQZ9ceCHglhjGMsabn3YV8Rni9mYEV8L2TAqTSGdchCQkdE6ba1DFHzHHp5fHSgqBxKNNsR2eawpVq3xJauTRhv3O7g8zeaSgQf67PCV7MW2aHvfVezuv2Ve8P9jWn1mx7gXfA5o8XKMpn2HuCbeAMl5FM2OnaLn9MKZMgCvEBR7uzfhVWPiTNdajQ511sYMKuNdtHD4xlAlFa0cIJ4XQb5oE86LlUuoqHNNRvKGGZ4xnoeFASv5ttvtknBPiCvV5hcfwPCHZJq0j0ZdBxCyb1wqzCwjIJ8layZfoStkqw7TIsHK0rXMbkTunhmOy4N7BtogymjMikRvxhN1IcMfn0FqWjgADl9UtYceMH6YUYuqUZtbdfD7GgtRqk1WVoAr7wDUG4CTF8QfoangAvsCWgN3goyNf12xz79bC7uFB7qYerQAfhdWFHa6NdQ0Kevhs1QPPD37FPVl9paM71xsGsp2SzgA9O74il90Ng6yJYMhF9IjCxglVwMnlkajaUwkr1iplStHCsK");
-			assertTrue(find(APP_PASSWORD_FIELD_2).isDisabled());
-			assertEquals("Passwords should be at most 1024 characters long",
-					((Label) find("#passwordErrorLabel")).getText());
-
-			initialStartupPage.enterPassword(PASSWORD);
-			assertTrue(find("#checkPassword").isVisible());
-			logger.info("Check mark is visible");
-
-			assertFalse(find(APP_PASSWORD_FIELD_2).isDisabled());
-			assertTrue(find(PASSWORD_CHECK_IMAGE).isVisible());
-			logger.info("Second password field is visible and enabled");
-
-			initialStartupPage.reEnterPassword("987654321");
-			assertFalse(find(ACCEPT_APP_PASSWORD).isVisible());
-			logger.info("Passwords don't match: Button is not visible");
-
-			initialStartupPage.reEnterPassword(PASSWORD);
-			assertTrue(find(ACCEPT_APP_PASSWORD).isVisible());
-			logger.info("Passwords match: Button is visible");
-
-			initialStartupPage.acceptPassword();
-			assertTrue(find(LINK_FOLDERS_VBOX).isVisible());
-			logger.info("Password accepted: Next step is visible");
-		} catch (Exception e) {
-			logger.error(e);
-		}
-
-	}
-
-	@Test
-	public void passwordBehavior_test() {
-		initialStartupPage.enterPassword("tempurasoju");
-
-		assertTrue(find("#checkPassword").isVisible());
-		assertFalse(find("#reEnterPasswordField").isDisabled());
-		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
-
-		initialStartupPage.reEnterPassword("tempurasoju");
-		assertTrue(find("#reCheckPassword").isVisible());
-		assertTrue(find("#acceptPasswordButton").isVisible());
-
-		clickOn("#appPasswordField");
-		type(KeyCode.BACK_SPACE);
-		type(KeyCode.BACK_SPACE);
-		type(KeyCode.BACK_SPACE);
-		type(KeyCode.BACK_SPACE);
-
-		assertFalse(find("#checkPassword").isVisible());
-		assertTrue(find("#reEnterPasswordField").isDisabled());
-		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
-
-		type(KeyCode.S);
-		type(KeyCode.O);
-		type(KeyCode.J);
-		type(KeyCode.U);
-
-		assertTrue(find("#checkPassword").isVisible());
-		assertFalse(find("#reEnterPasswordField").isDisabled());
-		assertTrue(((TextField) find("#reEnterPasswordField")).getText().isEmpty());
-	}
-
-	@Test
 	public void setOneDrive_Test() {
 
 		try {
@@ -267,10 +191,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@Test
 	public void generatePassphrase_Test() {
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword()
-				.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
+		initialStartupPage.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
 				.enterStringUsername("test1.council2@hederacouncil.org")
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
@@ -301,7 +222,10 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 		logger.info("The words in the grid correspond to the words generated");
 
-		initialStartupPage.clickMnemonicPopupButton("OK");
+		initialStartupPage.clickMnemonicPopupButton("OK")
+				.enterNewPasswordInPopup(PASSWORD);
+
+
 		assertFalse(find(GENERATE_KEYS_BUTTON).isVisible());
 		logger.info("Generate keys button is no longer visible");
 
@@ -398,10 +322,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			return;
 		}
 
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword()
-				.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
+		initialStartupPage.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
 				.enterStringUsername("test1.council2@hederacouncil.org")
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
@@ -447,10 +368,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	public void checkPredictiveTextInPassphrase_text() {
 		logger.info("Load stored mnemonic for testing");
 
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword()
-				.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
+		initialStartupPage.enterOneDriveFolder("/src/test/resources/Transactions - Documents")
 				.enterStringUsername("test1.council2@hederacouncil.org")
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
@@ -500,9 +418,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	public void testCreateLocalOneDriveFolders_Test() throws IOException {
 		logger.info("Setup password, then enter path and email");
 		var pane = initialStartupPage
-				.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword()
 				.enterOneDriveFolder(DIR_TEST_ONE_DRIVE);
 
 		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles").exists());
@@ -544,9 +459,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		FxToolkit.setupApplication(StartUI.class);
 
 		logger.info("Setup password, then enter verify path and email exist");
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword();
 
 		var oneDrive = new File(DIR_TEST_ONE_DRIVE).getAbsolutePath();
 		var in = new File(oneDrive + "/InputFiles");
@@ -561,7 +473,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		assertTrue(new File(out.getAbsolutePath() + "/test1.council2@hederacouncil.org").isDirectory());
 		assertTrue(new File(out.getAbsolutePath() + "/test1.council2@hederacouncil.org").exists());
-
 		logger.info("Path and email are verified");
 
 		var box = find("#passphraseBox");
@@ -590,9 +501,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		FxToolkit.setupApplication(StartUI.class);
 
 		logger.info("Setup password, then enter verify path and email exist");
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword();
 
 		if (initialMap.exists()) {
 			initialMap.deleteOnExit();
@@ -608,6 +516,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		}
 
 		var box = find("#passphraseBox");
+		sleep(10000);
 		assertTrue(box.isVisible());
 
 		for (int i = 0; i < 10; i++) {
@@ -624,9 +533,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		FxToolkit.setupApplication(StartUI.class);
 
 		logger.info("Setup password, then enter verify path and email exist");
-		initialStartupPage.enterPassword(PASSWORD)
-				.reEnterPassword(PASSWORD)
-				.acceptPassword();
+
 		var box = find("#passphraseBox");
 		assertFalse(box.isVisible());
 

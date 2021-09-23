@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Class extends a text field to allow for an "autocorrect" from a provided list. As the user types in the the text box,
+ * Class extends a text field to allow for an "autocorrect" from a provided list. As the user types in the text box,
  * a list of suggestions will appear. These suggestions will originate in the provided list of words.
  * This class will be used to suggest to the user one of the nicknames of the accounts on record. If the user types a
  * word that is not in the list, it will show in red.
@@ -196,7 +196,7 @@ public class AutoCompleteNickname extends TextField {
 	}
 
 	/**
-	 * Hide the menu if there is there is only one match
+	 * Hide the menu if there is only one match
 	 *
 	 * @param text
 	 * 		the input text

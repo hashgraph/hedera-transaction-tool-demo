@@ -5,6 +5,8 @@
     <file url="file://$PROJECT_DIR$/tools-cli/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tools-core/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tools-core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tools-integration/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/tools-integration/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tools-ui/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/tools-ui/src/main/resources" charset="UTF-8" />
   </component>

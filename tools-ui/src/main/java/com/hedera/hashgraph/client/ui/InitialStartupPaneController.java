@@ -34,7 +34,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
@@ -57,17 +56,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkPasswordPolicy;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.clearPasswordFields;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.deleteDirectory;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.setupCharacterCount;
 
 public class InitialStartupPaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(InitialStartupPaneController.class);
 
 	UserAccessibleProperties properties;
-	private char[] password;
 	private DriveSetupHelper driveSetupHelper;
 	private MnemonicPhraseHelper mnemonicPhraseHelper;
 
@@ -79,19 +74,16 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public VBox finishBox;
 	public VBox transactionFoldersVBoxIS;
 	public VBox phraseBox;
-	public VBox passwordBox;
 
 	public HBox addFolderPathHBox;
 	public HBox showEmailMapHBox;
 
 	public ScrollPane scrollPane;
 	public GridPane keysGridPane;
-	public GridPane passwordGridPane;
 	public GridPane addPathGridPaneIS;
 
 	public ButtonBar generateKeyPairButtonBar;
 	public ButtonBar addToEmailMapButtonBar;
-	public ButtonBar passwordButtonBar;
 
 	public Button generateKeys;
 	public Button resetButton;
@@ -100,25 +92,16 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public Button copyToClipBoardButton;
 	public Button pasteFromClipBoardButton;
 	public Button confirmAddFolderButton;
-	public Button acceptPasswordButton;
 	public Button browseNewFolderButton;
 
-	public Label characterCount;
-	public Label passwordErrorLabel;
 	public Label drivesErrorLabel;
 	public Label mnemonicErrorMessage;
 	public Label copyToClipboardLabel;
-	public Label matchPassword;
 
 	public TextField hiddenPathInitial;
 	public TextField pathTextField;
 	public TextField emailTextField;
 
-	public PasswordField appPasswordField;
-	public PasswordField reEnterPasswordField;
-
-	public ImageView checkPassword;
-	public ImageView reCheckPassword;
 	public ImageView emailGreenCheck;
 	public ImageView pathGreenCheck;
 	public ImageView deleteImageIS;
@@ -134,38 +117,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 */
 	public InitialStartupPaneController() {
 		logger.info("Default storage directory to: {}", DEFAULT_STORAGE);
-	}
-
-	/**
-	 * Setups the transaction tool directory
-	 *
-	 * @param location
-	 * 		location where the transaction tool directory will be built
-	 */
-	private void setupTransactionDirectory(String location) {
-		var directory = new File(location);
-		if (!directory.exists() && !directory.mkdirs()) {
-			logger.info("Directory already exists");
-		}
-
-		if (new File(String.format("%s/Accounts/", location)).mkdirs()) {
-			logger.info("Accounts info folder has been created");
-		}
-		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
-			logger.info("User files folder has been created");
-		}
-		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
-			logger.info("System files folder has been created");
-		}
-		if (new File(String.format("%s/Keys/", location)).mkdirs()) {
-			logger.info("Keys folder has been created");
-		}
-		if (new File(String.format("%s/History/", location)).mkdirs()) {
-			logger.info("History folder has been created");
-		}
-		if (new File(String.format("%s/logs/", location)).mkdirs()) {
-			logger.info("Log folder has been created");
-		}
 	}
 
 	/**
@@ -230,15 +181,14 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				.build();
 
 		hiddenPathInitial.clear();
-		resetPasswordBox();
 
 		resetPassphraseBox();
+
+		drivesBox.setVisible(true);
 		finishBox.setVisible(false);
 
 		// wait until the app is running to give focus to the password field
-		Platform.runLater(() -> appPasswordField.requestFocus());
-
-		setupPasswordEvents();
+		Platform.runLater(() -> drivesBox.requestFocus());
 
 		// If a box is not visible, set it to un-managed
 		setManagedProperties(drivesErrorLabel, addFolderPathHBox, addToEmailMapButton, drivesBox, passphraseBox,
@@ -342,54 +292,21 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Store the hash of the password
-	 *
-	 * @throws HederaClientException
-	 * 		if an InvalidKeySpecException or NoSuchAlgorithmException is thrown by the Hash calculation
-	 */
-	public void acceptPassword() throws HederaClientException {
-		password = appPasswordField.getText().toCharArray();
-		acceptPasswordButton.setVisible(false);
-		clearPasswordFields(acceptPasswordButton, password, appPasswordField,
-				reEnterPasswordField);
-		properties.setHash(password);
-
-		// Show the next box
-		drivesBox.setVisible(true);
-		if (properties.getOneDriveCredentials().size() > 0) {
-			passphraseBox.setVisible(true);
-		}
-	}
-
-	/**
 	 * Generate the mnemonic passphrase and display it for the user in the designated area
 	 */
 	public void generatePassphraseEvent() {
-		mnemonicPhraseHelper.generatePassphraseEvent(password, controller.getSalt(), true);
+		mnemonicPhraseHelper.generatePassphraseEvent(true);
 		copyToClipBoardButton.setVisible(true);
 		controller.setLegacy(false);
-	}
-
-	/**
-	 * Clean up the password box after a reset
-	 */
-	private void resetPasswordBox() {
-		passphraseBox.setVisible(true);
-		appPasswordField.setDisable(false);
-		acceptPasswordButton.setVisible(false);
-		appPasswordField.setText("");
-		checkPassword.setVisible(false);
-		reEnterPasswordField.setText("");
-		reEnterPasswordField.setDisable(true);
-		reCheckPassword.setVisible(false);
-		appPasswordField.requestFocus();
 	}
 
 	/**
 	 * Clean up the mnemonic passphrase box after a reset
 	 */
 	private void resetPassphraseBox() {
-		passphraseBox.setVisible(false);
+		if (properties.getOneDriveCredentials().isEmpty()) {
+			passphraseBox.setVisible(false);
+		}
 		phraseBox.getChildren().clear();
 		var mnemonicGridPane = new GridPane();
 		mnemonicPhraseHelper.setupEmptyMnemonicBox(mnemonicGridPane);
@@ -419,57 +336,6 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Event setup for the password fields and the "accept password" button
-	 */
-	private void setupPasswordEvents() {
-		appPasswordField.setOnKeyReleased(keyEvent -> {
-			checkPassword.setVisible(false);
-			reEnterPasswordField.setText("");
-			acceptPasswordButton.setVisible(false);
-			reCheckPassword.setVisible(false);
-			setupCharacterCount(appPasswordField, characterCount, checkPassword, passwordErrorLabel,
-					reEnterPasswordField);
-			checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
-
-		});
-
-		appPasswordField.setOnKeyPressed(keyEvent -> {
-			if (isTabOrEnter(keyEvent)) {
-				checkPasswordPolicy(appPasswordField, checkPassword, passwordErrorLabel, reEnterPasswordField);
-				if (checkPassword.isVisible()) {
-					reEnterPasswordField.requestFocus();
-				}
-			}
-		});
-
-		reEnterPasswordField.setOnKeyReleased(keyEvent -> {
-			if (appPasswordField.getText().equals(reEnterPasswordField.getText())) {
-				reCheckPassword.setVisible(true);
-				acceptPasswordButton.setVisible(true);
-				acceptPasswordButton.setDisable(false);
-				matchPassword.setVisible(false);
-			} else {
-				reCheckPassword.setVisible(false);
-				matchPassword.setVisible(true);
-				acceptPasswordButton.setVisible(false);
-				acceptPasswordButton.setDisable(true);
-			}
-
-			if (keyEvent.getCode().equals(KeyCode.ENTER) && reCheckPassword.isVisible()) {
-				try {
-					acceptPassword();
-				} catch (HederaClientException e) {
-					controller.logAndDisplayError(e);
-				}
-			}
-		});
-	}
-
-	private boolean isTabOrEnter(KeyEvent keyEvent) {
-		return (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB));
-	}
-
-	/**
 	 * For each node in the list, bind the managed property to their visibility
 	 *
 	 * @param nodes
@@ -481,6 +347,37 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
+	/**
+	 * Setups the transaction tool directory
+	 *
+	 * @param location
+	 * 		location where the transaction tool directory will be built
+	 */
+	private void setupTransactionDirectory(String location) {
+		var directory = new File(location);
+		if (!directory.exists() && !directory.mkdirs()) {
+			logger.info("Directory already exists");
+		}
+
+		setupDirectory(location, "Accounts", "Files/UserFiles", "Files/.System", "Keys", "History", "logs");
+	}
+
+
+	/**
+	 * Creates a series of directories if they don't exist
+	 *
+	 * @param location
+	 * 		the root of the directories
+	 * @param s
+	 * 		a set of strings
+	 */
+	private void setupDirectory(String location, String... s) {
+		for (String s1 : s) {
+			if (new File(location, s1).mkdirs()) {
+				logger.info("{} folder has been created", s1);
+			}
+		}
+	}
 
 	/**
 	 * TESTING ONLY: Setting up a different directory from default
