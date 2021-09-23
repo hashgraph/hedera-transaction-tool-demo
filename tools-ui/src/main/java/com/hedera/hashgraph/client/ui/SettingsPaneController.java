@@ -18,13 +18,19 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.common.net.InetAddresses;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
+import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -57,6 +63,7 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
@@ -69,7 +76,7 @@ import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.VALID_D
 import static javafx.scene.control.Alert.AlertType;
 import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
-public class SettingsPaneController {
+public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
@@ -104,6 +111,7 @@ public class SettingsPaneController {
 	public Button confirmAddFolderButtonSP;
 	public Button browseNewFolderButton;
 	public Button cancelAddToEmailMapButton;
+	public Button addCustomNetworkButton;
 
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
@@ -128,7 +136,6 @@ public class SettingsPaneController {
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
 	public TextField versionLabel;
-	public Button confirmAddFolderButton;
 	public Button networkTooltip;
 	public ComboBox networkCombobox;
 
@@ -244,29 +251,19 @@ public class SettingsPaneController {
 		noise = true;
 		networkCombobox.getItems().clear();
 		networkCombobox.getItems().addAll(controller.getDefaultNetworks());
-		networkCombobox.getItems().add(new Separator());
 		var customNetworks = controller.getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			networkCombobox.getItems().addAll(customNetworks);
 			networkCombobox.getItems().add(new Separator());
+			networkCombobox.getItems().addAll(customNetworks);
 		}
-		networkCombobox.getItems().add("BROWSE");
 		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
 		noise = false;
-		networkCombobox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener() {
-			@Override
-			public void changed(ObservableValue observableValue, Object o, Object t1) {
-				if (!noise && t1 instanceof String) {
-					final var selectedNetwork = (String) t1;
-					if (selectedNetwork.equals("BROWSE")) {
-						// load network
-						return;
-					}
-					controller.setCurrentNetwork(selectedNetwork);
-				}
+		networkCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (!noise && t1 instanceof String) {
+				final var selectedNetwork = (String) t1;
+				controller.setCurrentNetwork(selectedNetwork);
 			}
 		});
-
 	}
 
 	private void setupDefaultTransactionFeeTextField() {
@@ -634,6 +631,49 @@ public class SettingsPaneController {
 
 	public void cancelAddToEmailMap() {
 		driveSetupHelper.cancelAddToEmailMap();
+	}
+
+	public void addCustomNetworkAction() throws IOException {
+		if (new File(CUSTOM_NETWORK_FOLDER).mkdirs()) {
+			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
+		}
+		JsonObject customNetwork = NewNetworkPopup.display();
+		var filename = customNetwork.get("nickname").getAsString() + "." + Constants.JSON_EXTENSION;
+		var location = customNetwork.get("file").getAsString();
+		if (!verifyJsonNetwork(location)) {
+			PopupMessage.display("Error", "The json file does not contain a valid network");
+			return;
+		}
+		FileUtils.copyFile(new File(location), new File(CUSTOM_NETWORK_FOLDER, filename));
+
+	}
+
+	private boolean verifyJsonNetwork(String location) {
+		try {
+			var array = readJsonArray(location);
+			for (JsonElement jsonElement : array) {
+				var node = jsonElement.getAsJsonObject();
+				if (!node.has("accountID")) {
+					return false;
+				}
+				if (!node.has("ipAddress")) {
+					return false;
+				}
+				if (!node.has("port")) {
+					return false;
+				}
+				Identifier.parse(node.get("accountID").getAsString());
+				InetAddresses.forString(node.get("ipAddress").getAsString());
+				var port = node.get("port").getAsInt();
+				if (port < 49152 || port > 65535) {
+					return false;
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return false;
+		}
+		return true;
 	}
 
 
