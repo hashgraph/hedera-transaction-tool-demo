@@ -35,7 +35,6 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
-import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HOURS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_MINUTES;
@@ -115,11 +114,11 @@ public class UserAccessibleProperties {
 	}
 
 	public String getNetworkProperty() {
-		return properties.getProperty(CUSTOM_NETWORK, "MAINNET");
+		return properties.getProperty(NETWORKS, "MAINNET");
 	}
 
 	public void setNetworkProperty(NetworkEnum network) {
-		properties.setProperty(CUSTOM_NETWORK, network.toString());
+		properties.setProperty(NETWORKS, network.toString());
 	}
 
 	public Hbar getTransactionFeeProperty() {
@@ -427,7 +426,7 @@ public class UserAccessibleProperties {
 	 * 		a set of strings
 	 */
 	public void setCustomNetworks(Set<String> networks) {
-		properties.setSetProperty(CUSTOM_NETWORK, networks);
+		properties.setSetProperty(NETWORKS, networks);
 	}
 
 	public void setCurrentNetwork(String network, Set<String> defaulNetworks) {
@@ -440,20 +439,6 @@ public class UserAccessibleProperties {
 
 	public String getCurrentNetwork() {
 		return properties.getProperty(CURRENT_NETWORK, "MAINNET");
-	}
-
-	public void addCustomNetwork(String nickname, JsonObject nodes) {
-		var networks = getCustomNetworks();
-		networks.add(nickname);
-		setCustomNetworks(networks);
-		properties.setProperty(nickname, nodes);
-	}
-
-	private boolean removeCustomNetwork(String nickname) {
-		var networks = getCustomNetworks();
-		networks.remove(nickname);
-		setCustomNetworks(networks);
-		return properties.removeProperty(nickname);
 	}
 
 	// endregion

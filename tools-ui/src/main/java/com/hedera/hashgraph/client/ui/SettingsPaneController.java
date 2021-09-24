@@ -24,7 +24,6 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
@@ -54,6 +53,8 @@ import org.controlsfx.control.ToggleSwitch;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -112,6 +113,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button browseNewFolderButton;
 	public Button cancelAddToEmailMapButton;
 	public Button addCustomNetworkButton;
+	public Button deleteCustomNetworkButton;
 
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
@@ -256,14 +258,24 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			networkCombobox.getItems().add(new Separator());
 			networkCombobox.getItems().addAll(customNetworks);
 		}
-		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
 		noise = false;
+		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
 		networkCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
-			if (!noise && t1 instanceof String) {
-				final var selectedNetwork = (String) t1;
-				controller.setCurrentNetwork(selectedNetwork);
+			if (!noise) {
+				if (t1 instanceof String) {
+					final var selectedNetwork = (String) t1;
+					controller.setCurrentNetwork(selectedNetwork);
+					deleteCustomNetworkButton.setDisable(
+							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
+				}
+				if (t1 instanceof Separator) {
+					networkCombobox.getSelectionModel().select(o);
+				}
+
 			}
 		});
+
+
 	}
 
 	private void setupDefaultTransactionFeeTextField() {
@@ -638,14 +650,18 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
 		}
 		JsonObject customNetwork = NewNetworkPopup.display();
-		var filename = customNetwork.get("nickname").getAsString() + "." + Constants.JSON_EXTENSION;
+		final var nickname = customNetwork.get("nickname").getAsString();
+		var filename = nickname + "." + Constants.JSON_EXTENSION;
 		var location = customNetwork.get("file").getAsString();
 		if (!verifyJsonNetwork(location)) {
 			PopupMessage.display("Error", "The json file does not contain a valid network");
 			return;
 		}
 		FileUtils.copyFile(new File(location), new File(CUSTOM_NETWORK_FOLDER, filename));
-
+		var customNetworks = controller.getCustomNetworks();
+		assert customNetworks.contains(nickname);
+		controller.setCurrentNetwork(nickname);
+		setupNetworkBox();
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -674,6 +690,17 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			return false;
 		}
 		return true;
+	}
+
+	public void deleteCustomNetworkAction() throws IOException {
+		var answer = PopupMessage.display("Delete Network",
+				"This will remove the selected network from your app. Are you sure?", true, "CONTINUE", "CANCEL");
+		if (answer) {
+			Files.deleteIfExists(
+					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
+		}
+		controller.setCurrentNetwork("MAINNET");
+		setupNetworkBox();
 	}
 
 

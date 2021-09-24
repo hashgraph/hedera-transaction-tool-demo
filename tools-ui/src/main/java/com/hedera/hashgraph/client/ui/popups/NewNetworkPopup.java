@@ -48,19 +48,20 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 	private static final UserAccessibleProperties properties =
 			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
-	private static final JsonObject customNetwork = new JsonObject();
-	private static final VBox mainBox = new VBox();
+	private static JsonObject customNetwork;
 
 	private NewNetworkPopup() {
 		throw new IllegalStateException("Utility class");
 	}
 
 	public static JsonObject display() {
+		customNetwork = new JsonObject();
 		var window = new Stage();
 		window.setTitle("Add Custom Network");
 		window.sizeToScene();
 		window.setMaxWidth(600);
 		window.initModality(Modality.APPLICATION_MODAL);
+		final var mainBox = new VBox();
 
 		final var errorLabel = new Label();
 		errorLabel.setStyle("-fx-text-fill: red");
@@ -73,7 +74,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		locationLabel.setVisible(false);
 
 		nicknameTextField.setOnKeyPressed(
-				keyEvent -> handleNickname(errorLabel, nicknameTextField, locationTextField, keyEvent));
+				keyEvent -> handleNickname(errorLabel, locationTextField, keyEvent));
 		nicknameTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (!t1) {
 				removeFocusAction(errorLabel, nicknameTextField);
@@ -86,7 +87,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		locationHBox.getChildren().addAll(locationTextField, locationLabel);
 
 		final var browseButton = formatButton("BROWSE");
-		browseButton.setOnAction(actionEvent -> browseAction(errorLabel, locationTextField, locationLabel));
+		browseButton.setOnAction(actionEvent -> browseAction(errorLabel, locationTextField, locationLabel, mainBox));
 		final var continueButton = formatButton("CONTINUE");
 		final var cancelButton = formatButton("CANCEL");
 		continueButton.setOnAction(actionEvent -> {
@@ -97,10 +98,12 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		});
 		cancelButton.setOnAction(actionEvent -> window.close());
 
+		continueButton.disableProperty().bind(errorLabel.visibleProperty());
+
 		mainBox.setPadding(new Insets(10));
 		mainBox.setSpacing(10);
 
-		GridPane gridPane = new GridPane();
+		var gridPane = new GridPane();
 		gridPane.add(new Label("Nickname"), 0, 0);
 		gridPane.add(nicknameTextField, 1, 0);
 		gridPane.add(new Label("Location"), 0, 1);
@@ -113,7 +116,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 
 		mainBox.getChildren().add(errorLabel);
 
-		HBox continueBox = new HBox();
+		var continueBox = new HBox();
 		continueBox.getChildren().addAll(cancelButton, continueButton);
 		continueBox.setSpacing(20);
 		continueBox.setAlignment(Pos.CENTER);
@@ -128,9 +131,9 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return customNetwork;
 	}
 
-	private static void browseAction(Label errorLabel, TextField locationTextField, Label locationLabel) {
+	private static void browseAction(Label errorLabel, TextField locationTextField, Label locationLabel, VBox mainBox) {
 		errorLabel.setVisible(false);
-		File file = browse();
+		var file = browse(mainBox);
 		if (file == null) {
 			return;
 		}
@@ -149,8 +152,10 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 			errorLabel.setText("The file specified does not exist");
 			errorLabel.setVisible(true);
 		}
-		customNetwork.addProperty("nickname", nicknameTextField.getText());
-		customNetwork.addProperty("file", locationLabel.getText());
+		if (!errorLabel.isVisible()) {
+			customNetwork.addProperty("nickname", nicknameTextField.getText());
+			customNetwork.addProperty("file", locationLabel.getText());
+		}
 		return false;
 	}
 
@@ -172,8 +177,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		}
 	}
 
-	private static void handleNickname(Label errorLabel, TextField nicknameTextField, TextField locationTextField,
-			KeyEvent keyEvent) {
+	private static void handleNickname(Label errorLabel, TextField locationTextField, KeyEvent keyEvent) {
 		errorLabel.setVisible(false);
 		final var code = keyEvent.getCode();
 		if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
@@ -181,15 +185,13 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		}
 	}
 
-	private static boolean removeFocusAction(Label errorLabel, TextField nicknameTextField) {
-		String fileName = nicknameTextField.getText() + ".json";
+	private static void removeFocusAction(Label errorLabel, TextField nicknameTextField) {
+		var fileName = nicknameTextField.getText() + ".json";
 		if (new File(Constants.CUSTOM_NETWORK_FOLDER, fileName).exists()) {
 			errorLabel.setText("The network nickname already exists.");
 			errorLabel.setVisible(true);
 			nicknameTextField.requestFocus();
-			return true;
 		}
-		return false;
 	}
 
 	private static Label formatLabel() {
@@ -226,7 +228,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return textField;
 	}
 
-	private static File browse() {
+	private static File browse(VBox mainBox) {
 		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), mainBox,
 				"Json", Constants.JSON_EXTENSION);
 		properties.setLastBrowsedDirectory(file);
