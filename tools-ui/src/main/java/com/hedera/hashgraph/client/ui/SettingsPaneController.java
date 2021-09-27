@@ -650,6 +650,10 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
 		}
 		JsonObject customNetwork = NewNetworkPopup.display();
+		if (!customNetwork.has("nickname") || !customNetwork.has("file")) {
+			logger.info("Invalid custom network");
+			return;
+		}
 		final var nickname = customNetwork.get("nickname").getAsString();
 		var filename = nickname + "." + Constants.JSON_EXTENSION;
 		var location = customNetwork.get("file").getAsString();

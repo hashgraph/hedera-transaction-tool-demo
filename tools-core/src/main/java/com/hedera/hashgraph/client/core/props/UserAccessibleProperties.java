@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.props;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -33,6 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
@@ -416,7 +418,7 @@ public class UserAccessibleProperties {
 	 * @return a Set of strings
 	 */
 	public Set<String> getCustomNetworks() {
-		return properties.getSetProperty(NETWORKS, new HashSet<>());
+		return properties.getSetProperty(CUSTOM_NETWORKS, new HashSet<>());
 	}
 
 	/**
@@ -426,7 +428,7 @@ public class UserAccessibleProperties {
 	 * 		a set of strings
 	 */
 	public void setCustomNetworks(Set<String> networks) {
-		properties.setSetProperty(NETWORKS, networks);
+		properties.setSetProperty(CUSTOM_NETWORKS, networks);
 	}
 
 	public void setCurrentNetwork(String network, Set<String> defaulNetworks) {
