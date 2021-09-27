@@ -28,6 +28,8 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
+import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.PublicKey;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +40,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
@@ -78,6 +81,31 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 
 	public Key getKey() {
 		return key;
+	}
+
+	public boolean canSign(Set<PublicKey> keys) {
+		final var b = canSign(this.key, keys);
+		return b;
+	}
+
+	private boolean canSign(Key key, Set<PublicKey> keys) {
+		if (key instanceof KeyList) {
+			var keyList = (KeyList) key;
+			int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
+			var count = 0;
+			for (Key componentKey : keyList) {
+				if (canSign(componentKey, keys)) {
+					count++;
+				}
+				if (count >= threshold) {
+					return true;
+				}
+			}
+		}
+		if (key instanceof PublicKey) {
+			return keys.contains((PublicKey) key);
+		}
+		return false;
 	}
 
 	public boolean exists() {

@@ -158,7 +158,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param publicKeys
 	 * 		the list of public keys known by the app
 	 * @param key
-	 * 		if there is an initial key to be updated. Otherwise an empty key.
+	 * 		if there is an initial key to be updated. Otherwise, an empty key.
 	 */
 	public KeyDesignerPopup(Map<String, PublicKey> publicKeys, Key key) {
 		this.publicKeys = publicKeys;
