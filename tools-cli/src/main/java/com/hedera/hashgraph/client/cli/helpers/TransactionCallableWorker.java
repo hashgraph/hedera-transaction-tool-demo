@@ -84,8 +84,9 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	private void sleepUntilNeeded() throws InterruptedException {
 		assert tx != null;
 		var startTime = Objects.requireNonNull(tx.getTransactionId()).validStart;
+		assert startTime != null;
 		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond() - delay;
-		if (difference < 1) {
+		if (difference < 0) {
 			logger.info("Transactions occur in the future. Sleeping for {} second(s)", -difference);
 			sleep(-1000 * difference);
 		}

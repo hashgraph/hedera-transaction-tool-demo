@@ -136,7 +136,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		createAccounts();
 
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		Calendar cal = new Timestamp().plusSeconds(60).asCalendar();
+		Calendar cal = new Timestamp().plusSeconds(120).asCalendar();
 		var sdf1 = new SimpleDateFormat("MM/dd/yy");
 		var sdf2 = new SimpleDateFormat("HH:mm");
 		Date date = cal.getTime();
@@ -223,6 +223,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			}
 		}
 
+			sleep(500);
 		addSignature = find("ADD SIGNATURE");
 		ensureVisible(addSignature);
 		clickOn(addSignature);
