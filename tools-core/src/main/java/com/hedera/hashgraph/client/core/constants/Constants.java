@@ -87,7 +87,6 @@ public class Constants {
 	public static final int KEYS_COLUMNS = 5;
 	public static final int NUMBER_OF_SINGLE_BOXES = 5;
 	public static final String TEST_PASSWORD = "123456789";
-	public static final String TEST_PASSWORD2 = "tempura business";
 	// endregion
 
 	// region TRANSACTION DEFAULTS
