@@ -699,7 +699,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public void deleteCustomNetworkAction() throws IOException {
 		var answer = PopupMessage.display("Delete Network",
 				"This will remove the selected network from your app. Are you sure?", true, "CONTINUE", "CANCEL");
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			Files.deleteIfExists(
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
