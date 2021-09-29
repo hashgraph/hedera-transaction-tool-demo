@@ -28,11 +28,13 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private Identifier account;
 	private Hbar balance;
 	private String signer;
+	private long date;
 
-	public AccountLineInformation(String nickname, Identifier account, Hbar balance, boolean signer) {
+	public AccountLineInformation(String nickname, Identifier account, Hbar balance, long date, boolean signer) {
 		this.nickname = nickname;
 		this.account = account;
 		this.balance = balance;
+		this.date = date;
 		this.signer = signer ? "Yes" : "No";
 	}
 
@@ -68,34 +70,42 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.signer = signer ? "Yes" : "No";
 	}
 
+	public long getDate() {
+		return date;
+	}
+
+	public void setDate(long date) {
+		this.date = date;
+	}
+
 	@Override
 	public String toString() {
 		return "AccountLineInformation{" +
 				"nickname='" + nickname + '\'' +
 				", account='" + account.toReadableString() + '\'' +
 				", balance='" + balance + '\'' +
+				", date='" + date + '\'' +
 				", signer=" + signer +
 				'}';
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!super.equals(obj)) {
-			return false;
-		}
 		if (!(obj instanceof AccountLineInformation)) {
 			return false;
 		}
 		var line = (AccountLineInformation) obj;
 		return this.nickname.equals(line.getNickname()) &&
 				this.account.equals(line.getAccount()) &&
-				this.balance.equals(line.getBalance())
+				this.balance.equals(line.getBalance()) &&
+				this.date == line.getDate()
 				&& this.signer.equals(line.signer);
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + nickname.hashCode() + account.hashCode() + balance.hashCode() + signer.hashCode();
+		return nickname.hashCode() + account.hashCode() + balance.hashCode() + Long.hashCode(
+				date) + signer.hashCode();
 	}
 
 	@Override

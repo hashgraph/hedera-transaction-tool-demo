@@ -24,6 +24,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import java.io.File;
 
 public class Constants {
+
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -113,7 +114,8 @@ public class Constants {
 	public static final String ACCOUNTS_INFO_FOLDER = DEFAULT_STORAGE + "Accounts/";
 	public static final String KEYS_FOLDER = DEFAULT_STORAGE + "Keys/";
 	public static final String SYSTEM_FOLDER = DEFAULT_STORAGE + "Files/.System/";
-	public static final String CUSTOM_NETWORK_FOLDER = SYSTEM_FOLDER+ "CustomNetworks";
+	public static final String CUSTOM_NETWORK_FOLDER = SYSTEM_FOLDER + "CustomNetworks";
+	public static final String BALANCES_FILE = SYSTEM_FOLDER + "balancesArray.json";
 
 	// endregion
 
