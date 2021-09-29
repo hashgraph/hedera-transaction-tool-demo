@@ -18,21 +18,77 @@
 
 package com.hedera.hashgraph.client.core.queries;
 
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Client;
+import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
 
-public class BalanceQuery {
-	private String customNetworkLocations;
-	private NetworkEnum network;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+
+public class BalanceQuery implements GenericFileReadWriteAware {
+	private String network;
 	private AccountId accountId;
 
-
-	public BalanceQuery(NetworkEnum network, AccountId accountId) {
+	private BalanceQuery(String network, AccountId accountId) {
 		this.network = network;
 		this.accountId = accountId;
 	}
 
-	public void setCustomNetworkLocations(String customNetworkLocations) {
-		this.customNetworkLocations = customNetworkLocations;
+	public Hbar getBalance() throws PrecheckStatusException, TimeoutException, HederaClientException {
+		Client client = NetworkEnum.valueOf(network.toUpperCase(Locale.ROOT)).equals(NetworkEnum.UNKNOWN) ? getClient() :
+				Client.forName(network);
+		return new AccountBalanceQuery().setAccountId(accountId)
+				.execute(client)
+				.hbars;
+	}
+
+	private Client getClient() throws HederaClientException {
+		Map<String, AccountId> networkMap = new HashMap<>();
+		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + "." + network + "." + JSON_EXTENSION);
+		for (var jsonElement : customNetwork) {
+			var node = jsonElement.getAsJsonObject();
+			var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
+			var ip = node.get("ipAddress").getAsString() + ":" + node.get("port").getAsInt();
+			networkMap.put(ip, accountID);
+		}
+		return Client.forNetwork(networkMap);
+	}
+
+
+	public static final class Builder {
+		private String network;
+		private AccountId accountId;
+
+		private Builder() {
+		}
+
+		public static Builder aBalanceQuery() {
+			return new Builder();
+		}
+
+		public Builder withNetwork(String network) {
+			this.network = network;
+			return this;
+		}
+
+		public Builder withAccountId(AccountId accountId) {
+			this.accountId = accountId;
+			return this;
+		}
+
+		public BalanceQuery build() {
+			return new BalanceQuery(network, accountId);
+		}
 	}
 }
