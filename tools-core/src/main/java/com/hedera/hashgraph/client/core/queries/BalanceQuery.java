@@ -28,6 +28,7 @@ import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -46,8 +47,8 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	}
 
 	public Hbar getBalance() throws PrecheckStatusException, TimeoutException, HederaClientException {
-		Client client = NetworkEnum.valueOf(network.toUpperCase(Locale.ROOT)).equals(NetworkEnum.UNKNOWN) ? getClient() :
-				Client.forName(network);
+
+		Client client = NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) ? Client.forName(network) : getClient();
 		return new AccountBalanceQuery().setAccountId(accountId)
 				.execute(client)
 				.hbars;
@@ -55,7 +56,7 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 
 	private Client getClient() throws HederaClientException {
 		Map<String, AccountId> networkMap = new HashMap<>();
-		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + "." + network + "." + JSON_EXTENSION);
+		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
 		for (var jsonElement : customNetwork) {
 			var node = jsonElement.getAsJsonObject();
 			var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
