@@ -231,7 +231,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			// For legacy accounts
 			if (!balances.has(entry.getKey())) {
-				updateBalanceFromInfo(entry);
+				final var location = entry.getValue();
+				final var accountID = entry.getKey();
+				updateBalanceFromInfo(location, accountID);
 			}
 
 			final var balance =
@@ -249,12 +251,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	/**
 	 * If the balances json does not have information about an account in the table, update it from the info file
 	 *
-	 * @param entry
-	 * 		the account map entry
+	 * @param location
+	 * 		the file location of the account info
+	 * @param accountID
+	 * 		the account id as a string
 	 */
-	private void updateBalanceFromInfo(Map.Entry<String, String> entry) throws IOException, HederaClientException {
-		final var location = entry.getValue();
-		final var accountID = entry.getKey();
+	private void updateBalanceFromInfo(String location, String accountID) throws IOException, HederaClientException {
+
 
 		final var info = AccountInfo.fromBytes(readBytes(location));
 		final var attributes =
@@ -1083,6 +1086,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		try {
 			Files.deleteIfExists(newPath);
 			Files.copy(file.toPath(), newPath);
+			updateBalanceFromInfo(newPath.toString(), identifier);
 		} catch (IOException e) {
 			throw new HederaClientException(e);
 		}

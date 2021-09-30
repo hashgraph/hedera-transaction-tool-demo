@@ -41,6 +41,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import junitparams.JUnitParamsRunner;
@@ -479,11 +480,13 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			nodes = ((VBox) box).getChildren();
 		} else if (box instanceof HBox) {
 			nodes = ((HBox) box).getChildren();
+		} else if (box instanceof GridPane){
+			nodes = ((GridPane) box).getChildren();
 		} else {
 			return false;
 		}
 		for (Node node : nodes) {
-			if ((node instanceof HBox || node instanceof VBox) && findTextInBox(text, node)) {
+			if ((node instanceof HBox || node instanceof VBox || node instanceof GridPane) && findTextInBox(text, node)) {
 				return true;
 			}
 			if (node instanceof TextField && ((TextField) node).getText().contains(text)) {
@@ -498,7 +501,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 		return false;
-
 	}
 
 	private TreeView findTreeInBox(Node box) {
