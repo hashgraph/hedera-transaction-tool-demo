@@ -48,10 +48,12 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 
 	public Hbar getBalance() throws PrecheckStatusException, TimeoutException, HederaClientException {
 
-		Client client = NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) ? Client.forName(network) : getClient();
-		return new AccountBalanceQuery().setAccountId(accountId)
-				.execute(client)
-				.hbars;
+		try (Client client = NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) ? Client.forName(
+				network.toLowerCase(Locale.ROOT)) : getClient()) {
+			return new AccountBalanceQuery().setAccountId(accountId)
+					.execute(client)
+					.hbars;
+		}
 	}
 
 	private Client getClient() throws HederaClientException {

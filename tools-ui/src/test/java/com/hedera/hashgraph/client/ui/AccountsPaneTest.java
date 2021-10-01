@@ -324,7 +324,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return items;
 	}
 
-	private boolean checkBalance(String nickname, String balance) {
+	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
@@ -360,7 +360,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void loadSameAccount_Test() {
+	public void loadSameAccount_Test() throws HederaClientException {
 
 		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
 				"/src/test/resources/AccountsInfo";

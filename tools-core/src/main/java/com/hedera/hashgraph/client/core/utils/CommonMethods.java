@@ -38,6 +38,7 @@ import com.hedera.hashgraph.client.core.security.PasswordInput;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
+import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.control.Label;
 import org.apache.logging.log4j.LogManager;
@@ -317,7 +318,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return (count == 0);
 	}
 
-	public static boolean verifyOneOfExists(JsonObject input, String... fields){
+	public static boolean verifyOneOfExists(JsonObject input, String... fields) {
 		var count = 0;
 		for (var field : fields) {
 			if (input.has(field)) {
@@ -523,6 +524,35 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		}
 
 		return false;
+	}
+
+
+	/**
+	 * Given a string convert it to hbars
+	 *
+	 * @param hBarString
+	 * 		a String representing a number of hbars
+	 * @return an hbar amount
+	 * @throws HederaClientException
+	 * 		if the string cannot be parsed
+	 */
+	public static Hbar fromString(String hBarString) throws HederaClientException {
+		var trimmed = (hBarString.contains(" ")) ? hBarString.split(" ")[0] : hBarString;
+		if (hBarString.contains("t")) {
+			return Hbar.fromTinybars(Long.parseLong(trimmed));
+		}
+		var split = trimmed.split("\\.");
+		if (split.length == 1) {
+			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000);
+		}
+		if (split.length == 2) {
+			StringBuilder tiny = new StringBuilder(split[1]);
+			while (tiny.length() < 8) {
+				tiny.append("0");
+			}
+			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000 + Long.parseLong(tiny.toString()));
+		}
+		throw new HederaClientException(String.format("Cannot parse String \"%s\" to hbars", hBarString));
 	}
 }
 

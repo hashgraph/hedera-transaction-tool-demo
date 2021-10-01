@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
 import org.junit.Test;
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 public class AccountLineInformationTest {
 
 	@Test
-	public void gettersSetters_test() {
+	public void gettersSetters_test() throws HederaClientException {
 		var line =
 				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false);
