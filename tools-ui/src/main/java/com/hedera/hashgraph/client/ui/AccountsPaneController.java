@@ -32,6 +32,7 @@ import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
+import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
 import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
 import com.hedera.hashgraph.client.ui.popups.TwoButtonPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
@@ -43,10 +44,12 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -609,8 +612,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			acceptNicknameButton.setOnAction(
 					actionEvent -> updateNickname(parameter, lineInformation, changeNicknameButton,
-							acceptNicknameButton,
-							nickname));
+							acceptNicknameButton, nickname));
 			nickname.setOnKeyReleased(
 					keyEvent -> {
 						if (KeyCode.ENTER.equals(keyEvent.getCode()) && nickname.isEditable()) {
@@ -621,8 +623,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			final var filePath = accountInfos.get(lineInformation.getAccount().toReadableString());
 			var info = AccountInfo.fromBytes(readBytes(filePath));
-			final Hbar[] balance = { info.balance };
-			final String[] creationTime = { getFileDateString(filePath) };
 
 			var keyTreeView = controller.buildKeyTreeView(info.key);
 			double height = 28;
@@ -653,16 +653,24 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			refreshButton.setOnAction(actionEvent -> {
 				var identifier = new Identifier(info.accountId);
-				refreshBalance(balance, creationTime, identifier);
+				var balance = refreshBalance(identifier);
+				logger.info("Balance of account {} has been updated to {}", identifier.toReadableString(),
+						balance.toString());
+				// if table is preferred comment the next 4 lines
 				var jsonElement = balances.get(identifier.toReadableString());
 				dateLabel.setText(format("Balance (as of %s)", instantToLocalTimeDate(
 						new Date(jsonElement.getAsJsonObject().get(DATE_PROPERTY).getAsLong()).toInstant())));
 				final var newBalance =
 						Hbar.fromTinybars(jsonElement.getAsJsonObject().get(BALANCE_PROPERTY).getAsLong());
 				balanceTextField.setText(newBalance.toString());
-//				updateOneAccountLineInformation(identifier, newBalance);
-//				parameter.toggleExpanded();
-//				parameter.setExpanded(true);
+
+				/*
+			 	if the box is preferred uncomment this block
+				parameter.toggleExpanded();
+				updateOneAccountLineInformation(identifier, newBalance);
+				*/
+				logger.info("Balance for account {} updated to {}",
+						parameter.getValue().getAccount().asAccount().toString(), newBalance.toString());
 			});
 
 
@@ -681,7 +689,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			allBoxes.getChildren().addAll(returnBox, keyLabel, keyTreeView);
 
 
-
 		} catch (Exception e) {
 			logger.error(e);
 		}
@@ -692,8 +699,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		accountLineInformation.stream().filter(
 				lineInformation -> lineInformation.getAccount().equals(identifier)).forEach(
 				lineInformation -> lineInformation.setBalance(newBalance));
-
-
 	}
 
 	@NotNull
@@ -732,20 +737,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		return gridPane;
 	}
 
-	private void refreshBalance(Hbar[] balance, String[] creationTime, Identifier identifier) {
+	private Hbar refreshBalance(Identifier identifier) {
 		BalanceQuery query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(identifier.asAccount())
 				.withNetwork(controller.getCurrentNetwork())
 				.build();
+		Hbar balance;
 		try {
-			balance[0] = query.getBalance();
+			balance = query.getBalance();
 			var now = new Date();
-			creationTime[0] = instantToLocalTimeDate(now.toInstant());
-			updateBalance(identifier, balance[0], now.getTime());
-			//		refreshPanes();
-		} catch (PrecheckStatusException | TimeoutException | HederaClientException e) {
+			updateBalance(identifier, balance, now.getTime());
+		} catch (PrecheckStatusException e) {
 			logger.error(e.getMessage());
+			balance = new Hbar(-1);
+		} catch (TimeoutException e) {
+			logger.error(e.getMessage());
+			balance = new Hbar(-2);
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+			balance = new Hbar(-3);
 		}
+		return balance;
 	}
 
 	private void updateBalance(Identifier identifier, Hbar balance, long date) throws HederaClientException {
@@ -1286,5 +1298,49 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		}
 	}
+
+	public void updateAllBalances() {
+		long size = accountLineInformation.size();
+		ProgressBar progressBar = new ProgressBar();
+		var cancelButton = new Button("CANCEL");
+		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
+				"Please wait while the account balances are being updated.");
+		Task<Void> task = new Task<>() {
+			@Override
+			protected Void call() {
+				long counter = 0;
+				for (AccountLineInformation lineInformation : accountLineInformation) {
+					var identifier = lineInformation.getAccount();
+					var balance = refreshBalance(identifier);
+					updateOneAccountLineInformation(identifier, balance);
+					counter++;
+					updateProgress(counter, size);
+					logger.info("Account {} new balance {}", lineInformation.getAccount().toReadableString(), balance);
+				}
+				updateProgress(size, size);
+				return null;
+			}
+		};
+		progressBar.progressProperty().bind(task.progressProperty());
+		new Thread(task).start();
+
+		task.setOnSucceeded(workerStateEvent -> {
+			try {
+				updateAccountLineInformation();
+			} catch (IOException | HederaClientException e) {
+				logger.error(e.getMessage());
+			}
+			window.close();
+		});
+		task.setOnCancelled(workerStateEvent -> {
+			logger.info("Update balances cancelled");
+			window.close();
+		});
+		task.setOnFailed(workerStateEvent -> {
+			logger.info("Update balances failed");
+			window.close();
+		});
+	}
+
 
 }
