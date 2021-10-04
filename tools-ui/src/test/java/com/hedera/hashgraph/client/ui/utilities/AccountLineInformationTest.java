@@ -133,12 +133,12 @@ public class AccountLineInformationTest {
 		var line7 =
 				new AccountLineInformation("nick_name", new Identifier(0, 0, 10010),
 						new Hbar(159), 1632923362000L, false);
-		assertEquals(-373256064, line1.hashCode());
-		assertEquals(-373256064, line2.hashCode());
-		assertEquals(-373169818, line3.hashCode());
-		assertEquals(-373256420, line4.hashCode());
-		assertEquals(-973256064, line5.hashCode());
-		assertEquals(-373346154, line6.hashCode());
-		assertEquals(1733904911, line7.hashCode());
+		assertEquals(953508770, line1.hashCode());
+		assertEquals(953508770, line2.hashCode());
+		assertEquals(953595016, line3.hashCode());
+		assertEquals(953508414, line4.hashCode());
+		assertEquals(953503004, line5.hashCode());
+		assertEquals(953418680, line6.hashCode());
+		assertEquals(-1234297551, line7.hashCode());
 	}
 }

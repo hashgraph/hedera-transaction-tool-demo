@@ -117,7 +117,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 
 	@Override
 	public int hashCode() {
-		return nickname.hashCode() + account.hashCode() + balance.hashCode() + Long.hashCode(
+		return nickname.hashCode() + account.hashCode() + balance.getValue().hashCode() + Long.hashCode(
 				date) + signer.hashCode();
 	}
 
