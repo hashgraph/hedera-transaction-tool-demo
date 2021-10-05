@@ -24,13 +24,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class ProgressPopup {
+	private ProgressPopup() {
+		throw new IllegalStateException("Popup class");
+	}
+
 	public static Stage setupProgressPopup(ProgressBar bar, Button cancelButton, String title, String message) {
 
 		var window = new Stage();

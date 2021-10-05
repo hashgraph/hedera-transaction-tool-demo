@@ -279,11 +279,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
 
 		assertTrue(vBox.isVisible());
-
-
-		assertTrue(findTextInBox(sdf.format(date), vBox));
-
-
 		accountsPanePage.deleteAccount("thousand-five");
 
 	}

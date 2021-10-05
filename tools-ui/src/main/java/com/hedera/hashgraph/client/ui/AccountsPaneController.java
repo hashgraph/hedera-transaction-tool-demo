@@ -83,11 +83,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -99,7 +94,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -643,7 +637,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			var date = asJsonObject.get(DATE_PROPERTY).getAsLong();
 			var hbars = Hbar.fromTinybars(asJsonObject.get(BALANCE_PROPERTY).getAsLong());
 			var dateLabel =
-					setupBoxLabel(format("Balance (as of %s)", instantToLocalTimeDate(new Date(date).toInstant())));
+					setupBoxLabel(
+							format("Balance (as of %s)", Utilities.instantToLocalTimeDate(new Date(date).toInstant())));
 			var balanceTextField = setupBoxTextField(hbars.toString());
 
 			GridPane gridPane = refreshGridPane(nickname, info, refreshButton, dateLabel, balanceTextField);
@@ -654,11 +649,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			refreshButton.setOnAction(actionEvent -> {
 				var identifier = new Identifier(info.accountId);
 				var balance = refreshBalance(identifier);
-				logger.info("Balance of account {} has been updated to {}", identifier.toReadableString(),
-						balance.toString());
+				logger.info("Balance of account {} has been updated to {}", identifier.toReadableString(), balance);
 				// if table is preferred comment the next 4 lines
 				var jsonElement = balances.get(identifier.toReadableString());
-				dateLabel.setText(format("Balance (as of %s)", instantToLocalTimeDate(
+				dateLabel.setText(format("Balance (as of %s)", Utilities.instantToLocalTimeDate(
 						new Date(jsonElement.getAsJsonObject().get(DATE_PROPERTY).getAsLong()).toInstant())));
 				final var newBalance =
 						Hbar.fromTinybars(jsonElement.getAsJsonObject().get(BALANCE_PROPERTY).getAsLong());
@@ -669,8 +663,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				parameter.toggleExpanded();
 				updateOneAccountLineInformation(identifier, newBalance);
 				*/
-				logger.info("Balance for account {} updated to {}",
-						parameter.getValue().getAccount().asAccount().toString(), newBalance.toString());
+				logger.info("Balance for account {} updated to {}", parameter.getValue().getAccount().asAccount(),
+						newBalance);
 			});
 
 
@@ -831,21 +825,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (displayPopup.equals(true)) {
 			controller.keysPaneController.initializeKeysPane();
 		}
-	}
-
-	private String getFileDateString(String filePath) throws IOException {
-		var attr = Files.readAttributes(new File(filePath).toPath(), BasicFileAttributes.class);
-		var instant = attr.creationTime().toInstant();
-		return instantToLocalTimeDate(instant);
-	}
-
-	@NotNull
-	private String instantToLocalTimeDate(Instant instant) {
-		var ldt = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-		var transactionValidStart = Date.from(ldt.atZone(ZoneId.of("UTC")).toInstant());
-		var localDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		var tz = TimeZone.getDefault();
-		return localDateFormat.format(transactionValidStart) + " " + tz.getDisplayName(true, TimeZone.SHORT);
 	}
 
 	private Button setupWhiteButton(String change) {
@@ -1302,7 +1281,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public void updateAllBalances() {
 		long size = accountLineInformation.size();
 		ProgressBar progressBar = new ProgressBar();
-		var cancelButton = new Button("CANCEL");
+		var cancelButton = new Button(CANCEL_LABEL);
 		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
 				"Please wait while the account balances are being updated.");
 		Task<Void> task = new Task<>() {
@@ -1310,12 +1289,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			protected Void call() {
 				long counter = 0;
 				for (AccountLineInformation lineInformation : accountLineInformation) {
-					var identifier = lineInformation.getAccount();
-					var balance = refreshBalance(identifier);
+					final var identifier = lineInformation.getAccount();
+					final var balance = refreshBalance(identifier);
 					updateOneAccountLineInformation(identifier, balance);
-					counter++;
 					updateProgress(counter, size);
-					logger.info("Account {} new balance {}", lineInformation.getAccount().toReadableString(), balance);
+					final var accountIdString = identifier.toReadableString();
+					logger.info("Account {} new balance {}", accountIdString, balance);
+					counter++;
 				}
 				updateProgress(size, size);
 				return null;

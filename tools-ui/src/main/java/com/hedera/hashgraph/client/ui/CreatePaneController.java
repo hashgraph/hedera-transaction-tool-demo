@@ -30,7 +30,6 @@ import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
@@ -140,14 +139,14 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
+import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
+import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkAccount;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.showTooltip;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.textFieldToTinyBars;
 
 public class CreatePaneController implements GenericFileReadWriteAware {
 
@@ -992,7 +991,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var newTransaction =
 				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		if (!checkAccount(newTransaction.getAccountID())) {
+		final var status = parseAddress(newTransaction.getAccountID()).getStatus();
+		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
 			account.requestFocus();
@@ -1931,11 +1931,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if ("".equals(account)) {
 			return;
 		}
-		if (Utilities.isNumeric(account)) {
+		if (!Utilities.isNotLong(account)) {
 			account = "0.0." + account;
 		}
 
-		var parsedAddress = AddressChecksums.parseAddress(account);
+		var parsedAddress = parseAddress(account);
 		switch (parsedAddress.getStatus()) {
 			case BAD_FORMAT:
 				textField.setStyle(TEXTFIELD_ERROR);
@@ -2233,12 +2233,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private static void setHBarFormat(TextField currencyTextField) {
-		long hBarsLong = 0;
-		try {
-			hBarsLong = textFieldToTinyBars(currencyTextField);
-		} catch (HederaClientException e) {
-			logger.error(e);
-		}
+		long hBarsLong = Utilities.string2Hbar(currencyTextField.getText()).toTinybars();
 		logger.debug("Currency text field changed to: {}", currencyTextField.getText());
 		var hBarsString = Utilities.setHBarFormat(hBarsLong);
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));

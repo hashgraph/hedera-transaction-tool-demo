@@ -339,7 +339,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
-	public void fromString() throws HederaClientException {
+	void fromString() throws HederaClientException {
 		Hbar bar = new Hbar(1);
 		assertEquals(bar, CommonMethods.fromString(bar.toString()));
 		Hbar tinyBar = Hbar.fromTinybars(1);
