@@ -48,6 +48,7 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
@@ -77,6 +78,7 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -301,13 +303,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var balanceColumn = getBalanceColumn(table);
 
-		var canSignColumn = getCanSignColumn(table);
+	//	var canSignColumn = getCanSignColumn(table);
 
 		var expanderColumn = getExpanderColumn();
 
 		var actionColumn = getActionColumn(table);
 
-		table.getColumns().addAll(expanderColumn, nicknameColumn, accountIDColumn, balanceColumn, canSignColumn,
+		var checkBoxColumn = getCheckBoxColumn(table);
+
+		table.getColumns().addAll(expanderColumn, checkBoxColumn, nicknameColumn, accountIDColumn, balanceColumn,
 				actionColumn);
 		table.setItems(accountLineInformation);
 
@@ -315,6 +319,28 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			expanderColumn.toggleExpanded(0);
 		}
 		return table;
+	}
+
+	/**
+	 * Set up a checkbox column in the table
+	 *
+	 * @param table
+	 * 		a table containing account information
+	 * @return a formatted column
+	 */
+	private TableColumn<AccountLineInformation, String> getCheckBoxColumn(TableView<AccountLineInformation> table) {
+		CheckBox selectAll = new CheckBox();
+		selectAll.setOnAction(actionEvent -> {
+			actionEvent.consume();
+			table.getItems().forEach(item -> item.setSelected(selectAll.isSelected()));
+		});
+
+		var checkBoxColumn = new TableColumn<AccountLineInformation, String>("");
+		checkBoxColumn.setGraphic(selectAll);
+		checkBoxColumn.setCellValueFactory(new PropertyValueFactory<>("select"));
+		checkBoxColumn.prefWidthProperty().bind(table.widthProperty().divide(20));
+		checkBoxColumn.setStyle("-fx-alignment: CENTER");
+		return checkBoxColumn;
 	}
 
 	/**
@@ -326,9 +352,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private TableColumn<AccountLineInformation, String> getNicknameColumn(TableView<AccountLineInformation> table) {
-		var nicknameColumn = new TableColumn<AccountLineInformation, String>("Nickname");
+		var nicknameColumn = new TableColumn<AccountLineInformation, String>("Account");
 		nicknameColumn.setCellValueFactory(new PropertyValueFactory<>("nickname"));
-		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(2));
+		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(3));
 		nicknameColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
 		return nicknameColumn;
 	}
@@ -444,7 +470,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private TableColumn<AccountLineInformation, Hbar> getBalanceColumn(TableView<AccountLineInformation> table) {
-		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("Balance (At file creation)");
+		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("Balance");
 		balanceColumn.setCellValueFactory(new PropertyValueFactory<>(BALANCE_PROPERTY));
 		balanceColumn.setCellFactory(tc -> new TableCell<>() {
 			@Override
@@ -458,7 +484,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(10).multiply(4));
+		balanceColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(5));
 		balanceColumn.setStyle("-fx-alignment: TOP-RIGHT; -fx-padding: 10");
 		return balanceColumn;
 	}
@@ -660,9 +686,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 				/*
 			 	if the box is preferred uncomment this block
+			 	*/
 				parameter.toggleExpanded();
 				updateOneAccountLineInformation(identifier, newBalance);
-				*/
+
 				logger.info("Balance for account {} updated to {}", parameter.getValue().getAccount().asAccount(),
 						newBalance);
 			});

@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.control.CheckBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private StringProperty balance;
 	private String signer;
 	private long date;
+	private CheckBox select;
 
 	public AccountLineInformation(String nickname, Identifier account, Hbar balance, long date, boolean signer) {
 		this.nickname = nickname;
@@ -44,6 +46,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.balance = new SimpleStringProperty(balance.toString());
 		this.date = date;
 		this.signer = signer ? "Yes" : "No";
+		this.select = new CheckBox();
 	}
 
 	public String getNickname() {
@@ -86,6 +89,14 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.date = date;
 	}
 
+	public CheckBox getSelect() {
+		return select;
+	}
+
+	public void setSelect(CheckBox select) {
+		this.select = select;
+	}
+
 	@Override
 	public String toString() {
 		return "AccountLineInformation{" +
@@ -124,5 +135,12 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	@Override
 	public int compareTo(@NotNull AccountLineInformation o) {
 		return this.getAccount().compareTo(o.getAccount());
+	}
+
+	public void setSelected(boolean selected) {
+		select.setSelected(selected);
+	}
+	public boolean isSelected(){
+		return select.isSelected();
 	}
 }
