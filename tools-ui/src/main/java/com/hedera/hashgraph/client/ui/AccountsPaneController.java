@@ -43,6 +43,8 @@ import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -1337,8 +1339,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		long size = list.size();
 		ProgressBar progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
-		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
-				"Please wait while the account balances are being updated.");
+		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton,  "Updating Balances",
+				"Please wait while the account balances are being updated.", size);
 		Task<Void> task = new Task<>() {
 			@Override
 			protected Void call() {
