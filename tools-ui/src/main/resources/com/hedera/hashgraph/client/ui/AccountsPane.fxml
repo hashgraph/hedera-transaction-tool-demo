@@ -24,38 +24,51 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-
-<StackPane fx:id="accountsPane" minHeight="400.0" minWidth="800.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.AccountsPaneController">
+<StackPane xmlns:fx="http://javafx.com/fxml/" fx:id="accountsPane" minHeight="400.0" minWidth="800.0"
+		   AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+		   AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/"
+		   fx:controller="com.hedera.hashgraph.client.ui.AccountsPaneController">
 	<VBox>
 		<StackPane.margin>
-			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0"/>
 		</StackPane.margin>
 		<HBox alignment="TOP_RIGHT" spacing="20.0">
 			<Accordion style="-fx-background-color: transparent;">
 				<panes>
 					<TitledPane animated="false" text="Update accounts">
 						<AnchorPane minHeight="0.0" minWidth="0.0" prefWidth="500.0">
-							<Button layoutX="286.0" layoutY="36.0" minWidth="200.0" mnemonicParsing="false" onAction="#updateAllBalances" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="UPDATE BALANCES" />
+							<Button layoutX="286.0" layoutY="70.0" minWidth="200.0" mnemonicParsing="false"
+									onAction="#updateSelectedBalances"
+									style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;"
+									text="UPDATE SELECTED"/>
 						</AnchorPane>
 					</TitledPane>
 				</panes>
 			</Accordion>
-			<Region HBox.hgrow="ALWAYS" />
-			<Button fx:id="importAccountButton" minWidth="200.0" mnemonicParsing="false" onAction="#importAccountFromFile" style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;" text="IMPORT ACCOUNTS" />
-			<Button fx:id="importFolderButton" layoutX="10.0" layoutY="10.0" minWidth="200.0" mnemonicParsing="false" onAction="#importAccountFromFolder" style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;" text="IMPORT FOLDER" />
+			<Region HBox.hgrow="ALWAYS"/>
+			<Button fx:id="importAccountButton" minWidth="200.0" mnemonicParsing="false"
+					onAction="#importAccountFromFile"
+					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
+					text="IMPORT ACCOUNTS"/>
+			<Button fx:id="importFolderButton" layoutX="10.0" layoutY="10.0" minWidth="200.0" mnemonicParsing="false"
+					onAction="#importAccountFromFolder"
+					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
+					text="IMPORT FOLDER"/>
 		</HBox>
-		<TextField fx:id="hiddenPathAccount" onKeyReleased="#choosePath" style="-fx-font-size: 2;" visible="false" />
-		<ScrollPane fx:id="accountsScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+		<TextField fx:id="hiddenPathAccount" onKeyReleased="#choosePath" style="-fx-font-size: 2;" visible="false"/>
+		<ScrollPane fx:id="accountsScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER"
+					style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
 			<VBox.margin>
-				<Insets />
+				<Insets/>
 			</VBox.margin>
 			<padding>
-				<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+				<Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
 			</padding>
 		</ScrollPane>
 	</VBox>

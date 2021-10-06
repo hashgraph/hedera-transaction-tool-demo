@@ -22,9 +22,10 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.control.CheckBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private StringProperty balance;
 	private String signer;
 	private long date;
-	private CheckBox select;
+	private final BooleanProperty selected = new SimpleBooleanProperty();
 
 	public AccountLineInformation(String nickname, Identifier account, Hbar balance, long date, boolean signer) {
 		this.nickname = nickname;
@@ -46,7 +47,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.balance = new SimpleStringProperty(balance.toString());
 		this.date = date;
 		this.signer = signer ? "Yes" : "No";
-		this.select = new CheckBox();
+		this.selected.setValue(false);
 	}
 
 	public String getNickname() {
@@ -89,14 +90,6 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.date = date;
 	}
 
-	public CheckBox getSelect() {
-		return select;
-	}
-
-	public void setSelect(CheckBox select) {
-		this.select = select;
-	}
-
 	@Override
 	public String toString() {
 		return "AccountLineInformation{" +
@@ -126,6 +119,18 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		}
 	}
 
+	public boolean isSelected() {
+		return selected.get();
+	}
+
+	public BooleanProperty selectedProperty() {
+		return selected;
+	}
+
+	public void setSelected(boolean selected) {
+		this.selected.set(selected);
+	}
+
 	@Override
 	public int hashCode() {
 		return nickname.hashCode() + account.hashCode() + balance.getValue().hashCode() + Long.hashCode(
@@ -137,10 +142,4 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return this.getAccount().compareTo(o.getAccount());
 	}
 
-	public void setSelected(boolean selected) {
-		select.setSelected(selected);
-	}
-	public boolean isSelected(){
-		return select.isSelected();
-	}
 }

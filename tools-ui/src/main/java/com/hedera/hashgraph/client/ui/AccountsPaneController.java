@@ -42,7 +42,9 @@ import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -57,6 +59,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -78,7 +81,6 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -145,8 +147,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private Controller controller;
 	private final Map<String, String> accountInfos;    // is loaded from accountInfo.info
 	private final Map<String, String> idNickNames;     // key: accountID string, value: nickName
-	private final ObservableList<AccountLineInformation> accountLineInformation = FXCollections.observableArrayList();
+	private final ObservableList<AccountLineInformation> accountLineInformation = FXCollections.observableArrayList(
+			accountLineInformation -> new Observable[] { accountLineInformation.selectedProperty() });
 	private final JsonObject balances = new JsonObject();
+	private boolean noise = false;
+	private final CheckBox selectAll = new CheckBox();
 
 	public AccountsPaneController() {
 		accountInfos = new HashMap<>();
@@ -170,6 +175,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.error(exception);
 		}
 		accountsScrollPane.setContent(setupAccountTable());
+		accountLineInformation.addListener((ListChangeListener<AccountLineInformation>) change -> {
+			if (!noise) {
+				selectAll.setSelected(false);
+			}
+		});
 	}
 
 	private void getBalancesFromFileSystem() throws HederaClientException {
@@ -302,7 +312,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var balanceColumn = getBalanceColumn(table);
 
-	//	var canSignColumn = getCanSignColumn(table);
+		//	var canSignColumn = getCanSignColumn(table);
 
 		var expanderColumn = getExpanderColumn();
 
@@ -327,18 +337,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		a table containing account information
 	 * @return a formatted column
 	 */
-	private TableColumn<AccountLineInformation, String> getCheckBoxColumn(TableView<AccountLineInformation> table) {
-		CheckBox selectAll = new CheckBox();
+	private TableColumn<AccountLineInformation, Boolean> getCheckBoxColumn(TableView<AccountLineInformation> table) {
+
+
+		var checkBoxColumn = new TableColumn<AccountLineInformation, Boolean>("");
+		checkBoxColumn.setGraphic(selectAll);
+		checkBoxColumn.setCellValueFactory(f -> f.getValue().selectedProperty());
+		checkBoxColumn.setCellFactory(CheckBoxTableCell.forTableColumn(checkBoxColumn));
+
 		selectAll.setOnAction(actionEvent -> {
 			actionEvent.consume();
-			table.getItems().forEach(item -> item.setSelected(selectAll.isSelected()));
+			noise = true;
+			for (AccountLineInformation item : table.getItems()) {
+				item.setSelected(selectAll.isSelected());
+			}
+			noise = false;
 		});
 
-		var checkBoxColumn = new TableColumn<AccountLineInformation, String>("");
-		checkBoxColumn.setGraphic(selectAll);
-		checkBoxColumn.setCellValueFactory(new PropertyValueFactory<>("select"));
 		checkBoxColumn.prefWidthProperty().bind(table.widthProperty().divide(20));
-		checkBoxColumn.setStyle("-fx-alignment: CENTER");
+		checkBoxColumn.setEditable(true);
+		table.setEditable(true);
+		checkBoxColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 11 0 0 0");
 		return checkBoxColumn;
 	}
 
@@ -1304,8 +1323,18 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	public void updateAllBalances() {
-		long size = accountLineInformation.size();
+	public void updateSelectedBalances() {
+		List<AccountLineInformation> list = new ArrayList<>();
+		for (AccountLineInformation lineInformation : accountLineInformation) {
+			if (lineInformation.isSelected()) {
+				list.add(lineInformation);
+			}
+		}
+		updateBalances(list);
+	}
+
+	private void updateBalances(List<AccountLineInformation> list) {
+		long size = list.size();
 		ProgressBar progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
 		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
@@ -1314,7 +1343,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			@Override
 			protected Void call() {
 				long counter = 0;
-				for (AccountLineInformation lineInformation : accountLineInformation) {
+				for (AccountLineInformation lineInformation : list) {
 					final var identifier = lineInformation.getAccount();
 					final var balance = refreshBalance(identifier);
 					updateOneAccountLineInformation(identifier, balance);
@@ -1347,6 +1376,4 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			window.close();
 		});
 	}
-
-
 }
