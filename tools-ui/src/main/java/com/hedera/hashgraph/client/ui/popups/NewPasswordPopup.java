@@ -54,7 +54,7 @@ public class NewPasswordPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static char[] display(){
+	public static char[] display() {
 		return display(TITLE_LABEL, WARNING_LABEL);
 	}
 
@@ -111,8 +111,8 @@ public class NewPasswordPopup {
 
 		// region EVENTS
 
-		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1, check2,
-				event));
+		passwordField1.setOnKeyReleased(
+				event -> keyPressedEvent(passwordField1, passwordField2, check1, error1, check2, error2, event));
 		passwordField2.setOnKeyReleased(
 				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, error2, event));
 		continueButton.setOnAction(actionEvent -> continueActionEvent(window, passwordField1, passwordField2));
@@ -218,7 +218,7 @@ public class NewPasswordPopup {
 	}
 
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1, Label check2, KeyEvent event) {
+			Label error1, Label check2, Label error2, KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var status = policy.check(passwordField1.getText());
 		check1.setVisible(status.equals(Status.OK));
@@ -237,6 +237,10 @@ public class NewPasswordPopup {
 		}
 
 		check2.setVisible(passwordField1.getText().equals(passwordField2.getText()));
+
+		if (check1.isVisible() && check2.isVisible()) {
+			error2.setVisible(false);
+		}
 
 	}
 

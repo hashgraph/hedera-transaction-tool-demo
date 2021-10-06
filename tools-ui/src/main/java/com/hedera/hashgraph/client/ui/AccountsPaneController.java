@@ -141,7 +141,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public Button importAccountButton;
 	public Button importFolderButton;
 
-
 	@FXML
 	private Controller controller;
 	private final Map<String, String> accountInfos;    // is loaded from accountInfo.info
