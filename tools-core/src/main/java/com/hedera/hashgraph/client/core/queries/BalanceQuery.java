@@ -21,7 +21,7 @@ package com.hedera.hashgraph.client.core.queries;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
@@ -29,9 +29,7 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
@@ -57,15 +55,8 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	}
 
 	private Client getClient() throws HederaClientException {
-		Map<String, AccountId> networkMap = new HashMap<>();
 		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
-		for (var jsonElement : customNetwork) {
-			var node = jsonElement.getAsJsonObject();
-			var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
-			var ip = node.get("ipAddress").getAsString() + ":" + node.get("port").getAsInt();
-			networkMap.put(ip, accountID);
-		}
-		return Client.forNetwork(networkMap);
+		return CommonMethods.getClient(customNetwork);
 	}
 
 

@@ -43,6 +43,7 @@ import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.control.Label;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileReader;
@@ -553,6 +554,18 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000 + Long.parseLong(tiny.toString()));
 		}
 		throw new HederaClientException(String.format("Cannot parse String \"%s\" to hbars", hBarString));
+	}
+
+	@NotNull
+	public static Client getClient(JsonArray customNetwork) {
+		Map<String, AccountId> networkMap = new HashMap<>();
+		for (var jsonElement : customNetwork) {
+			var node = jsonElement.getAsJsonObject();
+			var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
+			var ip = node.get("ipAddress").getAsString() + ":" + node.get("port").getAsInt();
+			networkMap.put(ip, accountID);
+		}
+		return Client.forNetwork(networkMap);
 	}
 }
 

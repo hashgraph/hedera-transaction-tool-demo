@@ -86,6 +86,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			"The period of time in which the account will renew in seconds.\n" +
 					"Min:7000000 seconds \n" +
 					"Max: 8000000 seconds";
+
 	private boolean noise = false;
 
 	public TextField loadStorageTextField;
@@ -137,9 +138,10 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button maxFeeTooltip;
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
+	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox networkCombobox;
+	public ComboBox<String> networkCombobox;
 
 
 	@FXML

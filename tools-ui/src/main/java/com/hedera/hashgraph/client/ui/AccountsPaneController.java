@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.queries.AccountInfoQuery;
 import com.hedera.hashgraph.client.core.queries.BalanceQuery;
 import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
@@ -39,12 +40,11 @@ import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import javafx.beans.Observable;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -97,6 +97,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -144,6 +145,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public TextField hiddenPathAccount;
 	public Button importAccountButton;
 	public Button importFolderButton;
+	public TextField accountsToUpdateTextFIeld;
+	public Button selectAccountsButton;
 
 	@FXML
 	private Controller controller;
@@ -182,6 +185,49 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				selectAll.setSelected(false);
 			}
 		});
+
+		accountsToUpdateTextFIeld.setOnKeyPressed(keyEvent -> {
+			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+				AccountInfoQuery query = AccountInfoQuery.Builder
+						.anAccountInfoQuery()
+						.withNetwork(controller.getCurrentNetwork().toLowerCase(Locale.ROOT))
+						.build();
+				List<AccountId> accounts = parseAccountNumbers(accountsToUpdateTextFIeld.getText());
+				for (AccountId account : accounts) {
+					logger.info("Requesting information for account {}", account);
+
+				}
+				accountsToUpdateTextFIeld.clear();
+			}
+
+		});
+
+	}
+
+	private List<AccountId> parseAccountNumbers(String text) {
+		var split = text.replace("\\s", "").split("[\\s,]+");
+		List<AccountId> ids = new ArrayList<>();
+		for (String s : split) {
+			if (!s.contains("-")) {
+				ids.add(Identifier.parse(s).asAccount());
+				continue;
+			}
+			var range = s.split("-");
+			if (range.length != 2) {
+				logger.info("String {} cannot be parsed into a range", s);
+				continue;
+			}
+			var start = Identifier.parse(range[0]);
+			var end = Identifier.parse(range[1]);
+			for (long i = start.getRealmNum(); i <= end.getRealmNum(); i++) {
+				for (long j = start.getShardNum(); j <= end.getShardNum(); j++) {
+					for (long k = start.getAccountNum(); k <= end.getAccountNum(); k++) {
+						ids.add(new Identifier(i, j, k).asAccount());
+					}
+				}
+			}
+		}
+		return ids;
 	}
 
 	private void getBalancesFromFileSystem() throws HederaClientException {
@@ -463,22 +509,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
 		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
 		return expanderColumn;
-	}
-
-	/**
-	 * Set up the "Can Sign?" column
-	 *
-	 * @param table
-	 * 		a table containing account information
-	 * @return a formatted column
-	 */
-	@NotNull
-	private TableColumn<AccountLineInformation, String> getCanSignColumn(TableView<AccountLineInformation> table) {
-		var canSignColumn = new TableColumn<AccountLineInformation, String>("Can Sign?");
-		canSignColumn.setCellValueFactory(new PropertyValueFactory<>("signer"));
-		canSignColumn.prefWidthProperty().bind(table.widthProperty().divide(10));
-		canSignColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
-		return canSignColumn;
 	}
 
 	/**
@@ -1307,24 +1337,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	// endregion
-
-	/**
-	 * Testing only: if the enter key is pressed in the hidden field, the address is accepted as the new account info
-	 * file
-	 *
-	 * @param keyEvent
-	 * 		the triggering key event
-	 */
-	public void choosePath(KeyEvent keyEvent) throws HederaClientException {
-		if (KeyCode.ENTER.equals(keyEvent.getCode())) {
-			var infoPath = hiddenPathAccount.getText().replace(" ", "");
-			if (infoPath.endsWith(".info") && new File(infoPath).exists()) {
-				importAccountFromFile();
-			}
-		}
-	}
-
 	public void updateSelectedBalances() {
 		List<AccountLineInformation> list = new ArrayList<>();
 		for (AccountLineInformation lineInformation : accountLineInformation) {
@@ -1339,7 +1351,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		long size = list.size();
 		ProgressBar progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
-		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton,  "Updating Balances",
+		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
 				"Please wait while the account balances are being updated.", size);
 		Task<Void> task = new Task<>() {
 			@Override
@@ -1378,4 +1390,24 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			window.close();
 		});
 	}
+
+
+	// endregion
+
+	/**
+	 * Testing only: if the enter key is pressed in the hidden field, the address is accepted as the new account info
+	 * file
+	 *
+	 * @param keyEvent
+	 * 		the triggering key event
+	 */
+	public void choosePath(KeyEvent keyEvent) throws HederaClientException {
+		if (KeyCode.ENTER.equals(keyEvent.getCode())) {
+			var infoPath = hiddenPathAccount.getText().replace(" ", "");
+			if (infoPath.endsWith(".info") && new File(infoPath).exists()) {
+				importAccountFromFile();
+			}
+		}
+	}
+
 }

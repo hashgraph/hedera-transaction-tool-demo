@@ -48,8 +48,8 @@
 									text="UPDATE SELECTED"/>
 							<HBox layoutX="23.0" layoutY="14.0" spacing="20.0" AnchorPane.leftAnchor="20.0"
 								  AnchorPane.rightAnchor="20.0">
-								<TextField prefHeight="25.0" prefWidth="234.0"/>
-								<Button mnemonicParsing="false" text="Button"/>
+								<TextField fx:id="accountsToUpdateTextFIeld" prefHeight="25.0" prefWidth="234.0"/>
+								<Button fx:id="selectAccountsButton" mnemonicParsing="false" text="Button"/>
 							</HBox>
 						</AnchorPane>
 					</TitledPane>
