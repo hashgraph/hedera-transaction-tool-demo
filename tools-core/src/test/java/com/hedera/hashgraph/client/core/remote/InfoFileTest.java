@@ -18,12 +18,26 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileActions;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.sdk.AccountCreateTransaction;
+import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.AccountInfoQuery;
+import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -35,16 +49,26 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.KeyStoreException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
+import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.publicKeyFromFile;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class InfoFileTest extends TestBase {
+public class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
 
 	@Before
@@ -124,5 +148,109 @@ public class InfoFileTest extends TestBase {
 	@After
 	public void tearDown() throws Exception {
 		Files.delete(new File(DEFAULT_HISTORY + File.separator + "0.0.2.meta").toPath());
+	}
+
+	@Test
+	public void canSignThreshold_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
+			HederaClientException,
+			ReceiptStatusException, IOException {
+		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
+
+		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+
+		var keyFiles =
+				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
+		assert keyFiles != null;
+		var keys = Arrays.stream(keyFiles).map(
+				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
+
+		assertTrue(file.canSign(keys));
+
+		var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
+
+		assertFalse(file.canSign(smallSet));
+
+		Files.deleteIfExists(Path.of(infoFile));
+		logger.info("Deleted {}", infoFile);
+	}
+
+	@Test
+	public void canSignList_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
+			HederaClientException,
+			ReceiptStatusException, IOException {
+		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeyList.json");
+
+		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+
+		var keyFiles =
+				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
+		assert keyFiles != null;
+		var keys = Arrays.stream(keyFiles).map(
+				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
+
+		assertTrue(file.canSign(keys));
+
+		var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
+
+		assertFalse(file.canSign(smallSet));
+
+		Files.deleteIfExists(Path.of(infoFile));
+		logger.info("Deleted {}", infoFile);
+	}
+
+	@Test
+	public void canSignSingle_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
+			HederaClientException,
+			ReceiptStatusException, IOException {
+		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySingle.json");
+
+		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+
+		var keyFiles =
+				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
+		assert keyFiles != null;
+
+		var small = Arrays.stream(keyFiles).filter(keyFile -> !keyFile.getName().contains("0")).map(
+				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
+
+		var keys = Arrays.stream(keyFiles).map(
+				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
+
+		assertTrue(file.canSign(keys));
+
+
+		assertFalse(file.canSign(small));
+
+		Files.deleteIfExists(Path.of(infoFile));
+		logger.info("Deleted {}", infoFile);
+	}
+
+
+	private String createAccountInfo(String filePath) throws KeyStoreException, HederaClientException, TimeoutException,
+			PrecheckStatusException, ReceiptStatusException {
+		var keyStore =
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
+		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+
+
+		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+		var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
+		var transactionResponse = new AccountCreateTransaction()
+				.setKey(key)
+				.setInitialBalance(new Hbar(1))
+				.setAccountMemo("Test payer account")
+				.execute(client);
+
+		var account = transactionResponse.getReceipt(client).accountId;
+
+		var accountInfo = new AccountInfoQuery()
+				.setAccountId(account)
+				.execute(client);
+
+		final var infoFile = String.format("%s/%s.info", "src/test/resources/AccountInfos", account);
+		writeBytes(infoFile, accountInfo.toBytes());
+		logger.info("Account {} created and info stored to {}", account, infoFile);
+		return infoFile;
 	}
 }

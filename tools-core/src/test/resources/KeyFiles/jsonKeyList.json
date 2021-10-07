@@ -1,0 +1,37 @@
+{
+  "thresholdKey": {
+    "threshold": 10,
+    "keyList": [
+      {
+        "Ed25519": "985359feb9ab23eef8ccc71b87345976141c429a98c2f99d71bee4e726ce9665"
+      },
+      {
+        "Ed25519": "29e8c736cd22409b6d57ccbc9557bb3ecc0fe3c426bc6c9e75f0b9c9f62720ba"
+      },
+      {
+        "Ed25519": "eaceee8e46adaf94d81bc907db83e261a0b9ceab68738e054d93dd85f9f963ec"
+      },
+      {
+        "Ed25519": "5b2c8d4f40896ad87b432284b348a2afd156a18c5ab3d6b7cb8ea71722fea958"
+      },
+      {
+        "Ed25519": "3bf8ffa2f0971529e1325f21cc020240b0fc030780b2895ae71ef9e5b0489a52"
+      },
+      {
+        "Ed25519": "0aeb5bba964ac005b5b29aa4d299d123c8c7a1ad3a5347ae61b715bf6adc7ce0"
+      },
+      {
+        "Ed25519": "a1d29935af1b5c1ea642ce857ab6e90897bc1d3f18f7c599f095c05a3e2b0c1e"
+      },
+      {
+        "Ed25519": "0d23d823424bf25232a169e740fb7b6ce949264695b84508c2e70aa101a23fab"
+      },
+      {
+        "Ed25519": "23d30fd512043c2a36196b6d2f22cb95143cc3479f22d39849944ce5a1847385"
+      },
+      {
+        "Ed25519": "26234eae33ad65d1fdbd8961525033e2a6b0c5566a8c9c911e9b5e9c7e907515"
+      }
+    ]
+  }
+}

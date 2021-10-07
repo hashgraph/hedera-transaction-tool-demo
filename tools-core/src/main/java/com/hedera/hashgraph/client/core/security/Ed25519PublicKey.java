@@ -78,9 +78,7 @@ public final class Ed25519PublicKey {
 		}
 
 		var publicKeyInfo = SubjectPublicKeyInfo.getInstance(keyBytes);
-		return fromBytes(
-				publicKeyInfo.getPublicKeyData()
-						.getBytes());
+		return fromBytes(publicKeyInfo.getPublicKeyData().getBytes());
 	}
 
 	/**
