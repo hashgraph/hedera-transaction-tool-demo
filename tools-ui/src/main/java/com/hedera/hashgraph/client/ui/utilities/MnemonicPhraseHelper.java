@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Dictionary;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.popups.MnemonicBox;
+import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Mnemonic;
@@ -47,8 +48,11 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 import static javafx.scene.control.PopupControl.USE_COMPUTED_SIZE;
 
 public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
@@ -134,7 +138,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	public void generatePassphraseEvent(char[] password, byte[] salt, boolean showPopup) {
+	public void generatePassphraseEvent(boolean showPopup) {
 		var words = getWordsFromGridPane();
 
 		final var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
@@ -159,15 +163,6 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			mnemonicErrorMessage.setVisible(true);
 		}
 
-		try {
-			if (password != null) {
-				storeMnemonic(password, salt);
-				Arrays.fill(password, 'x');
-			}
-		} catch (Exception e) {
-			logger.error(e);
-			mnemonic = null;
-		}
 
 		try {
 			var gridPane = new GridPane();
@@ -201,6 +196,26 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		}
 
+		var password = NewPasswordPopup.display("Recovery phrase password",
+				"Enter your recovery phrase password. Frequently used passwords will not be accepted.");
+		try {
+			if (password != null) {
+				properties.setHash(password);
+				var token = properties.getHash();
+				var decoder = Base64.getDecoder();
+
+				var tokenBytes = decoder.decode(token);
+				if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+					logger.error("Token size check failed");
+				}
+				storeMnemonic(password, Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH));
+
+				Arrays.fill(password, 'x');
+			}
+		} catch (Exception e) {
+			logger.error(e);
+			mnemonic = null;
+		}
 		generateKeys.setVisible(false);
 		finishBox.setVisible(true);
 	}

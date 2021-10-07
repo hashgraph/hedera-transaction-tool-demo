@@ -55,20 +55,20 @@ public class NewPasswordPopup {
 	}
 
 	public static char[] display() {
+		return display(TITLE_LABEL, WARNING_LABEL);
+	}
 
-
+	public static char[] display(String title, String message) {
 		Stage window = getStage();
 
 		// Setup labels
-		var titleLabel = new Label(TITLE_LABEL);
+		var titleLabel = new Label(title);
 		titleLabel.setStyle("-fx-font-size: 20");
 
-		Label warningLabel = getLabel(WARNING_LABEL);
+		Label warningLabel = getLabel(message);
 		var firstTitle = new Label("Password");
-		Label firstExplanation = getLabel(PASSWORD_LENGTH_LABEL);
 
 		var secondTitle = new Label("Confirm password");
-		Label secondExplanation = getLabel(MATCH_LABEL);
 
 		// Error Labels
 		Label error1 = getLabel(PASSWORD_LENGTH_LABEL);
@@ -111,8 +111,8 @@ public class NewPasswordPopup {
 
 		// region EVENTS
 
-		passwordField1.setOnKeyReleased(event -> keyPressedEvent(passwordField1, passwordField2, check1, error1,
-				event));
+		passwordField1.setOnKeyReleased(
+				event -> keyPressedEvent(passwordField1, passwordField2, check1, error1, check2, error2, event));
 		passwordField2.setOnKeyReleased(
 				event -> keyReleasedEvent(window, passwordField1, passwordField2, check1, check2, error2, event));
 		continueButton.setOnAction(actionEvent -> continueActionEvent(window, passwordField1, passwordField2));
@@ -217,10 +217,8 @@ public class NewPasswordPopup {
 		}
 	}
 
-
 	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1,
-			KeyEvent event) {
+			Label error1, Label check2, Label error2, KeyEvent event) {
 		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var status = policy.check(passwordField1.getText());
 		check1.setVisible(status.equals(Status.OK));
@@ -231,11 +229,19 @@ public class NewPasswordPopup {
 			error1.setText(getLegend(status));
 			error1.setWrapText(true);
 			error1.setVisible(true);
+			check2.setVisible(false);
 		}
 		if ((event.getCode().equals(KeyCode.ENTER) || event.getCode().equals(
 				KeyCode.TAB)) && check1.isVisible()) {
 			answer = passwordField1.getText().toCharArray();
 		}
+
+		check2.setVisible(passwordField1.getText().equals(passwordField2.getText()));
+
+		if (check1.isVisible() && check2.isVisible()) {
+			error2.setVisible(false);
+		}
+
 	}
 
 	private static String getLegend(Status status) {

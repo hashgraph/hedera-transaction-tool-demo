@@ -115,7 +115,7 @@ public class SettingsPaneTest extends TestBase {
 		Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();

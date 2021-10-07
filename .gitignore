@@ -100,3 +100,5 @@ Release/tools-ui-0.1.0-rc.1.zip
 oldInstaller.sh
 Release/
 .idea/inspectionProfiles/Project_Default.xml
+tools-integration/src/test/resources/TempReceipts
+tools-integration/src/test/resources/TempTransactions

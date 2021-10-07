@@ -132,6 +132,21 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
+	public void checksums_test() throws IOException {
+		var badFile = new File("src/test/resources/Files/batchFileTests/badSender2.csv");
+		var badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+
+		badFile = new File("src/test/resources/Files/batchFileTests/badNode2.csv");
+		badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+
+		badFile = new File("src/test/resources/Files/batchFileTests/badTransferId2.csv");
+		badFileDetails = FileDetails.parse(badFile);
+		assertFalse(new BatchFile(badFileDetails).isValid());
+	}
+
+	@Test
 	public void getters_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		var info = FileDetails.parse(file);

@@ -7,8 +7,9 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="tools-cli" />
-        <module name="tools-core" />
         <module name="tools-ui" />
+        <module name="tools-integration" />
+        <module name="tools-core" />
       </profile>
     </annotationProcessing>
   </component>

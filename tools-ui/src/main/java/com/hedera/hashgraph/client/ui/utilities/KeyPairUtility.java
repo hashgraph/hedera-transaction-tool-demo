@@ -137,7 +137,7 @@ public class KeyPairUtility {
 		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 
 		// load mnemonic
-		var mnemonicPwd = PasswordBox.display("Password", "Please enter your recovery phrase password", "", false);
+		var mnemonicPwd = PasswordBox.display("Password", "Please enter your recovery phrase password.", "", false);
 		var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
 				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
