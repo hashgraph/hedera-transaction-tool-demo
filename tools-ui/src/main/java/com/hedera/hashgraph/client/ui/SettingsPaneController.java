@@ -30,6 +30,10 @@ import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -60,7 +64,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 
@@ -141,7 +148,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox<String> networkCombobox;
+	public ComboBox<Object> networkCombobox;
+	public ComboBox<String> feePayerCombobox;
 
 
 	@FXML
@@ -219,6 +227,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
+			setupFeePayerCombobox();
+
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
 						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
@@ -249,6 +259,30 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			logger.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
+	}
+
+	private void setupFeePayerCombobox() {
+		noise = true;
+		List<String> accounts = new ArrayList<>();
+		for (Identifier feePayer : controller.getFeePayers()) {
+			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+		Collections.sort(accounts);
+		feePayerCombobox.getItems().clear();
+		feePayerCombobox.getItems().addAll(accounts);
+		noise = false;
+
+		var feePayer = controller.getDefaultFeePayer();
+		if ("".equals(feePayer)) {
+			controller.setDefaultFeePayer(accounts.get(0));
+			feePayer = accounts.get(0);
+		}
+		feePayerCombobox.getSelectionModel().select(feePayer);
+		feePayerCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+			if (!noise){
+				controller.setDefaultFeePayer(t1);
+			}
+		});
 	}
 
 	private void setupNetworkBox() {

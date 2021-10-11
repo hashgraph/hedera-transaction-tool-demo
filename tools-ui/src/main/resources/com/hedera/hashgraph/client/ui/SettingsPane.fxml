@@ -398,9 +398,7 @@
 								<graphic>
 									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
 											   preserveRatio="true">
-										<image>
-											<Image url="@../../../../../icons/helpIcon.png"/>
-										</image>
+										<Image url="@../../../../../icons/helpIcon.png"/>
 									</ImageView>
 								</graphic>
 								<padding>

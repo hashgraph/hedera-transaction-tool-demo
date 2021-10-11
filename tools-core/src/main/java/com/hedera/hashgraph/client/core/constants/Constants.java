@@ -79,6 +79,7 @@ public class Constants {
 	public static final String CUSTOM_NETWORKS = "customNetwork";
 	public static final String NETWORKS = "networks";
 	public static final String CURRENT_NETWORK = "currentNetwork";
+	public static final String DEFAULT_FEE_PAYER = "defaultFeePayer";
 	// endregion
 
 	// region APP DEFAULTS

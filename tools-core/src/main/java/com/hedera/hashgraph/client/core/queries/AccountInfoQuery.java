@@ -68,15 +68,19 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 	}
 
 	public AccountInfo getInfo(AccountId account) throws PrecheckStatusException, TimeoutException {
+		for (PrivateKey signingKey : signingKeys) {
+			client.setOperator(feePayer, signingKey);
+		}
+		client.setMaxQueryPayment(fee);
 		return new com.hedera.hashgraph.sdk.AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);
 	}
 
 	public static final class Builder {
-		private String network;
+		private String network = "mainnet";
 		private AccountId feePayer;
-		private Hbar fee;
+		private Hbar fee = new Hbar(1);
 		private List<PrivateKey> signingKeys;
 
 		private Builder() {

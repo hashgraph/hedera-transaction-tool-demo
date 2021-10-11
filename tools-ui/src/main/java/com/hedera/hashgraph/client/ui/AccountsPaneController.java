@@ -29,21 +29,28 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.queries.AccountInfoQuery;
 import com.hedera.hashgraph.client.core.queries.BalanceQuery;
+import com.hedera.hashgraph.client.core.remote.InfoFile;
+import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
 import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
 import com.hedera.hashgraph.client.ui.popups.TwoButtonPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
+import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.PublicKey;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -77,6 +84,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.util.Callback;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -102,12 +110,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.BALANCES_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEXT_BOX_STYLE;
@@ -157,12 +167,17 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private final JsonObject balances = new JsonObject();
 	private boolean noise = false;
 	private final CheckBox selectAll = new CheckBox();
+	private final Set<PublicKey> keys = new HashSet<>();
+	private final Set<Identifier> feePayers = new HashSet<>();
 
 	public AccountsPaneController() {
 		accountInfos = new HashMap<>();
 		idNickNames = new HashMap<>();
 	}
 
+	public Set<Identifier> getFeePayers() {
+		return feePayers;
+	}
 
 	//region INITIALIZATION
 	void injectMainController(Controller controller) {
@@ -188,26 +203,113 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		accountsToUpdateTextFIeld.setOnKeyPressed(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-				AccountInfoQuery query = AccountInfoQuery.Builder
-						.anAccountInfoQuery()
-						.withNetwork(controller.getCurrentNetwork().toLowerCase(Locale.ROOT))
-						.build();
-				List<AccountId> accounts = parseAccountNumbers(accountsToUpdateTextFIeld.getText());
-				for (AccountId account : accounts) {
-					logger.info("Requesting information for account {}", account);
-
+				try {
+					getInfosFromNetwork();
+				} catch (PrecheckStatusException | TimeoutException | HederaClientException | InvalidProtocolBufferException e) {
+					logger.error(e.getMessage());
 				}
-				accountsToUpdateTextFIeld.clear();
 			}
 
 		});
 
+		setupFeePayers();
+	}
+
+	private void getInfosFromNetwork() throws PrecheckStatusException, TimeoutException, HederaClientException,
+			InvalidProtocolBufferException {
+		File tmpdir;
+		try {
+			tmpdir = Files.createTempDirectory("tmpDirPrefix").toFile();
+			FileUtils.cleanDirectory(tmpdir);
+		} catch (IOException e) {
+			logger.error(e.getMessage());
+			return;
+		}
+
+
+		final var feePayer = Identifier.parse(controller.getDefaultFeePayer());
+		var fullKey = AccountInfo.fromBytes(
+				readBytes(ACCOUNTS_INFO_FOLDER + feePayer.toReadableString() + "." + INFO_EXTENSION)).key;
+
+		var privateKeysFiles = getPrivateKeysFrom(fullKey);
+		var utility = new KeyPairUtility();
+		var privateKeys =
+				privateKeysFiles.stream().map(privateKeyFile -> utility.getKeyPairFromPEM(privateKeyFile,
+						format("Please enter the password for key %s",
+								FilenameUtils.getBaseName(privateKeyFile.getName())))).map(
+						keyPair -> PrivateKey.fromBytes(keyPair.getPrivate().getEncoded())).collect(Collectors.toList());
+
+		var query = AccountInfoQuery.Builder
+				.anAccountInfoQuery()
+				.withNetwork(controller.getCurrentNetwork().toLowerCase(Locale.ROOT))
+				.withSigningKeys(privateKeys)
+				.withFeePayer(feePayer.asAccount())
+				.withFee(Hbar.fromTinybars(controller.getDefaultTxFee()))
+				.build();
+		var accounts = parseAccountNumbers(accountsToUpdateTextFIeld.getText());
+
+		List<File> newFiles = new ArrayList<>();
+		for (var account : accounts) {
+			logger.info("Requesting information for account {}", account);
+			var info = query.getInfo(account);
+			final var filePath =
+					tmpdir.getAbsolutePath() + File.separator + account.toString() + "." + INFO_EXTENSION;
+			writeBytes(filePath, info.toBytes());
+			logger.info("Account info for {} stored to {}", account.toString(), filePath);
+			newFiles.add(new File(filePath));
+		}
+
+		if (newFiles.size() > 0) {
+			importInfoFiles(newFiles);
+		}
+
+		accountsToUpdateTextFIeld.clear();
+	}
+
+	private Set<File> getPrivateKeysFrom(Key fullKey) {
+		var flatKeys = EncryptionUtils.flatPubKeysString(Collections.singletonList(fullKey));
+		var pubFiles = controller.getPubFiles();
+		return flatKeys.stream().filter(pubFiles::containsKey).map(s -> new File(KEYS_FOLDER,
+				FilenameUtils.getBaseName(pubFiles.get(s).getFileName().toString()) + "." + PK_EXTENSION)).collect(
+				Collectors.toSet());
+	}
+
+	/**
+	 * Select the accounts that can be fee payers
+	 */
+	private void setupFeePayers() {
+		// Get public keys
+		var privateKeysFiles = new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PK_EXTENSION));
+		assert privateKeysFiles != null;
+		for (var privateKeysFile : privateKeysFiles) {
+			var publicKeyFile =
+					new File(KEYS_FOLDER, FilenameUtils.getBaseName(privateKeysFile.getName()) + "." + PUB_EXTENSION);
+			if (publicKeyFile.exists()) {
+				keys.add(EncryptionUtils.publicKeyFromFile(publicKeyFile.getAbsolutePath()));
+			}
+		}
+
+
+		var accountFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.endsWith(INFO_EXTENSION));
+		assert accountFiles != null;
+		for (var accountFile : accountFiles) {
+			InfoFile infoFile;
+			try {
+				infoFile = new InfoFile(FileDetails.parse(accountFile));
+			} catch (IOException e) {
+				logger.error(e.getMessage());
+				return;
+			}
+			if (infoFile.canSign(keys)) {
+				feePayers.add(infoFile.getAccountID());
+			}
+		}
 	}
 
 	private List<AccountId> parseAccountNumbers(String text) {
 		var split = text.replace("\\s", "").split("[\\s,]+");
 		List<AccountId> ids = new ArrayList<>();
-		for (String s : split) {
+		for (var s : split) {
 			if (!s.contains("-")) {
 				ids.add(Identifier.parse(s).asAccount());
 				continue;
@@ -219,9 +321,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			var start = Identifier.parse(range[0]);
 			var end = Identifier.parse(range[1]);
-			for (long i = start.getRealmNum(); i <= end.getRealmNum(); i++) {
-				for (long j = start.getShardNum(); j <= end.getShardNum(); j++) {
-					for (long k = start.getAccountNum(); k <= end.getAccountNum(); k++) {
+			for (var i = start.getRealmNum(); i <= end.getRealmNum(); i++) {
+				for (var j = start.getShardNum(); j <= end.getShardNum(); j++) {
+					for (var k = start.getAccountNum(); k <= end.getAccountNum(); k++) {
 						ids.add(new Identifier(i, j, k).asAccount());
 					}
 				}
@@ -396,7 +498,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		selectAll.setOnAction(actionEvent -> {
 			actionEvent.consume();
 			noise = true;
-			for (AccountLineInformation item : table.getItems()) {
+			for (var item : table.getItems()) {
 				item.setSelected(selectAll.isSelected());
 			}
 			noise = false;
@@ -717,7 +819,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							format("Balance (as of %s)", Utilities.instantToLocalTimeDate(new Date(date).toInstant())));
 			var balanceTextField = setupBoxTextField(hbars.toString());
 
-			GridPane gridPane = refreshGridPane(nickname, info, refreshButton, dateLabel, balanceTextField);
+			var gridPane = refreshGridPane(nickname, info, refreshButton, dateLabel, balanceTextField);
 			HBox.setHgrow(keysVBox, Priority.ALWAYS);
 			VBox.setVgrow(keysVBox, Priority.ALWAYS);
 
@@ -794,13 +896,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		gridPane.add(setupBoxLabel("Receiver Signature Required"), 0, 5);
 		gridPane.add(setupBoxTextField(valueOf(info.isReceiverSignatureRequired)), 1, 5);
 
-		ColumnConstraints col1 = new ColumnConstraints();
+		var col1 = new ColumnConstraints();
 		col1.setPercentWidth(50);
 
-		ColumnConstraints col2 = new ColumnConstraints();
+		var col2 = new ColumnConstraints();
 		col2.setPercentWidth(30);
 
-		ColumnConstraints col3 = new ColumnConstraints();
+		var col3 = new ColumnConstraints();
 		col3.setPercentWidth(20);
 
 		gridPane.getColumnConstraints().addAll(col1, col2, col3);
@@ -809,7 +911,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private Hbar refreshBalance(Identifier identifier) {
-		BalanceQuery query = BalanceQuery.Builder.aBalanceQuery()
+		var query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(identifier.asAccount())
 				.withNetwork(controller.getCurrentNetwork())
 				.build();
@@ -832,11 +934,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void updateBalance(Identifier identifier, Hbar balance, long date) throws HederaClientException {
-		JsonObject object = new JsonObject();
+		var object = new JsonObject();
 		object.addProperty(DATE_PROPERTY, date);
 		object.addProperty(BALANCE_PROPERTY, balance.toTinybars());
 		balances.add(identifier.toReadableString(), object);
-		JsonArray array = new File(BALANCES_FILE).exists() ? readJsonArray(BALANCES_FILE) : new JsonArray();
+		var array = new File(BALANCES_FILE).exists() ? readJsonArray(BALANCES_FILE) : new JsonArray();
 		object.addProperty(ACCOUNT_PROPERTY, identifier.toReadableString());
 		array.add(object);
 		writeJsonObject(BALANCES_FILE, array);
@@ -1339,7 +1441,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	public void updateSelectedBalances() {
 		List<AccountLineInformation> list = new ArrayList<>();
-		for (AccountLineInformation lineInformation : accountLineInformation) {
+		for (var lineInformation : accountLineInformation) {
 			if (lineInformation.isSelected()) {
 				list.add(lineInformation);
 			}
@@ -1349,7 +1451,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private void updateBalances(List<AccountLineInformation> list) {
 		long size = list.size();
-		ProgressBar progressBar = new ProgressBar();
+		var progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
 		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
 				"Please wait while the account balances are being updated.", size);
@@ -1357,7 +1459,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			@Override
 			protected Void call() {
 				long counter = 0;
-				for (AccountLineInformation lineInformation : list) {
+				for (var lineInformation : list) {
 					final var identifier = lineInformation.getAccount();
 					final var balance = refreshBalance(identifier);
 					updateOneAccountLineInformation(identifier, balance);

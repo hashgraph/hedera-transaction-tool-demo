@@ -57,9 +57,11 @@ import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Splitter.fixedLength;
 import static java.lang.System.arraycopy;
@@ -193,10 +195,10 @@ public class EncryptionUtils {
 			keyList.add(publicKey);
 		} else if (jsonObject.has(KEY_LIST)) {
 			if (jsonObject.get(KEY_LIST) instanceof JsonArray) {
-				keyList = (jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray(KEY_LIST)));
+				keyList = jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray(KEY_LIST));
 			}
 		} else if (jsonObject.has(THRESHOLD_KEY)) {
-			keyList = (KeyList) (jsonThresholdKeyToSDKKeyList(jsonObject.get(THRESHOLD_KEY).getAsJsonObject()));
+			keyList = (KeyList) jsonThresholdKeyToSDKKeyList(jsonObject.get(THRESHOLD_KEY).getAsJsonObject());
 		}
 		return keyList;
 	}
@@ -308,6 +310,12 @@ public class EncryptionUtils {
 			logger.error(e);
 			return ErrorMessages.COULD_NOT_CALCULATE_HASH_OF_THE_FILE;
 		}
+	}
+
+	public static Set<String> flatPubKeysString(List<Key> keyList){
+		var byteStrings = flatPubKeys(keyList);
+		return byteStrings.stream().map(byteString -> Hex.toHexString(byteString.toByteArray())).collect(
+				Collectors.toCollection(HashSet::new));
 	}
 
 	/**
