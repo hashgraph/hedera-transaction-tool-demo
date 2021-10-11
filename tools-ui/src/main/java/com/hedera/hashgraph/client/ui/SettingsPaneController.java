@@ -89,6 +89,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			"The period of time in which the account will renew in seconds.\n" +
 					"Min:7000000 seconds \n" +
 					"Max: 8000000 seconds";
+	private boolean noise = false;
 
 	private boolean noise = false;
 
