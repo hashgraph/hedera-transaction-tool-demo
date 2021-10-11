@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -418,10 +419,10 @@ public class Utilities {
 			var decoder = Base64.getDecoder();
 
 			var tokenBytes = decoder.decode(token);
-			if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 				logger.error("Token size check failed");
 			}
-			return Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH);
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 		}
 		return new byte[SALT_LENGTH];
 	}

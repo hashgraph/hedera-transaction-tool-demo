@@ -27,6 +27,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.io.File;
+
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ADD_FOLDER_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CANCEL_ADD_FOLDER_BUTTON;
@@ -38,6 +40,9 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_HOURS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_MINUTES_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_SECONDS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -150,15 +155,58 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage createPopup() {
-		ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
+		ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		var children = ((VBox) popupNodes.get(0)).getChildren();
-
-
 		var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
 		assertEquals(2, buttons.size());
 
 		driver.clickOn(buttons.get(0));
 		return this;
 	}
+
+	public SettingsPanePage openNetworksCombobox(String network) {
+		driver.clickOn("#networkCombobox");
+		driver.clickOn(network);
+		return this;
+	}
+
+	public SettingsPanePage addNetwork(String nickname, String location) {
+		driver.clickOn("#addCustomNetworkButton");
+		addNetworkNickname(nickname);
+		addCustomLocation(location);
+		clickOnButton("CONTINUE");
+		return this;
+	}
+
+	public SettingsPanePage clickOnButton(String legend) {
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		var button = findButtonInPopup(popupNodes, legend);
+		driver.clickOn(button);
+		return this;
+	}
+
+	public SettingsPanePage addNetworkNickname(String nickname) {
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		var textFields = findTextFieldsInPopup(popupNodes);
+		assert textFields.size() == 2;
+		driver.clickOn(textFields.get(0));
+		driver.write(nickname);
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public SettingsPanePage addCustomLocation(String location) {
+		ObservableList<Node> popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		var textFields = findTextFieldsInPopup(popupNodes);
+		driver.clickOn(textFields.get(1));
+		driver.write(new File(location).getAbsolutePath());
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+
 }

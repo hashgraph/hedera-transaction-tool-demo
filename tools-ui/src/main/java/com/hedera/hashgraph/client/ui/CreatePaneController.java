@@ -1388,7 +1388,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		input.add(NODE_ID_FIELD_NAME, Identifier.parse(nodeAccountField.getText()).asJSON());
 
 		// Network
-		input.addProperty(NETWORK_FIELD_NAME, controller.getNetworkProperty());
+		input.addProperty(NETWORK_FIELD_NAME, controller.getCurrentNetwork());
 
 
 		// Crypto create account fields

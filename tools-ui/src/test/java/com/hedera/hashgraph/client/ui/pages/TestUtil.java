@@ -27,6 +27,7 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -50,6 +51,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -283,6 +285,35 @@ public class TestUtil {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns a list of textfields contained in the Popup
+	 *
+	 * @param popupNodes
+	 * 		List of nodes in the popup
+	 * @return a list of TextFields
+	 */
+	public static List<TextField> findTextFieldsInPopup(ObservableList<Node> popupNodes) {
+		List<TextField> textFields = new ArrayList<>();
+		for (var popupNode : popupNodes) {
+			if (popupNode instanceof TextField) {
+				textFields.add((TextField) popupNode);
+			}
+			if (popupNode instanceof HBox) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((HBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof VBox) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((VBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof GridPane) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((GridPane) popupNode).getChildren())));
+			}
+		}
+		return textFields;
 	}
 
 	/**

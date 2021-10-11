@@ -73,9 +73,11 @@ public class Constants {
 	public static final String USER_NAME = "userName";
 	public static final String SETUP_PHASE = "setupPhase";
 	public static final String GENERATE_RECORD = "generateRecord";
-	public static final String NETWORK = "network";
 	public static final String SALT_PROPERTY = "salt";
 	public static final String LEGACY = "legacy";
+	public static final String CUSTOM_NETWORKS = "customNetwork";
+	public static final String NETWORKS = "networks";
+	public static final String CURRENT_NETWORK = "currentNetwork";
 	// endregion
 
 	// region APP DEFAULTS
@@ -85,7 +87,6 @@ public class Constants {
 	public static final int KEYS_COLUMNS = 5;
 	public static final int NUMBER_OF_SINGLE_BOXES = 5;
 	public static final String TEST_PASSWORD = "123456789";
-	public static final String TEST_PASSWORD2 = "tempura business";
 	// endregion
 
 	// region TRANSACTION DEFAULTS
@@ -112,6 +113,7 @@ public class Constants {
 	public static final String ACCOUNTS_INFO_FOLDER = DEFAULT_STORAGE + "Accounts/";
 	public static final String KEYS_FOLDER = DEFAULT_STORAGE + "Keys/";
 	public static final String SYSTEM_FOLDER = DEFAULT_STORAGE + "Files/.System/";
+	public static final String CUSTOM_NETWORK_FOLDER = SYSTEM_FOLDER+ "CustomNetworks";
 
 	// endregion
 

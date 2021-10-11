@@ -333,20 +333,46 @@ public class KeysPanePage {
 		return getAllPasswordFields(popupNodes);
 	}
 
+	public List<Label> getPopupErrorFields() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		return getAllErrorFields(popupNodes);
+	}
+
+
 	List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
-		List<PasswordField> buttons = new ArrayList<>();
+		List<PasswordField> passwordFields = new ArrayList<>();
 		for (Node node : nodes) {
 			if (node instanceof HBox) {
-				buttons.addAll(getAllPasswordFields(((HBox) node).getChildren()));
+				passwordFields.addAll(getAllPasswordFields(((HBox) node).getChildren()));
 			}
 			if (node instanceof VBox) {
-				buttons.addAll(getAllPasswordFields(((VBox) node).getChildren()));
+				passwordFields.addAll(getAllPasswordFields(((VBox) node).getChildren()));
 			}
 			if (node instanceof PasswordField) {
-				buttons.add((PasswordField) node);
+				passwordFields.add((PasswordField) node);
 			}
 		}
-		return buttons;
+		return passwordFields;
+	}
+
+	List<Label> getAllErrorFields(ObservableList<Node> nodes) {
+		List<Label> labels = new ArrayList<>();
+		for (Node node : nodes) {
+			if (node instanceof HBox) {
+				labels.addAll(getAllErrorFields(((HBox) node).getChildren()));
+			}
+			if (node instanceof VBox) {
+				labels.addAll(getAllErrorFields(((VBox) node).getChildren()));
+			}
+			if (node instanceof Label) {
+				final var label = (Label) node;
+				if (label.getStyle().contains("red")) {
+					labels.add(label);
+				}
+			}
+		}
+		return labels;
 	}
 
 	public KeysPanePage enterMnemonicPasswordAndEnter(String password) {
@@ -500,4 +526,5 @@ public class KeysPanePage {
 				.closePasswordPopup();
 
 	}
+
 }

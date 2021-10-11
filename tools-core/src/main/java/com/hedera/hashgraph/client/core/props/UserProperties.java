@@ -39,8 +39,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 public class UserProperties {
@@ -98,6 +101,7 @@ public class UserProperties {
 		loadProperties();
 		prop.setProperty(key, value);
 		storeProperties();
+		logger.info("Property {} set to {}", key, value);
 	}
 
 	/***
@@ -299,6 +303,27 @@ public class UserProperties {
 		}
 	}
 
+	public Set<String> getSetProperty(String key, Set<String> defaultSet) {
+		var serializedSet = getProperty(key, "");
+		if ("".equalsIgnoreCase(serializedSet)) {
+			return defaultSet;
+		}
+		return deserializeSet(serializedSet);
+	}
+
+	public void setSetProperty(String key, Set<String> set){
+		setProperty(key, serializeSet(set));
+	}
+
+	public boolean removeProperty(String key){
+		if (prop.contains(key)) {
+			prop.remove(key);
+			storeProperties();
+			return true;
+		}
+		return false;
+	}
+
 	/**
 	 * Load the properties map and return the property value as a boolean
 	 *
@@ -408,6 +433,14 @@ public class UserProperties {
 			logger.error("Credentials cannot be read from the map.");
 		}
 		return map;
+	}
+
+	private String serializeSet(Set<String> set) {
+		return String.join(" ", set);
+	}
+
+	private Set<String> deserializeSet(String serializedSet) {
+		return new HashSet<>(List.of(serializedSet.split(" ")));
 	}
 
 }
