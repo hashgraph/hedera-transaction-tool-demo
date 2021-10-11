@@ -30,10 +30,6 @@ import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -267,6 +263,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		for (Identifier feePayer : controller.getFeePayers()) {
 			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
 		}
+		if (accounts.isEmpty()) {
+			return;
+		}
 		Collections.sort(accounts);
 		feePayerCombobox.getItems().clear();
 		feePayerCombobox.getItems().addAll(accounts);
@@ -279,7 +278,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		feePayerCombobox.getSelectionModel().select(feePayer);
 		feePayerCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
-			if (!noise){
+			if (!noise) {
 				controller.setDefaultFeePayer(t1);
 			}
 		});

@@ -33,7 +33,6 @@ import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
 import com.hedera.hashgraph.client.ui.utilities.ReloadFilesService;
 import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
-import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
@@ -800,7 +799,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		assert networks != null;
 		var networkSet = Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
 				Collectors.toSet());
-		properties.setCustomNetworks(networkSet);
+		if (!networkSet.isEmpty()) {
+			properties.setCustomNetworks(networkSet);
+		}
 		return networkSet;
 	}
 
@@ -828,7 +829,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getDefaultFeePayer();
 	}
 
-	public void setDefaultFeePayer(String feePayer){
+	public void setDefaultFeePayer(String feePayer) {
 		properties.setDefaultFeePayer(feePayer);
 	}
 }
