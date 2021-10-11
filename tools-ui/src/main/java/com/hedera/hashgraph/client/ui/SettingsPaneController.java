@@ -258,7 +258,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerCombobox() {
-		noise = true;
 		List<String> accounts = new ArrayList<>();
 		for (Identifier feePayer : controller.getFeePayers()) {
 			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
@@ -267,6 +266,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		Collections.sort(accounts);
+		noise = true;
 		feePayerCombobox.getItems().clear();
 		feePayerCombobox.getItems().addAll(accounts);
 		noise = false;
@@ -306,11 +306,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				if (t1 instanceof Separator) {
 					networkCombobox.getSelectionModel().select(o);
 				}
-
 			}
 		});
-
-
 	}
 
 	private void setupDefaultTransactionFeeTextField() {
