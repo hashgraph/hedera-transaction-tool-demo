@@ -18,8 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;

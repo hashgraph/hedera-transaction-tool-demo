@@ -57,7 +57,6 @@ import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -268,7 +267,7 @@ public class EncryptionUtils {
 	}
 
 	/**
-	 * Trims an sdk public key to the 64 bytes in a regular public key
+	 * Trims a sdk public key to the 64 bytes in a regular public key
 	 *
 	 * @param key
 	 * 		a Key object

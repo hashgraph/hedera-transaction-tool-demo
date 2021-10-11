@@ -255,11 +255,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final var filePath =
 					tmpdir.getAbsolutePath() + File.separator + account.toString() + "." + INFO_EXTENSION;
 			writeBytes(filePath, info.toBytes());
-			logger.info("Account info for {} stored to {}", account.toString(), filePath);
+			logger.info("Account info for {} stored to {}", account, filePath);
 			newFiles.add(new File(filePath));
 		}
 
-		if (newFiles.size() > 0) {
+		if (!newFiles.isEmpty()) {
 			importInfoFiles(newFiles);
 		}
 
@@ -461,8 +461,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var accountIDColumn = getAccountIDColumn(table);
 
 		var balanceColumn = getBalanceColumn(table);
-
-		//	var canSignColumn = getCanSignColumn(table);
 
 		var expanderColumn = getExpanderColumn();
 
