@@ -419,10 +419,10 @@ public class Utilities {
 			var decoder = Base64.getDecoder();
 
 			var tokenBytes = decoder.decode(token);
-			if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 				logger.error("Token size check failed");
 			}
-			return Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH);
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 		}
 		return new byte[SALT_LENGTH];
 	}

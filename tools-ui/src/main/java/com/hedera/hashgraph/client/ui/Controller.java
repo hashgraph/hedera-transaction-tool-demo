@@ -50,6 +50,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeroturnaround.zip.commons.IOUtils;
@@ -68,14 +69,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
@@ -781,5 +786,36 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		} else {
 			properties.setLastBrowsedDirectory(file.getParentFile());
 		}
+	}
+
+	public Set<String> getCustomNetworks() {
+
+		final var customNetworksFolder = new File(Constants.CUSTOM_NETWORK_FOLDER);
+		if (customNetworksFolder.mkdirs()) {
+			logger.info("Custom networks folder storage created");
+		}
+		File[] networks = customNetworksFolder.listFiles(
+				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert networks != null;
+		var networkSet = Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
+				Collectors.toSet());
+		properties.setCustomNetworks(networkSet);
+		return networkSet;
+	}
+
+	public Set<String> getDefaultNetworks() {
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+		return defaultNetworks;
+	}
+
+	public String getCurrentNetwork() {
+		return properties.getCurrentNetwork();
+	}
+
+	public void setCurrentNetwork(String network) {
+		properties.setCurrentNetwork(network, getDefaultNetworks());
 	}
 }
