@@ -163,7 +163,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private final Map<String, String> accountInfos;    // is loaded from accountInfo.info
 	private final Map<String, String> idNickNames;     // key: accountID string, value: nickName
 	private final ObservableList<AccountLineInformation> accountLineInformation = FXCollections.observableArrayList(
-			accountLineInformation -> new Observable[] { accountLineInformation.selectedProperty() });
+			information -> new Observable[] { information.selectedProperty() });
 	private final JsonObject balances = new JsonObject();
 	private boolean noise = false;
 	private final CheckBox selectAll = new CheckBox();
