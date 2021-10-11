@@ -91,8 +91,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					"Max: 8000000 seconds";
 	private boolean noise = false;
 
-	private boolean noise = false;
-
 	public TextField loadStorageTextField;
 	public TextField pathTextFieldSP;
 	public TextField emailTextFieldSP;
