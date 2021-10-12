@@ -152,6 +152,14 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	DriveSetupHelper driveSetupHelper;
 
+	public boolean isNoise() {
+		return noise;
+	}
+
+	public void setNoise(boolean noise) {
+		this.noise = noise;
+	}
+
 	void injectMainController(Controller controller) {
 		this.controller = controller;
 	}
@@ -208,7 +216,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox();
+			setupNetworkBox(networkCombobox);
 
 			setupTxValidDurationTextField();
 
@@ -222,7 +230,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
-			setupFeePayerCombobox();
+			setupFeePayerCombobox(feePayerCombobox);
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
@@ -256,7 +264,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerCombobox() {
+	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
 		List<String> accounts = new ArrayList<>();
 		for (Identifier feePayer : controller.getFeePayers()) {
 			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
@@ -266,8 +274,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		Collections.sort(accounts);
 		noise = true;
-		feePayerCombobox.getItems().clear();
-		feePayerCombobox.getItems().addAll(accounts);
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(accounts);
 		noise = false;
 
 		var feePayer = controller.getDefaultFeePayer();
@@ -275,26 +283,41 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			controller.setDefaultFeePayer(accounts.get(0));
 			feePayer = accounts.get(0);
 		}
-		feePayerCombobox.getSelectionModel().select(feePayer);
-		feePayerCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+		comboBox.getSelectionModel().select(feePayer);
+		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
 			if (!noise) {
 				controller.setDefaultFeePayer(t1);
 			}
 		});
+
+		comboBox.setOnKeyPressed(keyEvent -> {
+			final var code = keyEvent.getCode();
+			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
+				var text = comboBox.getEditor().getText();
+				try {
+					var id = Identifier.parse(text);
+					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+				} catch (Exception e) {
+					noise = true;
+					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+					noise = false;
+				}
+			}
+		});
 	}
 
-	private void setupNetworkBox() {
+	private void setupNetworkBox(ComboBox<Object> comboBox) {
 		noise = true;
-		networkCombobox.getItems().clear();
-		networkCombobox.getItems().addAll(controller.getDefaultNetworks());
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(controller.getDefaultNetworks());
 		var customNetworks = controller.getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			networkCombobox.getItems().add(new Separator());
-			networkCombobox.getItems().addAll(customNetworks);
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().addAll(customNetworks);
 		}
 		noise = false;
-		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
-		networkCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (!noise) {
 				if (t1 instanceof String) {
 					final var selectedNetwork = (String) t1;
@@ -303,7 +326,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
 				}
 				if (t1 instanceof Separator) {
-					networkCombobox.getSelectionModel().select(o);
+					comboBox.getSelectionModel().select(o);
 				}
 			}
 		});
@@ -696,7 +719,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox();
+		setupNetworkBox(networkCombobox);
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -735,7 +758,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox();
+		setupNetworkBox(networkCombobox);
 	}
 
 

@@ -35,6 +35,7 @@ import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
+import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
 import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
@@ -52,17 +53,21 @@ import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
 import javafx.beans.Observable;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -97,6 +102,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -157,6 +166,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public Button importFolderButton;
 	public TextField accountsToUpdateTextFIeld;
 	public Button selectAccountsButton;
+	public ComboBox<String> feePayerComboboxA;
+	public ComboBox<Object> networkComboboxA;
+	public Button accountsTooltip;
+	public Button networkTooltipA;
+	public Button feePayerTooltipA;
 
 	@FXML
 	private Controller controller;
@@ -204,34 +218,81 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		accountsToUpdateTextFIeld.setOnKeyPressed(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 				try {
-					getInfosFromNetwork();
+					final var feePayer = getFeePayer();
+					final var keyFiles = getKeyFiles(feePayer);
+					if (keyFiles.isEmpty()) {
+						PopupMessage.display("Error",
+								"At least one key must be selected in order to sign the transaction");
+						return;
+					}
+					getInfosFromNetwork(parseAccountNumbers(accountsToUpdateTextFIeld.getText()),
+							feePayer, getNetwork(), keyFiles);
 				} catch (PrecheckStatusException | TimeoutException | HederaClientException | InvalidProtocolBufferException e) {
 					logger.error(e.getMessage());
 				}
 			}
-
 		});
 
 		setupFeePayers();
+		setupNetworkBox(networkComboboxA);
+		setupFeePayerCombobox(feePayerComboboxA);
+
 	}
 
-	private void getInfosFromNetwork() throws PrecheckStatusException, TimeoutException, HederaClientException,
-			InvalidProtocolBufferException {
-		File tmpdir;
-		try {
-			tmpdir = Files.createTempDirectory("tmpDirPrefix").toFile();
-			FileUtils.cleanDirectory(tmpdir);
-		} catch (IOException e) {
-			logger.error(e.getMessage());
-			return;
+	private Set<File> getKeyFiles(Identifier feePayer) throws HederaClientException, InvalidProtocolBufferException {
+		File accountInfo = new File(ACCOUNTS_INFO_FOLDER, feePayer.toReadableString() + "." + INFO_EXTENSION);
+		if (accountInfo.exists()) {
+			var fullKey = AccountInfo.fromBytes(readBytes(accountInfo.getAbsolutePath())).key;
+			return getPrivateKeysFrom(fullKey);
 		}
+		var keys = ExtraKeysSelectorPopup.display(new HashSet<>());
+		return new HashSet<>(keys);
+	}
+
+	private String getNetwork() {
+		return controller.getCurrentNetwork();
+	}
+
+	private Identifier getFeePayer() {
+		return Identifier.parse(controller.getDefaultFeePayer());
+	}
+
+	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
+			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException,
+			InvalidProtocolBufferException {
+
+		var query = getAccountInfoQuery(feePayer, network, privateKeysFiles);
+
+		try {
+			File tmpdir = Files.createTempDirectory("tmpDirPrefix").toFile();
+			FileUtils.cleanDirectory(tmpdir);
+
+			List<File> newFiles = new ArrayList<>();
+			for (var account : accounts) {
+				logger.info("Requesting information for account {}", account);
+				var info = query.getInfo(account);
+				final var filePath =
+						tmpdir.getAbsolutePath() + File.separator + account.toString() + "." + INFO_EXTENSION;
+				writeBytes(filePath, info.toBytes());
+				logger.info("Account info for {} stored to {}", account, filePath);
+				newFiles.add(new File(filePath));
+			}
+
+			if (!newFiles.isEmpty()) {
+				importInfoFiles(newFiles);
+			}
+			accountsToUpdateTextFIeld.clear();
+
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+	}
 
 
-		final var feePayer = Identifier.parse(controller.getDefaultFeePayer());
-		var fullKey = AccountInfo.fromBytes(
-				readBytes(ACCOUNTS_INFO_FOLDER + feePayer.toReadableString() + "." + INFO_EXTENSION)).key;
+	@NotNull
+	private AccountInfoQuery getAccountInfoQuery(Identifier feePayer, String network,
+			Set<File> privateKeysFiles) {
 
-		var privateKeysFiles = getPrivateKeysFrom(fullKey);
 		var utility = new KeyPairUtility();
 		var privateKeys =
 				privateKeysFiles.stream().map(privateKeyFile -> utility.getKeyPairFromPEM(privateKeyFile,
@@ -239,31 +300,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 								FilenameUtils.getBaseName(privateKeyFile.getName())))).map(
 						keyPair -> PrivateKey.fromBytes(keyPair.getPrivate().getEncoded())).collect(Collectors.toList());
 
-		var query = AccountInfoQuery.Builder
+		return AccountInfoQuery.Builder
 				.anAccountInfoQuery()
-				.withNetwork(controller.getCurrentNetwork().toLowerCase(Locale.ROOT))
+				.withNetwork(network.toLowerCase(Locale.ROOT))
 				.withSigningKeys(privateKeys)
 				.withFeePayer(feePayer.asAccount())
 				.withFee(Hbar.fromTinybars(controller.getDefaultTxFee()))
 				.build();
-		var accounts = parseAccountNumbers(accountsToUpdateTextFIeld.getText());
-
-		List<File> newFiles = new ArrayList<>();
-		for (var account : accounts) {
-			logger.info("Requesting information for account {}", account);
-			var info = query.getInfo(account);
-			final var filePath =
-					tmpdir.getAbsolutePath() + File.separator + account.toString() + "." + INFO_EXTENSION;
-			writeBytes(filePath, info.toBytes());
-			logger.info("Account info for {} stored to {}", account, filePath);
-			newFiles.add(new File(filePath));
-		}
-
-		if (!newFiles.isEmpty()) {
-			importInfoFiles(newFiles);
-		}
-
-		accountsToUpdateTextFIeld.clear();
 	}
 
 	private Set<File> getPrivateKeysFrom(Key fullKey) {
@@ -460,16 +503,18 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var accountIDColumn = getAccountIDColumn(table);
 
+		var dateColumn = getLastRefreshDateColumn(table);
+
 		var balanceColumn = getBalanceColumn(table);
 
 		var expanderColumn = getExpanderColumn();
 
-		var actionColumn = getActionColumn(table);
+		var deleteColumn = getDeleteColumn(table);
 
 		var checkBoxColumn = getCheckBoxColumn(table);
 
-		table.getColumns().addAll(expanderColumn, checkBoxColumn, nicknameColumn, accountIDColumn, balanceColumn,
-				actionColumn);
+		table.getColumns().addAll(expanderColumn, checkBoxColumn, nicknameColumn, accountIDColumn, dateColumn,
+				balanceColumn,				 deleteColumn);
 		table.setItems(accountLineInformation);
 
 		if (accountLineInformation.size() == 1) {
@@ -486,8 +531,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @return a formatted column
 	 */
 	private TableColumn<AccountLineInformation, Boolean> getCheckBoxColumn(TableView<AccountLineInformation> table) {
-
-
 		var checkBoxColumn = new TableColumn<AccountLineInformation, Boolean>("");
 		checkBoxColumn.setGraphic(selectAll);
 		checkBoxColumn.setCellValueFactory(f -> f.getValue().selectedProperty());
@@ -525,6 +568,22 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		return nicknameColumn;
 	}
 
+
+	private TableColumn<AccountLineInformation, String> getLastRefreshDateColumn(
+			TableView<AccountLineInformation> table) {
+		var dateColumn = new TableColumn<AccountLineInformation, String>("Last updated");
+		dateColumn.setCellValueFactory(
+				f -> {
+					LocalDate date =
+							Instant.ofEpochMilli(f.getValue().getDate()).atZone(ZoneId.systemDefault()).toLocalDate();
+					return new SimpleStringProperty(date.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+				});
+		dateColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(3));
+		dateColumn.setStyle("-fx-alignment: CENTER-RIGHT; -fx-padding: 10");
+		return dateColumn;
+	}
+
+
 	/**
 	 * Set up the Account ID column
 	 *
@@ -534,7 +593,16 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private TableColumn<AccountLineInformation, Identifier> getAccountIDColumn(TableView<AccountLineInformation> table) {
-		var accountIDColumn = new TableColumn<AccountLineInformation, Identifier>("Account ID");
+		var accountIDColumn = new TableColumn<AccountLineInformation, Identifier>("");
+		HBox title = new HBox();
+		var refreshSelectedButton = refreshButton();
+		refreshSelectedButton.setOnAction(actionEvent -> updateSelectedInfos());
+		title.getChildren().add(new Label("Account ID"));
+		title.getChildren().add(refreshSelectedButton);
+		title.setSpacing(5);
+		title.setAlignment(Pos.CENTER_RIGHT);
+		accountIDColumn.setGraphic(title);
+
 		accountIDColumn.setCellValueFactory(new PropertyValueFactory<>(ACCOUNT_PROPERTY));
 		accountIDColumn.setCellFactory(tc -> new TableCell<>() {
 			@Override
@@ -560,7 +628,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @return a formatted column
 	 */
 	@NotNull
-	private TableColumn<AccountLineInformation, String> getActionColumn(TableView<AccountLineInformation> table) {
+	private TableColumn<AccountLineInformation, String> getDeleteColumn(TableView<AccountLineInformation> table) {
 		var actionColumn = new TableColumn<AccountLineInformation, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		var cellFactory =
@@ -589,7 +657,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						if (Boolean.TRUE.equals(answer)) {
 							var accountLineInformation1 = getTableView().getItems().get(getIndex());
 							logger.info("Deleting {}", accountLineInformation1.getNickname());
-							deleteAccount(accountLineInformation1);
+							refresh(accountLineInformation1);
 							table.getItems().remove(getIndex());
 							controller.homePaneController.setForceUpdate(true);
 						}
@@ -598,6 +666,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		actionColumn.setCellFactory(cellFactory);
 		return actionColumn;
 	}
+
 
 	/**
 	 * Set up the expander column
@@ -620,7 +689,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private TableColumn<AccountLineInformation, Hbar> getBalanceColumn(TableView<AccountLineInformation> table) {
-		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("Balance");
+		var refresh = refreshButton();
+		refresh.setOnAction(actionEvent -> updateSelectedBalances());
+		HBox title = new HBox();
+		title.getChildren().add(new Label("Balance"));
+		title.getChildren().add(refresh);
+		title.setSpacing(5);
+		title.setAlignment(Pos.CENTER_RIGHT);
+		var balanceColumn = new TableColumn<AccountLineInformation, Hbar>("");
+		balanceColumn.setGraphic(title);
 		balanceColumn.setCellValueFactory(new PropertyValueFactory<>(BALANCE_PROPERTY));
 		balanceColumn.setCellFactory(tc -> new TableCell<>() {
 			@Override
@@ -675,7 +752,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param accountLineInformation
 	 * 		the line from the table that must be deleted
 	 */
-	public void deleteAccount(AccountLineInformation accountLineInformation) {
+	public void refresh(AccountLineInformation accountLineInformation) {
 		var accountID = accountLineInformation.getAccount().toReadableString();
 		var directory = controller.getPreferredStorageDirectory();
 		if (Paths.get(directory, ACCOUNTS, ARCHIVE).toFile().mkdirs()) {
@@ -1447,6 +1524,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		updateBalances(list);
 	}
 
+	private void updateSelectedInfos() {
+		List<AccountId> list = new ArrayList<>();
+		for (var lineInformation : accountLineInformation) {
+			if (lineInformation.isSelected()) {
+				list.add(lineInformation.getAccount().asAccount());
+			}
+		}
+		try {
+			final var feePayer = Identifier.parse(controller.getDefaultFeePayer());
+			final var keyFiles = getKeyFiles(feePayer);
+			if (keyFiles.isEmpty()) {
+				PopupMessage.display("Error",
+						"At least one key must be selected in order to sign the transaction");
+				return;
+			}
+			getInfosFromNetwork(list, feePayer, getNetwork(), keyFiles);
+		} catch (PrecheckStatusException | TimeoutException | HederaClientException | InvalidProtocolBufferException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
 	private void updateBalances(List<AccountLineInformation> list) {
 		long size = list.size();
 		var progressBar = new ProgressBar();
@@ -1508,6 +1606,55 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				importAccountFromFile();
 			}
 		}
+	}
+
+	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
+		List<String> accounts = new ArrayList<>();
+		for (Identifier feePayer : controller.getFeePayers()) {
+			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+		if (accounts.isEmpty()) {
+			return;
+		}
+		Collections.sort(accounts);
+		noise = true;
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(accounts);
+		noise = false;
+
+		var feePayer = controller.getDefaultFeePayer();
+		if ("".equals(feePayer)) {
+			controller.setDefaultFeePayer(accounts.get(0));
+			feePayer = accounts.get(0);
+		}
+		comboBox.getSelectionModel().select(feePayer);
+		comboBox.setOnKeyPressed(keyEvent -> {
+			final var code = keyEvent.getCode();
+			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
+				var text = comboBox.getEditor().getText();
+				try {
+					var id = Identifier.parse(text);
+					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+				} catch (Exception e) {
+					noise = true;
+					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+					noise = false;
+				}
+			}
+		});
+	}
+
+	private void setupNetworkBox(ComboBox<Object> comboBox) {
+		noise = true;
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(controller.getDefaultNetworks());
+		var customNetworks = controller.getCustomNetworks();
+		if (!customNetworks.isEmpty()) {
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().addAll(customNetworks);
+		}
+		noise = false;
+		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
 	}
 
 }
