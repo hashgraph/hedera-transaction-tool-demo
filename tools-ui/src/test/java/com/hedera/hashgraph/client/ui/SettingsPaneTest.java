@@ -340,7 +340,7 @@ public class SettingsPaneTest extends TestBase {
 
 	}
 
-	@Test
+//	@Test
 	public void defaultNetworks_Test() {
 		settingsPanePage.openNetworksCombobox("TESTNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());

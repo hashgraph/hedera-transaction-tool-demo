@@ -750,6 +750,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	//endregion
 
 
+	public String jsonKeyToPrettyString(JsonObject key){
+		return keyStructureUtility.jsonKeyToPrettyString(key);
+	}
+
 	public String showKeyString(ByteString key) {
 		return keyStructureUtility.showKeyString(key);
 	}

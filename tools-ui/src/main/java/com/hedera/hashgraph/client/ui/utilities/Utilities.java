@@ -18,11 +18,17 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
@@ -32,6 +38,7 @@ import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -45,7 +52,10 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
@@ -237,4 +247,94 @@ public class Utilities {
 	}
 
 
+	/**
+	 * Parses a String into a list of accounts. Strings may be of the form "1-5, 8, 12-13"
+	 *
+	 * @param text
+	 * 		a string containing a range of accounts, or a comma separated list of accounts, or a combination
+	 * @return a list of accounts
+	 */
+	public static List<AccountId> parseAccountNumbers(String text) {
+		List<AccountId> ids = new ArrayList<>();
+
+		if (text == null || "".equals(text)) {
+			return ids;
+		}
+
+		var split = text.replace("\\s", "").split("[\\s,]+");
+
+		for (var s : split) {
+			if (!s.contains("-")) {
+				try {
+					ids.add(Identifier.parse(s).asAccount());
+				} catch (Exception e) {
+					logger.error("Cannot parse {} into an account", s);
+					return new ArrayList<>();
+				}
+				continue;
+			}
+			var range = s.split("-");
+			if (range.length != 2) {
+				logger.error("String {} cannot be parsed into a range", s);
+				return new ArrayList<>();
+			}
+			Identifier start;
+			try {
+				start = Identifier.parse(range[0]);
+			} catch (Exception e) {
+				logger.error("Cannot parse {} into an account", range[0]);
+				return new ArrayList<>();
+			}
+			Identifier end;
+			try {
+				end = Identifier.parse(range[1]);
+			} catch (Exception e) {
+				logger.error("Cannot parse {} into an account", range[1]);
+				return new ArrayList<>();
+			}
+
+			if (end.getShardNum() != start.getShardNum() || end.getRealmNum() != start.getRealmNum()) {
+				logger.error("Cannot parse range: shards and realms must match");
+				return new ArrayList<>();
+			}
+
+			for (var i = Math.min(start.getAccountNum(), end.getAccountNum());
+				 i <= Math.max(start.getAccountNum(), end.getAccountNum()); i++) {
+				ids.add(new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount());
+			}
+		}
+		return ids;
+	}
+
+	/**
+	 * Calculate the difference betweeen two json objects
+	 *
+	 * @param j1
+	 * 		the first json object
+	 * @param j2
+	 * 		the second json object
+	 * @return a set containing the keys that are different from one to the second
+	 */
+	public static List<String> difference(JsonObject j1, JsonObject j2) {
+		Gson g = new Gson();
+		Type mapType = new TypeToken<Map<String, Object>>() {
+		}.getType();
+		Map<String, Object> first = g.fromJson(j1, mapType);
+		Map<String, Object> second = g.fromJson(j2, mapType);
+		var diff = Maps.difference(first, second);
+
+		Set<String> keys = new HashSet<>();
+		if (!diff.entriesDiffering().isEmpty()) {
+			keys.addAll(diff.entriesDiffering().keySet());
+		}
+		if (!diff.entriesOnlyOnLeft().isEmpty()) {
+			keys.addAll(diff.entriesOnlyOnLeft().keySet());
+		}
+		if (!diff.entriesOnlyOnRight().isEmpty()) {
+			keys.addAll(diff.entriesOnlyOnRight().keySet());
+		}
+		List<String> sorted = new ArrayList<>(keys);
+		Collections.sort(sorted);
+		return sorted;
+	}
 }
