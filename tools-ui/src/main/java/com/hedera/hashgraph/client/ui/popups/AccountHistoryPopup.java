@@ -54,6 +54,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -189,7 +190,7 @@ public class AccountHistoryPopup {
 			var diff = Utilities.difference(oldInfo, current);
 			diff.remove("balance");
 			List<String> titles =
-					diff.stream().map(s -> AccountInfoFields.valueOf(s).getName()).collect(Collectors.toList());
+					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(Collectors.toList());
 			var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
 			lines.add(new TableLine(entry, message));
 		}

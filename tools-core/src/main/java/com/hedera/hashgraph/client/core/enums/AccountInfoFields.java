@@ -21,23 +21,23 @@ package com.hedera.hashgraph.client.core.enums;
 import java.util.stream.Stream;
 
 public enum AccountInfoFields {
-	accountID("Account ID"),
-	contractAccountID("Contract ID"),
-	deleted("Deleted"),
-	proxyAccountID("Proxy ID"),
-	proxyReceived("Proxy Received"),
-	key("Key"),
-	balance("Balance"),
-	generateSendRecordThreshold("Send Record Threshold"),
-	generateReceiveRecordThreshold("Receive Record Threshold"),
-	receiverSigRequired("Receiver Signature Required"),
-	expirationTime("Expiration Date"),
-	autoRenewPeriod("Auto Renew"),
-	liveHashes("Live Hashes"),
-	tokenRelationships("Token Relationships"),
-	memo("Memo"),
-	ownedNfts("Owned NFTs"),
-	max_automatic_token_associations("Maximum Token Associations");
+	ACCOUNTID("Account ID"),
+	CONTRACTACCOUNTID("Contract ID"),
+	DELETED("Deleted"),
+	PROXYACCOUNTID("Proxy ID"),
+	PROXYRECEIVED("Proxy Received"),
+	KEY("Key"),
+	BALANCE("Balance"),
+	GENERATESENDRECORDTHRESHOLD("Send Record Threshold"),
+	GENERATERECEIVERECORDTHRESHOLD("Receive Record Threshold"),
+	RECEIVERSIGREQUIRED("Receiver Signature Required"),
+	EXPIRATIONTIME("Expiration Date"),
+	AUTORENEWPERIOD("Auto Renew"),
+	LIVEHASHES("Live Hashes"),
+	TOKENRELATIONSHIPS("Token Relationships"),
+	MEMO("Memo"),
+	OWNEDNFTS("Owned NFTs"),
+	MAX_AUTOMATIC_TOKEN_ASSOCIATIONS("Maximum Token Associations");
 	private String name = "";
 
 	AccountInfoFields(final String name) {

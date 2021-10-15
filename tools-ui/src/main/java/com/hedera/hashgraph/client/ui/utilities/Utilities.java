@@ -274,15 +274,15 @@ public class Utilities {
 			singles.add(s);
 		}
 
+
 		for (String single : singles) {
-			try {
-				ids.add(Identifier.parse(single).asAccount());
-			} catch (Exception e) {
-				logger.error("Cannot parse {} into an account", single);
+			if (!isIdentifier(single)) {
+				logger.error("String {} cannot be parsed.", single);
 				return new ArrayList<>();
 			}
+			AccountId accountId = Identifier.parse(single).asAccount();
+			ids.add(accountId);
 		}
-
 
 		for (var s : ranges) {
 			var range = s.split("-");
@@ -290,20 +290,15 @@ public class Utilities {
 				logger.error("String {} cannot be parsed into a range", s);
 				return new ArrayList<>();
 			}
-			Identifier start;
-			try {
-				start = Identifier.parse(range[0]);
-			} catch (Exception e) {
-				logger.error("Cannot parse {} into an account", range[0]);
+
+			if (!isIdentifier(range[0]) || isIdentifier(range[1])) {
+				logger.error("Cannot parse account");
 				return new ArrayList<>();
 			}
-			Identifier end;
-			try {
-				end = Identifier.parse(range[1]);
-			} catch (Exception e) {
-				logger.error("Cannot parse {} into an account", range[1]);
-				return new ArrayList<>();
-			}
+
+			Identifier start = Identifier.parse(range[0]);
+			Identifier end = Identifier.parse(range[1]);
+
 
 			if (end.getShardNum() != start.getShardNum() || end.getRealmNum() != start.getRealmNum()) {
 				logger.error("Cannot parse range: shards and realms must match");
@@ -311,7 +306,7 @@ public class Utilities {
 			}
 
 			LongStream.rangeClosed(Math.min(start.getAccountNum(), end.getAccountNum()),
-					Math.max(start.getAccountNum(), end.getAccountNum()))
+							Math.max(start.getAccountNum(), end.getAccountNum()))
 					.mapToObj(i -> new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount())
 					.forEach(ids::add);
 		}
@@ -349,5 +344,14 @@ public class Utilities {
 		List<String> sorted = new ArrayList<>(keys);
 		Collections.sort(sorted);
 		return sorted;
+	}
+
+	private static boolean isIdentifier(String s) {
+		try {
+			Identifier.parse(s);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
 	}
 }

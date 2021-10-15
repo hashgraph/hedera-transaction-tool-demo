@@ -47,6 +47,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -224,7 +225,7 @@ public class CompareInfosPopup {
 
 		public TableLine(String key, String current, String old) {
 			this.field = key;
-			this.key = AccountInfoFields.valueOf(key).getName();
+			this.key = AccountInfoFields.valueOf(key.toUpperCase(Locale.ROOT)).getName();
 			this.current = current;
 			this.old = old;
 		}
