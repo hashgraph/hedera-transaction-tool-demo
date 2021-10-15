@@ -40,12 +40,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,9 +55,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class CompareInfosPopup {
-	private static final Logger logger = LogManager.getLogger(CompareInfosPopup.class);
+	public static final String ACCOUNT_ID = "accountID";
 	private static Controller controller;
-	private static List<TableLine> lines = new ArrayList<>();
+	private static final List<TableLine> lines = new ArrayList<>();
 	private static final JsonObject accounts = readJsonObject();
 
 	public static void setController(Controller controller) {
@@ -68,16 +68,15 @@ public class CompareInfosPopup {
 		throw new IllegalStateException("Popup class");
 	}
 
-	public static void display(JsonObject current, JsonObject old,
-			Controller controller) throws HederaClientException, FileNotFoundException {
+	public static void display(JsonObject current, JsonObject old, Controller controller) throws HederaClientException {
 		var window = new Stage();
 		lines.clear();
 		setController(controller);
 		var diff = Utilities.difference(old, current);
 
-		var id = Identifier.parse(current.get("accountID").getAsJsonObject()).toNicknameAndChecksum(accounts);
+		var id = Identifier.parse(current.get(ACCOUNT_ID).getAsJsonObject()).toNicknameAndChecksum(accounts);
 
-		if (!current.get("accountID").getAsJsonObject().equals(old.get("accountID").getAsJsonObject())) {
+		if (!current.get(ACCOUNT_ID).getAsJsonObject().equals(old.get(ACCOUNT_ID).getAsJsonObject())) {
 			throw new HederaClientException("Account ids don't match.");
 		}
 
@@ -93,7 +92,7 @@ public class CompareInfosPopup {
 		continueButton.setOnAction(event -> window.close());
 		var layout = new VBox();
 
-		TableView<TableLine> tableView = new TableView<TableLine>();
+		TableView<TableLine> tableView = new TableView<>();
 		TableColumn<TableLine, String> keyColumn = new TableColumn<>("Info Field");
 		keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
 		keyColumn.prefWidthProperty().bind(tableView.widthProperty().divide(40).multiply(7));
@@ -101,60 +100,14 @@ public class CompareInfosPopup {
 		TableColumn<TableLine, String> currentColumn = new TableColumn<>("Current");
 		currentColumn.setCellValueFactory(new PropertyValueFactory<>("current"));
 		currentColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
-		currentColumn.setCellFactory(tv -> new TableCell<>() {
-			@Override
-			protected void updateItem(String s, boolean b) {
-				super.updateItem(s, b);
-				if (s == null || b) {
-					setGraphic(null);
-				} else {
-					VBox vBox = new VBox();
-					String[] textList = s.split(",");
-					for (String s1 : textList) {
-						if (!"".equals(s1)) {
-							vBox.getChildren().add(new Label(s1));
-						}
-					}
-					setGraphic(vBox);
-				}
-			}
-		});
+		currentColumn.setCellFactory(tv -> getCell());
 
 		TableColumn<TableLine, String> oldColumn = new TableColumn<>("Old");
 		oldColumn.setCellValueFactory(new PropertyValueFactory<>("old"));
 		oldColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
-		oldColumn.setCellFactory(tv -> new TableCell<>() {
-			@Override
-			protected void updateItem(String s, boolean b) {
-				super.updateItem(s, b);
-				if (s == null || b) {
-					setGraphic(null);
-				} else {
-					VBox vBox = new VBox();
-					String[] textList = s.split(",");
-					for (String s1 : textList) {
-						if (!"".equals(s1.replaceAll("\\s", ""))) {
-							vBox.getChildren().add(new Label(s1));
-						}
-					}
-					setGraphic(vBox);
-				}
-			}
-		});
+		oldColumn.setCellFactory(tv -> getCell());
 
-		tableView.setRowFactory(tableLineTableView -> new TableRow<>() {
-			@Override
-			protected void updateItem(TableLine tableLine, boolean b) {
-				super.updateItem(tableLine, b);
-				if (tableLine == null || b) {
-					setStyle("");
-				} else if (diff.contains(tableLine.getField())) {
-					setStyle("-fx-background-color: lightskyblue; ");
-				} else {
-					setStyle("");
-				}
-			}
-		});
+		tableView.setRowFactory(tableLineTableView -> getTableRow(diff));
 
 		tableView.setSelectionModel(null);
 		tableView.getColumns().addAll(keyColumn, currentColumn, oldColumn);
@@ -174,6 +127,42 @@ public class CompareInfosPopup {
 
 		window.showAndWait();
 	}
+
+	@NotNull
+	private static TableRow<TableLine> getTableRow(List<String> diff) {
+		return new TableRow<>() {
+			@Override
+			protected void updateItem(TableLine tableLine, boolean b) {
+				super.updateItem(tableLine, b);
+				if (tableLine == null || b) {
+					setStyle("");
+				} else {
+					setStyle(diff.contains(tableLine.getField()) ? "-fx-background-color: lightskyblue; " : "");
+				}
+			}
+		};
+	}
+
+	@NotNull
+	private static TableCell<TableLine, String> getCell() {
+		return new TableCell<>() {
+			@Override
+			protected void updateItem(String s, boolean b) {
+				super.updateItem(s, b);
+				if (s != null && !b) {
+					VBox vBox = new VBox();
+					String[] textList = s.split(",");
+					Arrays.stream(textList)
+							.filter(s1 -> !"".equals(s1.replaceAll("\\s", "")))
+							.forEach(s1 -> vBox.getChildren().add(new Label(s1)));
+					setGraphic(vBox);
+				} else {
+					setGraphic(null);
+				}
+			}
+		};
+	}
+
 
 	private static void parse(JsonObject current, JsonObject old) throws HederaClientException {
 		Set<String> combined = Stream.concat(current.keySet().stream(), old.keySet().stream())
@@ -196,7 +185,7 @@ public class CompareInfosPopup {
 		if (jsonObject.get(key).isJsonPrimitive()) {
 			return jsonObject.get(key).getAsString();
 		}
-		if ("accountID".equals(key)) {
+		if (ACCOUNT_ID.equals(key)) {
 			return Identifier.parse(jsonObject.getAsJsonObject(key)).toNicknameAndChecksum(accounts);
 		}
 		if ("autoRenewPeriod".equals(key)) {
@@ -231,7 +220,7 @@ public class CompareInfosPopup {
 		private String key;
 		private String current;
 		private String old;
-		private String field;
+		private final String field;
 
 		public TableLine(String key, String current, String old) {
 			this.field = key;

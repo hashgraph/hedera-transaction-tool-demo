@@ -23,7 +23,6 @@ import com.hedera.hashgraph.client.core.enums.AccountInfoFields;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.ui.Controller;
-import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import javafx.geometry.Insets;
@@ -36,6 +35,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
@@ -63,8 +63,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSIO
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class AccountHistoryPopup {
-	private final static Logger logger = LogManager.getLogger(AccountHistoryPopup.class);
-	private final static TreeMap<Long, JsonObject> history = new TreeMap<>();
+	private static final Logger logger = LogManager.getLogger(AccountHistoryPopup.class);
+	private static final TreeMap<Long, JsonObject> history = new TreeMap<>();
 
 	private static Controller controller;
 
@@ -129,38 +129,14 @@ public class AccountHistoryPopup {
 		dateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(3));
 		TableColumn<TableLine, String> differencesColumn = new TableColumn<>("Fields changed");
 		differencesColumn.setCellValueFactory(new PropertyValueFactory<>("differences"));
-		differencesColumn.setCellFactory(tv -> new TableCell<>() {
-			@Override
-			protected void updateItem(String s, boolean b) {
-				super.updateItem(s, b);
-				if (s == null || b) {
-					setGraphic(null);
-				} else {
-					VBox vBox = new VBox();
-					String[] textList = s.split(",");
-					for (String s1 : textList) {
-						vBox.getChildren().add(new Label(s1));
-					}
-					setGraphic(vBox);
-				}
-			}
-		});
+		differencesColumn.setCellFactory(tv -> getTableCell());
 		differencesColumn.prefWidthProperty().bind(tableView.widthProperty().divide(3).multiply(2));
 
 		tableView.setRowFactory(r -> {
 			final TableRow<TableLine> row = new TableRow<>() {
 			};
 
-			row.setOnMouseClicked(mouseEvent -> {
-				if (mouseEvent.getClickCount() == 2 && !row.isEmpty()) {
-					var rowData = row.getItem();
-					try {
-						CompareInfosPopup.display(current, history.get(rowData.getSeconds()), controller);
-					} catch (HederaClientException | FileNotFoundException e) {
-						logger.error(e.getMessage());
-					}
-				}
-			});
+			row.setOnMouseClicked(mouseEvent -> doubleClickEvent(current, row, mouseEvent));
 			return row;
 		});
 
@@ -169,6 +145,38 @@ public class AccountHistoryPopup {
 		tableView.getItems().addAll(lines);
 		tableView.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		return tableView;
+	}
+
+	private static void doubleClickEvent(JsonObject current, TableRow<TableLine> row, MouseEvent mouseEvent) {
+		if (mouseEvent.getClickCount() != 2 || row.isEmpty()) {
+			return;
+		}
+		var rowData = row.getItem();
+		try {
+			CompareInfosPopup.display(current, history.get(rowData.getSeconds()), controller);
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	@NotNull
+	private static TableCell<TableLine, String> getTableCell() {
+		return new TableCell<>() {
+			@Override
+			protected void updateItem(String s, boolean b) {
+				super.updateItem(s, b);
+				if (s != null && !b) {
+					VBox vBox = new VBox();
+					String[] textList = s.split(",");
+					for (String s1 : textList) {
+						vBox.getChildren().add(new Label(s1));
+					}
+					setGraphic(vBox);
+				} else {
+					setGraphic(null);
+				}
+			}
+		};
 	}
 
 	@NotNull
@@ -182,7 +190,7 @@ public class AccountHistoryPopup {
 			diff.remove("balance");
 			List<String> titles =
 					diff.stream().map(s -> AccountInfoFields.valueOf(s).getName()).collect(Collectors.toList());
-			var message = diff.size() > 0 ? String.join(",", titles) : "No difference";
+			var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
 			lines.add(new TableLine(entry, message));
 		}
 		return lines;
@@ -204,23 +212,14 @@ public class AccountHistoryPopup {
 	}
 
 	private static long getSeconds(File file) {
-		long seconds = -1;
 		final var archiveName = FilenameUtils.getBaseName(file.getName());
-		final String substring;
 		try {
-			substring = archiveName.substring(archiveName.lastIndexOf("_") + 1);
+			final String substring = archiveName.substring(archiveName.lastIndexOf("_") + 1);
+			return Long.parseLong(substring);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			return seconds;
 		}
-
-		try {
-			seconds = Long.parseLong(substring);
-		} catch (NumberFormatException e) {
-			logger.error(e.getMessage());
-		}
-
-		return seconds;
+		return -1;
 	}
 
 	private static JsonObject readJson(File file) throws IOException {
@@ -234,10 +233,10 @@ public class AccountHistoryPopup {
 		private final Long seconds;
 
 		public TableLine(Long entry, String message) {
-			var date = new Date(entry);
+			var entryDate = new Date(entry);
 			Format format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			this.seconds = entry;
-			this.date = format.format(date);
+			this.date = format.format(entryDate);
 			this.differences = message;
 		}
 

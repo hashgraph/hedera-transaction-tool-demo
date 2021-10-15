@@ -29,7 +29,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -40,6 +39,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static junit.framework.TestCase.assertEquals;
 
 public class KeyStructureUtilityTest {
 
@@ -91,7 +92,8 @@ public class KeyStructureUtilityTest {
 		KeyList singleKey = EncryptionUtils.jsonToKey(singleKeyJson);
 		JsonObject newJson = EncryptionUtils.keyToJson(singleKey);
 
-		var cleanJson = utility.replaceAvailableHexfromKey(newJson);
+		var cleanJson = utility.replaceAvailableHexfromKey(newJson).toString();
+		assertEquals("{\"Ed25519\":\"testKey-0\"}", cleanJson);
 
 	}
 
@@ -108,8 +110,11 @@ public class KeyStructureUtilityTest {
 		}
 		keyListJson.add("keyList", jsonArray);
 
-		var cleanJson = utility.replaceAvailableHexfromKey(keyListJson);
-
+		var cleanJson = utility.replaceAvailableHexfromKey(keyListJson).toString();
+		assertEquals("{\"keyList\":[{\"Ed25519\":\"testKey-0\"},{\"Ed25519\":\"testKey-1\"}," +
+				"{\"Ed25519\":\"testKey-2\"},{\"Ed25519\":\"testKey-3\"},{\"Ed25519\":\"testKey-4\"}," +
+				"{\"Ed25519\":\"testKey-5\"},{\"Ed25519\":\"testKey-6\"},{\"Ed25519\":\"testKey-7\"}," +
+				"{\"Ed25519\":\"testKey-8\"},{\"Ed25519\":\"testKey-9\"}]}", cleanJson);
 	}
 
 	@Test
@@ -129,8 +134,11 @@ public class KeyStructureUtilityTest {
 		thresholdJson.add("keyList", jsonArray);
 		thresholdKeyJson.add("thresholdKey", thresholdJson);
 
-		var cleanJson = utility.replaceAvailableHexfromKey(thresholdKeyJson);
+		var cleanJson = utility.replaceAvailableHexfromKey(thresholdKeyJson).toString();
+		assertEquals("{\"threshold\":8,\"keyList\":{\"keyList\":[{\"Ed25519\":\"testKey-0\"}," +
+				"{\"Ed25519\":\"testKey-1\"},{\"Ed25519\":\"testKey-2\"},{\"Ed25519\":\"testKey-3\"}," +
+				"{\"Ed25519\":\"testKey-4\"},{\"Ed25519\":\"testKey-5\"},{\"Ed25519\":\"testKey-6\"}," +
+				"{\"Ed25519\":\"testKey-7\"},{\"Ed25519\":\"testKey-8\"},{\"Ed25519\":\"testKey-9\"}]}}", cleanJson);
 
-		logger.info("poop");
 	}
 }

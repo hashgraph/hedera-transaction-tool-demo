@@ -58,8 +58,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -268,8 +266,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
-			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException,
-			InvalidProtocolBufferException {
+			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException{
 
 		var query = getAccountInfoQuery(feePayer, network, privateKeysFiles);
 
@@ -932,12 +929,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 			Hyperlink link = new Hyperlink("History");
-			link.setOnAction(new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent actionEvent) {
-					AccountHistoryPopup.display(info.accountId, controller);
-				}
-			});
+			link.setOnAction(actionEvent -> AccountHistoryPopup.display(info.accountId, controller));
 
 			gridPane.add(link, 3, 0);
 

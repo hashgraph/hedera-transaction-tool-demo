@@ -289,7 +289,10 @@ public interface GenericFileReadWriteAware {
 	 */
 	default File zipFiles(File[] toPack, String storageLocation) throws HederaClientException {
 		try {
-			assert toPack != null;
+			if (toPack == null) {
+				throw new HederaClientException("Files to pack are null");
+			}
+
 			final var zipFile = new File(storageLocation);
 			if (zipFile.exists()) {
 				var name = findFileName(zipFile.getParentFile().toPath(), FilenameUtils.getBaseName(storageLocation),

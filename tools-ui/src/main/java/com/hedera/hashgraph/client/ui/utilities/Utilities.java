@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.LongStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
@@ -256,6 +257,8 @@ public class Utilities {
 	 */
 	public static List<AccountId> parseAccountNumbers(String text) {
 		List<AccountId> ids = new ArrayList<>();
+		List<String> ranges = new ArrayList<>();
+		List<String> singles = new ArrayList<>();
 
 		if (text == null || "".equals(text)) {
 			return ids;
@@ -263,16 +266,25 @@ public class Utilities {
 
 		var split = text.replace("\\s", "").split("[\\s,]+");
 
-		for (var s : split) {
-			if (!s.contains("-")) {
-				try {
-					ids.add(Identifier.parse(s).asAccount());
-				} catch (Exception e) {
-					logger.error("Cannot parse {} into an account", s);
-					return new ArrayList<>();
-				}
+		for (String s : split) {
+			if (s.contains("-")) {
+				ranges.add(s);
 				continue;
 			}
+			singles.add(s);
+		}
+
+		for (String single : singles) {
+			try {
+				ids.add(Identifier.parse(single).asAccount());
+			} catch (Exception e) {
+				logger.error("Cannot parse {} into an account", single);
+				return new ArrayList<>();
+			}
+		}
+
+
+		for (var s : ranges) {
 			var range = s.split("-");
 			if (range.length != 2) {
 				logger.error("String {} cannot be parsed into a range", s);
@@ -298,11 +310,12 @@ public class Utilities {
 				return new ArrayList<>();
 			}
 
-			for (var i = Math.min(start.getAccountNum(), end.getAccountNum());
-				 i <= Math.max(start.getAccountNum(), end.getAccountNum()); i++) {
-				ids.add(new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount());
-			}
+			LongStream.rangeClosed(Math.min(start.getAccountNum(), end.getAccountNum()),
+					Math.max(start.getAccountNum(), end.getAccountNum()))
+					.mapToObj(i -> new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount())
+					.forEach(ids::add);
 		}
+
 		return ids;
 	}
 
