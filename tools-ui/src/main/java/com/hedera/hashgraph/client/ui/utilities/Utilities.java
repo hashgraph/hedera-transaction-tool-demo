@@ -291,7 +291,7 @@ public class Utilities {
 				return new ArrayList<>();
 			}
 
-			if (!isIdentifier(range[0]) || isIdentifier(range[1])) {
+			if (!isIdentifier(range[0]) || !isIdentifier(range[1])) {
 				logger.error("Cannot parse account");
 				return new ArrayList<>();
 			}
