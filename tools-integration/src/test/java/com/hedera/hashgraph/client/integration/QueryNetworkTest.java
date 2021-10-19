@@ -245,7 +245,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.pressPopupButton("Replace");
 
 		var newBalance = accountsPanePage.getBalance("treasury");
-		assertTrue(newBalance.toTinybars() < oldBalance.toTinybars());
+		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
 
 	}
 
