@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class ToolTipMessages {
-
 	private ToolTipMessages() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -49,5 +48,13 @@ public class ToolTipMessages {
 	public static final String TRANSACTION_FEE_TOOLTIP_MESSAGE = "The max transaction fee that will be offered";
 	public static final String NODE_ID_TOOLTIP_MESSAGE =
 			"The account ID of the node that will submit the transaction to the Hedera network";
-
+	public static final String NETWORKS_TOOLTIP_MESSAGES =
+			"The default network to which the app will submit all transactions and queries, unless otherwise " +
+					"specified.";
+	public static final String FEE_PAYER_TOOLTIP_MESSAGES =
+			"The account that will be used as a fee payer for all queries, unless otherwise specified";
+	public static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
+			"The period of time in which the account will renew in seconds.\n" +
+					"Min:7000000 seconds \n" +
+					"Max: 8000000 seconds";
 }

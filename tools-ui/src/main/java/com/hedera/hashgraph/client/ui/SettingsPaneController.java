@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
@@ -71,8 +72,10 @@ import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWOR
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FOLDER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.GENERATE_RECORD_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NETWORKS_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NODE_ID_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.START_TIME_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.TRANSACTION_FEE_TOOLTIP_MESSAGE;
@@ -85,10 +88,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
-	private static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
-			"The period of time in which the account will renew in seconds.\n" +
-					"Min:7000000 seconds \n" +
-					"Max: 8000000 seconds";
 	private boolean noise = false;
 
 	public TextField loadStorageTextField;
@@ -151,14 +150,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	private Controller controller;
 
 	DriveSetupHelper driveSetupHelper;
-
-	public boolean isNoise() {
-		return noise;
-	}
-
-	public void setNoise(boolean noise) {
-		this.noise = noise;
-	}
 
 	void injectMainController(Controller controller) {
 		this.controller = controller;
@@ -256,6 +247,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
 					FOLDER_TOOLTIP_MESSAGES));
 
+			networkTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, networkTooltip,
+					NETWORKS_TOOLTIP_MESSAGES));
+
+			feePayerTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, feePayerTooltip,
+					FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
 		} catch (Exception e) {
@@ -453,7 +449,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		autoRenewTooltip.setOnAction(
 				actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
-						AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+						ToolTipMessages.AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+
+
 	}
 
 	private void setupTxValidDurationTextField() {
