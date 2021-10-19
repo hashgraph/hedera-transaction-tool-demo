@@ -18,16 +18,18 @@
 
 package com.hedera.hashgraph.client.ui.pages;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.table.TableRowExpanderColumn;
@@ -46,6 +48,8 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.RETYPE_PASSWORD_BOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
+import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class AccountsPanePage {
@@ -93,13 +97,7 @@ public class AccountsPanePage {
 	public AccountsPanePage closePopup(String query) {
 		ObservableList<Node> nodes = getPopupNodes();
 		assert nodes != null;
-		Button queryButton = null;
 		driver.clickOn(query.toUpperCase());
-		return this;
-	}
-
-	public AccountsPanePage pressImportAccountButton() {
-		driver.clickOn("IMPORT ACCOUNT");
 		return this;
 	}
 
@@ -118,33 +116,6 @@ public class AccountsPanePage {
 		HBox hBox1 = ((HBox) hBox.getChildren().get(1));
 		Button button = (Button) hBox1.getChildren().get(1);
 		driver.clickOn(button);
-		return this;
-	}
-
-	public AccountsPanePage setPemLocation(String location) {
-		int i = 1;
-		return enterAddressInBox(location, i);
-	}
-
-	public AccountsPanePage setPubLocation(String location) {
-		int i = 2;
-		return enterAddressInBox(location, i);
-	}
-
-	private AccountsPanePage enterAddressInBox(String location, int i) {
-		ObservableList<Node> keysPopupNodes = getPopupNodes();
-
-		Button x = ((Button) (((HBox) (((VBox) Objects.requireNonNull(keysPopupNodes).get(i)).getChildren()).get(
-				1)).getChildren()).get(1));
-		driver.clickOn(x);
-
-		TestUtil.applyPath(location);
-
-		return this;
-	}
-
-	public AccountsPanePage browseToAccountInfo(String location) {
-		TestUtil.applyPath(location);
 		return this;
 	}
 
@@ -196,16 +167,90 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage enterKeysPathsInPopup(String pemLocation, String pubLocation) {
+	public AccountsPanePage enterPasswordInPopup(String text) throws HederaClientException {
+		final var popupNodes = getPopupNodes();
+		var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(popupNodes));
+		if (passwords == null) {
+			throw new HederaClientException("Unexpected popup");
+		}
+		var continueButton = findButtonInPopup(popupNodes, "CONFIRM");
+		passwords.setText(text);
 
-		ObservableList<Node> popupNodes = getPopupNodes();
-		TextField pemField = (TextField) ((HBox) ((VBox) Objects.requireNonNull(popupNodes).get(1)).getChildren().get(
-				1)).getChildren().get(0);
-		TextField pubField = (TextField) ((HBox) ((VBox) popupNodes.get(2)).getChildren().get(1)).getChildren().get(0);
+		driver.clickOn(continueButton);
+		return this;
+	}
 
-		driver.clickOn(pemField).write(pemLocation);
-		driver.clickOn(pubField).write(pubLocation).press(KeyCode.ENTER).release(KeyCode.ENTER);
+	/**
+	 * Given a list of nodes that originate in a popup, find the button whose text is equal to the provided legend
+	 *
+	 * @param popupNodes
+	 * 		a list of nodes
+	 * @param legend
+	 * 		the text in the button
+	 * @return a button
+	 */
+	public static Button findButtonInPopup(ObservableList<Node> popupNodes, String legend) {
+		for (var popupNode : popupNodes) {
+			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
+				return (Button) popupNode;
+			} else if (popupNode instanceof ButtonBar) {
+				var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof VBox) {
+				var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof HBox) {
+				var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof GridPane) {
+				var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			}
+		}
+		return null;
+	}
 
+	public AccountsPanePage pressPopupButton(String legend) {
+		final var popupNodes = getPopupNodes();
+		var button = findButtonInPopup(Objects.requireNonNull(popupNodes), legend);
+		driver.clickOn(button);
+		return this;
+	}
+
+	public AccountsPanePage selectRow(String nickname) throws InterruptedException {
+		sleep(1000);
+		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		assertTrue(scrollPane.getContent() instanceof TableView);
+		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		AccountLineInformation info = null;
+		for (AccountLineInformation item : table.getItems()) {
+			if (nickname.equals(item.getNickname())) {
+				info = item;
+			}
+		}
+
+		assertNotNull(info);
+		info.setSelected(true);
+		return this;
+	}
+
+	public AccountsPanePage requestSelectedInfo() throws InterruptedException {
+		sleep(1000);
+		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		assertTrue(scrollPane.getContent() instanceof TableView);
+		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+
+		var columns = table.getColumns();
+		var graphic = columns.get(3).getGraphic();
+		driver.clickOn(((HBox) graphic).getChildren().get(1));
 		return this;
 	}
 
@@ -253,12 +298,25 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage scrollToBottom() {
-		Node pane = driver.find("#currentAccountPane");
-		if (pane instanceof ScrollPane) {
-			((ScrollPane) pane).setVvalue(1.0);
-		}
+
+	public AccountsPanePage clickOnSeeHistory() {
+		driver.clickOn("History");
 		return this;
+	}
+
+	public TableView getTableFromPopup(ObservableList<Node> nodes) {
+		for (Node node : nodes) {
+			if (node instanceof TableView) {
+				return (TableView) node;
+			}
+			if (node instanceof HBox) {
+				return getTableFromPopup(((HBox) node).getChildren());
+			}
+			if (node instanceof VBox) {
+				return getTableFromPopup(((VBox) node).getChildren());
+			}
+		}
+		return null;
 	}
 
 

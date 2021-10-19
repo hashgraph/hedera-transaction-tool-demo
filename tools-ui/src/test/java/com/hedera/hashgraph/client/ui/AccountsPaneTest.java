@@ -57,19 +57,25 @@ import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
@@ -138,8 +144,28 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
+		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pem"));
+		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pub"));
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+
+		final var customNetworksFolder = new File(DEFAULT_STORAGE, "Files/.System/CustomNetworks/");
+		if (customNetworksFolder.mkdirs()) {
+			logger.info("Custom networks folder created: {}", customNetworksFolder.getAbsolutePath());
+		}
+
+		Files.copy(Path.of("src/test/resources/customNetwork.json"),
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
+		properties.setCustomNetworks(Collections.singleton("integration"));
+
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+
+		properties.setCurrentNetwork("integration", defaultNetworks);
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -249,7 +275,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		clickOn(continueButton);
 		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
 		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
-		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/0.0.2_0.zip").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/DELETED/0.0.2.zip").exists());
 	}
 
 	@Test
@@ -348,6 +374,38 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertEquals(1, items2.size());
 		accountsPanePage.deleteAccount("seventy");
 
+	}
+
+	@Test
+	public void checkAccountHistoryPopup_test() throws InterruptedException, HederaClientException {
+		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+				"/src/test/resources/AccountsInfo";
+		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2_integration.info")
+				.enterAccountNickName(ZERO_TWO)
+				.closeNicknamePopup()
+				.selectRow(ZERO_TWO)
+				.requestSelectedInfo()
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.pressPopupButton("Replace");
+
+		File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith("0.0.2");
+			}
+		});
+
+		assertNotNull(archive);
+		assertEquals(2, archive.length);
+
+		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		assertEquals(1, table.getItems().size());
+		doubleClickOn("No difference");
+		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		assertEquals(8, tableFromPopup.getItems().size());
+
+		accountsPanePage.pressPopupButton("CLOSE")
+				.pressPopupButton("CLOSE");
 	}
 
 	@After

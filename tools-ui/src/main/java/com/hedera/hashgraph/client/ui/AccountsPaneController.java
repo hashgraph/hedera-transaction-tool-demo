@@ -60,6 +60,7 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -265,7 +266,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
-			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException{
+			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException {
 
 		var query = getAccountInfoQuery(feePayer, network, privateKeysFiles);
 

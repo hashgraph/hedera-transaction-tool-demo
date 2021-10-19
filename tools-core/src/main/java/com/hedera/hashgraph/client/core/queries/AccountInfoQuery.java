@@ -60,7 +60,7 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 
 		if (NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) && !NetworkEnum.INTEGRATION.getName().equals(
 				network.toUpperCase(Locale.ROOT))) {
-			return Client.forName(network.toUpperCase(Locale.ROOT));
+			return Client.forName(network.toLowerCase(Locale.ROOT));
 		}
 
 		try {
