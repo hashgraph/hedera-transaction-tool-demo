@@ -235,8 +235,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		clickOn(cancelButton);
 
-		assertTrue((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info")).exists());
-		assertTrue((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json")).exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
 
 		// delete
 		clickOn(ZERO_TWO + "T");
@@ -247,9 +247,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertNotNull(continueButton);
 
 		clickOn(continueButton);
-		assertFalse((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info")).exists());
-		assertFalse((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json")).exists());
-
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/0.0.2_0.zip").exists());
 	}
 
 	@Test
