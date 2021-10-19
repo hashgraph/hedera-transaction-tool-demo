@@ -53,11 +53,16 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 		this.feePayer = feePayer;
 		this.fee = fee;
 		this.signingKeys = signingKeys;
-		this.client = NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) ? Client.forName(
-				network.toLowerCase(Locale.ROOT)) : getClient();
+		this.client = getClient();
 	}
 
 	private Client getClient() {
+
+		if (NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) && !NetworkEnum.INTEGRATION.getName().equals(
+				network.toUpperCase(Locale.ROOT))) {
+			return Client.forName(network.toUpperCase(Locale.ROOT));
+		}
+
 		try {
 			return CommonMethods.getClient(
 					readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION));
@@ -65,6 +70,7 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 		}
 		return null;
+
 	}
 
 	public AccountInfo getInfo(AccountId account) throws PrecheckStatusException, TimeoutException {

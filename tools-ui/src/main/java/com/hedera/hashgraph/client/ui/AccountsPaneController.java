@@ -169,7 +169,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public TextField hiddenPathAccount;
 	public Button importAccountButton;
 	public Button importFolderButton;
-	public TextField accountsToUpdateTextFIeld;
+	public TextField accountsToUpdateTextField;
 	public Button selectAccountsButton;
 	public ComboBox<String> feePayerComboboxA;
 	public ComboBox<Object> networkComboboxA;
@@ -229,7 +229,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							"At least one key must be selected in order to sign the transaction");
 					return;
 				}
-				final var accounts = parseAccountNumbers(accountsToUpdateTextFIeld.getText());
+				final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
 				if (accounts.isEmpty()) {
 					PopupMessage.display("No accounts selected",
 							"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
@@ -288,7 +288,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			if (!newFiles.isEmpty()) {
 				importInfoFiles(newFiles);
 			}
-			accountsToUpdateTextFIeld.clear();
+			accountsToUpdateTextField.clear();
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());

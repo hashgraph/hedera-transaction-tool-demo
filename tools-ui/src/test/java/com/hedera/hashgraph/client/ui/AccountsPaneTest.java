@@ -305,57 +305,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertFalse(items.contains("seventy"));
 	}
 
-	private List<String> getNicknames() {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			items.add(((AccountLineInformation) item).getNickname());
-
-		}
-		return items;
-	}
-
-	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			if (((AccountLineInformation) item).getBalance().equals(Hbar.fromString(balance.replace(" ", "")))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-	private String accountID(String s) {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			if (((AccountLineInformation) item).getNickname().contains(s)) {
-				return ((AccountLineInformation) item).getAccount().toReadableString();
-			}
-		}
-		return "";
-	}
-
 	@Test
 	public void loadSameAccount_Test() throws HederaClientException {
 
@@ -373,7 +322,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		accountsPanePage.replaceAccount();
 		assertTrue(checkBalance(ZERO_TWO, "46 479 878 904.04 547 520"));
 	}
-
 
 	@Test
 	public void loadTwoAccountsSameNickname_Test() {
@@ -470,7 +418,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return (ScrollPane) vBox.getChildren().get(i);
 	}
 
-
 	private boolean findTextInBox(String text, Node box) {
 		ObservableList<Node> nodes = null;
 		if (box instanceof VBox) {
@@ -522,6 +469,56 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 		return null;
+	}
+
+	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			if (((AccountLineInformation) item).getBalance().equals(Hbar.fromString(balance.replace(" ", "")))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private String accountID(String s) {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			if (((AccountLineInformation) item).getNickname().contains(s)) {
+				return ((AccountLineInformation) item).getAccount().toReadableString();
+			}
+		}
+		return "";
+	}
+
+	private List<String> getNicknames() {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			items.add(((AccountLineInformation) item).getNickname());
+
+		}
+		return items;
 	}
 
 

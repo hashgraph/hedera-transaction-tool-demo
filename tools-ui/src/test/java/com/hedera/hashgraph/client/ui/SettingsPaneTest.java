@@ -340,7 +340,7 @@ public class SettingsPaneTest extends TestBase {
 
 	}
 
-//	@Test
+	@Test
 	public void defaultNetworks_Test() {
 		settingsPanePage.openNetworksCombobox("TESTNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
@@ -348,6 +348,7 @@ public class SettingsPaneTest extends TestBase {
 		settingsPanePage.openNetworksCombobox("PREVIEWNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
 		assertEquals("PREVIEWNET", properties.getCurrentNetwork());
+		settingsPanePage.openNetworksCombobox("MAINNET");
 		settingsPanePage.openNetworksCombobox("MAINNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
 		assertEquals("MAINNET", properties.getCurrentNetwork());

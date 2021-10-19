@@ -91,7 +91,7 @@
 							<ComboBox fx:id="networkComboboxA" prefWidth="300.0"
 									  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
 									  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-							<TextField fx:id="accountsToUpdateTextFIeld" prefHeight="25.0" prefWidth="300.0"
+							<TextField fx:id="accountsToUpdateTextField" prefHeight="25.0" prefWidth="300.0"
 									   style="-fx-background-radius: 10; -fx-border-radius: 10;"
 									   GridPane.columnIndex="1"/>
 							<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">

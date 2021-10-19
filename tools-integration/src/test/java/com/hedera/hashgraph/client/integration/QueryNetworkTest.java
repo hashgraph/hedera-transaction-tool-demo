@@ -18,15 +18,20 @@
 
 package com.hedera.hashgraph.client.integration;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.integration.pages.AccountsPanePage;
+import com.hedera.hashgraph.client.integration.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -39,43 +44,41 @@ import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
 public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
 	public static final String TRANSACTIONS = "src/test/resources/TempTransactions";
 	public static final String RECEIPTS = "src/test/resources/TempReceipts";
-	private static final int TEST_SIZE = 5;
-	private static AccountId payerId;
-	private final Set<AccountId> receivers = new HashSet<>();
+	private static AccountId testAccountId;
 	private Client client;
-
-	protected static final String PASSWORD = "123456789";
-
+	private MainWindowPage mainWindowPage;
+	private AccountsPanePage accountsPanePage;
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -122,26 +125,151 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		createAccounts();
 
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		Calendar cal = new Timestamp().plusSeconds(120).asCalendar();
-		var sdf1 = new SimpleDateFormat("MM/dd/yy");
-		var sdf2 = new SimpleDateFormat("HH:mm");
-		Date date = cal.getTime();
 
-		// Create csv
-		List<String[]> distro = new ArrayList<>();
-		for (AccountId receiver : receivers) {
-			for (int i = 0; i < 100; i++) {
-				var line = new String[] { String.valueOf(receiver), String.valueOf((i + 1)), sdf1.format(
-						date), "memo line " + i };
-				distro.add(line);
+		setupUI();
+		mainWindowPage.clickOnAccountsButton();
+
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		if (new File(DEFAULT_STORAGE).exists()) {
+			try {
+				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+			} catch (IOException e) {
+				logger.error("Unable to delete {}: {}", DEFAULT_STORAGE, e.getMessage());
 			}
 		}
 
-		setupUI();
+		final var output =
+				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+		if (output.exists()) {
+			FileUtils.cleanDirectory(output);
+		}
+
+		final var input = new File("src/test/resources/Transactions - Documents/InputFiles/");
+		if (input.exists()) {
+			FileUtils.cleanDirectory(input);
+		}
 	}
 
 	@Test
-	public void requestOneBalance_test() {
+	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException {
+		final var nickname = testAccountId.toString();
+		var oldBalance = accountsPanePage.getBalance(nickname);
+
+		accountsPanePage.expandRow(nickname)
+				.requestNewBalance(nickname);
+
+		var newBalance = accountsPanePage.getBalance(nickname);
+		assertEquals(oldBalance, newBalance);
+
+		TestUtil.transfer(new AccountId(2L), testAccountId, Hbar.fromTinybars(123));
+		accountsPanePage.expandRow(nickname)
+				.requestNewBalance(nickname);
+
+		var finalBalance = accountsPanePage.getBalance(nickname);
+		assertEquals(oldBalance.toTinybars() + 123L, finalBalance.toTinybars());
+	}
+
+	@Test
+	public void requestCheckedBalances_test() throws InterruptedException, HederaClientException {
+		final var balancesFiles = new File(Constants.BALANCES_FILE);
+		assertTrue(balancesFiles.exists());
+		JsonArray initialBalances = readJsonArray(balancesFiles.getAbsolutePath());
+
+		// Request all balances
+		accountsPanePage.selectRow("treasury")
+				.selectRow(testAccountId.toString())
+				.requestSelectedBalances();
+
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
+		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
+
+		assertEquals(initialBalances.size() + 2, balances.size());
+	}
+
+	@Test
+	public void requestAllBalances_test() throws InterruptedException, HederaClientException {
+
+		// Request all balances twice
+		accountsPanePage.selectAllCheckBoxes()
+				.requestSelectedBalances();
+
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
+		accountsPanePage.selectAllCheckBoxes()
+				.requestSelectedBalances();
+
+		final var balancesFiles = new File(Constants.BALANCES_FILE);
+		assertTrue(balancesFiles.exists());
+		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
+		int counter = 0;
+		for (JsonElement balance : balances) {
+			String account = balance.getAsJsonObject().get("account").getAsString();
+			if (new Identifier(testAccountId).toReadableString().equals(account)) {
+				counter++;
+			}
+		}
+
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
+		assertEquals(2, counter);
+	}
+
+	@Test
+	public void requestOneInfo_test() throws InterruptedException, HederaClientException {
+		// Request all balances
+		accountsPanePage.selectRow("treasury")
+				.selectRow(testAccountId.toString())
+				.requestSelectedBalances();
+
+		var oldBalance = accountsPanePage.getBalance("treasury");
+
+		accountsPanePage.selectRow("treasury")
+				.requestSelectedInfo()
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.pressPopupButton("Replace");
+
+		var newBalance = accountsPanePage.getBalance("treasury");
+		assertTrue(newBalance.toTinybars() < oldBalance.toTinybars());
+
+	}
+
+	@Test
+	public void requestUnknownAccountsInfo_test() throws HederaClientException {
+
+		var accounts = accountsPanePage.getAccounts().size();
+		accountsPanePage.openAccordion()
+				.enterAccounts("30-40")
+				.clickRequestAccountsButton()
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.acceptAllNickNames();
+
+		var newAccounts = accountsPanePage.getAccounts().size();
+		assertEquals(accounts + 11, newAccounts);
+
+		accountsPanePage.enterAccounts("45-50, 61, 67")
+				.clickRequestAccountsButton()
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.acceptAllNickNames();
+
+		var newAccounts2 = accountsPanePage.getAccounts().size();
+
+		assertEquals(accounts + 19, newAccounts2);
 
 	}
 
@@ -158,37 +286,25 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
 		var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
-				.setInitialBalance(new Hbar(1000))
+				.setInitialBalance(new Hbar(1))
 				.setAccountMemo("Test payer account")
 				.execute(client);
 
 		var receipt = transactionResponse.getReceipt(client);
-		payerId = Objects.requireNonNull(receipt.accountId);
-		logger.info("Payer Id: {}", payerId.toString());
+		testAccountId = Objects.requireNonNull(receipt.accountId);
+		logger.info("Payer Id: {}", testAccountId.toString());
 
 		var accountInfo = new AccountInfoQuery()
-				.setAccountId(payerId)
+				.setAccountId(testAccountId)
 				.execute(client);
 
 		logger.info("Account Balance = {}", accountInfo.balance.toString());
-		writeBytes(String.format("%s/%s.info", "src/test/resources/Transactions - Documents/InputFiles", payerId),
+		writeBytes(String.format("%s/%s.info", "src/test/resources/Transactions - Documents/InputFiles", testAccountId),
 				accountInfo.toBytes());
-
-		// Create receiver accounts
-		for (var i = 0; i < TEST_SIZE; i++) {
-			transactionResponse = new AccountCreateTransaction()
-					.setKey(key)
-					.setInitialBalance(new Hbar(0))
-					.setAccountMemo("Test receiver account")
-					.execute(client);
-			final var accountId = transactionResponse.getReceipt(client).accountId;
-			assert accountId != null;
-			logger.info("Receiver account created: {}", accountId.toString());
-			receivers.add(accountId);
-		}
 	}
 
-	private void setupUI() throws IOException, KeyStoreException, TimeoutException {
+	private void setupUI() throws IOException, KeyStoreException, TimeoutException, PrecheckStatusException,
+			HederaClientException {
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
@@ -248,6 +364,27 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
+		final var customNetworksFolder = new File(DEFAULT_STORAGE, "Files/.System/CustomNetworks/");
+		if (customNetworksFolder.mkdirs()) {
+			logger.info("Custom networks folder created: {}", customNetworksFolder.getAbsolutePath());
+		}
+
+		Files.copy(Path.of("src/test/resources/customNetwork.json"),
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
+		properties.setCustomNetworks(Collections.singleton("integration"));
+
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+
+		properties.setCurrentNetwork("integration", defaultNetworks);
+
+		var treasuryInfo = new AccountInfoQuery()
+				.setAccountId(new AccountId(2))
+				.execute(client);
+		writeBytes(String.format("%s/0.0.2.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
+
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
@@ -259,6 +396,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
 		clickOn(button);
 
-	}
 
+		mainWindowPage = new MainWindowPage(this);
+		accountsPanePage = new AccountsPanePage(this);
+	}
 }
