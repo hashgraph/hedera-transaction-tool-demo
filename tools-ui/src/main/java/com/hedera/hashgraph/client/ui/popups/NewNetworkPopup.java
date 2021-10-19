@@ -76,7 +76,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		nicknameTextField.setOnKeyPressed(
 				keyEvent -> handleNickname(errorLabel, locationTextField, keyEvent));
 		nicknameTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (!t1) {
+			if (Boolean.FALSE.equals(t1)) {
 				removeFocusAction(errorLabel, nicknameTextField);
 			}
 		});

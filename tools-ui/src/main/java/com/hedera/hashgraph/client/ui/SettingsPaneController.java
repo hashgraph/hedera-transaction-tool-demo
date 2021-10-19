@@ -60,7 +60,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 
@@ -137,9 +140,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button maxFeeTooltip;
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
+	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox networkCombobox;
+	public ComboBox<Object> networkCombobox;
+	public ComboBox<String> feePayerCombobox;
 
 
 	@FXML
@@ -217,6 +222,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
+			setupFeePayerCombobox();
+
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
 						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
@@ -249,6 +256,33 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
+	private void setupFeePayerCombobox() {
+		List<String> accounts = new ArrayList<>();
+		for (Identifier feePayer : controller.getFeePayers()) {
+			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+		if (accounts.isEmpty()) {
+			return;
+		}
+		Collections.sort(accounts);
+		noise = true;
+		feePayerCombobox.getItems().clear();
+		feePayerCombobox.getItems().addAll(accounts);
+		noise = false;
+
+		var feePayer = controller.getDefaultFeePayer();
+		if ("".equals(feePayer)) {
+			controller.setDefaultFeePayer(accounts.get(0));
+			feePayer = accounts.get(0);
+		}
+		feePayerCombobox.getSelectionModel().select(feePayer);
+		feePayerCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+			if (!noise) {
+				controller.setDefaultFeePayer(t1);
+			}
+		});
+	}
+
 	private void setupNetworkBox() {
 		noise = true;
 		networkCombobox.getItems().clear();
@@ -271,11 +305,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				if (t1 instanceof Separator) {
 					networkCombobox.getSelectionModel().select(o);
 				}
-
 			}
 		});
-
-
 	}
 
 	private void setupDefaultTransactionFeeTextField() {
@@ -699,7 +730,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public void deleteCustomNetworkAction() throws IOException {
 		var answer = PopupMessage.display("Delete Network",
 				"This will remove the selected network from your app. Are you sure?", true, "CONTINUE", "CANCEL");
-		if (answer) {
+		if (Boolean.TRUE.equals(answer)) {
 			Files.deleteIfExists(
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}

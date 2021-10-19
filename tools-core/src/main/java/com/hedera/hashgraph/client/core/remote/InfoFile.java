@@ -84,8 +84,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	}
 
 	public boolean canSign(Set<PublicKey> keys) {
-		final var b = canSign(this.key, keys);
-		return b;
+		return canSign(this.key, keys);
 	}
 
 	private boolean canSign(Key key, Set<PublicKey> keys) {
@@ -103,7 +102,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 			}
 		}
 		if (key instanceof PublicKey) {
-			return keys.contains((PublicKey) key);
+			return keys.contains(key);
 		}
 		return false;
 	}

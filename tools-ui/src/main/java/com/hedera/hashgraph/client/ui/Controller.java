@@ -799,7 +799,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		assert networks != null;
 		var networkSet = Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
 				Collectors.toSet());
-		properties.setCustomNetworks(networkSet);
+		if (!networkSet.isEmpty()) {
+			properties.setCustomNetworks(networkSet);
+		}
 		return networkSet;
 	}
 
@@ -817,5 +819,17 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	public void setCurrentNetwork(String network) {
 		properties.setCurrentNetwork(network, getDefaultNetworks());
+	}
+
+	public Set<Identifier> getFeePayers() {
+		return accountsPaneController.getFeePayers();
+	}
+
+	public String getDefaultFeePayer() {
+		return properties.getDefaultFeePayer();
+	}
+
+	public void setDefaultFeePayer(String feePayer) {
+		properties.setDefaultFeePayer(feePayer);
 	}
 }

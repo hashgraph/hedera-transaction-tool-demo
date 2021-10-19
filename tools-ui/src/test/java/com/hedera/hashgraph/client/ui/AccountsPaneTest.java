@@ -41,6 +41,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import junitparams.JUnitParamsRunner;
@@ -190,8 +191,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		TableView tableView = (TableView) scrollPane.getContent();
 		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
-
+		sleep(100);
 		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+
 		assertTrue(vBox.isVisible());
 
 		assertTrue(findTextInBox("Never", vBox));
@@ -273,14 +275,10 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		TableView tableView = (TableView) scrollPane.getContent();
 		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
-
+		sleep(100);
 		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+
 		assertTrue(vBox.isVisible());
-
-
-		assertTrue(findTextInBox(sdf.format(date), vBox));
-
-
 		accountsPanePage.deleteAccount("thousand-five");
 
 	}
@@ -323,7 +321,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return items;
 	}
 
-	private boolean checkBalance(String nickname, String balance) {
+	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
@@ -359,7 +357,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void loadSameAccount_Test() {
+	public void loadSameAccount_Test() throws HederaClientException {
 
 		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
 				"/src/test/resources/AccountsInfo";
@@ -479,11 +477,14 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			nodes = ((VBox) box).getChildren();
 		} else if (box instanceof HBox) {
 			nodes = ((HBox) box).getChildren();
+		} else if (box instanceof GridPane) {
+			nodes = ((GridPane) box).getChildren();
 		} else {
 			return false;
 		}
 		for (Node node : nodes) {
-			if ((node instanceof HBox || node instanceof VBox) && findTextInBox(text, node)) {
+			if ((node instanceof HBox || node instanceof VBox || node instanceof GridPane) && findTextInBox(text,
+					node)) {
 				return true;
 			}
 			if (node instanceof TextField && ((TextField) node).getText().contains(text)) {
@@ -498,7 +499,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 		return false;
-
 	}
 
 	private TreeView findTreeInBox(Node box) {

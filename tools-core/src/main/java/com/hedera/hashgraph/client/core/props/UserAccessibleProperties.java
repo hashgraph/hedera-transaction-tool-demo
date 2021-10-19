@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.core.props;
 
 import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -34,10 +33,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HOURS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_MINUTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_NODE_ID;
@@ -441,6 +441,14 @@ public class UserAccessibleProperties {
 
 	public String getCurrentNetwork() {
 		return properties.getProperty(CURRENT_NETWORK, "MAINNET");
+	}
+
+	public String getDefaultFeePayer() {
+		return properties.getProperty(DEFAULT_FEE_PAYER, "");
+	}
+
+	public void setDefaultFeePayer(String feePayer) {
+		properties.setProperty(DEFAULT_FEE_PAYER, feePayer);
 	}
 
 	// endregion

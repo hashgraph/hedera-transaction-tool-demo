@@ -232,7 +232,6 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			addSignature = find("ADD SIGNATURE");
 		} while (addSignature == null);
 
-
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 		for (int i = 0; i < 7; i++) {

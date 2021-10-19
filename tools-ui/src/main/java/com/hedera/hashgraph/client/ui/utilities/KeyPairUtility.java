@@ -44,7 +44,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.ui.popups.PasswordBox.display;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.showErrorAlert;
 
 public class KeyPairUtility {
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
@@ -70,7 +69,8 @@ public class KeyPairUtility {
 		try {
 			keyPair = getKeyPair(pemFile, message);
 		} catch (Exception e) {
-			showErrorAlert("Not able to load private key. Error: " + e.getMessage());
+			PopupMessage.display("Error loading key", String.format("Unable to load private key: %s", e.getMessage()));
+			logger.error(e.getMessage());
 		}
 		return keyPair;
 	}

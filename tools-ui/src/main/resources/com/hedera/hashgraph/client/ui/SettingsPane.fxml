@@ -197,6 +197,7 @@
 						<rowConstraints>
 							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
 							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="30.0" prefHeight="30.0"/>
 							<RowConstraints minHeight="30.0"/>
 							<RowConstraints minHeight="30.0"/>
 							<RowConstraints minHeight="30.0"/>
@@ -230,7 +231,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="3">
 							<Label fx:id="txValidDurationLabel" text="Transaction Valid Duration:" wrapText="true"/>
 							<Button fx:id="validDurationTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
@@ -245,7 +246,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
+						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
 							<GridPane.margin>
 								<Insets right="10.0"/>
 							</GridPane.margin>
@@ -256,7 +257,7 @@
 							<Label fx:id="tvsErrorLabel" style="-fx-text-fill: red;"
 								   text="Must be a number between 1 and 180" visible="false" wrapText="true"/>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="6">
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="7">
 							<Label text="Generate Record" wrapText="true"/>
 							<Button fx:id="generateRecordTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
@@ -271,12 +272,12 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
+						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="7">
 							<ToggleSwitch fx:id="generateRecordSlider">
 							</ToggleSwitch>
 							<Label fx:id="generateRecordLabel" text="no"/>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="4">
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="5">
 							<Label text="Transactions Start Time:" wrapText="true"/>
 							<Button fx:id="startTimeTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
@@ -291,7 +292,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+						<HBox alignment="CENTER_LEFT" spacing="2.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
 
 							<TextField fx:id="hoursTextField" alignment="CENTER" minWidth="-Infinity" prefWidth="50.0"
 									   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00"/>
@@ -306,7 +307,7 @@
 							<Label fx:id="localTimeLabel" text="local time"/>
 
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="5">
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="6">
 							<Label text="Maximum Transaction Fee"/>
 							<Button fx:id="maxFeeTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
@@ -321,13 +322,13 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="5">
+						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
 							<TextField fx:id="defaultTransactionFee" focusTraversable="false" maxWidth="200.0"
 									   prefWidth="200.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
 							</TextField>
 							<Label text="ћ"/>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="3">
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="4">
 							<Label text="Auto Renew Period (new accounts)" wrapText="true"/>
 							<Button fx:id="autoRenewTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
@@ -342,7 +343,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
 							<TextField fx:id="autoRenewPeriodTextField" maxWidth="200.0" minWidth="200.0"
 									   prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
 							</TextField>
@@ -390,6 +391,24 @@
 								</graphic>
 							</Button>
 						</HBox>
+						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">
+							<Label text="Fee Payer"/>
+							<Button fx:id="feePayerTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
+									style="-fx-background-color: white; -fx-border-color: white;">
+								<graphic>
+									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
+											   preserveRatio="true">
+										<Image url="@../../../../../icons/helpIcon.png"/>
+									</ImageView>
+								</graphic>
+								<padding>
+									<Insets bottom="7.0"/>
+								</padding>
+							</Button>
+						</HBox>
+						<ComboBox fx:id="feePayerCombobox" prefWidth="200.0"
+								  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
+								  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 					</GridPane>
 				</VBox>
 				<VBox fx:id="aboutBox" layoutX="20.0" layoutY="305.0" spacing="10.0"
