@@ -406,7 +406,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<ComboBox fx:id="feePayerCombobox" prefWidth="200.0"
+						<ComboBox fx:id="feePayerCombobox" editable="true" prefWidth="200.0"
 								  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
 								  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 					</GridPane>

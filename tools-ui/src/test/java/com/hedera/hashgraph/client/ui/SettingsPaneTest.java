@@ -348,9 +348,6 @@ public class SettingsPaneTest extends TestBase {
 		settingsPanePage.openNetworksCombobox("PREVIEWNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
 		assertEquals("PREVIEWNET", properties.getCurrentNetwork());
-		settingsPanePage.openNetworksCombobox("MAINNET");
-		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
-		assertEquals("MAINNET", properties.getCurrentNetwork());
 	}
 
 	@Test

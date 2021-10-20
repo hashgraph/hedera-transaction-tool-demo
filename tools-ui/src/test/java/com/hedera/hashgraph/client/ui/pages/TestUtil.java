@@ -26,6 +26,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
@@ -132,6 +133,21 @@ public class TestUtil {
 		return null;
 	}
 
+
+	public static PasswordField findPasswordInPopup(ObservableList<Node> popupNodes) {
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof PasswordField) {
+				return (PasswordField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
+		}
+		return null;
+	}
 	public static ObservableList<Node> getPopupNodes() {
 		var actualAlertDialog = findModalWindow();
 		if (actualAlertDialog != null) {

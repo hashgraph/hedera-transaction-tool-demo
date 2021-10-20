@@ -18,7 +18,9 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -29,6 +31,7 @@ import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -41,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable.ED_25519;
 
 public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtility.class);
@@ -58,6 +62,11 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	public KeyStructureUtility(Controller controller) {
 		this.controller = controller;
 		loadPubKeys();
+	}
+
+	public KeyStructureUtility(Map<String, Path> pubFiles) {
+		this.pubFiles = pubFiles;
+		this.controller = null;
 	}
 
 	// region load pubKeys
@@ -127,7 +136,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 	private TreeItem<String> showKey(JsonObject keyJson) {
-		TreeItem<String> node = new TreeItem<>();
+		var node = new TreeItem<String>();
 		if (keyJson == null) {
 			return node;
 		}
@@ -143,12 +152,12 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 	private TreeItem<String> showSimpleKey(JsonObject keyJson) {
-
 		return (keyJson.has("Ed25519")) ?
 				showHexString(keyJson.get("Ed25519").getAsString()) :
 				new TreeItem<>("Load Error");
 
 	}
+
 
 	public TreeView<String> buildKeyTreeView(JsonObject keyJson) {
 		var keyTreeView = new TreeView<String>();
@@ -243,5 +252,58 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private boolean hasKeyList(JsonObject jsonObject) {
 		return jsonObject != null && jsonObject.has(KEY_LIST);
 	}
+
+
+	public String jsonKeyToPrettyString(JsonObject keyJson) {
+		var cleanKey = replaceAvailableHexfromKey(keyJson);
+		var gson = new GsonBuilder().setPrettyPrinting().create();
+		final var jsonString = gson.toJson(cleanKey);
+		return jsonString.replace("\"", "")
+				.replace(ED_25519 + ": ", "")
+				.replace(THRESHOLD_KEY + ": ", "")
+				.replace(KEY_LIST + ": ", "");
+	}
+
+	public JsonObject replaceAvailableHexfromKey(JsonObject keyJson) {
+		var cleanKey = new JsonObject();
+		if (keyJson.has(ED_25519)) {
+			cleanKey = handlePublicKey(keyJson);
+		}
+		if (keyJson.has(KEY_LIST)) {
+			cleanKey = handleKeyList(keyJson.getAsJsonArray(KEY_LIST));
+		}
+		if (keyJson.has(THRESHOLD_KEY)) {
+			cleanKey = handleThresholdKey(keyJson.getAsJsonObject(THRESHOLD_KEY));
+		}
+
+		return cleanKey;
+	}
+
+	private JsonObject handleThresholdKey(JsonObject thresholdJson) {
+		JsonObject cleanObject = new JsonObject();
+		cleanObject.addProperty(THRESHOLD, thresholdJson.get(THRESHOLD).getAsInt());
+		JsonObject cleanArray = handleKeyList(thresholdJson.get(KEY_LIST).getAsJsonArray());
+		cleanObject.add(KEY_LIST, cleanArray);
+		return cleanObject;
+	}
+
+	private JsonObject handleKeyList(JsonArray jsonArray) {
+		JsonObject object = new JsonObject();
+		JsonArray cleanArray = new JsonArray();
+		for (JsonElement element : jsonArray) {
+			cleanArray.add(replaceAvailableHexfromKey(element.getAsJsonObject()));
+		}
+		object.add(KEY_LIST, cleanArray);
+		return object;
+	}
+
+	private JsonObject handlePublicKey(JsonObject keyJson) {
+		JsonObject cleanKey = new JsonObject();
+		var ed = keyJson.get(ED_25519).getAsString();
+		var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
+		cleanKey.addProperty(ED_25519, value);
+		return cleanKey;
+	}
+
 
 }

@@ -45,9 +45,15 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	}
 
 	public Hbar getBalance() throws PrecheckStatusException, TimeoutException, HederaClientException {
-
-		try (Client client = NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) ? Client.forName(
-				network.toLowerCase(Locale.ROOT)) : getClient()) {
+		if (NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) &&
+				!NetworkEnum.INTEGRATION.getName().equals(network.toUpperCase(Locale.ROOT))) {
+			try (Client client = Client.forName(network.toLowerCase(Locale.ROOT))) {
+				return new AccountBalanceQuery().setAccountId(accountId)
+						.execute(client)
+						.hbars;
+			}
+		}
+		try (Client client = getClient()) {
 			return new AccountBalanceQuery().setAccountId(accountId)
 					.execute(client)
 					.hbars;
@@ -58,7 +64,6 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
 		return CommonMethods.getClient(customNetwork);
 	}
-
 
 	public static final class Builder {
 		private String network;

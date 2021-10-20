@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
@@ -71,8 +72,10 @@ import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWOR
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FOLDER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.GENERATE_RECORD_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NETWORKS_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NODE_ID_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.START_TIME_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.TRANSACTION_FEE_TOOLTIP_MESSAGE;
@@ -85,10 +88,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
-	private static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
-			"The period of time in which the account will renew in seconds.\n" +
-					"Min:7000000 seconds \n" +
-					"Max: 8000000 seconds";
 	private boolean noise = false;
 
 	public TextField loadStorageTextField;
@@ -208,7 +207,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox();
+			setupNetworkBox(networkCombobox);
 
 			setupTxValidDurationTextField();
 
@@ -222,7 +221,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
-			setupFeePayerCombobox();
+			setupFeePayerCombobox(feePayerCombobox);
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
@@ -248,6 +247,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
 					FOLDER_TOOLTIP_MESSAGES));
 
+			networkTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, networkTooltip,
+					NETWORKS_TOOLTIP_MESSAGES));
+
+			feePayerTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, feePayerTooltip,
+					FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
 		} catch (Exception e) {
@@ -256,7 +260,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerCombobox() {
+	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
 		List<String> accounts = new ArrayList<>();
 		for (Identifier feePayer : controller.getFeePayers()) {
 			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
@@ -266,8 +270,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		Collections.sort(accounts);
 		noise = true;
-		feePayerCombobox.getItems().clear();
-		feePayerCombobox.getItems().addAll(accounts);
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(accounts);
 		noise = false;
 
 		var feePayer = controller.getDefaultFeePayer();
@@ -275,26 +279,41 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			controller.setDefaultFeePayer(accounts.get(0));
 			feePayer = accounts.get(0);
 		}
-		feePayerCombobox.getSelectionModel().select(feePayer);
-		feePayerCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+		comboBox.getSelectionModel().select(feePayer);
+		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
 			if (!noise) {
 				controller.setDefaultFeePayer(t1);
 			}
 		});
+
+		comboBox.setOnKeyPressed(keyEvent -> {
+			final var code = keyEvent.getCode();
+			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
+				var text = comboBox.getEditor().getText();
+				try {
+					var id = Identifier.parse(text);
+					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+				} catch (Exception e) {
+					noise = true;
+					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+					noise = false;
+				}
+			}
+		});
 	}
 
-	private void setupNetworkBox() {
+	private void setupNetworkBox(ComboBox<Object> comboBox) {
 		noise = true;
-		networkCombobox.getItems().clear();
-		networkCombobox.getItems().addAll(controller.getDefaultNetworks());
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(controller.getDefaultNetworks());
 		var customNetworks = controller.getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			networkCombobox.getItems().add(new Separator());
-			networkCombobox.getItems().addAll(customNetworks);
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().addAll(customNetworks);
 		}
 		noise = false;
-		networkCombobox.getSelectionModel().select(controller.getCurrentNetwork());
-		networkCombobox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (!noise) {
 				if (t1 instanceof String) {
 					final var selectedNetwork = (String) t1;
@@ -303,7 +322,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
 				}
 				if (t1 instanceof Separator) {
-					networkCombobox.getSelectionModel().select(o);
+					comboBox.getSelectionModel().select(o);
 				}
 			}
 		});
@@ -430,7 +449,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		autoRenewTooltip.setOnAction(
 				actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
-						AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+						ToolTipMessages.AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+
+
 	}
 
 	private void setupTxValidDurationTextField() {
@@ -696,7 +717,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox();
+		setupNetworkBox(networkCombobox);
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -735,7 +756,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox();
+		setupNetworkBox(networkCombobox);
 	}
 
 

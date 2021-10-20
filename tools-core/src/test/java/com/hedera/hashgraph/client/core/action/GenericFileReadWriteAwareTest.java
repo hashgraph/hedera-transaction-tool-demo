@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.BooleanSupplier;
@@ -173,7 +175,7 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 	@Test
 	void exceptionTests() {
 
-		String expected1 = "Hedera Client Runtime: Unable to write input stream to empty destination: null";
+		String expected1 = "Hedera Client Runtime: Unable to write input stream to empty destination.";
 
 		byte[] contents = new byte[20];
 		new Random().nextBytes(contents);
@@ -190,7 +192,7 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 		Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> writeJsonObject(null, testJson));
 		assertEquals(expected1, exception2.getMessage());
 
-		String expected3 = "Hedera Client Runtime: Unable to write empty content object: null";
+		String expected3 = "Hedera Client Runtime: Unable to write empty content object.";
 		Exception exception3 = assertThrows(HederaClientRuntimeException.class,
 				() -> writeBytes(RESOURCES_DIRECTORY + "emptyBytes.txt", null));
 		assertEquals(expected3, exception3.getMessage());
@@ -300,5 +302,39 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 			assertEquals(new HashSet<>(testMap.get(key)), value);
 		}
 		csvFile.deleteOnExit();
+	}
+
+	@Test
+	void testZipFiles() throws IOException, HederaClientException {
+		// Prepare test files
+		final var tempFiles = new File("src/test/resources/temp");
+		if (tempFiles.mkdirs()) {
+			logger.info("Temp folder created");
+		}
+		File[] files = new File("src/test/resources/AccountInfos").listFiles();
+		assert files != null;
+		for (File file : files) {
+			FileUtils.copyFile(file, new File("src/test/resources/temp", file.getName()));
+		}
+
+		File[] toPack = tempFiles.listFiles();
+
+		var packed = zipFiles(toPack, "src/test/resources/temp.zip");
+		assertTrue(packed.exists());
+		unZip("src/test/resources/temp.zip", "src/test/resources/newTemp");
+		final var newTemp = new File("src/test/resources/newTemp").listFiles();
+		assert newTemp != null;
+		assertEquals(files.length, Objects.requireNonNull(newTemp).length);
+
+		var packed2 = zipFiles(newTemp, "src/test/resources/temp.zip");
+		assertTrue(packed2.exists());
+		assertEquals("temp.zip", packed2.getName());
+		assertTrue(new File("src/test/resources/temp.zip").exists());
+		assertTrue(new File("src/test/resources/temp_0.zip").exists());
+
+		Files.deleteIfExists(Path.of("src/test/resources/temp.zip"));
+		Files.deleteIfExists(Path.of("src/test/resources/temp_0.zip"));
+		FileUtils.deleteDirectory(new File("src/test/resources/temp"));
+		FileUtils.deleteDirectory(new File("src/test/resources/newTemp"));
 	}
 }
