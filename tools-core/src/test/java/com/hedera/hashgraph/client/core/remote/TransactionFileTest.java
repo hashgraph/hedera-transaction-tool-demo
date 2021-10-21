@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -54,6 +55,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -82,7 +84,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var files = new File("src/test/resources/PublicKeys").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(PUB_EXTENSION));
 		assert files != null;
-		for (File file : files) {
+		for (var file : files) {
 			final var destFile = new File(DEFAULT_KEYS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -94,7 +96,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var accounts = new File("src/test/resources/AccountInfos").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
 		assert accounts != null;
-		for (File file : accounts) {
+		for (var file : accounts) {
 			final var destFile = new File(DEFAULT_ACCOUNTS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -169,7 +171,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertEquals(100000000, transactionFile.getTransactionFee());
 		assertEquals(new Timestamp(1775282400, 0), transactionFile.getTransactionValidStart());
 
-		ToolTransaction transaction = transactionFile.getTransaction();
+		var transaction = transactionFile.getTransaction();
 		assertTrue(transaction instanceof ToolCryptoCreateTransaction);
 
 		assertEquals(16, transactionFile.getSigningPublicKeys().size());
@@ -289,10 +291,18 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		var files = unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 		assert files != null;
 		assertEquals(1, files.length);
-		var updateTx = Transaction.fromBytes(readBytes(files[0]));
+		final var bytes = readBytes(files[0]);
+		var updateTx = Transaction.fromBytes(bytes);
 		assertTrue(updateTx instanceof TransferTransaction);
 		var sigs = updateTx.getSignatures();
-		assertEquals(1, sigs.entrySet().size());
+		assertEquals(0, sigs.entrySet().size());
+
+		var sigFiles = unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(SIGNATURE_EXTENSION));
+		assert sigFiles != null;
+		assertEquals(1, sigFiles.length);
+		var signaturePair = new SignaturePair(sigFiles[0].getAbsolutePath());
+		var pubKey = signaturePair.getPublicKey();
+//		assertTrue(pubKey.verify(bytes, signaturePair.getSignature()));
 	}
 
 	private void unzip(File zip) throws IOException {
