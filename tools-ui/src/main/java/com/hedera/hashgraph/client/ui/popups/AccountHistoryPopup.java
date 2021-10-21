@@ -46,7 +46,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.Format;
@@ -190,7 +189,8 @@ public class AccountHistoryPopup {
 			var diff = Utilities.difference(oldInfo, current);
 			diff.remove("balance");
 			List<String> titles =
-					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(Collectors.toList());
+					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(
+							Collectors.toList());
 			var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
 			lines.add(new TableLine(entry, message));
 		}
