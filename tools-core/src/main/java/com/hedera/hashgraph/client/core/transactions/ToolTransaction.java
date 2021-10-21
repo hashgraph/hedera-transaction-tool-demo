@@ -212,12 +212,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public byte[] sign(PrivateKey key) throws HederaClientRuntimeException {
-		var signedTransaction = transaction.sign(key);
-		if (signedTransaction.getSignatures().size() == 0) {
-			return new byte[64];
-		}
-		var entry = signedTransaction.getSignatures().entrySet().iterator().next();
-		return entry.getValue().get(key.getPublicKey());
+		return key.signTransaction(transaction);
 	}
 
 	@Override

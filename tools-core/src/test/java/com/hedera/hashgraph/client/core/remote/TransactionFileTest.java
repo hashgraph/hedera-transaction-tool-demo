@@ -30,6 +30,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
 import javafx.scene.control.Hyperlink;
@@ -48,6 +49,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyStoreException;
+import java.util.Objects;
 import java.util.zip.ZipInputStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
@@ -302,7 +304,8 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertEquals(1, sigFiles.length);
 		var signaturePair = new SignaturePair(sigFiles[0].getAbsolutePath());
 		var pubKey = signaturePair.getPublicKey();
-//		assertTrue(pubKey.verify(bytes, signaturePair.getSignature()));
+		var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
+		assertEquals(pubKey, privateKey.getPublicKey());
 	}
 
 	private void unzip(File zip) throws IOException {
