@@ -55,7 +55,7 @@ public class ToolFileUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + file.hashCode() + Arrays.hashCode(bytes);
+		return super.hashCode();
 	}
 
 	@Override

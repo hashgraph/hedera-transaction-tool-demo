@@ -162,6 +162,6 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + initialBalance.hashCode() + key.hashCode() + autoRenewDuration.hashCode();
+		return super.hashCode();
 	}
 }

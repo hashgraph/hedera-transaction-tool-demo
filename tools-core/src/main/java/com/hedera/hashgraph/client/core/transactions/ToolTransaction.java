@@ -441,7 +441,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		return Arrays.hashCode(transaction.toBytes());
 	}
 
 	@Override
