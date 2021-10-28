@@ -32,6 +32,7 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
@@ -177,7 +178,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 
-
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
 	private final Set<String> accountNickNames = new HashSet<>();
@@ -222,6 +222,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public VBox systemDeleteUndeleteVBox;
 	public VBox fileIDToUpdateVBox;
 	public VBox fileContentsUpdateVBox;
+	public VBox freezeVBox;
+	public VBox freezeFileVBox;
+
 
 	public HBox fromHBox;
 	public HBox toHBox;
@@ -231,6 +234,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public HBox updateCopyFromAccountHBox;
 	public HBox timeZoneHBox;
 	public HBox timeZoneSystemHBox;
+	public HBox freezeStartHBox;
+	public HBox freezeTimeZoneHBox;
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
@@ -259,6 +264,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public TextField nanosField;
 	public TextField transactionFee;
 	public TextField loadTransactionTextField;
+	public TextField freezeHourField;
+	public TextField freezeMinuteField;
+	public TextField freezeScondsField;
+	public TextField freezeNanosField;
+	public TextField freezeFileIDTextField;
+	public TextField freezeFileHashTextField;
 
 	public TableView<AccountAmountStrings> fromTransferTable;
 	public TableView<AccountAmountStrings> toTransferTable;
@@ -267,7 +278,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public DatePicker datePicker;
 	public DatePicker datePickerSystem;
-
+	public DatePicker freezeDatePicker;
 	// Labels
 	public Label totalTransferLabel;
 	public Label createCharsLeft;
@@ -314,6 +325,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public ChoiceBox<String> systemActionChoiceBox;
 	public ChoiceBox<String> systemTypeChoiceBox;
+	public ChoiceBox<String> freezeTypeChoiceBox;
 
 	public Hyperlink contentsLink;
 	protected static final int MEMO_LENGTH = 99;
@@ -373,6 +385,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		createChoiceHBox.setVisible(false);
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
+		freezeVBox.setVisible(false);
 	}
 
 	private void setupTransferFields() {
@@ -1134,6 +1147,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		contents = null;
 	}
 
+
+	private void cleanAllFreezeFields() {
+		//todo empty method
+	}
+
 	/**
 	 * Error check the form
 	 *
@@ -1311,6 +1329,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanAllTransferFields();
 		cleanAllSystemFields();
 		cleanAllFileUpdateContentsFields();
+		cleanAllFreezeFields();
 
 		commentsVBox.setVisible(true);
 		commonFieldsVBox.setVisible(true);
@@ -1343,11 +1362,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case FILE_UPDATE:
 				fileContentsUpdateVBox.setVisible(true);
 				break;
+			case FREEZE:
+				freezeVBox.setVisible(true);
+				break;
 			case UNKNOWN:
 			default:
 				logger.info("Not Implemented");
 		}
 	}
+
 
 	/**
 	 * When the user presses the <b>CREATE</b> button, all data in the form is collected into a json object
@@ -2303,6 +2326,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				selectTransactionType.setValue("Admin Modify Content");
 				loadSystemTransactionToForm((ToolSystemTransaction) transaction);
 				break;
+			case FREEZE:
+				selectTransactionType.setValue("Network Freeze and Update");
+				loadFreezeTransactionToForm((ToolFreezeTransaction) transaction);
+				break;
 			default:
 				PopupMessage.display("Unsupported transaction", "The transaction is not yet supported by the tool.");
 				break;
@@ -2430,6 +2457,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (Boolean.FALSE.equals(transaction.isFile())) {
 			systemTypeChoiceBox.getSelectionModel().select(1);
 		}
+	}
+
+	private void loadFreezeTransactionToForm(ToolFreezeTransaction transaction) {
+		//todo empty method
+		System.out.println("poop");
 	}
 
 	public void cleanForm() {

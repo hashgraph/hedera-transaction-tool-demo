@@ -49,6 +49,10 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_TY
 
 public class ToolFreezeTransaction extends ToolTransaction {
 	private static final Logger logger = LogManager.getLogger(ToolFreezeTransaction.class);
+	public static final String START_TIME_MUST_BE_SPECIFIED_ERROR_MESSAGE = "Start time must be specified";
+	public static final String START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE = "Start time cannot be in the past";
+	public static final String FILE_ID_MUST_BE_SPECIFIED_ERROR_MESSAGE = "File ID must be specified";
+	public static final String EMPTY_FILE_HASH_ERROR_MESSAGE = "Empty file hash";
 
 	private Instant startTime;
 	private FreezeType freezeType;
@@ -151,12 +155,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		FreezeTransaction transaction = new FreezeTransaction();
 		switch (freezeType) {
 			case FREEZE_ONLY:
-				if (startTime == null) {
-					throw new HederaClientRuntimeException("Start time must be specified");
-				}
-				if (startTime.isBefore(Instant.now())) {
-					throw new HederaClientRuntimeException("Start time cannot be in the past");
-				}
+				checkStartTime();
 				return transaction.setTransactionId(transactionId)
 						.setFreezeType(FreezeType.FREEZE_ONLY)
 						.setStartTime(startTime)
@@ -164,12 +163,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 						.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 						.freeze();
 			case PREPARE_UPGRADE:
-				if (fileID == null) {
-					throw new HederaClientRuntimeException("File ID must be specified");
-				}
-				if (fileHash.length == 0) {
-					throw new HederaClientRuntimeException("Empty file hash");
-				}
+				checkFile();
 				return transaction.setFreezeType(FreezeType.PREPARE_UPGRADE)
 						.setFileId(fileID.asFile())
 						.setFileHash(fileHash)
@@ -178,18 +172,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 						.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 						.freeze();
 			case FREEZE_UPGRADE:
-				if (startTime == null) {
-					throw new HederaClientRuntimeException("Start time must be specified");
-				}
-				if (startTime.isBefore(Instant.now())) {
-					throw new HederaClientRuntimeException("Start time cannot be in the past");
-				}
-				if (fileID == null) {
-					throw new HederaClientRuntimeException("File ID must be specified");
-				}
-				if (fileHash.length == 0) {
-					throw new HederaClientRuntimeException("Empty file hash");
-				}
+				checkFile();
+				checkStartTime();
 				return transaction.setFreezeType(FreezeType.FREEZE_UPGRADE)
 						.setFileId(fileID.asFile())
 						.setFileHash(fileHash)
@@ -207,18 +191,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 						.freeze();
 
 			case TELEMETRY_UPGRADE:
-				if (startTime == null) {
-					throw new HederaClientRuntimeException("Start time must be specified");
-				}
-				if (startTime.isBefore(Instant.now())) {
-					throw new HederaClientRuntimeException("Start time cannot be in the past");
-				}
-				if (fileID == null) {
-					throw new HederaClientRuntimeException("File ID must be specified");
-				}
-				if (fileHash.length == 0) {
-					throw new HederaClientRuntimeException("Empty file hash");
-				}
+				checkFile();
+				checkStartTime();
 				return transaction.setFreezeType(FreezeType.TELEMETRY_UPGRADE)
 						.setStartTime(startTime)
 						.setFileHash(fileHash)
@@ -227,10 +201,27 @@ public class ToolFreezeTransaction extends ToolTransaction {
 						.setMaxTransactionFee(transactionFee)
 						.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 						.freeze();
-
+			default:
+				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
+	}
 
-		return transaction;
+	private void checkStartTime() {
+		if (startTime == null) {
+			throw new HederaClientRuntimeException(START_TIME_MUST_BE_SPECIFIED_ERROR_MESSAGE);
+		}
+		if (startTime.isBefore(Instant.now())) {
+			throw new HederaClientRuntimeException(START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE);
+		}
+	}
+
+	private void checkFile() {
+		if (fileID == null) {
+			throw new HederaClientRuntimeException(FILE_ID_MUST_BE_SPECIFIED_ERROR_MESSAGE);
+		}
+		if (fileHash.length == 0) {
+			throw new HederaClientRuntimeException(EMPTY_FILE_HASH_ERROR_MESSAGE);
+		}
 	}
 
 	@Override
