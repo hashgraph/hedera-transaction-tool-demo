@@ -208,8 +208,8 @@
 							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
 						</padding>
 						<HBox alignment="CENTER_LEFT" spacing="5.0" GridPane.columnIndex="1">
-							<TextField fx:id="nodeIDTextField" focusTraversable="false" maxWidth="200.0"
-									   minWidth="200.0" prefWidth="200.0"
+							<TextField fx:id="nodeIDTextField" focusTraversable="false" maxWidth="300.0"
+									   minWidth="300.0" prefWidth="300.0"
 									   style="-fx-border-radius: 10; -fx-background-radius: 10;">
 							</TextField>
 							<Label fx:id="accountIDErrorLabel" style="-fx-text-fill: red;"
@@ -250,8 +250,8 @@
 							<GridPane.margin>
 								<Insets right="10.0"/>
 							</GridPane.margin>
-							<TextField fx:id="txValidDurationTextField" maxWidth="200.0" minWidth="200.0"
-									   prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
+							<TextField fx:id="txValidDurationTextField" maxWidth="300.0" minWidth="300.0"
+									   prefWidth="300.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
 							</TextField>
 							<Label minWidth="50.0" prefWidth="50.0" text="s"/>
 							<Label fx:id="tvsErrorLabel" style="-fx-text-fill: red;"
@@ -323,8 +323,8 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="6">
-							<TextField fx:id="defaultTransactionFee" focusTraversable="false" maxWidth="200.0"
-									   prefWidth="200.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
+							<TextField fx:id="defaultTransactionFee" focusTraversable="false" maxWidth="300.0"
+									   prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;">
 							</TextField>
 							<Label text="ћ"/>
 						</HBox>
@@ -344,8 +344,8 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
-							<TextField fx:id="autoRenewPeriodTextField" maxWidth="200.0" minWidth="200.0"
-									   prefWidth="200.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
+							<TextField fx:id="autoRenewPeriodTextField" maxWidth="300.0" minWidth="300.0"
+									   prefWidth="300.0" style="-fx-background-radius: 10; -fx-border-radius: 10;">
 							</TextField>
 							<Label minWidth="50.0" prefWidth="50.0" text="s"/>
 							<Label fx:id="arpErrorLabel" style="-fx-text-fill: red;"
@@ -368,7 +368,7 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-							<ComboBox fx:id="networkCombobox" prefWidth="200.0"
+							<ComboBox fx:id="networkCombobox" prefWidth="300.0"
 									  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"/>
 							<Button fx:id="addCustomNetworkButton" mnemonicParsing="false"
 									onAction="#addCustomNetworkAction"
@@ -406,7 +406,7 @@
 								</padding>
 							</Button>
 						</HBox>
-						<ComboBox fx:id="feePayerCombobox" editable="true" prefWidth="200.0"
+						<ComboBox fx:id="feePayerCombobox" editable="true" prefWidth="300.0"
 								  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
 								  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 					</GridPane>
