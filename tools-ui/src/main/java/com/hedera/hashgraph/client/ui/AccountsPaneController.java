@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -288,8 +289,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private Identifier getFeePayer() {
 		final var defaultFeePayer = controller.getDefaultFeePayer();
 		if (defaultFeePayer.equals("")) {
-			PopupMessage.display("Fee payer not set",
-					"The fee payer account has not been set. This can be done in the settings pane");
+			PopupMessage.display("Fee payer not set", ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE);
 			return null;
 		}
 		return Identifier.parse(defaultFeePayer);

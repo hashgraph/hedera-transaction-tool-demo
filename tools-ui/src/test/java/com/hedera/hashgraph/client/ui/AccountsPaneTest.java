@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
@@ -41,6 +42,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -78,6 +80,7 @@ import java.util.prefs.BackingStoreException;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertNull;
@@ -406,6 +409,33 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		accountsPanePage.pressPopupButton("CLOSE")
 				.pressPopupButton("CLOSE");
+	}
+
+	@Test
+	public void noFeePayerSelected_test() {
+		clickOn("Update accounts");
+		clickOn("#accountsToUpdateTextField");
+		write("12345");
+		clickOn("#selectAccountsButton");
+		var nodes1 = getPopupNodes();
+		assertNotNull(nodes1);
+		assertEquals(1, nodes1.size());
+		assertTrue(nodes1.get(0) instanceof VBox);
+		var children = ((VBox)nodes1.get(0)).getChildren();
+		assertTrue(children.get(0) instanceof Label);
+		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
+		clickOn("CONTINUE");
+
+		clickOn("#feePayerComboboxA");
+		write("5050");
+		type(KeyCode.ENTER);
+		clickOn("#selectAccountsButton");
+
+		var nodes2 = getPopupNodes();
+		assertEquals(2, nodes2.size());
+		assertTrue(((VBox) nodes2.get(0)).getChildren().get(0) instanceof GridPane);
+		clickOn(findButtonInPopup(nodes2, "CANCEL"));
+		clickOn(findButtonInPopup(getPopupNodes(), "CONTINUE"));
 	}
 
 	@After
