@@ -148,7 +148,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public HBox phraseHBox;
 
-
 	public Button btnCreateKeys;
 	public Button btnImportKeys;
 	public Button btnRegenerateKeys;
@@ -158,7 +157,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public Button recoverKeysButton;
 	public Button cancelRecoverKeyButton;
 	public Button copyMnemonicToClipboard;
-
 	public Button cancelEditMnemonicButton;
 
 	public TextField nicknameTextBox;
@@ -168,6 +166,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public Label dummy;
 	public Label nicknameErrorLabel;
 	public Label phrasePasswordErrorLabel;
+
 	public Button publicKeyToolTip;
 	public Button linkedPrivateToolTip;
 	public Button unlinkedPrivateToolTip;
@@ -485,27 +484,27 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		var index = getIndex(value);
-		final var mnemonic = currentHashCode != null && currentHashCode.equals(hashAsString(value));
+		final var mnemonicBoolean = currentHashCode != null && currentHashCode.equals(hashAsString(value));
 		keysTableRows.add(
 				new KeysTableRow(FilenameUtils.removeExtension(key), "Missing public key", index, true,
-						mnemonic));
+						mnemonicBoolean));
 	}
 
 	private void addKeyToTableRowsList(List<KeysTableRow> keysTableRows, String key) throws KeyStoreException {
 		final var pemLocation = publicKeysMap.get(key).replace(PUB_EXTENSION, PK_EXTENSION);
 		// if pemLocation points to a pem file and it exists
 		var signer = false;
-		var mnemonic = false;
+		var mnemonicBoolean = false;
 		var index = "public key";
 		if (new File(pemLocation).exists() && isPEMFile(new File(pemLocation).toPath())) {
 			index = getIndex(pemLocation);
-			mnemonic = currentHashCode != null && currentHashCode.equals(hashAsString(pemLocation));
+			mnemonicBoolean = currentHashCode != null && currentHashCode.equals(hashAsString(pemLocation));
 			signer = true;
 		}
 
 		keysTableRows.add(
 				new KeysTableRow(FilenameUtils.removeExtension(key), keysAccountsMap.get(key),
-						index, signer, mnemonic));
+						index, signer, mnemonicBoolean));
 	}
 
 	private String hashAsString(String pemLocation) throws KeyStoreException {
