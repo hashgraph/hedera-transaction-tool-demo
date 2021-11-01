@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.core.queries.BalanceQuery;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
@@ -154,7 +155,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException {
+	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException,
+			PrecheckStatusException, TimeoutException {
 		final var nickname = testAccountId.toString();
 		var oldBalance = accountsPanePage.getBalance(nickname);
 
@@ -167,6 +169,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		TestUtil.transfer(new AccountId(2L), testAccountId, Hbar.fromTinybars(123));
 		accountsPanePage.expandRow(nickname)
 				.requestNewBalance(nickname);
+
+		mainWindowPage.clickOnSettingsButton().clickOnAccountsButton();
 
 		var finalBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance.toTinybars() + 123L, finalBalance.toTinybars());
