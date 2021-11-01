@@ -405,7 +405,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertEquals(1, table.getItems().size());
 		doubleClickOn("No difference");
 		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
-		assertEquals(8, tableFromPopup.getItems().size());
+		assertEquals(9, tableFromPopup.getItems().size());
 
 		accountsPanePage.pressPopupButton("CLOSE")
 				.pressPopupButton("CLOSE");

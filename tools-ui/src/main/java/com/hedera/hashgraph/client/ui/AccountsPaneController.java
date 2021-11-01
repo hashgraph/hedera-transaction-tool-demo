@@ -929,25 +929,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 			refreshButton.setOnAction(actionEvent -> {
-				var identifier = new Identifier(info.accountId);
-				var balance = refreshBalance(identifier);
-				logger.info("Balance of account {} has been updated to {}", identifier.toReadableString(), balance);
-				// if table is preferred comment the next 4 lines
-				var jsonElement = balances.get(identifier.toReadableString());
-				dateLabel.setText(format("Balance (as of %s)", instantToLocalTimeDate(
-						new Date(jsonElement.getAsJsonObject().get(DATE_PROPERTY).getAsLong()).toInstant())));
-				final var newBalance =
-						Hbar.fromTinybars(jsonElement.getAsJsonObject().get(BALANCE_PROPERTY).getAsLong());
-				balanceTextField.setText(newBalance.toString());
-
-				/*
-			 	if the box is preferred uncomment this block
-			 	*/
 				parameter.toggleExpanded();
-				updateOneAccountLineInformation(identifier, newBalance);
-
-				logger.info("Balance for account {} updated to {}", parameter.getValue().getAccount().asAccount(),
-						newBalance);
+				updateBalances(Collections.singletonList(lineInformation));
 			});
 
 
@@ -964,7 +947,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			gridPane.add(link, 3, 0);
 
 			returnBox.getChildren().add(gridPane);
-
 
 			allBoxes.setPrefHeight(Region.USE_COMPUTED_SIZE);
 			allBoxes.setPrefWidth(Region.USE_COMPUTED_SIZE);
