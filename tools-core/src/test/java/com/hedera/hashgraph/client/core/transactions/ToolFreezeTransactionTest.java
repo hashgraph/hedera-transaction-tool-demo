@@ -105,7 +105,7 @@ class ToolFreezeTransactionTest {
 	void buildExceptionsPart2_test() {
 		JsonObject testJson = getBasicJsonObject();
 
-		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
+		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		Exception exception0 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time must be specified", exception0.getMessage());
@@ -115,6 +115,7 @@ class ToolFreezeTransactionTest {
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time cannot be in the past", exception1.getMessage());
 
+		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().plusSeconds(100)).asJSON());
 		testJson.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 123).asJSON());
 		Exception exception2 =
@@ -128,8 +129,8 @@ class ToolFreezeTransactionTest {
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "TELEMETRY_UPGRADE");
 		testJson.remove(FREEZE_START_TIME_FIELD_NAME);
-		testJson.remove(FREEZE_FILE_ID_FIELD_NAME);
-		testJson.remove(FREEZE_FILE_HASH_FIELD_NAME);
+		testJson.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
+
 		Exception exception4 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time must be specified", exception4.getMessage());
@@ -141,6 +142,7 @@ class ToolFreezeTransactionTest {
 
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().plusSeconds(100)).asJSON());
 		testJson.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 123).asJSON());
+		testJson.remove(FREEZE_FILE_HASH_FIELD_NAME);
 		Exception exception6 =
 				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception6.getMessage());

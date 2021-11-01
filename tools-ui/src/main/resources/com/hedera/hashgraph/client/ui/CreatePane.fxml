@@ -145,7 +145,7 @@
 								   GridPane.columnIndex="1"/>
 					</GridPane>
 				</HBox>
-				<VBox fx:id="commonFieldsVBox" spacing="20.0">
+				<VBox fx:id="commonFieldsVBox" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
 						<Insets left="15.0" right="15.0" top="15.0"/>
 					</padding>
@@ -535,7 +535,7 @@
 						</HBox>
 					</VBox>
 				</VBox>
-				<VBox fx:id="freezeVBox" spacing="20.0">
+				<VBox fx:id="freezeVBox" spacing="20.0" style="-fx-background-color: white;">
 					<ChoiceBox fx:id="freezeTypeChoiceBox" minWidth="250.0"
 							   style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
 							   GridPane.columnIndex="1"/>

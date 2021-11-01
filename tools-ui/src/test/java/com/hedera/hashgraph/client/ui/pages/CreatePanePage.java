@@ -473,8 +473,10 @@ public class CreatePanePage {
 		datePickerFormat.setTimeZone(TimeZone.getDefault());
 		var localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
+
 		driver.ensureVisible(driver.find(datePicker));
-		driver.clickOn(datePicker);
+		driver.doubleClickOn(datePicker);
+		driver.doubleClickOn(datePicker);
 		driver.write(datePickerFormat.format(date));
 		driver.type(KeyCode.ENTER);
 

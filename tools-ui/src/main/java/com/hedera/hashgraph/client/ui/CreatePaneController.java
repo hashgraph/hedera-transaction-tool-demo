@@ -353,9 +353,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setupManagedProperty(commentsVBox, commonFieldsVBox, createAccountVBox, updateAccountVBox, transferCurrencyVBox,
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
-				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, contentsTextField, contentsLink,
-				fileContentsUpdateVBox, fileIDToUpdateVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey,
-				resetFormButton);
+				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
+				contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox, shaLabel,
+				contentsFilePathError, invalidUpdateNewKey, resetFormButton);
 
 		setupTransferFields();
 
