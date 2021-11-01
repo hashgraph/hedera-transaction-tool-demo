@@ -214,6 +214,12 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		accountsPanePage.selectAllCheckBoxes()
 				.requestSelectedBalances();
 
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
 		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
@@ -225,13 +231,9 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-		while (true) {
-			if (TestUtil.getPopupNodes() == null) {
-				break;
-			}
-		}
 
-		assertEquals(2, counter);
+
+		assertEquals(3, counter);
 	}
 
 	@Test
