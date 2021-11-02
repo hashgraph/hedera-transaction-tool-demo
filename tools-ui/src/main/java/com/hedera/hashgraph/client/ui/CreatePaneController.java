@@ -45,6 +45,7 @@ import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -85,6 +86,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.ToggleSwitch;
@@ -106,9 +108,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
@@ -177,6 +181,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
+	private final TimeZone freezeTimeZone = TimeZone.getDefault();
 
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
@@ -224,7 +229,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public VBox fileContentsUpdateVBox;
 	public VBox freezeVBox;
 	public VBox freezeFileVBox;
-
+	public VBox freezeStartVBox;
+	public VBox freezeChoiceVBox;
 
 	public HBox fromHBox;
 	public HBox toHBox;
@@ -234,7 +240,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public HBox updateCopyFromAccountHBox;
 	public HBox timeZoneHBox;
 	public HBox timeZoneSystemHBox;
-	public HBox freezeStartHBox;
 	public HBox freezeTimeZoneHBox;
 
 	public TextArea memoField;
@@ -266,7 +271,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public TextField loadTransactionTextField;
 	public TextField freezeHourField;
 	public TextField freezeMinuteField;
-	public TextField freezeScondsField;
+	public TextField freezeSecondsField;
 	public TextField freezeNanosField;
 	public TextField freezeFileIDTextField;
 	public TextField freezeFileHashTextField;
@@ -292,6 +297,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label systemCreateLocalTimeLabel;
 	public Label shaLabel;
 	public Label invalidTransactionFee;
+	public Label freezeUTCTimeLabel;
+	public Label freezeTimeErrorLabel;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -330,6 +337,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Hyperlink contentsLink;
 	protected static final int MEMO_LENGTH = 99;
 	private boolean fromFile = false;
+	private boolean noise = false;
 
 
 	// endregion
@@ -354,8 +362,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupManagedProperty(commentsVBox, commonFieldsVBox, createAccountVBox, updateAccountVBox, transferCurrencyVBox,
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
-				contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox, shaLabel,
-				contentsFilePathError, invalidUpdateNewKey, resetFormButton);
+				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
+				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
+				freezeUTCTimeLabel, freezeTimeErrorLabel);
 
 		setupTransferFields();
 
@@ -366,6 +375,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupSystemFields();
 
 		setupFileContentsFields();
+
+		setupFreezeFields();
 
 		setupTooltips();
 	}
@@ -593,6 +604,80 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
 
 		formatAccountTextField(entityID, invalidEntity, entityID.getParent());
+	}
+
+	private void setupFreezeFields() {
+		freezeChoiceVBox.setVisible(false);
+		freezeFileVBox.setVisible(false);
+		freezeStartVBox.setVisible(false);
+		noise = true;
+		var freezeValues = Arrays.asList(FreezeType.values());
+		List<String> freezeValuesAsStrings =
+				freezeValues.stream().map(
+						freezeValue -> StringUtils.capitalize(
+								(freezeValue.toString()).toLowerCase(Locale.ROOT).replace("_", " "))).collect(
+						Collectors.toList());
+		freezeValuesAsStrings.remove("Unknown freeze type");
+		freezeTypeChoiceBox.getItems().add("SELECT FREEZE TYPE");
+		freezeTypeChoiceBox.getItems().addAll(freezeValuesAsStrings);
+		freezeTypeChoiceBox.getSelectionModel().select("SELECT FREEZE TYPE");
+		noise = false;
+
+		freezeTypeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+			if (noise) {
+				return;
+			}
+			if ("SELECT FREEZE TYPE".equals(t1)) {
+				logger.info("Back to select");
+				cleanAllFreezeFields();
+				freezeFileVBox.setVisible(false);
+				freezeStartVBox.setVisible(false);
+				return;
+			}
+			FreezeType type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
+			switch (type) {
+				case FREEZE_ONLY:
+					// Freezes the network at the specified time. The start_time field must be provided and must
+					// reference a future time. Any values specified for the update_file and file_hash fields will
+					// be ignored. This transaction does not perform any network changes or upgrades and requires
+					// manual intervention to restart the network.
+					logger.info("Freeze only selected");
+					freezeFileVBox.setVisible(false);
+					freezeStartVBox.setVisible(true);
+					break;
+				case PREPARE_UPGRADE:
+					// A non-freezing operation that initiates network wide preparation in advance of a scheduled
+					// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
+					// start_time field may be omitted and any value present will be ignored.
+					logger.info("Prepare upgrade selected");
+					freezeFileVBox.setVisible(true);
+					freezeStartVBox.setVisible(false);
+					break;
+				case FREEZE_UPGRADE:
+					// Freezes the network at the specified time and performs the previously prepared automatic
+					// upgrade across the entire network.
+					logger.info("Freeze upgrade selected");
+					freezeFileVBox.setVisible(true);
+					freezeStartVBox.setVisible(true);
+					break;
+				case FREEZE_ABORT:
+					// Aborts a pending network freeze operation.
+					logger.info("Freeze abort selected");
+					freezeFileVBox.setVisible(false);
+					freezeStartVBox.setVisible(false);
+					break;
+				case TELEMETRY_UPGRADE:
+					// Performs an immediate upgrade on auxilary services and containers providing
+					// telemetry/metrics. Does not impact network operations.
+					logger.info("Telemetry upgrade selected");
+					freezeFileVBox.setVisible(true);
+					freezeStartVBox.setVisible(true);
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + type);
+			}
+		});
+
 	}
 
 	private void setupTooltips() {
@@ -1101,9 +1186,65 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return true;
 	}
 
+	private boolean checkFreezeFields() {
+		if (!checkAndFlagCommonFields()) {
+			return false;
+		}
+		final var choice = freezeTypeChoiceBox.getValue();
+		if (choice.equals("SELECT FREEZE TYPE")) {
+			return false;
+		}
+
+		var freezeType = FreezeType.valueOf(choice.toUpperCase(Locale.ROOT).replace(" ", "_"));
+
+		var validStart = true;
+		var validFile = true;
+		var validHash = true;
+		switch (freezeType) {
+			case FREEZE_ONLY:
+				validStart =
+						isDateValid(freezeHourField, freezeMinuteField, freezeSecondsField, datePicker,
+								ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
+				freezeTimeErrorLabel.setVisible(!validStart);
+				break;
+			case PREPARE_UPGRADE:
+				try {
+					var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
+					logger.info("Account {} parsed", file);
+				} catch (Exception e) {
+					validFile = false;
+				}
+				validHash = !"".equals(freezeFileHashTextField.getText());
+				break;
+			case FREEZE_UPGRADE:
+			case TELEMETRY_UPGRADE:
+				validStart =
+						isDateValid(freezeHourField, freezeMinuteField, freezeSecondsField, datePicker,
+								ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
+				freezeTimeErrorLabel.setVisible(!validStart);
+				try {
+					var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
+					logger.info("Account {} parsed", file);
+				} catch (Exception e) {
+					validFile = false;
+				}
+				validHash = !"".equals(freezeFileHashTextField.getText());
+			case FREEZE_ABORT:
+				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + freezeType);
+		}
+		return validStart && validFile && validHash;
+	}
+
 	private boolean checkAndFlagSystemFields() {
 		var flag = checkAndFlagCommonFields();
 		return flag && checkSystemFields();
+	}
+
+	private boolean checkAndFlagFreezeFields() {
+		var flag = checkAndFlagCommonFields();
+		return flag && checkFreezeFields();
 	}
 
 	private Pair<UserComments, ToolTransaction> createSystemTransactionAction() {
@@ -1125,6 +1266,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	}
 
+	private Pair<UserComments, ToolTransaction> createFreezeTransaction() {
+		if (!checkAndFlagFreezeFields()) {
+			return null;
+		}
+
+		var input = buildJsonInput();
+
+		try {
+			var tx = new ToolFreezeTransaction(input);
+			displayAndLogInformation("Freeze transaction created");
+			return getUserCommentsTransactionPair(tx);
+		} catch (HederaClientException e) {
+			controller.displaySystemMessage(e);
+			logger.error(e);
+			return null;
+		}
+
+	}
 
 	// endregion
 
@@ -1149,7 +1308,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 
 	private void cleanAllFreezeFields() {
-		//todo empty method
+		cleanCommonFields();
+		freezeTypeChoiceBox.getSelectionModel().select("SELECT FREEZE TYPE");
+		freezeDatePicker.setValue(null);
+		freezeHourField.setText("00");
+		freezeMinuteField.setText("00");
+		freezeSecondsField.setText("00");
+		freezeNanosField.setText("00000000");
+		freezeFileIDTextField.clear();
+		freezeFileHashTextField.clear();
 	}
 
 	/**
@@ -1363,6 +1530,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				fileContentsUpdateVBox.setVisible(true);
 				break;
 			case FREEZE:
+				freezeChoiceVBox.setVisible(true);
 				freezeVBox.setVisible(true);
 				break;
 			case UNKNOWN:
@@ -1746,6 +1914,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case SYSTEM:
 				pair = createSystemTransactionAction();
 				break;
+			case FREEZE:
+				pair = createFreezeTransaction();
+				break;
 			case FILE_UPDATE:
 			default:
 				logger.error("Cannot recognize transaction type");
@@ -1764,6 +1935,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				timeZone);
 		setupTimeZoneChooser(timeZoneSystem, timeZoneSystemHBox, datePickerSystem, hourFieldSystem,
 				minuteFieldSystem, secondsFieldSystem, systemCreateLocalTimeLabel);
+		configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField, freezeUTCTimeLabel,
+				LocalDateTime.now(), freezeTimeZone);
 
 		// endregion
 		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
@@ -2461,6 +2634,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadFreezeTransactionToForm(ToolFreezeTransaction transaction) {
 		//todo empty method
+		cleanAllFreezeFields();
+		freezeTypeChoiceBox.setValue(transaction.getFreezeType().toString());
+
+
 		System.out.println("poop");
 	}
 
