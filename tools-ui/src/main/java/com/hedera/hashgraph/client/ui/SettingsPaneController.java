@@ -37,6 +37,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -142,7 +143,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox<Object> networkCombobox;
+	public ChoiceBox<Object> networkCombobox;
 	public ComboBox<String> feePayerCombobox;
 
 
@@ -312,7 +313,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private void setupNetworkBox(ComboBox<Object> comboBox) {
+	private void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(controller.getDefaultNetworks());

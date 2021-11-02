@@ -47,7 +47,7 @@
 		<HBox alignment="TOP_RIGHT" spacing="20.0">
 			<Accordion style="-fx-background-color: transparent;">
 				<panes>
-					<TitledPane animated="false" text="Update accounts">
+					<TitledPane animated="false" text="Add accounts">
 						<GridPane hgap="5.0" style="-fx-background-color: white;" vgap="5.0">
 							<columnConstraints>
 								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
