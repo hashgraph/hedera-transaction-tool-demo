@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -45,6 +46,7 @@ import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -63,6 +65,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -135,6 +138,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.ACCOUNTS_FOLDER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.UNKNOWN_KEY_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.NICKNAME_IN_USE_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.ACCOUNTS_TO_QUERY_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NETWORKS_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.info2Json;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.getKeysFromInfo;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.instantToLocalTimeDate;
@@ -172,7 +178,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public TextField accountsToUpdateTextField;
 	public Button selectAccountsButton;
 	public ComboBox<String> feePayerComboboxA;
-	public ComboBox<Object> networkComboboxA;
+	public ChoiceBox<Object> networkChoiceBoxA;
 	public Button accountsTooltip;
 	public Button networkTooltipA;
 	public Button feePayerTooltipA;
@@ -222,7 +228,14 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		selectAccountsButton.setOnAction(event -> {
 			try {
-				final var feePayer = getFeePayer();
+				var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
+				var feePayer =
+						feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
+								feePayerCombobox);
+
+				if (feePayer == null) {
+					return;
+				}
 				final var keyFiles = getKeyFiles(feePayer);
 				if (keyFiles.isEmpty()) {
 					PopupMessage.display("Error",
@@ -242,19 +255,32 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		});
 
 		setupFeePayers();
-		setupNetworkBox(networkComboboxA);
+		setupNetworkBox(networkChoiceBoxA);
 		setupFeePayerCombobox(feePayerComboboxA);
+		setupTooltips();
 
+	}
+
+	private void setupTooltips() {
+		accountsTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, accountsTooltip,
+				ACCOUNTS_TO_QUERY_TOOLTIP_MESSAGE));
+		feePayerTooltipA.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, feePayerTooltipA,
+				FEE_PAYER_TOOLTIP_MESSAGES));
+		networkTooltipA.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, networkTooltipA,
+				NETWORKS_TOOLTIP_MESSAGES));
 	}
 
 	private Set<File> getKeyFiles(Identifier feePayer) throws HederaClientException, InvalidProtocolBufferException {
 		var accountInfo = new File(ACCOUNTS_INFO_FOLDER, feePayer.toReadableString() + "." + INFO_EXTENSION);
+		Set<File> returnSet = new HashSet<>();
 		if (accountInfo.exists()) {
 			var fullKey = AccountInfo.fromBytes(readBytes(accountInfo.getAbsolutePath())).key;
-			return getPrivateKeysFrom(fullKey);
+			returnSet.addAll(getPrivateKeysFrom(fullKey));
 		}
-
-		return new HashSet<>(ExtraKeysSelectorPopup.display(new HashSet<>()));
+		if (returnSet.isEmpty()) {
+			return new HashSet<>(ExtraKeysSelectorPopup.display(new HashSet<>()));
+		}
+		return returnSet;
 	}
 
 	private String getNetwork() {
@@ -262,7 +288,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private Identifier getFeePayer() {
-		return Identifier.parse(controller.getDefaultFeePayer());
+		final var defaultFeePayer = controller.getDefaultFeePayer();
+		if (defaultFeePayer.equals("")) {
+			PopupMessage.display("Fee payer not set", ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE);
+			return null;
+		}
+		return Identifier.parse(defaultFeePayer);
 	}
 
 	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
@@ -899,25 +930,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 			refreshButton.setOnAction(actionEvent -> {
-				var identifier = new Identifier(info.accountId);
-				var balance = refreshBalance(identifier);
-				logger.info("Balance of account {} has been updated to {}", identifier.toReadableString(), balance);
-				// if table is preferred comment the next 4 lines
-				var jsonElement = balances.get(identifier.toReadableString());
-				dateLabel.setText(format("Balance (as of %s)", instantToLocalTimeDate(
-						new Date(jsonElement.getAsJsonObject().get(DATE_PROPERTY).getAsLong()).toInstant())));
-				final var newBalance =
-						Hbar.fromTinybars(jsonElement.getAsJsonObject().get(BALANCE_PROPERTY).getAsLong());
-				balanceTextField.setText(newBalance.toString());
-
-				/*
-			 	if the box is preferred uncomment this block
-			 	*/
 				parameter.toggleExpanded();
-				updateOneAccountLineInformation(identifier, newBalance);
-
-				logger.info("Balance for account {} updated to {}", parameter.getValue().getAccount().asAccount(),
-						newBalance);
+				updateBalances(Collections.singletonList(lineInformation));
 			});
 
 
@@ -934,7 +948,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			gridPane.add(link, 3, 0);
 
 			returnBox.getChildren().add(gridPane);
-
 
 			allBoxes.setPrefHeight(Region.USE_COMPUTED_SIZE);
 			allBoxes.setPrefWidth(Region.USE_COMPUTED_SIZE);
@@ -1559,7 +1572,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		try {
-			final var feePayer = Identifier.parse(controller.getDefaultFeePayer());
+			final var feePayer = getFeePayer();
+			if (feePayer == null) {
+				return;
+			}
 			final var keyFiles = getKeyFiles(feePayer);
 			if (keyFiles.isEmpty()) {
 				PopupMessage.display("Error",
@@ -1636,25 +1652,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
-		List<String> accounts = new ArrayList<>();
-		for (var feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
-		}
-		if (accounts.isEmpty()) {
-			return;
-		}
-		Collections.sort(accounts);
-		noise = true;
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(accounts);
-		noise = false;
-
-		var feePayer = controller.getDefaultFeePayer();
-		if ("".equals(feePayer)) {
-			controller.setDefaultFeePayer(accounts.get(0));
-			feePayer = accounts.get(0);
-		}
-		comboBox.getSelectionModel().select(feePayer);
 		comboBox.setOnKeyPressed(keyEvent -> {
 			final var code = keyEvent.getCode();
 			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
@@ -1669,9 +1666,36 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		});
+
+		List<String> accounts = new ArrayList<>();
+		for (var feePayer : controller.getFeePayers()) {
+			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+		if (!accounts.contains(controller.getDefaultFeePayer()) && !"".equals(controller.getDefaultFeePayer())) {
+			accounts.add(controller.getDefaultFeePayer());
+		}
+		if (accounts.isEmpty()) {
+			return;
+		}
+		addNamesToCombobox(comboBox, accounts);
+
+		var feePayer = controller.getDefaultFeePayer();
+		if ("".equals(feePayer) && !accounts.isEmpty()) {
+			controller.setDefaultFeePayer(accounts.get(0));
+			feePayer = accounts.get(0);
+		}
+		comboBox.getSelectionModel().select(feePayer);
 	}
 
-	private void setupNetworkBox(ComboBox<Object> comboBox) {
+	private void addNamesToCombobox(ComboBox<String> comboBox, List<String> accounts) {
+		Collections.sort(accounts);
+		noise = true;
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(accounts);
+		noise = false;
+	}
+
+	private void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(controller.getDefaultNetworks());
@@ -1684,4 +1708,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
 	}
 
+	public void setDefaultFeePayer(String id) {
+		addNamesToCombobox(feePayerComboboxA, Collections.singletonList(id));
+		noise = true;
+		feePayerComboboxA.getSelectionModel().select(id);
+		noise = false;
+	}
 }

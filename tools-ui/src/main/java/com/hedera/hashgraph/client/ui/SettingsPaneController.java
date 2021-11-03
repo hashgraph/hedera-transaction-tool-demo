@@ -37,6 +37,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -142,7 +143,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox<Object> networkCombobox;
+	public ChoiceBox<Object> networkChoicebox;
 	public ComboBox<String> feePayerCombobox;
 
 
@@ -207,7 +208,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox(networkCombobox);
+			setupNetworkBox(networkChoicebox);
 
 			setupTxValidDurationTextField();
 
@@ -261,10 +262,34 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
+		comboBox.setOnKeyPressed(keyEvent -> {
+			final var code = keyEvent.getCode();
+			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
+				var text = comboBox.getEditor().getText();
+				try {
+					var id = Identifier.parse(text);
+					final var feePayer = id.toNicknameAndChecksum(controller.getAccountsList());
+					comboBox.getEditor().setText(feePayer);
+					controller.setDefaultFeePayer(feePayer);
+					controller.accountsPaneController.setDefaultFeePayer(feePayer);
+				} catch (Exception e) {
+					noise = true;
+					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+					noise = false;
+				}
+			}
+		});
+
+		var feePayer = controller.getDefaultFeePayer();
+
 		List<String> accounts = new ArrayList<>();
-		for (Identifier feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		for (Identifier payer : controller.getFeePayers()) {
+			accounts.add(payer.toNicknameAndChecksum(controller.getAccountsList()));
 		}
+		if (!accounts.contains(feePayer) && !"".equals(feePayer)) {
+			accounts.add(feePayer);
+		}
+
 		if (accounts.isEmpty()) {
 			return;
 		}
@@ -274,7 +299,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		comboBox.getItems().addAll(accounts);
 		noise = false;
 
-		var feePayer = controller.getDefaultFeePayer();
 		if ("".equals(feePayer)) {
 			controller.setDefaultFeePayer(accounts.get(0));
 			feePayer = accounts.get(0);
@@ -286,23 +310,10 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		comboBox.setOnKeyPressed(keyEvent -> {
-			final var code = keyEvent.getCode();
-			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
-				var text = comboBox.getEditor().getText();
-				try {
-					var id = Identifier.parse(text);
-					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-				} catch (Exception e) {
-					noise = true;
-					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
-					noise = false;
-				}
-			}
-		});
+
 	}
 
-	private void setupNetworkBox(ComboBox<Object> comboBox) {
+	private void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(controller.getDefaultNetworks());
@@ -717,7 +728,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -756,7 +767,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
 	}
 
 

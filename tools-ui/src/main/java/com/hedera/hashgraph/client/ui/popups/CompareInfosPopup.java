@@ -168,9 +168,19 @@ public class CompareInfosPopup {
 	private static void parse(JsonObject current, JsonObject old) throws HederaClientException {
 		Set<String> combined = Stream.concat(current.keySet().stream(), old.keySet().stream())
 				.collect(Collectors.toSet());
+		combined.add("memo");
 		for (String s : combined) {
 			String oldBox = getString(old, s);
 			String currentBox = getString(current, s);
+			// memo should always be present
+			if ("memo".equals(s)) {
+				if ("".equals(oldBox)) {
+					oldBox = "No account memo set.";
+				}
+				if ("".equals(currentBox)) {
+					currentBox = "No account memo set.";
+				}
+			}
 
 			if (!"".equals(currentBox) || !"".equals(oldBox)) {
 				lines.add(new TableLine(s, currentBox, oldBox));
