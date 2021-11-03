@@ -65,6 +65,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -177,7 +178,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public TextField accountsToUpdateTextField;
 	public Button selectAccountsButton;
 	public ComboBox<String> feePayerComboboxA;
-	public ComboBox<Object> networkComboboxA;
+	public ChoiceBox<Object> networkChoiceBoxA;
 	public Button accountsTooltip;
 	public Button networkTooltipA;
 	public Button feePayerTooltipA;
@@ -254,7 +255,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		});
 
 		setupFeePayers();
-		setupNetworkBox(networkComboboxA);
+		setupNetworkBox(networkChoiceBoxA);
 		setupFeePayerCombobox(feePayerComboboxA);
 		setupTooltips();
 
@@ -1694,7 +1695,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		noise = false;
 	}
 
-	private void setupNetworkBox(ComboBox<Object> comboBox) {
+	private void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(controller.getDefaultNetworks());

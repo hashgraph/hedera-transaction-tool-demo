@@ -143,7 +143,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ChoiceBox<Object> networkCombobox;
+	public ChoiceBox<Object> networkChoicebox;
 	public ComboBox<String> feePayerCombobox;
 
 
@@ -208,7 +208,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox(networkCombobox);
+			setupNetworkBox(networkChoicebox);
 
 			setupTxValidDurationTextField();
 
@@ -728,7 +728,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -767,7 +767,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
 	}
 
 

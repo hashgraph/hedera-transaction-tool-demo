@@ -166,7 +166,7 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage openNetworksCombobox(String network) {
-		driver.clickOn("#networkCombobox");
+		driver.clickOn("#networkChoicebox");
 		driver.clickOn(network);
 		return this;
 	}

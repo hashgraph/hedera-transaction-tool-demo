@@ -413,7 +413,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Test
 	public void noFeePayerSelected_test() {
-		clickOn("Update accounts");
+		clickOn("Add accounts");
 		clickOn("#accountsToUpdateTextField");
 		write("12345");
 		clickOn("#selectAccountsButton");

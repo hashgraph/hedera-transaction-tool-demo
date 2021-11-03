@@ -369,7 +369,7 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
-							<ChoiceBox fx:id="networkCombobox" prefWidth="300.0"
+							<ChoiceBox fx:id="networkChoicebox" prefWidth="300.0"
 									   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"/>
 							<Button fx:id="addCustomNetworkButton" mnemonicParsing="false"
 									onAction="#addCustomNetworkAction"
