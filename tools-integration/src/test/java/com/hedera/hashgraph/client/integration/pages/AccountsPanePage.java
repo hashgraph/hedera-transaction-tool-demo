@@ -200,7 +200,7 @@ public class AccountsPanePage {
 	}
 
 	public AccountsPanePage openAccordion() {
-		driver.clickOn("Update accounts");
+		driver.clickOn("Add accounts");
 		return this;
 	}
 
