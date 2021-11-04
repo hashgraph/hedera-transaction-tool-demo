@@ -22,7 +22,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.integration.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.sdk.Hbar;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -135,7 +134,10 @@ public class AccountsPanePage {
 
 		var columns = table.getColumns();
 		var graphic = columns.get(1).getGraphic();
-		driver.clickOn(graphic);
+		assertTrue(graphic instanceof CheckBox);
+		if (!((CheckBox) graphic).isSelected()) {
+			driver.clickOn(graphic);
+		}
 		return this;
 	}
 

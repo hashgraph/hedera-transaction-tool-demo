@@ -231,8 +231,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-
-
 		assertEquals(3, counter);
 	}
 

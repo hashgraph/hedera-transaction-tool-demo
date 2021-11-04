@@ -274,7 +274,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					controller.accountsPaneController.setDefaultFeePayer(feePayer);
 				} catch (Exception e) {
 					noise = true;
-					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+					comboBox.getSelectionModel().select(controller.getDefaultFeePayer());
 					noise = false;
 				}
 			}
