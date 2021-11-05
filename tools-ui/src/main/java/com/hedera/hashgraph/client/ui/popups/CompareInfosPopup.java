@@ -97,16 +97,19 @@ public class CompareInfosPopup {
 		TableColumn<TableLine, String> keyColumn = new TableColumn<>("Info Field");
 		keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
 		keyColumn.prefWidthProperty().bind(tableView.widthProperty().divide(40).multiply(7));
+		keyColumn.setSortable(false);
 
 		TableColumn<TableLine, String> currentColumn = new TableColumn<>("Current");
 		currentColumn.setCellValueFactory(new PropertyValueFactory<>("current"));
 		currentColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		currentColumn.setCellFactory(tv -> getCell());
+		currentColumn.setSortable(false);
 
 		TableColumn<TableLine, String> oldColumn = new TableColumn<>("Old");
 		oldColumn.setCellValueFactory(new PropertyValueFactory<>("old"));
 		oldColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		oldColumn.setCellFactory(tv -> getCell());
+		oldColumn.setSortable(false);
 
 		tableView.setRowFactory(tableLineTableView -> getTableRow(diff));
 

@@ -1931,6 +1931,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if ("".equals(account)) {
 			return;
 		}
+		if (account.contains("(")){
+			account = account.substring(account.lastIndexOf("(")+1, account.lastIndexOf(")"));
+		}
 		if (!Utilities.isNotLong(account)) {
 			account = "0.0." + account;
 		}

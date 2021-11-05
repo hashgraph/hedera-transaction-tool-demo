@@ -1,0 +1,91 @@
+{
+  "accountID": {
+    "accountNum": "2"
+  },
+  "contractAccountID": "0000000000000000000000000000000000000002",
+  "proxyAccountID": {},
+  "key": {
+    "keyList": {
+      "keys": [
+        {
+          "thresholdKey": {
+            "threshold": 2,
+            "keys": {
+              "keys": [
+                {
+                  "thresholdKey": {
+                    "threshold": 1,
+                    "keys": {
+                      "keys": [
+                        {
+                          "ed25519": "NTZuB/QCS39lKb9CCjjVWujcnKH+WnNMk2B3AVGJwYM\u003d"
+                        },
+                        {
+                          "ed25519": "R8K7tom7neGZEGGzoVPgC/IplgklCT0Fal5pzSwA988\u003d"
+                        },
+                        {
+                          "ed25519": "++Bu9Ov7+rBVC4aqFNIcOz+X28pBmDwkpjWvjT0HIQA\u003d"
+                        },
+                        {
+                          "ed25519": "9lqho47KFdn77mCkVFJhzFRwtrcXSY0TRdYzJF/c9kU\u003d"
+                        },
+                        {
+                          "ed25519": "+Rgl8Wge5wUKYDjZ0d8+0Gqvo5imzPya7zZQmAEr85I\u003d"
+                        },
+                        {
+                          "ed25519": "oyIqvEsI72IrSdfMRHNYaBC6S+eXpHrJqlO+VhWmNLs\u003d"
+                        },
+                        {
+                          "ed25519": "GK+TgozV9anb7XC8h1CjXgdE5jN3YdfvpgmLEVO7DLQ\u003d"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "thresholdKey": {
+                    "threshold": 3,
+                    "keys": {
+                      "keys": [
+                        {
+                          "ed25519": "3aQH04UuNYZVSzXE0KoY/000zrCa0NGeMf+PA5g1/2U\u003d"
+                        },
+                        {
+                          "ed25519": "g4hcxrdxLWVH1aC5TTYj6E1dOr4IY5rmBqfet4o7jG8\u003d"
+                        },
+                        {
+                          "ed25519": "p3OzzHnGeJcmpxzYsNBtYw3Ax7Ihyf3AxFD/6tCCNBk\u003d"
+                        },
+                        {
+                          "ed25519": "3dVYRMT/1IL23gyi32vounmcvw6wEi16tQ6qVsk4Bc0\u003d"
+                        },
+                        {
+                          "ed25519": "NRedz7pAVrQkuHgI8yuE08oONM4jGiso1okuYDbdnEo\u003d"
+                        },
+                        {
+                          "ed25519": "rv+T9rYnacfAJZDuNHOZe9RGGhNCiYfmDghbu73LBj4\u003d"
+                        },
+                        {
+                          "ed25519": "cHacsrhRn0FEtb39ClWtBQpGmeQUM+QWPZz3G9FobUY\u003d"
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "balance": "4647987890404547520",
+  "generateSendRecordThreshold": "5000000000000000000",
+  "generateReceiveRecordThreshold": "5000000000000000000",
+  "expirationTime": {
+    "seconds": "31556889864403199"
+  },
+  "autoRenewPeriod": {
+    "seconds": "17775"
+  }
+}

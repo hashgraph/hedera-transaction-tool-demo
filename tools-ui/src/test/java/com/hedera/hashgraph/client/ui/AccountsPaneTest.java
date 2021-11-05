@@ -30,6 +30,7 @@ import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -344,12 +345,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
 
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
-
-		accountsPanePage.dontReplaceAccount();
-		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		accountsPanePage.replaceAccount();
 		assertTrue(checkBalance(ZERO_TWO, "46 479 878 904.04 547 520"));
+
 	}
 
 	@Test
@@ -388,8 +385,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.closeNicknamePopup()
 				.selectRow(ZERO_TWO)
 				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD)
-				.pressPopupButton("Replace");
+				.enterPasswordInPopup(TEST_PASSWORD);
 
 		File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(new FilenameFilter() {
 			@Override
@@ -403,7 +399,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(1, table.getItems().size());
-		doubleClickOn("No difference");
+		var line = (AccountHistoryPopup.TableLine)table.getItems().get(0);
+		doubleClickOn(line.getDate());
 		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(9, tableFromPopup.getItems().size());
 
@@ -425,17 +422,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(children.get(0) instanceof Label);
 		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
 		clickOn("CONTINUE");
-
-		clickOn("#feePayerComboboxA");
-		write("5050");
-		type(KeyCode.ENTER);
-		clickOn("#selectAccountsButton");
-
-		var nodes2 = getPopupNodes();
-		assertEquals(2, nodes2.size());
-		assertTrue(((VBox) nodes2.get(0)).getChildren().get(0) instanceof GridPane);
-		clickOn(findButtonInPopup(nodes2, "CANCEL"));
-		clickOn(findButtonInPopup(getPopupNodes(), "CONTINUE"));
 	}
 
 	@After

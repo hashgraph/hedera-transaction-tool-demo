@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.core.queries.BalanceQuery;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
@@ -122,14 +121,11 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		if (input.mkdirs()) {
 			logger.info("Input directory created");
 		}
-
 		createAccounts();
-
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
 		setupUI();
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		mainWindowPage.clickOnAccountsButton();
-
 	}
 
 	@After
@@ -231,8 +227,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-
-
 		assertEquals(3, counter);
 	}
 
@@ -247,8 +241,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		accountsPanePage.selectRow("treasury")
 				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD)
-				.pressPopupButton("Replace");
+				.enterPasswordInPopup(TEST_PASSWORD);
 
 		var newBalance = accountsPanePage.getBalance("treasury");
 		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
@@ -268,7 +261,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var newAccounts = accountsPanePage.getAccounts().size();
 		assertEquals(accounts + 11, newAccounts);
 
-		accountsPanePage.enterAccounts("45-50, 61, 67")
+		accountsPanePage.openAccordion()
+				.enterAccounts("45-50, 61, 67")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.acceptAllNickNames();

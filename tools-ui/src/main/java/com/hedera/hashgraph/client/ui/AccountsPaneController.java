@@ -40,7 +40,6 @@ import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
-import com.hedera.hashgraph.client.ui.popups.ThreeButtonPopup;
 import com.hedera.hashgraph.client.ui.popups.TwoButtonPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
@@ -66,7 +65,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -76,6 +74,7 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -92,6 +91,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -119,7 +119,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -169,6 +168,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String ACCOUNT_PROPERTY = "account";
 	public static final String BALANCE_PROPERTY = "balance";
 	public static final String DATE_PROPERTY = "date";
+	public static final String TIMEOUR_ERROR_MESSAGE =
+			"The operation failed due to timeout. Please try again later or contact the network " +
+					"administrator.";
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -177,11 +179,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public Button importFolderButton;
 	public TextField accountsToUpdateTextField;
 	public Button selectAccountsButton;
-	public ComboBox<String> feePayerComboboxA;
+	public ChoiceBox<Object> feePayerComboboxA;
 	public ChoiceBox<Object> networkChoiceBoxA;
 	public Button accountsTooltip;
 	public Button networkTooltipA;
 	public Button feePayerTooltipA;
+
+	public TitledPane addAccountsTitledPane;
 
 	@FXML
 	private Controller controller;
@@ -226,39 +230,45 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		selectAccountsButton.setOnAction(event -> {
-			try {
-				var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
-				var feePayer =
-						feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
-								feePayerCombobox);
-
-				if (feePayer == null) {
-					return;
-				}
-				final var keyFiles = getKeyFiles(feePayer);
-				if (keyFiles.isEmpty()) {
-					PopupMessage.display("Error",
-							"At least one key must be selected in order to sign the transaction");
-					return;
-				}
-				final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
-				if (accounts.isEmpty()) {
-					PopupMessage.display("No accounts selected",
-							"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
-					return;
-				}
-				getInfosFromNetwork(accounts, feePayer, getNetwork(), keyFiles);
-			} catch (PrecheckStatusException | TimeoutException | HederaClientException | InvalidProtocolBufferException e) {
-				logger.error(e.getMessage());
-			}
-		});
+		selectAccountsButton.setOnAction(event -> selectAccountsButtonAction());
 
 		setupFeePayers();
 		setupNetworkBox(networkChoiceBoxA);
 		setupFeePayerCombobox(feePayerComboboxA);
 		setupTooltips();
 
+	}
+
+	private void selectAccountsButtonAction() {
+		try {
+			var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
+			var feePayer =
+					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
+							(String) feePayerCombobox);
+
+			if (feePayer == null) {
+				return;
+			}
+			final var keyFiles = getKeyFiles(feePayer);
+			if (keyFiles.isEmpty()) {
+				PopupMessage.display("Error",
+						"At least one key must be selected in order to sign the transaction");
+				return;
+			}
+			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
+			if (accounts.isEmpty()) {
+				PopupMessage.display("No accounts selected",
+						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
+				return;
+			}
+			if (!(networkChoiceBoxA.getValue() instanceof String)) {
+				return;
+			}
+			var network = (String) networkChoiceBoxA.getValue();
+			getInfosFromNetwork(accounts, feePayer, network, keyFiles);
+		} catch (HederaClientException | InvalidProtocolBufferException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	private void setupTooltips() {
@@ -297,7 +307,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
-			Set<File> privateKeysFiles) throws PrecheckStatusException, TimeoutException, HederaClientException {
+			Set<File> privateKeysFiles) {
 
 		var query = getAccountInfoQuery(feePayer, network, privateKeysFiles);
 
@@ -320,10 +330,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				importInfoFiles(newFiles);
 			}
 			accountsToUpdateTextField.clear();
+			if (addAccountsTitledPane.isExpanded()) {
+				addAccountsTitledPane.setExpanded(false);
+			}
 
-		} catch (Exception e) {
+		} catch (TimeoutException e) {
+			PopupMessage.display("Timeout error", TIMEOUR_ERROR_MESSAGE);
+			logger.error(e.getMessage());
+		} catch (PrecheckStatusException e) {
+			PopupMessage.display("Precheck Error", precheckErrorString(e));
+			logger.error(e.getMessage());
+		} catch (IOException | HederaClientException e) {
 			logger.error(e.getMessage());
 		}
+	}
+
+	@NotNull
+	private String precheckErrorString(PrecheckStatusException e) {
+		String message = e.getMessage();
+		var error = message.substring(message.indexOf("`") + 1);
+		error = "Request " + error.substring(error.indexOf("`") + 1);
+		return error;
 	}
 
 
@@ -772,6 +799,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	public void refresh(AccountLineInformation accountLineInformation) {
 		var accountID = accountLineInformation.getAccount().toReadableString();
+		if (controller.getDefaultFeePayer().equals(accountID)) {
+			controller.setDefaultFeePayer("");
+		}
 		var directory = controller.getPreferredStorageDirectory();
 		var oldInfoPath =
 				Paths.get(directory, ACCOUNTS, format(FORMAT_NAME_EXTENSION, accountID, INFO_EXTENSION));
@@ -1015,9 +1045,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			var now = new Date();
 			updateBalance(identifier, balance, now.getTime());
 		} catch (PrecheckStatusException e) {
+			PopupMessage.display("Precheck Error", precheckErrorString(e));
 			logger.error(e.getMessage());
 			balance = new Hbar(-1);
 		} catch (TimeoutException e) {
+			PopupMessage.display("Timeout error", TIMEOUR_ERROR_MESSAGE);
 			logger.error(e.getMessage());
 			balance = new Hbar(-2);
 		} catch (HederaClientException e) {
@@ -1287,34 +1319,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private int handleDuplicateFiles(List<File> duplicates) throws HederaClientException {
 		var counter = 0;
 		if (!duplicates.isEmpty()) {
-			var keepAsking = true;
-			var responseEnum = ResponseEnum.UNKNOWN;
 			for (var file : duplicates) {
-				if (keepAsking) {
-					responseEnum = ThreeButtonPopup.display(file,
-							"Account %s has already been imported.\nDo you want to replace the existing account " +
-									"information?",
-							false, duplicates.size() > 1);
-				}
-				switch (Objects.requireNonNull(responseEnum)) {
-					case IGNORE_ONCE:
-					case UNKNOWN:
-						break;
-					case IGNORE_ALWAYS:
-						keepAsking = false;
-						break;
-					case REPLACE_ONCE:
-						replaceInfo(file);
-						counter++;
-						break;
-					case REPLACE_ALWAYS:
-						replaceInfo(file);
-						counter++;
-						keepAsking = false;
-						break;
-					default:
-						throw new IllegalStateException("Unexpected value: " + Objects.requireNonNull(responseEnum));
-				}
+				replaceInfo(file);
+				counter++;
 			}
 		}
 		return counter;
@@ -1555,6 +1562,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		for (var lineInformation : accountLineInformation) {
 			if (lineInformation.isSelected()) {
 				list.add(lineInformation);
+				lineInformation.setSelected(false);
 			}
 		}
 		updateBalances(list);
@@ -1565,6 +1573,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		for (var lineInformation : accountLineInformation) {
 			if (lineInformation.isSelected()) {
 				list.add(lineInformation.getAccount().asAccount());
+				lineInformation.setSelected(false);
 			}
 		}
 		if (list.isEmpty()) {
@@ -1583,7 +1592,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				return;
 			}
 			getInfosFromNetwork(list, feePayer, getNetwork(), keyFiles);
-		} catch (PrecheckStatusException | TimeoutException | HederaClientException | InvalidProtocolBufferException e) {
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+		} catch (InvalidProtocolBufferException e) {
+			PopupMessage.display("Invalid Information", "Cannot parse the response from the network");
 			logger.error(e.getMessage());
 		}
 	}
@@ -1592,8 +1604,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		long size = list.size();
 		var progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
-		var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
-				"Please wait while the account balances are being updated.", size);
+		Stage window = null;
+		if (size > 4 || SetupPhase.TEST_PHASE.equals(controller.getSetupPhase())) {
+			window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
+					"Please wait while the account balances are being updated.", size);
+		}
 		Task<Void> task = new Task<>() {
 			@Override
 			protected Void call() {
@@ -1614,21 +1629,29 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		progressBar.progressProperty().bind(task.progressProperty());
 		new Thread(task).start();
 
+		Stage finalWindow = window;
 		task.setOnSucceeded(workerStateEvent -> {
 			try {
 				updateAccountLineInformation();
 			} catch (IOException | HederaClientException e) {
 				logger.error(e.getMessage());
 			}
-			window.close();
+			if (finalWindow != null) {
+				finalWindow.close();
+			}
 		});
+
 		task.setOnCancelled(workerStateEvent -> {
 			logger.info("Update balances cancelled");
-			window.close();
+			if (finalWindow != null) {
+				finalWindow.close();
+			}
 		});
 		task.setOnFailed(workerStateEvent -> {
 			logger.info("Update balances failed");
-			window.close();
+			if (finalWindow != null) {
+				finalWindow.close();
+			}
 		});
 	}
 
@@ -1651,47 +1674,43 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
+	private void setupFeePayerCombobox(ChoiceBox<Object> comboBox) {
 		comboBox.setOnKeyPressed(keyEvent -> {
 			final var code = keyEvent.getCode();
 			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
-				var text = comboBox.getEditor().getText();
-				try {
-					var id = Identifier.parse(text);
-					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-				} catch (Exception e) {
-					noise = true;
-					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
-					noise = false;
-				}
+				comboBox.getParent().requestFocus();
 			}
 		});
 
-		List<String> accounts = new ArrayList<>();
-		for (var feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
-		}
-		if (!accounts.contains(controller.getDefaultFeePayer()) && !"".equals(controller.getDefaultFeePayer())) {
-			accounts.add(controller.getDefaultFeePayer());
-		}
-		if (accounts.isEmpty()) {
+
+		final var accounts = controller.getFeePayers();
+		if (accounts.isEmpty() && "".equals(controller.getDefaultFeePayer())) {
 			return;
 		}
-		addNamesToCombobox(comboBox, accounts);
+		addNamesToCombobox(comboBox);
 
 		var feePayer = controller.getDefaultFeePayer();
 		if ("".equals(feePayer) && !accounts.isEmpty()) {
-			controller.setDefaultFeePayer(accounts.get(0));
-			feePayer = accounts.get(0);
+			feePayer = accounts.iterator().next().toNicknameAndChecksum(controller.getAccountsList());
+			controller.setDefaultFeePayer(feePayer);
 		}
 		comboBox.getSelectionModel().select(feePayer);
 	}
 
-	private void addNamesToCombobox(ComboBox<String> comboBox, List<String> accounts) {
+	private void addNamesToCombobox(ChoiceBox<Object> comboBox) {
+		List<String> accounts = new ArrayList<>();
+		for (var feePayer : controller.getFeePayers()) {
+			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+		}
 		Collections.sort(accounts);
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(accounts);
+		if (!accounts.contains(controller.getDefaultFeePayer()) && !"".equals(controller.getDefaultFeePayer())) {
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().add(controller.getDefaultFeePayer());
+		}
+		comboBox.setValue(controller.getDefaultFeePayer());
 		noise = false;
 	}
 
@@ -1708,10 +1727,4 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
 	}
 
-	public void setDefaultFeePayer(String id) {
-		addNamesToCombobox(feePayerComboboxA, Collections.singletonList(id));
-		noise = true;
-		feePayerComboboxA.getSelectionModel().select(id);
-		noise = false;
-	}
 }
