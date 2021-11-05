@@ -147,7 +147,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public TextField versionLabel;
 	public Button networkTooltip;
 	public ChoiceBox<Object> networkChoicebox;
-	public ChoiceBox feePayerChoicebox;
+	public ChoiceBox<Object> feePayerChoicebox;
 
 	@FXML
 	private Controller controller;
@@ -275,7 +275,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void addCustomFeePayer(Boolean t1) {
-		if (!t1) {
+		if (Boolean.FALSE.equals(t1)) {
 			try {
 				final var text = customFeePayerTextField.getText();
 				if ("".equals(text)) {
@@ -299,7 +299,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		customFeePayerTextField.setText("");
 	}
 
-	private void setupFeePayerChoicebox(ChoiceBox choiceBox) {
+	private void setupFeePayerChoicebox(ChoiceBox<Object> choiceBox) {
 		var feePayer = controller.getDefaultFeePayer();
 
 		List<String> accounts = new ArrayList<>();
@@ -804,7 +804,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	public void deleteFeePayerAction() {
 		final var feePayers = controller.getFeePayers();
-		if (feePayers.size() > 0) {
+		if (!feePayers.isEmpty()) {
 			final var choice = feePayers.iterator().next();
 			feePayerChoicebox.setValue(choice);
 			controller.setDefaultFeePayer(choice.toNicknameAndChecksum(controller.getAccountsList()));

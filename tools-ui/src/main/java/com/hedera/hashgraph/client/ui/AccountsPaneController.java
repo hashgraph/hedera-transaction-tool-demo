@@ -230,43 +230,45 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		selectAccountsButton.setOnAction(event -> {
-			try {
-				var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
-				var feePayer =
-						feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
-								(String) feePayerCombobox);
-
-				if (feePayer == null) {
-					return;
-				}
-				final var keyFiles = getKeyFiles(feePayer);
-				if (keyFiles.isEmpty()) {
-					PopupMessage.display("Error",
-							"At least one key must be selected in order to sign the transaction");
-					return;
-				}
-				final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
-				if (accounts.isEmpty()) {
-					PopupMessage.display("No accounts selected",
-							"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
-					return;
-				}
-				if (!(networkChoiceBoxA.getValue() instanceof String)) {
-					return;
-				}
-				var network = (String) networkChoiceBoxA.getValue();
-				getInfosFromNetwork(accounts, feePayer, network, keyFiles);
-			} catch (HederaClientException | InvalidProtocolBufferException e) {
-				logger.error(e.getMessage());
-			}
-		});
+		selectAccountsButton.setOnAction(event -> selectAccountsButtonAction());
 
 		setupFeePayers();
 		setupNetworkBox(networkChoiceBoxA);
 		setupFeePayerCombobox(feePayerComboboxA);
 		setupTooltips();
 
+	}
+
+	private void selectAccountsButtonAction() {
+		try {
+			var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
+			var feePayer =
+					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
+							(String) feePayerCombobox);
+
+			if (feePayer == null) {
+				return;
+			}
+			final var keyFiles = getKeyFiles(feePayer);
+			if (keyFiles.isEmpty()) {
+				PopupMessage.display("Error",
+						"At least one key must be selected in order to sign the transaction");
+				return;
+			}
+			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
+			if (accounts.isEmpty()) {
+				PopupMessage.display("No accounts selected",
+						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
+				return;
+			}
+			if (!(networkChoiceBoxA.getValue() instanceof String)) {
+				return;
+			}
+			var network = (String) networkChoiceBoxA.getValue();
+			getInfosFromNetwork(accounts, feePayer, network, keyFiles);
+		} catch (HederaClientException | InvalidProtocolBufferException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	private void setupTooltips() {
