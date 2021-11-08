@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.ui.TestBase;
+import com.hedera.hashgraph.client.ui.utilities.AutoCompleteTextField;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
@@ -72,6 +74,7 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.applyPath;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Boolean.parseBoolean;
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -401,9 +404,11 @@ public class KeysPanePage {
 
 	public KeysPanePage pressPopupButton(String legend) {
 		ObservableList<Node> nodes = getPopupNodes();
-		for (Node n : nodes) {
-			if (n instanceof Button && legend.equals(((Button) n).getText())) {
+		var buttons = getPopupButtons();
+		for (Button n : buttons) {
+			if (n != null && legend.equals(n.getText())) {
 				driver.clickOn(n);
+				break;
 			}
 		}
 		return this;
@@ -527,4 +532,34 @@ public class KeysPanePage {
 
 	}
 
+	public KeysPanePage pressHyperlinkPassword(String message) throws InterruptedException {
+		var links = TestUtil.findHyperlinksInPopup();
+		for (Hyperlink link : links) {
+			if (message.equalsIgnoreCase(link.getText())) {
+				driver.clickOn(link);
+				sleep(500);
+				break;
+			}
+		}
+		return this;
+	}
+
+	public KeysPanePage enteMnemonicInPopup(String mnemonic) {
+		var mnemonicArray = mnemonic.toLowerCase(Locale.ROOT).split(" ");
+		var grid = TestUtil.findGridpanesInPopup();
+		if (grid.size() == 1) {
+			var children = grid.get(0).getChildren();
+			if (children.size() != mnemonicArray.length) {
+				return this;
+			}
+			int counter = 0;
+			for (Node child : children) {
+				if (child instanceof AutoCompleteTextField) {
+					driver.clickOn(child);
+					driver.write(mnemonicArray[counter++]);
+				}
+			}
+		}
+		return this;
+	}
 }

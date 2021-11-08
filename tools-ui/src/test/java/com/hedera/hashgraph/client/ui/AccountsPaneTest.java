@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
@@ -29,6 +30,7 @@ import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -41,6 +43,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -78,6 +81,7 @@ import java.util.prefs.BackingStoreException;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertNull;
@@ -341,12 +345,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
 
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
-
-		accountsPanePage.dontReplaceAccount();
-		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		accountsPanePage.replaceAccount();
 		assertTrue(checkBalance(ZERO_TWO, "46 479 878 904.04 547 520"));
+
 	}
 
 	@Test
@@ -385,8 +385,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.closeNicknamePopup()
 				.selectRow(ZERO_TWO)
 				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD)
-				.pressPopupButton("Replace");
+				.enterPasswordInPopup(TEST_PASSWORD);
 
 		File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(new FilenameFilter() {
 			@Override
@@ -400,12 +399,29 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(1, table.getItems().size());
-		doubleClickOn("No difference");
+		var line = (AccountHistoryPopup.TableLine)table.getItems().get(0);
+		doubleClickOn(line.getDate());
 		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
-		assertEquals(8, tableFromPopup.getItems().size());
+		assertEquals(9, tableFromPopup.getItems().size());
 
 		accountsPanePage.pressPopupButton("CLOSE")
 				.pressPopupButton("CLOSE");
+	}
+
+	@Test
+	public void noFeePayerSelected_test() {
+		clickOn("Add accounts");
+		clickOn("#accountsToUpdateTextField");
+		write("12345");
+		clickOn("#selectAccountsButton");
+		var nodes1 = getPopupNodes();
+		assertNotNull(nodes1);
+		assertEquals(1, nodes1.size());
+		assertTrue(nodes1.get(0) instanceof VBox);
+		var children = ((VBox)nodes1.get(0)).getChildren();
+		assertTrue(children.get(0) instanceof Label);
+		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
+		clickOn("CONTINUE");
 	}
 
 	@After

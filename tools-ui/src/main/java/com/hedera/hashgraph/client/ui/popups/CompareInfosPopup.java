@@ -97,16 +97,19 @@ public class CompareInfosPopup {
 		TableColumn<TableLine, String> keyColumn = new TableColumn<>("Info Field");
 		keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
 		keyColumn.prefWidthProperty().bind(tableView.widthProperty().divide(40).multiply(7));
+		keyColumn.setSortable(false);
 
 		TableColumn<TableLine, String> currentColumn = new TableColumn<>("Current");
 		currentColumn.setCellValueFactory(new PropertyValueFactory<>("current"));
 		currentColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		currentColumn.setCellFactory(tv -> getCell());
+		currentColumn.setSortable(false);
 
 		TableColumn<TableLine, String> oldColumn = new TableColumn<>("Old");
 		oldColumn.setCellValueFactory(new PropertyValueFactory<>("old"));
 		oldColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		oldColumn.setCellFactory(tv -> getCell());
+		oldColumn.setSortable(false);
 
 		tableView.setRowFactory(tableLineTableView -> getTableRow(diff));
 
@@ -168,9 +171,19 @@ public class CompareInfosPopup {
 	private static void parse(JsonObject current, JsonObject old) throws HederaClientException {
 		Set<String> combined = Stream.concat(current.keySet().stream(), old.keySet().stream())
 				.collect(Collectors.toSet());
+		combined.add("memo");
 		for (String s : combined) {
 			String oldBox = getString(old, s);
 			String currentBox = getString(current, s);
+			// memo should always be present
+			if ("memo".equals(s)) {
+				if ("".equals(oldBox)) {
+					oldBox = "No account memo set.";
+				}
+				if ("".equals(currentBox)) {
+					currentBox = "No account memo set.";
+				}
+			}
 
 			if (!"".equals(currentBox) || !"".equals(oldBox)) {
 				lines.add(new TableLine(s, currentBox, oldBox));

@@ -121,14 +121,11 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		if (input.mkdirs()) {
 			logger.info("Input directory created");
 		}
-
 		createAccounts();
-
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
 		setupUI();
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		mainWindowPage.clickOnAccountsButton();
-
 	}
 
 	@After
@@ -154,7 +151,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException {
+	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException,
+			PrecheckStatusException, TimeoutException {
 		final var nickname = testAccountId.toString();
 		var oldBalance = accountsPanePage.getBalance(nickname);
 
@@ -167,6 +165,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		TestUtil.transfer(new AccountId(2L), testAccountId, Hbar.fromTinybars(123));
 		accountsPanePage.expandRow(nickname)
 				.requestNewBalance(nickname);
+
+		mainWindowPage.clickOnSettingsButton().clickOnAccountsButton();
 
 		var finalBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance.toTinybars() + 123L, finalBalance.toTinybars());
@@ -210,6 +210,12 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		accountsPanePage.selectAllCheckBoxes()
 				.requestSelectedBalances();
 
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
 		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
@@ -221,13 +227,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-		while (true) {
-			if (TestUtil.getPopupNodes() == null) {
-				break;
-			}
-		}
-
-		assertEquals(2, counter);
+		assertEquals(3, counter);
 	}
 
 	@Test
@@ -241,8 +241,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		accountsPanePage.selectRow("treasury")
 				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD)
-				.pressPopupButton("Replace");
+				.enterPasswordInPopup(TEST_PASSWORD);
 
 		var newBalance = accountsPanePage.getBalance("treasury");
 		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
@@ -262,7 +261,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var newAccounts = accountsPanePage.getAccounts().size();
 		assertEquals(accounts + 11, newAccounts);
 
-		accountsPanePage.enterAccounts("45-50, 61, 67")
+		accountsPanePage.openAccordion()
+				.enterAccounts("45-50, 61, 67")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.acceptAllNickNames();

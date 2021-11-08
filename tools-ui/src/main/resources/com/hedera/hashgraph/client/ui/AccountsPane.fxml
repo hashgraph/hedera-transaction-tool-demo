@@ -21,7 +21,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
@@ -36,9 +36,9 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<StackPane xmlns:fx="http://javafx.com/fxml/" fx:id="accountsPane" minHeight="400.0" minWidth="800.0"
-		   AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-		   AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/"
+<StackPane fx:id="accountsPane" minHeight="400.0" minWidth="800.0" AnchorPane.bottomAnchor="0.0"
+		   AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+		   xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/"
 		   fx:controller="com.hedera.hashgraph.client.ui.AccountsPaneController">
 	<VBox>
 		<StackPane.margin>
@@ -47,7 +47,7 @@
 		<HBox alignment="TOP_RIGHT" spacing="20.0">
 			<Accordion style="-fx-background-color: transparent;">
 				<panes>
-					<TitledPane animated="false" text="Update accounts">
+					<TitledPane fx:id="addAccountsTitledPane" animated="false" text="Add accounts">
 						<GridPane hgap="5.0" style="-fx-background-color: white;" vgap="5.0">
 							<columnConstraints>
 								<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
@@ -85,12 +85,12 @@
 									</Button>
 								</HBox>
 							</HBox>
-							<ComboBox fx:id="feePayerComboboxA" editable="true" prefWidth="300.0"
-									  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
-									  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-							<ComboBox fx:id="networkComboboxA" prefWidth="300.0"
-									  style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
-									  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+							<ChoiceBox fx:id="feePayerComboboxA" prefWidth="300.0"
+									   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
+									   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+							<ChoiceBox fx:id="networkChoiceBoxA" prefWidth="300.0"
+									   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
+									   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
 							<TextField fx:id="accountsToUpdateTextField" prefHeight="25.0" prefWidth="300.0"
 									   style="-fx-background-radius: 10; -fx-border-radius: 10;"
 									   GridPane.columnIndex="1"/>
