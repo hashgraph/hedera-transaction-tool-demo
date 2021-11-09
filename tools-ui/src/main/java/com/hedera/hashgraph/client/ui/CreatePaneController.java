@@ -188,6 +188,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public static final String REMAINING_TIME_MESSAGE =
 			"The transaction will expire in %d seconds. This might not be enough time to sign, " +
 					"collate, and submit it";
+	public static final String NINE_ZEROS = "000000000";
+	public static final String FREEZE_AND_UPGRADE = "Freeze and upgrade";
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
@@ -565,7 +567,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupSystemFields() {
 		setupTimeZoneChooser(timeZoneSystem, timeZoneSystemHBox, datePickerSystem, hourFieldSystem,
-				minuteFieldSystem, secondsFieldSystem, new TextField("000000000"), systemCreateLocalTimeLabel);
+				minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS), systemCreateLocalTimeLabel);
 		systemSlidersHBox.visibleProperty().bind(systemDeleteUndeleteVBox.visibleProperty());
 		systemTypeChoiceBox.getItems().clear();
 		systemTypeChoiceBox.getItems().addAll("File", "Smart Contract");
@@ -602,7 +604,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 						var start = LocalDateTime.of(datePicker.getValue(), localTime);
 						configureDateTime(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-								new TextField("000000000"),
+								new TextField(NINE_ZEROS),
 								systemCreateLocalTimeLabel, start, timeZoneSystem);
 						configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
 								freezeNanosField,
@@ -636,7 +638,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 							var name = StringUtils.capitalize(
 									freezeValue.toString().toLowerCase(Locale.ROOT).replace("_", " "));
 							if (name.equals("Freeze upgrade")) {
-								name = "Freeze and upgrade";
+								name = FREEZE_AND_UPGRADE;
 							}
 							return name;
 						}).collect(Collectors.toList());
@@ -660,7 +662,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				freezeStartVBox.setVisible(false);
 				return;
 			}
-			if ("Freeze and upgrade".equals(t1)) {
+			if (FREEZE_AND_UPGRADE.equals(t1)) {
 				t1 = "freeze upgrade";
 			}
 			FreezeType type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
@@ -1216,7 +1218,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		if (systemActionChoiceBox.getSelectionModel().getSelectedItem().contains("Remove")) {
 			var validExpiration =
-					isDateValid(hourFieldSystem, minuteFieldSystem, secondsFieldSystem, new TextField("000000000"),
+					isDateValid(hourFieldSystem, minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS),
 							datePickerSystem, ZoneId.of(timeZoneSystem.getID()), timeZoneSystemHBox);
 			invalidExpirationDate.setVisible(!validExpiration);
 			return validExpiration;
@@ -1234,7 +1236,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 
-		var freezeType = "Freeze and upgrade".equals(choice) ?
+		var freezeType = FREEZE_AND_UPGRADE.equals(choice) ?
 				FreezeType.FREEZE_UPGRADE :
 				FreezeType.valueOf(choice.toUpperCase(Locale.ROOT).replace(" ", "_"));
 
@@ -1358,7 +1360,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		freezeHourField.setText("00");
 		freezeMinuteField.setText("00");
 		freezeSecondsField.setText("00");
-		freezeNanosField.setText("000000000");
+		freezeNanosField.setText(NINE_ZEROS);
 		freezeFileIDTextField.clear();
 		freezeFileHashTextField.clear();
 	}
@@ -1597,6 +1599,146 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						Integer.parseInt(nanosField.getText()));
 
 		// Common elements
+		addCommonElements(input, transactionValidStart);
+
+		// Crypto create account fields
+		addCryptoCreateElements(input);
+
+		// Crypto update account fields
+		addCryptoUpdateElements(input);
+
+		// Transfer fields
+		addCryptoTransferElements(input);
+
+		// System delete/un-delete fields
+		addSystemElements(input);
+
+		// Freeze fields
+		if (addFreezeNetworkFields(input)) {
+			return null;
+		}
+		return input;
+
+	}
+
+	private boolean addFreezeNetworkFields(JsonObject input) {
+		final var freezeChoiceValue = FREEZE_AND_UPGRADE.equals(freezeTypeChoiceBox.getValue()) ?
+				"freeze upgrade" :
+				freezeTypeChoiceBox.getValue();
+
+		final var freezeType = freezeChoiceValue.toUpperCase(Locale.ROOT).replace(" ", "_");
+
+		if (!"select freeze type".equalsIgnoreCase(freezeChoiceValue)) {
+			input.addProperty(FREEZE_TYPE_FIELD_NAME, freezeType);
+
+			switch (FreezeType.valueOf(freezeType)) {
+				case UNKNOWN_FREEZE_TYPE:
+					logger.error("Unrecognized freeze type");
+					return true;
+				case FREEZE_ONLY:
+					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
+							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
+									ZoneId.of(freezeTimeZone.getID())).asRFCString());
+					break;
+				case PREPARE_UPGRADE:
+					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
+					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
+					break;
+				case FREEZE_UPGRADE:
+				case TELEMETRY_UPGRADE:
+					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
+					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
+					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
+							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
+									ZoneId.of(freezeTimeZone.getID())).asRFCString());
+					break;
+				case FREEZE_ABORT:
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + FreezeType.valueOf(freezeType));
+			}
+
+		}
+		return false;
+	}
+
+	private void addSystemElements(JsonObject input) {
+		// Entity ID
+		if (!"".equals(entityID.getText())) {
+			input.add(ENTITY_TO_DEL_UNDEL, Identifier.parse(entityID.getText()).asJSON());
+		}
+
+		// File/Contract
+		input.addProperty(FILE_CONTRACT_SWITCH, systemTypeChoiceBox.getValue());
+
+		// Delete/Un-delete
+		input.addProperty(DEL_UNDEL_SWITCH, systemActionChoiceBox.getValue());
+
+		// Expiration time
+		if (datePickerSystem != null) {
+			input.addProperty(EXPIRATION_DATE_TIME,
+					getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
+							ZoneId.of(timeZoneSystem.getID())).asRFCString());
+		}
+	}
+
+	private void addCryptoTransferElements(JsonObject input) {
+		//Get transfers from tables
+		if (!fromTransferTable.getItems().isEmpty() && !toTransferTable.getItems().isEmpty()) {
+			List<AccountAmountStrings> transfers = new ArrayList<>();
+			for (var a : fromTransferTable.getItems()) {
+				transfers.add(a.negate());
+			}
+			transfers.addAll(toTransferTable.getItems());
+			var jsonArray = new JsonArray();
+			for (var a : transfers) {
+				var accountAmountPair = new JsonObject();
+				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
+				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
+				jsonArray.add(accountAmountPair);
+			}
+			input.add(TRANSFERS, jsonArray);
+		}
+	}
+
+	private void addCryptoUpdateElements(JsonObject input) {
+		// Account ID
+		if (!"".equals(updateAccountID.getText())) {
+			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
+		}
+
+		// Auto renew
+		if (!"".equals(updateAutoRenew.getText())) {
+			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(updateAutoRenew.getText()));
+		}
+
+		// Receiver Sig Required
+		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, updateReceiverSignatureRequired.isSelected());
+	}
+
+	private void addCryptoCreateElements(JsonObject input) {
+		// Balance
+		if (!"".equals(createInitialBalance.getText())) {
+			var balanceJson = new JsonObject();
+			balanceJson.addProperty(H_BARS, 0);
+			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
+			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
+		}
+		// Auto renew
+		if (!"".equals(createAutoRenew.getText())) {
+			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(createAutoRenew.getText()));
+		}
+
+		// Key
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0) {
+			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
+		}
+
+		// Receiver Sig Required
+		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
+	}
+
+	private void addCommonElements(JsonObject input, Timestamp transactionValidStart) {
 		// Transaction valid start
 		input.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
 
@@ -1624,119 +1766,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Network
 		input.addProperty(NETWORK_FIELD_NAME, controller.getCurrentNetwork());
-
-		// Crypto create account fields
-		// Balance
-		if (!"".equals(createInitialBalance.getText())) {
-			var balanceJson = new JsonObject();
-			balanceJson.addProperty(H_BARS, 0);
-			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
-			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
-		}
-		// Auto renew
-		if (!"".equals(createAutoRenew.getText())) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(createAutoRenew.getText()));
-		}
-
-		// Key
-		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0) {
-			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
-		}
-
-		// Receiver Sig Required
-		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
-
-		// Crypto update account fields
-		// Account ID
-		if (!"".equals(updateAccountID.getText())) {
-			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
-		}
-
-		// Auto renew
-		if (!"".equals(updateAutoRenew.getText())) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(updateAutoRenew.getText()));
-		}
-
-		// Receiver Sig Required
-		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, updateReceiverSignatureRequired.isSelected());
-
-		// Transfer fields
-		//Get transfers from tables
-		if (!fromTransferTable.getItems().isEmpty() && !toTransferTable.getItems().isEmpty()) {
-			List<AccountAmountStrings> transfers = new ArrayList<>();
-			for (var a : fromTransferTable.getItems()) {
-				transfers.add(a.negate());
-			}
-			transfers.addAll(toTransferTable.getItems());
-			var jsonArray = new JsonArray();
-			for (var a : transfers) {
-				var accountAmountPair = new JsonObject();
-				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
-				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
-				jsonArray.add(accountAmountPair);
-			}
-			input.add(TRANSFERS, jsonArray);
-		}
-
-		// System delete/un-delete fields
-		// Entity ID
-		if (!"".equals(entityID.getText())) {
-			input.add(ENTITY_TO_DEL_UNDEL, Identifier.parse(entityID.getText()).asJSON());
-		}
-
-		// File/Contract
-		input.addProperty(FILE_CONTRACT_SWITCH, systemTypeChoiceBox.getValue());
-
-		// Delete/Un-delete
-		input.addProperty(DEL_UNDEL_SWITCH, systemActionChoiceBox.getValue());
-
-		// Expiration time
-		if (datePickerSystem != null) {
-			input.addProperty(EXPIRATION_DATE_TIME,
-					getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-							ZoneId.of(timeZoneSystem.getID())).asRFCString());
-		}
-
-		// Freeze fields
-		final var freezeChoiceValue = "Freeze and upgrade".equals(freezeTypeChoiceBox.getValue()) ?
-				"freeze upgrade" :
-				freezeTypeChoiceBox.getValue();
-
-		final var freezeType = freezeChoiceValue.toUpperCase(Locale.ROOT).replace(" ", "_");
-
-		if (!"select freeze type".equalsIgnoreCase(freezeChoiceValue)) {
-			input.addProperty(FREEZE_TYPE_FIELD_NAME, freezeType);
-
-			switch (FreezeType.valueOf(freezeType)) {
-				case UNKNOWN_FREEZE_TYPE:
-					logger.error("Unrecognized freeze type");
-					return null;
-				case FREEZE_ONLY:
-					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
-							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-									ZoneId.of(freezeTimeZone.getID())).asRFCString());
-					break;
-				case PREPARE_UPGRADE:
-					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
-					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
-					break;
-				case FREEZE_UPGRADE:
-				case TELEMETRY_UPGRADE:
-					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
-					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
-					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
-							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-									ZoneId.of(freezeTimeZone.getID())).asRFCString());
-					break;
-				case FREEZE_ABORT:
-					break;
-				default:
-					throw new IllegalStateException("Unexpected value: " + FreezeType.valueOf(freezeType));
-			}
-
-		}
-		return input;
-
 	}
 
 	/**
@@ -2400,7 +2429,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		hourField.setText(String.format("%02d", controller.getDefaultHours()));
 		minuteField.setText(String.format("%02d", controller.getDefaultMinutes()));
 		secondsField.setText(String.format("%02d", controller.getDefaultSeconds()));
-		nanosField.setText("000000000");
+		nanosField.setText(NINE_ZEROS);
 		datePicker.setValue(null);
 		feePayerAccountField.clear();
 		final var defaultNodeID =
@@ -2742,7 +2771,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanAllFreezeFields();
 		final var freezeType = transaction.getFreezeType();
 		if (freezeType.equals(FreezeType.FREEZE_UPGRADE)) {
-			freezeTypeChoiceBox.setValue("Freeze and upgrade");
+			freezeTypeChoiceBox.setValue(FREEZE_AND_UPGRADE);
 		} else {
 			freezeTypeChoiceBox.setValue(freezeType.toString());
 		}
