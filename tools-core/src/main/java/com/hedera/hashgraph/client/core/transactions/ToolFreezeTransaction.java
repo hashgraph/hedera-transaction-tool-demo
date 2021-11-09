@@ -95,23 +95,6 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		return Hex.toHexString(fileHash);
 	}
 
-	private FreezeType parseType(String asString) {
-		switch (asString) {
-			case "FREEZE_ONLY":
-				return FreezeType.FREEZE_ONLY;
-			case "PREPARE_UPGRADE":
-				return FreezeType.PREPARE_UPGRADE;
-			case "FREEZE_UPGRADE":
-				return FreezeType.FREEZE_UPGRADE;
-			case "FREEZE_ABORT":
-				return FreezeType.FREEZE_ABORT;
-			case "TELEMETRY_UPGRADE":
-				return FreezeType.TELEMETRY_UPGRADE;
-			default:
-				return FreezeType.UNKNOWN_FREEZE_TYPE;
-		}
-	}
-
 	@Override
 	public boolean checkInput(JsonObject input) {
 		var answer = super.checkInput(input);
@@ -208,27 +191,6 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		}
 	}
 
-	private void checkStartTime() {
-		if (startTime == null) {
-			throw new HederaClientRuntimeException(START_TIME_MUST_BE_SPECIFIED_ERROR_MESSAGE);
-		}
-		if (startTime.isBefore(Instant.now())) {
-			throw new HederaClientRuntimeException(START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE);
-		}
-		if (startTime.isBefore(transactionValidStart)) {
-			throw new HederaClientRuntimeException(START_TIME_BEFORE_VALID_START_ERROR_MESSAGE);
-		}
-	}
-
-	private void checkFile() {
-		if (fileID == null) {
-			throw new HederaClientRuntimeException(FILE_ID_MUST_BE_SPECIFIED_ERROR_MESSAGE);
-		}
-		if (fileHash.length == 0) {
-			throw new HederaClientRuntimeException(EMPTY_FILE_HASH_ERROR_MESSAGE);
-		}
-	}
-
 	@Override
 	public Set<AccountId> getSigningAccounts() {
 		Set<AccountId> accountIds = new HashSet<>();
@@ -255,5 +217,43 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	private FreezeType parseType(String asString) {
+		switch (asString) {
+			case "FREEZE_ONLY":
+				return FreezeType.FREEZE_ONLY;
+			case "PREPARE_UPGRADE":
+				return FreezeType.PREPARE_UPGRADE;
+			case "FREEZE_UPGRADE":
+				return FreezeType.FREEZE_UPGRADE;
+			case "FREEZE_ABORT":
+				return FreezeType.FREEZE_ABORT;
+			case "TELEMETRY_UPGRADE":
+				return FreezeType.TELEMETRY_UPGRADE;
+			default:
+				return FreezeType.UNKNOWN_FREEZE_TYPE;
+		}
+	}
+
+	private void checkStartTime() {
+		if (startTime == null) {
+			throw new HederaClientRuntimeException(START_TIME_MUST_BE_SPECIFIED_ERROR_MESSAGE);
+		}
+		if (startTime.isBefore(Instant.now())) {
+			throw new HederaClientRuntimeException(START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE);
+		}
+		if (startTime.isBefore(transactionValidStart)) {
+			throw new HederaClientRuntimeException(START_TIME_BEFORE_VALID_START_ERROR_MESSAGE);
+		}
+	}
+
+	private void checkFile() {
+		if (fileID == null) {
+			throw new HederaClientRuntimeException(FILE_ID_MUST_BE_SPECIFIED_ERROR_MESSAGE);
+		}
+		if (fileHash.length == 0) {
+			throw new HederaClientRuntimeException(EMPTY_FILE_HASH_ERROR_MESSAGE);
+		}
 	}
 }

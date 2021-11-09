@@ -386,7 +386,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		Label startTimeLabel;
 		Label fileIDLabel;
 		Label fileHashLabel;
-		detailsGridPane.add(new Label("Freeze Type:"), 0, count);
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
 				logger.error("Cannot parse freeze type");
@@ -396,7 +395,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				// reference a future time. Any values specified for the update_file and file_hash fields will
 				// be ignored. This transaction does not perform any network changes or upgrades and requires
 				// manual intervention to restart the network.
-				detailsGridPane.add(new Label("Freeze Only"), 1, count++);
 				detailsGridPane.add(new Label("Freeze start:"), 0, count);
 				startTimeLabel = getTimeLabel(toolFreezeTransaction.getStartTime(), true);
 				startTimeLabel.setWrapText(true);
@@ -406,7 +404,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				// A non-freezing operation that initiates network wide preparation in advance of a scheduled
 				// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
 				// start_time field may be omitted and any value present will be ignored.
-				detailsGridPane.add(new Label("Prepare Upgrade"), 1, count++);
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
@@ -415,24 +412,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
 			case FREEZE_UPGRADE:
-				// Performs an immediate upgrade on auxilary services and containers providing
-				// telemetry/metrics. Does not impact network operations.
-				detailsGridPane.add(new Label("Freeze and upgrade"), 1, count++);
-				startTimeLabel = getTimeLabel(toolFreezeTransaction.getStartTime(), true);
-				startTimeLabel.setWrapText(true);
-				detailsGridPane.add(new Label("Upgrade start:"), 0, count);
-				detailsGridPane.add(startTimeLabel, 1, count++);
-				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
-				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
-				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel = new Label(CommonMethods.splitStringDigest(toolFreezeTransaction.getFileHash(), 12));
-				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
-				detailsGridPane.add(fileHashLabel, 1, count);
-				break;
-			case TELEMETRY_UPGRADE:
 				// Freezes the network at the specified time and performs the previously prepared automatic
 				// upgrade across the entire network.
-				detailsGridPane.add(new Label("Prepare Upgrade"), 1, count++);
+			case TELEMETRY_UPGRADE:
+				// Performs an immediate upgrade on auxilary services and containers providing
+				// telemetry/metrics. Does not impact network operations.
 				startTimeLabel = getTimeLabel(toolFreezeTransaction.getStartTime(), true);
 				startTimeLabel.setWrapText(true);
 				detailsGridPane.add(new Label("Upgrade start:"), 0, count);
@@ -446,7 +430,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				break;
 			case FREEZE_ABORT:
 				// Aborts a pending network freeze operation.
-				detailsGridPane.add(new Label("ABORT UPGRADE"), 1, count);
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + freezeType);
