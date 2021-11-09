@@ -309,7 +309,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label shaLabel;
 	public Label invalidTransactionFee;
 	public Label freezeUTCTimeLabel;
-	public Label freezeTimeErrorLabel;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -331,6 +330,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label invalidChunkSizeLabel;
 	public Label invalidIntervalLabel;
 	public Label contentsFilePathError;
+	public Label freezeTimeErrorLabel;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -567,7 +567,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupSystemFields() {
 		setupTimeZoneChooser(timeZoneSystem, timeZoneSystemHBox, datePickerSystem, hourFieldSystem,
-				minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS), systemCreateLocalTimeLabel);
+				minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS), systemCreateLocalTimeLabel,
+				invalidExpirationDate);
 		systemSlidersHBox.visibleProperty().bind(systemDeleteUndeleteVBox.visibleProperty());
 		systemTypeChoiceBox.getItems().clear();
 		systemTypeChoiceBox.getItems().addAll("File", "Smart Contract");
@@ -604,11 +605,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 						var start = LocalDateTime.of(datePicker.getValue(), localTime);
 						configureDateTime(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-								new TextField(NINE_ZEROS),
-								systemCreateLocalTimeLabel, start, timeZoneSystem);
+								new TextField(NINE_ZEROS), systemCreateLocalTimeLabel, start, timeZoneSystem,
+								invalidExpirationDate);
 						configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-								freezeNanosField,
-								freezeTimeErrorLabel, start, freezeTimeZone);
+								freezeNanosField, freezeUTCTimeLabel, start, freezeTimeZone, freezeTimeErrorLabel);
 					} else {
 						resetSystemTime();
 						resetFreezeTime();
@@ -626,7 +626,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupFreezeFields() {
 		setupTimeZoneChooser(freezeTimeZone, freezeTimeZoneHBox, freezeDatePicker, freezeHourField,
-				freezeMinuteField, freezeSecondsField, freezeNanosField, freezeUTCTimeLabel);
+				freezeMinuteField, freezeSecondsField, freezeNanosField, freezeUTCTimeLabel, invalidExpirationDate);
 		freezeChoiceVBox.setVisible(false);
 		freezeFileVBox.setVisible(false);
 		freezeStartVBox.setVisible(false);
@@ -735,7 +735,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupTimeZoneChooser(TimeZone zone, HBox hBox, DatePicker date, TextField hour,
-			TextField minute, TextField seconds, TextField nanos, Label label) {
+			TextField minute, TextField seconds, TextField nanos, Label label, Label errorLabel) {
 		var chooser = new AutoCompleteNickname(ZoneId.getAvailableZoneIds());
 		chooser.setDefault(zone.getID());
 		hBox.getChildren().clear(); // need to clear the hox before entering the new Field.
@@ -752,12 +752,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				hour.setText(String.valueOf(ldt.getHour()));
 				minute.setText(String.format("%02d", ldt.getMinute()));
 				seconds.setText(String.format("%02d", ldt.getSecond()));
-				nanos.setText(String.format("%08d", ldt.getNano()));
+				nanos.setText(String.format("%09d", ldt.getNano()));
 				label.setText("");
 			}
 			zone.setID(chooser.getText());
 			logger.info("Timezone changed to: {}", zone.getID());
-			setLocalDateString(date, hour, minute, seconds, nanos, zone, label);
+			setLocalDateString(date, hour, minute, seconds, nanos, zone, label, errorLabel);
 		});
 	}
 
@@ -1247,8 +1247,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case FREEZE_ONLY:
 				validStart =
 						isDateValid(freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
-								datePicker,
-								ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
+								datePicker, ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
 				freezeTimeErrorLabel.setVisible(!validStart);
 				break;
 			case PREPARE_UPGRADE:
@@ -1264,8 +1263,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case TELEMETRY_UPGRADE:
 				validStart =
 						isDateValid(freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
-								datePicker,
-								ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
+								datePicker, ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
 				freezeTimeErrorLabel.setVisible(!validStart);
 				try {
 					var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
@@ -2042,14 +2040,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		nodeAccountField.setText(controller.getDefaultNodeID());
 
 		configureDateTime(datePicker, hourField, minuteField, secondsField, nanosField, createUTCTimeLabel,
-				LocalDateTime.now(),
-				timeZone);
+				LocalDateTime.now(), timeZone, invalidDate);
 		setupTimeZoneChooser(timeZone, timeZoneHBox, datePicker, hourField, minuteField, secondsField, nanosField,
-				createUTCTimeLabel);
-
+				createUTCTimeLabel, invalidDate);
 		configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
-				freezeUTCTimeLabel,
-				LocalDateTime.now(), freezeTimeZone);
+				freezeUTCTimeLabel, LocalDateTime.now(), freezeTimeZone, freezeTimeErrorLabel);
 
 		// endregion
 		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
@@ -2087,25 +2082,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void configureDateTime(DatePicker date, TextField hour, TextField minute, TextField seconds,
-			TextField nanos, Label localTime, LocalDateTime today, TimeZone zone) {
+			TextField nanos, Label localTime, LocalDateTime today, TimeZone zone, Label errorLabel) {
 		hour.textProperty().addListener((observable, oldValue, newValue) -> {
 			fixTimeTextField(hour, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone);
+			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
 		});
 
 		minute.textProperty().addListener((observable, oldValue, newValue) -> {
 			fixTimeTextField(minute, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone);
+			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
 		});
 
 		seconds.textProperty().addListener((observable, oldValue, newValue) -> {
 			fixTimeTextField(seconds, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone);
+			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
 		});
 
 		nanos.textProperty().addListener((observable, oldValue, newValue) -> {
 			fixTimeTextField(nanos, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone);
+			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
 		});
 
 		setupNumberField(hour, 23);
@@ -2128,32 +2123,31 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		date.valueProperty().addListener(
 				(observable, oldDate, newDate) -> refreshLocalTime(date, hour, minute, seconds, nanos, localTime,
-						zone));
-
+						zone, errorLabel));
 
 		// region FOCUS EVENTS
 		hour.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Hours text field changed to: {}", hour.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime);
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
 		minute.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Minute text field changed to: {}", minute.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime);
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
 		seconds.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Second text field changed to: {}", seconds.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime);
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
 		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Date changed to: {}", date.getValue());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime);
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
 	}
@@ -2165,7 +2159,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void refreshLocalTime(DatePicker date, TextField hour, TextField minute, TextField seconds, TextField nanos,
-			Label localTime, TimeZone timeZone) {
+			Label localTime, TimeZone timeZone, Label errorLabel) {
 		final var hourText = hour.getText();
 		final var minuteText = minute.getText();
 		final var secondsText = seconds.getText();
@@ -2180,16 +2174,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var dateValue = date.getValue();
 		if (dateValue != null) {
 			logger.info("Date changed to: {}", dateValue);
-			setLocalDateString(date, hour, minute, seconds, nanos, timeZone, localTime);
+			setLocalDateString(date, hour, minute, seconds, nanos, timeZone, localTime, errorLabel);
+			localTime.setVisible(true);
 		} else {
 			logger.info("Date cleared");
+			localTime.setVisible(false);
 			localTime.setText("");
 		}
 	}
 
 	private boolean isDateValid(TextField hourField, TextField minuteField, TextField secondsField,
-			TextField nanosField,
-			DatePicker datePicker, ZoneId zoneId, HBox timeZoneHBox) {
+			TextField nanosField, DatePicker datePicker, ZoneId zoneId, HBox timeZoneHBox) {
 		var flag = true;
 		try {
 			var zone = timeZoneHBox.getChildren().get(0);
@@ -2446,17 +2441,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		this.nanosField.setText(String.format("%09d", now.atZone(ZoneId.of(timeZone.getID())).getNano()));
 	}
 
-	private void setTimeInForm(Instant start, TimeZone freezeTimeZone, TextField freezeHourField,
-			TextField freezeMinuteField, TextField freezeSecondsField, DatePicker freezeDatePicker) {
-		final var zonedDateTimeFreezeStart = start.atZone(ZoneId.of(freezeTimeZone.getID()));
-		freezeHourField.setText(String.format("%02d", zonedDateTimeFreezeStart.getHour()));
-		freezeMinuteField.setText(String.format("%02d", zonedDateTimeFreezeStart.getMinute()));
-		freezeSecondsField.setText(String.format("%02d", zonedDateTimeFreezeStart.getSecond()));
-		freezeDatePicker.setValue(zonedDateTimeFreezeStart.toLocalDate());
+	private void setTimeInForm(Instant start, TimeZone timeZone, TextField hourField,
+			TextField minuteField, TextField secondsField, DatePicker datePicker) {
+		final var zonedDateTimeFreezeStart = start.atZone(ZoneId.of(timeZone.getID()));
+		hourField.setText(String.format("%02d", zonedDateTimeFreezeStart.getHour()));
+		minuteField.setText(String.format("%02d", zonedDateTimeFreezeStart.getMinute()));
+		secondsField.setText(String.format("%02d", zonedDateTimeFreezeStart.getSecond()));
+		datePicker.setValue(zonedDateTimeFreezeStart.toLocalDate());
 	}
 
 	private void setLocalDateString(DatePicker datePicker, TextField hourField, TextField minuteField,
-			TextField secondsField, TextField nanos, TimeZone timeZone, Label label) {
+			TextField secondsField, TextField nanos, TimeZone timeZone, Label label, Label invalidDate) {
 
 		if (datePicker.getValue() == null) {
 			return;
@@ -2537,7 +2532,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void checkTimeField(TextField timeField, int limit) {
 		try {
 			var k = Math.min(Integer.parseInt(timeField.getText()), limit);
-			timeField.setText(String.format("%02d", k));
+			var format = (limit < 100) ? "%02d" : "%09d";
+			timeField.setText(String.format(format, k));
 		} catch (NumberFormatException e) {
 			logger.error("Cannot parse field");
 		}
