@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_NUMBER;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
@@ -383,12 +384,14 @@ class ToolFreezeTransactionTest {
 	void testHashCode_test() throws HederaClientException {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(1761418184, 123);
+		final var validStart = new Timestamp(1761418084, 123);
 
 		JsonObject input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
+		input.add(TRANSACTION_VALID_START_FIELD_NAME, validStart.asJSON());
 
 		var transaction0 = new ToolFreezeTransaction(input);
 		var other = new ToolFreezeTransaction(input);
@@ -396,22 +399,22 @@ class ToolFreezeTransactionTest {
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
 		var differentOP = new ToolFreezeTransaction(input);
-		assertEquals(-1450457786, differentOP.hashCode());
+		assertEquals(-1490156285, differentOP.hashCode());
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.plusSeconds(1).asJSON());
 		var differentStart = new ToolFreezeTransaction(input);
-		assertEquals(-1075131736, differentStart.hashCode());
+		assertEquals(1858050281, differentStart.hashCode());
 
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 122).asJSON());
 		var differentFile = new ToolFreezeTransaction(input);
-		assertEquals(1836174760, differentFile.hashCode());
+		assertEquals(759995369, differentFile.hashCode());
 
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abd");
 		var differentHash = new ToolFreezeTransaction(input);
-		assertEquals(-1801400664, differentHash.hashCode());
+		assertEquals(-1283613463, differentHash.hashCode());
 	}
 
 	@NotNull
@@ -435,7 +438,7 @@ class ToolFreezeTransactionTest {
 
 		testJson.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
 
-		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(1729882184, 10).asRFCString());
+		testJson.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp().asJSON());
 
 		testJson.add(NODE_ID_FIELD_NAME, node);
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());

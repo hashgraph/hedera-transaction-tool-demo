@@ -27,7 +27,7 @@
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
 		<version>0.4.0-alpha.3</version>
-		<relativePath>../</relativePath>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<!-- Maven Model Version -->

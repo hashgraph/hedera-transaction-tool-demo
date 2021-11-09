@@ -36,6 +36,7 @@ import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
+import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -161,12 +162,12 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (transaction instanceof AccountUpdateTransaction) {
 			return new ToolCryptoUpdateTransaction(inputFile);
 		}
-
 		if (transaction instanceof SystemDeleteTransaction || transaction instanceof SystemUndeleteTransaction) {
 			return new ToolSystemTransaction(inputFile);
 		}
-
-
+		if (transaction instanceof FreezeTransaction){
+			return new ToolFreezeTransaction(inputFile);
+		}
 		return new ToolTransaction(inputFile);
 	}
 

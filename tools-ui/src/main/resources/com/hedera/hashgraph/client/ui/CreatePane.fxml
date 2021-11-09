@@ -443,7 +443,7 @@
 							<DatePicker fx:id="freezeDatePicker" />
 							<Label minWidth="11.0" text="at" />
 							<HBox alignment="CENTER_LEFT" spacing="5.0">
-								<TextField fx:id="freezeHourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<TextField fx:id="freezeHourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="01" />
 								<Label text=":" />
 								<TextField fx:id="freezeMinuteField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
 								<Label layoutX="65.0" layoutY="15.0" text=":" />
@@ -453,8 +453,8 @@
 								<HBox fx:id="freezeTimeZoneHBox" />
 							</HBox>
 						</HBox>
-                  <Label fx:id="freezeUTCTimeLabel" text="Label" visible="false" />
-                  <Label fx:id="freezeTimeErrorLabel" text="Label" visible="false" />
+                  <Label fx:id="freezeUTCTimeLabel" visible="false" />
+                  <Label fx:id="freezeTimeErrorLabel" style="-fx-text-fill: RED;" text="Invalid freeze start time" visible="false" />
 					</VBox>
 					<VBox fx:id="freezeFileVBox" spacing="20.0">
 						<Label text="File ID" />

@@ -53,6 +53,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	public static final String START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE = "Start time cannot be in the past";
 	public static final String FILE_ID_MUST_BE_SPECIFIED_ERROR_MESSAGE = "File ID must be specified";
 	public static final String EMPTY_FILE_HASH_ERROR_MESSAGE = "Empty file hash";
+	public static final String START_TIME_BEFORE_VALID_START_ERROR_MESSAGE =
+			"Start time must be after the transaction valid start time";
 
 	private Instant startTime;
 	private FreezeType freezeType;
@@ -212,6 +214,9 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		}
 		if (startTime.isBefore(Instant.now())) {
 			throw new HederaClientRuntimeException(START_TIME_CANNOT_BE_IN_THE_PAST_ERROR_MESSAGE);
+		}
+		if (startTime.isBefore(transactionValidStart)) {
+			throw new HederaClientRuntimeException(START_TIME_BEFORE_VALID_START_ERROR_MESSAGE);
 		}
 	}
 
