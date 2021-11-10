@@ -645,6 +645,59 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	}
 
+	@Test
+	public void freezeTransactions_Test() {
+		assertEquals(4, freezeBoxes.size());
+		VBox abort = null;
+		VBox freeze = null;
+		VBox prepare = null;
+		VBox freezeUpgrade = null;
+		for (VBox freezeBox : freezeBoxes) {
+			var children = freezeBox.getChildren();
+			assertTrue(children.get(0) instanceof Label);
+			switch (((Label) children.get(0)).getText()) {
+				case "Abort Freeze Transaction":
+					abort = freezeBox;
+					break;
+				case "Freeze Only Transaction":
+					freeze = freezeBox;
+					break;
+				case "Prepare Upgrade Transaction":
+					prepare = freezeBox;
+					break;
+				case "Freeze and Upgrade Transaction":
+					freezeUpgrade = freezeBox;
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + ((Label) children.get(0)).getText());
+			}
+		}
+		assertNotNull(abort);
+		assertNotNull(freeze);
+		assertNotNull(prepare);
+		assertNotNull(freezeUpgrade);
+
+		var abortHBox = (HBox) abort.getChildren().get(1);
+		var freezeHBox = (HBox)freeze.getChildren().get(1);
+		var prepareHBox =(HBox) prepare.getChildren().get(1);
+		var freezeUpgradeHBox = (HBox)freezeUpgrade.getChildren().get(1);
+
+		assertEquals(2, abortHBox.getChildren().size());
+		assertEquals(2, freezeHBox.getChildren().size());
+		assertEquals(2, prepareHBox.getChildren().size());
+		assertEquals(2, freezeUpgradeHBox.getChildren().size());
+
+		assertTrue(abortHBox.getChildren().get(0) instanceof GridPane);
+		assertTrue(freezeHBox.getChildren().get(0) instanceof GridPane);
+		assertTrue(prepareHBox.getChildren().get(0) instanceof GridPane);
+		assertTrue(freezeUpgradeHBox.getChildren().get(0) instanceof GridPane);
+
+		assertEquals(6, ((GridPane) abortHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(8, ((GridPane) freezeHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(10, ((GridPane) prepareHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(12, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
+	}
+
 	//@Test
 	public void acceptSystemTransaction_Test() throws IOException, HederaClientException {
 		sleep(ONE_SECOND);
@@ -773,7 +826,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	private void separateBoxes(ObservableList<Node> newFiles, List<VBox> publicKeyBoxes, List<VBox> accountInfoBoxes,
-			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes, List<VBox> freezeBoxes) {
+			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes,
+			List<VBox> freezeBoxes) {
 		for (var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
@@ -783,7 +837,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				var l = ((Label) lines.get(0)).getText();
 				if (l.contains("Batch")) {
 					batchBoxes.add((VBox) box);
-				} else if (l.contains("Transaction") && !(l.contains("ZippedTransactions") || l.contains("Freeze") || l.contains("Upgrade"))) {
+				} else if (l.contains("Transaction") && !(l.contains("ZippedTransactions") || l.contains(
+						"Freeze") || l.contains("Upgrade"))) {
 					transactionBoxes.add((VBox) box);
 				} else if (l.contains("Account Information")) {
 					accountInfoBoxes.add((VBox) box);
@@ -793,7 +848,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 					softwareBoxes.add((VBox) box);
 				} else if (l.contains("Content")) {
 					systemBoxes.add((VBox) box);
-				} else if (l.contains("Freeze") || l.contains("Upgrade")){
+				} else if (l.contains("Freeze") || l.contains("Upgrade")) {
 					freezeBoxes.add((VBox) box);
 				}
 			}
