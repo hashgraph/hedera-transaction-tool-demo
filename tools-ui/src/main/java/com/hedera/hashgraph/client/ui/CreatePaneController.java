@@ -331,6 +331,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label invalidIntervalLabel;
 	public Label contentsFilePathError;
 	public Label freezeTimeErrorLabel;
+	public Label invalidFreezeFile;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -630,6 +631,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		freezeChoiceVBox.setVisible(false);
 		freezeFileVBox.setVisible(false);
 		freezeStartVBox.setVisible(false);
+
+		formatAccountTextField(freezeFileIDTextField, invalidFreezeFile, freezeFileHashTextField);
+
 		noise = true;
 		var freezeValues = Arrays.asList(FreezeType.values());
 		List<String> freezeValuesAsStrings =

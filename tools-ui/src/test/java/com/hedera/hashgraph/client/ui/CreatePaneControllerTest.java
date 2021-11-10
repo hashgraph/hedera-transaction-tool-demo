@@ -1294,7 +1294,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void errorMessagesUpdate_Test() throws InterruptedException {
+	public void errorMessagesUpdate_Test() {
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
 			// Test will not work on headless mode
@@ -1302,8 +1302,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
-				.createAndExport(resources)
-				.clickOnPopupButton("CONTINUE");
+				.createAndExport(resources);
 
 		assertTrue(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());

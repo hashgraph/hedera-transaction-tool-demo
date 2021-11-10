@@ -229,8 +229,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void verifySoftwareCard_Test() {
-
-
 		var storage = DEFAULT_STORAGE + KEYS_STRING;
 		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
 
@@ -551,23 +549,30 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var totalBoxes = newFiles.size();
 
 		// Check the time and local time are correct
-		var gridPane = ((GridPane) ((HBox) transactionBoxes.get(1).getChildren().get(1)).getChildren().get(0));
-		var timestamp = new Timestamp(1761976800, 0);
-		var localDateTime = timestamp.asReadableLocalString();
-		var utcDateTime = timestamp.asUTCString().replace("_", " ");
+		int k = 0;
+		boolean found = false;
+		while (k < transactionBoxes.size()) {
+			var gridPane = ((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+			var timestamp = new Timestamp(1675214610, 0);
+			var localDateTime = timestamp.asReadableLocalString();
+			var utcDateTime = timestamp.asUTCString().replace("_", " ");
 
-		for (var n : gridPane.getChildren()) {
-			if (n instanceof Label) {
-				var text = ((Label) n).getText();
-				if (text.contains("UTC")) {
-					assertTrue(text.contains(utcDateTime));
-					assertTrue(text.contains(localDateTime));
-
+			for (var n : gridPane.getChildren()) {
+				if (n instanceof Label) {
+					var text = ((Label) n).getText();
+					if (text.contains("UTC")) {
+						found = (text.contains(utcDateTime)) && (text.contains(localDateTime));
+					}
 				}
 			}
+			if (found) {
+				break;
+			}
+			k++;
 		}
 
-		final var children = (transactionBoxes.get(1)).getChildren();
+		assertTrue(found);
+		final var children = (transactionBoxes.get(k)).getChildren();
 		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
 		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
 
@@ -575,7 +580,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(addMore);
 
 
-		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(k).getChildren().get(2));
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
@@ -607,10 +612,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var transactionFiles = output.listFiles();
 		assert transactionFiles != null;
 		assertEquals(2, transactionFiles.length);
-
-		var zip2 = findByStringExtension(output, "sig");
-		assertEquals(1, zip2.size());
-
 	}
 
 	@Test
@@ -678,9 +679,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertNotNull(freezeUpgrade);
 
 		var abortHBox = (HBox) abort.getChildren().get(1);
-		var freezeHBox = (HBox)freeze.getChildren().get(1);
-		var prepareHBox =(HBox) prepare.getChildren().get(1);
-		var freezeUpgradeHBox = (HBox)freezeUpgrade.getChildren().get(1);
+		var freezeHBox = (HBox) freeze.getChildren().get(1);
+		var prepareHBox = (HBox) prepare.getChildren().get(1);
+		var freezeUpgradeHBox = (HBox) freezeUpgrade.getChildren().get(1);
 
 		assertEquals(2, abortHBox.getChildren().size());
 		assertEquals(2, freezeHBox.getChildren().size());
@@ -698,7 +699,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(12, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
 	}
 
-	//@Test
+	@Test
 	public void acceptSystemTransaction_Test() throws IOException, HederaClientException {
 		sleep(ONE_SECOND);
 		final var out =
@@ -714,17 +715,19 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		// Check the time and local time are correct
 
 		var gridPane = ((GridPane) ((HBox) children.get(1)).getChildren().get(0));
-		var timestamp = new Timestamp(1725081403, 0);
+		var timestamp = new Timestamp(1659724521, 0);
 		var localDateTime = timestamp.asReadableLocalString();
 		var utcDateTime = timestamp.asUTCString().replace("_", " ");
+		var expirationTimestamp = new Timestamp(1685348108, 0);
+		var expirationLocalDateTime = expirationTimestamp.asReadableLocalString();
+		var expirationUtcDateTime = expirationTimestamp.asUTCString().replace("_", " ");
 
-		for (var n :
-				gridPane.getChildren()) {
+		for (var n : gridPane.getChildren()) {
 			if (n instanceof Label) {
 				var text = ((Label) n).getText();
 				if (text.contains("UTC")) {
-					assertTrue(text.contains(utcDateTime));
-					assertTrue(text.contains(localDateTime));
+					assertTrue(text.contains(utcDateTime) || text.contains(expirationUtcDateTime));
+					assertTrue(text.contains(localDateTime) || text.contains(expirationLocalDateTime));
 
 				}
 			}
@@ -754,7 +757,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 
-		assertEquals(totalBoxes, refreshFiles.size());
+		assertEquals(totalBoxes - 1, refreshFiles.size());
 
 		var listFiles = new File(out).listFiles();
 		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
@@ -766,19 +769,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		var zip = listZips[0];
 		unzip(zip);
-		var ext = new String[] { "zip", "txt" };
+		var ext = new String[] { "sig", "tx" };
 		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
 		var transactionFiles = FileUtils.listFiles(output, ext, false);
 		assertEquals(2, transactionFiles.size());
 
-		var zip2 = findByStringExtension(output, "zip");
+		var zip2 = findByStringExtension(output, "sig");
 		assertEquals(1, zip2.size());
-
-		unzip(zip2.get(0));
-		var output2 = new File(zip2.get(0).getAbsolutePath().replace(".zip", ""));
-
-		assertTrue(verifySignature(findByStringExtension(output2, ".tx"), findByStringExtension(output2, "sigpair")));
-
 	}
 
 	@Test
@@ -846,10 +843,12 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 					publicKeyBoxes.add((VBox) box);
 				} else if (l.contains("Software")) {
 					softwareBoxes.add((VBox) box);
-				} else if (l.contains("Content")) {
+				} else if (l.contains("Restore") || l.contains("Remove")) {
 					systemBoxes.add((VBox) box);
 				} else if (l.contains("Freeze") || l.contains("Upgrade")) {
 					freezeBoxes.add((VBox) box);
+				} else {
+					logger.info("here");
 				}
 			}
 		}

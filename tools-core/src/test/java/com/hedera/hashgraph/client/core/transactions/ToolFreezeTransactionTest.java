@@ -317,7 +317,7 @@ class ToolFreezeTransactionTest {
 
 		var transaction = new ToolFreezeTransaction(input);
 		var signers = transaction.getSigningAccounts();
-		assertTrue(signers.contains(new AccountId(0, 0, 2)));
+
 		assertTrue(signers.contains(new AccountId(0, 0, 50)));
 	}
 
