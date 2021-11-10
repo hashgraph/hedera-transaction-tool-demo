@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
@@ -82,7 +81,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	protected static final String PASSWORD = "123456789";
 	public static final int ONE_SECOND = 1000;
 	private HomePanePage homePanePage;
-	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
@@ -97,6 +95,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	private final List<VBox> transactionBoxes = new ArrayList<>();
 	private final List<VBox> softwareBoxes = new ArrayList<>();
 	private final List<VBox> systemBoxes = new ArrayList<>();
+	private final List<VBox> freezeBoxes = new ArrayList<>();
 
 
 	@Before
@@ -116,16 +115,15 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 
-		if (new File(currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory" +
+		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {
 			logger.info("Keys path created");
 		}
 
-
 		// Special case for test: Does not ask for password during setup
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		final var pathname =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
 		if (new File(pathname).exists()) {
@@ -138,7 +136,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
@@ -167,15 +165,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FxToolkit.setupApplication(StartUI.class);
 
 		homePanePage = new HomePanePage(this);
-		accountsPanePage = new AccountsPanePage(this);
 		mainWindowPage = new MainWindowPage(this);
 
 		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes);
+				systemBoxes, freezeBoxes);
 
 		assertEquals(newFiles.size(),
-				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size());
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
 	}
 
 	@Test
@@ -232,8 +229,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void verifySoftwareCard_Test() {
-
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 
 
 		var storage = DEFAULT_STORAGE + KEYS_STRING;
@@ -484,7 +479,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
 		var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
 		if (new File(out).mkdirs()) {
@@ -522,6 +517,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		var reject = TestUtil.findButtonInPopup(children, "DECLINE");
 
+		assert reject != null;
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
 
 		clickOn(reject);
@@ -533,7 +529,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(1, historyFiles.size()); // see other note
 
 		var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 		if (new File(out).mkdirs()) {
 			logger.info("Output directory created");
@@ -545,10 +541,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	}
 
-	//@Test
-	public void acceptTransaction_Test() throws IOException, HederaClientException, InterruptedException {
+	@Test
+	public void acceptTransaction_Test() throws IOException, HederaClientException {
 		final var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
 		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
@@ -556,12 +552,11 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		// Check the time and local time are correct
 		var gridPane = ((GridPane) ((HBox) transactionBoxes.get(1).getChildren().get(1)).getChildren().get(0));
-		var timestamp = new Timestamp(1676601650, 0);
+		var timestamp = new Timestamp(1761976800, 0);
 		var localDateTime = timestamp.asReadableLocalString();
 		var utcDateTime = timestamp.asUTCString().replace("_", " ");
 
-		for (var n :
-				gridPane.getChildren()) {
+		for (var n : gridPane.getChildren()) {
 			if (n instanceof Label) {
 				var text = ((Label) n).getText();
 				if (text.contains("UTC")) {
@@ -595,7 +590,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				.waitForWindow();
 
 		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		assertEquals(totalBoxes, refreshFiles.size());
+		assertEquals(totalBoxes - 1, refreshFiles.size());
 
 		var listFiles = new File(out).listFiles();
 		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
@@ -608,22 +603,17 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var zip = listFiles[0];
 		unzip(zip);
 
-		var ext = new String[] { "zip", "txt" };
 		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
-		var transactionFiles = FileUtils.listFiles(output, ext, false);
-		assertEquals(2, transactionFiles.size());
+		var transactionFiles = output.listFiles();
+		assert transactionFiles != null;
+		assertEquals(2, transactionFiles.length);
 
-		var zip2 = findByStringExtension(output, "zip");
+		var zip2 = findByStringExtension(output, "sig");
 		assertEquals(1, zip2.size());
-
-		unzip(zip2.get(0));
-		var output2 = new File(zip2.get(0).getAbsolutePath().replace(".zip", ""));
-
-		assertTrue(verifySignature(findByStringExtension(output2, ".tx"), findByStringExtension(output2, "sigpair")));
 
 	}
 
-	//@Test
+	@Test
 	public void declineTransaction_Test() {
 
 		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
@@ -643,7 +633,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(1, historyFiles.size()); // see other note
 
 		var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 
 		if (new File(out).mkdirs()) {
@@ -656,14 +646,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	//@Test
-	public void acceptSystemTransaction_Test() throws IOException, HederaClientException, InterruptedException {
+	public void acceptSystemTransaction_Test() throws IOException, HederaClientException {
 		sleep(ONE_SECOND);
 		final var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
 		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		var totalBoxes = newFiles.size();
+
+		sleep(10000);
 		final var children = systemBoxes.get(1).getChildren();
 
 		// Check the time and local time are correct
@@ -754,7 +746,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void nicknameNegative_Tests() throws TimeoutException, HederaClientException {
+	public void nicknameNegative_Tests() throws TimeoutException {
 
 		mainWindowPage.clickOnAccountsButton();
 		sleep(ONE_SECOND);
@@ -781,9 +773,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	private void separateBoxes(ObservableList<Node> newFiles, List<VBox> publicKeyBoxes, List<VBox> accountInfoBoxes,
-			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes) {
-		for (var box :
-				newFiles) {
+			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes, List<VBox> freezeBoxes) {
+		for (var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
 			var lines = ((VBox) box).getChildren();
@@ -792,7 +783,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				var l = ((Label) lines.get(0)).getText();
 				if (l.contains("Batch")) {
 					batchBoxes.add((VBox) box);
-				} else if (l.contains("Transaction") && !l.contains("ZippedTransactions")) {
+				} else if (l.contains("Transaction") && !(l.contains("ZippedTransactions") || l.contains("Freeze") || l.contains("Upgrade"))) {
 					transactionBoxes.add((VBox) box);
 				} else if (l.contains("Account Information")) {
 					accountInfoBoxes.add((VBox) box);
@@ -802,6 +793,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 					softwareBoxes.add((VBox) box);
 				} else if (l.contains("Content")) {
 					systemBoxes.add((VBox) box);
+				} else if (l.contains("Freeze") || l.contains("Upgrade")){
+					freezeBoxes.add((VBox) box);
 				}
 			}
 		}
@@ -818,10 +811,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var vValueCurrent = scrollPane.getVvalue();
 
 		if (nodeMaxY < 0) {
-			// currently located above (remember, top left is (0,0))
+			// located above (remember, top left is (0,0))
 			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
 		} else if (nodeMinY > viewport.getHeight()) {
-			// currently located below
+			// located below
 			vValueDelta = (nodeMinY) / contentHeight;
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
@@ -881,15 +874,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		transactionBoxes.clear();
 		softwareBoxes.clear();
 		systemBoxes.clear();
+		freezeBoxes.clear();
 
 		var currentRelativePath = Paths.get("");
-		var s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
 		var out =
-				currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 		if (new File(out).exists()) {
 			FileUtils.cleanDirectory(new File(out));

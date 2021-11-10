@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.google.common.base.Splitter.fixedLength;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
@@ -533,7 +534,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 *
 	 * @param hBarString
 	 * 		a String representing a number of hbars
-	 * @return an hbar amount
+	 * @return hbar amount
 	 * @throws HederaClientException
 	 * 		if the string cannot be parsed
 	 */
@@ -566,6 +567,27 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			networkMap.put(ip, accountID);
 		}
 		return Client.forNetwork(networkMap);
+	}
+
+	/**
+	 * Given a string divide into groups of four strings. Primarily used to increase readability of hashes and digests
+	 *
+	 * @param digest
+	 * 		a string.
+	 * @return a partitioned string
+	 */
+	@NotNull
+	public static String splitString(String digest) {
+		var count = 0;
+		var splitDigest = new StringBuilder();
+		for (final var token : fixedLength(4).split(digest)) {
+			if (count != 0) {
+				splitDigest.append(" ");
+			}
+			splitDigest.append(token);
+			count++;
+		}
+		return splitDigest.toString();
 	}
 }
 

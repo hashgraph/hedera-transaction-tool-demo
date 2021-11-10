@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -40,9 +39,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_START_TIME_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_TYPE_FIELD_NAME;
@@ -189,14 +186,6 @@ public class ToolFreezeTransaction extends ToolTransaction {
 			default:
 				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
-	}
-
-	@Override
-	public Set<AccountId> getSigningAccounts() {
-		Set<AccountId> accountIds = new HashSet<>();
-		accountIds.add(new Identifier(0, 0, 2).asAccount());
-		accountIds.add(new Identifier(0, 0, 50).asAccount());
-		return accountIds;
 	}
 
 	@Override

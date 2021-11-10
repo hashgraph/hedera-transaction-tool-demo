@@ -385,7 +385,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var freezeType = toolFreezeTransaction.getFreezeType();
 		Label startTimeLabel;
 		Label fileIDLabel;
-		Label fileHashLabel;
+		Text fileHashLabel = new Text();
+		fileHashLabel.setFont(Font.font("Courier", 18));
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
 				logger.error("Cannot parse freeze type");
@@ -407,7 +408,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel = new Label(CommonMethods.splitStringDigest(toolFreezeTransaction.getFileHash(), 12));
+				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
 				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
@@ -424,7 +425,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel = new Label(CommonMethods.splitStringDigest(toolFreezeTransaction.getFileHash(), 12));
+				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
 				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
