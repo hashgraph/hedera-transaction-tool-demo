@@ -180,7 +180,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			addCustomPayerButton1.visibleProperty().bind(customFeePayerTextField.visibleProperty());
 			addCustomPayerButton.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
 
-			addCustomPayerButton1.setOnAction((actionEvent) -> customFeePayerTextField.getParent().requestFocus());
+			addCustomPayerButton1.setOnAction(actionEvent -> customFeePayerTextField.getParent().requestFocus());
 
 			customFeePayerTextField.focusedProperty().addListener(
 					(observableValue, aBoolean, t1) -> addCustomFeePayer(t1));
@@ -247,7 +247,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
-						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
+						generateRecordLabel.setText(Boolean.TRUE.equals(t1) ? "yes" : "no");
 						controller.setGenerateRecord(t1);
 					});
 
@@ -306,13 +306,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				customFeePayerTextField.requestFocus();
 			}
 		}
-	}
-
-	public void refreshFeePayerBox() {
-		noise = true;
-
-
-		noise = false;
 	}
 
 	private void addAccountToChooser(Identifier id) {

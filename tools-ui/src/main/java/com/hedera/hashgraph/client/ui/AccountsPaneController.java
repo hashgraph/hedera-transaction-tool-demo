@@ -134,6 +134,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.Constants.TEXT_BOX_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.*;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.ACCOUNTS_FOLDER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.UNKNOWN_KEY_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.NICKNAME_IN_USE_MESSAGE;
@@ -171,6 +172,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String TIMEOUR_ERROR_MESSAGE =
 			"The operation failed due to timeout. Please try again later or contact the network " +
 					"administrator.";
+	public static final String NO_ACCOUNTS_SELECTED_TITLE = "No accounts selected";
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -257,7 +259,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
 			if (accounts.isEmpty()) {
-				PopupMessage.display("No accounts selected",
+				PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE,
 						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
 				return;
 			}
@@ -300,7 +302,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private Identifier getFeePayer() {
 		final var defaultFeePayer = controller.getDefaultFeePayer();
 		if (defaultFeePayer.equals("")) {
-			PopupMessage.display("Fee payer not set", ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE);
+			PopupMessage.display("Fee payer not set", FEE_PAYER_NOT_SET_ERROR_MESSAGE);
 			return null;
 		}
 		return Identifier.parse(defaultFeePayer);
@@ -1581,7 +1583,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		}
 		if (list.isEmpty()) {
-			PopupMessage.display("No accounts selected", "At least one account must be selected");
+			PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE, "At least one account must be selected");
 			return;
 		}
 		try {
@@ -1610,7 +1612,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var cancelButton = new Button(CANCEL_LABEL);
 		Stage window = null;
 		if (size == 0) {
-			PopupMessage.display("No accounts selected", "At least one account must be selected");
+			PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE, "At least one account must be selected");
 			return;
 		}
 

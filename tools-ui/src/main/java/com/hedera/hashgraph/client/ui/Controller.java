@@ -113,10 +113,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					"its current form by anyone other than members of the Hedera Council and Hedera personnel. " +
 					"If you are not a Hedera Council member or staff member, use of this application or of the " +
 					"code in its current form is not recommended and is at your own risk.";
-	public static final String FEE_PAYER_NOT_SET_MESSAGE =
-			"The fee payer account has not been set. Please go to the settings tab and set the default payer in" +
-					" order to request account information from the network.";
-
 	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
 	private boolean disableButtons = false;
 	private boolean drivesChanged = false;
@@ -743,15 +739,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getEmailFromMap(path);
 	}
 
-	public String getNetworkProperty() {
-		return properties.getNetworkProperty();
-	}
-
 	public boolean getGenerateRecord() {
 		return properties.getGenerateRecord();
 	}
 	//endregion
-
 
 	public String jsonKeyToPrettyString(JsonObject key) {
 		return keyStructureUtility.jsonKeyToPrettyString(key);
