@@ -707,6 +707,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							refresh(accountLineInformation1);
 							table.getItems().remove(getIndex());
 							setupFeePayers();
+							setupFeePayerCombobox(feePayerComboboxA);
 							controller.homePaneController.setForceUpdate(true);
 							controller.settingsPaneController.initializeSettingsPane();
 						}
@@ -1608,7 +1609,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
 		Stage window = null;
-		if (size==0) {
+		if (size == 0) {
 			PopupMessage.display("No accounts selected", "At least one account must be selected");
 			return;
 		}
@@ -1683,6 +1684,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerCombobox(ChoiceBox<Object> comboBox) {
+		var feePayer = "".equals(controller.getDefaultFeePayer()) ? "" : Identifier.parse(
+				controller.getDefaultFeePayer()).toNicknameAndChecksum(controller.getAccountsList());
+
+
 		comboBox.setOnKeyPressed(keyEvent -> {
 			final var code = keyEvent.getCode();
 			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
@@ -1693,11 +1698,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		final var accounts = controller.getFeePayers();
 		if (accounts.isEmpty() && "".equals(controller.getDefaultFeePayer())) {
+			comboBox.getItems().clear();
 			return;
 		}
 		addNamesToCombobox(comboBox);
 
-		var feePayer = controller.getDefaultFeePayer();
 		if ("".equals(feePayer) && !accounts.isEmpty()) {
 			feePayer = accounts.iterator().next().toNicknameAndChecksum(controller.getAccountsList());
 			controller.setDefaultFeePayer(feePayer);
@@ -1707,18 +1712,22 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private void addNamesToCombobox(ChoiceBox<Object> comboBox) {
 		List<String> accounts = new ArrayList<>();
+		final var accountsList = controller.getAccountsList();
 		for (var feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+			accounts.add(feePayer.toNicknameAndChecksum(accountsList));
 		}
 		Collections.sort(accounts);
 		noise = true;
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(accounts);
-		if (!accounts.contains(controller.getDefaultFeePayer()) && !"".equals(controller.getDefaultFeePayer())) {
+		final var defaultFeePayer = controller.getDefaultFeePayer();
+		final var feePayer =
+				"".equals(defaultFeePayer) ? "" : Identifier.parse(defaultFeePayer).toNicknameAndChecksum(accountsList);
+		if (!accounts.contains(feePayer) && !"".equals(feePayer)) {
 			comboBox.getItems().add(new Separator());
-			comboBox.getItems().add(controller.getDefaultFeePayer());
+			comboBox.getItems().add(feePayer);
 		}
-		comboBox.setValue(controller.getDefaultFeePayer());
+		comboBox.setValue(feePayer);
 		noise = false;
 	}
 

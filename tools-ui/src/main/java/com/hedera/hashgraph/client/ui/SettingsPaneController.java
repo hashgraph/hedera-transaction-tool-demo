@@ -286,12 +286,20 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		if (Boolean.FALSE.equals(t1)) {
 			try {
 				final var text = customFeePayerTextField.getText();
-				if ("".equals(text)) {
+				if (!"".equals(text)) {
+					Identifier id = Identifier.parse(text);
+					customFeePayerTextField.setText("");
+					customFeePayerTextField.setVisible(false);
+					addAccountToChooser(id);
 					return;
 				}
-				Identifier id = Identifier.parse(text);
-				customFeePayerTextField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-				addAccountToChooser(id);
+				if (controller.getFeePayers().isEmpty()) {
+					customFeePayerTextField.requestFocus();
+					return;
+				}
+				final var choice = controller.getFeePayers().iterator().next();
+				feePayerChoicebox.setValue(choice);
+				controller.setDefaultFeePayer(choice.toNicknameAndChecksum(controller.getAccountsList()));
 			} catch (Exception e) {
 				logger.info(e.getMessage());
 				PopupMessage.display("Cannot parse", "The contents cannot be parsed into an account ID");
@@ -315,8 +323,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerChoicebox(ChoiceBox<Object> choiceBox) {
-		var feePayer =
-				Identifier.parse(controller.getDefaultFeePayer()).toNicknameAndChecksum(controller.getAccountsList());
+		var feePayer = "".equals(controller.getDefaultFeePayer()) ? "" : Identifier.parse(
+				controller.getDefaultFeePayer()).toNicknameAndChecksum(controller.getAccountsList());
 
 		List<String> accounts = new ArrayList<>();
 		for (Identifier payer : controller.getFeePayers()) {
@@ -828,6 +836,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		controller.setDefaultFeePayer("");
+		controller.accountsPaneController.initializeAccountPane();
 		addFeePayerAction();
 	}
 
