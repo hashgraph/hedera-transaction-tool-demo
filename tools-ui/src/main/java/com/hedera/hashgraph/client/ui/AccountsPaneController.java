@@ -400,6 +400,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var accountFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.endsWith(INFO_EXTENSION));
 		assert accountFiles != null;
+		feePayers.clear();
 		for (var accountFile : accountFiles) {
 			InfoFile infoFile;
 			try {
@@ -705,7 +706,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							logger.info("Deleting {}", accountLineInformation1.getNickname());
 							refresh(accountLineInformation1);
 							table.getItems().remove(getIndex());
+							setupFeePayers();
 							controller.homePaneController.setForceUpdate(true);
+							controller.settingsPaneController.initializeSettingsPane();
 						}
 					}
 				};
@@ -1605,6 +1608,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
 		Stage window = null;
+		if (size==0) {
+			PopupMessage.display("No accounts selected", "At least one account must be selected");
+			return;
+		}
+
 		if (size > 4 || SetupPhase.TEST_PHASE.equals(controller.getSetupPhase())) {
 			window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
 					"Please wait while the account balances are being updated.", size);

@@ -89,6 +89,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
 
+
 	private boolean noise = false;
 
 	public TextField loadStorageTextField;
@@ -120,6 +121,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button deleteCustomNetworkButton;
 	public Button deleteCustomPayerButton;
 	public Button addCustomPayerButton;
+	public Button addCustomPayerButton1;
 
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
@@ -164,7 +166,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// bindings
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButtonSP, cancelAddToEmailMapButton,
-					browseNewFolderButton, deleteImage, editImage, customFeePayerTextField, feePayerChoicebox);
+					browseNewFolderButton, deleteImage, editImage, customFeePayerTextField, feePayerChoicebox,
+					addCustomPayerButton1, addCustomPayerButton);
 
 			feePayerChoicebox.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
 			customFeePayerTextField.setOnKeyReleased(event -> {
@@ -173,6 +176,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					feePayerChoicebox.getParent().requestFocus();
 				}
 			});
+
+			addCustomPayerButton1.visibleProperty().bind(customFeePayerTextField.visibleProperty());
+			addCustomPayerButton.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
+
+			addCustomPayerButton1.setOnAction((actionEvent) -> customFeePayerTextField.getParent().requestFocus());
 
 			customFeePayerTextField.focusedProperty().addListener(
 					(observableValue, aBoolean, t1) -> addCustomFeePayer(t1));
@@ -292,6 +300,13 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
+	public void refreshFeePayerBox() {
+		noise = true;
+
+
+		noise = false;
+	}
+
 	private void addAccountToChooser(Identifier id) {
 		controller.setDefaultFeePayer(id.toNicknameAndChecksum(controller.getAccountsList()));
 		setupFeePayerChoicebox(feePayerChoicebox);
@@ -300,7 +315,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupFeePayerChoicebox(ChoiceBox<Object> choiceBox) {
-		var feePayer = controller.getDefaultFeePayer();
+		var feePayer =
+				Identifier.parse(controller.getDefaultFeePayer()).toNicknameAndChecksum(controller.getAccountsList());
 
 		List<String> accounts = new ArrayList<>();
 		for (Identifier payer : controller.getFeePayers()) {
