@@ -117,12 +117,12 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		List<String> transactionResponses = new ArrayList<>();
 		for (var future : transactionsFutureTasks) {
-			final String response;
+			String response;
 			try {
 				response = (String) future.get();
 			} catch (ExecutionException e) {
 				logger.error(e.getMessage());
-				throw new HederaClientException(e);
+				response = "";
 			}
 			if (!"".equals(response)) {
 				transactionResponses.add(response);
