@@ -43,7 +43,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -69,10 +72,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -742,6 +748,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public boolean getGenerateRecord() {
 		return properties.getGenerateRecord();
 	}
+
+	public Set<Identifier> getCustomFeePayers() {
+		return properties.getCustomFeePayers();
+	}
+
+	public void addCustomFeePayer(Identifier identifier) {
+		properties.addCustomFeePayer(identifier);
+	}
+
+	public void removeCustomFeePayer(Identifier identifier) {
+		properties.removeCustomFeePayer(identifier);
+	}
+
 	//endregion
 
 	public String jsonKeyToPrettyString(JsonObject key) {
@@ -823,11 +842,60 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return accountsPaneController.getFeePayers();
 	}
 
-	public String getDefaultFeePayer() {
+	public Identifier getDefaultFeePayer() {
 		return properties.getDefaultFeePayer();
 	}
 
-	public void setDefaultFeePayer(String feePayer) {
+	public void setDefaultFeePayer(Identifier feePayer) {
 		properties.setDefaultFeePayer(feePayer);
+	}
+
+	void networkBoxSetup(ChoiceBox<Object> comboBox) {
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(getDefaultNetworks());
+		var customNetworks = getCustomNetworks();
+		if (!customNetworks.isEmpty()) {
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().addAll(customNetworks);
+		}
+	}
+
+	String setupChoiceBoxFeePayer(ChoiceBox<Object> choiceBox, TextField textfield) {
+		var feePayer = Identifier.ZERO.equals(getDefaultFeePayer()) ? "" :
+				getDefaultFeePayer().toNicknameAndChecksum(getAccountsList());
+
+		List<String> accounts = getFeePayers().stream().map(
+				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
+				Collectors.toList());
+
+		List<String> customFeePayers = getCustomFeePayers().stream().map(
+				customFeePayer -> customFeePayer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
+				Collectors.toList());
+
+		Set<String> allPayers = new HashSet<>(accounts);
+		allPayers.addAll(customFeePayers);
+		List<String> sortedAllPayers = new ArrayList<>(allPayers);
+		Collections.sort(sortedAllPayers);
+
+		var custom = !customFeePayers.isEmpty();
+
+
+		choiceBox.getItems().clear();
+		choiceBox.getItems().addAll(accounts);
+		if (custom) {
+			choiceBox.getItems().add(new Separator());
+			choiceBox.getItems().addAll(customFeePayers);
+		}
+
+		if ("".equals(feePayer)) {
+			if (allPayers.isEmpty()) {
+				textfield.setVisible(true);
+				textfield.requestFocus();
+			} else {
+				feePayer = sortedAllPayers.get(0);
+				setDefaultFeePayer(Identifier.parse(feePayer));
+			}
+		}
+		return feePayer;
 	}
 }
