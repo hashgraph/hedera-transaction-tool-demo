@@ -117,6 +117,7 @@ public class Constants {
 	public static final String SYSTEM_FOLDER = DEFAULT_STORAGE + "Files/.System/";
 	public static final String CUSTOM_NETWORK_FOLDER = SYSTEM_FOLDER + "CustomNetworks";
 	public static final String BALANCES_FILE = SYSTEM_FOLDER + "balancesArray.json";
+	public static final String CUSTOM_FEE_PAYERS = "customFeePayers";
 
 	// endregion
 

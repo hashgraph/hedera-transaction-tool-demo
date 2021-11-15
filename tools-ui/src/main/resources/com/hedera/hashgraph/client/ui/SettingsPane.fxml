@@ -28,7 +28,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import org.controlsfx.control.ToggleSwitch?>
-<AnchorPane xmlns:fx="http://javafx.com/fxml/" xmlns="http://javafx.com/javafx/"
+<AnchorPane xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/"
 			fx:controller="com.hedera.hashgraph.client.ui.SettingsPaneController">
 	<VBox maxHeight="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
 		  AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
@@ -392,7 +392,7 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">
-							<Label text="Fee Payer"/>
+							<Label text="Fee Payer Account"/>
 							<Button fx:id="feePayerTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>
@@ -409,20 +409,35 @@
 						<HBox spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="2">
 							<VBox>
 								<TextField fx:id="customFeePayerTextField" prefWidth="300.0"
+										   promptText="Enter fee payer account"
 										   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
 										   visible="false"/>
 								<ChoiceBox fx:id="feePayerChoicebox" prefWidth="300.0"
 										   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"/>
 							</VBox>
-							<Button fx:id="addCustomPayerButton" mnemonicParsing="false" onAction="#addFeePayerAction"
-									style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;">
-								<graphic>
-									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
-											   preserveRatio="true">
-										<Image url="@../../../../../icons/plus.png"/>
-									</ImageView>
-								</graphic>
-							</Button>
+							<HBox>
+								<Button fx:id="addCustomPayerButton" mnemonicParsing="false"
+										onAction="#addFeePayerAction"
+										style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;">
+									<graphic>
+										<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+												   preserveRatio="true">
+											<Image url="@../../../../../icons/plus.png"/>
+										</ImageView>
+									</graphic>
+								</Button>
+								<Button fx:id="addCustomPayerButton1" layoutX="10.0" layoutY="10.0"
+										mnemonicParsing="false" onAction="#addFeePayerAction"
+										style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;"
+										visible="false">
+									<graphic>
+										<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+												   preserveRatio="true">
+											<Image url="@../../../../../icons/plus.png"/>
+										</ImageView>
+									</graphic>
+								</Button>
+							</HBox>
 							<Button fx:id="deleteCustomPayerButton" mnemonicParsing="false"
 									onAction="#deleteFeePayerAction"
 									style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;">

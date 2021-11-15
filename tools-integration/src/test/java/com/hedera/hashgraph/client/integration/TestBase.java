@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.integration;import com.hedera.hashgraph.client.core.constants.Constants;
+package com.hedera.hashgraph.client.integration;
+
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
@@ -30,24 +31,16 @@ import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
 
-import javax.swing.JFileChooser;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyStoreException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Set;
-
-import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 
 public class TestBase extends ApplicationTest {
 
 	private static final Logger logger = LogManager.getLogger(TestBase.class);
 	public static final String KEYS_STRING = "Keys";
-	public static final String ACCOUNTS_STRING = "Accounts";
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
@@ -92,41 +85,6 @@ public class TestBase extends ApplicationTest {
 		}
 	}
 
-	/* Helper method to retrieve Java FX GUI components. */
-	public Set<Node> findAll(final String query) {
-		return lookup(query).queryAll();
-	}
-
-
-	public boolean exists(final String query) {
-		try {
-			Node x = lookup(query).queryAll().iterator().next();
-			return x != null;
-		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	public void remakeTransactionTools() {
-		String toolsFolder =
-				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
-		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
-			logger.info("Folder {} created", toolsFolder);
-		}
-
-		try {
-			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
-					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
-				logger.info("Accounts folder created");
-			}
-			if (!new File(toolsFolder, KEYS_STRING).exists() &&
-					new File(toolsFolder, KEYS_STRING).mkdirs()) {
-				logger.info("{} folder created", KEYS_STRING);
-			}
-		} catch (Exception cause) {
-			logger.error("Unable to remake Transaction folders.", cause);
-		}
-	}
 
 	/**
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
@@ -182,28 +140,6 @@ public class TestBase extends ApplicationTest {
 		}
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
 				new File(location, "Files/.System/recovery.aes"));
-	}
-
-	/**
-	 * Get a salt from the token
-	 *
-	 * @param token
-	 * 		a string that contains a salt and a password salt
-	 * @return the salt
-	 */
-	public byte[] getSalt(String token, boolean legacy) {
-
-		if (legacy) {
-			return new byte[SALT_LENGTH];
-		}
-
-		var decoder = Base64.getDecoder();
-
-		var tokenBytes = decoder.decode(token);
-		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
-			logger.error("Token size check failed");
-		}
-		return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 	}
 
 	public void ensureVisible(Node node) {

@@ -28,6 +28,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 
@@ -36,6 +37,7 @@ import java.util.Objects;
 
 import static com.hedera.hashgraph.client.integration.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.integration.TestUtil.findCheckBoxInPopup;
+import static com.hedera.hashgraph.client.integration.TestUtil.findTextFieldInPopup;
 import static com.hedera.hashgraph.client.integration.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
@@ -232,6 +234,35 @@ public class AccountsPanePage {
 		assertTrue(scrollPane.getContent() instanceof TableView);
 		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 		return table.getItems();
+	}
+
+	public AccountsPanePage selectCheckBoxInPopup(String name) {
+		final var popupNodes = Objects.requireNonNull(getPopupNodes());
+		CheckBox checkBox = findCheckBoxInPopup(popupNodes, name);
+		driver.clickOn(checkBox);
+		return this;
+	}
+
+	public AccountsPanePage clickOnPopupButton(String name) {
+		final var popupNodes = Objects.requireNonNull(getPopupNodes());
+		Button button = findButtonInPopup(popupNodes, name);
+		driver.clickOn(button);
+		return this;
+	}
+
+	public AccountsPanePage deleteAccount(String nickname) {
+		driver.clickOn(nickname + "T");
+		driver.clickOn("CONTINUE");
+		return this;
+	}
+
+	public AccountsPanePage enterTextInPopup(String name) {
+		final var popupNodes = Objects.requireNonNull(getPopupNodes());
+		TextField textField = findTextFieldInPopup(popupNodes);
+		driver.doubleClickOn(textField);
+		driver.write(name);
+		driver.type(KeyCode.ENTER);
+		return this;
 	}
 }
 

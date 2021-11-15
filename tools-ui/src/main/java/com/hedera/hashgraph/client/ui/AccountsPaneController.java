@@ -22,7 +22,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -69,7 +68,6 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -135,6 +133,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TEXT_BOX_STYL
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.ACCOUNTS_FOLDER_ERROR_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.UNKNOWN_KEY_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.NICKNAME_IN_USE_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.ACCOUNTS_TO_QUERY_TOOLTIP_MESSAGE;
@@ -171,6 +170,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String TIMEOUR_ERROR_MESSAGE =
 			"The operation failed due to timeout. Please try again later or contact the network " +
 					"administrator.";
+	public static final String NO_ACCOUNTS_SELECTED_TITLE = "No accounts selected";
+	public static final String ERROR_TITLE = "Error";
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -179,13 +180,16 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public Button importFolderButton;
 	public TextField accountsToUpdateTextField;
 	public Button selectAccountsButton;
-	public ChoiceBox<Object> feePayerComboboxA;
+	public ChoiceBox<Object> feePayerChoiceBoxA;
 	public ChoiceBox<Object> networkChoiceBoxA;
 	public Button accountsTooltip;
 	public Button networkTooltipA;
 	public Button feePayerTooltipA;
 
 	public TitledPane addAccountsTitledPane;
+	public Button addCustomPayerButton;
+	public Button addCustomPayerButton1;
+	public TextField feePayerTextFieldA;
 
 	@FXML
 	private Controller controller;
@@ -232,16 +236,34 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		selectAccountsButton.setOnAction(event -> selectAccountsButtonAction());
 
-		setupFeePayers();
-		setupNetworkBox(networkChoiceBoxA);
-		setupFeePayerCombobox(feePayerComboboxA);
 		setupTooltips();
 
+		setupFeePayers();
+		setupNetworkBox(networkChoiceBoxA);
+		setupFeePayerChoiceBox();
+		setupInfoRequestFields();
+	}
+
+	private void setupInfoRequestFields() {
+		feePayerTextFieldA.managedProperty().bind(feePayerTextFieldA.visibleProperty());
+		addCustomPayerButton.managedProperty().bind(addCustomPayerButton.visibleProperty());
+		addCustomPayerButton1.managedProperty().bind(addCustomPayerButton1.visibleProperty());
+		feePayerChoiceBoxA.managedProperty().bind(feePayerChoiceBoxA.visibleProperty());
+		addCustomPayerButton1.visibleProperty().bind(addCustomPayerButton.visibleProperty().not());
+		feePayerChoiceBoxA.visibleProperty().bind(feePayerTextFieldA.visibleProperty().not());
+		addCustomPayerButton.visibleProperty().bind(feePayerTextFieldA.visibleProperty().not());
+		feePayerTextFieldA.focusedProperty().addListener((observableValue, aBoolean, t1) -> addCustomFeePayer(t1));
+		feePayerTextFieldA.setOnKeyPressed(event -> {
+			var code = event.getCode();
+			if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
+				feePayerChoiceBoxA.getParent().requestFocus();
+			}
+		});
 	}
 
 	private void selectAccountsButtonAction() {
 		try {
-			var feePayerCombobox = feePayerComboboxA.getSelectionModel().getSelectedItem();
+			var feePayerCombobox = feePayerChoiceBoxA.getSelectionModel().getSelectedItem();
 			var feePayer =
 					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
 							(String) feePayerCombobox);
@@ -249,18 +271,21 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			if (feePayer == null) {
 				return;
 			}
-			final var keyFiles = getKeyFiles(feePayer);
-			if (keyFiles.isEmpty()) {
-				PopupMessage.display("Error",
-						"At least one key must be selected in order to sign the transaction");
-				return;
-			}
+
 			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
 			if (accounts.isEmpty()) {
-				PopupMessage.display("No accounts selected",
+				PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE,
 						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
 				return;
 			}
+
+			final var keyFiles = getKeyFiles(feePayer);
+			if (keyFiles.isEmpty()) {
+				PopupMessage.display(ERROR_TITLE,
+						"At least one key must be selected in order to sign the transaction");
+				return;
+			}
+
 			if (!(networkChoiceBoxA.getValue() instanceof String)) {
 				return;
 			}
@@ -299,11 +324,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private Identifier getFeePayer() {
 		final var defaultFeePayer = controller.getDefaultFeePayer();
-		if (defaultFeePayer.equals("")) {
-			PopupMessage.display("Fee payer not set", ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE);
+		if (Identifier.ZERO.equals(defaultFeePayer)) {
+			PopupMessage.display("Fee payer not set", FEE_PAYER_NOT_SET_ERROR_MESSAGE);
 			return null;
 		}
-		return Identifier.parse(defaultFeePayer);
+		return defaultFeePayer;
 	}
 
 	private void getInfosFromNetwork(List<AccountId> accounts, Identifier feePayer, String network,
@@ -400,6 +425,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var accountFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.endsWith(INFO_EXTENSION));
 		assert accountFiles != null;
+		feePayers.clear();
 		for (var accountFile : accountFiles) {
 			InfoFile infoFile;
 			try {
@@ -705,7 +731,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							logger.info("Deleting {}", accountLineInformation1.getNickname());
 							refresh(accountLineInformation1);
 							table.getItems().remove(getIndex());
+							setupFeePayers();
+							setupFeePayerChoiceBox();
 							controller.homePaneController.setForceUpdate(true);
+							controller.settingsPaneController.setupFeePayerChoicebox();
 						}
 					}
 				};
@@ -798,15 +827,16 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		the line from the table that must be deleted
 	 */
 	public void refresh(AccountLineInformation accountLineInformation) {
-		var accountID = accountLineInformation.getAccount().toReadableString();
+		final var accountID = accountLineInformation.getAccount();
+		var accountIDString = accountID.toReadableString();
 		if (controller.getDefaultFeePayer().equals(accountID)) {
-			controller.setDefaultFeePayer("");
+			removeDefaultFeePayer();
 		}
 		var directory = controller.getPreferredStorageDirectory();
 		var oldInfoPath =
-				Paths.get(directory, ACCOUNTS, format(FORMAT_NAME_EXTENSION, accountID, INFO_EXTENSION));
+				Paths.get(directory, ACCOUNTS, format(FORMAT_NAME_EXTENSION, accountIDString, INFO_EXTENSION));
 		var oldJsonPath =
-				Paths.get(directory, ACCOUNTS, format(FORMAT_NAME_EXTENSION, accountID, JSON_EXTENSION));
+				Paths.get(directory, ACCOUNTS, format(FORMAT_NAME_EXTENSION, accountIDString, JSON_EXTENSION));
 
 		// move the folder to the deleted accounts folder
 		try {
@@ -820,8 +850,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		JsonObject nicknames;
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-			if (nicknames.has(accountID)) {
-				nicknames.remove(accountID);
+			if (nicknames.has(accountIDString)) {
+				nicknames.remove(accountIDString);
 				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
 			}
 		} catch (HederaClientException e) {
@@ -829,7 +859,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		// Delete the account info from the History of accepted files
 		var historyInfo = new File(controller.getPreferredStorageDirectory() + "/History").listFiles(
-				(dir, name) -> name.contains(accountID));
+				(dir, name) -> name.contains(accountIDString));
 
 		assert historyInfo != null;
 		if (historyInfo.length > 0) {
@@ -842,11 +872,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		}
-		logger.info("Account {} has been deleted", accountID);
+		logger.info("Account {} has been deleted", accountIDString);
 
 		//Archiving history
 		File[] historyList =
-				new File(ACCOUNTS_INFO_FOLDER, ARCHIVE).listFiles((dir, name) -> name.startsWith(accountID + "_"));
+				new File(ACCOUNTS_INFO_FOLDER, ARCHIVE).listFiles((dir, name) -> name.startsWith(accountIDString + "_"
+				));
 
 		final var deletedFolder = new File(ACCOUNTS_INFO_FOLDER, ARCHIVE + File.separator + "DELETED");
 		if (deletedFolder.mkdirs()) {
@@ -854,14 +885,21 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		try {
 			var zip = zipFiles(historyList,
-					deletedFolder.getAbsolutePath() + File.separator + accountID + "." + ZIP_EXTENSION);
+					deletedFolder.getAbsolutePath() + File.separator + accountIDString + "." + ZIP_EXTENSION);
 			if (zip != null) {
-				logger.info("Archive for account {} stored to {}", accountID, zip.getAbsolutePath());
+				logger.info("Archive for account {} stored to {}", accountIDString, zip.getAbsolutePath());
 			}
 		} catch (HederaClientException e) {
 			logger.error("IO Error during zip process");
 		}
 		controller.createPaneController.initializeCreatePane();
+	}
+
+	private void removeDefaultFeePayer() {
+		controller.setDefaultFeePayer(Identifier.ZERO);
+		controller.settingsPaneController.initializeSettingsPane();
+		setupFeePayerChoiceBox();
+		controller.settingsPaneController.setupFeePayerChoicebox();
 	}
 
 	/**
@@ -1577,7 +1615,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		}
 		if (list.isEmpty()) {
-			PopupMessage.display("No accounts selected", "At least one account must be selected");
+			PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE, "At least one account must be selected");
 			return;
 		}
 		try {
@@ -1587,7 +1625,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			final var keyFiles = getKeyFiles(feePayer);
 			if (keyFiles.isEmpty()) {
-				PopupMessage.display("Error",
+				PopupMessage.display(ERROR_TITLE,
 						"At least one key must be selected in order to sign the transaction");
 				return;
 			}
@@ -1605,6 +1643,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var progressBar = new ProgressBar();
 		var cancelButton = new Button(CANCEL_LABEL);
 		Stage window = null;
+		if (size == 0) {
+			PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE, "At least one account must be selected");
+			return;
+		}
+
 		if (size > 4 || SetupPhase.TEST_PHASE.equals(controller.getSetupPhase())) {
 			window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating Balances",
 					"Please wait while the account balances are being updated.", size);
@@ -1674,57 +1717,64 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerCombobox(ChoiceBox<Object> comboBox) {
-		comboBox.setOnKeyPressed(keyEvent -> {
-			final var code = keyEvent.getCode();
-			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
-				comboBox.getParent().requestFocus();
-			}
-		});
+	/**
+	 * Set up for fee payer choice box
+	 */
+	public void setupFeePayerChoiceBox() {
+		noise = true;
+		String feePayer = controller.setupChoiceBoxFeePayer(feePayerChoiceBoxA, feePayerTextFieldA);
+		noise = false;
 
-
-		final var accounts = controller.getFeePayers();
-		if (accounts.isEmpty() && "".equals(controller.getDefaultFeePayer())) {
+		if ("".equals(feePayer)) {
 			return;
 		}
-		addNamesToCombobox(comboBox);
-
-		var feePayer = controller.getDefaultFeePayer();
-		if ("".equals(feePayer) && !accounts.isEmpty()) {
-			feePayer = accounts.iterator().next().toNicknameAndChecksum(controller.getAccountsList());
-			controller.setDefaultFeePayer(feePayer);
-		}
-		comboBox.getSelectionModel().select(feePayer);
-	}
-
-	private void addNamesToCombobox(ChoiceBox<Object> comboBox) {
-		List<String> accounts = new ArrayList<>();
-		for (var feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
-		}
-		Collections.sort(accounts);
-		noise = true;
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(accounts);
-		if (!accounts.contains(controller.getDefaultFeePayer()) && !"".equals(controller.getDefaultFeePayer())) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().add(controller.getDefaultFeePayer());
-		}
-		comboBox.setValue(controller.getDefaultFeePayer());
-		noise = false;
+		feePayerChoiceBoxA.getSelectionModel().select(feePayer);
+		feePayerChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (t1 instanceof String) {
+				final var text = (String) t1;
+				controller.setDefaultFeePayer(Identifier.parse(text));
+			}
+		});
 	}
 
 	private void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(controller.getDefaultNetworks());
-		var customNetworks = controller.getCustomNetworks();
-		if (!customNetworks.isEmpty()) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().addAll(customNetworks);
-		}
+		controller.networkBoxSetup(comboBox);
 		noise = false;
 		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+	}
+
+	public void addFeePayerAction() {
+		feePayerTextFieldA.setVisible(true);
+		feePayerTextFieldA.requestFocus();
+	}
+
+	private void addCustomFeePayer(Boolean t1) {
+		if (Boolean.FALSE.equals(t1)) {
+			var tempSet = new HashSet<>(controller.getFeePayers());
+			tempSet.addAll(controller.getCustomFeePayers());
+
+			if ("".equals(feePayerTextFieldA.getText())) {
+				return;
+			}
+
+			try {
+				var id = Identifier.parse(feePayerTextFieldA.getText());
+				controller.setDefaultFeePayer(id);
+				if (!tempSet.contains(id)) {
+					controller.addCustomFeePayer(id);
+				}
+				setupFeePayerChoiceBox();
+				feePayerTextFieldA.setVisible(false);
+				feePayerTextFieldA.clear();
+				controller.settingsPaneController.setupFeePayerChoicebox();
+			} catch (Exception e) {
+				logger.error("Cannot parse identifier {}", e.getMessage());
+				PopupMessage.display(ERROR_TITLE, "Cannot parse your input to an account. Please try again.");
+				feePayerTextFieldA.requestFocus();
+				feePayerTextFieldA.setVisible(true);
+			}
+		}
 	}
 
 }
