@@ -171,6 +171,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			"The operation failed due to timeout. Please try again later or contact the network " +
 					"administrator.";
 	public static final String NO_ACCOUNTS_SELECTED_TITLE = "No accounts selected";
+	public static final String ERROR_TITLE = "Error";
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -270,18 +271,21 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			if (feePayer == null) {
 				return;
 			}
-			final var keyFiles = getKeyFiles(feePayer);
-			if (keyFiles.isEmpty()) {
-				PopupMessage.display("Error",
-						"At least one key must be selected in order to sign the transaction");
-				return;
-			}
+
 			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
 			if (accounts.isEmpty()) {
 				PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE,
 						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
 				return;
 			}
+
+			final var keyFiles = getKeyFiles(feePayer);
+			if (keyFiles.isEmpty()) {
+				PopupMessage.display(ERROR_TITLE,
+						"At least one key must be selected in order to sign the transaction");
+				return;
+			}
+
 			if (!(networkChoiceBoxA.getValue() instanceof String)) {
 				return;
 			}
@@ -1621,7 +1625,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 			final var keyFiles = getKeyFiles(feePayer);
 			if (keyFiles.isEmpty()) {
-				PopupMessage.display("Error",
+				PopupMessage.display(ERROR_TITLE,
 						"At least one key must be selected in order to sign the transaction");
 				return;
 			}
@@ -1766,7 +1770,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				controller.settingsPaneController.setupFeePayerChoicebox();
 			} catch (Exception e) {
 				logger.error("Cannot parse identifier {}", e.getMessage());
-				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
+				PopupMessage.display(ERROR_TITLE, "Cannot parse your input to an account. Please try again.");
 				feePayerTextFieldA.requestFocus();
 				feePayerTextFieldA.setVisible(true);
 			}

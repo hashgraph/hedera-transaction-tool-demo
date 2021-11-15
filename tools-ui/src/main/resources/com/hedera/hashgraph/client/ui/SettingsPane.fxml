@@ -392,7 +392,7 @@
 							</Button>
 						</HBox>
 						<HBox alignment="CENTER_LEFT" spacing="7.0" GridPane.rowIndex="2">
-							<Label text=" Fee Payer Account"/>
+							<Label text="Fee Payer Account"/>
 							<Button fx:id="feePayerTooltip" alignment="TOP_CENTER" mnemonicParsing="false"
 									style="-fx-background-color: white; -fx-border-color: white;">
 								<graphic>

@@ -233,6 +233,26 @@ public class AccountsPanePage {
 		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 		return table.getItems();
 	}
+
+	public AccountsPanePage selectCheckBoxInPopup(String name) {
+		final var popupNodes = Objects.requireNonNull(getPopupNodes());
+		CheckBox checkBox = findCheckBoxInPopup(popupNodes, name);
+		driver.clickOn(checkBox);
+		return this;
+	}
+
+	public AccountsPanePage clickOnPopupButton(String name) {
+		final var popupNodes = Objects.requireNonNull(getPopupNodes());
+		Button button = findButtonInPopup(popupNodes, name);
+		driver.clickOn(button);
+		return this;
+	}
+
+	public AccountsPanePage deleteAccount(String nickname) {
+		driver.clickOn(nickname + "T");
+		driver.clickOn("CONTINUE");
+		return this;
+	}
 }
 
 
