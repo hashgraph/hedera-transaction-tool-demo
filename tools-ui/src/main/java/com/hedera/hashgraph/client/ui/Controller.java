@@ -861,16 +861,32 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	String setupChoiceBoxFeePayer(ChoiceBox<Object> choiceBox, TextField textfield) {
-		var feePayer = Identifier.ZERO.equals(getDefaultFeePayer()) ? "" :
-				getDefaultFeePayer().toNicknameAndChecksum(getAccountsList());
+		final var defaultFeePayer = getDefaultFeePayer();
+
+		// In case the default was deleted
+		if (!Identifier.ZERO.equals(defaultFeePayer) && !getCustomFeePayers().contains(defaultFeePayer)) {
+			addCustomFeePayer(defaultFeePayer);
+		}
+
+		var feePayer = Identifier.ZERO.equals(defaultFeePayer) ? "" :
+				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
+
 
 		List<String> accounts = getFeePayers().stream().map(
 				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
 				Collectors.toList());
 
-		List<String> customFeePayers = getCustomFeePayers().stream().map(
-				customFeePayer -> customFeePayer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
-				Collectors.toList());
+		List<String> customFeePayers = new ArrayList<>();
+		getCustomFeePayers().forEach(customFeePayer -> {
+			String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
+			if (accounts.contains(s)) {
+				removeCustomFeePayer(customFeePayer);
+			} else {
+				customFeePayers.add(s);
+			}
+		});
+		customFeePayers.sort(null);
+
 
 		Set<String> allPayers = new HashSet<>(accounts);
 		allPayers.addAll(customFeePayers);
@@ -887,7 +903,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			choiceBox.getItems().addAll(customFeePayers);
 		}
 
-		if ("".equals(feePayer)) {
+		if (Identifier.ZERO.equals(defaultFeePayer)) {
 			if (allPayers.isEmpty()) {
 				textfield.setVisible(true);
 				textfield.requestFocus();
@@ -896,6 +912,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDefaultFeePayer(Identifier.parse(feePayer));
 			}
 		}
+
+		textfield.setVisible(Identifier.ZERO.equals(getDefaultFeePayer()));
+
 		return feePayer;
 	}
 }

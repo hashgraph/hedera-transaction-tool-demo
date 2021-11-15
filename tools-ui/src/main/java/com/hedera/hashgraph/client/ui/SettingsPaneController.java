@@ -242,7 +242,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
-			setupFeePayerChoicebox(feePayerChoicebox, customFeePayerTextField);
+			setupFeePayerChoicebox();
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
@@ -298,7 +298,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				if (!tempSet.contains(id)) {
 					controller.addCustomFeePayer(id);
 				}
-				setupFeePayerChoicebox(feePayerChoicebox, customFeePayerTextField);
+				setupFeePayerChoicebox();
+				controller.accountsPaneController.setupFeePayerChoiceBox();
 			} catch (Exception e) {
 				logger.error("Cannot parse identifier {}", e.getMessage());
 				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
@@ -308,20 +309,25 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerChoicebox(ChoiceBox<Object> choiceBox, TextField textField) {
+	/**
+	 * Setup for fee payer choicebox
+	 */
+	public void setupFeePayerChoicebox() {
 		noise = true;
-		var feePayer = controller.setupChoiceBoxFeePayer(choiceBox, textField);
+		var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
 		noise = false;
 
-		choiceBox.getSelectionModel().select(feePayer);
-		choiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+		if ("".equals(feePayer)) {
+			return;
+		}
+		feePayerChoicebox.getSelectionModel().select(feePayer);
+		feePayerChoicebox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (t1 instanceof String) {
 				final var text = (String) t1;
 				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text)));
 				controller.setDefaultFeePayer(Identifier.parse(text));
 			}
 		});
-
 	}
 
 	public void setupNetworkBox(ChoiceBox<Object> comboBox) {
@@ -789,7 +795,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			final var choice = allPayers.first();
 			feePayerChoicebox.setValue(choice.toNicknameAndChecksum(controller.getAccountsList()));
 			controller.setDefaultFeePayer(choice);
-			setupFeePayerChoicebox(feePayerChoicebox, customFeePayerTextField);
+			setupFeePayerChoicebox();
+			controller.accountsPaneController.setupFeePayerChoiceBox();
 			return;
 		}
 		controller.setDefaultFeePayer(Identifier.ZERO);

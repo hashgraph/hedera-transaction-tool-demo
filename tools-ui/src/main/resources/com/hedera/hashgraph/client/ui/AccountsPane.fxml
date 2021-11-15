@@ -38,7 +38,7 @@
 <?import javafx.scene.layout.VBox?>
 <StackPane fx:id="accountsPane" minHeight="400.0" minWidth="800.0" AnchorPane.bottomAnchor="0.0"
 		   AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
-		   xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
+		   xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/"
 		   fx:controller="com.hedera.hashgraph.client.ui.AccountsPaneController">
 	<VBox>
 		<StackPane.margin>
