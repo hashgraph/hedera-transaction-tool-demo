@@ -42,6 +42,7 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -440,10 +441,10 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.clickRequestAccountsButton()
 				.selectCheckBoxInPopup("genesis")
 				.clickOnPopupButton("ACCEPT")
-				.enterPasswordInPopup(TEST_PASSWORD);
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.enterTextInPopup("treasury");
 
-		write("treasury");
-		type(KeyCode.ENTER);
+
 
 		mainWindowPage.clickOnSettingsButton();
 		assertTrue(find("#deleteCustomPayerButton").isDisabled());

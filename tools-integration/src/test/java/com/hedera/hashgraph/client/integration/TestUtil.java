@@ -38,6 +38,7 @@ import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -438,6 +439,20 @@ public class TestUtil {
 		return null;
 	}
 
+	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof TextField) {
+				return (TextField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
+		}
+		return null;
+	}
 	/**
 	 * Transfers tinibars from one account to another
 	 *
