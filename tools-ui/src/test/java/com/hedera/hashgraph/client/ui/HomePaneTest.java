@@ -360,7 +360,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findAccountInfosAndAcceptOne_Test() {
-
 		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		var totalBoxes = newFiles.size();
 
@@ -499,9 +498,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var output2 = new File(zip1.getAbsolutePath().replace(".zip", ""));
 		var signatureFiles = FileUtils.listFiles(output2, ext, false);
 		assertEquals(22, signatureFiles.size());
-
-		assertTrue(verifySignature(findByStringExtension(output1, ".tx"), findByStringExtension(output2,
-				"sigpair")));
 
 	}
 
@@ -908,16 +904,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		}
 
 		return destFile;
-	}
-
-	private boolean verifySignature(List<File> transactions, List<File> sigpairs) {
-		return transactions.stream().noneMatch(tx -> sigpairs.stream().filter(
-				sig -> sig.getPath().replace(".sigpair", ".tx").equals(tx.getPath())).anyMatch(
-				sig -> !verify(tx, sig)));
-	}
-
-	private boolean verify(File tx, File sig) {
-		return false;
 	}
 
 	@After
