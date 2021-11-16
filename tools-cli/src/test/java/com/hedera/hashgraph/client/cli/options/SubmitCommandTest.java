@@ -62,6 +62,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
+import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -74,35 +75,39 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 	public static final int TEST_SIZE = 10;
 
 	private static PrivateKey generalPrivateKey;
-	private static PublicKey generalPublicKey;
 	private static Client client;
-	private static Map<AccountId, TransactionReceipt> receipts = new HashMap<>();
+	private static final Map<AccountId, TransactionReceipt> receipts = new HashMap<>();
 
 	@BeforeAll
-	static void beforeAll() throws TimeoutException, PrecheckStatusException, ReceiptStatusException,
-			KeyStoreException, IOException {
+	static void beforeAll() throws ReceiptStatusException, KeyStoreException, IOException {
 		var keyStore =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
 		generalPrivateKey = PrivateKey.generate();
-		generalPublicKey = generalPrivateKey.getPublicKey();
+		PublicKey generalPublicKey = generalPrivateKey.getPublicKey();
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 
 		for (int i = 0; i < 2; i++) {
-			TransactionResponse transactionResponse = new AccountCreateTransaction()
-					// The only _required_ property here is `key`
-					.setKey(generalPublicKey)
-					.setInitialBalance(Hbar.fromTinybars(1000000000))
-					.execute(client);
+			TransactionResponse transactionResponse;
+			try {
+				transactionResponse = new AccountCreateTransaction()
+						// The only _required_ property here is `key`
+						.setKey(generalPublicKey)
+						.setInitialBalance(Hbar.fromTinybars(1000000000))
+						.execute(client);
 
-			// This will wait for the receipt to become available
-			TransactionReceipt receipt = transactionResponse.getReceipt(client);
+				// This will wait for the receipt to become available
+				TransactionReceipt receipt = transactionResponse.getReceipt(client);
+				AccountId newAccountId = receipt.accountId;
+				receipts.put(newAccountId, receipt);
 
-			AccountId newAccountId = receipt.accountId;
-			receipts.put(newAccountId, receipt);
+			} catch (TimeoutException | PrecheckStatusException e) {
+				logger.error(e.getMessage());
+			}
+
 		}
 		logger.info("{} accounts created", receipts.size());
 
@@ -136,7 +141,8 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final var iterator = receipts.entrySet().iterator();
 		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
 		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		String transactionLocation = createTransfer(sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+		String transactionLocation =
+				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
 
 		Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
@@ -171,7 +177,8 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final var iterator = receipts.entrySet().iterator();
 		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
 		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		String transactionLocation = createTransfer(sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+		String transactionLocation =
+				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
 		Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
@@ -214,7 +221,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		for (int i = 0; i < TEST_SIZE; i++) {
 			final var transactionValidStart = Instant.now().plusSeconds(count);
 			String transactionLocation =
-					createTransfer(sender.getKey(), receiver.getKey(), transactionValidStart);
+					createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
 			transactions.add(transactionLocation);
 			count += rand.nextInt(5) + 1;
 		}
@@ -247,7 +254,43 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		assertEquals("Hedera Client Runtime: No valid transactions found.", e.getMessage());
 	}
 
-	private String createTransfer(AccountId sender, AccountId receiver,
+	@Test
+	void submitDuplicatedTransaction_test() throws Exception {
+		logger.info("Creating transaction");
+
+		final var iterator = receipts.entrySet().iterator();
+		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		Hbar initialBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		final var transactionValidStart = Instant.now().plusSeconds(30);
+		String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
+		String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(), transactionValidStart);
+
+		logger.info("Submitting transactions");
+
+		final String[] args0 =
+				{ "submit", "-t", transactionLocation0, "-n", "INTEGRATION", "-o", RECEIPTS };
+		ToolsMain.main(args0);
+
+		sleep(1000);
+		final String[] args1 =
+				{ "submit", "-t", transactionLocation1, "-n", "INTEGRATION", "-o", RECEIPTS };
+		ToolsMain.main(args1);
+		logger.info("Transactions submitted");
+
+		Hbar finalBalance = new AccountBalanceQuery()
+				.setAccountId(receiver.getKey())
+				.execute(client)
+				.hbars;
+
+		assertEquals(1000, finalBalance.toTinybars() - initialBalance.toTinybars());
+	}
+
+	private String createTransfer(int node, AccountId sender, AccountId receiver,
 			Instant transactionValidStart) throws HederaClientException {
 
 		var transactionId =
@@ -258,7 +301,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		transferTransaction.setMaxTransactionFee(Hbar.fromTinybars(1000000000))
 				.setTransactionId(transactionId)
 				.setTransactionMemo("test transfer")
-				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
+				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, node)))
 				.setTransactionValidDuration(Duration.ofSeconds(175));
 
 		// Add transfers
@@ -268,7 +311,8 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		transferTransaction.sign(generalPrivateKey);
 
 		final var filePath =
-				TRANSACTIONS + File.separator + transactionId.toString().replace(".", "_").replace("@", "_") + ".txsig";
+				TRANSACTIONS + File.separator + transactionId.toString().replace(".", "_").replace("@",
+						"_") + "_" + node + ".txsig";
 		writeBytes(filePath, transferTransaction.toBytes());
 		return filePath;
 	}

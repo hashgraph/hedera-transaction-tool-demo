@@ -26,15 +26,15 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.4.0-alpha.3</version>
-		<relativePath>../pom.xml</relativePath>
+		<version>0.4.0-alpha.4</version>
+		<relativePath>../</relativePath>
 	</parent>
 
 	<!-- Maven Model Version -->
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-ui</artifactId>
-	<version>0.4.0-alpha.3</version>
+	<version>0.4.0-alpha.4</version>
 	<packaging>jar</packaging>
 
 	<!-- Project Properties -->
@@ -65,7 +65,7 @@
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-core</artifactId>
-			<version>0.4.0-alpha.3</version>
+			<version>0.4.0-alpha.4</version>
 		</dependency>
 
 		<!-- SDK Dependency -->

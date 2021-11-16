@@ -19,6 +19,8 @@
 package com.hedera.hashgraph.client.integration.pages;
 
 import com.hedera.hashgraph.client.integration.TestBase;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 
 import static java.lang.Thread.sleep;
 
@@ -30,4 +32,17 @@ public class SettingsPanePage {
 	}
 
 
+	public SettingsPanePage enterFeePayer(String account) {
+		TextField textField = driver.find("#customFeePayerTextField");
+		if (!textField.isVisible()){
+			driver.clickOn("#addCustomPayerButton");
+		}
+		assert textField.isVisible();
+
+		driver.clickOn(textField);
+		driver.write(account);
+		driver.type(KeyCode.ENTER);
+
+		return this;
+	}
 }

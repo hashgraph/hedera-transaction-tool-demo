@@ -30,60 +30,38 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_RECOVER_KEYS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_RECOVER_KEY_INDEX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_RECOVER_KEY_NICKNAME;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CANCEL_EXPORT_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CANCEL_RECOVER_KEYS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CHOOSE_EXPORT_LOCATION;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CURRENT_ACCOUNT_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_CANCEL_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_CREATE_KEYS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_EXPORT_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_GENERATE_KEYS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_MNEMONIC_ACCEPT_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_MNEMONIC_CLOSE_VIEW;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_MNEMONIC_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_RECOVERY_PHRASE_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_RECOVER_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_BOX;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.RETYPE_PASSWORD_BOX;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.applyPath;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static java.lang.Boolean.parseBoolean;
-import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class KeysPanePage {
-	private static final Logger logger = LogManager.getLogger(KeysPanePage.class);
 
-	private final String defaultStorage =
-			System.getProperty("user.home") + File.separator + "Documents" + File.separator + "TransactionTools";
 	private final TestBase driver;
 
 	public KeysPanePage(TestBase driver) {
@@ -105,12 +83,6 @@ public class KeysPanePage {
 	public KeysPanePage enterNickName(String nickname) {
 		((TextField) driver.find(NICKNAME)).clear();
 		driver.clickOn(NICKNAME).write(nickname);
-		return this;
-	}
-
-	public KeysPanePage enterPassword(String password) {
-		((PasswordField) driver.find(PASSWORD_BOX)).clear();
-		driver.clickOn(PASSWORD_BOX).write(password);
 		return this;
 	}
 
@@ -141,12 +113,6 @@ public class KeysPanePage {
 		throw new HederaClientRuntimeException("Cannot find password field");
 	}
 
-	public KeysPanePage enterRepeatPassword(String password) {
-		((PasswordField) driver.find(RETYPE_PASSWORD_BOX)).clear();
-		driver.clickOn(RETYPE_PASSWORD_BOX).write(password);
-		return this;
-	}
-
 	public KeysPanePage pressCreateKeysButton() {
 		driver.clickOn(KEYS_CREATE_KEYS);
 		return this;
@@ -170,6 +136,7 @@ public class KeysPanePage {
 	public KeysPanePage closeOKPopup() {
 		ObservableList<Node> x = getPopupNodes();
 		HBox hBox = null;
+		assert x != null;
 		if (x.get(0) instanceof VBox) {
 			ObservableList<Node> y = ((VBox) x.get(0)).getChildren();
 			hBox = (y.get(1) instanceof HBox) ? (HBox) y.get(1) : null;
@@ -196,35 +163,6 @@ public class KeysPanePage {
 
 	public KeysPanePage clickOn(Button button) {
 		driver.clickOn(button);
-		return this;
-	}
-
-	public KeysPanePage pressExportKeysButton() {
-		ScrollPane pane = (ScrollPane) driver.find(CURRENT_ACCOUNT_PANE);
-		pane.setVvalue(1.0);
-		driver.clickOn(KEYS_EXPORT_KEYS);
-		return this;
-	}
-
-	public KeysPanePage selectOnTableRow(String query, TableView<String> table) {
-		ObservableList<String> items = table.getItems();
-		for (String line :
-				items) {
-			if (!line.isEmpty() && line.contains(query)) {
-				table.getSelectionModel().select(line);
-			}
-		}
-		return this;
-	}
-
-	public KeysPanePage exportKey(String query) {
-		driver.clickOn(CHOOSE_EXPORT_LOCATION);
-		driver.clickOn(query);
-		return this;
-	}
-
-	public KeysPanePage pressCancelExportKeysButton() {
-		driver.clickOn(CANCEL_EXPORT_KEYS);
 		return this;
 	}
 
@@ -262,24 +200,6 @@ public class KeysPanePage {
 	public KeysPanePage pressRecoveryPhrase() {
 		driver.clickOn(KEYS_RECOVERY_PHRASE_BUTTON);
 		return this;
-	}
-
-	public KeysPanePage scrollToBottom() {
-		Node pane = driver.find("#currentAccountPane");
-		if (pane instanceof ScrollPane) {
-			((ScrollPane) pane).setVvalue(1.0);
-		}
-		return this;
-	}
-
-	public Label getPopupLabel() {
-		VBox vBox = (VBox) getPopupNodes().get(0);
-		for (Node node : vBox.getChildren()) {
-			if (node instanceof Label) {
-				return (Label) node;
-			}
-		}
-		return new Label();
 	}
 
 	public List<Label> getPopupLabels() {
@@ -378,32 +298,12 @@ public class KeysPanePage {
 		return labels;
 	}
 
-	public KeysPanePage enterMnemonicPasswordAndEnter(String password) {
-		enterMnemonicPassword(password);
-		driver.type(KeyCode.ENTER);
-		return this;
-	}
-
-	public KeysPanePage enterMnemonicPassword(String password) {
-		Node p = driver.find(KEYS_MNEMONIC_PASSWORD);
-		assert p instanceof PasswordField;
-		driver.clickOn(p);
-		driver.write(password);
-		return this;
-	}
-
 	public KeysPanePage pressCloseViewMnemonic() {
 		driver.clickOn(KEYS_MNEMONIC_CLOSE_VIEW);
 		return this;
 	}
 
-	public KeysPanePage pressEnterPassword() {
-		driver.clickOn(KEYS_MNEMONIC_ACCEPT_PASSWORD);
-		return this;
-	}
-
 	public KeysPanePage pressPopupButton(String legend) {
-		ObservableList<Node> nodes = getPopupNodes();
 		var buttons = getPopupButtons();
 		for (Button n : buttons) {
 			if (n != null && legend.equals(n.getText())) {
@@ -444,28 +344,6 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public void importAllKeys(String pathToKey) throws IOException {
-		File keyFile = new File(pathToKey);
-		assertTrue(keyFile.isDirectory());
-		if (parseBoolean(System.getProperty("headless"))) {
-			logger.info("Cannot run headless test");
-			File[] allFiles = new File(pathToKey).listFiles(
-					(dir, name) -> name.endsWith(PUB_EXTENSION) || name.endsWith(TXT_EXTENSION) || name.endsWith(
-							PK_EXTENSION));
-			assert allFiles != null;
-			for (File aFile : allFiles) {
-				FileUtils.copyFile(aFile, new File(defaultStorage + "/Keys/" + aFile.getName()));
-			}
-
-		} else {
-			driver.clickOn("#btnImportKeys");
-			String fullPath = keyFile.getAbsolutePath();
-			applyPath(fullPath);
-			driver.push(KeyCode.CONTROL, KeyCode.A);
-			driver.push(KeyCode.ENTER);
-		}
-	}
-
 	public KeysPanePage pressPopupHyperlink() {
 		ObservableList<Node> popupNodes;
 		popupNodes = getPopupNodes();
@@ -489,11 +367,6 @@ public class KeysPanePage {
 		for (String w : words) {
 			setNextWord(w);
 		}
-		return this;
-	}
-
-	public KeysPanePage acceptWords() {
-		driver.clickOn("#recoverPhraseButton");
 		return this;
 	}
 
@@ -532,12 +405,11 @@ public class KeysPanePage {
 
 	}
 
-	public KeysPanePage pressHyperlinkPassword(String message) throws InterruptedException {
+	public KeysPanePage pressHyperlinkPassword(String message) {
 		var links = TestUtil.findHyperlinksInPopup();
 		for (Hyperlink link : links) {
 			if (message.equalsIgnoreCase(link.getText())) {
 				driver.clickOn(link);
-				sleep(500);
 				break;
 			}
 		}

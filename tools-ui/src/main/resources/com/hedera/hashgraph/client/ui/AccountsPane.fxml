@@ -85,9 +85,35 @@
 									</Button>
 								</HBox>
 							</HBox>
-							<ChoiceBox fx:id="feePayerComboboxA" prefWidth="300.0"
-									   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
-									   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+							<HBox alignment="CENTER_LEFT" spacing="20.0" GridPane.columnIndex="1" GridPane.rowIndex="1">
+								<VBox>
+									<TextField fx:id="feePayerTextFieldA" prefWidth="300.0"
+											   promptText="Enter the fee payer account" visible="false"
+											   style="-fx-border-radius: 10; -fx-background-radius: 10; -fx-background-color: white; -fx-border-color: lightgrey;"/>
+									<ChoiceBox fx:id="feePayerChoiceBoxA" prefWidth="300.0"
+											   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"/>
+								</VBox>
+								<Button fx:id="addCustomPayerButton" mnemonicParsing="false"
+										onAction="#addFeePayerAction"
+										style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;">
+									<graphic>
+										<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+												   preserveRatio="true">
+											<Image url="@../../../../../icons/plus.png"/>
+										</ImageView>
+									</graphic>
+								</Button>
+								<Button fx:id="addCustomPayerButton1" mnemonicParsing="false"
+										style="-fx-background-color: white; -fx-border-color: darkgrey; -fx-background-radius: 5; -fx-border-radius: 5;"
+										visible="false">
+									<graphic>
+										<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+												   preserveRatio="true">
+											<Image url="@../../../../../icons/plus.png"/>
+										</ImageView>
+									</graphic>
+								</Button>
+							</HBox>
 							<ChoiceBox fx:id="networkChoiceBoxA" prefWidth="300.0"
 									   style="-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 10; -fx-border-radius: 10;"
 									   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
