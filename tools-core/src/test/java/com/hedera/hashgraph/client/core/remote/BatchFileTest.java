@@ -205,7 +205,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertTrue(label.getText().contains("19:30:00 UTC"));
 
 		label = (Label) gridPane.getChildren().get(7);
-		assertEquals("0.0.3 0.0.4 ", label.getText());
+		assertEquals("0.0.3-tzfmz\n0.0.4-cjcuq\n", label.getText());
 
 		assertTrue(gridPane.getChildren().get(9) instanceof Hyperlink);
 	}

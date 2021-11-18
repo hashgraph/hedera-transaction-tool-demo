@@ -438,9 +438,17 @@ public class BatchFile extends RemoteFile {
 		nLabel.setWrapText(true);
 		detailsGridPane.add(nLabel, 0, 3);
 
+		JsonObject nicknames;
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (HederaClientException e) {
+			logger.error(e);
+			nicknames = new JsonObject();
+		}
+
 		var nodesString = new StringBuilder();
 		for (var n : getNodeAccountID()) {
-			nodesString.append(n.toReadableString()).append(" ");
+			nodesString.append(n.toNicknameAndChecksum(nicknames)).append("\n");
 		}
 
 		detailsGridPane.add(new Label(nodesString.toString()), 1, 3);
