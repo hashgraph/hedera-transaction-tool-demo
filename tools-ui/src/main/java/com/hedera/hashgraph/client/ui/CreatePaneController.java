@@ -307,7 +307,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label expirationLabel;
 	public Label systemCreateLocalTimeLabel;
 	public Label shaLabel;
-	public Label invalidTransactionFee;
 	public Label freezeUTCTimeLabel;
 
 	// Error messages
@@ -332,6 +331,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label contentsFilePathError;
 	public Label freezeTimeErrorLabel;
 	public Label invalidFreezeFile;
+	public Label invalidTransactionFee;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -2066,12 +2066,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setNowValidStart.setOnAction(
 				actionEvent -> {
-					setNowTime(Instant.now().plusMillis(1));
-					// Also set the expiration date for System Modify at the same time
+					setNowTime(Instant.now());
 
-					setTimeInForm(Instant.now().plusMillis(1), timeZoneSystem, hourFieldSystem, minuteFieldSystem,
-							secondsFieldSystem,
-							datePickerSystem);
+					// Also set the expiration date for System Modify at the same time
+					setTimeInForm(Instant.now(), timeZoneSystem, hourFieldSystem, minuteFieldSystem,
+							secondsFieldSystem, datePickerSystem);
 				});
 
 		createCharsLeft.setText(String.format("Characters left: %d", LIMIT));
@@ -2130,6 +2129,30 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						zone, errorLabel));
 
 		// region FOCUS EVENTS
+		hour.setOnKeyPressed(event -> {
+			if (KeyCode.ENTER.equals(event.getCode())) {
+				hour.getParent().requestFocus();
+			}
+		});
+
+		minute.setOnKeyPressed(event -> {
+			if (KeyCode.ENTER.equals(event.getCode())) {
+				minute.getParent().requestFocus();
+			}
+		});
+
+		seconds.setOnKeyPressed(event -> {
+			if (KeyCode.ENTER.equals(event.getCode())) {
+				seconds.getParent().requestFocus();
+			}
+		});
+
+		nanos.setOnKeyPressed(event -> {
+			if (KeyCode.ENTER.equals(event.getCode())) {
+				nanos.getParent().requestFocus();
+			}
+		});
+
 		hour.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Hours text field changed to: {}", hour.getText());
@@ -2145,6 +2168,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		seconds.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Second text field changed to: {}", seconds.getText());
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
+			}
+		});
+		nanos.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Nanos text field changed to: {}", nanos.getText());
 				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
@@ -2441,8 +2470,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setNowTime(Instant now) {
-		setTimeInForm(now, timeZone, hourField, minuteField, secondsField, datePicker);
 		this.nanosField.setText(String.format("%09d", now.atZone(ZoneId.of(timeZone.getID())).getNano()));
+		setTimeInForm(now, timeZone, hourField, minuteField, secondsField, datePicker);
+		setLocalDateString(datePicker, hourField, minuteField, secondsField, nanosField, timeZone, createUTCTimeLabel, invalidDate);
 	}
 
 	private void setTimeInForm(Instant start, TimeZone timeZone, TextField hourField,
@@ -2465,16 +2495,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				LocalTime.of(Integer.parseInt(hourField.getText()), Integer.parseInt(minuteField.getText()),
 						Integer.parseInt(secondsField.getText())));
 		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of(timeZone.getID())).toInstant());
+		final var tvsInstant = transactionValidStart.toInstant().plusNanos(Long.parseLong(nanos.getText()));
+		final var nowInstant = Instant.now();
 
-		final var beforeNow = transactionValidStart.toInstant().isBefore(Instant.now());
+		final var beforeNow = tvsInstant.isBefore(nowInstant);
 		label.setStyle("-fx-text-fill: " + (beforeNow ? "red" : "black"));
 		invalidDate.setVisible(beforeNow);
 
 		var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
 
-		label.setText(dateTimeFormatter.format(transactionValidStart.toInstant().plusNanos(
-				Long.parseLong(nanos.getText()))) + " Coordinated Universal Time");
+		label.setText(dateTimeFormatter.format(tvsInstant) + " Coordinated Universal Time");
 	}
 
 	private Timestamp getDate(DatePicker dates, TextField hours, TextField minutes, TextField seconds, ZoneId zoneId) {
