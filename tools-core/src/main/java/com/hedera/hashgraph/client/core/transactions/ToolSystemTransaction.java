@@ -59,16 +59,6 @@ public class ToolSystemTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		return super.equals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode() + entity.hashCode() + expiration.hashCode();
-	}
-
 	public ToolSystemTransaction(File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.isDelete = transaction instanceof SystemDeleteTransaction;
@@ -90,6 +80,22 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 		this.expiration = (isDelete) ? ((SystemDeleteTransaction) transaction).getExpirationTime() : null;
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;
+	}
+
+	public Identifier getEntity() {
+		return entity;
+	}
+
+	public Instant getExpiration() {
+		return expiration;
+	}
+
+	public boolean isFile() {
+		return isFile;
+	}
+
+	public boolean isDelete() {
+		return isDelete;
 	}
 
 	@Override
@@ -170,22 +176,6 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 	}
 
-	public Identifier getEntity() {
-		return entity;
-	}
-
-	public Instant getExpiration() {
-		return expiration;
-	}
-
-	public boolean isFile() {
-		return isFile;
-	}
-
-	public boolean isDelete() {
-		return isDelete;
-	}
-
 	@Override
 	public JsonObject asJson() {
 		var asJson = super.asJson();
@@ -205,4 +195,15 @@ public class ToolSystemTransaction extends ToolTransaction {
 		accountIds.add(new Identifier(0, 0, 50).asAccount());
 		return accountIds;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
 }

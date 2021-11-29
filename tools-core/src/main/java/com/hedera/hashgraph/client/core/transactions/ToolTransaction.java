@@ -36,6 +36,7 @@ import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
+import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -161,12 +162,12 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (transaction instanceof AccountUpdateTransaction) {
 			return new ToolCryptoUpdateTransaction(inputFile);
 		}
-
 		if (transaction instanceof SystemDeleteTransaction || transaction instanceof SystemUndeleteTransaction) {
 			return new ToolSystemTransaction(inputFile);
 		}
-
-
+		if (transaction instanceof FreezeTransaction){
+			return new ToolFreezeTransaction(inputFile);
+		}
 		return new ToolTransaction(inputFile);
 	}
 
@@ -212,12 +213,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public byte[] sign(PrivateKey key) throws HederaClientRuntimeException {
-		var signedTransaction = transaction.sign(key);
-		if (signedTransaction.getSignatures().size() == 0) {
-			return new byte[64];
-		}
-		var entry = signedTransaction.getSignatures().entrySet().iterator().next();
-		return entry.getValue().get(key.getPublicKey());
+		return key.signTransaction(transaction);
 	}
 
 	@Override
@@ -350,7 +346,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		try {
 			if (input.has(NETWORK_FIELD_NAME)) {
 				final var networkName = input.get(NETWORK_FIELD_NAME).getAsString();
-				//todo: introduce check for custom networks
 				network = NetworkEnum.valueOf(networkName);
 			}
 		} catch (Exception e) {
@@ -447,7 +442,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		return Arrays.hashCode(transaction.toBytes());
 	}
 
 	@Override

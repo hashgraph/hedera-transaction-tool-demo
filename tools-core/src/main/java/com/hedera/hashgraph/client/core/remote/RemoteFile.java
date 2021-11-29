@@ -31,6 +31,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.MetadataAction;
+import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -382,7 +383,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	/**
 	 * Bring back the file from the history to active. Used if more signatures are required
-	 *
 	 */
 	public void moveFromHistory() throws HederaClientException {
 		setHistory(false);
@@ -430,7 +430,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 */
 	public VBox buildDetailsBox() throws HederaClientException {
 		var fileVBox = buildFileVBox(isHistory());
-		var titleLabel = (TRANSACTION.equals(type)) ? setupTitle(
+		var titleLabel = TRANSACTION.equals(type) ? setupTitle(
 				((TransactionFile) this).getTransactionType().toString()) : setupTitle(type.toKind());
 
 
@@ -564,11 +564,36 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	}
 
 	private Label setupTitle(String title) {
-		if ("Content Transaction".equals(title)) {
-			final var transaction = (ToolSystemTransaction) ((TransactionFile) this).getTransaction();
-			title = ((transaction.isDelete()) ? "Remove " : "Restore ") + (transaction.isFile() ? "File" : "Contract");
-		}
 		var titleLabel = new Label(title);
+		if ("Content Transaction".equals(title)) {
+			final var toolSystemTransaction = (ToolSystemTransaction) ((TransactionFile) this).getTransaction();
+			var newTitle =
+					(toolSystemTransaction.isDelete() ? "Remove " : "Restore ") + (toolSystemTransaction.isFile() ?
+							"File" : "Contract");
+			titleLabel.setText(newTitle);
+		}
+		if ("Freeze Transaction".equals(title)) {
+			final var freezeType = ((ToolFreezeTransaction) ((TransactionFile) this).getTransaction()).getFreezeType();
+			switch (freezeType) {
+				case FREEZE_ONLY:
+					titleLabel.setText("Freeze Only Transaction");
+					break;
+				case PREPARE_UPGRADE:
+					titleLabel.setText("Prepare Upgrade Transaction");
+					break;
+				case FREEZE_UPGRADE:
+					titleLabel.setText("Freeze and Upgrade Transaction");
+					break;
+				case FREEZE_ABORT:
+					titleLabel.setText("Abort Freeze Transaction");
+					break;
+				case TELEMETRY_UPGRADE:
+					titleLabel.setText("Telemetry Upgrade Transaction");
+					break;
+				default:
+					throw new IllegalStateException("Unexpected value: " + freezeType);
+			}
+		}
 		titleLabel.styleProperty().bind(
 				Bindings.concat("-fx-font-size: ", Constants.FONT_SIZE.asString(), "; -fx-font-weight: bold;"));
 		return titleLabel;
@@ -603,7 +628,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			return new TextArea();
 		}
 
-		var authorMessage = "From: " + ((comments.has("Author")) ? comments.get("Author").getAsString() : "");
+		var authorMessage = "From: " + (comments.has("Author") ? comments.get("Author").getAsString() : "");
 		var contentsMessage = comments.get("Contents").getAsString();
 
 		var textArea = new TextArea(String.format("%s%n%s", authorMessage, contentsMessage));

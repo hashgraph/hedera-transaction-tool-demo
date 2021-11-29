@@ -100,7 +100,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		super();
 	}
 
-	public LargeBinaryFile(FileDetails fileDetails) {
+	public LargeBinaryFile(FileDetails fileDetails) throws HederaClientException {
 		super(fileDetails);
 
 		var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
@@ -182,7 +182,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		this.filename = details.get("filename").getAsString();
 		this.fileID = fileIdentifier;
-		this.chunkSize = details.has("chunkSize") ? details.get("chunkSize").getAsInt() : 4096;
+		this.chunkSize = details.has("chunkSize") ? details.get("chunkSize").getAsInt() : 1024;
+		if (getChunkSize() > 1024) {
+			throw new HederaClientException("Maximum chunk size is 1024 for unsigned file update transactions.");
+		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
 				Duration.ofSeconds(details.has("validDuration") ? details.get("validDuration").getAsLong() : 120);

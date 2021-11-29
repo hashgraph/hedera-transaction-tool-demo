@@ -185,6 +185,6 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + account.hashCode() + key.hashCode() + autoRenewDuration.hashCode();
+		return super.hashCode();
 	}
 }

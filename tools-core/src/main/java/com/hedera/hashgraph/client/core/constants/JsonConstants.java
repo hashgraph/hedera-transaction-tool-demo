@@ -19,6 +19,8 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class JsonConstants {
+
+
 	private JsonConstants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -67,5 +69,10 @@ public class JsonConstants {
 
 	public static final String H_BARS = "hBars";
 	public static final String TINY_BARS = "tinyBars";
+
+	public static final String FREEZE_START_TIME_FIELD_NAME = "freezeStartTime";
+	public static final String FREEZE_TYPE_FIELD_NAME = "freezeType";
+	public static final String FREEZE_FILE_ID_FIELD_NAME = "freezeFileID";
+	public static final String FREEZE_FILE_HASH_FIELD_NAME = "freezeFileHash";
 
 }

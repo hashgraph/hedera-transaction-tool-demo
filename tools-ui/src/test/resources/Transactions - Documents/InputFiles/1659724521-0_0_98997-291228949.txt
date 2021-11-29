@@ -1,0 +1,1 @@
+{"Author":"test1.council2@hederacouncil.org","Contents":"delete contract to be sent 2022-08-05 at 13:35:21 (CST). Expiration 2023-05-29 at 03:15:08 (CST)","Timestamp":"2020-08-19 13:57:52"}

@@ -411,8 +411,7 @@ class ToolTransactionTest {
 
 		var transfer = new ToolTransferTransaction(testJson);
 		var sigMapBefore = transfer.getTransaction().getSignatures();
-		assertTrue(sigMapBefore.containsKey(nodeId));
-		assertEquals(0, sigMapBefore.get(nodeId).size());
+		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(signatures);
 		var sigMapAfter = transfer.getTransaction().getSignatures();
@@ -423,7 +422,9 @@ class ToolTransactionTest {
 		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			assertTrue(collatedMap.containsKey(entry.getKey()));
 			assertArrayEquals(collatedMap.get(entry.getKey()), entry.getValue());
+			entry.getKey().verifyTransaction(transfer.getTransaction());
 		}
+
 
 	}
 
@@ -488,8 +489,7 @@ class ToolTransactionTest {
 
 		var transfer = new ToolTransferTransaction(testJson);
 		var sigMapBefore = transfer.getTransaction().getSignatures();
-		assertTrue(sigMapBefore.containsKey(nodeId));
-		assertEquals(0, sigMapBefore.get(nodeId).size());
+		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(pairs);
 		var sigMapAfter = transfer.getTransaction().getSignatures();
@@ -500,6 +500,7 @@ class ToolTransactionTest {
 		for (SignaturePair pair : pairs) {
 			assertTrue(collatedMap.containsKey(pair.getPublicKey()));
 			assertArrayEquals(pair.getSignature(), collatedMap.get(pair.getPublicKey()));
+			pair.getPublicKey().verifyTransaction(transfer.getTransaction());
 		}
 	}
 
