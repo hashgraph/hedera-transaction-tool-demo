@@ -462,6 +462,20 @@ public class TestUtil {
 		return null;
 	}
 
+	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof TextField) {
+				return (TextField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
+		}
+		return null;
+	}
 	/**
 	 * Transfers tinibars from one account to another
 	 *
