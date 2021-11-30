@@ -349,7 +349,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 		try {
 			if (input.has(NETWORK_FIELD_NAME)) {
-				network = NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString());
+				final var networkName = input.get(NETWORK_FIELD_NAME).getAsString();
+				//todo: introduce check for custom networks
+				network = NetworkEnum.valueOf(networkName);
 			}
 		} catch (Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NETWORK_FIELD_NAME);

@@ -26,7 +26,10 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import com.hedera.hashgraph.client.ui.utilities.AutoCompleteTextField;
 import com.hedera.hashgraph.client.ui.utilities.KeysTableRow;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
@@ -55,7 +58,9 @@ import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -93,6 +98,9 @@ public class KeysPaneTest extends TestBase {
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	private final String storedMnemonic =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	@Before
 	public void setUp() throws Exception {
@@ -160,11 +168,13 @@ public class KeysPaneTest extends TestBase {
 
 	@Test(expected = FxRobotException.class)
 	public void clickOnBogusItem_Test() {
+		logger.info("clickOnBogusItem_Test");
 		clickOn("#exterminate");
 	}
 
 	@Test
 	public void changeMnemonicPassword_test() {
+		logger.info("changeMnemonicPassword_test");
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword(PASSWORD);
 		VBox gridPaneVBox = find("#recoveryVBox");
@@ -212,7 +222,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateKeyWorkflow_Test() throws KeyStoreException {
-		logger.info("Generate keys test");
+		logger.info("generateKeyWorkflow_Test");
 		assertTrue(find(KEYS_GENERATE_KEYS).isVisible());
 
 		assertTrue(find(KEYS_RECOVER_KEYS).isVisible());
@@ -313,7 +323,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void recoverKey_Test() throws KeyStoreException {
-		logger.info("Recover keys test");
+		logger.info("recoverKey_Test");
 		var oldKeyStore = Ed25519KeyStore.read(PASSWORD.toCharArray(),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
 
@@ -380,7 +390,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void showRecoveryPhrase_Test() {
-		logger.info("Recovery phrase button testing");
+		logger.info("showRecoveryPhrase_Test");
 		keysPanePage.pressRecoveryPhrase().enterPopupPassword(PASSWORD);
 		assertTrue(find("#recoveryVBox").isVisible());
 		VBox gridPaneVBox1 = find("#recoveryVBox");
@@ -401,6 +411,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateMissingPublicKey_Test() throws IOException {
+		logger.info("generateMissingPublicKey_Test");
 		keysPanePage.createKey("test", PASSWORD);
 		mainWindowPage.clickOnHomeButton();
 		FileUtils.moveFile(new File(DEFAULT_STORAGE + "/Keys/test.pub"),
@@ -416,6 +427,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void generateMultipleMissingPublicKeys_Test() throws IOException {
+		logger.info("generateMultipleMissingPublicKeys_Test");
 		keysPanePage.createKey("test1", PASSWORD);
 		keysPanePage.createKey("test2", PASSWORD);
 		keysPanePage.createKey("test3", PASSWORD);
@@ -452,6 +464,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void showKeyDetails_test() throws IOException {
+		logger.info("showKeyDetails_test");
 		keysPanePage.createKey("test1", PASSWORD);
 		keysPanePage.createKey("test2", PASSWORD);
 		keysPanePage.createKey("test3", PASSWORD);
@@ -582,6 +595,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void changeKeyPassword_test() {
+		logger.info("changeKeyPassword_test");
 		keysPanePage.createKey("test1", PASSWORD);
 		VBox tableBox = find(SIGNING_KEYS_VBOX);
 		assertNotNull(tableBox);
@@ -662,6 +676,7 @@ public class KeysPaneTest extends TestBase {
 
 	@Test
 	public void linkPhraseToKey_Test() throws IOException, KeyStoreException {
+		logger.info("linkPhraseToKey_Test");
 		keysPanePage.createKey("test1", PASSWORD);
 		removeLineFromPem(DEFAULT_STORAGE + "Keys/test1.pem");
 

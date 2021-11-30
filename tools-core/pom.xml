@@ -25,14 +25,14 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.3.0</version>
+		<version>0.4.0</version>
 	</parent>
 
 	<!-- Maven Model Version -->
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-core</artifactId>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 	<packaging>jar</packaging>
 
 	<dependencyManagement>

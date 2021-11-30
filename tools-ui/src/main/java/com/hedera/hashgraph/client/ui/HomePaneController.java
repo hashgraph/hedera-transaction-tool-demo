@@ -207,7 +207,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var count = 0;
 		final var outs = controller.getOneDriveCredentials();
 		for (var inputLocation : outs.keySet()) {
-			count += Objects.requireNonNull(new File(inputLocation, "InputFiles").listFiles()).length;
+			count += Objects.requireNonNull(new File(inputLocation, INPUT_FILES).listFiles()).length;
 		}
 		return count;
 	}

@@ -17,14 +17,28 @@
  */
 
 package com.hedera.hashgraph.client.integration;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
+import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -37,7 +51,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.testfx.api.FxRobot;
-import org.testfx.util.WaitForAsyncUtils;
 
 import javax.swing.JFileChooser;
 import java.awt.Toolkit;
@@ -45,11 +58,30 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.nio.file.Paths;
+import java.security.KeyStoreException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_NUMBER;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_KEY_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.REALM_NUMBER;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.SHARD_NUMBER;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 import static org.junit.Assert.assertNotNull;
 
 public class TestUtil {
@@ -57,59 +89,70 @@ public class TestUtil {
 	private static final TestBase driver = new TestBase();
 	private static FxRobot robot = new FxRobot();
 	private static final Logger logger = LogManager.getLogger(TestUtil.class);
+	private static final String RESOURCES_DIRECTORY = "src/test/resources";
 
-	public static void applyPath(String filePath) {
-		driver.press(KeyCode.COMMAND);
-		driver.press(KeyCode.SHIFT);
-		driver.press(KeyCode.G);
-		driver.release(KeyCode.G);
-		driver.release(KeyCode.SHIFT);
-		driver.release(KeyCode.COMMAND);
+	/**
+	 * Create a json input for testing single transfers
+	 *
+	 * @param tinyBars
+	 * 		amount to be transferred between accounts
+	 * @param fromAccount
+	 * 		sender
+	 * @param toAccount
+	 * 		receiver
+	 * @return a json object
+	 */
+	public static JsonObject getJsonInputCT(long tinyBars, long fromAccount, long toAccount) {
+		JsonObject testJson = new JsonObject();
+		File key = new File(RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		var charPath = filePath.toCharArray();
-		for (var c : charPath) {
-			pressButton(c);
-		}
+		JsonObject feeJson = new JsonObject();
+		feeJson.addProperty(H_BARS, 0);
+		feeJson.addProperty(TINY_BARS, 100000000);
 
-		driver.press(KeyCode.ENTER);
-		driver.release(KeyCode.ENTER);
+		JsonObject feePayerAccount = new JsonObject();
+		feePayerAccount.addProperty(REALM_NUMBER, 0);
+		feePayerAccount.addProperty(SHARD_NUMBER, 0);
+		feePayerAccount.addProperty(ACCOUNT_NUMBER, fromAccount);
 
-		driver.push(KeyCode.ENTER);
+		JsonObject node = new JsonObject();
+		node.addProperty(REALM_NUMBER, 0);
+		node.addProperty(SHARD_NUMBER, 0);
+		node.addProperty(ACCOUNT_NUMBER, 3);
 
-		WaitForAsyncUtils.waitForFxEvents(1);
+		testJson.addProperty(FEE_PAYER_KEY_LOCATION, key.getAbsolutePath());
+		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
+		testJson.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+
+		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(10).asRFCString());
+
+		testJson.add(NODE_ID_FIELD_NAME, node);
+		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
+
+		JsonArray jsonArray = new JsonArray();
+		JsonObject from = new JsonObject();
+		from.add(ACCOUNT, new Identifier(0, 0, fromAccount).asJSON());
+		from.addProperty(AMOUNT, -tinyBars);
+
+		JsonObject to = new JsonObject();
+		to.add(ACCOUNT, new Identifier(0, 0, toAccount).asJSON());
+		to.addProperty(AMOUNT, tinyBars);
+		jsonArray.add(from);
+		jsonArray.add(to);
+
+		testJson.add(TRANSFERS, jsonArray);
+
+		var startInstant = Instant.now().plusMillis(500);
+		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(startInstant).asRFCString());
+
+		testJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, 120);
+
+		testJson.addProperty(MEMO_FIELD_NAME, "a memo to go with the transaction");
+
+		return testJson;
+
 	}
 
-	private static void pressButton(char c) {
-		if (Character.isLetter(c)) {
-			if (Character.isUpperCase(c)) {
-				driver.press(KeyCode.SHIFT);
-				driver.press(KeyCode.getKeyCode(String.valueOf(c)));
-				driver.release(KeyCode.getKeyCode(String.valueOf(c)));
-				driver.release(KeyCode.SHIFT);
-			} else {
-				driver.press(KeyCode.getKeyCode(String.valueOf(c).toUpperCase()));
-				driver.release(KeyCode.getKeyCode(String.valueOf(c).toUpperCase()));
-			}
-		} else if (Character.isDigit(c)) {
-			driver.press(KeyCode.getKeyCode(String.valueOf(c).toUpperCase()));
-			driver.release(KeyCode.getKeyCode(String.valueOf(c).toUpperCase()));
-		} else if (c == '/') {
-			driver.press(KeyCode.SLASH);
-			driver.release(KeyCode.SLASH);
-		} else if (c == '.') {
-			driver.press(KeyCode.PERIOD);
-			driver.release(KeyCode.PERIOD);
-		} else if (c == '-') {
-			driver.press(KeyCode.MINUS);
-			driver.release(KeyCode.MINUS);
-		} else if (c == '_') {
-			driver.press(KeyCode.SHIFT);
-			driver.press(KeyCode.MINUS);
-			driver.release(KeyCode.MINUS);
-			driver.release(KeyCode.SHIFT);
-		}
-
-	}
 
 	public static Button findButton(String buttonName, String buttonMessage) {
 		Button button = driver.find(buttonName);
@@ -284,6 +327,39 @@ public class TestUtil {
 	}
 
 	/**
+	 * Given a list of nodes that originate in a popup, find the checkbox whose text is equal to the provided legend
+	 *
+	 * @param popupNodes
+	 * 		a list of nodes
+	 * @param legend
+	 * 		the text in the button
+	 * @return a button
+	 */
+	public static CheckBox findCheckBoxInPopup(ObservableList<Node> popupNodes, String legend){
+		for (var popupNode : popupNodes) {
+			if (popupNode instanceof CheckBox && legend.equalsIgnoreCase(((CheckBox) popupNode).getText())) {
+				return (CheckBox) popupNode;
+			} else if (popupNode instanceof VBox) {
+				var f = findCheckBoxInPopup(((VBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof HBox) {
+				var f = findCheckBoxInPopup(((HBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof GridPane) {
+				var f = findCheckBoxInPopup(((GridPane) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Initialize keys folder with test keys.
 	 */
 	public static void copyCreatePaneKeys() {
@@ -350,10 +426,54 @@ public class TestUtil {
 
 	public static PasswordField findPasswordInPopup(ObservableList<Node> popupNodes) {
 		for (Node popupNode : popupNodes) {
-			if (popupNode instanceof PasswordField) return (PasswordField) popupNode;
-			if (popupNode instanceof HBox) return findPasswordInPopup(((HBox) popupNode).getChildren());
-			if (popupNode instanceof VBox) return findPasswordInPopup(((VBox) popupNode).getChildren());
+			if (popupNode instanceof PasswordField) {
+				return (PasswordField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
 		}
 		return null;
 	}
+
+	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof TextField) {
+				return (TextField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
+		}
+		return null;
+	}
+	/**
+	 * Transfers tinibars from one account to another
+	 *
+	 * @param payer
+	 * 		payer account (key is genesis)
+	 * @param receiver
+	 * 		receover account
+	 * @param amount
+	 * 		the amount to be transfered
+	 */
+	public static void transfer(AccountId payer, AccountId receiver, Hbar amount) throws HederaClientException,
+			InterruptedException, KeyStoreException {
+		var keyStore =
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
+		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		JsonObject testJson = getJsonInputCT(amount.toTinybars(), payer.num, receiver.num);
+		ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
+		transaction.sign(genesisKey);
+		transaction.submit();
+
+	}
+
+
 }

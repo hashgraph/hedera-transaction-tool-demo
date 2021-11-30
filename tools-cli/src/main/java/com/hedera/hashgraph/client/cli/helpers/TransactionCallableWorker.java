@@ -42,10 +42,10 @@ import static java.lang.Thread.sleep;
 public class TransactionCallableWorker implements Callable<String>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
 
-	private Transaction<?> tx;
-	private int delay;
-	private String location;
-	private Client client;
+	private final Transaction<?> tx;
+	private final int delay;
+	private final String location;
+	private final Client client;
 
 	public TransactionCallableWorker(Transaction<?> tx, int delay, String location, Client client) {
 		this.tx = tx;
@@ -58,7 +58,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	public String call() throws Exception {
 		assert tx != null;
 		assert tx.getTransactionValidDuration() != null;
-		if (Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart.plusSeconds(
+		if (Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
 				tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
 			throw new HederaClientRuntimeException("Transaction happens in the past.");
 		}
@@ -67,25 +67,29 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
-		var response = submit(tx);
-		assert response != null;
+		try {
+			var response = submit(tx);
+			assert response != null;
 
-		final var status = response.getReceipt(client).status;
-		logger.info("Worker: Transaction: {}, final status: {}", idString, status);
+			final var status = response.getReceipt(client).status;
+			logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
-		var storageLocation = storeResponse(response, idString);
-		if (status.equals(Status.SUCCESS)) {
-			return storageLocation;
-		} else {
-			return "";
+			var storageLocation = storeResponse(response, idString);
+			if (status.equals(Status.SUCCESS)) {
+				return storageLocation;
+			}
+		} catch (TimeoutException | PrecheckStatusException | ReceiptStatusException | HederaClientException e) {
+			logger.info("Worker: Transaction: {}, failed with error: {}", idString, e.getMessage());
 		}
+		return "";
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
 		assert tx != null;
 		var startTime = Objects.requireNonNull(tx.getTransactionId()).validStart;
+		assert startTime != null;
 		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond() - delay;
-		if (difference < 1) {
+		if (difference < 0) {
 			logger.info("Transactions occur in the future. Sleeping for {} second(s)", -difference);
 			sleep(-1000 * difference);
 		}

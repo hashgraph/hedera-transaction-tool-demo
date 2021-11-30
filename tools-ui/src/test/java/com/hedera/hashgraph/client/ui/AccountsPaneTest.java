@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
@@ -29,6 +30,7 @@ import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -41,6 +43,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import junitparams.JUnitParamsRunner;
@@ -56,21 +60,28 @@ import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertNull;
@@ -137,8 +148,28 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
+		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pem"));
+		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pub"));
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+
+		final var customNetworksFolder = new File(DEFAULT_STORAGE, "Files/.System/CustomNetworks/");
+		if (customNetworksFolder.mkdirs()) {
+			logger.info("Custom networks folder created: {}", customNetworksFolder.getAbsolutePath());
+		}
+
+		Files.copy(Path.of("src/test/resources/customNetwork.json"),
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
+		properties.setCustomNetworks(Collections.singleton("integration"));
+
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+
+		properties.setCurrentNetwork("integration", defaultNetworks);
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -190,8 +221,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		TableView tableView = (TableView) scrollPane.getContent();
 		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
-
+		sleep(100);
 		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+
 		assertTrue(vBox.isVisible());
 
 		assertTrue(findTextInBox("Never", vBox));
@@ -233,8 +265,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		clickOn(cancelButton);
 
-		assertTrue((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info")).exists());
-		assertTrue((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json")).exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
 
 		// delete
 		clickOn(ZERO_TWO + "T");
@@ -245,9 +277,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertNotNull(continueButton);
 
 		clickOn(continueButton);
-		assertFalse((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info")).exists());
-		assertFalse((new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json")).exists());
-
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/DELETED/0.0.2.zip").exists());
 	}
 
 	@Test
@@ -273,14 +305,10 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
 		TableView tableView = (TableView) scrollPane.getContent();
 		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
-
+		sleep(100);
 		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+
 		assertTrue(vBox.isVisible());
-
-
-		assertTrue(findTextInBox(sdf.format(date), vBox));
-
-
 		accountsPanePage.deleteAccount("thousand-five");
 
 	}
@@ -307,59 +335,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertFalse(items.contains("seventy"));
 	}
 
-	private List<String> getNicknames() {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			items.add(((AccountLineInformation) item).getNickname());
-
-		}
-		return items;
-	}
-
-	private boolean checkBalance(String nickname, String balance) {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			if (((AccountLineInformation) item).getBalance().equals(Hbar.fromString(balance.replace(" ", "")))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-
-	private String accountID(String s) {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
-		assertTrue(table instanceof TableView);
-
-		final TableView accountTable = (TableView) table;
-
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
-			assertTrue(item instanceof AccountLineInformation);
-			if (((AccountLineInformation) item).getNickname().contains(s)) {
-				return ((AccountLineInformation) item).getAccount().toReadableString();
-			}
-		}
-		return "";
-	}
-
 	@Test
-	public void loadSameAccount_Test() {
+	public void loadSameAccount_Test() throws HederaClientException {
 
 		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
 				"/src/test/resources/AccountsInfo";
@@ -368,14 +345,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
 
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
-
-		accountsPanePage.dontReplaceAccount();
-		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		accountsPanePage.replaceAccount();
 		assertTrue(checkBalance(ZERO_TWO, "46 479 878 904.04 547 520"));
-	}
 
+	}
 
 	@Test
 	public void loadTwoAccountsSameNickname_Test() {
@@ -402,6 +374,54 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertEquals(1, items2.size());
 		accountsPanePage.deleteAccount("seventy");
 
+	}
+
+	@Test
+	public void checkAccountHistoryPopup_test() throws InterruptedException, HederaClientException {
+		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+				"/src/test/resources/AccountsInfo";
+		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2_integration.info")
+				.enterAccountNickName(ZERO_TWO)
+				.closeNicknamePopup()
+				.selectRow(ZERO_TWO)
+				.requestSelectedInfo()
+				.enterPasswordInPopup(TEST_PASSWORD);
+
+		File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith("0.0.2");
+			}
+		});
+
+		assertNotNull(archive);
+		assertEquals(2, archive.length);
+
+		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		assertEquals(1, table.getItems().size());
+		var line = (AccountHistoryPopup.TableLine)table.getItems().get(0);
+		doubleClickOn(line.getDate());
+		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		assertEquals(9, tableFromPopup.getItems().size());
+
+		accountsPanePage.pressPopupButton("CLOSE")
+				.pressPopupButton("CLOSE");
+	}
+
+	@Test
+	public void noFeePayerSelected_test() {
+		clickOn("Add accounts");
+		clickOn("#accountsToUpdateTextField");
+		write("12345");
+		clickOn("#selectAccountsButton");
+		var nodes1 = getPopupNodes();
+		assertNotNull(nodes1);
+		assertEquals(1, nodes1.size());
+		assertTrue(nodes1.get(0) instanceof VBox);
+		var children = ((VBox)nodes1.get(0)).getChildren();
+		assertTrue(children.get(0) instanceof Label);
+		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
+		clickOn("CONTINUE");
 	}
 
 	@After
@@ -472,18 +492,20 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return (ScrollPane) vBox.getChildren().get(i);
 	}
 
-
 	private boolean findTextInBox(String text, Node box) {
 		ObservableList<Node> nodes = null;
 		if (box instanceof VBox) {
 			nodes = ((VBox) box).getChildren();
 		} else if (box instanceof HBox) {
 			nodes = ((HBox) box).getChildren();
+		} else if (box instanceof GridPane) {
+			nodes = ((GridPane) box).getChildren();
 		} else {
 			return false;
 		}
 		for (Node node : nodes) {
-			if ((node instanceof HBox || node instanceof VBox) && findTextInBox(text, node)) {
+			if ((node instanceof HBox || node instanceof VBox || node instanceof GridPane) && findTextInBox(text,
+					node)) {
 				return true;
 			}
 			if (node instanceof TextField && ((TextField) node).getText().contains(text)) {
@@ -498,7 +520,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 		return false;
-
 	}
 
 	private TreeView findTreeInBox(Node box) {
@@ -522,6 +543,56 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 		return null;
+	}
+
+	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			if (((AccountLineInformation) item).getBalance().equals(Hbar.fromString(balance.replace(" ", "")))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private String accountID(String s) {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			if (((AccountLineInformation) item).getNickname().contains(s)) {
+				return ((AccountLineInformation) item).getAccount().toReadableString();
+			}
+		}
+		return "";
+	}
+
+	private List<String> getNicknames() {
+		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		Node table = scrollPane.getContent();
+		assertTrue(table instanceof TableView);
+
+		final TableView accountTable = (TableView) table;
+
+		List<String> items = new ArrayList<>();
+		for (Object item : accountTable.getItems()) {
+			assertTrue(item instanceof AccountLineInformation);
+			items.add(((AccountLineInformation) item).getNickname());
+
+		}
+		return items;
 	}
 
 

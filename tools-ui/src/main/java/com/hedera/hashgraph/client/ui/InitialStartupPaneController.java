@@ -42,6 +42,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,7 +57,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.deleteDirectory;
 
 public class InitialStartupPaneController implements GenericFileReadWriteAware {
 
@@ -235,10 +235,10 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	/**
 	 * If the user presses the reset button at any time, the process should restart from a clean state
 	 */
-	public void resetSetup() {
+	public void resetSetup() throws IOException {
 		if (Boolean.TRUE.equals(
 				PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes", "No"))) {
-			deleteDirectory(new File(controller.getPreferredStorageDirectory()));
+			FileUtils.deleteDirectory(new File(controller.getPreferredStorageDirectory()));
 			controller.resetProperties();
 			initializeStartupPane();
 		}

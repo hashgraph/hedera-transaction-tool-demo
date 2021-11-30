@@ -27,6 +27,7 @@ import com.google.gson.JsonSyntaxException;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import org.apache.commons.io.FilenameUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.BufferedOutputStream;
@@ -156,8 +157,7 @@ public interface GenericFileReadWriteAware {
 	 */
 	default void writeJsonObject(final String filePath, final Object jsonObject) throws HederaClientException {
 		if (filePath == null) {
-			throw new HederaClientRuntimeException(
-					String.format("Unable to write input stream to empty destination: %s", filePath));
+			throw new HederaClientRuntimeException("Unable to write input stream to empty destination.");
 		}
 
 		if (jsonObject == null) {
@@ -190,12 +190,10 @@ public interface GenericFileReadWriteAware {
 	 */
 	default void writeBytes(final String filePath, final byte[] contents) throws HederaClientException {
 		if (filePath == null) {
-			throw new HederaClientRuntimeException(
-					String.format("Unable to write input stream to empty destination: %s", (Object) null));
+			throw new HederaClientRuntimeException("Unable to write input stream to empty destination.");
 		}
 		if (contents == null) {
-			throw new HederaClientRuntimeException(
-					String.format("Unable to write empty content object: %s", (Object) null));
+			throw new HederaClientRuntimeException("Unable to write empty content object.");
 		}
 		final var file = new File(filePath);
 		//make parent directory if it doesn't exist
@@ -251,9 +249,8 @@ public interface GenericFileReadWriteAware {
 
 
 	/**
-	 * Create an unique name for a file. If a file with the same name exists, increment a subscript by one until the
-	 * name
-	 * is unique;
+	 * Create a unique name for a file. If a file with the same name exists, increment a subscript by one until the
+	 * name is unique;
 	 *
 	 * @param dir
 	 * 		the directory where the new file will be created
@@ -279,6 +276,41 @@ public interface GenericFileReadWriteAware {
 		throw new IllegalStateException("Cannot build path");
 	}
 
+	/**
+	 * Zip and delete array of files
+	 *
+	 * @param toPack
+	 * 		an array containing the files to zip and delete
+	 * @param storageLocation
+	 * 		the filename of the zip file
+	 * @return the zip file
+	 * @throws HederaClientException
+	 * 		if an IOException is thrown
+	 */
+	default File zipFiles(File[] toPack, String storageLocation) throws HederaClientException {
+		try {
+			if (toPack == null) {
+				throw new HederaClientException("Files to pack are null");
+			}
+
+			final var zipFile = new File(storageLocation);
+			if (zipFile.exists()) {
+				var name = findFileName(zipFile.getParentFile().toPath(), FilenameUtils.getBaseName(storageLocation),
+						FilenameUtils.getExtension(storageLocation));
+				Files.move(Path.of(storageLocation), name);
+			}
+
+			ZipUtil.packEntries(toPack, zipFile);
+
+			// Delete unzipped transactions
+			for (var file : toPack) {
+				Files.deleteIfExists(file.toPath());
+			}
+			return zipFile;
+		} catch (IOException e) {
+			throw new HederaClientException(e);
+		}
+	}
 
 	default void zipDir(final Path path) throws IOException {
 		if (!Files.isDirectory(path)) {

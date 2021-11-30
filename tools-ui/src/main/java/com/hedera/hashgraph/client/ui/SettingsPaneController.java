@@ -18,9 +18,17 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.common.net.InetAddresses;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
+import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.fxml.FXML;
@@ -29,8 +37,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -44,20 +54,27 @@ import org.controlsfx.control.ToggleSwitch;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 import java.util.prefs.BackingStoreException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FOLDER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.GENERATE_RECORD_TOOLTIP_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NETWORKS_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NODE_ID_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.START_TIME_TOOLTIP_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.TRANSACTION_FEE_TOOLTIP_MESSAGE;
@@ -65,15 +82,14 @@ import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.VALID_D
 import static javafx.scene.control.Alert.AlertType;
 import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
-public class SettingsPaneController {
+public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
-	public static final String AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE =
-			"The period of time in which the account will renew in seconds.\n" +
-					"Min:7000000 seconds \n" +
-					"Max: 8000000 seconds";
+
+
+	private boolean noise = false;
 
 	public TextField loadStorageTextField;
 	public TextField pathTextFieldSP;
@@ -85,6 +101,7 @@ public class SettingsPaneController {
 	public TextField minutesTextField;
 	public TextField secondsTextField;
 	public TextField defaultTransactionFee;
+	public TextField customFeePayerTextField;
 
 	public Label loadStorageLabel;
 	public Label nodeIDLabel;
@@ -99,6 +116,11 @@ public class SettingsPaneController {
 	public Button confirmAddFolderButtonSP;
 	public Button browseNewFolderButton;
 	public Button cancelAddToEmailMapButton;
+	public Button addCustomNetworkButton;
+	public Button deleteCustomNetworkButton;
+	public Button deleteCustomPayerButton;
+	public Button addCustomPayerButton;
+	public Button addCustomPayerButton1;
 
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
@@ -122,9 +144,11 @@ public class SettingsPaneController {
 	public Button maxFeeTooltip;
 	public Button autoRenewTooltip;
 	public Button folderTooltip;
+	public Button feePayerTooltip;
 	public TextField versionLabel;
-	public Button confirmAddFolderButton;
-
+	public Button networkTooltip;
+	public ChoiceBox<Object> networkChoicebox;
+	public ChoiceBox<Object> feePayerChoicebox;
 
 	@FXML
 	private Controller controller;
@@ -141,7 +165,24 @@ public class SettingsPaneController {
 			// bindings
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButtonSP, cancelAddToEmailMapButton,
-					browseNewFolderButton, deleteImage, editImage);
+					browseNewFolderButton, deleteImage, editImage, customFeePayerTextField, feePayerChoicebox,
+					addCustomPayerButton1, addCustomPayerButton);
+
+			feePayerChoicebox.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
+			customFeePayerTextField.setOnKeyReleased(event -> {
+				var code = event.getCode();
+				if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
+					feePayerChoicebox.getParent().requestFocus();
+				}
+			});
+
+			addCustomPayerButton1.visibleProperty().bind(customFeePayerTextField.visibleProperty());
+			addCustomPayerButton.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
+
+			addCustomPayerButton1.setOnAction(actionEvent -> customFeePayerTextField.getParent().requestFocus());
+
+			customFeePayerTextField.focusedProperty().addListener(
+					(observableValue, aBoolean, t1) -> addCustomFeePayer(t1));
 
 			//Initialize drive builder
 			driveSetupHelper = DriveSetupHelper.Builder.aDriveSetupHelper()
@@ -187,6 +228,8 @@ public class SettingsPaneController {
 			// region Events
 			setupNodeIDTextField();
 
+			setupNetworkBox(networkChoicebox);
+
 			setupTxValidDurationTextField();
 
 			setupAutoRenewTextField();
@@ -199,9 +242,11 @@ public class SettingsPaneController {
 
 			setupDefaultTransactionFeeTextField();
 
+			setupFeePayerChoicebox();
+
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
-						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
+						generateRecordLabel.setText(Boolean.TRUE.equals(t1) ? "yes" : "no");
 						controller.setGenerateRecord(t1);
 					});
 
@@ -223,12 +268,86 @@ public class SettingsPaneController {
 			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
 					FOLDER_TOOLTIP_MESSAGES));
 
+			networkTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, networkTooltip,
+					NETWORKS_TOOLTIP_MESSAGES));
+
+			feePayerTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, feePayerTooltip,
+					FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
 		} catch (Exception e) {
 			logger.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
+	}
+
+	private void addCustomFeePayer(Boolean t1) {
+		if (Boolean.FALSE.equals(t1)) {
+			var tempSet = new HashSet<>(controller.getFeePayers());
+			tempSet.addAll(controller.getCustomFeePayers());
+
+			if ("".equals(customFeePayerTextField.getText())) {
+				return;
+			}
+
+			try {
+				var id = Identifier.parse(customFeePayerTextField.getText());
+				controller.setDefaultFeePayer(id);
+				customFeePayerTextField.setVisible(false);
+				customFeePayerTextField.clear();
+				if (!tempSet.contains(id)) {
+					controller.addCustomFeePayer(id);
+				}
+				setupFeePayerChoicebox();
+				controller.accountsPaneController.setupFeePayerChoiceBox();
+			} catch (Exception e) {
+				logger.error("Cannot parse identifier {}", e.getMessage());
+				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
+				customFeePayerTextField.requestFocus();
+				customFeePayerTextField.setVisible(true);
+			}
+		}
+	}
+
+	/**
+	 * Setup for fee payer choicebox
+	 */
+	public void setupFeePayerChoicebox() {
+		noise = true;
+		var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
+		noise = false;
+
+		if ("".equals(feePayer)) {
+			return;
+		}
+		feePayerChoicebox.getSelectionModel().select(feePayer);
+		feePayerChoicebox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (t1 instanceof String) {
+				final var text = (String) t1;
+				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text)));
+				controller.setDefaultFeePayer(Identifier.parse(text));
+			}
+		});
+	}
+
+	public void setupNetworkBox(ChoiceBox<Object> comboBox) {
+		noise = true;
+		controller.networkBoxSetup(comboBox);
+		noise = false;
+		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
+		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (!noise) {
+				if (t1 instanceof String) {
+					final var selectedNetwork = (String) t1;
+					controller.setCurrentNetwork(selectedNetwork);
+					deleteCustomNetworkButton.setDisable(
+							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
+				}
+				if (t1 instanceof Separator) {
+					comboBox.getSelectionModel().select(o);
+				}
+			}
+		});
 	}
 
 	private void setupDefaultTransactionFeeTextField() {
@@ -352,7 +471,9 @@ public class SettingsPaneController {
 
 		autoRenewTooltip.setOnAction(
 				actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
-						AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+						ToolTipMessages.AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
+
+
 	}
 
 	private void setupTxValidDurationTextField() {
@@ -415,18 +536,13 @@ public class SettingsPaneController {
 	}
 
 	private void checkFee() {
-
 		var txFee = defaultTransactionFee.getText().replace(" ", "") + "00000000";
-
 		if (txFee.contains(".")) {
 			txFee = txFee.substring(0, txFee.lastIndexOf(".") + 9).replace(".", "");
 		}
-
 		var fee = Long.parseLong(txFee);
-
 		controller.setDefaultTxFee(fee);
 		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.getDefaultTxFee()));
-
 	}
 
 	private void checkSeconds() {
@@ -596,6 +712,96 @@ public class SettingsPaneController {
 
 	public void cancelAddToEmailMap() {
 		driveSetupHelper.cancelAddToEmailMap();
+	}
+
+	public void addCustomNetworkAction() throws IOException {
+		if (new File(CUSTOM_NETWORK_FOLDER).mkdirs()) {
+			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
+		}
+		JsonObject customNetwork = NewNetworkPopup.display();
+		if (!customNetwork.has("nickname") || !customNetwork.has("file")) {
+			logger.info("Invalid custom network");
+			return;
+		}
+		final var nickname = customNetwork.get("nickname").getAsString();
+		var filename = nickname + "." + Constants.JSON_EXTENSION;
+		var location = customNetwork.get("file").getAsString();
+		if (!verifyJsonNetwork(location)) {
+			PopupMessage.display("Error", "The json file does not contain a valid network");
+			return;
+		}
+		FileUtils.copyFile(new File(location), new File(CUSTOM_NETWORK_FOLDER, filename));
+		var customNetworks = controller.getCustomNetworks();
+		assert customNetworks.contains(nickname);
+		controller.setCurrentNetwork(nickname);
+		setupNetworkBox(networkChoicebox);
+	}
+
+	private boolean verifyJsonNetwork(String location) {
+		try {
+			var array = readJsonArray(location);
+			for (JsonElement jsonElement : array) {
+				var node = jsonElement.getAsJsonObject();
+				if (!node.has("accountID")) {
+					return false;
+				}
+				if (!node.has("ipAddress")) {
+					return false;
+				}
+				if (!node.has("port")) {
+					return false;
+				}
+				Identifier.parse(node.get("accountID").getAsString());
+				InetAddresses.forString(node.get("ipAddress").getAsString());
+				var port = node.get("port").getAsInt();
+				if (port < 49152 || port > 65535) {
+					return false;
+				}
+			}
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	public void deleteCustomNetworkAction() throws IOException {
+		var answer = PopupMessage.display("Delete Network",
+				"This will remove the selected network from your app. Are you sure?", true, "CONTINUE", "CANCEL");
+		if (Boolean.TRUE.equals(answer)) {
+			Files.deleteIfExists(
+					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
+		}
+		controller.setCurrentNetwork("MAINNET");
+		setupNetworkBox(networkChoicebox);
+	}
+
+	public void addFeePayerAction() {
+		customFeePayerTextField.setVisible(true);
+		customFeePayerTextField.requestFocus();
+	}
+
+	public void deleteFeePayerAction() {
+		final var selectedItem = feePayerChoicebox.getSelectionModel().getSelectedItem();
+		if (!(selectedItem instanceof String)) {
+			return;
+		}
+		controller.removeCustomFeePayer(Identifier.parse((String) selectedItem));
+
+		final var allPayers = new TreeSet<>(controller.getFeePayers());
+		allPayers.addAll(controller.getCustomFeePayers());
+
+		if (!allPayers.isEmpty()) {
+			final var choice = allPayers.first();
+			feePayerChoicebox.setValue(choice.toNicknameAndChecksum(controller.getAccountsList()));
+			controller.setDefaultFeePayer(choice);
+			setupFeePayerChoicebox();
+			controller.accountsPaneController.setupFeePayerChoiceBox();
+			return;
+		}
+		controller.setDefaultFeePayer(Identifier.ZERO);
+		controller.accountsPaneController.initializeAccountPane();
+		addFeePayerAction();
 	}
 
 

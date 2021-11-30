@@ -29,6 +29,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
+import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -334,6 +335,26 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		assertTrue(CommonMethods.badPassword("tempura".toCharArray()));
 		assertTrue(CommonMethods.badPassword("1234567890".toCharArray()));
 		assertTrue(CommonMethods.badPassword(RandomStringUtils.random(1025, true, true).toCharArray()));
+
+	}
+
+	@Test
+	void fromString() throws HederaClientException {
+		Hbar bar = new Hbar(1);
+		assertEquals(bar, CommonMethods.fromString(bar.toString()));
+		Hbar tinyBar = Hbar.fromTinybars(1);
+		assertEquals(tinyBar, CommonMethods.fromString(tinyBar.toString()));
+
+		Hbar barTinyBar = Hbar.fromTinybars(110000020);
+		assertEquals(barTinyBar, CommonMethods.fromString(barTinyBar.toString()));
+
+		assertEquals(Hbar.from(1), CommonMethods.fromString("1"));
+
+		Exception exception0 = assertThrows(NumberFormatException.class, ()-> CommonMethods.fromString("not an hbar"));
+		assertEquals("For input string: \"not\"", exception0.getMessage());
+
+		Exception exception1 = assertThrows(HederaClientException.class, ()-> CommonMethods.fromString("1.1.1"));
+		assertEquals("Hedera Client: Cannot parse String \"1.1.1\" to hbars", exception1.getMessage());
 
 	}
 }

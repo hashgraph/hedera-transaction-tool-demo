@@ -31,13 +31,19 @@ public enum NetworkEnum {
 	private String name = "";
 
 	NetworkEnum(final String name) {
-		if (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(s -> s.equalsIgnoreCase(name))) {
+		if (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(
+				s -> s.equalsIgnoreCase(name))) {
 			this.name = name;
 		}
 	}
 
 	public String getName() {
 		return name;
+	}
+
+	public static boolean isNetwork(String network) {
+		return (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(
+				s -> s.equalsIgnoreCase(network)));
 	}
 
 }

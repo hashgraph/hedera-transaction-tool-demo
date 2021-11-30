@@ -21,52 +21,63 @@
 	font-family: 'StyreneA Black';
 	src: url('styreneA-appfont/StyreneA-Black-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA BlackItalic';
 	src: url('styreneA-appfont/StyreneA-BlackItalic-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA Bold';
 	src: url('styreneA-appfont/StyreneA-Bold-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA BoldItalic';
 	src: url('styreneA-appfont/StyreneA-BoldItalic-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA Light';
 	src: url('styreneA-appfont/StyreneA-Light-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA LightItalic';
 	src: url('styreneA-appfont/StyreneA-LightItalic-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA Medium';
 	src: url('styreneA-appfont/StyreneA-Medium-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA MediumItalic';
 	src: url('styreneA-appfont/StyreneA-MediumItalic-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA Regular';
 	src: url('styreneA-appfont/StyreneA-Regular-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA RegularItalic';
 	src: url('styreneA-appfont/StyreneA-RegularItalic-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA Thin';
 	src: url('styreneA-appfont/StyreneA-Thin-App.ttf') format('truetype');
 }
+
 @font-face {
 	font-family: 'StyreneA ThinItalic';
 	src: url('styreneA-appfont/StyreneA-ThinItalic-App.ttf') format('truetype');
 }
 
-.root{
+.root {
 	-fx-font-family: 'Styrene A App Regular';
 }
 
@@ -103,3 +114,36 @@
 	-fx-padding: 0;
 	-fx-shape: null;
 }
+
+.titled-pane > .title {
+	-fx-background-color: white;
+	-fx-background-insets: 0, 1, 2;
+	-fx-background-radius: 10;
+	-fx-border-color: #0b9dfd;
+	-fx-border-radius: 10;
+	-fx-text-fill: #0b9dfd;
+	-fx-padding: 0.166667em 0.833333em 0.25em 0.833333em; /* 2 10 3 10 */
+}
+
+.titled-pane > .title > .arrow-button {
+	-fx-background-color: white;
+	-fx-background-insets: 0;
+	-fx-background-radius: 0;
+	-fx-padding: 0.0em 0.25em 0.0em 0.0em; /* 0 3 0 0 */
+}
+
+.titled-pane > .title > .arrow-button .arrow {
+	-fx-background-color: black;
+	-fx-background-insets: 1 0 -1 0, 0;
+	-fx-padding: 0.25em 0.3125em 0.25em 0.3125em; /* 3 3.75 3 3.75 */
+	-fx-shape: "M 0 0 h 7 l -3.5 4 z";
+}
+
+.titled-pane > *.content {
+	-fx-background-color: white;
+	-fx-background-insets: 0, 0 1 1 1;
+	-fx-border-radius: 10;
+	-fx-background-radius: 10;
+	-fx-padding: 0.167em;
+}
+

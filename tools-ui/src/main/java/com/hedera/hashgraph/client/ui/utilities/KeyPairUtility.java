@@ -44,10 +44,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.ui.popups.PasswordBox.display;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.showErrorAlert;
 
 public class KeyPairUtility {
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
+	public static final String ERROR_RECOVERING_PASSWORD_TITLE = "Error recovering password";
+	public static final String ERROR_RECOVERING_PASSWORD_MESSAGE =
+			"The key is not associated with the current recovery phrase. The password cannot be changed";
+	public static final String CONTINUE = "CONTINUE";
 
 
 	/**
@@ -70,7 +73,8 @@ public class KeyPairUtility {
 		try {
 			keyPair = getKeyPair(pemFile, message);
 		} catch (Exception e) {
-			showErrorAlert("Not able to load private key. Error: " + e.getMessage());
+			PopupMessage.display("Error loading key", String.format("Unable to load private key: %s", e.getMessage()));
+			logger.error(e.getMessage());
 		}
 		return keyPair;
 	}
@@ -112,16 +116,12 @@ public class KeyPairUtility {
 		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
 		if (hashCode == null) {
 			logger.error("Hashcode is null");
-			PopupMessage.display("Error recovering password",
-					"The key is not associated with the current recovery phrase. The password cannot be changed",
-					"CONTINUE");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
 			return new char[0];
 		}
 		if (hashCode != storedHashCode) {
 			logger.info("The key is not associated with the current mnemonic");
-			PopupMessage.display("Error recovering password",
-					"The key is not associated with the current recovery phrase. The password cannot be changed",
-					"CONTINUE");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
 			return new char[0];
 		}
 

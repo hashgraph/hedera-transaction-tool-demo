@@ -87,7 +87,6 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 	private Client client;
 
 	protected static final String PASSWORD = "123456789";
-	public static final int ONE_SECOND = 1000;
 
 
 	private final Path currentRelativePath = Paths.get("");
@@ -136,7 +135,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		createAccounts();
 
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		Calendar cal = new Timestamp().plusSeconds(60).asCalendar();
+		Calendar cal = new Timestamp().plusSeconds(120).asCalendar();
 		var sdf1 = new SimpleDateFormat("MM/dd/yy");
 		var sdf2 = new SimpleDateFormat("HH:mm");
 		Date date = cal.getTime();
@@ -205,7 +204,13 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			}
 		}
 
-		Node addSignature = find("ADD SIGNATURE");
+		Node addSignature;
+
+		do {
+			addSignature = find("ADD SIGNATURE");
+		} while (addSignature == null);
+
+		addSignature = find("ADD SIGNATURE");
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 		for (int i = 0; i < 8; i++) {
@@ -223,7 +228,10 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			}
 		}
 
-		addSignature = find("ADD SIGNATURE");
+		do {
+			addSignature = find("ADD SIGNATURE");
+		} while (addSignature == null);
+
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 		for (int i = 0; i < 7; i++) {
@@ -240,7 +248,10 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			}
 		}
 
-		addSignature = find("ADD SIGNATURE");
+		do {
+			addSignature = find("ADD SIGNATURE");
+		} while (addSignature == null);
+		
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 

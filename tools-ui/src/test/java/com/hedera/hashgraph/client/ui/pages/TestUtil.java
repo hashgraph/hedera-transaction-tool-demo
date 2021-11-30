@@ -25,8 +25,11 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
@@ -50,6 +53,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -130,6 +134,21 @@ public class TestUtil {
 		return null;
 	}
 
+
+	public static PasswordField findPasswordInPopup(ObservableList<Node> popupNodes) {
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof PasswordField) {
+				return (PasswordField) popupNode;
+			}
+			if (popupNode instanceof HBox) {
+				return findPasswordInPopup(((HBox) popupNode).getChildren());
+			}
+			if (popupNode instanceof VBox) {
+				return findPasswordInPopup(((VBox) popupNode).getChildren());
+			}
+		}
+		return null;
+	}
 	public static ObservableList<Node> getPopupNodes() {
 		var actualAlertDialog = findModalWindow();
 		if (actualAlertDialog != null) {
@@ -286,6 +305,35 @@ public class TestUtil {
 	}
 
 	/**
+	 * Returns a list of textfields contained in the Popup
+	 *
+	 * @param popupNodes
+	 * 		List of nodes in the popup
+	 * @return a list of TextFields
+	 */
+	public static List<TextField> findTextFieldsInPopup(ObservableList<Node> popupNodes) {
+		List<TextField> textFields = new ArrayList<>();
+		for (var popupNode : popupNodes) {
+			if (popupNode instanceof TextField) {
+				textFields.add((TextField) popupNode);
+			}
+			if (popupNode instanceof HBox) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((HBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof VBox) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((VBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof GridPane) {
+				textFields.addAll(
+						Objects.requireNonNull(findTextFieldsInPopup(((GridPane) popupNode).getChildren())));
+			}
+		}
+		return textFields;
+	}
+
+	/**
 	 * Initialize keys folder with test keys.
 	 */
 	public static void copyCreatePaneKeys() {
@@ -348,5 +396,53 @@ public class TestUtil {
 
 		driver.press(KeyCode.CONTROL).press(KeyCode.V).release(KeyCode.V).release(KeyCode.CONTROL);
 		driver.push(KeyCode.ENTER);
+	}
+
+	public static List<Hyperlink> findHyperlinksInPopup() {
+		var popupNodes = getPopupNodes();
+		if (popupNodes == null) {
+			return new ArrayList<>();
+		}
+		return findHyperlinksInPopup(popupNodes);
+	}
+
+	private static List<Hyperlink> findHyperlinksInPopup(ObservableList<Node> popupNodes) {
+		List<Hyperlink> nodes = new ArrayList<>();
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof Hyperlink) {
+				nodes.add((Hyperlink) popupNode);
+			} else if (popupNode instanceof HBox) {
+				nodes.addAll(findHyperlinksInPopup(((HBox) popupNode).getChildren()));
+			} else if (popupNode instanceof VBox) {
+				nodes.addAll(findHyperlinksInPopup(((VBox) popupNode).getChildren()));
+			} else if (popupNode instanceof GridPane) {
+				nodes.addAll(findHyperlinksInPopup(((GridPane) popupNode).getChildren()));
+			}
+		}
+
+		return nodes;
+	}
+
+	public static List<GridPane> findGridpanesInPopup() {
+		var popupNodes = getPopupNodes();
+		if (popupNodes == null) {
+			return new ArrayList<>();
+		}
+		return findGridPanesInPopup(popupNodes);
+	}
+
+	private static List<GridPane> findGridPanesInPopup(ObservableList<Node> popupNodes) {
+		List<GridPane> nodes = new ArrayList<>();
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof GridPane) {
+				nodes.add((GridPane) popupNode);
+			} else if (popupNode instanceof HBox) {
+				nodes.addAll(findGridPanesInPopup(((HBox) popupNode).getChildren()));
+			} else if (popupNode instanceof VBox) {
+				nodes.addAll(findGridPanesInPopup(((VBox) popupNode).getChildren()));
+			}
+		}
+
+		return nodes;
 	}
 }

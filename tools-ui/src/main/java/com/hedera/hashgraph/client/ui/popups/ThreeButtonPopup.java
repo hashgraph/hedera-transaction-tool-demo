@@ -121,7 +121,7 @@ public class ThreeButtonPopup {
 		choiceBox.getChildren().addAll(checkBox, buttonBox);
 		choiceBox.setAlignment(Pos.CENTER);
 
-		var explanation = new Label(String.format(message, file.getName()));
+		var explanation = new Label(String.format(message, FilenameUtils.getBaseName(file.getName())));
 		explanation.setWrapText(true);
 
 		if (multipleFiles) {

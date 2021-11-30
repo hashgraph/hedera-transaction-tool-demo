@@ -20,10 +20,10 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.SettingsPanePage;
@@ -33,6 +33,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_RECORD_SLIDER;
@@ -65,12 +67,13 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_SECONDS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class SettingsPaneTest extends TestBase {
 
 	private SettingsPanePage settingsPanePage;
-	private MainWindowPage mainWindowPage;
+	private MainWindowPage mainWindowPage = new MainWindowPage(this);
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
@@ -101,16 +104,19 @@ public class SettingsPaneTest extends TestBase {
 
 		if (new File(
 				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
-						"/InputFiles/").mkdirs()) {
+				"/InputFiles/").mkdirs()) {
 			logger.info("Second input folder created");
 		}
 
 		if (new File(
 				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
-						"/OutputFiles/test@testemail.net").mkdirs()) {
+				"/OutputFiles/test@testemail.net").mkdirs()) {
 			logger.info("Second output folder created");
 		}
 
+		if (new File(Constants.CUSTOM_NETWORK_FOLDER).exists()) {
+			FileUtils.cleanDirectory(new File(Constants.CUSTOM_NETWORK_FOLDER));
+		}
 
 		Map<String, String> emailMap = new HashMap<>();
 
@@ -141,7 +147,7 @@ public class SettingsPaneTest extends TestBase {
 		}
 
 		settingsPanePage = new SettingsPanePage(this);
-		mainWindowPage = new MainWindowPage(this);
+
 		properties.setHash("123456789".toCharArray());
 		startApplication();
 		mainWindowPage.clickOnSettingsButton();
@@ -332,6 +338,65 @@ public class SettingsPaneTest extends TestBase {
 		assertTrue(new File("src/test/resources/OutputFiles").exists());
 		assertTrue(new File("src/test/resources/OutputFiles/test@testemail.net").exists());
 
+	}
+
+	@Test
+	public void defaultNetworks_Test() {
+		settingsPanePage.openNetworksCombobox("TESTNET");
+		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
+		assertEquals("TESTNET", properties.getCurrentNetwork());
+		settingsPanePage.openNetworksCombobox("PREVIEWNET");
+		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
+		assertEquals("PREVIEWNET", properties.getCurrentNetwork());
+	}
+
+	@Test
+	public void addCustomNetwork_test() {
+		settingsPanePage.addNetwork("custom", "src/test/resources/customNetwork.json");
+		assertFalse(find("#deleteCustomNetworkButton").isDisabled());
+		assertEquals("custom", properties.getCurrentNetwork());
+		clickOn("#addCustomNetworkButton");
+		settingsPanePage.addNetworkNickname("custom");
+		var nodes = TestUtil.getPopupNodes();
+		assertTrue(nodes.get(1).isVisible());
+		assertTrue(nodes.get(1) instanceof Label);
+		assertEquals("The network nickname already exists.", ((Label) nodes.get(1)).getText());
+
+		type(KeyCode.A);
+		nodes = TestUtil.getPopupNodes();
+		assertFalse(nodes.get(1).isVisible());
+		type(KeyCode.ENTER);
+		nodes = TestUtil.getPopupNodes();
+		assertFalse(nodes.get(1).isVisible());
+
+		settingsPanePage.addCustomLocation("src/test/resources/customNetwork_bad.json");
+		settingsPanePage.clickOnButton("CONTINUE");
+
+		var newNodes = TestUtil.getPopupNodes();
+		assertNotNull(newNodes);
+		assertTrue(newNodes.get(0) instanceof VBox);
+		var children = ((VBox) newNodes.get(0)).getChildren();
+		assertEquals("The json file does not contain a valid network", ((Label) children.get(0)).getText());
+		clickOn(TestUtil.findButtonInPopup(newNodes, "CONTINUE"));
+
+		settingsPanePage.openNetworksCombobox("TESTNET");
+		settingsPanePage.openNetworksCombobox("custom");
+
+		assertFalse(find("#deleteCustomNetworkButton").isDisabled());
+		clickOn("#deleteCustomNetworkButton");
+
+		var deleteNetworkNodes = TestUtil.getPopupNodes();
+		clickOn(TestUtil.findButtonInPopup(deleteNetworkNodes, "CONTINUE"));
+
+		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
+		assertFalse(new File(Constants.CUSTOM_NETWORK_FOLDER, "custom.json").exists());
+
+		settingsPanePage.addNetwork("customb", "src/test/resources/fakeFile.json");
+		nodes = TestUtil.getPopupNodes();
+		assertTrue(nodes.get(1).isVisible());
+		assertTrue(nodes.get(1) instanceof Label);
+		assertEquals("The location specified does not exist. Please try again.", ((Label) nodes.get(1)).getText());
+		assertTrue(Objects.requireNonNull(TestUtil.findButtonInPopup(nodes, "CONTINUE")).isDisabled());
 	}
 
 	@After

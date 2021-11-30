@@ -28,10 +28,17 @@ import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
+import com.hedera.hashgraph.client.ui.utilities.AutoCompleteTextField;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
@@ -41,6 +48,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
@@ -63,6 +71,10 @@ public class NewPasswordPopupTest extends TestBase {
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
+	private final String storedMnemonic =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	@Before
 	public void setUp() throws Exception {
@@ -255,6 +267,40 @@ public class NewPasswordPopupTest extends TestBase {
 		}
 		assertNotNull(keyStore);
 		clickOn(buttons.get(4));
+	}
+	@Test
+	public void forgotMnemonicPasswordCancel_test() throws InterruptedException {
+		logger.info("forgotMnemonicPasswordCancel_test");
+		keysPanePage.pressRecoveryPhrase()
+				.enterPopupPassword(PASSWORD);
+		VBox gridPaneVBox = find("#recoveryVBox");
+		Assert.assertNotNull(gridPaneVBox);
+		Assert.assertTrue(gridPaneVBox.isVisible());
+		var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
+		Assert.assertTrue(boxChildren.get(0) instanceof Label);
+		var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
+
+		keysPanePage.pressCloseViewMnemonic()
+				.pressRecoveryPhrase()
+				.pressHyperlinkPassword("Forgot your password?")
+				.pressPopupButton("RESET")
+				.pressPopupButton("RESET")
+				.enteMnemonicInPopup(storedMnemonic)
+				.pressPopupButton("RECOVER")
+				.pressPopupButton("CANCEL");
+
+		var wordsPane = TestUtil.findGridpanesInPopup();
+		Assert.assertEquals(1, wordsPane.size());
+
+		var children = wordsPane.get(0).getChildren();
+		for (Node child : children) {
+			Assert.assertTrue(child instanceof AutoCompleteTextField);
+			Assert.assertTrue(storedMnemonic.toLowerCase(Locale.ROOT).contains(
+					((AutoCompleteTextField) child).getText().toLowerCase(Locale.ROOT)));
+		}
+
+		keysPanePage.pressPopupButton("CANCEL");
+
 	}
 
 }

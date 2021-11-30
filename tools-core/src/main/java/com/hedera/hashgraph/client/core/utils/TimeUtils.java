@@ -50,7 +50,7 @@ public class TimeUtils {
 		try {
 			calendar.setTime(formatter.parse(excelDate));
 		} catch (ParseException ex) {
-			logger.error("Parsing error", ex);
+			logger.error("Parsing error: {}", ex.getMessage());
 			return null;
 		}
 		return calendar;

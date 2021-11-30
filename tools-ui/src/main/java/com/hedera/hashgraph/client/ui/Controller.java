@@ -43,13 +43,17 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeroturnaround.zip.commons.IOUtils;
@@ -68,14 +72,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
@@ -108,7 +119,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					"its current form by anyone other than members of the Hedera Council and Hedera personnel. " +
 					"If you are not a Hedera Council member or staff member, use of this application or of the " +
 					"code in its current form is not recommended and is at your own risk.";
-
 	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
 	private boolean disableButtons = false;
 	private boolean drivesChanged = false;
@@ -735,15 +745,27 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getEmailFromMap(path);
 	}
 
-	public String getNetworkProperty() {
-		return properties.getNetworkProperty();
-	}
-
 	public boolean getGenerateRecord() {
 		return properties.getGenerateRecord();
 	}
+
+	public Set<Identifier> getCustomFeePayers() {
+		return properties.getCustomFeePayers();
+	}
+
+	public void addCustomFeePayer(Identifier identifier) {
+		properties.addCustomFeePayer(identifier);
+	}
+
+	public void removeCustomFeePayer(Identifier identifier) {
+		properties.removeCustomFeePayer(identifier);
+	}
+
 	//endregion
 
+	public String jsonKeyToPrettyString(JsonObject key) {
+		return keyStructureUtility.jsonKeyToPrettyString(key);
+	}
 
 	public String showKeyString(ByteString key) {
 		return keyStructureUtility.showKeyString(key);
@@ -781,5 +803,118 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		} else {
 			properties.setLastBrowsedDirectory(file.getParentFile());
 		}
+	}
+
+	public Set<String> getCustomNetworks() {
+
+		final var customNetworksFolder = new File(Constants.CUSTOM_NETWORK_FOLDER);
+		if (customNetworksFolder.mkdirs()) {
+			logger.info("Custom networks folder storage created");
+		}
+		File[] networks = customNetworksFolder.listFiles(
+				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		assert networks != null;
+		var networkSet = Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
+				Collectors.toSet());
+		if (!networkSet.isEmpty()) {
+			properties.setCustomNetworks(networkSet);
+		}
+		return networkSet;
+	}
+
+	public Set<String> getDefaultNetworks() {
+		Set<String> defaultNetworks = new HashSet<>();
+		defaultNetworks.add("MAINNET");
+		defaultNetworks.add("TESTNET");
+		defaultNetworks.add("PREVIEWNET");
+		return defaultNetworks;
+	}
+
+	public String getCurrentNetwork() {
+		return properties.getCurrentNetwork();
+	}
+
+	public void setCurrentNetwork(String network) {
+		properties.setCurrentNetwork(network, getDefaultNetworks());
+	}
+
+	public Set<Identifier> getFeePayers() {
+		return accountsPaneController.getFeePayers();
+	}
+
+	public Identifier getDefaultFeePayer() {
+		return properties.getDefaultFeePayer();
+	}
+
+	public void setDefaultFeePayer(Identifier feePayer) {
+		properties.setDefaultFeePayer(feePayer);
+	}
+
+	void networkBoxSetup(ChoiceBox<Object> comboBox) {
+		comboBox.getItems().clear();
+		comboBox.getItems().addAll(getDefaultNetworks());
+		var customNetworks = getCustomNetworks();
+		if (!customNetworks.isEmpty()) {
+			comboBox.getItems().add(new Separator());
+			comboBox.getItems().addAll(customNetworks);
+		}
+	}
+
+	String setupChoiceBoxFeePayer(ChoiceBox<Object> choiceBox, TextField textfield) {
+		final var defaultFeePayer = getDefaultFeePayer();
+
+		// In case the default was deleted
+		if (!Identifier.ZERO.equals(defaultFeePayer) && !getCustomFeePayers().contains(defaultFeePayer)) {
+			addCustomFeePayer(defaultFeePayer);
+		}
+
+		var feePayer = Identifier.ZERO.equals(defaultFeePayer) ? "" :
+				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
+
+
+		List<String> accounts = getFeePayers().stream().map(
+				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
+				Collectors.toList());
+
+		List<String> customFeePayers = new ArrayList<>();
+		getCustomFeePayers().forEach(customFeePayer -> {
+			String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
+			if (accounts.contains(s)) {
+				removeCustomFeePayer(customFeePayer);
+			} else {
+				customFeePayers.add(s);
+			}
+		});
+		customFeePayers.sort(null);
+
+
+		Set<String> allPayers = new HashSet<>(accounts);
+		allPayers.addAll(customFeePayers);
+		List<String> sortedAllPayers = new ArrayList<>(allPayers);
+		Collections.sort(sortedAllPayers);
+
+		var custom = !customFeePayers.isEmpty();
+
+
+		choiceBox.getItems().clear();
+		choiceBox.getItems().addAll(accounts);
+		if (custom) {
+			choiceBox.getItems().add(new Separator());
+			choiceBox.getItems().addAll(customFeePayers);
+		}
+
+		if (Identifier.ZERO.equals(defaultFeePayer)) {
+			if (allPayers.isEmpty()) {
+				textfield.setVisible(true);
+				textfield.requestFocus();
+			} else {
+				feePayer = sortedAllPayers.get(0);
+				setDefaultFeePayer(Identifier.parse(feePayer));
+			}
+		}
+
+		textfield.setVisible(Identifier.ZERO.equals(getDefaultFeePayer()));
+
+		return feePayer;
 	}
 }

@@ -18,52 +18,49 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.codahale.passpol.BreachDatabase;
-import com.codahale.passpol.PasswordPolicy;
-import com.codahale.passpol.Status;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.LongStream;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.GREEN_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.RED_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 
 public class Utilities {
@@ -76,32 +73,6 @@ public class Utilities {
 		throw new IllegalStateException("Utility class");
 	}
 
-	/***
-	 *
-	 * Displays an error popup with a given message
-	 *
-	 * @param info    The error message to display
-	 */
-	public static void showErrorAlert(String info) {
-		logger.error(info);
-		var alert = new Alert(Alert.AlertType.ERROR);
-		alert.setContentText(info);
-		alert.show();
-	}
-
-	/***
-	 *
-	 * Displays an error popup with a given message
-	 *
-	 * @param info    The error to display
-	 */
-	public static void showErrorAlert(Exception info) {
-		logger.error(info);
-		var alert = new Alert(Alert.AlertType.ERROR);
-		alert.setContentText(info.getMessage());
-		alert.show();
-	}
-
 	/**
 	 * Check if a string contains a long
 	 *
@@ -110,6 +81,9 @@ public class Utilities {
 	 * @return true if the string is not a long
 	 */
 	public static boolean isNotLong(String strNum) {
+		if (strNum == null) {
+			return false;
+		}
 		try {
 			Long.parseLong(strNum);
 		} catch (NumberFormatException | NullPointerException nfe) {
@@ -119,41 +93,32 @@ public class Utilities {
 	}
 
 	/**
-	 * Checks that a string represents an account ID
+	 * Given an instant returns the formatted date time string
 	 *
-	 * @param accountID
-	 * 		a string
-	 * @return true if the string can be parsed to an account
+	 * @param instant
+	 * 		a date represented as an Instant
+	 * @return a formatted string
 	 */
-	public static boolean checkAccount(String accountID) {
-		if (accountID.contains("(")) {
-			return checkAccount(accountID.substring(accountID.indexOf("(") + 1, accountID.indexOf("-")));
-		}
-		if (accountID.contains("-")) {
-			return checkAccount(accountID.substring(0, accountID.indexOf("-")));
-		}
-
-		var tokens = accountID.split("[.]");
-		if (tokens.length > 3 || tokens.length == 2) {
-			return false;
-		}
-		for (var t : tokens) {
-			if (isNotLong(t)) {
-				return false;
-			}
-		}
-		return true;
+	public static String instantToLocalTimeDate(final Instant instant) {
+		var ldt = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+		var transactionValidStart = Date.from(ldt.atZone(ZoneId.of("UTC")).toInstant());
+		var localDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		var tz = TimeZone.getDefault();
+		return localDateFormat.format(transactionValidStart) + " " + tz.getDisplayName(true, TimeZone.SHORT);
 	}
 
+	/**
+	 * Given a timestamp returns the formatted date time string
+	 *
+	 * @param timestamp
+	 * 		a date represented as a Timestamp
+	 * @return a formatted string
+	 */
 	public static String timestampToString(final Timestamp timestamp) {
-		var sec = timestamp.getSeconds();
-		var date = new Date(sec * 1000);
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		return dateFormat.format(date);
+		return instantToLocalTimeDate(timestamp.asInstant());
 	}
 
-	public static String setHBarFormat(long amount) {
+	public static String setHBarFormat(final long amount) {
 		var symbols = new DecimalFormatSymbols();
 		symbols.setGroupingSeparator(' ');
 		var formatInt = new DecimalFormat("###,###,###,###,###,###", symbols);
@@ -168,12 +133,12 @@ public class Utilities {
 		}
 	}
 
-	public static String setCurrencyFormat(long amount) {
+	public static String setCurrencyFormat(final long amount) {
 		var currency = setHBarFormat(amount);
 		return currency.replace(" " + HBAR_STRING, "");
 	}
 
-	public static String stripHBarFormat(String hBars) {
+	public static String stripHBarFormat(final String hBars) {
 		if (hBars.equals("")) {
 			return "0";
 		}
@@ -193,69 +158,15 @@ public class Utilities {
 	 * @return the number of Hbars represented by the string
 	 */
 	public static Hbar string2Hbar(String hBars) {
-		var bars = hBars.replace(" ", "").replace(HBAR_STRING, "");
-		return Hbar.from(BigDecimal.valueOf(Double.parseDouble(bars)));
-	}
-
-	/**
-	 * Deletes a directory and all of its children
-	 *
-	 * @param dir
-	 * 		a directory file
-	 * @return true if the directory has been successfully deleted
-	 */
-	public static boolean deleteDirectory(File dir) {
-		if (dir.isDirectory()) {
-			var children = dir.listFiles();
-			assert children != null;
-			for (var child : children) {
-				var success = deleteDirectory(child);
-				if (!success) {
-					return false;
-				}
-			}
-		} // either file or an empty directory
-
-		logger.info("removing file or directory : {}", dir.getName());
-
-		try {
-			Files.deleteIfExists(dir.toPath());
-			return true;
-		} catch (IOException e) {
-			logger.error("Directory {} cannot be deleted", dir.getAbsolutePath());
-			return false;
+		if ("".equals(hBars) || hBars == null) {
+			return new Hbar(0);
 		}
-	}
-
-	/**
-	 * Converts the contents of a text field into an amount in tiny bars
-	 *
-	 * @param t
-	 * 		a TextField
-	 * @return a long
-	 * @throws HederaClientException
-	 * 		if the text is not parsable
-	 */
-	public static long textFieldToTinyBars(TextField t) throws HederaClientException {
-		var amountString = t.getText().replace(" ", "");
-		if (isNotLong(amountString.replace(".", "").replace(" ", ""))) {
-			throw new HederaClientException(String.format("%s cannot be resolved into a number", amountString));
-		}
-
-		if (!amountString.contains(".")) {
-			return Long.parseLong(amountString.concat("00000000"));
-		}
-
-		var decimals = amountString.length() - amountString.lastIndexOf(".") - 1;
-		if (decimals > 8) {
-			amountString = amountString.substring(0, amountString.length() - (decimals - 8));
-			return Long.parseLong(amountString.replace(".", ""));
-		}
-
-		for (var i = 0; i < 8 - decimals; i++) {
-			amountString = amountString.concat("0");
-		}
-		return Long.parseLong(amountString.replace(".", ""));
+		var split = hBars.replace(" ", "").replace(HBAR_STRING, "").split("\\.");
+		var bars = Double.parseDouble(split[0]);
+		var tiny =
+				split.length == 2 ? Double.parseDouble("0." + split[1].substring(0, Math.min(8, split[1].length())))
+						: 0;
+		return Hbar.from(BigDecimal.valueOf(bars).add(BigDecimal.valueOf(tiny)));
 	}
 
 	/**
@@ -293,72 +204,6 @@ public class Utilities {
 	}
 
 	/**
-	 * Checks that the password policy is followed
-	 *
-	 * @param appPasswordField
-	 * 		the password field where the user enters his new password
-	 * @param checkPassword
-	 * 		an image that is displayed if the password passes the policy
-	 * @param passwordErrorLabel
-	 * 		a label where an informative text will be displayed in case the password does not pass the policy
-	 * @param reEnterPasswordField
-	 * 		a password field where the user needs to re-enter is new password for confirmation
-	 */
-	public static void checkPasswordPolicy(PasswordField appPasswordField, ImageView checkPassword,
-			Label passwordErrorLabel, PasswordField reEnterPasswordField) {
-		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
-				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
-		final var password1 = appPasswordField.getText();
-		switch (policy.check(password1)) {
-			case OK:
-				checkPassword.setVisible(true);
-				passwordErrorLabel.setVisible(false);
-				reEnterPasswordField.setDisable(false);
-				break;
-			case TOO_SHORT:
-				passwordErrorLabel.setText("Passwords should be at least 10 characters long");
-				passwordErrorLabel.setVisible(true);
-				checkPassword.setVisible(false);
-				reEnterPasswordField.setDisable(true);
-				break;
-			case TOO_LONG:
-				passwordErrorLabel.setText("Passwords should be at most 1024 characters long");
-				passwordErrorLabel.setVisible(true);
-				checkPassword.setVisible(false);
-				reEnterPasswordField.setDisable(true);
-				break;
-			case BREACHED:
-				passwordErrorLabel.setText(
-						"The password selected has been breached. Please select a more unique password");
-				passwordErrorLabel.setVisible(true);
-				checkPassword.setVisible(false);
-				reEnterPasswordField.setDisable(true);
-				break;
-		}
-	}
-
-	public static void setupCharacterCount(PasswordField passwordField, Label characterCount, ImageView imageCheck,
-			Label errorLabel, PasswordField passwordFieldCopy) {
-		var policy = new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
-				MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
-		final var length = passwordField.getText().length();
-		characterCount.setText(String.valueOf(length));
-		imageCheck.setVisible(false);
-		String style = length >= MIN_PASSWORD_LENGTH && length <= MAX_PASSWORD_LENGTH ? GREEN_STYLE : RED_STYLE;
-		characterCount.setStyle(style);
-		final var check = policy.check(passwordField.getText());
-		if (Status.OK.equals(check)) {
-			imageCheck.setVisible(true);
-			errorLabel.setVisible(false);
-			passwordFieldCopy.setDisable(false);
-		} else {
-			imageCheck.setVisible(false);
-			errorLabel.setVisible(true);
-			passwordFieldCopy.setDisable(true);
-		}
-	}
-
-	/**
 	 * Given an account info, returns a list of string keys
 	 *
 	 * @param info
@@ -382,31 +227,6 @@ public class Utilities {
 	}
 
 	/**
-	 * Retrieves the password from the PasswordFields and destroys the arrays.
-	 *
-	 * @param accept
-	 * 		button
-	 * @param password
-	 * 		the char array containing the password
-	 * @param passwordField
-	 * 		the field that contains the password
-	 * @param confirmField
-	 * 		the field that confirms the password
-	 */
-	public static void clearPasswordFields(Button accept, char[] password, PasswordField passwordField,
-			PasswordField confirmField) {
-		accept.setDisable(true);
-		var filler = new char[password.length];
-		Arrays.fill(filler, 'x');
-		passwordField.clear();
-		confirmField.clear();
-		passwordField.setText(String.valueOf(filler));
-		confirmField.setText(String.valueOf(filler));
-		passwordField.setDisable(true);
-		confirmField.setDisable(true);
-	}
-
-	/**
 	 * Retrieves the salt from the properties
 	 *
 	 * @param properties
@@ -419,26 +239,119 @@ public class Utilities {
 			var decoder = Base64.getDecoder();
 
 			var tokenBytes = decoder.decode(token);
-			if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 				logger.error("Token size check failed");
 			}
-			return Arrays.copyOfRange(tokenBytes, 0, SALT_LENGTH);
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 		}
 		return new byte[SALT_LENGTH];
 	}
 
-	public static boolean isNumeric(String string) {
-		if (string == null) {
-			return false;
+
+	/**
+	 * Parses a String into a list of accounts. Strings may be of the form "1-5, 8, 12-13"
+	 *
+	 * @param text
+	 * 		a string containing a range of accounts, or a comma separated list of accounts, or a combination
+	 * @return a list of accounts
+	 */
+	public static List<AccountId> parseAccountNumbers(String text) {
+		List<AccountId> ids = new ArrayList<>();
+		List<String> ranges = new ArrayList<>();
+		List<String> singles = new ArrayList<>();
+
+		if (text == null || "".equals(text)) {
+			return ids;
 		}
-		try {
-			var l = Long.parseLong(string);
-			logger.info("Parsed {}", l);
-		} catch (NumberFormatException e) {
-			return false;
+
+		var split = text.replace("\\s", "").split("[\\s,]+");
+
+		for (String s : split) {
+			if (s.contains("-")) {
+				ranges.add(s);
+				continue;
+			}
+			singles.add(s);
 		}
-		return true;
+
+
+		for (String single : singles) {
+			if (!isIdentifier(single)) {
+				logger.error("String {} cannot be parsed.", single);
+				return new ArrayList<>();
+			}
+			AccountId accountId = Identifier.parse(single).asAccount();
+			ids.add(accountId);
+		}
+
+		for (var s : ranges) {
+			var range = s.split("-");
+			if (range.length != 2) {
+				logger.error("String {} cannot be parsed into a range", s);
+				return new ArrayList<>();
+			}
+
+			if (!isIdentifier(range[0]) || !isIdentifier(range[1])) {
+				logger.error("Cannot parse account");
+				return new ArrayList<>();
+			}
+
+			Identifier start = Identifier.parse(range[0]);
+			Identifier end = Identifier.parse(range[1]);
+
+
+			if (end.getShardNum() != start.getShardNum() || end.getRealmNum() != start.getRealmNum()) {
+				logger.error("Cannot parse range: shards and realms must match");
+				return new ArrayList<>();
+			}
+
+			LongStream.rangeClosed(Math.min(start.getAccountNum(), end.getAccountNum()),
+							Math.max(start.getAccountNum(), end.getAccountNum()))
+					.mapToObj(i -> new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount())
+					.forEach(ids::add);
+		}
+
+		return ids;
 	}
 
+	/**
+	 * Calculate the difference betweeen two json objects
+	 *
+	 * @param j1
+	 * 		the first json object
+	 * @param j2
+	 * 		the second json object
+	 * @return a set containing the keys that are different from one to the second
+	 */
+	public static List<String> difference(JsonObject j1, JsonObject j2) {
+		Gson g = new Gson();
+		Type mapType = new TypeToken<Map<String, Object>>() {
+		}.getType();
+		Map<String, Object> first = g.fromJson(j1, mapType);
+		Map<String, Object> second = g.fromJson(j2, mapType);
+		var diff = Maps.difference(first, second);
 
+		Set<String> keys = new HashSet<>();
+		if (!diff.entriesDiffering().isEmpty()) {
+			keys.addAll(diff.entriesDiffering().keySet());
+		}
+		if (!diff.entriesOnlyOnLeft().isEmpty()) {
+			keys.addAll(diff.entriesOnlyOnLeft().keySet());
+		}
+		if (!diff.entriesOnlyOnRight().isEmpty()) {
+			keys.addAll(diff.entriesOnlyOnRight().keySet());
+		}
+		List<String> sorted = new ArrayList<>(keys);
+		Collections.sort(sorted);
+		return sorted;
+	}
+
+	private static boolean isIdentifier(String s) {
+		try {
+			Identifier.parse(s);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }
