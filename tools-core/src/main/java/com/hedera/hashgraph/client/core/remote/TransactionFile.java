@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
@@ -92,6 +93,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
+	private JsonObject nicknames;
 
 
 	public TransactionFile() {
@@ -179,7 +181,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var detailsGridPane = super.buildGridPane();
 		handleTransactionCommonFields(detailsGridPane);
 		var count = detailsGridPane.getRowCount() + 1;
-
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
+					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (HederaClientException e) {
+			logger.error(e);
+		}
 		switch (transaction.getTransactionType()) {
 			case CRYPTO_TRANSFER:
 				handleCryptoTransferFields(detailsGridPane, count);
@@ -192,6 +199,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				break;
 			case SYSTEM_DELETE_UNDELETE:
 				handleSystemTransactionField(detailsGridPane, count);
+				break;
+			case FREEZE:
+				handleFreezeTransactionFields(detailsGridPane, count);
 				break;
 			default:
 				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
@@ -240,13 +250,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * 		the number of rows in the grid pane
 	 */
 	private void handleCryptoTransferFields(GridPane detailsGridPane, int count) {
-		var nicknames = new JsonObject();
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
-					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (HederaClientException e) {
-			logger.error(e);
-		}
+
 		var accountAmountMap =
 				((ToolTransferTransaction) transaction).getAccountAmountMap();
 		List<Pair<String, String>> senders = new ArrayList<>();
@@ -332,7 +336,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					, 1, count++);
 		}
 
-
 		if (updateTransaction.isReceiverSignatureRequired() != null) {
 			detailsGridPane.add(sigReqLabel, 0, count);
 			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
@@ -366,6 +369,71 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					true);
 			expirationTimeLabel.setWrapText(true);
 			detailsGridPane.add(expirationTimeLabel, 1, count);
+		}
+	}
+
+	/**
+	 * Add the FREEZE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleFreezeTransactionFields(GridPane detailsGridPane, int count) {
+		var toolFreezeTransaction = (ToolFreezeTransaction) transaction;
+		var freezeType = toolFreezeTransaction.getFreezeType();
+		Label startTimeLabel;
+		Label fileIDLabel;
+		Text fileHashLabel = new Text();
+		fileHashLabel.setFont(Font.font("Courier", 18));
+		switch (freezeType) {
+			case UNKNOWN_FREEZE_TYPE:
+				logger.error("Cannot parse freeze type");
+				break;
+			case FREEZE_ONLY:
+				// Freezes the network at the specified time. The start_time field must be provided and must
+				// reference a future time. Any values specified for the update_file and file_hash fields will
+				// be ignored. This transaction does not perform any network changes or upgrades and requires
+				// manual intervention to restart the network.
+				detailsGridPane.add(new Label("Freeze start:"), 0, count);
+				startTimeLabel = getTimeLabel(toolFreezeTransaction.getStartTime(), true);
+				startTimeLabel.setWrapText(true);
+				detailsGridPane.add(startTimeLabel, 1, count);
+				break;
+			case PREPARE_UPGRADE:
+				// A non-freezing operation that initiates network wide preparation in advance of a scheduled
+				// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
+				// start_time field may be omitted and any value present will be ignored.
+				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
+				detailsGridPane.add(new Label("Upgrade File"), 0, count);
+				detailsGridPane.add(fileIDLabel, 1, count++);
+				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
+				detailsGridPane.add(fileHashLabel, 1, count);
+				break;
+			case FREEZE_UPGRADE:
+				// Freezes the network at the specified time and performs the previously prepared automatic
+				// upgrade across the entire network.
+			case TELEMETRY_UPGRADE:
+				// Performs an immediate upgrade on auxilary services and containers providing
+				// telemetry/metrics. Does not impact network operations.
+				startTimeLabel = getTimeLabel(toolFreezeTransaction.getStartTime(), true);
+				startTimeLabel.setWrapText(true);
+				detailsGridPane.add(new Label("Upgrade start:"), 0, count);
+				detailsGridPane.add(startTimeLabel, 1, count++);
+				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
+				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
+				detailsGridPane.add(fileIDLabel, 1, count++);
+				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
+				detailsGridPane.add(fileHashLabel, 1, count);
+				break;
+			case FREEZE_ABORT:
+				// Aborts a pending network freeze operation.
+				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
 	}
 

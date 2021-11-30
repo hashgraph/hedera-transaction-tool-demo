@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
+import com.hedera.hashgraph.sdk.FreezeType;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
@@ -34,13 +35,16 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
@@ -70,6 +74,12 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_TO_ACCOUN
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_TRANSFER_TO_AMOUNT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ACCOUNT_ID;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ENTITY_ID_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_DATE_PICKER;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_FILE_HASH_TEXT_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_FILE_IDTEXT_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_HOUR_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_MINUTE_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FREEZE_SECONDS_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SET_NOW_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TIMEZONE_HBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TRANSACTION_ACTION_CHOICE_BOX;
@@ -83,6 +93,7 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 
 public class CreatePanePage {
+
 	private final TestBase driver;
 
 	private static final Logger logger = LogManager.getLogger(CreatePanePage.class);
@@ -336,6 +347,7 @@ public class CreatePanePage {
 		driver.type(KeyCode.TAB);
 		return this;
 	}
+
 	public CreatePanePage setFromAccountTransfer(String accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
@@ -344,6 +356,7 @@ public class CreatePanePage {
 		driver.type(KeyCode.TAB);
 		return this;
 	}
+
 	public CreatePanePage setToAccountTransfer(long accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
@@ -352,6 +365,7 @@ public class CreatePanePage {
 		driver.type(KeyCode.TAB);
 		return this;
 	}
+
 	public CreatePanePage setToAccountTransfer(String accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
@@ -360,6 +374,7 @@ public class CreatePanePage {
 		driver.type(KeyCode.TAB);
 		return this;
 	}
+
 	public CreatePanePage addCredit(long accountNum, double amount) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
@@ -466,6 +481,12 @@ public class CreatePanePage {
 				CREATE_SYSTEM_MINUTES, CREATE_SYSTEM_SECONDS);
 	}
 
+	public CreatePanePage setFreezeStartDate(LocalDateTime date) {
+		var startTimeDate = Date.from(date.toInstant(OffsetDateTime.now().getOffset()));
+		return getCreatePanePage(startTimeDate, FREEZE_DATE_PICKER, FREEZE_HOUR_FIELD, FREEZE_MINUTE_FIELD,
+				FREEZE_SECONDS_FIELD);
+	}
+
 	private CreatePanePage getCreatePanePage(Date date, String datePicker, String hours, String minutes,
 			String seconds) {
 
@@ -473,8 +494,10 @@ public class CreatePanePage {
 		datePickerFormat.setTimeZone(TimeZone.getDefault());
 		var localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
+
 		driver.ensureVisible(driver.find(datePicker));
-		driver.clickOn(datePicker);
+		driver.doubleClickOn(datePicker);
+		driver.doubleClickOn(datePicker);
 		driver.write(datePickerFormat.format(date));
 		driver.type(KeyCode.ENTER);
 
@@ -671,6 +694,34 @@ public class CreatePanePage {
 		((TextField) n).setText(nanosString);
 		driver.clickOn(n);
 		driver.press(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setFreezeType(FreezeType freezeOnly) {
+		var type = freezeOnly.equals(FreezeType.FREEZE_UPGRADE) ?
+				"Freeze and upgrade" :
+				freezeOnly.toString()
+						.replace("_", " ")
+						.toLowerCase(Locale.ROOT);
+
+		driver.clickOn("#freezeTypeChoiceBox");
+		driver.clickOn(StringUtils.capitalize(type));
+		return this;
+	}
+
+	public CreatePanePage setFreezeFileId(int i) {
+		driver.ensureVisible(driver.find(FREEZE_FILE_IDTEXT_FIELD));
+		driver.clickOn(FREEZE_FILE_IDTEXT_FIELD);
+		driver.write(String.valueOf(i));
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setFreezeHash(String hash) {
+		driver.ensureVisible(driver.find(FREEZE_FILE_HASH_TEXT_FIELD));
+		driver.clickOn(FREEZE_FILE_HASH_TEXT_FIELD);
+		driver.write(hash);
+		driver.type(KeyCode.ENTER);
 		return this;
 	}
 

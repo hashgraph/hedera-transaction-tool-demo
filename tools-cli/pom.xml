@@ -25,7 +25,7 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.4.0</version>
+		<version>0.5.0-alpha.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -33,7 +33,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-cli</artifactId>
-	<version>0.4.0</version>
+	<version>0.5.0-alpha.1</version>
 	<packaging>jar</packaging>
 
 	<dependencyManagement>
@@ -53,7 +53,7 @@
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-core</artifactId>
-			<version>0.4.0</version>
+			<version>0.5.0-alpha.1</version>
 		</dependency>
 
 		<!-- Logging SLF4j + Log4j2 implementation -->
@@ -364,6 +364,24 @@
 							<overWriteIfNewer>true</overWriteIfNewer>
 						</configuration>
 					</execution>
+					<execution>
+						<id>copy-installed</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${project.groupId}</groupId>
+									<artifactId>${project.artifactId}</artifactId>
+									<version>${project.version}</version>
+									<type>zip</type>
+								</artifactItem>
+							</artifactItems>
+							<outputDirectory>${project.parent.basedir}/Release</outputDirectory>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -441,6 +459,7 @@
 					</gitDescribe>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 	<repositories>

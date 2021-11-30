@@ -510,7 +510,6 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	public void loadSystemTransaction_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/modifyContent.tx");
 		createPanePage.createAndExport(resources);
-
 		var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {

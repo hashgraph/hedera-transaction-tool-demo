@@ -24,7 +24,8 @@ public enum TransactionType {
 	CRYPTO_UPDATE,
 	SYSTEM_DELETE_UNDELETE,
 	FILE_UPDATE,
-	FILE_APPEND;
+	FILE_APPEND,
+	FREEZE;
 
 
 	@Override
@@ -42,6 +43,8 @@ public enum TransactionType {
 				return "File Update Transaction";
 			case FILE_APPEND:
 				return "File Append Transaction";
+			case FREEZE:
+				return "Freeze Transaction";
 		}
 		return super.toString();
 	}
