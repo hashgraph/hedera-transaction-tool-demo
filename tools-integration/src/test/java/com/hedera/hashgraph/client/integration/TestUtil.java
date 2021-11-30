@@ -214,7 +214,15 @@ public class TestUtil {
 	public static Stage findModalWindow() {
 		// Get a list of windows but ordered from top[0] to bottom[n] ones.
 		// It is needed to get the first found modal window.
-		final List<Window> allWindows = new ArrayList<>(robot.robotContext().getWindowFinder().listWindows());
+		final var windowFinder = robot.robotContext().getWindowFinder();
+		if (windowFinder == null) {
+			return null;
+		}
+		final List<Window> allWindows = new ArrayList<>(windowFinder.listWindows());
+		if (allWindows.isEmpty()) {
+			return null;
+		}
+
 		Collections.reverse(allWindows);
 
 		return (Stage) allWindows
@@ -335,7 +343,7 @@ public class TestUtil {
 	 * 		the text in the button
 	 * @return a button
 	 */
-	public static CheckBox findCheckBoxInPopup(ObservableList<Node> popupNodes, String legend){
+	public static CheckBox findCheckBoxInPopup(ObservableList<Node> popupNodes, String legend) {
 		for (var popupNode : popupNodes) {
 			if (popupNode instanceof CheckBox && legend.equalsIgnoreCase(((CheckBox) popupNode).getText())) {
 				return (CheckBox) popupNode;
@@ -453,6 +461,7 @@ public class TestUtil {
 		}
 		return null;
 	}
+
 	/**
 	 * Transfers tinibars from one account to another
 	 *
