@@ -447,30 +447,14 @@ public class TestUtil {
 		return null;
 	}
 
-	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
-		for (Node popupNode : popupNodes) {
-			if (popupNode instanceof TextField) {
-				return (TextField) popupNode;
-			}
-			if (popupNode instanceof HBox) {
-				return findPasswordInPopup(((HBox) popupNode).getChildren());
-			}
-			if (popupNode instanceof VBox) {
-				return findPasswordInPopup(((VBox) popupNode).getChildren());
-			}
-		}
-		return null;
-	}
 
 	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
 		for (Node popupNode : popupNodes) {
 			if (popupNode instanceof TextField) {
 				return (TextField) popupNode;
-			}
-			if (popupNode instanceof HBox) {
+			} else if (popupNode instanceof HBox) {
 				return findPasswordInPopup(((HBox) popupNode).getChildren());
-			}
-			if (popupNode instanceof VBox) {
+			} else if (popupNode instanceof VBox) {
 				return findPasswordInPopup(((VBox) popupNode).getChildren());
 			}
 		}
