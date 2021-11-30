@@ -77,7 +77,7 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 		for (PrivateKey signingKey : signingKeys) {
 			client.setOperator(feePayer, signingKey);
 		}
-		client.setDefaultMaxQueryPayment(fee);
+		client.setMaxQueryPayment(fee);
 		return new com.hedera.hashgraph.sdk.AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);
