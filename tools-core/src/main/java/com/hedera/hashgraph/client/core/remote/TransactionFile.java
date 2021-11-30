@@ -184,8 +184,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		handleTransactionCommonFields(detailsGridPane);
 		var count = detailsGridPane.getRowCount() + 1;
 		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
-					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
@@ -413,7 +412,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				fileHashLabel.setText(
+						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
+								12));
 				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
@@ -430,7 +431,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				fileHashLabel.setText(
+						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
+								12));
 				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
