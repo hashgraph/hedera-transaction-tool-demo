@@ -141,6 +141,9 @@ public class MnemonicInputPopup {
 		}
 
 		var password = NewPasswordPopup.display();
+		if (password.length == 0) {
+			return;
+		}
 		try {
 			setPassword(password);
 		} catch (HederaClientException e) {
@@ -198,6 +201,9 @@ public class MnemonicInputPopup {
 	}
 
 	private static void setPassword(char[] password) throws HederaClientException {
+		if (password.length == 0) {
+			return;
+		}
 		UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setHash(password);

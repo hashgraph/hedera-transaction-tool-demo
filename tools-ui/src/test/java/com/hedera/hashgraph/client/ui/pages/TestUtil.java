@@ -25,6 +25,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
@@ -395,5 +396,53 @@ public class TestUtil {
 
 		driver.press(KeyCode.CONTROL).press(KeyCode.V).release(KeyCode.V).release(KeyCode.CONTROL);
 		driver.push(KeyCode.ENTER);
+	}
+
+	public static List<Hyperlink> findHyperlinksInPopup() {
+		var popupNodes = getPopupNodes();
+		if (popupNodes == null) {
+			return new ArrayList<>();
+		}
+		return findHyperlinksInPopup(popupNodes);
+	}
+
+	private static List<Hyperlink> findHyperlinksInPopup(ObservableList<Node> popupNodes) {
+		List<Hyperlink> nodes = new ArrayList<>();
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof Hyperlink) {
+				nodes.add((Hyperlink) popupNode);
+			} else if (popupNode instanceof HBox) {
+				nodes.addAll(findHyperlinksInPopup(((HBox) popupNode).getChildren()));
+			} else if (popupNode instanceof VBox) {
+				nodes.addAll(findHyperlinksInPopup(((VBox) popupNode).getChildren()));
+			} else if (popupNode instanceof GridPane) {
+				nodes.addAll(findHyperlinksInPopup(((GridPane) popupNode).getChildren()));
+			}
+		}
+
+		return nodes;
+	}
+
+	public static List<GridPane> findGridpanesInPopup() {
+		var popupNodes = getPopupNodes();
+		if (popupNodes == null) {
+			return new ArrayList<>();
+		}
+		return findGridPanesInPopup(popupNodes);
+	}
+
+	private static List<GridPane> findGridPanesInPopup(ObservableList<Node> popupNodes) {
+		List<GridPane> nodes = new ArrayList<>();
+		for (Node popupNode : popupNodes) {
+			if (popupNode instanceof GridPane) {
+				nodes.add((GridPane) popupNode);
+			} else if (popupNode instanceof HBox) {
+				nodes.addAll(findGridPanesInPopup(((HBox) popupNode).getChildren()));
+			} else if (popupNode instanceof VBox) {
+				nodes.addAll(findGridPanesInPopup(((VBox) popupNode).getChildren()));
+			}
+		}
+
+		return nodes;
 	}
 }

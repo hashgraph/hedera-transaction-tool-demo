@@ -187,7 +187,6 @@ public class AccountHistoryPopup {
 		for (var entry : history.descendingKeySet()) {
 			var oldInfo = history.get(entry);
 			var diff = Utilities.difference(oldInfo, current);
-			diff.remove("balance");
 			List<String> titles =
 					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(
 							Collectors.toList());

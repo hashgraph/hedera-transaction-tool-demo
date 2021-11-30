@@ -47,6 +47,10 @@ import static com.hedera.hashgraph.client.ui.popups.PasswordBox.display;
 
 public class KeyPairUtility {
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
+	public static final String ERROR_RECOVERING_PASSWORD_TITLE = "Error recovering password";
+	public static final String ERROR_RECOVERING_PASSWORD_MESSAGE =
+			"The key is not associated with the current recovery phrase. The password cannot be changed";
+	public static final String CONTINUE = "CONTINUE";
 
 
 	/**
@@ -112,16 +116,12 @@ public class KeyPairUtility {
 		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
 		if (hashCode == null) {
 			logger.error("Hashcode is null");
-			PopupMessage.display("Error recovering password",
-					"The key is not associated with the current recovery phrase. The password cannot be changed",
-					"CONTINUE");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
 			return new char[0];
 		}
 		if (hashCode != storedHashCode) {
 			logger.info("The key is not associated with the current mnemonic");
-			PopupMessage.display("Error recovering password",
-					"The key is not associated with the current recovery phrase. The password cannot be changed",
-					"CONTINUE");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
 			return new char[0];
 		}
 

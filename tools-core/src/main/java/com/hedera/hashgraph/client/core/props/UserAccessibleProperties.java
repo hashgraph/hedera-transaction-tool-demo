@@ -28,13 +28,16 @@ import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_FEE_PAYERS;
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
@@ -443,13 +446,37 @@ public class UserAccessibleProperties {
 		return properties.getProperty(CURRENT_NETWORK, "MAINNET");
 	}
 
-	public String getDefaultFeePayer() {
-		return properties.getProperty(DEFAULT_FEE_PAYER, "");
+	public Identifier getDefaultFeePayer() {
+		var idString = properties.getProperty(DEFAULT_FEE_PAYER, "");
+		return idString.equals("") ? Identifier.ZERO : Identifier.parse(idString);
 	}
 
-	public void setDefaultFeePayer(String feePayer) {
-		properties.setProperty(DEFAULT_FEE_PAYER, feePayer);
+	public void setDefaultFeePayer(Identifier feePayer) {
+		properties.setProperty(DEFAULT_FEE_PAYER, feePayer.toReadableString());
 	}
+
+	public Set<Identifier> getCustomFeePayers() {
+		var idStrings = properties.getSetProperty(CUSTOM_FEE_PAYERS, new HashSet<>());
+		return idStrings.stream().map(Identifier::parse).collect(Collectors.toSet());
+	}
+
+	public void setCustomFeePayers(Set<Identifier> identifiers) {
+		var payers = identifiers.stream().map(Identifier::toReadableString).collect(Collectors.toSet());
+		properties.setSetProperty(CUSTOM_FEE_PAYERS, payers);
+	}
+
+	public void addCustomFeePayer(Identifier identifier) {
+		var customFeePayers = getCustomFeePayers();
+		customFeePayers.add(identifier);
+		setCustomFeePayers(Collections.unmodifiableSet(customFeePayers));
+	}
+
+	public void removeCustomFeePayer(Identifier identifier) {
+		var payers = getCustomFeePayers();
+		payers.remove(identifier);
+		setCustomFeePayers(Collections.unmodifiableSet(payers));
+	}
+
 
 	// endregion
 

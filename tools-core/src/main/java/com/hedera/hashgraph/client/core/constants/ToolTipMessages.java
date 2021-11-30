@@ -57,4 +57,9 @@ public class ToolTipMessages {
 			"The period of time in which the account will renew in seconds.\n" +
 					"Min:7000000 seconds \n" +
 					"Max: 8000000 seconds";
+	public static final String ACCOUNTS_TO_QUERY_TOOLTIP_MESSAGE =
+			"The accounts that will be requested from the network.\n" +
+					"e.g:\t1001, 1002, 1008\n" +
+					"\t0.0.1001-0.0.1005\n" +
+					"\t1001, 1003-0.0.1008";
 }

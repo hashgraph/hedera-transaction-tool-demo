@@ -32,6 +32,7 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.integration.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.integration.pages.MainWindowPage;
+import com.hedera.hashgraph.client.integration.pages.SettingsPanePage;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -41,6 +42,8 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,6 +71,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
@@ -79,6 +83,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	private Client client;
 	private MainWindowPage mainWindowPage;
 	private AccountsPanePage accountsPanePage;
+	private SettingsPanePage settingsPanePage;
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -121,14 +126,11 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		if (input.mkdirs()) {
 			logger.info("Input directory created");
 		}
-
 		createAccounts();
-
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-
 		setupUI();
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		mainWindowPage.clickOnAccountsButton();
-
 	}
 
 	@After
@@ -167,6 +169,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		TestUtil.transfer(new AccountId(2L), testAccountId, Hbar.fromTinybars(123));
 		accountsPanePage.expandRow(nickname)
 				.requestNewBalance(nickname);
+
+		mainWindowPage.clickOnSettingsButton().clickOnAccountsButton();
 
 		var finalBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance.toTinybars() + 123L, finalBalance.toTinybars());
@@ -210,6 +214,12 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		accountsPanePage.selectAllCheckBoxes()
 				.requestSelectedBalances();
 
+		while (true) {
+			if (TestUtil.getPopupNodes() == null) {
+				break;
+			}
+		}
+
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
 		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
@@ -221,13 +231,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-		while (true) {
-			if (TestUtil.getPopupNodes() == null) {
-				break;
-			}
-		}
-
-		assertEquals(2, counter);
+		assertEquals(3, counter);
 	}
 
 	@Test
@@ -241,8 +245,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		accountsPanePage.selectRow("treasury")
 				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD)
-				.pressPopupButton("Replace");
+				.enterPasswordInPopup(TEST_PASSWORD);
 
 		var newBalance = accountsPanePage.getBalance("treasury");
 		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
@@ -262,7 +265,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var newAccounts = accountsPanePage.getAccounts().size();
 		assertEquals(accounts + 11, newAccounts);
 
-		accountsPanePage.enterAccounts("45-50, 61, 67")
+		accountsPanePage.openAccordion()
+				.enterAccounts("45-50, 61, 67")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.acceptAllNickNames();
@@ -396,8 +400,73 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
 		clickOn(button);
 
-
 		mainWindowPage = new MainWindowPage(this);
 		accountsPanePage = new AccountsPanePage(this);
+		settingsPanePage = new SettingsPanePage(this);
+	}
+
+	@Test
+	public void feePayerChange_test() throws HederaClientException, TimeoutException, IOException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
+		FileUtils.cleanDirectory(new File(ACCOUNTS_INFO_FOLDER));
+		properties.setDefaultFeePayer(Identifier.ZERO);
+		Files.deleteIfExists(Path.of(Constants.DEFAULT_STORAGE, "Files/.System/accountMapFile.json"));
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		mainWindowPage.clickOnAccountsButton();
+		accountsPanePage.openAccordion();
+
+		assertTrue(find("#feePayerTextFieldA").isVisible());
+		assertFalse(find("#feePayerChoiceBoxA").isVisible());
+
+		mainWindowPage.clickOnSettingsButton();
+
+		assertTrue(find("#customFeePayerTextField").isVisible());
+		assertFalse(find("#feePayerChoicebox").isVisible());
+
+		settingsPanePage.enterFeePayer("2");
+		assertFalse(find("#deleteCustomPayerButton").isDisabled());
+		assertTrue(find("#deleteCustomPayerButton").isVisible());
+
+		mainWindowPage.clickOnAccountsButton();
+
+		assertFalse(find("#feePayerTextFieldA").isVisible());
+		assertTrue(find("#feePayerChoiceBoxA").isVisible());
+
+		accountsPanePage.enterAccounts("2")
+				.clickRequestAccountsButton()
+				.selectCheckBoxInPopup("genesis")
+				.clickOnPopupButton("ACCEPT")
+				.enterPasswordInPopup(TEST_PASSWORD)
+				.enterTextInPopup("treasury");
+
+
+
+		mainWindowPage.clickOnSettingsButton();
+		assertTrue(find("#deleteCustomPayerButton").isDisabled());
+		assertTrue(find("#deleteCustomPayerButton").isVisible());
+
+		mainWindowPage.clickOnAccountsButton();
+
+		accountsPanePage.deleteAccount("treasury");
+		assertFalse(find("#feePayerTextFieldA").isVisible());
+		assertTrue(find("#feePayerChoiceBoxA").isVisible());
+
+		mainWindowPage.clickOnSettingsButton();
+		assertFalse(find("#customFeePayerTextField").isVisible());
+		assertTrue(find("#feePayerChoicebox").isVisible());
+		assertFalse(find("#deleteCustomPayerButton").isDisabled());
+		assertTrue(find("#deleteCustomPayerButton").isVisible());
+
+		clickOn("#deleteCustomPayerButton");
+
+		mainWindowPage.clickOnAccountsButton();
+		accountsPanePage.openAccordion();
+		assertTrue(find("#feePayerTextFieldA").isVisible());
+		assertFalse(find("#feePayerChoiceBoxA").isVisible());
 	}
 }

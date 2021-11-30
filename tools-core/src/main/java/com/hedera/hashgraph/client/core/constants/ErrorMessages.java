@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.constants;
 
 public class ErrorMessages {
 
+
 	private ErrorMessages() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -59,4 +60,7 @@ public class ErrorMessages {
 			"Execution aborted, missing fields in the json file";
 	public static final String COULD_NOT_CALCULATE_HASH_OF_THE_FILE = "Could not calculate the hash of the file";
 	public static final String POSITIVE_NUMBER_CURRENCY_ERROR_MESSAGE = "Currency amount must be a positive number";
+	public static final String FEE_PAYER_NOT_SET_ERROR_MESSAGE =
+			"The fee payer account has not been set. Please go to the settings tab and set the default payer in order " +
+					"to request account information from the network.";
 }

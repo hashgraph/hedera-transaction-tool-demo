@@ -85,6 +85,7 @@ public class TestBase extends ApplicationTest {
 		}
 	}
 
+
 	/**
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
 	 *

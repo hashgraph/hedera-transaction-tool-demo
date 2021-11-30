@@ -37,7 +37,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
@@ -61,11 +61,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
 import java.util.TimeZone;
+import java.util.TreeSet;
 import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
@@ -88,6 +87,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "[^\\d]";
 	private static final String REGEX1 = "\\d*";
+
+
 	private boolean noise = false;
 
 	public TextField loadStorageTextField;
@@ -100,6 +101,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public TextField minutesTextField;
 	public TextField secondsTextField;
 	public TextField defaultTransactionFee;
+	public TextField customFeePayerTextField;
 
 	public Label loadStorageLabel;
 	public Label nodeIDLabel;
@@ -116,6 +118,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button cancelAddToEmailMapButton;
 	public Button addCustomNetworkButton;
 	public Button deleteCustomNetworkButton;
+	public Button deleteCustomPayerButton;
+	public Button addCustomPayerButton;
+	public Button addCustomPayerButton1;
 
 	public ImageView pathGreenCheck;
 	public ImageView emailGreenCheck;
@@ -142,9 +147,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public Button feePayerTooltip;
 	public TextField versionLabel;
 	public Button networkTooltip;
-	public ComboBox<Object> networkCombobox;
-	public ComboBox<String> feePayerCombobox;
-
+	public ChoiceBox<Object> networkChoicebox;
+	public ChoiceBox<Object> feePayerChoicebox;
 
 	@FXML
 	private Controller controller;
@@ -161,7 +165,24 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// bindings
 			managedPropertyBinding(addFolderButton, addPathGridPane, pathGreenCheck, drivesErrorLabelSP,
 					addFolderPathHBoxSP, tvsErrorLabel, confirmAddFolderButtonSP, cancelAddToEmailMapButton,
-					browseNewFolderButton, deleteImage, editImage);
+					browseNewFolderButton, deleteImage, editImage, customFeePayerTextField, feePayerChoicebox,
+					addCustomPayerButton1, addCustomPayerButton);
+
+			feePayerChoicebox.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
+			customFeePayerTextField.setOnKeyReleased(event -> {
+				var code = event.getCode();
+				if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
+					feePayerChoicebox.getParent().requestFocus();
+				}
+			});
+
+			addCustomPayerButton1.visibleProperty().bind(customFeePayerTextField.visibleProperty());
+			addCustomPayerButton.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
+
+			addCustomPayerButton1.setOnAction(actionEvent -> customFeePayerTextField.getParent().requestFocus());
+
+			customFeePayerTextField.focusedProperty().addListener(
+					(observableValue, aBoolean, t1) -> addCustomFeePayer(t1));
 
 			//Initialize drive builder
 			driveSetupHelper = DriveSetupHelper.Builder.aDriveSetupHelper()
@@ -207,7 +228,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox(networkCombobox);
+			setupNetworkBox(networkChoicebox);
 
 			setupTxValidDurationTextField();
 
@@ -221,11 +242,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			setupDefaultTransactionFeeTextField();
 
-			setupFeePayerCombobox(feePayerCombobox);
+			setupFeePayerChoicebox();
 
 			generateRecordSlider.selectedProperty().addListener(
 					(observableValue, aBoolean, t1) -> {
-						generateRecordLabel.setText((Boolean.TRUE.equals(t1)) ? "yes" : "no");
+						generateRecordLabel.setText(Boolean.TRUE.equals(t1) ? "yes" : "no");
 						controller.setGenerateRecord(t1);
 					});
 
@@ -260,57 +281,58 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupFeePayerCombobox(ComboBox<String> comboBox) {
-		List<String> accounts = new ArrayList<>();
-		for (Identifier feePayer : controller.getFeePayers()) {
-			accounts.add(feePayer.toNicknameAndChecksum(controller.getAccountsList()));
+	private void addCustomFeePayer(Boolean t1) {
+		if (Boolean.FALSE.equals(t1)) {
+			var tempSet = new HashSet<>(controller.getFeePayers());
+			tempSet.addAll(controller.getCustomFeePayers());
+
+			if ("".equals(customFeePayerTextField.getText())) {
+				return;
+			}
+
+			try {
+				var id = Identifier.parse(customFeePayerTextField.getText());
+				controller.setDefaultFeePayer(id);
+				customFeePayerTextField.setVisible(false);
+				customFeePayerTextField.clear();
+				if (!tempSet.contains(id)) {
+					controller.addCustomFeePayer(id);
+				}
+				setupFeePayerChoicebox();
+				controller.accountsPaneController.setupFeePayerChoiceBox();
+			} catch (Exception e) {
+				logger.error("Cannot parse identifier {}", e.getMessage());
+				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
+				customFeePayerTextField.requestFocus();
+				customFeePayerTextField.setVisible(true);
+			}
 		}
-		if (accounts.isEmpty()) {
-			return;
-		}
-		Collections.sort(accounts);
+	}
+
+	/**
+	 * Setup for fee payer choicebox
+	 */
+	public void setupFeePayerChoicebox() {
 		noise = true;
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(accounts);
+		var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
 		noise = false;
 
-		var feePayer = controller.getDefaultFeePayer();
 		if ("".equals(feePayer)) {
-			controller.setDefaultFeePayer(accounts.get(0));
-			feePayer = accounts.get(0);
+			return;
 		}
-		comboBox.getSelectionModel().select(feePayer);
-		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
-			if (!noise) {
-				controller.setDefaultFeePayer(t1);
-			}
-		});
-
-		comboBox.setOnKeyPressed(keyEvent -> {
-			final var code = keyEvent.getCode();
-			if (KeyCode.ENTER.equals(code) || KeyCode.TAB.equals(code)) {
-				var text = comboBox.getEditor().getText();
-				try {
-					var id = Identifier.parse(text);
-					comboBox.getEditor().setText(id.toNicknameAndChecksum(controller.getAccountsList()));
-				} catch (Exception e) {
-					noise = true;
-					comboBox.getSelectionModel().select(controller.getCurrentNetwork());
-					noise = false;
-				}
+		feePayerChoicebox.getSelectionModel().select(feePayer);
+		feePayerChoicebox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (t1 instanceof String) {
+				final var text = (String) t1;
+				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text)));
+				controller.setDefaultFeePayer(Identifier.parse(text));
 			}
 		});
 	}
 
-	private void setupNetworkBox(ComboBox<Object> comboBox) {
+	public void setupNetworkBox(ChoiceBox<Object> comboBox) {
 		noise = true;
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(controller.getDefaultNetworks());
-		var customNetworks = controller.getCustomNetworks();
-		if (!customNetworks.isEmpty()) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().addAll(customNetworks);
-		}
+		controller.networkBoxSetup(comboBox);
 		noise = false;
 		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
 		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
@@ -514,18 +536,13 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkFee() {
-
 		var txFee = defaultTransactionFee.getText().replace(" ", "") + "00000000";
-
 		if (txFee.contains(".")) {
 			txFee = txFee.substring(0, txFee.lastIndexOf(".") + 9).replace(".", "");
 		}
-
 		var fee = Long.parseLong(txFee);
-
 		controller.setDefaultTxFee(fee);
 		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.getDefaultTxFee()));
-
 	}
 
 	private void checkSeconds() {
@@ -717,7 +734,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
 	}
 
 	private boolean verifyJsonNetwork(String location) {
@@ -756,7 +773,35 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox(networkCombobox);
+		setupNetworkBox(networkChoicebox);
+	}
+
+	public void addFeePayerAction() {
+		customFeePayerTextField.setVisible(true);
+		customFeePayerTextField.requestFocus();
+	}
+
+	public void deleteFeePayerAction() {
+		final var selectedItem = feePayerChoicebox.getSelectionModel().getSelectedItem();
+		if (!(selectedItem instanceof String)) {
+			return;
+		}
+		controller.removeCustomFeePayer(Identifier.parse((String) selectedItem));
+
+		final var allPayers = new TreeSet<>(controller.getFeePayers());
+		allPayers.addAll(controller.getCustomFeePayers());
+
+		if (!allPayers.isEmpty()) {
+			final var choice = allPayers.first();
+			feePayerChoicebox.setValue(choice.toNicknameAndChecksum(controller.getAccountsList()));
+			controller.setDefaultFeePayer(choice);
+			setupFeePayerChoicebox();
+			controller.accountsPaneController.setupFeePayerChoiceBox();
+			return;
+		}
+		controller.setDefaultFeePayer(Identifier.ZERO);
+		controller.accountsPaneController.initializeAccountPane();
+		addFeePayerAction();
 	}
 
 
