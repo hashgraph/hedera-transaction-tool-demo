@@ -189,7 +189,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		var createTransaction = new TransactionFile(info);
 		var gridPane = createTransaction.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(14, gridPane.getChildren().size());
+		assertEquals(16, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(3);
@@ -198,12 +198,12 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		label = (Label) gridPane.getChildren().get(5);
 		assertTrue(label.getText().contains("2025-04-05 06:00:00 UTC"));
 
-		assertTrue(gridPane.getChildren().get(7) instanceof Hyperlink);
-
-		label = (Label) gridPane.getChildren().get(9);
-		assertEquals("7000000 seconds", label.getText());
+		assertTrue(gridPane.getChildren().get(9) instanceof Hyperlink);
 
 		label = (Label) gridPane.getChildren().get(11);
+		assertEquals("7000000 seconds", label.getText());
+
+		label = (Label) gridPane.getChildren().get(13);
 		assertEquals("0 tℏ", label.getText());
 
 		var signers = createTransaction.getSigningPublicKeys();
@@ -219,7 +219,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		var transfer = new TransactionFile(info);
 		var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(12, gridPane.getChildren().size());
+		assertEquals(14, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(3);
@@ -229,13 +229,17 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(label.getText().contains("2029-05-05 22:10:07 UTC"));
 
 		label = (Label) gridPane.getChildren().get(7);
+		assertEquals("0.0.3-tzfmz", label.getText());
+
+
+		label = (Label) gridPane.getChildren().get(9);
 		assertEquals("0.0.50-rlcsj", label.getText());
-		label = (Label) gridPane.getChildren().get(8);
+		label = (Label) gridPane.getChildren().get(10);
 		assertEquals("-100 ℏ", label.getText());
 
-		label = (Label) gridPane.getChildren().get(10);
+		label = (Label) gridPane.getChildren().get(12);
 		assertEquals("0.0.94-bbukb", label.getText());
-		label = (Label) gridPane.getChildren().get(11);
+		label = (Label) gridPane.getChildren().get(13);
 		assertEquals("100 ℏ", label.getText());
 
 		var signers = transfer.getSigningPublicKeys();
@@ -251,7 +255,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		var transfer = new TransactionFile(info);
 		var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(10, gridPane.getChildren().size());
+		assertEquals(12, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(3);
@@ -261,9 +265,12 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(label.getText().contains("2026-05-02 09:27:13 UTC"));
 
 		label = (Label) gridPane.getChildren().get(7);
-		assertEquals("0.0.123", label.getText());
+		assertEquals("0.0.3-tzfmz", label.getText());
 
 		label = (Label) gridPane.getChildren().get(9);
+		assertEquals("0.0.123", label.getText());
+
+		label = (Label) gridPane.getChildren().get(11);
 		assertTrue(label.getText().contains("2028-05-06 06:00:00 UTC"));
 
 		var signers = transfer.getSigningPublicKeys();

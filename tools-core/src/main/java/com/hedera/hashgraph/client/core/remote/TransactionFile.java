@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.core.remote;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
@@ -78,6 +77,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class TransactionFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -182,8 +184,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		handleTransactionCommonFields(detailsGridPane);
 		var count = detailsGridPane.getRowCount() + 1;
 		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
-					Constants.ACCOUNTS_MAP_FILE) : new JsonObject();
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
@@ -217,14 +218,15 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 */
 	private void handleTransactionCommonFields(GridPane detailsGridPane) {
 		try {
-			var map =
-					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), map));
-			feePayerLabel.setWrapText(true);
-			detailsGridPane.add(feePayerLabel, 1, 0);
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (HederaClientException e) {
 			logger.error(e);
+			nicknames = new JsonObject();
 		}
+
+		final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), nicknames));
+		feePayerLabel.setWrapText(true);
+		detailsGridPane.add(feePayerLabel, 1, 0);
 
 		var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
 		text.setFont(COURIER_FONT);
@@ -239,6 +241,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
+		detailsGridPane.add(new Label("Node"), 0, 4);
+		detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), 1, 4);
 	}
 
 	/**
@@ -408,7 +412,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				fileHashLabel.setText(
+						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
+								12));
 				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
@@ -425,7 +431,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
 				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
-				fileHashLabel.setText(CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()), 12));
+				fileHashLabel.setText(
+						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
+								12));
 				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
@@ -453,9 +461,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				this.getBaseName() + "-" + keyName + ".zip");
 
 		final var tempTxFile =
-				tempStorage + File.separator + this.getBaseName() + "." + Constants.TRANSACTION_EXTENSION;
+				tempStorage + File.separator + this.getBaseName() + "." + TRANSACTION_EXTENSION;
 		final var signatureFile =
-				tempStorage + File.separator + this.getBaseName() + "." + Constants.SIGNATURE_EXTENSION;
+				tempStorage + File.separator + this.getBaseName() + "." + SIGNATURE_EXTENSION;
 
 		try {
 			var value = pair.getValue();
@@ -549,7 +557,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		keysPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		keysPane.setContent(keyTreeView);
 		var okButton = new Button("CLOSE");
-		okButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		okButton.setStyle(WHITE_BUTTON_STYLE);
 		okButton.setOnAction(event -> window.close());
 		var layout = new VBox();
 		var titleLabel = new Label("New Key");

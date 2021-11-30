@@ -689,10 +689,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertTrue(prepareHBox.getChildren().get(0) instanceof GridPane);
 		assertTrue(freezeUpgradeHBox.getChildren().get(0) instanceof GridPane);
 
-		assertEquals(6, ((GridPane) abortHBox.getChildren().get(0)).getChildren().size());
-		assertEquals(8, ((GridPane) freezeHBox.getChildren().get(0)).getChildren().size());
-		assertEquals(10, ((GridPane) prepareHBox.getChildren().get(0)).getChildren().size());
-		assertEquals(12, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(8, ((GridPane) abortHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(10, ((GridPane) freezeHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(12, ((GridPane) prepareHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(14, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
 	}
 
 	@Test
