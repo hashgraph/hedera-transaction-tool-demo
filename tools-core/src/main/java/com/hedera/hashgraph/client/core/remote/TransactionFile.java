@@ -183,6 +183,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var detailsGridPane = super.buildGridPane();
 		handleTransactionCommonFields(detailsGridPane);
 		var count = detailsGridPane.getRowCount() + 1;
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (HederaClientException e) {
+			logger.error(e);
+		}
 		switch (transaction.getTransactionType()) {
 			case CRYPTO_TRANSFER:
 				handleCryptoTransferFields(detailsGridPane, count);

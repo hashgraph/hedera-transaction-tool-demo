@@ -19,59 +19,60 @@
   -->
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.ToggleSwitch?>
-<AnchorPane fx:id="createAnchorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
-			AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/"
-			xmlns:fx="http://javafx.com/fxml/" fx:controller="com.hedera.hashgraph.client.ui.CreatePaneController">
-	<VBox fx:id="mainVBox" layoutX="5.0" layoutY="5.0"
-		  style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;"
-		  AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0"
-		  AnchorPane.topAnchor="5.0">
-		<TextField fx:id="loadTransactionTextField" maxHeight="1.0" minHeight="1.0"
-				   onKeyReleased="#loadFormFromTransactionTest" prefHeight="1.0" style="-fx-background-color: white;"/>
+
+<AnchorPane fx:id="createAnchorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.CreatePaneController">
+	<VBox fx:id="mainVBox" layoutX="5.0" layoutY="5.0" style="-fx-background-color: white; -fx-border-color: lightgrey white white white; -fx-border-width: 3;" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0">
+		<TextField fx:id="loadTransactionTextField" maxHeight="1.0" minHeight="1.0" onKeyReleased="#loadFormFromTransactionTest" prefHeight="1.0" style="-fx-background-color: white;" />
 		<HBox alignment="CENTER_LEFT" fillHeight="false" minHeight="80.0" spacing="20.0">
 			<GridPane hgap="5.0" vgap="5.0">
 				<columnConstraints>
-					<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
-					<ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0"/>
+					<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+					<ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" />
 				</columnConstraints>
 				<rowConstraints>
-					<RowConstraints minHeight="30.0" vgrow="SOMETIMES"/>
-					<RowConstraints maxHeight="30.0" minHeight="30.0" vgrow="SOMETIMES"/>
+					<RowConstraints minHeight="30.0" vgrow="SOMETIMES" />
+					<RowConstraints maxHeight="30.0" minHeight="30.0" vgrow="SOMETIMES" />
 				</rowConstraints>
-				<Label text="Transaction Type"/>
-				<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction"
-						   prefWidth="300.0"
-						   style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;"
-						   GridPane.columnIndex="1"/>
-				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false"
-						onAction="#loadFormFromTransaction" prefWidth="300.0"
-						style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
-						text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+				<Label text="Transaction Type" />
+				<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction" prefWidth="300.0" style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" />
+				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false" onAction="#loadFormFromTransaction" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 			</GridPane>
-			<Region HBox.hgrow="ALWAYS"/>
-			<HBox fx:id="createChoiceHBox"/>
+			<Region HBox.hgrow="ALWAYS" />
+			<HBox fx:id="createChoiceHBox" />
 			<VBox.margin>
-				<Insets bottom="10.0" left="15.0" right="15.0"/>
+				<Insets bottom="10.0" left="15.0" right="15.0" />
 			</VBox.margin>
 		</HBox>
-		<ScrollPane fx:id="createScrollPane" fitToHeight="true" fitToWidth="true"
-					style="-fx-background-color: white; -fx-border-color: white;">
+		<ScrollPane fx:id="createScrollPane" fitToHeight="true" fitToWidth="true" style="-fx-background-color: white; -fx-border-color: white;">
 			<VBox spacing="20.0" style="-fx-background-color: white; -fx-border-color: white;">
 				<VBox fx:id="commentsVBox" spacing="10.0" style="-fx-background-color: white;">
-					<Label text="Comments:"/>
-					<TextArea fx:id="createCommentsTextArea" maxHeight="200" minHeight="100.0" prefHeight="100"
-							  prefRowCount="5" prefWidth="200.0" promptText="Your comments" wrapText="true"/>
+					<Label text="Comments:" />
+					<TextArea fx:id="createCommentsTextArea" maxHeight="200" minHeight="100.0" prefHeight="100" prefRowCount="5" prefWidth="200.0" promptText="Your comments" wrapText="true" />
 					<HBox>
-						<Region HBox.hgrow="ALWAYS"/>
-						<Label fx:id="createCharsLeft" text="Characters remaining: 255"/>
+						<Region HBox.hgrow="ALWAYS" />
+						<Label fx:id="createCharsLeft" text="Characters remaining: 255" />
 					</HBox>
 					<padding>
-						<Insets left="15.0" right="15.0"/>
+						<Insets left="15.0" right="15.0" />
 					</padding>
 				</VBox>
 				<VBox fx:id="freezeChoiceVBox" spacing="25.0">
@@ -84,496 +85,378 @@
 				</VBox>
 				<VBox fx:id="accountIDToUpdateVBox" spacing="10.0">
 					<VBox.margin>
-						<Insets left="15.0" right="15.0" top="15.0"/>
+						<Insets left="15.0" right="15.0" top="15.0" />
 					</VBox.margin>
-					<Label text="Account to update"/>
+					<Label text="Account to update" />
 					<HBox alignment="CENTER_LEFT" spacing="20.0">
-						<TextField fx:id="updateAccountID" alignment="CENTER" maxWidth="300.0" minWidth="300.0"
-								   prefWidth="300.0" promptText="X.X.XXXX"
-								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-								   visible="false">
-							<Image url="@../../../../../icons/greencheck.png"/>
+						<TextField fx:id="updateAccountID" alignment="CENTER" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+							<Image url="@../../../../../icons/greencheck.png" />
 						</ImageView>
-						<Label fx:id="invalidUpdateAccountToUpdate" text="Cannot recognize account" textFill="RED"
-							   visible="false"/>
+						<Label fx:id="invalidUpdateAccountToUpdate" text="Cannot recognize account" textFill="RED" visible="false" />
 						<padding>
-							<Insets top="15.0"/>
+							<Insets top="15.0" />
 						</padding>
 					</HBox>
 				</VBox>
 				<VBox fx:id="fileIDToUpdateVBox" layoutX="26.0" layoutY="215.0" spacing="10.0">
 					<VBox.margin>
-						<Insets left="15.0" right="15.0" top="15.0"/>
+						<Insets left="15.0" right="15.0" top="15.0" />
 					</VBox.margin>
-					<Label text="File to update"/>
+					<Label text="File to update" />
 					<HBox alignment="CENTER_LEFT" spacing="20.0">
 						<padding>
-							<Insets top="15.0"/>
+							<Insets top="15.0" />
 						</padding>
-						<TextField fx:id="updateFileID" alignment="CENTER" maxWidth="300.0" minWidth="300.0"
-								   prefWidth="300.0" promptText="X.X.XXXX"
-								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-								   visible="false">
-							<Image url="@../../../../../icons/greencheck.png"/>
+						<TextField fx:id="updateFileID" alignment="CENTER" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+							<Image url="@../../../../../icons/greencheck.png" />
 						</ImageView>
-						<Label fx:id="invalidUpdateFileToUpdate" text="Cannot recognize file" textFill="RED"
-							   visible="false"/>
+						<Label fx:id="invalidUpdateFileToUpdate" text="Cannot recognize file" textFill="RED" visible="false" />
 					</HBox>
 				</VBox>
 				<HBox fx:id="systemSlidersHBox" spacing="50.0">
 					<padding>
-						<Insets left="15.0" right="15.0" top="15.0"/>
+						<Insets left="15.0" right="15.0" top="15.0" />
 					</padding>
 					<GridPane vgap="20.0">
 						<columnConstraints>
-							<ColumnConstraints minWidth="150.0"/>
-							<ColumnConstraints halignment="LEFT" minWidth="10.0"/>
+							<ColumnConstraints minWidth="150.0" />
+							<ColumnConstraints halignment="LEFT" minWidth="10.0" />
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints vgrow="SOMETIMES"/>
+							<RowConstraints vgrow="SOMETIMES" />
 						</rowConstraints>
-						<Label text="Action"/>
-						<ChoiceBox fx:id="systemActionChoiceBox" minWidth="250.0"
-								   style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
-								   GridPane.columnIndex="1"/>
+						<Label text="Action" />
+						<ChoiceBox fx:id="systemActionChoiceBox" minWidth="250.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" />
 					</GridPane>
 					<GridPane layoutX="10.0" layoutY="10.0" vgap="20.0">
 						<columnConstraints>
-							<ColumnConstraints minWidth="150.0"/>
-							<ColumnConstraints halignment="LEFT" minWidth="10.0"/>
+							<ColumnConstraints minWidth="150.0" />
+							<ColumnConstraints halignment="LEFT" minWidth="10.0" />
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints vgrow="SOMETIMES"/>
+							<RowConstraints vgrow="SOMETIMES" />
 						</rowConstraints>
-						<Label text="Type"/>
-						<ChoiceBox fx:id="systemTypeChoiceBox" minWidth="250.0"
-								   style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
-								   GridPane.columnIndex="1"/>
+						<Label text="Type" />
+						<ChoiceBox fx:id="systemTypeChoiceBox" minWidth="250.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" />
 					</GridPane>
 				</HBox>
 				<VBox fx:id="commonFieldsVBox" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets left="15.0" right="15.0" top="15.0"/>
+						<Insets left="15.0" right="15.0" top="15.0" />
 					</padding>
 					<VBox spacing="10.0">
-						<Label text="Transaction will be submitted on"/>
+						<Label text="Transaction will be submitted on" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<DatePicker fx:id="datePicker"/>
-							<Label minWidth="11.0" text="at"/>
+							<DatePicker fx:id="datePicker" />
+							<Label minWidth="11.0" text="at" />
 							<HBox alignment="CENTER_LEFT" spacing="5.0">
-								<TextField fx:id="hourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="00"/>
-								<Label text=":"/>
-								<TextField fx:id="minuteField" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="00"/>
-								<Label layoutX="65.0" layoutY="15.0" text=":"/>
-								<TextField fx:id="secondsField" alignment="CENTER" layoutX="74.0" layoutY="10.0"
-										   maxWidth="50.0" minWidth="50.0" prefWidth="50.0"
-										   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00"/>
-								<Label layoutX="128.0" layoutY="16.0" text="."/>
-								<TextField fx:id="nanosField" alignment="CENTER" layoutX="136.0" layoutY="11.0"
-										   minWidth="39.0" prefHeight="27.0" prefWidth="150.0"
-										   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="000000000"/>
-								<HBox fx:id="timeZoneHBox"/>
+								<TextField fx:id="hourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label text=":" />
+								<TextField fx:id="minuteField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label layoutX="65.0" layoutY="15.0" text=":" />
+								<TextField fx:id="secondsField" alignment="CENTER" layoutX="74.0" layoutY="10.0" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label layoutX="128.0" layoutY="16.0" text="." />
+								<TextField fx:id="nanosField" alignment="CENTER" layoutX="136.0" layoutY="11.0" minWidth="39.0" prefHeight="27.0" prefWidth="150.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="000000000" />
+								<HBox fx:id="timeZoneHBox" />
 							</HBox>
 							<HBox spacing="2.0">
-								<Button fx:id="setNowValidStart" minWidth="70.0" mnemonicParsing="false"
-										style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;"
-										text="Now"/>
-								<Button fx:id="nowTimeToolTip" alignment="TOP_CENTER" mnemonicParsing="false"
-										style="-fx-background-color: white; -fx-border-color: white;">
+								<Button fx:id="setNowValidStart" minWidth="70.0" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="Now" />
+								<Button fx:id="nowTimeToolTip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
 									<graphic>
-										<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true"
-												   preserveRatio="true">
-											<Image url="@../../../../../icons/helpIcon.png"/>
+										<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+											<Image url="@../../../../../icons/helpIcon.png" />
 										</ImageView>
 									</graphic>
 									<padding>
-										<Insets bottom="7.0"/>
+										<Insets bottom="7.0" />
 									</padding>
 								</Button>
 							</HBox>
 						</HBox>
-						<Label fx:id="createUTCTimeLabel"/>
-						<Label fx:id="invalidDate" text="Invalid transaction submission time" textFill="RED"
-							   visible="false"/>
+						<Label fx:id="createUTCTimeLabel" />
+						<Label fx:id="invalidDate" text="Invalid transaction submission time" textFill="RED" visible="false" />
 					</VBox>
 					<VBox spacing="10.0" VBox.vgrow="ALWAYS">
-						<Label text="Memo field"/>
+						<Label text="Memo field" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextArea fx:id="memoField" maxWidth="600.0" minWidth="600.0" prefRowCount="1"
-									  prefWidth="600.0" wrapText="true"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextArea fx:id="memoField" maxWidth="600.0" minWidth="600.0" prefRowCount="1" prefWidth="600.0" wrapText="true" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label text="Label" visible="false"/>
+							<Label text="Label" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Payer account"/>
+						<Label text="Payer account" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="feePayerAccountField" alignment="CENTER" maxWidth="300.0" minWidth="300.0"
-									   prefWidth="300.0" promptText="X.X.XXXX"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="feePayerAccountField" alignment="CENTER" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidFeePayer" text="Cannot recognize account" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidFeePayer" text="Cannot recognize account" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Submit to node"/>
+						<Label text="Submit to node" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="nodeAccountField" alignment="CENTER" maxWidth="300.0" minWidth="300.0"
-									   prefWidth="300.0" promptText="X.X.XXXX"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="nodeAccountField" alignment="CENTER" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidNode" text="Cannot recognize account" textFill="RED" visible="false"/>
+							<Label fx:id="invalidNode" text="Cannot recognize account" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Maximum transaction fee"/>
+						<Label text="Maximum transaction fee" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="transactionFee" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="0"/>
-							<Label text="ћ"/>
-							<Label fx:id="invalidTransactionFee" text="Invalid initial balance" textFill="RED"
-								   visible="false"/>
+							<TextField fx:id="transactionFee" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" text="0" />
+							<Label text="ћ" />
+							<Label fx:id="invalidTransactionFee" text="Invalid initial balance" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 				</VBox>
 				<VBox fx:id="createAccountVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0" />
 					</padding>
 					<VBox layoutX="28.0" layoutY="102.0" spacing="10.0">
-						<Label text="Initial Balance"/>
+						<Label text="Initial Balance" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="createInitialBalance" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="0"/>
-							<Label text="ћ"/>
-							<Label fx:id="invalidCreateInitialBalance" text="Invalid initial balance" textFill="RED"
-								   visible="false"/>
+							<TextField fx:id="createInitialBalance" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" text="0" />
+							<Label text="ћ" />
+							<Label fx:id="invalidCreateInitialBalance" text="Invalid initial balance" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox layoutX="25.0" layoutY="617.0" spacing="10.0">
-						<Label text="New account key"/>
+						<Label text="New account key" />
 						<HBox alignment="CENTER_LEFT" spacing="50.0">
-							<ScrollPane fx:id="createNewKey" hbarPolicy="NEVER" minHeight="150.0" minWidth="-Infinity"
-										prefHeight="150.0" prefWidth="300.0"
-										style="-fx-background-color: white; -fx-border-color: grey;" visible="false"/>
+							<ScrollPane fx:id="createNewKey" hbarPolicy="NEVER" minHeight="150.0" minWidth="-Infinity" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: grey;" visible="false" />
 							<GridPane hgap="5.0" vgap="5.0">
 								<columnConstraints>
-									<ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity"/>
-									<ColumnConstraints hgrow="SOMETIMES"/>
+									<ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity" />
+									<ColumnConstraints hgrow="SOMETIMES" />
 								</columnConstraints>
 								<rowConstraints>
-									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
-									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
-									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER" />
 								</rowConstraints>
-								<Button fx:id="createKeyButton" maxWidth="1.7976931348623157E308"
-										mnemonicParsing="false"
-										style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;"
-										text="EDIT KEY" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS"
-										GridPane.valignment="CENTER"/>
-								<HBox fx:id="copyFromAccountHBox" spacing="5.0" GridPane.columnIndex="1"
-									  GridPane.rowIndex="2"/>
+								<Button fx:id="createKeyButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="EDIT KEY" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" />
+								<HBox fx:id="copyFromAccountHBox" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 							</GridPane>
-							<Label fx:id="invalidCreateNewKey" text="A new key must be specified" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidCreateNewKey" text="A new key must be specified" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Auto renew period"/>
+						<Label text="Auto renew period" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="createAutoRenew" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="17775"/>
-							<Label text="s"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="createAutoRenew" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" text="17775" />
+							<Label text="s" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidCreateAutoRenew" text="Invalid auto renew period" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidCreateAutoRenew" text="Invalid auto renew period" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox layoutX="28.0" layoutY="546.0" spacing="10.0">
 						<HBox spacing="20.0">
-							<Label text="Receiver signature required"/>
-							<ToggleSwitch fx:id="createSignatureRequired"/>
-							<Label fx:id="createRSRLabel" layoutX="10.0" layoutY="10.0" text="false"/>
+							<Label text="Receiver signature required" />
+							<ToggleSwitch fx:id="createSignatureRequired" />
+							<Label fx:id="createRSRLabel" layoutX="10.0" layoutY="10.0" text="false" />
 						</HBox>
 					</VBox>
 				</VBox>
 				<VBox fx:id="updateAccountVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0" />
 					</padding>
-					<VBox layoutX="28.0" layoutY="28.0" spacing="10.0"/>
+					<VBox layoutX="28.0" layoutY="28.0" spacing="10.0" />
 					<VBox layoutX="25.0" layoutY="617.0" spacing="10.0">
 						<VBox spacing="10.0">
-							<Label text="New account key"/>
+							<Label text="New account key" />
 							<HBox alignment="CENTER_LEFT" spacing="20.0">
 								<VBox spacing="2.0">
-									<Label maxWidth="1.7976931348623157E308" minWidth="-Infinity"
-										   text="Original Value"/>
-									<ScrollPane fx:id="updateOriginalKey" minHeight="150.0" minWidth="-Infinity"
-												prefHeight="150.0" prefWidth="300.0"
-												style="-fx-background-color: white; -fx-border-color: grey;">
+									<Label maxWidth="1.7976931348623157E308" minWidth="-Infinity" text="Original Value" />
+									<ScrollPane fx:id="updateOriginalKey" minHeight="150.0" minWidth="-Infinity" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: grey;">
 									</ScrollPane>
 								</VBox>
 								<VBox spacing="2.0">
-									<Label fx:id="newValueLabel" maxWidth="1.7976931348623157E308" minWidth="-Infinity"
-										   text="New Value" visible="false"/>
+									<Label fx:id="newValueLabel" maxWidth="1.7976931348623157E308" minWidth="-Infinity" text="New Value" visible="false" />
 
-									<ScrollPane fx:id="updateNewKey" minHeight="150.0" minWidth="-Infinity"
-												prefHeight="150.0" prefWidth="300.0"
-												style="-fx-background-color: white; -fx-border-color: grey;"
-												visible="false">
+									<ScrollPane fx:id="updateNewKey" minHeight="150.0" minWidth="-Infinity" prefHeight="150.0" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: grey;" visible="false">
 									</ScrollPane>
 								</VBox>
 								<GridPane alignment="CENTER" hgap="5.0" vgap="5.0">
 									<columnConstraints>
-										<ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity"/>
-										<ColumnConstraints hgrow="SOMETIMES"/>
+										<ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity" />
+										<ColumnConstraints hgrow="SOMETIMES" />
 									</columnConstraints>
 									<rowConstraints>
-										<RowConstraints minHeight="10.0" vgrow="NEVER"/>
-										<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
-										<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
+										<RowConstraints minHeight="10.0" vgrow="NEVER" />
+										<RowConstraints minHeight="-Infinity" vgrow="NEVER" />
+										<RowConstraints minHeight="-Infinity" vgrow="NEVER" />
 									</rowConstraints>
-									<Button fx:id="updateKeyButton" maxWidth="1.7976931348623157E308"
-											mnemonicParsing="false"
-											style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;"
-											text="MODIFY KEY" GridPane.hgrow="ALWAYS"/>
-									<HBox fx:id="updateCopyFromAccountHBox" spacing="5.0" GridPane.columnIndex="1"
-										  GridPane.rowIndex="2"/>
+									<Button fx:id="updateKeyButton" maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;" text="MODIFY KEY" GridPane.hgrow="ALWAYS" />
+									<HBox fx:id="updateCopyFromAccountHBox" spacing="5.0" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 								</GridPane>
-								<Label fx:id="invalidUpdateNewKey" text="Please choose an account to update first."
-									   textFill="RED" visible="false" wrapText="true"/>
+								<Label fx:id="invalidUpdateNewKey" text="Please choose an account to update first." textFill="RED" visible="false" wrapText="true" />
 							</HBox>
 						</VBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Auto renew period"/>
+						<Label text="Auto renew period" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<Label minWidth="77.0" text="Original Value"/>
-							<TextField fx:id="updateARPOriginal" disable="true" editable="false"
-									   focusTraversable="false" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
-									   promptText="unknown" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							<Label minWidth="60.0" text="New Value"/>
-							<TextField fx:id="updateAutoRenew" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							<Label text="s"/>
-							<Label fx:id="invalidUpdatedAutoRenew" text="Invalid auto renew period" textFill="RED"
-								   visible="false"/>
+							<Label minWidth="77.0" text="Original Value" />
+							<TextField fx:id="updateARPOriginal" disable="true" editable="false" focusTraversable="false" maxWidth="250.0" minWidth="250.0" prefWidth="250.0" promptText="unknown" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+							<Label minWidth="60.0" text="New Value" />
+							<TextField fx:id="updateAutoRenew" maxWidth="250.0" minWidth="250.0" prefWidth="250.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+							<Label text="s" />
+							<Label fx:id="invalidUpdatedAutoRenew" text="Invalid auto renew period" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox layoutX="28.0" layoutY="546.0" spacing="10.0">
 						<HBox spacing="20.0">
-							<Label text="Receiver signature required"/>
-							<Label text="Original Value"/>
-							<Label fx:id="updateRSROriginal" alignment="CENTER" minWidth="26.0"
-								   style="-fx-text-fill: grey;" text="???"/>
-							<Label text="New Value"/>
-							<ToggleSwitch fx:id="updateReceiverSignatureRequired"/>
-							<Label fx:id="updateRSRLabel" text="false"/>
+							<Label text="Receiver signature required" />
+							<Label text="Original Value" />
+							<Label fx:id="updateRSROriginal" alignment="CENTER" minWidth="26.0" style="-fx-text-fill: grey;" text="???" />
+							<Label text="New Value" />
+							<ToggleSwitch fx:id="updateReceiverSignatureRequired" />
+							<Label fx:id="updateRSRLabel" text="false" />
 						</HBox>
 					</VBox>
 				</VBox>
-				<VBox fx:id="transferCurrencyVBox" alignment="CENTER" spacing="20.0"
-					  style="-fx-background-color: white;">
+				<VBox fx:id="transferCurrencyVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0" />
 					</padding>
 					<VBox maxHeight="1.7976931348623157E308" maxWidth="-Infinity" spacing="20.0">
-						<VBox fx:id="fromAccountsVBox" maxHeight="1.7976931348623157E308" maxWidth="-Infinity"
-							  spacing="10.0">
-							<Label text="From account(s)"/>
-							<TableView fx:id="fromTransferTable" focusTraversable="false" maxHeight="-Infinity"
-									   maxWidth="-Infinity"/>
-							<HBox fx:id="fromHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity"
-								  spacing="20.0">
-								<TextField fx:id="transferFromAccountIDTextField" alignment="CENTER"
-										   promptText="X.X.XXXX"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
-								<TextField fx:id="transferFromAmountTextField" layoutX="10.0" layoutY="10.0"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
-								<Label text="ћ"/>
-								<Button fx:id="acceptFromAccountButton" mnemonicParsing="false" prefWidth="150.0"
-										style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;"
-										text="ACCEPT" textAlignment="CENTER"/>
+						<VBox fx:id="fromAccountsVBox" maxHeight="1.7976931348623157E308" maxWidth="-Infinity" spacing="10.0">
+							<Label text="From account(s)" />
+							<TableView fx:id="fromTransferTable" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" />
+							<HBox fx:id="fromHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" spacing="20.0">
+								<TextField fx:id="transferFromAccountIDTextField" alignment="CENTER" promptText="X.X.XXXX" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+								<TextField fx:id="transferFromAmountTextField" layoutX="10.0" layoutY="10.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+								<Label text="ћ" />
+								<Button fx:id="acceptFromAccountButton" mnemonicParsing="false" prefWidth="150.0" style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;" text="ACCEPT" textAlignment="CENTER" />
 							</HBox>
-							<Label fx:id="errorInvalidFromAccount" style="-fx-text-fill: red;"
-								   text="Cannot parse the account ID" visible="false"/>
+							<Label fx:id="errorInvalidFromAccount" style="-fx-text-fill: red;" text="Cannot parse the account ID" visible="false" />
 
 						</VBox>
 						<VBox fx:id="toAccountsVBox" maxHeight="1.7976931348623157E308" spacing="10.0">
-							<Label text="To account(s)"/>
-							<TableView fx:id="toTransferTable" focusTraversable="false" maxHeight="-Infinity"
-									   maxWidth="-Infinity"/>
-							<HBox fx:id="toHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity"
-								  spacing="20.0">
-								<TextField fx:id="transferToAccountIDTextField" alignment="CENTER" promptText="X.X.XXXX"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
-								<TextField fx:id="transferToAmountTextField" layoutX="10.0" layoutY="10.0"
-										   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
-								<Label text="ћ"/>
-								<Button fx:id="acceptToAccountButton" mnemonicParsing="false" prefWidth="150.0"
-										style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;"
-										text="ACCEPT" textAlignment="CENTER"/>
+							<Label text="To account(s)" />
+							<TableView fx:id="toTransferTable" focusTraversable="false" maxHeight="-Infinity" maxWidth="-Infinity" />
+							<HBox fx:id="toHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" spacing="20.0">
+								<TextField fx:id="transferToAccountIDTextField" alignment="CENTER" promptText="X.X.XXXX" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+								<TextField fx:id="transferToAmountTextField" layoutX="10.0" layoutY="10.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" />
+								<Label text="ћ" />
+								<Button fx:id="acceptToAccountButton" mnemonicParsing="false" prefWidth="150.0" style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;" text="ACCEPT" textAlignment="CENTER" />
 							</HBox>
-							<Label fx:id="errorInvalidToAccount" style="-fx-text-fill: red;"
-								   text="Cannot parse the account ID" visible="false"/>
+							<Label fx:id="errorInvalidToAccount" style="-fx-text-fill: red;" text="Cannot parse the account ID" visible="false" />
 						</VBox>
 						<HBox>
-							<Label fx:id="invalidTransferList"
-								   text=" There must be at least one recipient and one sender for the transfer "
-								   textFill="RED" visible="false"/>
-							<Region HBox.hgrow="ALWAYS"/>
-							<Label fx:id="invalidTransferTotal" text=" Total debits must equal total credits "
-								   textFill="RED" visible="false"/>
-							<Label fx:id="totalTransferLabel" text="0"/>
+							<Label fx:id="invalidTransferList" text=" There must be at least one recipient and one sender for the transfer " textFill="RED" visible="false" />
+							<Region HBox.hgrow="ALWAYS" />
+							<Label fx:id="invalidTransferTotal" text=" Total debits must equal total credits " textFill="RED" visible="false" />
+							<Label fx:id="totalTransferLabel" text="0" />
 						</HBox>
 					</VBox>
 				</VBox>
 				<VBox fx:id="systemDeleteUndeleteVBox" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets left="15.0" right="15.0" top="10.0"/>
+						<Insets left="15.0" right="15.0" top="10.0" />
 					</padding>
 					<VBox spacing="10.0">
-						<Label fx:id="entityLabel" text="File ID"/>
+						<Label fx:id="entityLabel" text="File ID" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
-							<TextField fx:id="entityID" alignment="CENTER" maxWidth="300.0" minWidth="300.0"
-									   prefWidth="300.0" promptText="X.X.XXXX"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="entityID" alignment="CENTER" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidEntity" text="Cannot recognize entity ID" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidEntity" text="Cannot recognize entity ID" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox fx:id="systemExpirationVBox" disable="true" spacing="10.0">
-						<Label fx:id="expirationLabel" text="File will expire on:"/>
+						<Label fx:id="expirationLabel" text="File will expire on:" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<DatePicker fx:id="datePickerSystem"/>
-							<Label text="at"/>
+							<DatePicker fx:id="datePickerSystem" />
+							<Label text="at" />
 							<HBox alignment="CENTER_LEFT" spacing="5.0">
-								<TextField fx:id="hourFieldSystem" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="00"/>
-								<Label text=":"/>
-								<TextField fx:id="minuteFieldSystem" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="00"/>
-								<Label layoutX="65.0" layoutY="15.0" text=":"/>
-								<TextField fx:id="secondsFieldSystem" alignment="CENTER" layoutX="74.0" layoutY="10.0"
-										   maxWidth="50.0" minWidth="50.0" prefWidth="50.0"
-										   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00"/>
-								<HBox fx:id="timeZoneSystemHBox"/>
+								<TextField fx:id="hourFieldSystem" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label text=":" />
+								<TextField fx:id="minuteFieldSystem" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label layoutX="65.0" layoutY="15.0" text=":" />
+								<TextField fx:id="secondsFieldSystem" alignment="CENTER" layoutX="74.0" layoutY="10.0" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<HBox fx:id="timeZoneSystemHBox" />
 							</HBox>
-							<Label fx:id="invalidExpirationDate" text="Invalid expiration date" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidExpirationDate" text="Invalid expiration date" textFill="RED" visible="false" />
 						</HBox>
-						<Label fx:id="systemCreateLocalTimeLabel"/>
+						<Label fx:id="systemCreateLocalTimeLabel" />
 					</VBox>
 				</VBox>
-				<VBox fx:id="fileContentsUpdateVBox" layoutX="11.0" layoutY="2970.0" spacing="20.0"
-					  style="-fx-background-color: white;">
+				<VBox fx:id="fileContentsUpdateVBox" layoutX="11.0" layoutY="2970.0" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
-						<Insets left="15.0" right="15.0" top="10.0"/>
+						<Insets left="15.0" right="15.0" top="10.0" />
 					</padding>
 					<VBox layoutX="25.0" layoutY="20.0" spacing="10.0">
-						<Label text="Contents file"/>
+						<Label text="Contents file" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
 							<VBox minWidth="600.0">
-								<TextField fx:id="contentsTextField" maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
-										   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
-								<Label fx:id="contentsFilePathError" text="The file selected does not exist"
-									   textFill="RED" visible="false"/>
-								<Hyperlink fx:id="contentsLink" text="Hyperlink" visible="false"/>
+								<TextField fx:id="contentsTextField" maxWidth="600.0" minWidth="600.0" prefWidth="600.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+								<Label fx:id="contentsFilePathError" text="The file selected does not exist" textFill="RED" visible="false" />
+								<Hyperlink fx:id="contentsLink" text="Hyperlink" visible="false" />
 							</VBox>
-							<Button fx:id="browseContentsButton" mnemonicParsing="false"
-									onAction="#browseToContentsFile" prefWidth="150.0"
-									style="-fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
-									text="BROWSE"/>
+							<Button fx:id="browseContentsButton" mnemonicParsing="false" onAction="#browseToContentsFile" prefWidth="150.0" style="-fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;" text="BROWSE" />
 						</HBox>
-						<Label fx:id="shaLabel" visible="false" wrapText="true"/>
+						<Label fx:id="shaLabel" visible="false" wrapText="true" />
 					</VBox>
-					<VBox layoutX="25.0" layoutY="163.0" spacing="10.0"/>
+					<VBox layoutX="25.0" layoutY="163.0" spacing="10.0" />
 					<VBox spacing="10.0">
-						<Label text="Chunk size"/>
+						<Label text="Chunk size" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
-							<TextField fx:id="chunkSizeTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="1024"/>
-							<Label text="bytes"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="chunkSizeTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" text="1024" />
+							<Label text="bytes" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidChunkSizeLabel" text="Invalid chunk size" textFill="RED"
-								   visible="false"/>
+							<Label fx:id="invalidChunkSizeLabel" text="Invalid chunk size" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 					<VBox layoutX="25.0" layoutY="20.0" spacing="10.0">
-						<Label text="Interval between transactions"/>
+						<Label text="Interval between transactions" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
-							<TextField fx:id="intervalTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="100"/>
-							<Label text="nanoseconds"/>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
-									   visible="false">
-								<Image url="@../../../../../icons/greencheck.png"/>
+							<TextField fx:id="intervalTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" text="100" />
+							<Label text="nanoseconds" />
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true" visible="false">
+								<Image url="@../../../../../icons/greencheck.png" />
 							</ImageView>
-							<Label fx:id="invalidIntervalLabel" text="Invalid interval between transactions"
-								   textFill="RED" visible="false"/>
+							<Label fx:id="invalidIntervalLabel" text="Invalid interval between transactions" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
 				</VBox>
 				<VBox fx:id="freezeVBox" spacing="20.0" style="-fx-background-color: white;">
 					<VBox fx:id="freezeStartVBox" spacing="20.0">
-						<Label text="Freeze Start Time"/>
+						<Label text="Freeze Start Time" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
-							<DatePicker fx:id="freezeDatePicker"/>
-							<Label minWidth="11.0" text="at"/>
+							<DatePicker fx:id="freezeDatePicker" />
+							<Label minWidth="11.0" text="at" />
 							<HBox alignment="CENTER_LEFT" spacing="5.0">
-								<TextField fx:id="freezeHourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="01"/>
-								<Label text=":"/>
-								<TextField fx:id="freezeMinuteField" alignment="CENTER" maxWidth="50.0" minWidth="50.0"
-										   prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;"
-										   text="00"/>
-								<Label layoutX="65.0" layoutY="15.0" text=":"/>
-								<TextField fx:id="freezeSecondsField" alignment="CENTER" layoutX="74.0" layoutY="10.0"
-										   maxWidth="50.0" minWidth="50.0" prefWidth="50.0"
-										   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00"/>
-								<Label layoutX="128.0" layoutY="16.0" text="."/>
-								<TextField fx:id="freezeNanosField" alignment="CENTER" layoutX="136.0" layoutY="11.0"
-										   minWidth="39.0" prefHeight="27.0" prefWidth="150.0"
-										   style="-fx-border-radius: 5; -fx-background-radius: 5;" text="000000000"/>
-								<HBox fx:id="freezeTimeZoneHBox"/>
+								<TextField fx:id="freezeHourField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="01" />
+								<Label text=":" />
+								<TextField fx:id="freezeMinuteField" alignment="CENTER" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label layoutX="65.0" layoutY="15.0" text=":" />
+								<TextField fx:id="freezeSecondsField" alignment="CENTER" layoutX="74.0" layoutY="10.0" maxWidth="50.0" minWidth="50.0" prefWidth="50.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="00" />
+								<Label layoutX="128.0" layoutY="16.0" text="." />
+								<TextField fx:id="freezeNanosField" alignment="CENTER" layoutX="136.0" layoutY="11.0" minWidth="39.0" prefHeight="27.0" prefWidth="150.0" style="-fx-border-radius: 5; -fx-background-radius: 5;" text="000000000" />
+								<HBox fx:id="freezeTimeZoneHBox" />
 							</HBox>
 						</HBox>
-						<Label fx:id="freezeUTCTimeLabel" visible="false"/>
-						<Label fx:id="freezeTimeErrorLabel" style="-fx-text-fill: RED;" text="Invalid freeze start time"
-							   visible="false"/>
+						<Label fx:id="freezeUTCTimeLabel" visible="false" />
+						<Label fx:id="freezeTimeErrorLabel" style="-fx-text-fill: RED;" text="Invalid freeze start time" visible="false" />
 					</VBox>
 					<VBox fx:id="freezeFileVBox" spacing="20.0">
-						<Label text="File ID"/>
+						<Label text="File ID" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
 							<TextField fx:id="freezeFileIDTextField" alignment="CENTER" maxWidth="300.0"
 									   minWidth="300.0" prefWidth="300.0" promptText="X.X.XXXX"
@@ -581,31 +464,27 @@
 							<Label fx:id="invalidFreezeFile" text="Cannot recognize file ID" textFill="RED"
 								   visible="false"/>
 						</HBox>
-						<Label text="File Hash"/>
-						<TextField fx:id="freezeFileHashTextField" maxWidth="800.0" minWidth="800.0" prefWidth="800.0"
-								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						<Label text="File Hash" />
+						<TextField fx:id="freezeFileHashTextField" maxWidth="800.0" minWidth="800.0" prefWidth="800.0" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
 					</VBox>
 					<padding>
-						<Insets left="15.0" right="15.0" top="10.0"/>
+						<Insets left="15.0" right="15.0" top="10.0" />
 					</padding>
 				</VBox>
 				<HBox alignment="CENTER_RIGHT">
 					<padding>
-						<Insets right="15.0"/>
+						<Insets right="15.0" />
 					</padding>
-					<Button fx:id="resetFormButton" mnemonicParsing="false" onAction="#cleanForm" prefWidth="200.0"
-							style="-fx-background-color: white; -fx-border-color: #0b9bfd; -fx-text-fill: #0B9DFD; -fx-border-radius: 10; -fx-background-radius: 10;"
-							text="RESET FORM" textAlignment="CENTER"/>
+					<Button fx:id="resetFormButton" mnemonicParsing="false" onAction="#cleanForm" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9bfd; -fx-text-fill: #0B9DFD; -fx-border-radius: 10; -fx-background-radius: 10;" text="RESET FORM" textAlignment="CENTER" />
 				</HBox>
 				<padding>
-					<Insets top="15.0"/>
+					<Insets top="15.0" />
 				</padding>
 			</VBox>
 		</ScrollPane>
-		<TextField fx:id="keyLoadingField" maxHeight="1.0" minHeight="1.0" prefHeight="1.0"
-				   style="-fx-background-color: #0b9dfd;" visible="false"/>
+		<TextField fx:id="keyLoadingField" maxHeight="1.0" minHeight="1.0" prefHeight="1.0" style="-fx-background-color: #0b9dfd;" visible="false" />
 		<padding>
-			<Insets top="20.0"/>
+			<Insets top="20.0" />
 		</padding>
 	</VBox>
 </AnchorPane>
