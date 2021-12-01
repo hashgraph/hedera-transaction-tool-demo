@@ -51,13 +51,13 @@ import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PublicKey;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -84,6 +84,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -379,6 +380,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
 				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel);
 
+		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
+				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
+				freezeFileHashTextField
+		);
+
 		setupTransferFields();
 
 		setupUpdateFields();
@@ -410,6 +416,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
 		freezeVBox.setVisible(false);
+		freezeChoiceVBox.setVisible(false);
 	}
 
 	private void setupTransferFields() {
@@ -478,7 +485,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupUpdateFields() {
 		setupKeyPane(new TreeView<>(), updateNewKey);
-
 
 		updateAutoRenew.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
@@ -2587,6 +2593,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		for (var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
+	}
+
+	private void setupTextFieldResizeProperty(TextField... textFields) {
+		for (TextField tf : textFields) {
+			tf.textProperty().addListener((ov, prevText, currText) -> {
+				// Do this in a Platform.runLater because of Textfield has no padding at first time and so on
+				Platform.runLater(() -> {
+					javafx.scene.text.Text text = new Text(currText);
+					text.setFont(tf.getFont()); // Set the same font, so the size is the same
+					double width = text.getLayoutBounds().getWidth() // This big is the Text in the TextField
+							+ tf.getPadding().getLeft() + tf.getPadding().getRight() // Add the padding of the
+							// TextField
+							+ 2d; // Add some spacing
+					tf.setPrefWidth(width); // Set the width
+					tf.positionCaret(tf.getCaretPosition());
+				});
+			});
+		}
+
 	}
 
 	private void processKey(JsonObject key, ScrollPane keyPane) {

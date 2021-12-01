@@ -165,7 +165,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		}
 
 		var shaDigest = new Text(digest);
-		shaDigest.setFont(Font.font("Courier", 18));
+		shaDigest.setFont(Font.font("Courier New", 18));
 
 
 		var shaDigestHBox = new HBox();

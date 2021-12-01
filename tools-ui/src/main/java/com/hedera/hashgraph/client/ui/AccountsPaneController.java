@@ -779,7 +779,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				if (empty) {
 					setText("");
 				} else {
-					setFont(Font.font("Courier", 17));
+					setFont(Font.font("Courier New", 17));
 					setText(hBars.toString());
 				}
 			}
