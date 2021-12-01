@@ -49,8 +49,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCA;
-import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCT;
+import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCA;
+import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

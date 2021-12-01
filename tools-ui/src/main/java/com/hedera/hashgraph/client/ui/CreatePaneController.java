@@ -57,6 +57,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -376,7 +377,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
 				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
-				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate);
+				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel);
 
 		setupTransferFields();
 
@@ -2183,6 +2184,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
 			}
 		});
+		date.setOnKeyReleased(event -> {
+			if (event.getCode().equals(KeyCode.ENTER)) {
+				date.getParent().requestFocus();
+			}
+		});
 	}
 
 	private void fixTimeTextField(TextField hour, String newValue, String s, String regex) {
@@ -2472,7 +2478,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setNowTime(Instant now) {
 		this.nanosField.setText(String.format("%09d", now.atZone(ZoneId.of(timeZone.getID())).getNano()));
 		setTimeInForm(now, timeZone, hourField, minuteField, secondsField, datePicker);
-		setLocalDateString(datePicker, hourField, minuteField, secondsField, nanosField, timeZone, createUTCTimeLabel, invalidDate);
+		setLocalDateString(datePicker, hourField, minuteField, secondsField, nanosField, timeZone, createUTCTimeLabel,
+				invalidDate);
 	}
 
 	private void setTimeInForm(Instant start, TimeZone timeZone, TextField hourField,
@@ -2488,6 +2495,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			TextField secondsField, TextField nanos, TimeZone timeZone, Label label, Label invalidDate) {
 
 		if (datePicker.getValue() == null) {
+			label.setVisible(false);
 			return;
 		}
 
@@ -2506,6 +2514,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
 
 		label.setText(dateTimeFormatter.format(tvsInstant) + " Coordinated Universal Time");
+		label.setVisible(true);
 	}
 
 	private Timestamp getDate(DatePicker dates, TextField hours, TextField minutes, TextField seconds, ZoneId zoneId) {

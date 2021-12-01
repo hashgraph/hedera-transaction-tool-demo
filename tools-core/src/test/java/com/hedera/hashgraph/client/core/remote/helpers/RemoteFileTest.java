@@ -37,7 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCT;
+import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;

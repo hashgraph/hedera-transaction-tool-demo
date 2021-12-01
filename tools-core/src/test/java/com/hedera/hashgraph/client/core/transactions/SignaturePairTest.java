@@ -31,7 +31,7 @@ import java.security.KeyStoreException;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCT;
+import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
 import static java.lang.Boolean.parseBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

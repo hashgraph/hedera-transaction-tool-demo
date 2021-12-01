@@ -58,6 +58,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -80,6 +81,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -136,6 +138,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_AUTO_RENEW;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_NEW_KEY;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ORIGINAL_KEY;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.SET_NOW_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_ENTITY_ID_LABEL;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.delete;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.undelete;
@@ -518,7 +521,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void useTheNowButton() {
+	public void useTheNowButton_test() {
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 
 		var localDateTime = LocalDateTime.now();
@@ -542,6 +545,45 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(localDateTime.getMinute(), Long.parseLong(textFieldMinutes.getText()));
 		assertTrue(Math.abs(localDateTime.getSecond() - Long.parseLong(textFieldSeconds.getText())) <= 2);
 		assertTrue(Long.parseLong(textFieldNanos.getText()) > 0);
+	}
+
+	@Test
+	public void useTheNowButtonErrorMessages_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
+
+		var localDateTime = LocalDateTime.now();
+		while (localDateTime.getSecond() < 5 || localDateTime.getSecond() > 50) {
+			localDateTime = LocalDateTime.now();
+		}
+
+		createPanePage.clickOnNowButton();
+
+		var dateUTC = (Label) find("#createUTCTimeLabel");
+		var errorMsg = (Label) find("#invalidDate");
+
+		assertTrue(dateUTC.isVisible());
+		assertTrue(dateUTC.getStyle().toLowerCase(Locale.ROOT).contains("red"));
+		assertTrue(errorMsg.isVisible());
+
+		var futureTime = localDateTime.plusYears(1);
+		final String formattedDate = getFormattedDate(futureTime);
+		createPanePage.setDate(formattedDate);
+		assertTrue(dateUTC.isVisible());
+		assertFalse(dateUTC.getStyle().toLowerCase(Locale.ROOT).contains("red"));
+		assertFalse(errorMsg.isVisible());
+
+		clickOn(SET_NOW_BUTTON);
+		assertTrue(dateUTC.isVisible());
+		assertTrue(dateUTC.getStyle().toLowerCase(Locale.ROOT).contains("red"));
+		assertTrue(errorMsg.isVisible());
+
+	}
+
+	@NotNull
+	private String getFormattedDate(LocalDateTime localDateTime) {
+		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		return datePickerFormat.format(Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()));
 	}
 
 	@Test
@@ -1268,8 +1310,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
-				.createAndExport(resources)
-				.clickOnPopupButton("CONTINUE");
+				.createAndExport(resources);
 
 		assertTrue(find(CREATE_INVALID_DATE).isVisible());
 		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
