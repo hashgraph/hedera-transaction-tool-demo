@@ -2146,9 +2146,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		nanos.focusedProperty().addListener(
 				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
 						localTime, zone, errorLabel, newPropertyValue, "Nanos", nanos.getText()));
-		date.focusedProperty().addListener(
-				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
-						localTime, zone, errorLabel, newPropertyValue, "Date", date.getValue().toString()));
+		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
+				logger.info("Date changed to: {}", date.getValue());
+				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
+			}
+		});
 		date.setOnKeyReleased(event -> {
 			if (event.getCode().equals(KeyCode.ENTER)) {
 				date.getParent().requestFocus();
