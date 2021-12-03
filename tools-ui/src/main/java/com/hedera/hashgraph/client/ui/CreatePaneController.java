@@ -51,6 +51,7 @@ import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PublicKey;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -84,6 +85,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -91,6 +93,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.ToggleSwitch;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
@@ -379,6 +382,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
 				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel);
 
+		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
+				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
+				freezeFileHashTextField
+		);
+
 		setupTransferFields();
 
 		setupUpdateFields();
@@ -410,6 +418,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
 		freezeVBox.setVisible(false);
+		freezeChoiceVBox.setVisible(false);
 	}
 
 	private void setupTransferFields() {
@@ -478,7 +487,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupUpdateFields() {
 		setupKeyPane(new TreeView<>(), updateNewKey);
-
 
 		updateAutoRenew.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
@@ -2112,72 +2120,33 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupNumberField(seconds, 59);
 		setupNumberField(nanos, 999999999);
 
-		date.setDayCellFactory(picker -> new DateCell() {
-			@Override
-			public void updateItem(LocalDate date, boolean empty) {
-				super.updateItem(date, empty);
-				var localTime =
-						LocalTime.of(Integer.parseInt(hour.getText()), Integer.parseInt(minute.getText()),
-								Integer.parseInt(seconds.getText()));
-				var dateTime = LocalDateTime.of(date, localTime);
-
-				setDisable(empty || dateTime.compareTo(today) <= 0);
-			}
-		});
+		date.setDayCellFactory(picker -> getDateCell(hour, minute, seconds, today));
 
 		date.valueProperty().addListener(
 				(observable, oldDate, newDate) -> refreshLocalTime(date, hour, minute, seconds, nanos, localTime,
 						zone, errorLabel));
 
 		// region FOCUS EVENTS
-		hour.setOnKeyPressed(event -> {
-			if (KeyCode.ENTER.equals(event.getCode())) {
-				hour.getParent().requestFocus();
-			}
-		});
+		removeFocusOnEnter(hour);
 
-		minute.setOnKeyPressed(event -> {
-			if (KeyCode.ENTER.equals(event.getCode())) {
-				minute.getParent().requestFocus();
-			}
-		});
+		removeFocusOnEnter(minute);
 
-		seconds.setOnKeyPressed(event -> {
-			if (KeyCode.ENTER.equals(event.getCode())) {
-				seconds.getParent().requestFocus();
-			}
-		});
+		removeFocusOnEnter(seconds);
 
-		nanos.setOnKeyPressed(event -> {
-			if (KeyCode.ENTER.equals(event.getCode())) {
-				nanos.getParent().requestFocus();
-			}
-		});
+		removeFocusOnEnter(nanos);
 
-		hour.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Hours text field changed to: {}", hour.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-			}
-		});
-		minute.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Minute text field changed to: {}", minute.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-			}
-		});
-		seconds.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Second text field changed to: {}", seconds.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-			}
-		});
-		nanos.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Nanos text field changed to: {}", nanos.getText());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-			}
-		});
+		hour.focusedProperty().addListener(
+				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
+						localTime, zone, errorLabel, newPropertyValue, "Hours", hour.getText()));
+		minute.focusedProperty().addListener(
+				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
+						localTime, zone, errorLabel, newPropertyValue, "Minutes", minute.getText()));
+		seconds.focusedProperty().addListener(
+				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
+						localTime, zone, errorLabel, newPropertyValue, "Seconds", seconds.getText()));
+		nanos.focusedProperty().addListener(
+				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
+						localTime, zone, errorLabel, newPropertyValue, "Nanos", nanos.getText()));
 		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Date changed to: {}", date.getValue());
@@ -2189,6 +2158,39 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				date.getParent().requestFocus();
 			}
 		});
+	}
+
+	private void setChangeListener(DatePicker date, TextField hour, TextField minute, TextField seconds,
+			TextField nanos, Label localTime, TimeZone zone, Label errorLabel, Boolean newPropertyValue, String field,
+			String text) {
+		if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
+			logger.info("{} text field changed to: {}", field, text);
+			setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
+		}
+	}
+
+	private void removeFocusOnEnter(TextField hour) {
+		hour.setOnKeyPressed(event -> {
+			if (KeyCode.ENTER.equals(event.getCode())) {
+				hour.getParent().requestFocus();
+			}
+		});
+	}
+
+	@NotNull
+	private DateCell getDateCell(TextField hour, TextField minute, TextField seconds, LocalDateTime today) {
+		return new DateCell() {
+			@Override
+			public void updateItem(LocalDate date, boolean empty) {
+				super.updateItem(date, empty);
+				var localTime =
+						LocalTime.of(Integer.parseInt(hour.getText()), Integer.parseInt(minute.getText()),
+								Integer.parseInt(seconds.getText()));
+				var dateTime = LocalDateTime.of(date, localTime);
+
+				setDisable(empty || dateTime.compareTo(today) <= 0);
+			}
+		};
 	}
 
 	private void fixTimeTextField(TextField hour, String newValue, String s, String regex) {
@@ -2587,6 +2589,26 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		for (var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
+	}
+
+	private void setupTextFieldResizeProperty(TextField... textFields) {
+		for (TextField tf : textFields) {
+			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
+		}
+
+	}
+
+	private void resizeTextField(TextField tf, String currText) {
+		// Do this in a Platform.runLater because of Textfield has no padding at first time and so on
+		Platform.runLater(() -> {
+			Text text = new Text(currText);
+			text.setFont(tf.getFont()); // Set the same font, so the size is the same
+			double width = text.getLayoutBounds().getWidth() // This big is the Text in the TextField
+					+ tf.getPadding().getLeft() + tf.getPadding().getRight() // Add the padding of the TextField
+					+ 4d; // Add some spacing
+			tf.setPrefWidth(width); // Set the width
+			tf.positionCaret(tf.getCaretPosition());
+		});
 	}
 
 	private void processKey(JsonObject key, ScrollPane keyPane) {

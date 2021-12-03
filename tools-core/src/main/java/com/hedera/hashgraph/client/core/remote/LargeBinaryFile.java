@@ -501,7 +501,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
-		text.setFont(Font.font("Courier", 17));
+		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
 
@@ -536,7 +536,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		detailsGridPane.add(new Label("File Hash"), 0, 5);
 		var checksum = new Text(getChecksum());
-		checksum.setFont(Font.font("Courier", 16));
+		checksum.setFont(Font.font("Courier New", 16));
 		detailsGridPane.add(checksum, 1, 5);
 
 		detailsGridPane.add(new Label("File size"), 0, 6);

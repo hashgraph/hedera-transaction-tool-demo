@@ -86,7 +86,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 	public static final String UNBREAKABLE_SPACE = "\u00A0";
-	private static final Font COURIER_FONT = Font.font("Courier", 17);
+	private static final Font COURIER_FONT = Font.font("Courier New", 17);
 
 	private ToolTransaction transaction;
 	private TransactionType transactionType;
@@ -390,7 +390,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		Label startTimeLabel;
 		Label fileIDLabel;
 		Text fileHashLabel = new Text();
-		fileHashLabel.setFont(Font.font("Courier", 18));
+		fileHashLabel.setFont(Font.font("Courier New", 18));
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
 				logger.error("Cannot parse freeze type");
@@ -410,11 +410,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
 				// start_time field may be omitted and any value present will be ignored.
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
-				detailsGridPane.add(new Label("Upgrade File"), 0, count);
+				detailsGridPane.add(new Label("Upgrade file"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
 				fileHashLabel.setText(
 						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
-								12));
+								6));
 				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
@@ -429,11 +429,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				detailsGridPane.add(new Label("Upgrade start:"), 0, count);
 				detailsGridPane.add(startTimeLabel, 1, count++);
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
-				detailsGridPane.add(new Label("Upgrade File:"), 0, count);
+				detailsGridPane.add(new Label("Upgrade file:"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
 				fileHashLabel.setText(
 						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
-								12));
+								6));
 				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
