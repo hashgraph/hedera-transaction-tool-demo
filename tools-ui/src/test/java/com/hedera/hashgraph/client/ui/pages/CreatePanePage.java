@@ -125,6 +125,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setDate(String date) {
+		driver.doubleClickOn(CREATE_DATE_PICKER);
 		driver.clickOn(CREATE_DATE_PICKER);
 		driver.write(date);
 		driver.type(KeyCode.ENTER);

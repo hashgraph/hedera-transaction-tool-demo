@@ -16,15 +16,13 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.core.helpers;
+package com.hedera.hashgraph.client.core.testHelpers;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
-import com.hedera.hashgraph.client.core.helpers.TestConstants;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
-import com.hedera.hashgraph.sdk.Key;
 
 import java.io.File;
 import java.time.Instant;

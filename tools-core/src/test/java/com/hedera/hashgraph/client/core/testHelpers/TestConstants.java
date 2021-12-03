@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.core.helpers;
+package com.hedera.hashgraph.client.core.testHelpers;
 
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
