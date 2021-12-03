@@ -2277,15 +2277,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		startFieldsSet.setDate(now);
 	}
 
-	private void setTimeInForm(Instant start, TimeZone timeZone, TextField hourField,
-			TextField minuteField, TextField secondsField, DatePicker datePicker) {
-		final var zonedDateTimeFreezeStart = start.atZone(ZoneId.of(timeZone.getID()));
-		hourField.setText(String.format("%02d", zonedDateTimeFreezeStart.getHour()));
-		minuteField.setText(String.format("%02d", zonedDateTimeFreezeStart.getMinute()));
-		secondsField.setText(String.format("%02d", zonedDateTimeFreezeStart.getSecond()));
-		datePicker.setValue(zonedDateTimeFreezeStart.toLocalDate());
-	}
-
 	private void setupHbarNumberField(TextField currencyField) {
 		currencyField.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixNumericTextField(currencyField, newValue, "[^\\d.\\s]",
@@ -2541,8 +2532,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void loadSystemTransactionToForm(ToolSystemTransaction transaction) {
 		cleanAllSystemFields();
 		if (transaction.isDelete()) {
-			setTimeInForm(transaction.getExpiration(), timeZoneSystem, hourFieldSystem, minuteFieldSystem,
-					secondsFieldSystem, datePickerSystem);
+			systemFieldsSet.setDate(transaction.getExpiration());
 		}
 		entityID.setText(transaction.getEntity().toNicknameAndChecksum(controller.getAccountsList()));
 		if (Boolean.TRUE.equals(transaction.isDelete())) {
@@ -2580,8 +2570,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				// reference a future time. Any values specified for the update_file and file_hash fields will
 				// be ignored. This transaction does not perform any network changes or upgrades and requires
 				// manual intervention to restart the network.
-				setTimeInForm(transaction.getStartTime().asInstant(), freezeTimeZone, freezeHourField,
-						freezeMinuteField, freezeSecondsField, freezeDatePicker);
+				freezeFieldsSet.setDate(transaction.getStartTime().asInstant());
 				break;
 			case PREPARE_UPGRADE:
 				// A non-freezing operation that initiates network wide preparation in advance of a scheduled
@@ -2597,8 +2586,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case TELEMETRY_UPGRADE:
 				// Freezes the network at the specified time and performs the previously prepared automatic
 				// upgrade across the entire network.
-				setTimeInForm(transaction.getStartTime().asInstant(), freezeTimeZone, freezeHourField,
-						freezeMinuteField, freezeSecondsField, freezeDatePicker);
+				freezeFieldsSet.setDate(transaction.getStartTime().asInstant());
 				freezeFileIDTextField.setText(
 						transaction.getFileID().toNicknameAndChecksum(controller.getAccountsList()));
 				freezeFileHashTextField.setText(transaction.getFileHash());
