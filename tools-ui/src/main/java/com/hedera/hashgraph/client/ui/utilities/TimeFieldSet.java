@@ -38,7 +38,6 @@ import java.util.TimeZone;
 
 public class TimeFieldSet {
 	private static final Logger logger = LogManager.getLogger(TimeFieldSet.class);
-	private static final String REGEX = "[^\\d]";
 
 	DatePicker datePicker;
 	TextField hours;
@@ -65,83 +64,12 @@ public class TimeFieldSet {
 		if (timeZoneBox.getChildren().isEmpty()) {
 			configureTimeZoneChooser();
 		}
+		this.timeZone = getZoneFromBox();
 
-		this.timeZone = getZoneFromBox(timeZoneBox);
+		// Set managed for labels
+		utcLabel.managedProperty().bind(utcLabel.visibleProperty());
+		errorLabel.managedProperty().bind(errorLabel.visibleProperty());
 	}
-
-	// region GETTERS AND SETTERS
-	public DatePicker getDatePicker() {
-		return datePicker;
-	}
-
-	public void setDatePicker(DatePicker datePicker) {
-		this.datePicker = datePicker;
-	}
-
-	public TextField getHours() {
-		return hours;
-	}
-
-	public void setHours(TextField hours) {
-		this.hours = hours;
-	}
-
-	public TextField getMinutes() {
-		return minutes;
-	}
-
-	public void setMinutes(TextField minutes) {
-		this.minutes = minutes;
-	}
-
-	public TextField getSeconds() {
-		return seconds;
-	}
-
-	public void setSeconds(TextField seconds) {
-		this.seconds = seconds;
-	}
-
-	public TextField getNanos() {
-		return nanos;
-	}
-
-	public void setNanos(TextField nanos) {
-		this.nanos = nanos;
-	}
-
-	public TimeZone getTimeZone() {
-		return timeZone;
-	}
-
-	public void setTimeZone(TimeZone timeZone) {
-		this.timeZone = timeZone;
-	}
-
-	public Label getUtcLabel() {
-		return utcLabel;
-	}
-
-	public void setUtcLabel(Label utcLabel) {
-		this.utcLabel = utcLabel;
-	}
-
-	public Label getErrorLabel() {
-		return errorLabel;
-	}
-
-	public void setErrorLabel(Label errorLabel) {
-		this.errorLabel = errorLabel;
-	}
-
-	public HBox getTimeZoneBox() {
-		return timeZoneBox;
-	}
-
-	public void setTimeZoneBox(HBox timeZoneBox) {
-		this.timeZoneBox = timeZoneBox;
-	}
-// endregion
 
 	// region METHODS
 
@@ -155,34 +83,29 @@ public class TimeFieldSet {
 
 		final var date = datePicker.getValue();
 		if (date == null) {
+			utcLabel.setVisible(false);
 			logger.error("Date not set");
 			flag = false;
 		}
 
-		if (!checkTimeField(hours.getText(), 24)) {
+		if (checkTimeField(hours.getText(), 24)) {
 			logger.error("Invalid hours field");
 			flag = false;
 		}
-		if (!checkTimeField(minutes.getText(), 60)) {
+		if (checkTimeField(minutes.getText(), 60)) {
 			logger.error("Invalid minutes field");
 			flag = false;
 		}
-		if (!checkTimeField(seconds.getText(), 60)) {
+		if (checkTimeField(seconds.getText(), 60)) {
 			logger.error("Invalid seconds field");
 			flag = false;
 		}
 
-		if (!checkTimeField(nanos.getText(), 1000000000)) {
+		if (checkTimeField(nanos.getText(), 1000000000)) {
 			logger.error("Invalid nanos field");
 			flag = false;
 		}
 
-//		final var transactionValidStart = getDate().asDate();
-//
-//		if (transactionValidStart.before(new Date())) {
-//			logger.error("Transaction valid start in the past");
-//			flag = false;
-//		}
 		return flag;
 	}
 
@@ -201,7 +124,7 @@ public class TimeFieldSet {
 		datePicker.setDayCellFactory(picker -> disablePastDates(start));
 
 		datePicker.valueProperty().addListener(
-				(observable, oldDate, newDate) -> setLocalDateString());
+				(observable, oldDate, newDate) -> setUTCDateString());
 
 		// region FOCUS EVENTS
 		removeFocusOnEnter(hours);
@@ -224,7 +147,7 @@ public class TimeFieldSet {
 		datePicker.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (datePicker.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 				logger.info("Date changed to: {}", datePicker.getValue());
-				setLocalDateString();
+				setUTCDateString();
 			}
 		});
 		datePicker.setOnKeyReleased(event -> {
@@ -237,7 +160,7 @@ public class TimeFieldSet {
 	/**
 	 * Checks that the textfields represent a valid date/time and refreshes the label with the UTC time
 	 */
-	public void setLocalDateString() {
+	public void setUTCDateString() {
 		if (!isDateValid()) {
 			return;
 		}
@@ -298,7 +221,7 @@ public class TimeFieldSet {
 		seconds.setText(String.format("%02d", zonedDateTime.getSecond()));
 		nanos.setText(String.format("%09d", zonedDateTime.getNano()));
 		datePicker.setValue(zonedDateTime.toLocalDate());
-		setLocalDateString();
+		setUTCDateString();
 	}
 
 	public void reset(int defaultHours, int defaultMinutes, int defaultSeconds) {
@@ -309,11 +232,16 @@ public class TimeFieldSet {
 		nanos.setText("000000000");
 		utcLabel.setVisible(false);
 		errorLabel.setVisible(false);
-		logger.info("Dare fields reset");
+		logger.info("Date fields reset");
 	}
 	// endregion
 
 	// region UTILITY
+
+	/**
+	 * Adds a zone chooser textfield to the hbox. The chooser is an AutoCompleteNickname textfield, where allowed texts
+	 * are in the list of Java's available time zones
+	 */
 	private void configureTimeZoneChooser() {
 		var chooser = new AutoCompleteNickname(ZoneId.getAvailableZoneIds());
 		chooser.setDefault(TimeZone.getDefault().getID());
@@ -332,28 +260,41 @@ public class TimeFieldSet {
 				minutes.setText(String.format("%02d", ldt.getMinute()));
 				seconds.setText(String.format("%02d", ldt.getSecond()));
 				nanos.setText(String.format("%09d", ldt.getNano()));
-				setLocalDateString();
+				setUTCDateString();
 			}
 			timeZone.setID(chooser.getText());
 			logger.info("Timezone changed to: {}", timeZone.getID());
-			setLocalDateString();
+			setUTCDateString();
 		});
 	}
 
+	/**
+	 * Checks the value in a textfield against the limit
+	 *
+	 * @param value
+	 * 		the value in the textfield.
+	 * @param limit
+	 * 		the maximum allowed value.
+	 * @return true is the value is between 0 and the limit.
+	 */
 	private boolean checkTimeField(String value, int limit) {
 		if (value.equals("")) {
-			return false;
+			return true;
 		}
-
 		try {
 			int intValue = Integer.parseInt(value);
-			return intValue >= 0 && intValue < limit;
+			return intValue < 0 || intValue >= limit;
 		} catch (NumberFormatException e) {
-			return false;
+			return true;
 		}
 	}
 
-	private TimeZone getZoneFromBox(HBox timeZoneBox) {
+	/**
+	 * Extracts the timezone from the HBox.
+	 *
+	 * @return a timezone
+	 */
+	private TimeZone getZoneFromBox() {
 		var zone = timeZoneBox.getChildren().get(0);
 		assert zone instanceof AutoCompleteNickname;
 		var zoneString = ((AutoCompleteNickname) zone).getText();
@@ -364,15 +305,20 @@ public class TimeFieldSet {
 		return TimeZone.getTimeZone(zoneString);
 	}
 
-	private void fixTextField(TextField hour, String newValue, String s, String regex) {
-		if (!newValue.matches(s)) {
-			hour.setText(newValue.replaceAll(regex, ""));
-		}
-	}
-
+	/**
+	 * Setups a timefield. Disallows all characters other than numerics, limits the contents to positive numbers smaller
+	 * than the limit.
+	 *
+	 * @param timeField
+	 * 		the TextField that is being formatted
+	 * @param limit
+	 * 		the maximum allowed value for the field
+	 */
 	private void setupNumberField(TextField timeField, int limit) {
 		timeField.textProperty().addListener((observable, oldValue, newValue) -> {
-			fixTextField(hours, newValue, "\\d*", REGEX);
+			if (!newValue.matches("\\d*")) {
+				timeField.setText(newValue.replaceAll("[^\\d]", ""));
+			}
 			timeField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 				if (Boolean.FALSE.equals(newPropertyValue)) {
 					try {
@@ -384,10 +330,18 @@ public class TimeFieldSet {
 					}
 				}
 			});
-			setLocalDateString();
+			setUTCDateString();
 		});
 	}
 
+	/**
+	 * Setups the dates allowed in the calendar chooser. Dates before {@code start} will show as disabled in the
+	 * calendar.
+	 *
+	 * @param start
+	 * 		the earlies possible datetime for the parameter
+	 * @return a DateCell that will be disabled if before {@code start}
+	 */
 	private DateCell disablePastDates(LocalDateTime start) {
 		return new DateCell() {
 			@Override
@@ -403,6 +357,12 @@ public class TimeFieldSet {
 		};
 	}
 
+	/**
+	 * Pressing the {@code ENTER} key will remove focus from the textfield
+	 *
+	 * @param field
+	 * 		a TextField
+	 */
 	private void removeFocusOnEnter(TextField field) {
 		field.setOnKeyPressed(event -> {
 			if (KeyCode.ENTER.equals(event.getCode())) {
@@ -411,10 +371,20 @@ public class TimeFieldSet {
 		});
 	}
 
+	/**
+	 * Changes the label with the utc time when the user changes the input.
+	 *
+	 * @param newPropertyValue
+	 * 		true if changes were made
+	 * @param field
+	 * 		the name of the changed field
+	 * @param text
+	 * 		the new value of the field
+	 */
 	private void setChangeListener(Boolean newPropertyValue, String field, String text) {
 		if (datePicker.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 			logger.info("{} text field changed to: {}", field, text);
-			setLocalDateString();
+			setUTCDateString();
 		}
 	}
 

@@ -622,6 +622,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupFreezeFields() {
 		freezeFieldsSet = new TimeFieldSet(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
 				new TextField(), freezeTimeZoneHBox, freezeUTCTimeLabel, freezeTimeErrorLabel);
+		freezeFieldsSet.configureDateTime(startFieldsSet.getLocalDateTime());
 
 		freezeChoiceVBox.setVisible(false);
 		freezeFileVBox.setVisible(false);
@@ -707,7 +708,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					throw new IllegalStateException("Unexpected value: " + type);
 			}
 		});
-
+		freezeStartVBox.disableProperty().bind(Bindings.isNull(datePicker.valueProperty()));
 	}
 
 	private void setupTooltips() {
@@ -1985,14 +1986,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				createUTCTimeLabel, invalidDate);
 		startFieldsSet.configureDateTime(LocalDateTime.now());
 
-
-//		configureDateTime(datePicker, hourField, minuteField, secondsField, nanosField, createUTCTimeLabel,
-//				LocalDateTime.now(), timeZone, invalidDate);
-//		setupTimeZoneChooser(timeZone, timeZoneHBox, datePicker, hourField, minuteField, secondsField, nanosField,
-//				createUTCTimeLabel, invalidDate);
-//		configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
-//				freezeUTCTimeLabel, LocalDateTime.now(), freezeTimeZone, freezeTimeErrorLabel);
-//
 		// endregion
 		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
 		formatAccountTextField(feePayerAccountField, invalidFeePayer, feePayerAccountField.getParent());
