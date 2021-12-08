@@ -720,7 +720,7 @@ public class CreatePanePage {
 
 	public CreatePanePage setFreezeHash(String hash) {
 		driver.ensureVisible(driver.find(FREEZE_FILE_HASH_TEXT_FIELD));
-		driver.clickOn(FREEZE_FILE_HASH_TEXT_FIELD);
+		driver.doubleClickOn(FREEZE_FILE_HASH_TEXT_FIELD);
 		driver.write(hash);
 		driver.type(KeyCode.ENTER);
 		return this;
