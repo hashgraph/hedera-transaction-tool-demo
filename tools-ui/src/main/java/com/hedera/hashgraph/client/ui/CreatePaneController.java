@@ -667,8 +667,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (noise) {
 				return;
 			}
-			// Uncomment the following line if all fields need to be cleared
-			// cleanCommonFields();
+			cleanCommonFields();
 			cleanFreezeExclusiveFields();
 			if (SELECT_FREEZE_TYPE.equals(t1)) {
 				logger.info("Back to select");
