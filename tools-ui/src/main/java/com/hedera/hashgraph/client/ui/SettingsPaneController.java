@@ -778,7 +778,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	public void addFeePayerAction() {
 		customFeePayerTextField.setVisible(true);
-		customFeePayerTextField.requestFocus();
 	}
 
 	public void deleteFeePayerAction() {

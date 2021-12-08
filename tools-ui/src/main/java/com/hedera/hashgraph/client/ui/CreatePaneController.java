@@ -91,6 +91,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
 import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
@@ -298,6 +299,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public DatePicker datePicker;
 	public DatePicker datePickerSystem;
 	public DatePicker freezeDatePicker;
+
 	// Labels
 	public Label totalTransferLabel;
 	public Label createCharsLeft;
@@ -335,6 +337,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label freezeTimeErrorLabel;
 	public Label invalidFreezeFile;
 	public Label invalidTransactionFee;
+	public Label invalidFreezeFileHash;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -379,7 +382,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
 				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
-				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel);
+				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
+				invalidFreezeFileHash);
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
@@ -722,7 +726,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					throw new IllegalStateException("Unexpected value: " + type);
 			}
 		});
-
+		freezeFileHashTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.FALSE.equals(t1)) {
+				isValidHash();
+			}
+		});
+		freezeFileHashTextField.setOnKeyReleased(event -> {
+			if (KeyCode.ENTER.equals(event.getCode()) || KeyCode.TAB.equals(event.getCode())) {
+				freezeFileHashTextField.getParent().requestFocus();
+			}
+		});
 	}
 
 	private void setupTooltips() {
@@ -1249,7 +1262,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return false;
 		}
 
-
 		var freezeType = FREEZE_AND_UPGRADE.equals(choice) ?
 				FreezeType.FREEZE_UPGRADE :
 				FreezeType.valueOf(choice.toUpperCase(Locale.ROOT).replace(" ", "_"));
@@ -1271,7 +1283,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				} catch (Exception e) {
 					validFile = false;
 				}
-				validHash = !"".equals(freezeFileHashTextField.getText());
+				validHash = isValidHash();
 				break;
 			case FREEZE_UPGRADE:
 			case TELEMETRY_UPGRADE:
@@ -1285,7 +1297,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				} catch (Exception e) {
 					validFile = false;
 				}
-				validHash = !"".equals(freezeFileHashTextField.getText());
+				validHash = isValidHash();
 				break;
 			case FREEZE_ABORT:
 				break;
@@ -1293,6 +1305,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
 		return validStart && validFile && validHash;
+	}
+
+	/**
+	 * Check if the hash has a valid value
+	 *
+	 * @return true if the hash is valid
+	 */
+	private boolean isValidHash() {
+		boolean validHash;
+		validHash = !"".equals(freezeFileHashTextField.getText());
+		try {
+			Hex.decode(freezeFileHashTextField.getText());
+		} catch (Exception e) {
+			logger.error("Hash is invalid");
+			validHash = false;
+		}
+		invalidFreezeFileHash.setVisible(!validHash);
+		return validHash;
 	}
 
 	private boolean checkAndFlagSystemFields() {

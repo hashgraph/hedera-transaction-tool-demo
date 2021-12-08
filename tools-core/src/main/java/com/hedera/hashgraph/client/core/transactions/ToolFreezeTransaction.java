@@ -139,6 +139,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 			case FREEZE_ONLY:
 				checkStartTime();
 				return transaction.setTransactionId(transactionId)
+						.setTransactionMemo(memo)
 						.setFreezeType(FreezeType.FREEZE_ONLY)
 						.setStartTime(startTime)
 						.setMaxTransactionFee(transactionFee)
@@ -147,6 +148,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 			case PREPARE_UPGRADE:
 				checkFile();
 				return transaction.setFreezeType(FreezeType.PREPARE_UPGRADE)
+						.setTransactionMemo(memo)
 						.setFileId(fileID.asFile())
 						.setFileHash(fileHash)
 						.setTransactionId(transactionId)
@@ -157,6 +159,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 				checkFile();
 				checkStartTime();
 				return transaction.setFreezeType(FreezeType.FREEZE_UPGRADE)
+						.setTransactionMemo(memo)
 						.setFileId(fileID.asFile())
 						.setFileHash(fileHash)
 						.setStartTime(startTime)
@@ -167,15 +170,16 @@ public class ToolFreezeTransaction extends ToolTransaction {
 
 			case FREEZE_ABORT:
 				return transaction.setFreezeType(FreezeType.FREEZE_ABORT)
+						.setTransactionMemo(memo)
 						.setTransactionId(transactionId)
 						.setMaxTransactionFee(transactionFee)
 						.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 						.freeze();
-
 			case TELEMETRY_UPGRADE:
 				checkFile();
 				checkStartTime();
 				return transaction.setFreezeType(FreezeType.TELEMETRY_UPGRADE)
+						.setTransactionMemo(memo)
 						.setStartTime(startTime)
 						.setFileHash(fileHash)
 						.setFileId(fileID.asFile())

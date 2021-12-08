@@ -649,6 +649,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		VBox freeze = null;
 		VBox prepare = null;
 		VBox freezeUpgrade = null;
+
 		for (VBox freezeBox : freezeBoxes) {
 			var children = freezeBox.getChildren();
 			assertTrue(children.get(0) instanceof Label);
@@ -689,10 +690,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertTrue(prepareHBox.getChildren().get(0) instanceof GridPane);
 		assertTrue(freezeUpgradeHBox.getChildren().get(0) instanceof GridPane);
 
-		assertEquals(8, ((GridPane) abortHBox.getChildren().get(0)).getChildren().size());
-		assertEquals(10, ((GridPane) freezeHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(10, ((GridPane) abortHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(12, ((GridPane) freezeHBox.getChildren().get(0)).getChildren().size());
 		assertEquals(12, ((GridPane) prepareHBox.getChildren().get(0)).getChildren().size());
-		assertEquals(14, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
+		assertEquals(16, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
 	}
 
 	@Test
