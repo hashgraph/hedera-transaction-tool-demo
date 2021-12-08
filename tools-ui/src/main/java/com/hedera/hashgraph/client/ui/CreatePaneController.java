@@ -58,7 +58,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -668,6 +667,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (noise) {
 				return;
 			}
+			// Uncomment the following line if all fields need to be cleared
+			// cleanCommonFields();
+			cleanFreezeExclusiveFields();
 			if (SELECT_FREEZE_TYPE.equals(t1)) {
 				logger.info("Back to select");
 				cleanAllFreezeFields();
@@ -1367,6 +1369,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void cleanAllFreezeFields() {
 		cleanCommonFields();
 		freezeTypeChoiceBox.getSelectionModel().select(SELECT_FREEZE_TYPE);
+		cleanFreezeExclusiveFields();
+	}
+
+	private void cleanFreezeExclusiveFields() {
 		freezeDatePicker.setValue(null);
 		freezeHourField.setText("00");
 		freezeMinuteField.setText("00");
