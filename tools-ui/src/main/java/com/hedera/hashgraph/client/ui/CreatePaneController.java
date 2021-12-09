@@ -556,8 +556,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var destFile =
 					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
 			try {
-				org.apache.commons.io.FileUtils.copyFile(contents,
-						destFile);
+				org.apache.commons.io.FileUtils.copyFile(contents, destFile);
 			} catch (IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e);

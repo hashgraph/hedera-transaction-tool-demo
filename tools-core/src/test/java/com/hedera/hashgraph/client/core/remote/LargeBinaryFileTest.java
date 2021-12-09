@@ -177,16 +177,16 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(label.getText().contains("2022-09-03 01:00:00 UTC"));
 
 		text = (Text) gridPane.getChildren().get(11);
-		assertTrue(text.getText().contains("b55f f40e 35c6 2da5 5d93 8e4f"));
+		assertTrue(text.getText().contains("9242 b8c9 5482 e9b7 237d 7ecc"));
 
 		label = (Label) gridPane.getChildren().get(13);
-		assertEquals("100320 bytes", label.getText());
+		assertEquals("18651636 bytes", label.getText());
 
 		label = (Label) gridPane.getChildren().get(15);
 		assertEquals("1023 bytes", label.getText());
 
 		label = (Label) gridPane.getChildren().get(17);
-		assertEquals("99", label.getText());
+		assertEquals("18233", label.getText());
 
 		label = (Label) gridPane.getChildren().get(19);
 		assertEquals("100 nanoseconds", label.getText());
@@ -200,8 +200,8 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		var info = FileDetails.parse(file);
 		var largeBinary = new LargeBinaryFile(info);
 
-		assertEquals("hundredThousandBytes.bin", largeBinary.getFilename());
-		assertEquals("b55ff40e35c62da55d938e4f72e1bf4276e62d571c494ea05cf672ad495f349536386bbdbdd089538d8e46b7e45542d9",
+		assertEquals("hundredThousandBytes.zip", largeBinary.getFilename());
+		assertEquals("9242b8c95482e9b7237d7ecc37be0303afaeee6d7e3e6794a60d42e15416ffe996b836347fb2379f4f17a38beb9b70b9",
 				largeBinary.getChecksum().replace("\n", "").replace("\u00a0", ""));
 		assertEquals(1023, largeBinary.getChunkSize());
 		assertEquals(120, largeBinary.getTransactionValidDuration());
@@ -236,7 +236,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 		var transactions = unzipped.listFiles();
 		assert transactions != null;
-		assertEquals(100, transactions.length);
+		assertEquals(18234, transactions.length);
 
 		final var update = new File(unzipped.getAbsolutePath(), "hundredThousandBytes-00000.txsig");
 		assertTrue(update.exists());

@@ -25,6 +25,7 @@ import java.io.File;
 
 public class Constants {
 
+
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -32,7 +33,6 @@ public class Constants {
 	public static final int MIN_PASSWORD_LENGTH = 10;
 	public static final int MAX_PASSWORD_LENGTH = 1024;
 	public static final int MNEMONIC_SIZE = 24;
-
 
 	// region FILE EXTENSIONS
 	public static final String PK_EXTENSION = "pem";
@@ -53,6 +53,7 @@ public class Constants {
 	public static final String CONFIGURATION_EXTENSION = "cfg";
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
+	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
 
@@ -89,6 +90,7 @@ public class Constants {
 	public static final int KEYS_COLUMNS = 5;
 	public static final int NUMBER_OF_SINGLE_BOXES = 5;
 	public static final String TEST_PASSWORD = "123456789";
+	public static final String COMMA_DELIMITER = ",";
 	// endregion
 
 	// region TRANSACTION DEFAULTS
@@ -98,6 +100,7 @@ public class Constants {
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
+	public static final int NUMBER_OF_THREADS = 200;
 	// endregion
 
 	// region FILES
@@ -117,8 +120,9 @@ public class Constants {
 	public static final String SYSTEM_FOLDER = DEFAULT_STORAGE + "Files/.System/";
 	public static final String CUSTOM_NETWORK_FOLDER = SYSTEM_FOLDER + "CustomNetworks";
 	public static final String BALANCES_FILE = SYSTEM_FOLDER + "balancesArray.json";
-	public static final String CUSTOM_FEE_PAYERS = "customFeePayers";
-
+	public static final String INTEGRATION_NODES_JSON = "src/main/resources/IntegrationNodes.json";
+	public static final String PUBLIC_KEY_LOCATION = "Files/.System/gpgPublicKey.asc";
+	public static final String TEMP_FOLDER_LOCATION = System.getProperty("java.io.tmpdir");
 	// endregion
 
 	// region STYLE
@@ -148,11 +152,7 @@ public class Constants {
 	public static final String BLUE_BUTTON_STYLE =
 			"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
 					"10; -fx-background-radius: 10;";
-	public static final String TEMP_FOLDER_LOCATION = System.getProperty(
-			"java.io.tmpdir");
-	public static final int NUMBER_OF_THREADS = 200;
-	public static final String INTEGRATION_NODES_JSON = "src/main/resources/IntegrationNodes.json";
-	public static final String COMMA_DELIMITER = ",";
+
 
 	// endregion
 
@@ -164,10 +164,6 @@ public class Constants {
 	public static final int KEY_LENGTH = 256;
 	// endregion
 
-	public static final String PUBLIC_KEY_LOCATION = "Files/.System/gpgPublicKey.asc";
-
 
 	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
-	public static final String RED_STYLE = "-fx-text-fill: red";
-	public static final String GREEN_STYLE = "-fx-text-fill: limegreen";
 }
