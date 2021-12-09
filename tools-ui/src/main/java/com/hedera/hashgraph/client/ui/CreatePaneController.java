@@ -58,7 +58,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -557,8 +556,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var destFile =
 					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
 			try {
-				org.apache.commons.io.FileUtils.copyFile(contents,
-						destFile);
+				org.apache.commons.io.FileUtils.copyFile(contents, destFile);
 			} catch (IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e);

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
-import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_FEE_PAYERS;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
