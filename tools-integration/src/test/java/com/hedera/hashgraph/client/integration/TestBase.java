@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyStoreException;
+import java.util.Set;
 
 public class TestBase extends ApplicationTest {
 
@@ -45,7 +46,7 @@ public class TestBase extends ApplicationTest {
 	@BeforeClass
 	public static void setupHeadlessMode() {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
-		System.setProperty("headless", "true");
+		//System.setProperty("headless", "true");
 
 		if (Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
@@ -173,4 +174,10 @@ public class TestBase extends ApplicationTest {
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
+
+	/* Helper method to retrieve Java FX GUI components. */
+	public Set<Node> findAll(final String query) {
+		return lookup(query).queryAll();
+	}
+
 }

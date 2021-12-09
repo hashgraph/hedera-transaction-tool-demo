@@ -18,55 +18,68 @@
 
 package com.hedera.hashgraph.client.integration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.security.SecurityUtilities;
+import com.hedera.hashgraph.client.integration.pages.AccountsPanePage;
+import com.hedera.hashgraph.client.integration.pages.CreatePanePage;
+import com.hedera.hashgraph.client.integration.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.StartUI;
+import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.BadMnemonicException;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.Mnemonic;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.testfx.api.FxToolkit;
 
+import javax.swing.JFileChooser;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.REALM_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.SHARD_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
+import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
+import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -74,65 +87,58 @@ import static org.junit.Assert.assertTrue;
  * GUARANTEED TO EXIST
  */
 
-public class FreezeTransactionTest {
+public class FreezeTransactionTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(FreezeTransactionTest.class);
 
 	private static Client client;
 	private static PrivateKey genesisKey;
 
-	@Before
-	public void setUp() throws Exception {
-		// Setup the client for network
-		setupClient();
-		// Fund account 50 if needed
-		var transferTransaction = new TransferTransaction();
-		final var transactionValidStart = Instant.now();
-		TransactionId transactionId = new TransactionId(new AccountId(0, 0, 2), transactionValidStart);
-		transferTransaction.setMaxTransactionFee(Hbar.fromTinybars(1000000000))
-				.setTransactionId(transactionId)
-				.setTransactionMemo("test transfer")
-				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
-				.setTransactionValidDuration(Duration.ofSeconds(175));
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
+	private static final String DEFAULT_STORAGE = System.getProperty(
+			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 
-		// Add transfers
-		transferTransaction.addHbarTransfer(new AccountId(0, 0, 2), Hbar.fromTinybars(-100000000));
-		transferTransaction.addHbarTransfer(new AccountId(0, 0, 50), Hbar.fromTinybars(100000000));
-		transferTransaction.freeze();
-		transferTransaction.sign(genesisKey);
-		var response = transferTransaction.execute(client);
-		assert response != null;
+	private CreatePanePage createPanePage;
+	private AccountsPanePage accountsPanePage;
+	private MainWindowPage mainWindowPage;
 
-		final var status = response.getReceipt(client).status;
-		logger.info("Worker: Transaction: {}, final status: {}", transactionId.toString(), status);
+	private final Path currentRelativePath = Paths.get("");
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+	public UserAccessibleProperties properties;
 
-		// Update file 150
-		// Calculate file 150's checksum
+	private static final List<String> testWords =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
+
+	public static final String KEYS_STRING = "Keys";
+	public static final String ACCOUNTS_STRING = "Accounts";
+
+	public TestBase get() {
+		return this;
 	}
 
-	@NotNull
-	private void setupClient() throws KeyStoreException {
-		var keyStore =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
-		genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+	@Before
+	public void setUp() throws Exception {
+		// Set up the client for network
+//		setupClient();
 
-		Map<String, AccountId> network = new HashMap<>();
-		var jsonArray = getIPS("src/test/resources/homeNodes.json");
-		for (var jsonElement : jsonArray) {
-			var node = jsonElement.getAsJsonObject();
-			network.put(
-					String.format("%s:%s", node.get("ipAddress").getAsString(), node.get("port").getAsString()),
-					new AccountId(node.get("accountID").getAsInt()));
-		}
-		client = Client.forNetwork(network);
-		final var treasury = new AccountId(0, 0, 2);
-		client.setOperator(treasury, genesisKey);
+		// Fund account 58
+//		fundAccount58();
+
+		setUpUI();
+
+
 	}
 
 	@Test
-	public void freezeTransactionBuild_test() throws HederaClientException, PrecheckStatusException, TimeoutException {
-		// Check 50 has a balance
+	public void freezeTransactionBuild_test() throws PrecheckStatusException, TimeoutException {
+		// Check 58 has a balance
 		Hbar balance = new AccountBalanceQuery()
-				.setAccountId(new AccountId(0, 0, 50))
+				.setAccountId(new AccountId(0, 0, 58))
 				.execute(client)
 				.hbars;
 
@@ -142,7 +148,7 @@ public class FreezeTransactionTest {
 		final var transactionValidStart = Instant.now();
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		TransactionId transactionId = new TransactionId(new AccountId(0, 0, 50), transactionValidStart);
+		TransactionId transactionId = new TransactionId(new AccountId(0, 0, 58), transactionValidStart);
 		FreezeTransaction freezeTransaction = new FreezeTransaction().setTransactionId(transactionId)
 				.setFreezeType(FreezeType.FREEZE_ONLY)
 				.setStartTime(startFreeze.asInstant())
@@ -152,14 +158,48 @@ public class FreezeTransactionTest {
 
 		freezeTransaction.sign(genesisKey);
 
-		client.setOperator(new AccountId(0, 0, 50), genesisKey);
+		client.setOperator(new AccountId(0, 0, 58), genesisKey);
 		var response = freezeTransaction.execute(client);
 		assert response != null;
 		// Assert network is down
 		balance = new AccountBalanceQuery()
-				.setAccountId(new AccountId(0, 0, 50))
+				.setAccountId(new AccountId(0, 0, 58))
 				.execute(client)
 				.hbars;
+	}
+
+	@Test
+	public void integration_test() throws KeyStoreException, IOException, TimeoutException {
+		// Launch tools
+		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+		mainWindowPage.clickOnCreateButton();
+
+
+		var date = DateUtils.addMinutes(new Date(), 2);
+		var file = new File("src/test/resources/hundredThousandBytes.zip").getAbsolutePath();
+		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
+				.setUpdateFileID("0.0.150")
+				.setStartDateTime(date)
+				.setMemo("Freeze integration test")
+				.setFeePayerAccount(58)
+				.setContents(file);
+
+		sleep(15000);
+
+		// Create a zip transaction
+
+		// Sign zip
+
+		// Submit file update
+
+		// Create prepare upgrade
+
+		// Sign transaction
+
+		// Submit transaction
+
 	}
 
 	@After
@@ -182,36 +222,158 @@ public class FreezeTransactionTest {
 		return new JsonArray();
 	}
 
-	@NotNull
-	private JsonObject getBasicJsonObject() {
-		JsonObject testJson = new JsonObject();
-		JsonObject feeJson = new JsonObject();
-		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, 100000000);
+	public void remakeTransactionTools() {
+		String toolsFolder =
+				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
+		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
+			logger.info("Folder {} created", toolsFolder);
+		}
 
-		JsonObject feePayerAccount = new JsonObject();
-		feePayerAccount.addProperty(REALM_NUMBER, 0);
-		feePayerAccount.addProperty(SHARD_NUMBER, 0);
-		feePayerAccount.addProperty(ACCOUNT_NUMBER, 50);
+		try {
+			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
+					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
+				logger.info("Accounts folder created");
+			}
+			if (!new File(toolsFolder, KEYS_STRING).exists() &&
+					new File(toolsFolder, KEYS_STRING).mkdirs()) {
+				logger.info("{} folder created", KEYS_STRING);
+			}
+		} catch (Exception cause) {
+			logger.error("Unable to remake Transaction folders.", cause);
+		}
+	}
 
-		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
+	private void setUpUI() throws IOException, BadMnemonicException, HederaClientException, KeyStoreException {
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
 
-		JsonObject node = new JsonObject();
-		node.addProperty(REALM_NUMBER, 0);
-		node.addProperty(SHARD_NUMBER, 0);
-		node.addProperty(ACCOUNT_NUMBER, 3);
+		if (new File(DEFAULT_STORAGE).mkdirs()) {
+			logger.info("TransactionTools folder created");
+		}
+		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-		testJson.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+				"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
+			logger.info("Output path created");
+		}
 
-		testJson.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp().asJSON());
+		remakeTransactionTools();
 
-		testJson.add(NODE_ID_FIELD_NAME, node);
-		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.CUSTOM.toString());
+		//Copy Accounts folders
+		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original/Accounts"),
+				new File(DEFAULT_STORAGE + "/Accounts"));
+		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original/Files"),
+				new File(DEFAULT_STORAGE + "/Files"));
 
-		testJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, 120);
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
-		testJson.addProperty(MEMO_FIELD_NAME, "a memo to go with the transaction");
-		return testJson;
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
+				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
+
+		Map<String, String> emailMap = new HashMap<>();
+
+		emailMap.put(
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
+				"test1.council2@hederacouncil.org");
+
+		var mnemonic = Mnemonic.fromWords(testWords);
+		properties.setMnemonicHashCode(mnemonic.words.hashCode());
+		properties.setHash(TEST_PASSWORD.toCharArray());
+		properties.setLegacy(false);
+		var salt = Utilities.getSaltBytes(properties);
+		var passwordBytes = SecurityUtilities.keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
+		toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
+				mnemonic.toString());
+
+		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+
+		var objectMapper = new ObjectMapper();
+		var mapAsString = objectMapper.writeValueAsString(emailMap);
+		assertNotNull(mapAsString);
+
+		properties.setOneDriveCredentials(emailMap);
+		properties.setHash("123456789".toCharArray());
+
+		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
+		setupTransactionDirectory(DEFAULT_STORAGE);
+
+		var controller = new Controller();
+		var version = controller.getVersion();
+		properties.setVersionString(version);
+
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
+		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+
+		if (createPanePage == null) {
+			createPanePage = new CreatePanePage(this);
+		}
+		if (mainWindowPage == null) {
+			mainWindowPage = new MainWindowPage(get());
+		}
+		if (accountsPanePage == null) {
+			accountsPanePage = new AccountsPanePage(get());
+		}
+		var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+		if (!new File(rootFolder).exists() && new File(rootFolder).mkdirs()) {
+			logger.info("Tools root folder created");
+		} else {
+			logger.info("Tools root directory exists.");
+		}
+		var toolsFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
+		if (!new File(toolsFolder).exists() && new File(toolsFolder).mkdirs()) {
+			logger.info("Tools document directory created");
+		} else {
+			logger.info("Tools document directory exists.");
+		}
+
+		final var outputDirectory = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+		FileUtils.cleanDirectory(outputDirectory);
+
+		TestUtil.copyCreatePaneKeys();
+	}
+
+	private void fundAccount58() throws TimeoutException, PrecheckStatusException, ReceiptStatusException {
+		var transferTransaction = new TransferTransaction();
+		final var transactionValidStart = Instant.now();
+		TransactionId transactionId = new TransactionId(new AccountId(0, 0, 2), transactionValidStart);
+		transferTransaction.setMaxTransactionFee(Hbar.fromTinybars(1000000000))
+				.setTransactionId(transactionId)
+				.setTransactionMemo("test transfer")
+				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
+				.setTransactionValidDuration(Duration.ofSeconds(175));
+
+		// Add transfers
+		transferTransaction.addHbarTransfer(new AccountId(0, 0, 2), Hbar.fromTinybars(-100000000));
+		transferTransaction.addHbarTransfer(new AccountId(0, 0, 58), Hbar.fromTinybars(100000000));
+		transferTransaction.freeze();
+		transferTransaction.sign(genesisKey);
+		var response = transferTransaction.execute(client);
+		assert response != null;
+
+		final var status = response.getReceipt(client).status;
+		logger.info("Worker: Transaction: {}, final status: {}", transactionId.toString(), status);
+	}
+
+	private void setupClient() throws KeyStoreException {
+		var keyStore =
+				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
+		genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+
+		Map<String, AccountId> network = new HashMap<>();
+		var jsonArray = getIPS("src/test/resources/homeNodes.json");
+		for (var jsonElement : jsonArray) {
+			var node = jsonElement.getAsJsonObject();
+			network.put(
+					String.format("%s:%s", node.get("ipAddress").getAsString(), node.get("port").getAsString()),
+					new AccountId(node.get("accountID").getAsInt()));
+		}
+		client = Client.forNetwork(network);
+		final var treasury = new AccountId(0, 0, 2);
+		client.setOperator(treasury, genesisKey);
 	}
 
 

@@ -23,20 +23,26 @@ import com.hedera.hashgraph.client.integration.TestBase;
 public class MainWindowPage {
 
 	private final TestBase driver;
-	private static final String ACCOUNTS_BUTTON = "#accountsButton";
-	private static final String SETTINGS_PANE = "#settingsButton";
+	private static final String ACCOUNTS_PANE_BUTTON = "#accountsButton";
+	private static final String SETTINGS_PANE_BUTTON = "#settingsButton";
+	private static final String CREATE_PANE_BUTTON = "#createButton";
 
 	public MainWindowPage(TestBase driver) {
 		this.driver = driver;
 	}
 
 	public MainWindowPage clickOnAccountsButton() {
-		driver.clickOn(ACCOUNTS_BUTTON);
+		driver.clickOn(ACCOUNTS_PANE_BUTTON);
 		return new MainWindowPage(driver);
 	}
 
 	public MainWindowPage clickOnSettingsButton() {
-		driver.clickOn(SETTINGS_PANE);
+		driver.clickOn(SETTINGS_PANE_BUTTON);
+		return new MainWindowPage(driver);
+	}
+
+	public MainWindowPage clickOnCreateButton() {
+		driver.clickOn(CREATE_PANE_BUTTON);
 		return new MainWindowPage(driver);
 	}
 }

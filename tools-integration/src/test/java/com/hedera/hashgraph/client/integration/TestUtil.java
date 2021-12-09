@@ -297,44 +297,6 @@ public class TestUtil {
 	}
 
 	/**
-	 * Given a list of nodes that originate in a popup, find the button whose text is equal to the provided legend
-	 *
-	 * @param popupNodes
-	 * 		a list of nodes
-	 * @param legend
-	 * 		the text in the button
-	 * @return a button
-	 */
-	public static Button findButtonInPopup(ObservableList<Node> popupNodes, String legend) {
-		for (var popupNode : popupNodes) {
-			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
-				return (Button) popupNode;
-			} else if (popupNode instanceof ButtonBar) {
-				var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
-				if (f != null) {
-					return f;
-				}
-			} else if (popupNode instanceof VBox) {
-				var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
-				if (f != null) {
-					return f;
-				}
-			} else if (popupNode instanceof HBox) {
-				var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
-				if (f != null) {
-					return f;
-				}
-			} else if (popupNode instanceof GridPane) {
-				var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
-				if (f != null) {
-					return f;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Given a list of nodes that originate in a popup, find the checkbox whose text is equal to the provided legend
 	 *
 	 * @param popupNodes
@@ -480,6 +442,45 @@ public class TestUtil {
 		transaction.sign(genesisKey);
 		transaction.submit();
 
+	}
+
+
+	/**
+	 * Given a list of nodes that originate in a popup, find the button whose text is equal to the provided legend
+	 *
+	 * @param popupNodes
+	 * 		a list of nodes
+	 * @param legend
+	 * 		the text in the button
+	 * @return a button
+	 */
+	public static Button findButtonInPopup(ObservableList<Node> popupNodes, String legend) {
+		for (var popupNode : popupNodes) {
+			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
+				return (Button) popupNode;
+			} else if (popupNode instanceof ButtonBar) {
+				var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof VBox) {
+				var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof HBox) {
+				var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			} else if (popupNode instanceof GridPane) {
+				var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
+				if (f != null) {
+					return f;
+				}
+			}
+		}
+		return null;
 	}
 
 
