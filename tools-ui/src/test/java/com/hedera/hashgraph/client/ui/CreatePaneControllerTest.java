@@ -1747,12 +1747,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_ONLY)
 				.setComment("this is a comment that will go with the system transaction - Freeze only")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
-
-		createPanePage.setFreezeType(FreezeType.FREEZE_ONLY);
 
 		assertTrue(find("#freezeStartVBox").isVisible());
 		assertFalse(find("#freezeFileVBox").isVisible());
@@ -1788,12 +1787,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var localDateTime = LocalDateTime.now().plusMinutes(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_ABORT)
 				.setComment("this is a comment that will go with the system transaction - Freeze abort")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
-
-		createPanePage.setFreezeType(FreezeType.FREEZE_ABORT);
 
 		assertFalse(find("#freezeStartVBox").isVisible());
 		assertFalse(find("#freezeFileVBox").isVisible());
@@ -1827,12 +1825,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_UPGRADE)
 				.setComment("this is a comment that will go with the system transaction - Freeze and upgrade")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
-
-		createPanePage.setFreezeType(FreezeType.FREEZE_UPGRADE);
 
 		assertTrue(find("#freezeStartVBox").isVisible());
 		assertTrue(find("#freezeFileVBox").isVisible());
@@ -1879,12 +1876,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var localDateTime = LocalDateTime.now().plusHours(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.PREPARE_UPGRADE)
 				.setComment("this is a comment that will go with the system transaction - Prepare upgrade")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
 
-		createPanePage.setFreezeType(FreezeType.PREPARE_UPGRADE)
+		createPanePage
 				.setFreezeFileId(111)
 				.setFreezeHash("xxxyyyzzz");
 		assertTrue(find("#invalidFreezeFileHash").isVisible());
