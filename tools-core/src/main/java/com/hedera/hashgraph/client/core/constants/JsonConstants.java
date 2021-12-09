@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.core.constants;
 public class JsonConstants {
 
 
+
 	private JsonConstants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -55,6 +56,7 @@ public class JsonConstants {
 	public static final String TRANSACTION_VALID_START_FIELD_NAME = "transactionValidStart";
 	public static final String TRANSACTION_VALID_START_READABLE_FIELD_NAME = "transactionValidStart_RFC";
 	public static final String MEMO_FIELD_NAME = "memo";
+	public static final String CUSTOM_FEE_PAYERS = "customFeePayers";
 
 	public static final String FEE_PAYER_KEY_LOCATION = "feePayerKeyLocation";
 

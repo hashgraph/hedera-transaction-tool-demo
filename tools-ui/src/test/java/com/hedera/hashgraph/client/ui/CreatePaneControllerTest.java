@@ -1302,7 +1302,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@Test
-	public void errorMessagesCreate_Test() throws InterruptedException {
+	public void errorMessagesCreate_Test() {
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
 			// Test will not work on headless mode
@@ -1747,12 +1747,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_ONLY)
 				.setComment("this is a comment that will go with the system transaction - Freeze only")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
-
-		createPanePage.setFreezeType(FreezeType.FREEZE_ONLY);
 
 		assertTrue(find("#freezeStartVBox").isVisible());
 		assertFalse(find("#freezeFileVBox").isVisible());
@@ -1788,12 +1787,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var localDateTime = LocalDateTime.now().plusMinutes(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_ABORT)
 				.setComment("this is a comment that will go with the system transaction - Freeze abort")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
-
-		createPanePage.setFreezeType(FreezeType.FREEZE_ABORT);
 
 		assertFalse(find("#freezeStartVBox").isVisible());
 		assertFalse(find("#freezeFileVBox").isVisible());
@@ -1827,19 +1825,24 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.FREEZE_UPGRADE)
 				.setComment("this is a comment that will go with the system transaction - Freeze and upgrade")
 				.setStartDate(localDateTime)
 				.setMemo("A comment")
 				.setFeePayerAccount(3232);
 
-		createPanePage.setFreezeType(FreezeType.FREEZE_UPGRADE);
-
 		assertTrue(find("#freezeStartVBox").isVisible());
 		assertTrue(find("#freezeFileVBox").isVisible());
 
 		createPanePage.setFreezeStartDate(startTime)
-				.setFreezeFileId(123)
-				.setFreezeHash("abc123def456")
+				.setFreezeFileId(123);
+
+		createPanePage.setFreezeHash("xxxyyyzzz");
+		assertTrue(find("#invalidFreezeFileHash").isVisible());
+		createPanePage
+				.setFreezeHash("abc123def456");
+		assertFalse(find("#invalidFreezeFileHash").isVisible());
+		createPanePage
 				.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
 
@@ -1865,6 +1868,49 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 						freeezeTransaction.getTransactionId().validStart));
 
 		assertEquals(new Identifier(0, 0, 123).asFile(), freeezeTransaction.getFileId());
+		assertArrayEquals(Hex.decode("abc123def456"), freeezeTransaction.getFileHash());
+	}
+
+	@Test
+	public void prepareUpgrade_test() throws HederaClientException, InvalidProtocolBufferException {
+		var localDateTime = LocalDateTime.now().plusHours(1);
+
+		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
+				.setFreezeType(FreezeType.PREPARE_UPGRADE)
+				.setComment("this is a comment that will go with the system transaction - Prepare upgrade")
+				.setStartDate(localDateTime)
+				.setMemo("A comment")
+				.setFeePayerAccount(3232);
+
+		createPanePage
+				.setFreezeFileId(111)
+				.setFreezeHash("xxxyyyzzz");
+		assertTrue(find("#invalidFreezeFileHash").isVisible());
+		createPanePage
+				.setFreezeHash("abc123def456");
+		assertFalse(find("#invalidFreezeFileHash").isVisible());
+		createPanePage
+				.createAndExport(resources);
+
+		var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
+
+		assert transactions != null;
+		assertEquals(1, transactions.length);
+		var transaction = Transaction.fromBytes(readBytes(transactions[0]));
+		assertTrue(transaction instanceof FreezeTransaction);
+		var freeezeTransaction = (FreezeTransaction) transaction;
+		assertEquals(FreezeType.PREPARE_UPGRADE, freeezeTransaction.getFreezeType());
+
+		assertNotNull(freeezeTransaction.getTransactionId());
+		assertNotNull(freeezeTransaction.getTransactionId().validStart);
+
+		assertEquals(new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000),
+				Date.from(
+						freeezeTransaction.getTransactionId().validStart));
+
+		assertEquals(new Identifier(0, 0, 111).asFile(), freeezeTransaction.getFileId());
 		assertArrayEquals(Hex.decode("abc123def456"), freeezeTransaction.getFileHash());
 	}
 

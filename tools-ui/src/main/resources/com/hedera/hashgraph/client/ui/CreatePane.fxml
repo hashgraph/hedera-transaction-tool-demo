@@ -578,8 +578,12 @@
 								   visible="false"/>
 						</HBox>
 						<Label text="File Hash"/>
-						<TextField fx:id="freezeFileHashTextField" maxWidth="-Infinity" minWidth="800.0"
-								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						<VBox spacing="5.0">
+							<TextField fx:id="freezeFileHashTextField" maxWidth="-Infinity" minWidth="800.0"
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<Label fx:id="invalidFreezeFileHash" style="-fx-text-fill: red;"
+								   text="File hash cannot be parsed" visible="false"/>
+						</VBox>
 					</VBox>
 					<padding>
 						<Insets left="15.0" right="15.0" top="10.0"/>

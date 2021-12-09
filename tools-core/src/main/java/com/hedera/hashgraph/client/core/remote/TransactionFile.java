@@ -272,7 +272,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		detailsGridPane.add(new Label("Senders: "), 0, count++);
-		setAccountAmounts(detailsGridPane, count++, senders);
+		count = setAccountAmounts(detailsGridPane, count, senders);
 
 		detailsGridPane.add(new Label("Receivers: "), 0, count++);
 		setAccountAmounts(detailsGridPane, count, receivers);
@@ -531,7 +531,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return super.getSigningPublicKeys();
 	}
 
-	private void setAccountAmounts(GridPane detailsGridPane, int count, List<Pair<String, String>> receivers) {
+	private int setAccountAmounts(GridPane detailsGridPane, int count, List<Pair<String, String>> receivers) {
 		for (var receiver : receivers) {
 			var accountText = new Label(receiver.getLeft());
 			accountText.setWrapText(true);
@@ -546,6 +546,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			amountText.setPadding(new Insets(0, 50, 0, 0));
 			detailsGridPane.add(amountText, 1, count++);
 		}
+		return count;
 	}
 
 	private void displayKey(TreeView<String> keyTreeView) {
