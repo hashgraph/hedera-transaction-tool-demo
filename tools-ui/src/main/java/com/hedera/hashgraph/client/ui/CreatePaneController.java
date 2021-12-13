@@ -1993,14 +1993,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		try {
-			var pair = getUserCommentsTransactionPair(type);
-			if (pair == null) {
-				return;
-			}
+			// File update is treated differently because it does not conform to the usual creation paradigm
 			if (type.equals(CreateTransactionType.FILE_UPDATE)) {
 				prepareZipAndComment(fileService);
 				return;
 			}
+
+			var pair = getUserCommentsTransactionPair(type);
+			if (pair == null) {
+				return;
+			}
+
 			storeTransactionAndComment(pair, fileService);
 		} catch (HederaClientException e) {
 			controller.displaySystemMessage(e);
@@ -2051,9 +2054,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var now = new Date();
 		var secs = date.getSeconds() - now.getTime() / 1000;
 		if (secs < 120) {
-			answer = PopupMessage.display("Warning", String.format(REMAINING_TIME_MESSAGE,
-					secs / 1000), true, "CONTINUE", "CANCEL");
-
+			answer = PopupMessage.display("Warning", String.format(REMAINING_TIME_MESSAGE, secs), true, "CONTINUE",
+					"CANCEL");
 		}
 		return !answer;
 	}
