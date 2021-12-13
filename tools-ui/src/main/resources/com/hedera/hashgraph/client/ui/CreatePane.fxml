@@ -23,6 +23,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
 <?import org.controlsfx.control.ToggleSwitch?>
 <AnchorPane fx:id="createAnchorPane" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
 			AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/"
@@ -507,7 +508,10 @@
 									style="-fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
 									text="BROWSE"/>
 						</HBox>
-						<Label fx:id="shaLabel" visible="false" wrapText="true"/>
+						<HBox fx:id="shaTextFlow" spacing="2.0">
+							<Label text="SHA-384 Checksum: " wrapText="true"/>
+							<Text fx:id="fileDigest"/>
+						</HBox>
 					</VBox>
 					<VBox layoutX="25.0" layoutY="163.0" spacing="10.0"/>
 					<VBox spacing="10.0">

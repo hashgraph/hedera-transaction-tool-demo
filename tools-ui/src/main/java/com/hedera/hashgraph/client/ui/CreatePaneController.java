@@ -37,6 +37,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -84,7 +85,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -154,6 +157,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.*;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
@@ -197,6 +201,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
+
 
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
@@ -311,7 +316,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label entityLabel;
 	public Label expirationLabel;
 	public Label systemCreateLocalTimeLabel;
-	public Label shaLabel;
+	public HBox shaTextFlow;
+	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
 
 	// Error messages
@@ -381,7 +387,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
-				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
+				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
 				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
 				invalidFreezeFileHash);
 
@@ -1387,8 +1393,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		contentsTextField.clear();
 		intervalTextField.clear();
 		chunkSizeTextField.clear();
-		shaLabel.setText("");
-		shaLabel.setVisible(false);
+		fileDigest.setText("");
+		shaTextFlow.setVisible(false);
 		contentsFilePathError.setVisible(false);
 		contents = null;
 	}
@@ -2668,11 +2674,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setContentsAction() {
 		if (contents.exists() && contents.isFile()) {
 			contentsLink.setText(contents.getName());
-			shaLabel.setText(
-					String.format("SHA-384 Checksum: %s", EncryptionUtils.getChecksum(contents.getAbsolutePath())));
+			final var digest = EncryptionUtils.getChecksum(contents.getAbsolutePath());
+			fileDigest.setText(splitStringDigest(splitString(digest), 6));
+			fileDigest.setFont(Font.font("Courier New", 18));
 			contentsTextField.setVisible(false);
 			contentsLink.setVisible(true);
-			shaLabel.setVisible(true);
+			shaTextFlow.setVisible(true);
 		} else {
 			contentsFilePathError.setVisible(true);
 			contents = null;
