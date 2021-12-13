@@ -1993,14 +1993,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		try {
-			var pair = getUserCommentsTransactionPair(type);
-			if (pair == null) {
-				return;
-			}
 			if (type.equals(CreateTransactionType.FILE_UPDATE)) {
 				prepareZipAndComment(fileService);
 				return;
 			}
+
+			var pair = getUserCommentsTransactionPair(type);
+			if (pair == null) {
+				return;
+			}
+
 			storeTransactionAndComment(pair, fileService);
 		} catch (HederaClientException e) {
 			controller.displaySystemMessage(e);

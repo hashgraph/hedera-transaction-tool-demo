@@ -184,8 +184,10 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 				.setStartDateTime(date)
 				.setMemo("Freeze integration test")
 				.setFeePayerAccount(58)
+				.setChunkSize(1024)
+				.setInterval(100000000)
 				.setContents(file);
-
+		createPanePage.createAndExport(resources);
 		sleep(15000);
 
 		// Create a zip transaction

@@ -742,6 +742,20 @@ public class CreatePanePage {
 
 	}
 
+	public CreatePanePage setChunkSize(int i) {
+		driver.ensureVisible(driver.find("#chunkSizeTextField"));
+		driver.doubleClickOn("#chunkSizeTextField");
+		driver.write(String.valueOf(i));
+		return this;
+	}
+
+	public CreatePanePage setInterval(long interval) {
+		driver.ensureVisible(driver.find("#intervalTextField"));
+		driver.doubleClickOn("#intervalTextField");
+		driver.write(String.valueOf(interval));
+		return this;
+	}
+
 	public enum OperationType {
 		delete, undelete
 	}
