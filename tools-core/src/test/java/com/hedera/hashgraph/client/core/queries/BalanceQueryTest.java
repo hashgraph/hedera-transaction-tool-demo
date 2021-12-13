@@ -66,13 +66,14 @@ public class BalanceQueryTest {
 
 		assertTrue(balance.toTinybars() > 0);
 
-//		query = BalanceQuery.Builder.aBalanceQuery()
-//				.withAccountId(new AccountId(0, 0, 2))
-//				.withNetwork("previewnet")
-//				.build();
+		query = BalanceQuery.Builder.aBalanceQuery()
+				.withAccountId(new AccountId(0, 0, 2))
+				.withNetwork("previewnet")
+				.build();
+		// todo Remove comment
 //		balance = query.getBalance();
-//		logger.info("Balance for PreviewNet: {}", balance);
-//		assertTrue(balance.toTinybars() > 0);
+		logger.info("Balance for PreviewNet: {}", balance);
+		assertTrue(balance.toTinybars() > 0);
 
 		if (new File(CUSTOM_NETWORK_FOLDER).mkdirs()) {
 			logger.info("Custom networks folder created");
