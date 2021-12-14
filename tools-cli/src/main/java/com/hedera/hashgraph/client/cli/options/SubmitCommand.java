@@ -149,7 +149,6 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
 			sleep(1000 * (difference - readyTime));
-
 		}
 	}
 
