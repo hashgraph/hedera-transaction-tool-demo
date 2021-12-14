@@ -30,6 +30,9 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testfx.api.FxRobot;
@@ -110,5 +113,35 @@ public class TestUtil {
 			}
 		}
 		return buttons;
+	}
+
+	public static ObservableList<Node> getPopupNodes() {
+		var actualAlertDialog = findModalWindow();
+		if (actualAlertDialog != null) {
+			final Node dialogPane = actualAlertDialog.getScene().getRoot();
+			if (dialogPane != null) {
+				if (dialogPane.getClass().isAssignableFrom(VBox.class)) {
+					return ((VBox) dialogPane).getChildren();
+				}
+				if (dialogPane.getClass().isAssignableFrom(HBox.class)) {
+					return ((HBox) dialogPane).getChildren();
+				}
+			}
+		}
+		return null;
+	}
+
+	public static Stage findModalWindow() {
+		// Get a list of windows but ordered from top[0] to bottom[n] ones.
+		// It is needed to get the first found modal window.
+		final List<Window> allWindows = new ArrayList<>(robot.robotContext().getWindowFinder().listWindows());
+		Collections.reverse(allWindows);
+
+		return (Stage) allWindows
+				.stream()
+				.filter(window -> window instanceof Stage)
+				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
+				.findFirst()
+				.orElse(null);
 	}
 }

@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.integration.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.integration.pages.CreatePanePage;
+import com.hedera.hashgraph.client.integration.pages.HomePanePage;
 import com.hedera.hashgraph.client.integration.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
@@ -51,6 +52,7 @@ import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
@@ -64,22 +66,27 @@ import javax.swing.JFileChooser;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
+import static com.hedera.hashgraph.client.integration.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -100,7 +107,16 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
+	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
+
+	private final List<VBox> publicKeyBoxes = new ArrayList<>();
+	private final List<VBox> accountInfoBoxes = new ArrayList<>();
+	private final List<VBox> batchBoxes = new ArrayList<>();
+	private final List<VBox> transactionBoxes = new ArrayList<>();
+	private final List<VBox> softwareBoxes = new ArrayList<>();
+	private final List<VBox> systemBoxes = new ArrayList<>();
+	private final List<VBox> freezeBoxes = new ArrayList<>();
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -131,6 +147,9 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 
 		setUpUI();
 
+		FileUtils.cleanDirectory(new File("src/test/resources/Transactions - Documents/InputFiles"));
+		FileUtils.cleanDirectory(
+				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org"));
 
 	}
 
@@ -169,14 +188,15 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 	}
 
 	@Test
-	public void integration_test() throws KeyStoreException, IOException, TimeoutException {
+	public void integration_test() throws KeyStoreException, IOException, TimeoutException, InterruptedException,
+			HederaClientException {
 		// Launch tools
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 		mainWindowPage.clickOnCreateButton();
 
-
+		// Create a zip transaction
 		var date = DateUtils.addMinutes(new Date(), 2);
 		var file = new File("src/test/resources/hundredThousandBytes.zip").getAbsolutePath();
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
@@ -187,15 +207,40 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 				.setChunkSize(1024)
 				.setInterval(100000000)
 				.setContents(file);
-		createPanePage.createAndExport(resources);
-		sleep(15000);
+		createPanePage.createAndExport(resources).clickOnPopupButton("CONTINUE");
 
-		// Create a zip transaction
+		final var txtFile = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil" +
+						".org/hundredThousandBytes.txt");
+		assertTrue(txtFile.exists());
+		final var zipFile = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil" +
+						".org/hundredThousandBytes.zip");
+		assertTrue(zipFile.exists());
+
+		//Close app
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 
 		// Sign zip
 
-		// Submit file update
+		final var destTxt = new File("src/test/resources/Transactions - Documents/InputFiles/hundredThousandBytes.txt");
+		final var destZip = new File("src/test/resources/Transactions - Documents/InputFiles/hundredThousandBytes.zip");
+		Files.deleteIfExists(destTxt.toPath());
+		Files.deleteIfExists(destZip.toPath());
 
+		FileUtils.moveFile(txtFile, destTxt);
+		FileUtils.moveFile(zipFile, destZip);
+
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		signSingleBox();
+
+		// Collate and Submit file update
+		sleep(50000);
 		// Create prepare upgrade
 
 		// Sign transaction
@@ -204,9 +249,27 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 
 	}
 
+	private void signSingleBox() throws HederaClientException {
+		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		assertEquals(1, newFiles.size());
+
+		final var children = ((VBox) newFiles.get(0)).getChildren();
+		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+		clickOn(addMore);
+
+		homePanePage.clickOnKeyCheckBox("genesis");
+		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		clickOn(acceptButton);
+		clickOn(sign);
+		homePanePage.enterPasswordInPopup("123456789");
+	}
+
 	@After
 	public void tearDown() throws Exception {
-
+		FileUtils.cleanDirectory(new File("src/test/resources/Transactions - Documents/InputFiles"));
+		FileUtils.cleanDirectory(
+				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org"));
 	}
 
 	/**
@@ -304,10 +367,10 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 		var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
-				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
-		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
-				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+		FileUtils.copyFile(new File("src/test/resources/KeyFiles/genesis.pem"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pem"));
+		FileUtils.copyFile(new File("src/test/resources/KeyFiles/genesis.pub"),
+				new File(DEFAULT_STORAGE + "/Keys/genesis.pub"));
 
 		if (createPanePage == null) {
 			createPanePage = new CreatePanePage(this);
@@ -317,6 +380,9 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 		}
 		if (accountsPanePage == null) {
 			accountsPanePage = new AccountsPanePage(get());
+		}
+		if (homePanePage == null) {
+			homePanePage = new HomePanePage(get());
 		}
 		var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 		if (!new File(rootFolder).exists() && new File(rootFolder).mkdirs()) {
