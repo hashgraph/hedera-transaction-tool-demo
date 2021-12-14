@@ -23,6 +23,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.hedera.hashgraph.client.cli.ToolsMain;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -110,14 +111,6 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
 
-	private final List<VBox> publicKeyBoxes = new ArrayList<>();
-	private final List<VBox> accountInfoBoxes = new ArrayList<>();
-	private final List<VBox> batchBoxes = new ArrayList<>();
-	private final List<VBox> transactionBoxes = new ArrayList<>();
-	private final List<VBox> softwareBoxes = new ArrayList<>();
-	private final List<VBox> systemBoxes = new ArrayList<>();
-	private final List<VBox> freezeBoxes = new ArrayList<>();
-
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	public UserAccessibleProperties properties;
@@ -140,10 +133,10 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 	@Before
 	public void setUp() throws Exception {
 		// Set up the client for network
-//		setupClient();
+		setupClient();
 
 		// Fund account 58
-//		fundAccount58();
+		fundAccount58();
 
 		setUpUI();
 
@@ -151,6 +144,16 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 		FileUtils.cleanDirectory(
 				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org"));
 
+		File transactionsDir = new File("src/test/resources/TempTransactions");
+		if (transactionsDir.mkdirs()) {
+			logger.info("Transactions folder created");
+		}
+		FileUtils.cleanDirectory(transactionsDir);
+		File receiptsDir = new File("src/test/resources/TempReceipts");
+		if (receiptsDir.mkdirs()) {
+			logger.info("Receipts folder created");
+		}
+		FileUtils.cleanDirectory(receiptsDir);
 	}
 
 	@Test
@@ -188,8 +191,7 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 	}
 
 	@Test
-	public void integration_test() throws KeyStoreException, IOException, TimeoutException, InterruptedException,
-			HederaClientException {
+	public void integration_test() throws Exception {
 		// Launch tools
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 		FxToolkit.registerPrimaryStage();
@@ -205,7 +207,7 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 				.setMemo("Freeze integration test")
 				.setFeePayerAccount(58)
 				.setChunkSize(1024)
-				.setInterval(100000000)
+				.setInterval(1000000000)
 				.setContents(file);
 		createPanePage.createAndExport(resources).clickOnPopupButton("CONTINUE");
 
@@ -240,7 +242,24 @@ public class FreezeTransactionTest extends TestBase implements GenericFileReadWr
 		signSingleBox();
 
 		// Collate and Submit file update
+		final String[] collateArgs =
+				{ "collate", "-f", "src/test/resources/Transactions - Documents/OutputFiles/test1" +
+						".council2@hederacouncil.org" };
+		ToolsMain.main(collateArgs);
+
+		logger.info("Collation finished");
+
+		unZip("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/hundredThousandBytes_genesis.zip",
+				"src/test/resources/TempTransactions");
+
+		final String[] submitArgs = { "submit", "-t", "src/test/resources/TempTransactions", "-n", "CUSTOM", "-o", "src/test/resources/TempReceipts"};
+		ToolsMain.main(submitArgs);
+
+		logger.info("Collation finished");
+
 		sleep(50000);
+
+
 		// Create prepare upgrade
 
 		// Sign transaction

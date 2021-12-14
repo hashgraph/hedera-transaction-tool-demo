@@ -119,6 +119,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				}
 				client = Client.forNetwork(network);
 				break;
+			case CUSTOM:
+				Map<String, AccountId> net1 = new HashMap<>();
+				net1.put("127.0.0.1:50211", new AccountId(0,0,3));
+				client = Client.forNetwork(net1);
+				break;
+			case UNKNOWN:
 			default:
 				throw new IllegalStateException("Unexpected value: " + networkEnum);
 		}

@@ -87,6 +87,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		var root = new File(rootFolder);
+		if (Objects.requireNonNull(root.listFiles()).length == 0) {
+			throw new HederaClientException("The folder contains no files");
+		}
 		if (!root.exists()) {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
