@@ -86,6 +86,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		// Load transactions
 		var files = getTransactionPaths();
+		if (files.isEmpty()) {
+			throw new HederaClientException("No valid transactions found");
+		}
 
 		// Setup threads
 		var transactionsFutureTasks = new FutureTask[files.size()];
