@@ -54,6 +54,7 @@ import javafx.scene.control.TreeView;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,6 +68,9 @@ import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -87,6 +91,8 @@ import java.util.Objects;
 import java.util.TimeZone;
 import java.util.function.Supplier;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
@@ -948,6 +954,122 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("this is a comment that will go with the update transaction",
 				comment.get("Contents").getAsString());
 		assertTrue(comment.has("Timestamp"));
+	}
+
+	@Test
+	public void createLargeBinaryUpdate_test() throws HederaClientException, IOException {
+		var date = DateUtils.addDays(new Date(), 2);
+		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+		var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+				LocalTime.of(3, 45, 15));
+
+		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
+				.setComment("this is a comment that will go with the file update")
+				.setUpdateFileID(155)
+				.setDate(datePickerFormat.format(date))
+				.setHours(3)
+				.setMinutes(45)
+				.setSeconds(15)
+				.setMemo("A file update")
+				.setFeePayerAccount(10019)
+				.setNodeAccount(42);
+
+		createPanePage.setContents("src/test/resources/createTransactions/largeFileUpdate.zip")
+				.setChunkSize(1000)
+				.setInterval(1000000000);
+
+		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+		logger.info("Exporting to \"{}\"", resources);
+		createPanePage.createAndExport(resources);
+
+		var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				pathname -> {
+					var name = pathname.getName();
+					return name.endsWith(Constants.LARGE_BINARY_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
+				});
+
+		assert transactions != null;
+
+		var comment = new JsonObject();
+
+		File zipFile = null;
+
+		for (var f : transactions) {
+			if (f.getName().contains("large")) {
+				if (f.getName().endsWith(Constants.LARGE_BINARY_EXTENSION)) {
+					zipFile = f;
+				}
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
+					comment = readJsonObject(f.getAbsolutePath());
+				}
+			}
+		}
+
+		assert zipFile != null;
+		unZip(zipFile.getAbsolutePath(), "src/test/resources/unzipped");
+
+		var unzippedFiles = new File("src/test/resources/unzipped").listFiles(
+				pathname -> {
+					var name = pathname.getName();
+					return name.endsWith(Constants.CONTENT_EXTENSION) || name.endsWith(Constants.JSON_EXTENSION);
+				});
+
+		assert unzippedFiles != null;
+		assertEquals(2, unzippedFiles.length);
+		File jsonFile = null;
+		File contentFile = null;
+		for (File unzippedFile : unzippedFiles) {
+			if (JSON_EXTENSION.equals(FilenameUtils.getExtension(unzippedFile.getName()))) {
+				jsonFile = unzippedFile;
+			}
+			if (CONTENT_EXTENSION.equals(FilenameUtils.getExtension(unzippedFile.getName()))) {
+				contentFile = unzippedFile;
+			}
+		}
+		assertNotNull(jsonFile);
+		assertNotNull(contentFile);
+
+		InputStream inputStream1 = new FileInputStream(contentFile);
+		InputStream inputStream2 =
+				new FileInputStream(new File("src/test/resources/createTransactions/largeFileUpdate.zip"));
+
+		assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
+
+		JsonObject jsonObject = readJsonObject(jsonFile);
+
+		assertTrue(jsonObject.has("filename"));
+		assertEquals("largeFileUpdate.zip", jsonObject.get("filename").getAsString());
+
+		assertTrue(jsonObject.has("fileID"));
+		assertEquals(new Identifier(0, 0, 155).asJSON(), jsonObject.getAsJsonObject("fileID"));
+
+		assertTrue(jsonObject.has("chunkSize"));
+		assertEquals(1000, jsonObject.get("chunkSize").getAsInt());
+
+		assertTrue(jsonObject.has("validIncrement"));
+		assertEquals(1000000000L, jsonObject.get("validIncrement").getAsLong());
+
+		assertTrue(jsonObject.has("firsTransactionValidStart"));
+		var first = jsonObject.get("firsTransactionValidStart").getAsJsonObject();
+		assertEquals(transactionValidStart.getTime() / 1000, first.get("seconds").getAsLong());
+
+		assertTrue(comment.has("Author"));
+		assertEquals("test1.council2@hederacouncil.org", comment.get("Author").getAsString());
+		assertTrue(comment.has("Contents"));
+		assertEquals("this is a comment that will go with the file update", comment.get("Contents").getAsString());
+		assertTrue(comment.has("Timestamp"));
+
+		FileUtils.deleteDirectory(new File("src/test/resources/unzipped"));
+		FileUtils.cleanDirectory(
+				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org"));
 	}
 
 	@Test
