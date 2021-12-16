@@ -241,7 +241,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
-		detailsGridPane.add(new Label("Node"), 0, 4);
+		detailsGridPane.add(new Label("Node:"), 0, 4);
 		detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), 1, 4);
 	}
 
@@ -272,7 +272,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		detailsGridPane.add(new Label("Senders: "), 0, count++);
-		setAccountAmounts(detailsGridPane, count++, senders);
+		count = setAccountAmounts(detailsGridPane, count, senders);
 
 		detailsGridPane.add(new Label("Receivers: "), 0, count++);
 		setAccountAmounts(detailsGridPane, count, receivers);
@@ -410,12 +410,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
 				// start_time field may be omitted and any value present will be ignored.
 				fileIDLabel = new Label(toolFreezeTransaction.getFileID().toNicknameAndChecksum(new JsonObject()));
-				detailsGridPane.add(new Label("Upgrade file"), 0, count);
+				detailsGridPane.add(new Label("Upgrade file:"), 0, count);
 				detailsGridPane.add(fileIDLabel, 1, count++);
 				fileHashLabel.setText(
 						CommonMethods.splitStringDigest(CommonMethods.splitString(toolFreezeTransaction.getFileHash()),
 								6));
-				detailsGridPane.add(new Label("Upgrade file hash"), 0, count);
+				detailsGridPane.add(new Label("Upgrade file hash:"), 0, count);
 				detailsGridPane.add(fileHashLabel, 1, count);
 				break;
 			case FREEZE_UPGRADE:
@@ -531,7 +531,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return super.getSigningPublicKeys();
 	}
 
-	private void setAccountAmounts(GridPane detailsGridPane, int count, List<Pair<String, String>> receivers) {
+	private int setAccountAmounts(GridPane detailsGridPane, int count, List<Pair<String, String>> receivers) {
 		for (var receiver : receivers) {
 			var accountText = new Label(receiver.getLeft());
 			accountText.setWrapText(true);
@@ -546,6 +546,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			amountText.setPadding(new Insets(0, 50, 0, 0));
 			detailsGridPane.add(amountText, 1, count++);
 		}
+		return count;
 	}
 
 	private void displayKey(TreeView<String> keyTreeView) {

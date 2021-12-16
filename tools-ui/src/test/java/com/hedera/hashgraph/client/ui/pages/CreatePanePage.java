@@ -720,11 +720,26 @@ public class CreatePanePage {
 
 	public CreatePanePage setFreezeHash(String hash) {
 		driver.ensureVisible(driver.find(FREEZE_FILE_HASH_TEXT_FIELD));
-		driver.clickOn(FREEZE_FILE_HASH_TEXT_FIELD);
+		driver.doubleClickOn(FREEZE_FILE_HASH_TEXT_FIELD);
 		driver.write(hash);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
+
+	public CreatePanePage setChunkSize(int chunk) {
+		driver.ensureVisible(driver.find("#chunkSizeTextField"));
+		driver.doubleClickOn("#chunkSizeTextField");
+		driver.write(String.valueOf(chunk));
+		return this;
+	}
+
+	public CreatePanePage setInterval(int interval) {
+		driver.ensureVisible(driver.find("#intervalTextField"));
+		driver.doubleClickOn("#intervalTextField");
+		driver.write(String.valueOf(interval));
+		return this;
+	}
+
 
 	public enum OperationType {
 		delete, undelete

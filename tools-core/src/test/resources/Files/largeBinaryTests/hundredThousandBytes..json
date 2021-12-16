@@ -1,0 +1,27 @@
+{
+  "filename": "hundredThousandBytes.zip",
+  "fileID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 15225
+  },
+  "feePayerAccountId": {
+    "realmNum": -8,
+    "shardNum": 0,
+    "accountNum": 56
+  },
+  "nodeID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 3
+  },
+  "chunkSize": 2048,
+  "firsTransactionValidStart": {
+    "seconds": 1662166800,
+    "nanos": 0
+  },
+  "validIncrement": 100,
+  "transactionValidDuration": 180,
+  "memo": "a memo included",
+  "transactionFee": 190000000
+}

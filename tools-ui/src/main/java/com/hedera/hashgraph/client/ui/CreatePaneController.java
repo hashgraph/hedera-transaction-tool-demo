@@ -84,6 +84,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
@@ -91,6 +92,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -151,6 +153,8 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
@@ -194,6 +198,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
+
 
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
@@ -296,6 +301,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public DatePicker datePicker;
 	public DatePicker datePickerSystem;
 	public DatePicker freezeDatePicker;
+
 	// Labels
 	public Label totalTransferLabel;
 	public Label createCharsLeft;
@@ -307,7 +313,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label entityLabel;
 	public Label expirationLabel;
 	public Label systemCreateLocalTimeLabel;
-	public Label shaLabel;
+	public HBox shaTextFlow;
+	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
 
 	// Error messages
@@ -333,6 +340,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label freezeTimeErrorLabel;
 	public Label invalidFreezeFile;
 	public Label invalidTransactionFee;
+	public Label invalidFreezeFileHash;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
@@ -378,8 +386,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
-				freezeStartVBox, shaLabel, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
-				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel);
+				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
+				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
+				invalidFreezeFileHash);
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
@@ -557,8 +566,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var destFile =
 					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
 			try {
-				org.apache.commons.io.FileUtils.copyFile(contents,
-						destFile);
+				org.apache.commons.io.FileUtils.copyFile(contents, destFile);
 			} catch (IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e);
@@ -655,6 +663,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (noise) {
 				return;
 			}
+			cleanCommonFields();
+			cleanFreezeExclusiveFields();
 			if (SELECT_FREEZE_TYPE.equals(t1)) {
 				logger.info("Back to select");
 				cleanAllFreezeFields();
@@ -708,7 +718,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					throw new IllegalStateException("Unexpected value: " + type);
 			}
 		});
-		freezeStartVBox.disableProperty().bind(Bindings.isNull(datePicker.valueProperty()));
+		freezeFileHashTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.FALSE.equals(t1)) {
+				isValidHash();
+			}
+		});
+		freezeFileHashTextField.setOnKeyReleased(event -> {
+			if (KeyCode.ENTER.equals(event.getCode()) || KeyCode.TAB.equals(event.getCode())) {
+				freezeFileHashTextField.getParent().requestFocus();
+			}
+		});
 	}
 
 	private void setupTooltips() {
@@ -1190,7 +1209,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return false;
 		}
 
-
 		var freezeType = FREEZE_AND_UPGRADE.equals(choice) ?
 				FreezeType.FREEZE_UPGRADE :
 				FreezeType.valueOf(choice.toUpperCase(Locale.ROOT).replace(" ", "_"));
@@ -1212,7 +1230,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				} catch (Exception e) {
 					validFile = false;
 				}
-				validHash = !"".equals(freezeFileHashTextField.getText());
+				validHash = isValidHash();
 				break;
 			case FREEZE_UPGRADE:
 			case TELEMETRY_UPGRADE:
@@ -1226,7 +1244,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				} catch (Exception e) {
 					validFile = false;
 				}
-				validHash = !"".equals(freezeFileHashTextField.getText());
+				validHash = isValidHash();
 				break;
 			case FREEZE_ABORT:
 				break;
@@ -1234,6 +1252,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
 		return validStart && validFile && validHash;
+	}
+
+	/**
+	 * Check if the hash has a valid value
+	 *
+	 * @return true if the hash is valid
+	 */
+	private boolean isValidHash() {
+		boolean validHash;
+		validHash = !"".equals(freezeFileHashTextField.getText());
+		try {
+			Hex.decode(freezeFileHashTextField.getText());
+		} catch (Exception e) {
+			logger.error("Hash is invalid");
+			validHash = false;
+		}
+		invalidFreezeFileHash.setVisible(!validHash);
+		return validHash;
 	}
 
 	private boolean checkAndFlagSystemFields() {
@@ -1299,8 +1335,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		contentsTextField.clear();
 		intervalTextField.clear();
 		chunkSizeTextField.clear();
-		shaLabel.setText("");
-		shaLabel.setVisible(false);
+		fileDigest.setText("");
+		shaTextFlow.setVisible(false);
 		contentsFilePathError.setVisible(false);
 		contents = null;
 	}
@@ -1309,8 +1345,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void cleanAllFreezeFields() {
 		cleanCommonFields();
 		freezeTypeChoiceBox.getSelectionModel().select(SELECT_FREEZE_TYPE);
-		freezeFieldsSet.reset(controller.getDefaultHours(), controller.getDefaultMinutes(),
-				controller.getDefaultSeconds());
+		cleanFreezeExclusiveFields();
+	}
+
+	private void cleanFreezeExclusiveFields() {
+		freezeDatePicker.setValue(null);
+		freezeHourField.setText("00");
+		freezeMinuteField.setText("00");
+		freezeSecondsField.setText("00");
+		freezeNanosField.setText(NINE_ZEROS);
 		freezeFileIDTextField.clear();
 		freezeFileHashTextField.clear();
 	}
@@ -1884,14 +1927,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		try {
-			var pair = getUserCommentsTransactionPair(type);
-			if (pair == null) {
-				return;
-			}
+			// File update is treated differently because it does not conform to the usual creation paradigm
 			if (type.equals(CreateTransactionType.FILE_UPDATE)) {
 				prepareZipAndComment(fileService);
 				return;
 			}
+
+			var pair = getUserCommentsTransactionPair(type);
+			if (pair == null) {
+				return;
+			}
+
 			storeTransactionAndComment(pair, fileService);
 		} catch (HederaClientException e) {
 			controller.displaySystemMessage(e);
@@ -1942,9 +1988,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var now = new Date();
 		var secs = date.getSeconds() - now.getTime() / 1000;
 		if (secs < 120) {
-			answer = PopupMessage.display("Warning", String.format(REMAINING_TIME_MESSAGE,
-					secs / 1000), true, "CONTINUE", "CANCEL");
-
+			answer = PopupMessage.display("Warning", String.format(REMAINING_TIME_MESSAGE, secs), true, "CONTINUE",
+					"CANCEL");
 		}
 		return !answer;
 	}
@@ -2095,6 +2140,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if ("".equals(account)) {
 			return;
 		}
+
 		if (account.contains("(")) {
 			account = account.substring(account.lastIndexOf("(") + 1, account.lastIndexOf(")"));
 		}
@@ -2356,11 +2402,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setContentsAction() {
 		if (contents.exists() && contents.isFile()) {
 			contentsLink.setText(contents.getName());
-			shaLabel.setText(
-					String.format("SHA-384 Checksum: %s", EncryptionUtils.getChecksum(contents.getAbsolutePath())));
+			final var digest = EncryptionUtils.getChecksum(contents.getAbsolutePath());
+			fileDigest.setText(splitStringDigest(splitString(digest), 6));
+			fileDigest.setFont(Font.font("Courier New", 18));
 			contentsTextField.setVisible(false);
 			contentsLink.setVisible(true);
-			shaLabel.setVisible(true);
+			shaTextFlow.setVisible(true);
 		} else {
 			contentsFilePathError.setVisible(true);
 			contents = null;
