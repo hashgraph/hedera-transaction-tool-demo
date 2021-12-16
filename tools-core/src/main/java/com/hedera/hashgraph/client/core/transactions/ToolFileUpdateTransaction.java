@@ -31,7 +31,6 @@ import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Arrays;
 import java.util.Collections;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
@@ -55,7 +54,7 @@ public class ToolFileUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + file.hashCode() + Arrays.hashCode(bytes);
+		return super.hashCode();
 	}
 
 	@Override

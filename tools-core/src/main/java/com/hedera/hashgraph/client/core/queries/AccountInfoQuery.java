@@ -44,8 +44,9 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 	private String network = "mainnet";
 	private AccountId feePayer;
 	private Hbar fee = Hbar.from(1);
-	private List<PrivateKey> signingKeys;
-	private Client client;
+
+	private final List<PrivateKey> signingKeys;
+	private final Client client;
 
 	private AccountInfoQuery(String network, AccountId feePayer, Hbar fee,
 			List<PrivateKey> signingKeys) {
@@ -77,7 +78,9 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 		for (PrivateKey signingKey : signingKeys) {
 			client.setOperator(feePayer, signingKey);
 		}
-		client.setMaxQueryPayment(fee);
+
+		client.setDefaultMaxQueryPayment(fee);
+
 		return new com.hedera.hashgraph.sdk.AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);

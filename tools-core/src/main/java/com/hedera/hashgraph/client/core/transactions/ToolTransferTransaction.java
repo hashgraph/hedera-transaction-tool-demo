@@ -60,15 +60,6 @@ public class ToolTransferTransaction extends ToolTransaction {
 		this.transactionType = TransactionType.CRYPTO_TRANSFER;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		return super.equals(obj);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode() + accountAmountMap.hashCode();
-	}
 
 	public ToolTransferTransaction(File location) throws HederaClientException {
 		super(location);
@@ -187,6 +178,16 @@ public class ToolTransferTransaction extends ToolTransaction {
 		}
 		output.add(TRANSFERS, array);
 		return output;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode() + accountAmountMap.hashCode();
 	}
 
 	/**

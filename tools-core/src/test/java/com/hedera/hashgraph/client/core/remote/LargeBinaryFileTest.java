@@ -52,6 +52,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTO
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
@@ -67,7 +68,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		var emptyFile = new LargeBinaryFile();
 		assertFalse(emptyFile.isValid());
 
@@ -151,7 +152,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPane_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		var info = FileDetails.parse(file);
 
@@ -176,16 +177,16 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(label.getText().contains("2022-09-03 01:00:00 UTC"));
 
 		text = (Text) gridPane.getChildren().get(11);
-		assertTrue(text.getText().contains("cda0 b8c5 419b 6238 bdb1 ace4"));
+		assertTrue(text.getText().contains("9242 b8c9 5482 e9b7 237d 7ecc"));
 
 		label = (Label) gridPane.getChildren().get(13);
-		assertEquals("100320 bytes", label.getText());
+		assertEquals("18651636 bytes", label.getText());
 
 		label = (Label) gridPane.getChildren().get(15);
-		assertEquals("2048 bytes", label.getText());
+		assertEquals("1023 bytes", label.getText());
 
 		label = (Label) gridPane.getChildren().get(17);
-		assertEquals("49", label.getText());
+		assertEquals("18233", label.getText());
 
 		label = (Label) gridPane.getChildren().get(19);
 		assertEquals("100 nanoseconds", label.getText());
@@ -193,16 +194,16 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void getters_test() throws IOException {
+	public void getters_test() throws IOException, HederaClientException {
 
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		var info = FileDetails.parse(file);
 		var largeBinary = new LargeBinaryFile(info);
 
-		assertEquals("hundredThousandBytes.bin", largeBinary.getFilename());
-		assertEquals("27e12e1cb0ec7e7d01f28ce5150e437e2c294f6f00f13a27d3cec65d43bb1cce4be22c70cda0b8c5419b6238bdb1ace4",
+		assertEquals("hundredThousandBytes.zip", largeBinary.getFilename());
+		assertEquals("9242b8c95482e9b7237d7ecc37be0303afaeee6d7e3e6794a60d42e15416ffe996b836347fb2379f4f17a38beb9b70b9",
 				largeBinary.getChecksum().replace("\n", "").replace("\u00a0", ""));
-		assertEquals(2048, largeBinary.getChunkSize());
+		assertEquals(1023, largeBinary.getChunkSize());
 		assertEquals(120, largeBinary.getTransactionValidDuration());
 		assertEquals(new Timestamp(1662166800, 0), largeBinary.getTransactionValidStart());
 		assertEquals(100, largeBinary.getValidIncrement());
@@ -234,7 +235,8 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(unzipped.exists());
 
 		var transactions = unzipped.listFiles();
-		assertEquals(50, transactions.length);
+		assert transactions != null;
+		assertEquals(18234, transactions.length);
 
 		final var update = new File(unzipped.getAbsolutePath(), "hundredThousandBytes-00000.txsig");
 		assertTrue(update.exists());
@@ -278,5 +280,13 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		}
 		zis.closeEntry();
 		zis.close();
+	}
+
+	@Test
+	public void chunkTooLarge_test() throws IOException {
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.zip");
+		var info = FileDetails.parse(file);
+		Exception exception = assertThrows(HederaClientException.class, () -> new LargeBinaryFile(info));
+		assertEquals("Hedera Client: Maximum chunk size is 1024 for unsigned file update transactions.", exception.getMessage());
 	}
 }

@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Splitter.fixedLength;
 import static java.lang.System.arraycopy;
 
 public class EncryptionUtils {
@@ -391,15 +390,7 @@ public class EncryptionUtils {
 		if (digest.equals(ErrorMessages.COULD_NOT_CALCULATE_HASH_OF_THE_FILE)) {
 			return "";
 		}
-		var count = 0;
-		var splitDigest = new StringBuilder();
-		for (final var token : fixedLength(4).split(digest)) {
-			if (count != 0) {
-				splitDigest.append(" ");
-			}
-			splitDigest.append(token);
-			count++;
-		}
-		return splitDigest.toString();
+		return CommonMethods.splitString(digest);
 	}
+
 }

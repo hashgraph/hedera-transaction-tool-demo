@@ -38,6 +38,7 @@ public enum CreateTransactionType {
 	TRANSFER("Transfer"),
 	SYSTEM("Admin Modify Content"),
 	FILE_UPDATE("File Contents Update"),
+	FREEZE("Network Freeze and Update"),
 	UNKNOWN("");
 
 	private final String typeString;

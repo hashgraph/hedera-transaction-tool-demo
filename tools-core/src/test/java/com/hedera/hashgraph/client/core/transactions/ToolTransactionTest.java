@@ -71,7 +71,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.helpers.TestHelpers.getJsonInputCT;
+import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -411,8 +411,7 @@ class ToolTransactionTest {
 
 		var transfer = new ToolTransferTransaction(testJson);
 		var sigMapBefore = transfer.getTransaction().getSignatures();
-		assertTrue(sigMapBefore.containsKey(nodeId));
-		assertEquals(0, sigMapBefore.get(nodeId).size());
+		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(signatures);
 		var sigMapAfter = transfer.getTransaction().getSignatures();
@@ -423,7 +422,9 @@ class ToolTransactionTest {
 		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			assertTrue(collatedMap.containsKey(entry.getKey()));
 			assertArrayEquals(collatedMap.get(entry.getKey()), entry.getValue());
+			entry.getKey().verifyTransaction(transfer.getTransaction());
 		}
+
 
 	}
 
@@ -488,8 +489,7 @@ class ToolTransactionTest {
 
 		var transfer = new ToolTransferTransaction(testJson);
 		var sigMapBefore = transfer.getTransaction().getSignatures();
-		assertTrue(sigMapBefore.containsKey(nodeId));
-		assertEquals(0, sigMapBefore.get(nodeId).size());
+		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(pairs);
 		var sigMapAfter = transfer.getTransaction().getSignatures();
@@ -500,6 +500,7 @@ class ToolTransactionTest {
 		for (SignaturePair pair : pairs) {
 			assertTrue(collatedMap.containsKey(pair.getPublicKey()));
 			assertArrayEquals(pair.getSignature(), collatedMap.get(pair.getPublicKey()));
+			pair.getPublicKey().verifyTransaction(transfer.getTransaction());
 		}
 	}
 

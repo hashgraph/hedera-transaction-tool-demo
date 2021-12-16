@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
 import org.apache.logging.log4j.LogManager;
@@ -190,13 +191,10 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 				Transaction.fromBytes(readBytes(signed + File.separator + "0-0-2_1678312256-0.txsig"));
 		assertNotNull(transaction);
 		assertTrue(transaction instanceof TransferTransaction);
-		assertFalse(transaction.getSignatures().isEmpty());
-
-		var signatures = transaction.getSignatures().get(new AccountId(0, 0, 3));
-		assertEquals(0, signatures.size());
+		assertTrue(transaction.getSignatures().isEmpty());
 
 		var signedTransaction = helper.collate();
-		signatures = signedTransaction.getSignatures().get(new AccountId(0, 0, 3));
+		var signatures = signedTransaction.getSignatures().get(new AccountId(0, 0, 3));
 		assertEquals(4, signatures.size());
 
 		signed = new File(helper.store("key"));
@@ -207,7 +205,9 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 		assertTrue(transaction instanceof TransferTransaction);
 		signatures = transaction.getSignatures().get(new AccountId(0, 0, 3));
 		assertEquals(4, signatures.size());
-
+		for (SignaturePair signaturePair : helper.getSignaturePairs()) {
+			assertTrue(signaturePair.getPublicKey().verifyTransaction(transaction));
+		}
 	}
 
 	@Test

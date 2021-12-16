@@ -194,4 +194,12 @@ public class JavaFXIDs {
 	// Time
 	public static final String SET_NOW_BUTTON = "#setNowValidStart";
 	public static final String TIME_ZONE_HBOX = "#timeZoneHBox";
+
+	// Freeze
+	public static final String FREEZE_DATE_PICKER = "#freezeDatePicker";
+	public static final String FREEZE_HOUR_FIELD = "#freezeHourField";
+	public static final String FREEZE_MINUTE_FIELD = "#freezeMinuteField";
+	public static final String FREEZE_SECONDS_FIELD = "#freezeSecondsField";
+	public static final String FREEZE_FILE_HASH_TEXT_FIELD = "#freezeFileHashTextField";
+	public static final String FREEZE_FILE_IDTEXT_FIELD = "#freezeFileIDTextField";
 }

@@ -78,7 +78,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFile.class);
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
-	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content.bin";
+	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content."+ Constants.CONTENT_EXTENSION;
 
 	private String filename;
 	private Identifier fileID;
@@ -100,7 +100,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		super();
 	}
 
-	public LargeBinaryFile(FileDetails fileDetails) {
+	public LargeBinaryFile(FileDetails fileDetails) throws HederaClientException {
 		super(fileDetails);
 
 		var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
@@ -132,7 +132,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		var bins = new File(destination).listFiles((dir, name) -> name.endsWith("bin"));
+		var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
 		assert bins != null;
 		if (bins.length != 1) {
 			final var formattedError =
@@ -182,7 +182,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		this.filename = details.get("filename").getAsString();
 		this.fileID = fileIdentifier;
-		this.chunkSize = details.has("chunkSize") ? details.get("chunkSize").getAsInt() : 4096;
+		this.chunkSize = details.has("chunkSize") ? details.get("chunkSize").getAsInt() : 1024;
+		if (getChunkSize() > 1024) {
+			throw new HederaClientException("Maximum chunk size is 1024 for unsigned file update transactions.");
+		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
 				Duration.ofSeconds(details.has("validDuration") ? details.get("validDuration").getAsLong() : 120);
@@ -275,7 +278,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 *
 	 * @param details
 	 * 		the json read from the zip provided by the user
-	 * @return the a json object representing the transaction valid start if it exists and is correct, Null otherwise.
+	 * @return a json object representing the transaction valid start if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
 	private JsonObject getTransactionValidStamp(JsonObject details) {
@@ -431,7 +434,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				// First transaction is an update
 				var updateTransaction = new ToolFileUpdateTransaction(input);
 				updateTransaction.sign(privateKey);
-				final var filePath = String.format("%s%s-00000.%s", tempStorage, filename.replace(".bin", ""),
+				final var filePath = String.format("%s%s-00000.%s", tempStorage, FilenameUtils.getBaseName(filename),
 						Constants.SIGNED_TRANSACTION_EXTENSION);
 				writeBytes(filePath, updateTransaction.getTransaction().toBytes());
 				toPack.add(new File(filePath));
@@ -449,7 +452,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					var appendTransaction = new ToolFileAppendTransaction(input);
 					appendTransaction.sign(privateKey);
 					final var appendFilePath =
-							String.format("%s%s-%05d.%s", tempStorage, filename.replace(".bin", ""), count,
+							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
 									Constants.SIGNED_TRANSACTION_EXTENSION);
 					writeBytes(appendFilePath, appendTransaction.getTransaction().toBytes());
 					toPack.add(new File(appendFilePath));
@@ -498,7 +501,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
-		text.setFont(Font.font("Courier", 17));
+		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
 
@@ -515,13 +518,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		var fileLink = new Hyperlink("Click for more details");
 		fileLink.setOnAction(actionEvent -> {
 			try {
-				FileUtils.copyFile(getContent(),
-						new File(getContent().getAbsolutePath().replace(".bin", "-copy.bin")));
+				final var copyName = FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
+				FileUtils.copyFile(getContent(), new File(copyName));
 				var r = Runtime.getRuntime();
-				var command =
-						String.format("open -e %s", getContent().getAbsolutePath().replace(".bin", "-copy.bin"));
+				var command = String.format("open -e %s", copyName);
 				r.exec(command);
-
 			} catch (IOException e) {
 				logger.error(e.getMessage());
 			}
@@ -533,7 +534,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		detailsGridPane.add(new Label("File Hash"), 0, 5);
 		var checksum = new Text(getChecksum());
-		checksum.setFont(Font.font("Courier", 16));
+		checksum.setFont(Font.font("Courier New", 16));
 		detailsGridPane.add(checksum, 1, 5);
 
 		detailsGridPane.add(new Label("File size"), 0, 6);
