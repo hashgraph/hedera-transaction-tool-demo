@@ -561,13 +561,13 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		createPanePage.createAndExport(resources);
 		var n = find("#updateFileID");
 		assertTrue(n instanceof TextField);
-		assertEquals("0.0.15225-bvqfv", ((TextField) n).getText());
+		assertTrue(((TextField) n).getText().contains("0.0.15225"));
 		n = find("#feePayerAccountField");
 		assertTrue(n instanceof TextField);
-		assertEquals("0.0.56-kqmmh", ((TextField) n).getText());
+		assertTrue(((TextField) n).getText().contains("0.0.56"));
 		n = find("#nodeAccountField");
 		assertTrue(n instanceof TextField);
-		assertEquals("0.0.3-tzfmz", ((TextField) n).getText());
+		assertTrue(((TextField) n).getText().contains("0.0.3"));
 		n = find("#chunkSizeTextField");
 		assertTrue(n instanceof TextField);
 		assertEquals("2048", ((TextField) n).getText());

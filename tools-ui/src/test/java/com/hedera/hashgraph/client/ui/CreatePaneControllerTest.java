@@ -572,7 +572,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(errorMsg.isVisible());
 
 		var futureTime = localDateTime.plusYears(1);
-		final String formattedDate = getFormattedDate(futureTime);
+		final var formattedDate = getFormattedDate(futureTime);
 		createPanePage.setDate(formattedDate);
 		assertTrue(dateUTC.isVisible());
 		assertFalse(dateUTC.getStyle().toLowerCase(Locale.ROOT).contains("red"));
@@ -1026,7 +1026,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(2, unzippedFiles.length);
 		File jsonFile = null;
 		File contentFile = null;
-		for (File unzippedFile : unzippedFiles) {
+		for (var unzippedFile : unzippedFiles) {
 			if (JSON_EXTENSION.equals(FilenameUtils.getExtension(unzippedFile.getName()))) {
 				jsonFile = unzippedFile;
 			}
@@ -1037,13 +1037,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertNotNull(jsonFile);
 		assertNotNull(contentFile);
 
-		InputStream inputStream1 = new FileInputStream(contentFile);
-		InputStream inputStream2 =
-				new FileInputStream(new File("src/test/resources/createTransactions/largeFileUpdate.zip"));
+		final InputStream inputStream1 = new FileInputStream(contentFile);
+		final InputStream inputStream2 =
+				new FileInputStream("src/test/resources/createTransactions/largeFileUpdate.zip");
 
 		assertTrue(IOUtils.contentEquals(inputStream1, inputStream2));
 
-		JsonObject jsonObject = readJsonObject(jsonFile);
+		final var jsonObject = readJsonObject(jsonFile);
 
 		assertTrue(jsonObject.has("filename"));
 		assertEquals("largeFileUpdate.zip", jsonObject.get("filename").getAsString());
@@ -1058,7 +1058,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(1000000000L, jsonObject.get("validIncrement").getAsLong());
 
 		assertTrue(jsonObject.has("firsTransactionValidStart"));
-		var first = jsonObject.get("firsTransactionValidStart").getAsJsonObject();
+		final var first = jsonObject.get("firsTransactionValidStart").getAsJsonObject();
 		assertEquals(transactionValidStart.getTime() / 1000, first.get("seconds").getAsLong());
 
 		assertTrue(comment.has("Author"));
