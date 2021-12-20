@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.cli.helpers;
+package com.hedera.hashgraph.client.core.helpers;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -26,7 +26,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
-import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
 import org.apache.logging.log4j.LogManager;
@@ -160,6 +159,19 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 
 	}
 
+	@Test
+	void addHelper_differentTx() throws HederaClientException {
+		var helper1 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/Transactions/Signer1/0_0_76@1639746360_10000-0_0_10749.tx"));
+		var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/Transactions/Signer2/0_0_76@1639746360_10000-0_0_10749.tx"));
+
+		assertNotNull(helper1.getTransaction()); // empty transaction
+		assertTrue(helper1.hasTransaction());
+		assertNotNull(helper2.getTransaction()); // empty transaction
+		assertTrue(helper2.hasTransaction());
+
+		var exception = assertThrows(HederaClientException.class, () -> helper1.addHelper(helper2));
+		assertEquals("Hedera Client: Transactions don't match", exception.getMessage());
+	}
 	@Test
 	void addAllSignatures_test() throws HederaClientException {
 		var helper1 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));

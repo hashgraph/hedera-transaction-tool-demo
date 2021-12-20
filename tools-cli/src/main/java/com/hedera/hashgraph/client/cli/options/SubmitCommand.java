@@ -19,7 +19,7 @@
 package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.cli.helpers.TransactionCallableWorker;
+import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;

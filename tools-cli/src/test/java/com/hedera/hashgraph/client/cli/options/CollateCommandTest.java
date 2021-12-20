@@ -106,6 +106,13 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
+	void collate_zips_different_test() throws Exception {
+		final String[] args = { "collate", "-f", RESOURCES_DIRECTORY + "Collation_different" };
+		var exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
+		assertEquals("Hedera Client: Transactions don't match", exception.getMessage());
+	}
+
+	@Test
 	void badRoot_test() {
 		final String[] args = { "collate", "-f", "src/test/resource/" + "collation_test" };
 		Exception exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
