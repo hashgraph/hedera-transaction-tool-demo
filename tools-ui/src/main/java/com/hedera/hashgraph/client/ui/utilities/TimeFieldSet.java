@@ -189,10 +189,14 @@ public class TimeFieldSet {
 	 */
 	public Timestamp getDate() {
 		try {
-			var hour = Integer.parseInt(hours.getText());
-			var minute = Integer.parseInt(minutes.getText());
-			var second = Integer.parseInt(seconds.getText());
-			var nano = Integer.parseInt(nanos.getText());
+			final var textH = hours.getText();
+			var hour = "".equals(textH) ? 0 : Integer.parseInt(textH);
+			final var textM = minutes.getText();
+			var minute = "".equals(textM) ? 0 : Integer.parseInt(textM);
+			final var textS = seconds.getText();
+			var second = "".equals(textS) ? 0 : Integer.parseInt(textS);
+			final var textN = nanos.getText();
+			var nano = "".equals(textN) ? 0 : Integer.parseInt(textN);
 			var localDateTime = LocalDateTime.of(datePicker.getValue() != null ? datePicker.getValue() :
 					LocalDate.now(), LocalTime.of(hour, minute, second));
 			return new Timestamp(localDateTime.atZone(timeZone.toZoneId()).toInstant()).plusNanos(nano);
