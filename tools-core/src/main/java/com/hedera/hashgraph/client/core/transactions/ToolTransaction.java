@@ -500,11 +500,24 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			return false;
 		}
 
-		if (((ToolTransaction) obj).getTransaction() == null && this.transaction == null) {
+		final Transaction<?> transaction = ((ToolTransaction) obj).getTransaction();
+		if (transaction == null && this.transaction == null) {
 			return this.asJson().equals(((ToolTransaction) obj).asJson());
 		}
-		if (((ToolTransaction) obj).getTransaction() != null && this.transaction != null) {
-			return Arrays.areEqual(this.transaction.toBytes(), ((ToolTransaction) obj).getTransaction().toBytes());
+		if (transaction != null && this.transaction != null) {
+			if (!this.transaction.getTransactionMemo().equals(transaction.getTransactionMemo()) ||
+					!Objects.equals(this.transaction.getTransactionId(), transaction.getTransactionId())) {
+				return false;
+			}
+			assert this.transaction.getMaxTransactionFee() != null;
+			assert transaction.getMaxTransactionFee() != null;
+			if (!this.transaction.getMaxTransactionFee().equals(transaction.getMaxTransactionFee())) {
+				return false;
+			}
+			assert this.transaction.getTransactionValidDuration() != null;
+			assert transaction.getTransactionValidDuration() != null;
+			return this.transaction.getTransactionValidDuration().equals(transaction.getTransactionValidDuration()) &&
+					Objects.equals(this.transaction.getNodeAccountIds(), transaction.getNodeAccountIds());
 		}
 		return false;
 	}
