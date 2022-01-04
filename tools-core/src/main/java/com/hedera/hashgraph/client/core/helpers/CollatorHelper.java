@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.cli.helpers;
+package com.hedera.hashgraph.client.core.helpers;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -203,7 +203,13 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			this.transactionFile = helper.transactionFile;
 			this.transaction = helper.transaction;
 			this.comments.addAll(helper.comments);
-		} else {
+		} else if (helper.hasTransaction()) {
+
+			if (!this.transaction.equals(helper.getTransaction())) {
+				logger.error("Transaction {} does not match transaction {}", this.getTransactionFile(),
+						helper.getTransactionFile());
+				throw new HederaClientException("Transactions don't match");
+			}
 			this.transactionFile = setFileOutput(helper.transactionFile);
 		}
 		signaturePairs.addAll(helper.getSignaturePairs());
