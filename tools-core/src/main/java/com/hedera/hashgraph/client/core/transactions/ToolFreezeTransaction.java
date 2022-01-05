@@ -211,11 +211,6 @@ public class ToolFreezeTransaction extends ToolTransaction {
 			return false;
 		}
 
-		//	private Instant startTime;
-		//	private FreezeType freezeType;
-		//	private Identifier fileID;
-		//	private byte[] fileHash;
-
 		final var other = (ToolFreezeTransaction) obj;
 		var freezeTypeBoolean = this.getFreezeType().equals(other.getFreezeType());
 		var fileHashBoolean = this.getFileHash() != null && other.getFileHash() != null && this.getFileHash().equals(

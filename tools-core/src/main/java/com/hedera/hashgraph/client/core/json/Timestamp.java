@@ -138,6 +138,10 @@ public class Timestamp {
 		return Duration.ofSeconds(this.getSeconds()).plusNanos(this.getNanos());
 	}
 
+	public Date asDate() {
+		return asCalendar().getTime();
+	}
+
 	public String asUTCString() {
 		var date = new Date(seconds * 1000);
 		var sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
