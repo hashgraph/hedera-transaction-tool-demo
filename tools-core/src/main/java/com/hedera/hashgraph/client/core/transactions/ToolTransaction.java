@@ -165,7 +165,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (transaction instanceof SystemDeleteTransaction || transaction instanceof SystemUndeleteTransaction) {
 			return new ToolSystemTransaction(inputFile);
 		}
-		if (transaction instanceof FreezeTransaction){
+		if (transaction instanceof FreezeTransaction) {
 			return new ToolFreezeTransaction(inputFile);
 		}
 		return new ToolTransaction(inputFile);
@@ -500,24 +500,24 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			return false;
 		}
 
-		final Transaction<?> transaction = ((ToolTransaction) obj).getTransaction();
-		if (transaction == null && this.transaction == null) {
+		final Transaction<?> tx = ((ToolTransaction) obj).getTransaction();
+		if (tx == null && this.transaction == null) {
 			return this.asJson().equals(((ToolTransaction) obj).asJson());
 		}
-		if (transaction != null && this.transaction != null) {
-			if (!this.transaction.getTransactionMemo().equals(transaction.getTransactionMemo()) ||
-					!Objects.equals(this.transaction.getTransactionId(), transaction.getTransactionId())) {
+		if (tx != null && this.transaction != null) {
+			if (!this.transaction.getTransactionMemo().equals(tx.getTransactionMemo()) ||
+					!Objects.equals(this.transaction.getTransactionId(), tx.getTransactionId())) {
 				return false;
 			}
 			assert this.transaction.getMaxTransactionFee() != null;
-			assert transaction.getMaxTransactionFee() != null;
-			if (!this.transaction.getMaxTransactionFee().equals(transaction.getMaxTransactionFee())) {
+			assert tx.getMaxTransactionFee() != null;
+			if (!this.transaction.getMaxTransactionFee().equals(tx.getMaxTransactionFee())) {
 				return false;
 			}
 			assert this.transaction.getTransactionValidDuration() != null;
-			assert transaction.getTransactionValidDuration() != null;
-			return this.transaction.getTransactionValidDuration().equals(transaction.getTransactionValidDuration()) &&
-					Objects.equals(this.transaction.getNodeAccountIds(), transaction.getNodeAccountIds());
+			assert tx.getTransactionValidDuration() != null;
+			return this.transaction.getTransactionValidDuration().equals(tx.getTransactionValidDuration()) &&
+					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
 		}
 		return false;
 	}
