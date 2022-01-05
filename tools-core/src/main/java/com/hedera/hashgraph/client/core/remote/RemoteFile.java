@@ -41,6 +41,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -405,6 +406,14 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 */
 	public GridPane buildGridPane() {
 		var detailsGridPane = new GridPane();
+
+		var columnConstraint1 = new ColumnConstraints();
+		var columnConstraint2 = new ColumnConstraints();
+		columnConstraint1.setHgrow(Priority.ALWAYS);
+		columnConstraint2.setHgrow(Priority.ALWAYS);
+		columnConstraint1.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
+		columnConstraint2.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
+		detailsGridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2);
 
 		detailsGridPane.add(new Label("Fee Payer Account ID: "), 0, 0);
 
