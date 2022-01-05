@@ -33,7 +33,6 @@ import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.pages.InitialStartupPage;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -62,15 +61,11 @@ import java.util.function.BooleanSupplier;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCEPT_APP_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_1;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_2;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.COPY_TO_CLIPBOARD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.FINISH_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_KEYS_BUTTON;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.LINK_FOLDERS_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MNEMONIC_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_CHECK_IMAGE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
 import static java.lang.Boolean.parseBoolean;
 import static org.apache.commons.io.FileUtils.deleteDirectory;
@@ -495,7 +490,8 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	@Test
 	public void testDefaultDrivesSetupOverLimit_test() throws TimeoutException, HederaClientException, IOException {
 
-		final var initialMap = buildDrivesJson(10);
+		final var testSize = 50;
+		final var initialMap = buildDrivesJson(testSize);
 		logger.info("Restarting stage");
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -511,15 +507,15 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		for (Map.Entry<String, String> entry : map.entrySet()) {
 			String drive = entry.getKey();
 			String email = entry.getValue();
-			int index = Integer.parseInt(drive.substring(drive.length() - 1));
-			assertEquals(String.format("test1.council%d@hederacouncil.org", index), email);
+			int index = Integer.parseInt(drive.substring(drive.length() - 2));
+			assertEquals(String.format("test1.council%02d@hederacouncil.org", index), email);
 		}
 
 		var box = find("#passphraseBox");
-		sleep(10000);
+
 		assertTrue(box.isVisible());
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < testSize; i++) {
 			deleteDummyDrive(i);
 		}
 	}
@@ -623,13 +619,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		for (var i = 0; i < k; i++) {
 			var element = new JsonObject();
-			element.addProperty("drive", drive + i);
-			element.addProperty("email", String.format("test1.council%d@hederacouncil.org", i));
+			element.addProperty("drive", String.format("%s%02d", drive, i));
+			element.addProperty("email", String.format("test1.council%02d@hederacouncil.org", i));
 			setupDummyOneDrive(i);
 			array.add(element);
 		}
 		map.add("map", array);
-
 
 		writeJsonObject(initialMap.getAbsolutePath(), map);
 		return initialMap;
@@ -644,9 +639,10 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	private void setupDummyOneDrive(int i) {
 		logger.info("Setting up dummy one drive");
 
-		if (!new File(DIR_TEST_ONE_DRIVE + i).exists()) {
-			if (new File(DIR_TEST_ONE_DRIVE + i, "InputFiles").mkdirs() && new File(DIR_TEST_ONE_DRIVE + i,
-					String.format("OutputFiles/test1.council%d@hederacouncil.org", i)).mkdirs()) {
+		final var dirName = String.format("%s%02d", DIR_TEST_ONE_DRIVE, i);
+		if (!new File(dirName).exists()) {
+			if (new File(dirName, "InputFiles").mkdirs() && new File(dirName,
+					String.format("OutputFiles/test1.council%02d@hederacouncil.org", i)).mkdirs()) {
 				logger.info("Drive created");
 			}
 		}
@@ -660,7 +656,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	 */
 	private void deleteDummyDrive(int i) throws IOException {
 		logger.info("Deleting up dummy one drive");
-		final var directory = new File(DIR_TEST_ONE_DRIVE + i);
+		final var directory = new File(String.format("%s%02d", DIR_TEST_ONE_DRIVE, i));
 		if (directory.exists()) {
 			deleteDirectory(directory);
 		}
