@@ -560,12 +560,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(new Label(formattedIntervalLength), 1, 9);
 		}
 
-		var cc1 = new ColumnConstraints();
-		cc1.setPercentWidth(50);
-		var cc2 = new ColumnConstraints();
-		cc2.setPercentWidth(50);
-		detailsGridPane.getColumnConstraints().addAll(cc1, cc2);
-
 		return detailsGridPane;
 	}
 
