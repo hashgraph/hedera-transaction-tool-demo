@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
 import org.apache.logging.log4j.LogManager;
