@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
@@ -31,6 +32,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.DistributionMaker;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Hbar;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
@@ -101,6 +103,10 @@ public class BatchFile extends RemoteFile {
 	public static final String ACCOUNT_ID = "account id";
 	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
 	private static final String MEMO = "memo";
+
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
+
 
 	private final UserAccessibleProperties properties =
 			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
@@ -480,6 +486,13 @@ public class BatchFile extends RemoteFile {
 		setValid(false);
 	}
 
+	/**
+	 * Makes sure all transfers have a different transaction ID
+	 *
+	 * @param transfers
+	 * 		the list of read transfers
+	 * @return a list of transfers with distinct transaction valid starts
+	 */
 	private List<BatchLine> dedup(List<BatchLine> transfers) {
 		Set<Timestamp> dedupSet = new HashSet<>();
 		List<BatchLine> newTransfers = new ArrayList<>();
@@ -613,36 +626,54 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public GridPane buildGridPane() {
 		var detailsGridPane = new GridPane();
-		detailsGridPane.add(new Label("Sender account: "), 0, 0);
-
+		int row = 0;
 		try {
 			final var accounts = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					ACCOUNTS_MAP_FILE) : new JsonObject();
+			detailsGridPane.add(new Label("Sender account: "), LEFT, row);
 			detailsGridPane.add(
-					new Label(CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts)), 1,
-					0);
+					new Label(CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts)), RIGHT, row++);
+			detailsGridPane.add(new Label("Fee payer account"), LEFT, row);
+			detailsGridPane.add(new Label(CommonMethods.nicknameOrNumber(getFeePayerAccountID(), accounts)), RIGHT,
+					row++);
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
+
+		var feeLabel = new Label("Single transaction maximum fee: ");
+		feeLabel.setWrapText(true);
+		detailsGridPane.add(feeLabel, LEFT, row);
+
+		var actualFeeLabel = new Label(Hbar.fromTinybars(getTransactionFee()).toString());
+		actualFeeLabel.setWrapText(true);
+		actualFeeLabel.setStyle(Constants.DEBIT);
+		detailsGridPane.add(actualFeeLabel, RIGHT, row++);
+
 		var firstTransactionLabel = new Label("First transaction date: ");
 		firstTransactionLabel.setWrapText(true);
 		firstTransactionLabel.setAlignment(Pos.CENTER_LEFT);
-		detailsGridPane.add(firstTransactionLabel, 0, 1);
+		detailsGridPane.add(firstTransactionLabel, LEFT, row);
+
 
 		var timestamp = getFirstTransactionTimeStamp();
 
 		var utcTime = getTimeLabel(timestamp, true);
 		utcTime.setWrapText(true);
-		detailsGridPane.add(utcTime, 1, 1);
+		detailsGridPane.add(utcTime, RIGHT, row++);
 
 		var utcLabel = new Label("All transactions will be sent at: ");
-		detailsGridPane.add(utcLabel, 0, 2);
+		detailsGridPane.add(utcLabel, LEFT, row);
 		utcLabel.setWrapText(true);
+		detailsGridPane.add(getTimeLabel(timestamp, false), RIGHT, row++);
 
-		detailsGridPane.add(getTimeLabel(timestamp, false), 1, 2);
+		var tvDuration = new Label("Transactions duration: ");
+		detailsGridPane.add(tvDuration, LEFT, row);
+		tvDuration.setWrapText(true);
+		detailsGridPane.add(new Label(String.format("%d seconds", getTxValidDuration())), RIGHT, row++);
+
 		var nLabel = new Label("Transactions will be submitted to nodes: ");
 		nLabel.setWrapText(true);
-		detailsGridPane.add(nLabel, 0, 3);
+		detailsGridPane.add(nLabel, LEFT, row);
 
 		JsonObject nicknames;
 		try {
@@ -657,8 +688,16 @@ public class BatchFile extends RemoteFile {
 			nodesString.append(n.toNicknameAndChecksum(nicknames)).append("\n");
 		}
 
-		detailsGridPane.add(new Label(nodesString.toString()), 1, 3);
-		detailsGridPane.add(new Label("More details: "), 0, 4);
+		detailsGridPane.add(new Label(nodesString.toString()), RIGHT, row++);
+
+		if (!"".equals(getMemo())) {
+			detailsGridPane.add(new Label("Memo: "), LEFT, row);
+			final var memoLabel = new Label(getMemo());
+			memoLabel.setWrapText(true);
+			detailsGridPane.add(memoLabel, RIGHT, row++);
+		}
+
+		detailsGridPane.add(new Label("More details: "), LEFT, row);
 		var hyperlink = new Hyperlink("Click to open CSV file");
 		hyperlink.setOnAction(actionEvent -> {
 			try {
@@ -667,7 +706,7 @@ public class BatchFile extends RemoteFile {
 				logger.error(e);
 			}
 		});
-		detailsGridPane.add(hyperlink, 1, 4);
+		detailsGridPane.add(hyperlink, RIGHT, row);
 
 		var cc1 = new ColumnConstraints();
 		cc1.prefWidthProperty().bind(detailsGridPane.widthProperty().divide(5).multiply(2));

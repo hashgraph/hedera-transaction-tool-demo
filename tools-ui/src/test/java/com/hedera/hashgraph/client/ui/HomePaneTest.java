@@ -429,7 +429,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		var totalBoxes = newFiles.size();
 
 		var gridPane = ((GridPane) ((HBox) batchBoxes.get(1).getChildren().get(1)).getChildren().get(0));
-		assertEquals(5, gridPane.getRowCount());
+		assertEquals(8, gridPane.getRowCount());
 		assertEquals(2, gridPane.getColumnCount());
 
 		var c2 = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -785,7 +785,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				nicknameLabels.add((Label) nickname);
 			}
 		}
-		assertEquals(1, nicknameLabels.size());
+		assertEquals(2, nicknameLabels.size()); // sender and fee payer
 
 		var badNicknames = findAll("badNick");
 		assertEquals(0, badNicknames.size());

@@ -285,29 +285,76 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPaneLegacy_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		var info = FileDetails.parse(file);
 
 		var batchFile = new BatchFile(info);
 		var gridPane = batchFile.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(10, gridPane.getChildren().size());
+		assertEquals(16, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(1);
 		assertEquals("0.0.94-bbukb", label.getText());
 
 		label = (Label) gridPane.getChildren().get(3);
-		assertTrue(label.getText().contains("2029-09-17 19:30:00 UTC"));
+		assertEquals("0.0.94-bbukb", label.getText());
 
 		label = (Label) gridPane.getChildren().get(5);
-		assertTrue(label.getText().contains("19:30:00 UTC"));
+		assertEquals("1 ℏ", label.getText());
 
 		label = (Label) gridPane.getChildren().get(7);
+		assertTrue(label.getText().contains("2029-09-17 19:30:00 UTC"));
+
+		label = (Label) gridPane.getChildren().get(9);
+		assertTrue(label.getText().contains("19:30:00 UTC"));
+
+		label = (Label) gridPane.getChildren().get(11);
+		assertTrue(label.getText().contains("180 seconds"));
+
+		label = (Label) gridPane.getChildren().get(13);
 		assertEquals("0.0.3-tzfmz\n0.0.4-cjcuq\n", label.getText());
 
-		assertTrue(gridPane.getChildren().get(9) instanceof Hyperlink);
+		assertTrue(gridPane.getChildren().get(15) instanceof Hyperlink);
+	}
+
+	@Test
+	public void buildGridPane_test() throws IOException {
+		final var file = new File("src/test/resources/Files/batchFileTests/testNewCSV.csv");
+		var info = FileDetails.parse(file);
+
+		var batchFile = new BatchFile(info);
+		var gridPane = batchFile.buildGridPane();
+		assertEquals(2, gridPane.getColumnCount());
+		assertEquals(18, gridPane.getChildren().size());
+		assertTrue(gridPane.getChildren().get(0) instanceof Label);
+
+		var label = (Label) gridPane.getChildren().get(1);
+		assertEquals("0.0.94-bbukb", label.getText());
+
+		label = (Label) gridPane.getChildren().get(3);
+		assertEquals("0.0.1365-rwprr", label.getText());
+
+		label = (Label) gridPane.getChildren().get(5);
+		assertEquals("1.56657951 ℏ", label.getText());
+
+		label = (Label) gridPane.getChildren().get(7);
+		assertTrue(label.getText().contains("2029-09-17 19:30:00 UTC"));
+
+		label = (Label) gridPane.getChildren().get(9);
+		assertTrue(label.getText().contains("19:30:00 UTC"));
+
+		label = (Label) gridPane.getChildren().get(11);
+		assertTrue(label.getText().contains("113 seconds"));
+
+		label = (Label) gridPane.getChildren().get(13);
+		assertEquals("0.0.3-tzfmz\n0.0.4-cjcuq\n0.0.5-ktach\n", label.getText());
+
+		label = (Label) gridPane.getChildren().get(15);
+		assertEquals("a memo for all transfers", label.getText());
+
+		assertTrue(gridPane.getChildren().get(17) instanceof Hyperlink);
 	}
 
 	@Test
