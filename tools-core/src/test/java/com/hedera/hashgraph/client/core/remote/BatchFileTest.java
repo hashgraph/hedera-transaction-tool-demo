@@ -151,7 +151,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals(19, batchFile.getHoursUTC());
 		assertEquals(30, batchFile.getMinutesUTC());
 
-		assertEquals(batchFile.getNodeAccountID().size(), 2);
+		assertEquals(2, batchFile.getNodeAccountID().size());
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
 
@@ -194,7 +194,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals(19, batchFile.getHoursUTC());
 		assertEquals(30, batchFile.getMinutesUTC());
 
-		assertEquals(batchFile.getNodeAccountID().size(), 3);
+		assertEquals(3, batchFile.getNodeAccountID().size());
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 5)));
@@ -220,7 +220,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals(19, batchFile.getHoursUTC());
 		assertEquals(30, batchFile.getMinutesUTC());
 
-		assertEquals(batchFile.getNodeAccountID().size(), 3);
+		assertEquals(3, batchFile.getNodeAccountID().size());
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 5)));

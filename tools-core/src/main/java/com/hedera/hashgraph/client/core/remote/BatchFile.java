@@ -102,10 +102,11 @@ public class BatchFile extends RemoteFile {
 	private static final String DURATION = "transaction valid duration";
 	public static final String ACCOUNT_ID = "account id";
 	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
-	private static final String MEMO = "memo";
+	private static final String MEMO_STRING = "memo";
 
 	private static final int LEFT = 0;
 	private static final int RIGHT = 1;
+	public static final String NUMBER_OF_FIELDS = "Number of fields";
 
 
 	private final UserAccessibleProperties properties =
@@ -211,12 +212,12 @@ public class BatchFile extends RemoteFile {
 			String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
 
 			if (senderIDLine.length != 2) {
-				errorBehavior(getName(), "Number of fields", "sender ID");
+				errorBehavior(getName(), NUMBER_OF_FIELDS, SENDER_ACCOUNT);
 				return true;
 			}
 			this.senderAccountID = Identifier.parse(senderIDLine[1]);
 		} catch (Exception e) {
-			errorBehavior(getName(), e.getMessage(), "sender ID");
+			errorBehavior(getName(), e.getMessage(), SENDER_ACCOUNT);
 			setValid(false);
 			return true;
 		}
@@ -240,7 +241,7 @@ public class BatchFile extends RemoteFile {
 			}
 
 			if (feePayerIDLine.length != 2) {
-				errorBehavior(getName(), "Number of fields", "sender ID");
+				errorBehavior(getName(), NUMBER_OF_FIELDS, FEE_PAYER_ACCOUNT);
 				return true;
 			}
 			this.feePayerAccountID = Identifier.parse(feePayerIDLine[1]);
@@ -261,19 +262,19 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkMemo(List<String> csvList) {
 		try {
-			String[] feePayerIDLine = getStrings(csvList, MEMO, "[,]", false);
+			String[] memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
 
-			if (feePayerIDLine.length == 0) {
+			if (memoLine.length == 0) {
 				return false;
 			}
 
-			if (feePayerIDLine.length != 2) {
-				errorBehavior(getName(), "Number of fields", "sender ID");
+			if (memoLine.length != 2) {
+				errorBehavior(getName(), NUMBER_OF_FIELDS, MEMO_STRING);
 				return true;
 			}
-			this.memo = feePayerIDLine[1];
+			this.memo = memoLine[1];
 		} catch (Exception e) {
-			errorBehavior(getName(), e.getMessage(), MEMO);
+			errorBehavior(getName(), e.getMessage(), MEMO_STRING);
 			setValid(false);
 			return true;
 		}
@@ -291,7 +292,7 @@ public class BatchFile extends RemoteFile {
 		try {
 			String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
 			if (timeLine.length != 3) {
-				errorBehavior(getName(), "Number of fields", "time");
+				errorBehavior(getName(), NUMBER_OF_FIELDS, "time");
 				return true;
 			}
 			this.hoursUTC = Integer.parseInt(timeLine[1]);
@@ -366,7 +367,7 @@ public class BatchFile extends RemoteFile {
 				return false;
 			}
 			if (feeLine.length != 2) {
-				errorBehavior(getName(), "Number of fields", TRANSACTION_FEE);
+				errorBehavior(getName(), NUMBER_OF_FIELDS, TRANSACTION_FEE);
 				return true;
 			}
 			this.transactionFee = Long.parseLong(feeLine[1]);
@@ -394,7 +395,7 @@ public class BatchFile extends RemoteFile {
 				return false;
 			}
 			if (tvdLine.length != 2) {
-				errorBehavior(getName(), "Number of fields", DURATION);
+				errorBehavior(getName(), NUMBER_OF_FIELDS, DURATION);
 				return true;
 			}
 			this.txValidDuration = Long.parseLong(tvdLine[1]);

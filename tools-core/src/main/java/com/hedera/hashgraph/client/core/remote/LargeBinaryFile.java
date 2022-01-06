@@ -36,7 +36,6 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -78,7 +77,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFile.class);
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
-	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content."+ Constants.CONTENT_EXTENSION;
+	private static final String TEMP_LOCATION =
+			TEMP_DIRECTORY + File.separator + "content." + Constants.CONTENT_EXTENSION;
 
 	private String filename;
 	private Identifier fileID;
@@ -518,7 +518,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		var fileLink = new Hyperlink("Click for more details");
 		fileLink.setOnAction(actionEvent -> {
 			try {
-				final var copyName = FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
+				final var copyName =
+						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
 				FileUtils.copyFile(getContent(), new File(copyName));
 				var r = Runtime.getRuntime();
 				var command = String.format("open -e %s", copyName);
