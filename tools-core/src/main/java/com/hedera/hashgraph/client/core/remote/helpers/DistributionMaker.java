@@ -69,34 +69,42 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	public static final String TRANSACTIONS_SUFFIX = "_transactions";
 	public static final String SIGNATURES_SUFFIX = "_signatures";
 	private final AccountId sender;
+	private final AccountId feePayer;
 	private final AccountId node;
 	private final Timestamp transactionValidDuration;
 	private final long transactionFee;
 	private final String storageLocation;
 	private final String output;
+	private final String memo;
 
 	/**
 	 * Constructor
 	 *
 	 * @param sender
-	 * 		account that will be the fee payer and sender
+	 * 		account that will be the sender
+	 * @param feePayer
+	 * 		account that will be the fee payer
 	 * @param node
 	 * 		node account where transactions will be sent
 	 * @param transactionValidDuration
 	 * 		duration of the transaction
 	 * @param transactionFee
 	 * 		maximum transaction fee
+	 * @param memo
+	 * 		the transactions memo
 	 * @param storageLocation
 	 * 		location where the created transactions will be temporarily stored
 	 * @param output
 	 * 		the location where the zip files will be exported
 	 */
-	public DistributionMaker(AccountId sender, AccountId node, Timestamp transactionValidDuration, long transactionFee,
-			String storageLocation, String output) {
+	public DistributionMaker(AccountId sender, AccountId feePayer, AccountId node, Timestamp transactionValidDuration,
+			long transactionFee, String memo, String storageLocation, String output) {
 		this.sender = sender;
+		this.feePayer = feePayer;
 		this.node = node;
 		this.transactionValidDuration = transactionValidDuration;
 		this.transactionFee = transactionFee;
+		this.memo = memo;
 		this.storageLocation = storageLocation;
 		if (new File(output).mkdirs()) {
 			logger.info("Output folder {} created", output);
@@ -138,7 +146,6 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 
 	/**
 	 * Summarizes the transactions and zips the transactions and signatures separately
-	 *
 	 */
 	public void pack() throws HederaClientException {
 		try {
@@ -155,7 +162,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		input.add(TRANSACTION_VALID_START_FIELD_NAME, distributionData.getDate().asJSON());
 
 		// Fee payer
-		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, new Identifier(sender).asJSON());
+		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, new Identifier(feePayer).asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
 		var feeJson = new JsonObject();
@@ -170,7 +177,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		input.add(NODE_ID_FIELD_NAME, new Identifier(node).asJSON());
 
 		// Memo
-		input.addProperty(MEMO_FIELD_NAME, distributionData.getMemo());
+		input.addProperty(MEMO_FIELD_NAME, memo);
 
 		// Transfer
 		var jsonArray = new JsonArray();

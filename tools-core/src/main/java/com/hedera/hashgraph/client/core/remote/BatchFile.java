@@ -99,16 +99,20 @@ public class BatchFile extends RemoteFile {
 	private static final String TRANSACTION_FEE = "transaction fee";
 	private static final String DURATION = "transaction valid duration";
 	public static final String ACCOUNT_ID = "account id";
+	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
+	private static final String MEMO = "memo";
 
 	private final UserAccessibleProperties properties =
 			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
 	private Identifier senderAccountID;
+	private Identifier feePayerAccountID;
 	private List<Identifier> nodeAccountID;
 	private int hoursUTC;
 	private int minutesUTC;
 	private LocalDate firstTransaction;
 	private List<BatchLine> transfers;
+	private String memo = "";
 	private long transactionFee = VAL_NUM_TRANSACTION_DEFAULT_FEE;// default value
 	private long txValidDuration = VAL_NUM_TRANSACTION_VALID_DURATION; // default value
 
@@ -136,6 +140,14 @@ public class BatchFile extends RemoteFile {
 
 		// Sender line
 		if (checkSender(csvList)) {
+			return;
+		}
+
+		if (checkFeePayer(csvList)) {
+			return;
+		}
+
+		if (checkMemo(csvList)) {
 			return;
 		}
 
@@ -190,7 +202,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkSender(List<String> csvList) {
 		try {
-			String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]");
+			String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
 
 			if (senderIDLine.length != 2) {
 				errorBehavior(getName(), "Number of fields", "sender ID");
@@ -206,6 +218,63 @@ public class BatchFile extends RemoteFile {
 	}
 
 	/**
+	 * Checks the fee payer line of the csv file. If the line does not exist, uses the sender as fee payer
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the sender line is invalid
+	 */
+	private boolean checkFeePayer(List<String> csvList) {
+		try {
+			String[] feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
+
+			if (feePayerIDLine.length == 0) {
+				this.feePayerAccountID = this.senderAccountID;
+				return false;
+			}
+
+			if (feePayerIDLine.length != 2) {
+				errorBehavior(getName(), "Number of fields", "sender ID");
+				return true;
+			}
+			this.feePayerAccountID = Identifier.parse(feePayerIDLine[1]);
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), FEE_PAYER_ACCOUNT);
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the memo line of the csv file. If the line does not exist, the memo is empty
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the sender line is invalid
+	 */
+	private boolean checkMemo(List<String> csvList) {
+		try {
+			String[] feePayerIDLine = getStrings(csvList, MEMO, "[,]", false);
+
+			if (feePayerIDLine.length == 0) {
+				return false;
+			}
+
+			if (feePayerIDLine.length != 2) {
+				errorBehavior(getName(), "Number of fields", "sender ID");
+				return true;
+			}
+			this.memo = feePayerIDLine[1];
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), MEMO);
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Checks the time line of the csv file
 	 *
 	 * @param csvList
@@ -214,7 +283,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkTime(List<String> csvList) {
 		try {
-			String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]");
+			String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
 			if (timeLine.length != 3) {
 				errorBehavior(getName(), "Number of fields", "time");
 				return true;
@@ -247,7 +316,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkNodes(List<String> csvList) {
 		nodeAccountID = new ArrayList<>();
 		try {
-			String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]");
+			String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
 
 			if (nodeAccountIDLine.length == 0) {
 				setValid(false);
@@ -257,7 +326,7 @@ public class BatchFile extends RemoteFile {
 			nodeAccountID = new ArrayList<>();
 			for (var i = 1; i < nodeAccountIDLine.length; i++) {
 				if (!nodeAccountID.contains(Identifier.parse(nodeAccountIDLine[i]))) {
-					nodeAccountID.add((Identifier.parse(nodeAccountIDLine[i])));
+					nodeAccountID.add(Identifier.parse(nodeAccountIDLine[i]));
 				}
 			}
 
@@ -284,7 +353,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkFee(List<String> csvList) {
 		try {
-			String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]");
+			String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
 			// If there is no transaction fee line, just use the default;
 			if (feeLine.length == 0) {
 				this.transactionFee = properties.getDefaultTxFee();
@@ -312,7 +381,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkTransactionValidDuration(List<String> csvList) {
 		try {
-			String[] tvdLine = getStrings(csvList, DURATION, "[,]");
+			String[] tvdLine = getStrings(csvList, DURATION, "[,]", true);
 			// If there is no transaction valid duration line, just use the default;
 			if (tvdLine.length == 0) {
 				this.txValidDuration = properties.getTxValidDuration();
@@ -366,11 +435,17 @@ public class BatchFile extends RemoteFile {
 	 * @return an array of strings
 	 */
 	@NotNull
-	private String[] getStrings(List<String> csvList, String queryString, String regex) {
+	private String[] getStrings(List<String> csvList, String queryString, String regex, boolean removeSpaces) {
 		String[] strings = new String[0];
 		for (String s : csvList) {
 			if (s.toLowerCase(Locale.ROOT).startsWith(queryString)) {
-				strings = s.replace(" ", "").split(regex);
+				strings = removeSpaces ? s.replace(" ", "").split(regex) : s.split(regex);
+				String[] returnString = new String[strings.length];
+				// trim leading and trailing spaces
+				for (int i = 0, stringsLength = strings.length; i < stringsLength; i++) {
+					returnString[i] = strings[i].trim();
+				}
+				return returnString;
 			}
 		}
 		return strings;
@@ -466,6 +541,14 @@ public class BatchFile extends RemoteFile {
 
 	public Identifier getSenderAccountID() {
 		return senderAccountID;
+	}
+
+	public Identifier getFeePayerAccountID() {
+		return feePayerAccountID;
+	}
+
+	public String getMemo() {
+		return memo;
 	}
 
 	public List<Identifier> getNodeAccountID() {
@@ -601,7 +684,7 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
 		var tempStorage =
-				TEMP_FOLDER_LOCATION + (LocalDate.now()) + File.separator + RandomStringUtils.randomAlphanumeric(
+				TEMP_FOLDER_LOCATION + LocalDate.now() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		DoubleProperty progress = new SimpleDoubleProperty(1);
@@ -636,8 +719,13 @@ public class BatchFile extends RemoteFile {
 			var storageLocation =
 					tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
 							pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
-			var maker = new DistributionMaker(getSenderAccountID().asAccount(), nodeID.asAccount(),
-					new Timestamp(getTxValidDuration(), 0), getTransactionFee(), storageLocation,
+			var maker = new DistributionMaker(getSenderAccountID().asAccount(),
+					feePayerAccountID.asAccount(),
+					nodeID.asAccount(),
+					new Timestamp(getTxValidDuration(), 0),
+					getTransactionFee(),
+					memo,
+					storageLocation,
 					output + File.separator + user);
 
 
@@ -762,4 +850,5 @@ public class BatchFile extends RemoteFile {
 
 		return window;
 	}
+
 }

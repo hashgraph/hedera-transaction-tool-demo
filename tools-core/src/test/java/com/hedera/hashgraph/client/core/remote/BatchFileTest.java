@@ -146,6 +146,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertNotNull(batchFile);
 
 		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
+		assertEquals(new Identifier(0, 0, 94), batchFile.getFeePayerAccountID());
 
 		assertEquals(19, batchFile.getHoursUTC());
 		assertEquals(30, batchFile.getMinutesUTC());
@@ -159,6 +160,8 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 		assertEquals(22, batchFile.getTransfers().size());
 		assertEquals(LocalDate.of(2029, 9, 17), batchFile.getFirstTransaction());
+
+		assertEquals("", batchFile.getMemo());
 
 		UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
@@ -186,6 +189,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertNotNull(batchFile);
 
 		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
+		assertEquals(new Identifier(0, 0, 1365), batchFile.getFeePayerAccountID());
 
 		assertEquals(19, batchFile.getHoursUTC());
 		assertEquals(30, batchFile.getMinutesUTC());
@@ -200,6 +204,8 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 		assertEquals(156657951, batchFile.getTransactionFee());
 		assertEquals(113, batchFile.getTxValidDuration());
+
+		assertEquals("a memo for all transfers", batchFile.getMemo());
 	}
 
 	@Test
@@ -273,7 +279,6 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals(180, batchFile.getTxValidDuration());
 		batchFile.setTxValidDuration(285);
 		assertEquals(180, batchFile.getTxValidDuration());
-
 
 		var transfers = batchFile.getTransfers();
 		assertEquals(22, transfers.size());

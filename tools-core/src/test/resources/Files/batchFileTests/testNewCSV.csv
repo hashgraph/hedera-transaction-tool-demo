@@ -1,8 +1,10 @@
 Sender Account, 0.0.94
+Fee Payer Account, 0.0.1365
 Sending Time, 19:30
 Node IDs, 0.0.3, 0.0.4, 0.0.5
 Transaction Fee, 156657951
 Transaction Valid Duration, 113
+Memo, "a memo for all transfers"
 Account ID,Amount per distribution (tinybar),Start Date (MM/DD/YY)
 0.0.1053,2083300001,9/17/29
 0.0.1053,2083300000,9/17/29
