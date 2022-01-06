@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -35,9 +36,13 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -131,6 +136,96 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertTrue(new BatchFile(badFileDetails).isExpired());
 	}
 
+
+	@Test
+	public void loadLegacyCSV_test() throws IOException {
+		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
+		var info = FileDetails.parse(file);
+
+		var batchFile = new BatchFile(info);
+		assertNotNull(batchFile);
+
+		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
+
+		assertEquals(19, batchFile.getHoursUTC());
+		assertEquals(30, batchFile.getMinutesUTC());
+
+		assertEquals(batchFile.getNodeAccountID().size(), 2);
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
+
+		assertEquals(100000000, batchFile.getTransactionFee());
+		assertEquals(180, batchFile.getTxValidDuration());
+
+		assertEquals(22, batchFile.getTransfers().size());
+		assertEquals(LocalDate.of(2029, 9, 17), batchFile.getFirstTransaction());
+
+		UserAccessibleProperties properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		properties.setDefaultTxFee(123456789);
+		properties.setTxValidDuration(123);
+
+		var batchFile2 = new BatchFile(info);
+		assertNotNull(batchFile2);
+		assertEquals(123456789, batchFile2.getTransactionFee());
+		assertEquals(123, batchFile2.getTxValidDuration());
+	}
+
+	@Test
+	public void loadCurrentCSV_test() throws IOException {
+		UserAccessibleProperties properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		properties.setDefaultTxFee(123456789);
+		properties.setTxValidDuration(123);
+		assertEquals(123456789, properties.getDefaultTxFee());
+		assertEquals(123, properties.getTxValidDuration());
+
+		final var file = new File("src/test/resources/Files/batchFileTests/testNewCSV.csv");
+		var info = FileDetails.parse(file);
+		var batchFile = new BatchFile(info);
+		assertNotNull(batchFile);
+
+		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
+
+		assertEquals(19, batchFile.getHoursUTC());
+		assertEquals(30, batchFile.getMinutesUTC());
+
+		assertEquals(batchFile.getNodeAccountID().size(), 3);
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 5)));
+
+		assertEquals(21, batchFile.getTransfers().size());
+		assertEquals(LocalDate.of(2029, 9, 17), batchFile.getFirstTransaction());
+
+		assertEquals(156657951, batchFile.getTransactionFee());
+		assertEquals(113, batchFile.getTxValidDuration());
+	}
+
+	@Test
+	public void loadMixedCSV_test() throws IOException {
+		final var file = new File("src/test/resources/Files/batchFileTests/testMixedCSV.csv");
+		var info = FileDetails.parse(file);
+		var batchFile = new BatchFile(info);
+		assertNotNull(batchFile);
+
+		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
+
+		assertEquals(19, batchFile.getHoursUTC());
+		assertEquals(30, batchFile.getMinutesUTC());
+
+		assertEquals(batchFile.getNodeAccountID().size(), 3);
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
+		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 5)));
+
+		assertEquals(21, batchFile.getTransfers().size());
+		assertEquals(LocalDate.of(2029, 9, 17), batchFile.getFirstTransaction());
+
+		assertEquals(156657951, batchFile.getTransactionFee());
+		assertEquals(113, batchFile.getTxValidDuration());
+	}
+
 	@Test
 	public void checksums_test() throws IOException {
 		var badFile = new File("src/test/resources/Files/batchFileTests/badSender2.csv");
@@ -220,7 +315,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		if (new File("src/test/resources/Files/output").exists()) {
 			FileUtils.deleteDirectory(new File("src/test/resources/Files/output"));
 		}
-
+		Files.deleteIfExists(Path.of(DEFAULT_STORAGE, USER_PROPERTIES));
 	}
 
 }
