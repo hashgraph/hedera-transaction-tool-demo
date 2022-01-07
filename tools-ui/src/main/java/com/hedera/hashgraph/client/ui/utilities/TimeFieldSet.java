@@ -39,17 +39,17 @@ import java.util.TimeZone;
 public class TimeFieldSet {
 	private static final Logger logger = LogManager.getLogger(TimeFieldSet.class);
 
-	DatePicker datePicker;
-	TextField hours;
-	TextField minutes;
-	TextField seconds;
-	TextField nanos;
+	private final DatePicker datePicker;
+	private final TextField hours;
+	private final TextField minutes;
+	private final TextField seconds;
+	private final TextField nanos;
 
-	HBox timeZoneBox;
-	TimeZone timeZone;
+	private final HBox timeZoneBox;
+	private final TimeZone timeZone;
 
-	Label utcLabel;
-	Label errorLabel;
+	private final Label utcLabel;
+	private final Label errorLabel;
 
 	public TimeFieldSet(DatePicker datePicker, TextField hours, TextField minutes, TextField seconds,
 			TextField nanos, HBox timeZoneBox, Label utcLabel, Label errorLabel) {
