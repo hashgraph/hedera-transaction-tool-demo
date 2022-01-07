@@ -823,7 +823,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// region CREATE ACCOUNT
 
-	private Pair<UserComments, ToolTransaction> createAccountTransactionAction() {
+	private Pair<UserComments, ToolTransaction> createAccountTransactionAction() throws HederaClientException {
 		if (!checkAndFlagCreateFields()) {
 			return null;
 		}
@@ -1110,10 +1110,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		amount.setStyle(null);
 		amount.setStyle(START_STYLE);
 
-		var newTransaction =
-				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+		AccountAmountStrings newTransaction;
+		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		final var status = parseAddress(newTransaction.getAccountID()).getStatus();
+		final var status = parseAddress(newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
@@ -1283,7 +1283,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return flag && freezeFlag;
 	}
 
-	private Pair<UserComments, ToolTransaction> createSystemTransactionAction() {
+	private Pair<UserComments, ToolTransaction> createSystemTransactionAction() throws HederaClientException {
 		if (!checkAndFlagSystemFields()) {
 			return null;
 		}
@@ -1302,7 +1302,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private Pair<UserComments, ToolTransaction> createFreezeTransaction() {
+	private Pair<UserComments, ToolTransaction> createFreezeTransaction() throws HederaClientException {
 		if (!checkAndFlagFreezeFields()) {
 			return null;
 		}
@@ -1587,7 +1587,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 *
 	 * @return a json object with the all the information collected in the form
 	 */
-	private JsonObject buildJsonInput() {
+	private JsonObject buildJsonInput() throws HederaClientException {
 		var input = new JsonObject();
 		var transactionValidStart = startFieldsSet.getDate();
 
@@ -2367,6 +2367,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupTextFieldResizeProperty(TextField... textFields) {
 		for (TextField tf : textFields) {
+			tf.setMinWidth(300);
 			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
 		}
 
@@ -2545,9 +2546,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanAllTransferFields();
 		var transfers = transaction.getAccountAmountMap();
 		for (Map.Entry<Identifier, Hbar> entry : transfers.entrySet()) {
-			var newTransaction =
-					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
-							String.valueOf(Math.abs(entry.getValue().toTinybars())));
+			AccountAmountStrings newTransaction;
+			newTransaction = new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
+					String.valueOf(Math.abs(entry.getValue().toTinybars())));
 			var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}

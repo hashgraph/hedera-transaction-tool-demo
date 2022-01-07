@@ -28,9 +28,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.Mnemonic;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
@@ -63,7 +60,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		if (new File("src/test/resources/out").mkdirs()) {
 			logger.info("Output directory created");
 		}
-		File file = new File("recovery.aes");
+		var file = new File("recovery.aes");
 		if (file.exists() && file.delete()) {
 			logger.info("File deleted");
 		}
@@ -77,13 +74,13 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void getClient() {
-		Client integration = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		var integration = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		assertEquals(4, integration.getNetwork().size());
-		Client mainNet = CommonMethods.getClient(NetworkEnum.MAINNET);
+		var mainNet = CommonMethods.getClient(NetworkEnum.MAINNET);
 		assertTrue(mainNet.getNetwork().size() >= 10);
-		Client testNet = CommonMethods.getClient(NetworkEnum.TESTNET);
+		var testNet = CommonMethods.getClient(NetworkEnum.TESTNET);
 		assertTrue(testNet.getNetwork().size() >= 4);
-		Client previewNet = CommonMethods.getClient(NetworkEnum.PREVIEWNET);
+		var previewNet = CommonMethods.getClient(NetworkEnum.PREVIEWNET);
 		assertTrue(previewNet.getNetwork().size() >= 4);
 	}
 
@@ -104,7 +101,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void setupClient() throws HederaClientException {
-		JsonObject testInput = new JsonObject();
+		var testInput = new JsonObject();
 		Exception exception0 = assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals("Hedera Client: Missing critical fields in the JSON input to set up the client",
 				exception0.getMessage());
@@ -132,12 +129,12 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 						".gson.JsonPrimitive and com.google.gson.JsonObject are in unnamed module of loader 'app')",
 				exception4.getMessage());
 
-		JsonObject feeJson = new JsonObject();
+		var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 		testInput.add(JsonConstants.TRANSACTION_FEE_FIELD_NAME, feeJson);
 
-		Client client = CommonMethods.setupClient(testInput);
+		var client = CommonMethods.setupClient(testInput);
 		Map<String, AccountId> network = new HashMap<>();
 		network.put("34.74.191.8:50211", new AccountId(3L));
 		network.put("35.245.150.69:50211", new AccountId(4L));
@@ -160,13 +157,13 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 				assertThrows(HederaClientException.class, () -> CommonMethods.setupRecoveryPhrase("recovery.aes"));
 		assertEquals("Hedera Client: Cannot open file recovery.aes", exception0.getMessage());
 
-		Mnemonic mnemonic0 = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
+		var mnemonic0 = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
 		assertNotNull(mnemonic0);
 
-		Mnemonic mnemonic1 = CommonMethods.setupRecoveryPhrase("src/test/resources/out");
+		var mnemonic1 = CommonMethods.setupRecoveryPhrase("src/test/resources/out");
 		assertNotNull(mnemonic1);
 		assertTrue(new File("src/test/resources/out/recovery.aes").exists());
-		Mnemonic mnemonic2 =
+		var mnemonic2 =
 				SecurityUtilities.fromEncryptedFile(
 						SecurityUtilities.keyFromPasswordLegacy(Constants.TEST_PASSWORD.toCharArray()),
 						"src/test/resources/out/recovery.aes");
@@ -216,7 +213,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 			logger.info("Output folder created");
 		}
 
-		Mnemonic mnemonic = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
+		var mnemonic = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
 		final var singleKeyAsJson =
 				CommonMethods.createSingleKeyAsJson(mnemonic, Constants.TEST_PASSWORD.toCharArray(), 7,
 						"src/test/resources/Keys/Temp");
@@ -265,21 +262,21 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		var split = CommonMethods.splitStringDigest(words, 9);
 		var pieces = split.split("\n");
 		assertEquals(4, pieces.length);
-		for (String piece : pieces) {
+		for (var piece : pieces) {
 			assertEquals(9, piece.split("\u00A0").length);
 		}
 
 		split = CommonMethods.splitStringDigest(words, 3);
 		pieces = split.split("\n");
 		assertEquals(12, pieces.length);
-		for (String piece : pieces) {
+		for (var piece : pieces) {
 			assertEquals(3, piece.split("\u00A0").length);
 		}
 	}
 
 	@Test
 	void nickNameOrNumber_Test() throws HederaClientException {
-		JsonObject nicknames = readJsonObject("src/test/resources/accountMapFile.json");
+		var nicknames = readJsonObject("src/test/resources/accountMapFile.json");
 
 		var testString = CommonMethods.nicknameOrNumber(new Identifier(0, 0, 1), nicknames);
 		assertEquals("zero1 (0.0.1-dfkxr)", testString);
@@ -296,10 +293,10 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void checkJsonInput_test() {
-		JsonObject input = new JsonObject();
+		var input = new JsonObject();
 		input.addProperty("testPropInt", 42);
 		input.addProperty("testPropString", "forty two");
-		JsonObject fortyTwo = new JsonObject();
+		var fortyTwo = new JsonObject();
 		fortyTwo.addProperty("tens", 4);
 		fortyTwo.addProperty("units", "two");
 		input.add("testPropJson", fortyTwo);
@@ -317,10 +314,10 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void verifyFieldExist_test() {
-		JsonObject input = new JsonObject();
+		var input = new JsonObject();
 		input.addProperty("testPropInt", 42);
 		input.addProperty("testPropString", "forty two");
-		JsonObject fortyTwo = new JsonObject();
+		var fortyTwo = new JsonObject();
 		fortyTwo.addProperty("tens", 4);
 		fortyTwo.addProperty("units", "two");
 		input.add("testPropJson", fortyTwo);
@@ -340,21 +337,36 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void fromString() throws HederaClientException {
-		Hbar bar = new Hbar(1);
+		var bar = new Hbar(1);
 		assertEquals(bar, CommonMethods.fromString(bar.toString()));
-		Hbar tinyBar = Hbar.fromTinybars(1);
+		var tinyBar = Hbar.fromTinybars(1);
 		assertEquals(tinyBar, CommonMethods.fromString(tinyBar.toString()));
 
-		Hbar barTinyBar = Hbar.fromTinybars(110000020);
+		var barTinyBar = Hbar.fromTinybars(110000020);
 		assertEquals(barTinyBar, CommonMethods.fromString(barTinyBar.toString()));
 
 		assertEquals(Hbar.from(1), CommonMethods.fromString("1"));
 
-		Exception exception0 = assertThrows(NumberFormatException.class, ()-> CommonMethods.fromString("not an hbar"));
+		Exception exception0 = assertThrows(NumberFormatException.class, () -> CommonMethods.fromString("not an hbar"));
 		assertEquals("For input string: \"not\"", exception0.getMessage());
 
-		Exception exception1 = assertThrows(HederaClientException.class, ()-> CommonMethods.fromString("1.1.1"));
+		Exception exception1 = assertThrows(HederaClientException.class, () -> CommonMethods.fromString("1.1.1"));
 		assertEquals("Hedera Client: Cannot parse String \"1.1.1\" to hbars", exception1.getMessage());
 
+	}
+
+	@Test
+	void removeNickname_test() {
+		assertEquals("654654.9946546.3345667-atest",
+				CommonMethods.removeNickname("nickname (654654.9946546.3345667-atest)"));
+		assertEquals("0.0.34-godql", CommonMethods.removeNickname("0.0.34"));
+		assertEquals("0.0.34-godql", CommonMethods.removeNickname("34"));
+		assertEquals("", CommonMethods.removeNickname("0.34"));
+		assertEquals("", CommonMethods.removeNickname("a.b.c"));
+		assertEquals("", CommonMethods.removeNickname("a.1.2"));
+		assertEquals("", CommonMethods.removeNickname("1.oio.2"));
+
+		var id = new Identifier(78098098, 987987, 987987);
+		assertEquals("78098098.987987.987987-fydsl", CommonMethods.removeNickname(id.toReadableStringAndChecksum()));
 	}
 }

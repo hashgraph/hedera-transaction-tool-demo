@@ -57,11 +57,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
@@ -590,5 +594,33 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return splitDigest.toString();
 	}
 
+	/**
+	 * Given a string that may or may not represent an account id with nickname and checksum, return just the account id
+	 * and the checksum
+	 *
+	 * @param value
+	 * 		any String
+	 * @return an account and checksum string if the pattern is found. An empty string otherwise
+	 */
+	public static String removeNickname(String value) {
+		var patternFull = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		var matcherFull = patternFull.matcher(value);
+		if (matcherFull.find()) {
+			return matcherFull.group(0);
+		}
+		var patternAccount = Pattern.compile(FULL_ACCOUNT_REGEX);
+		var matcherAccount = patternAccount.matcher(value);
+		if (matcherAccount.find()) {
+			var identifier = Identifier.parse(matcherAccount.group(0));
+			return identifier.toReadableStringAndChecksum();
+		}
+		var patternDecimal = Pattern.compile(NUMBER_REGEX);
+		var matcherDecimal = patternDecimal.matcher(value);
+		if (matcherDecimal.find()) {
+			var identifier = Identifier.parse(matcherDecimal.group(0));
+			return identifier.toReadableStringAndChecksum();
+		}
+		return "";
+	}
 }
 
