@@ -165,7 +165,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (transaction instanceof SystemDeleteTransaction || transaction instanceof SystemUndeleteTransaction) {
 			return new ToolSystemTransaction(inputFile);
 		}
-		if (transaction instanceof FreezeTransaction){
+		if (transaction instanceof FreezeTransaction) {
 			return new ToolFreezeTransaction(inputFile);
 		}
 		return new ToolTransaction(inputFile);
@@ -500,11 +500,24 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			return false;
 		}
 
-		if (((ToolTransaction) obj).getTransaction() == null && this.transaction == null) {
+		final Transaction<?> tx = ((ToolTransaction) obj).getTransaction();
+		if (tx == null && this.transaction == null) {
 			return this.asJson().equals(((ToolTransaction) obj).asJson());
 		}
-		if (((ToolTransaction) obj).getTransaction() != null && this.transaction != null) {
-			return Arrays.areEqual(this.transaction.toBytes(), ((ToolTransaction) obj).getTransaction().toBytes());
+		if (tx != null && this.transaction != null) {
+			if (!this.transaction.getTransactionMemo().equals(tx.getTransactionMemo()) ||
+					!Objects.equals(this.transaction.getTransactionId(), tx.getTransactionId())) {
+				return false;
+			}
+			assert this.transaction.getMaxTransactionFee() != null;
+			assert tx.getMaxTransactionFee() != null;
+			if (!this.transaction.getMaxTransactionFee().equals(tx.getMaxTransactionFee())) {
+				return false;
+			}
+			assert this.transaction.getTransactionValidDuration() != null;
+			assert tx.getTransactionValidDuration() != null;
+			return this.transaction.getTransactionValidDuration().equals(tx.getTransactionValidDuration()) &&
+					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
 		}
 		return false;
 	}

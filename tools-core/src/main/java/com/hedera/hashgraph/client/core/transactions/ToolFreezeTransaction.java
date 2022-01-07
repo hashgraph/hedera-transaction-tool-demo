@@ -77,6 +77,9 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	}
 
 	public Timestamp getStartTime() {
+		if (startTime == null) {
+			return null;
+		}
 		return new Timestamp(startTime);
 	}
 
@@ -89,7 +92,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	}
 
 	public String getFileHash() {
-		return Hex.toHexString(fileHash);
+		return (fileHash == null) ? null : Hex.toHexString(fileHash);
 	}
 
 	@Override
@@ -204,7 +207,39 @@ public class ToolFreezeTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(Object obj) {
-		return super.equals(obj);
+		if (!(obj instanceof ToolFreezeTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolFreezeTransaction) obj;
+		var freezeTypeBoolean = this.getFreezeType().equals(other.getFreezeType());
+		var fileHashBoolean = this.getFileHash() != null && other.getFileHash() != null && this.getFileHash().equals(
+				other.getFileHash());
+		var fileIDBoolean =
+				this.getFileID() != null && other.getFileID() != null && this.getFileID().equals(other.getFileID());
+		var startTimeBoolean =
+				this.getStartTime() != null && other.getStartTime() != null && this.getStartTime().equals(
+						other.getStartTime());
+
+		boolean freezeBoolean = freezeTypeBoolean;
+		switch (freezeType) {
+			case UNKNOWN_FREEZE_TYPE:
+				return false;
+			case FREEZE_ONLY:
+				freezeBoolean = freezeBoolean && startTimeBoolean;
+				break;
+			case PREPARE_UPGRADE:
+				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean;
+				break;
+			case FREEZE_UPGRADE:
+			case TELEMETRY_UPGRADE:
+				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean && startTimeBoolean;
+				break;
+			case FREEZE_ABORT:
+				break;
+		}
+
+		return super.equals(obj) && freezeBoolean;
 	}
 
 	@Override

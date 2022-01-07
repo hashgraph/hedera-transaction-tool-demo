@@ -106,6 +106,42 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
+	void collate_small_zips_test() throws Exception {
+		final var out1 = new File(
+				RESOURCES_DIRECTORY + File.separator + "Collation_small/Node-0-0-3_0_0_94@1884367800_10000-0_0_1053" +
+						".txsig");
+		Files.deleteIfExists(out1.toPath());
+
+		final var out2 = new File(
+				RESOURCES_DIRECTORY + File.separator + "Collation_small/Node-0-0-4_0_0_94@1884367800_10000-0_0_1053" +
+						".txsig");
+		Files.deleteIfExists(out2.toPath());
+
+		final var verification = new File(RESOURCES_DIRECTORY + File.separator + "Collation_small/verification.csv");
+		if (verification.exists()) {
+			Files.deleteIfExists(verification.toPath());
+		}
+
+		final String[] args = { "collate", "-f", RESOURCES_DIRECTORY + "Collation_small" };
+		ToolsMain.main(args);
+
+		assertTrue(out1.exists());
+		assertTrue(out2.exists());
+		assertTrue(verification.exists());
+
+		Files.deleteIfExists(out1.toPath());
+		Files.deleteIfExists(out2.toPath());
+		Files.deleteIfExists(verification.toPath());
+	}
+
+	@Test
+	void collate_zips_different_test() {
+		final String[] args = { "collate", "-f", RESOURCES_DIRECTORY + "Collation_different" };
+		var exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
+		assertEquals("Hedera Client: Transactions don't match", exception.getMessage());
+	}
+
+	@Test
 	void badRoot_test() {
 		final String[] args = { "collate", "-f", "src/test/resource/" + "collation_test" };
 		Exception exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));

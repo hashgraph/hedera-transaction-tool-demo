@@ -19,11 +19,11 @@
 package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.cli.helpers.CollatorHelper;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -128,11 +128,13 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		for (var output : outputs) {
 			final var files = Objects.requireNonNull(new File(output).listFiles());
-			if (onlyOneFile(output, files)) {
+			if (moreThanOneFile(output, files)) {
 				continue;
 			}
 
-			var destination = new File(out + File.separator + files[0].getName());
+			final var prefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
+			final var destination = new File(out + File.separator + prefix + files[0].getName());
+
 			if (Files.deleteIfExists(destination.toPath())) {
 				logger.info("Destination file deleted");
 			}
@@ -144,7 +146,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		logger.info("Collation done");
 	}
 
-	private boolean onlyOneFile(String output, File[] files) throws IOException {
+	private boolean moreThanOneFile(String output, File[] files) throws IOException {
 		if (files.length <= 1) {
 			return false;
 		}
@@ -177,7 +179,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			List<String> sortedIDs = new ArrayList<>(ids);
 			Collections.sort(sortedIDs);
-			verifyWithFiles.put(FilenameUtils.getBaseName(helper.getTransactionFile()), ids);
+			verifyWithFiles.put(FilenameUtils.getBaseName(helper.getTransactionFile()), new HashSet<>(sortedIDs));
 		}
 
 		for (AccountId requiredId : requiredIds) {

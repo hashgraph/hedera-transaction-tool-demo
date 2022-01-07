@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.cli.helpers;
+package com.hedera.hashgraph.client.core.helpers;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -29,8 +29,6 @@ import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CollatorHelperTest implements GenericFileReadWriteAware {
-	private static final Logger logger = LogManager.getLogger(CollatorHelperTest.class);
 
 	@AfterEach
 	void tearDown() throws IOException {
@@ -158,6 +155,22 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 		assertNotNull(helper1.getTransaction()); // empty transaction
 		assertTrue(helper1.hasTransaction());
 
+	}
+
+	@Test
+	void addHelper_differentTx() throws HederaClientException {
+		var helper1 = new CollatorHelper(new File(
+				"src/test/resources/CollatorHelperFiles/Transactions/Signer1/0_0_76@1639746360_10000-0_0_10749.tx"));
+		var helper2 = new CollatorHelper(new File(
+				"src/test/resources/CollatorHelperFiles/Transactions/Signer2/0_0_76@1639746360_10000-0_0_10749.tx"));
+
+		assertNotNull(helper1.getTransaction()); // empty transaction
+		assertTrue(helper1.hasTransaction());
+		assertNotNull(helper2.getTransaction()); // empty transaction
+		assertTrue(helper2.hasTransaction());
+
+		var exception = assertThrows(HederaClientException.class, () -> helper1.addHelper(helper2));
+		assertEquals("Hedera Client: Transactions don't match", exception.getMessage());
 	}
 
 	@Test
