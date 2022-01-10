@@ -897,8 +897,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				break;
 			case BATCH:
 				assert rf instanceof BatchFile;
-				((BatchFile) rf).setTransactionFee(controller.getDefaultTxFee());
-				((BatchFile) rf).setTxValidDuration(controller.getTxValidDuration());
 				createSignedTransaction(rf, pair);
 				break;
 			default:

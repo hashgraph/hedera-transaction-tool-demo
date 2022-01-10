@@ -194,6 +194,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			clickOn(keys.get(i));
 		}
 		Node sign = find("SIGN\u2026");
+
 		ensureVisible(sign);
 		clickOn(sign);
 		enterPasswordInPopup();
@@ -407,7 +408,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			data.add(new String[] { "Sender Account", payerId.toString() });
 			data.add(new String[] { "Sending Time", time });
 			data.add(new String[] { "Node IDs", "0.0.3", "0.0.4" });
-			data.add(new String[] { "AccountID", "Amount", "Start Date", "memo" });
+			data.add(new String[] { "Account ID", "Amount", "Start Date", "memo" });
 			data.addAll(distro);
 			writer.writeAll(data);
 			writer.close();

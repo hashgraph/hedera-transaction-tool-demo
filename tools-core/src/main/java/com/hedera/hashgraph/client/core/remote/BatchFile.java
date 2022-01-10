@@ -19,17 +19,20 @@
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.remote.helpers.BatchLine;
 import com.hedera.hashgraph.client.core.remote.helpers.DistributionMaker;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Hbar;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
@@ -53,6 +56,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
@@ -71,14 +75,16 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_NUMBER_OF_NODES;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_FOLDER_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_DEFAULT_FEE;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.ADD_MORE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.BROWSE;
 import static com.hedera.hashgraph.client.core.enums.FileActions.DECLINE;
@@ -89,14 +95,31 @@ public class BatchFile extends RemoteFile {
 
 	private static final Logger logger = LogManager.getLogger(BatchFile.class);
 	public static final int SORTING_CONSTANT = 10000;
+	private static final String SENDING_TIME = "sending time";
+	private static final String SENDER_ACCOUNT = "sender account";
+	private static final String NODE_IDS = "node ids";
+	private static final String TRANSACTION_FEE = "transaction fee";
+	private static final String DURATION = "transaction valid duration";
+	public static final String ACCOUNT_ID = "account id";
+	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
+	private static final String MEMO_STRING = "memo";
 
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
+	public static final String NUMBER_OF_FIELDS = "Number of fields";
+
+
+	private final UserAccessibleProperties properties =
+			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
 	private Identifier senderAccountID;
+	private Identifier feePayerAccountID;
 	private List<Identifier> nodeAccountID;
 	private int hoursUTC;
 	private int minutesUTC;
 	private LocalDate firstTransaction;
 	private List<BatchLine> transfers;
+	private String memo = "";
 	private long transactionFee = VAL_NUM_TRANSACTION_DEFAULT_FEE;// default value
 	private long txValidDuration = VAL_NUM_TRANSACTION_VALID_DURATION; // default value
 
@@ -123,12 +146,20 @@ public class BatchFile extends RemoteFile {
 		}
 
 		// Sender line
-		if (checkSender(fileDetails, csvList)) {
+		if (checkSender(csvList)) {
+			return;
+		}
+
+		if (checkFeePayer(csvList)) {
+			return;
+		}
+
+		if (checkMemo(csvList)) {
 			return;
 		}
 
 		// Submission-time line
-		if (checkTime(fileDetails, csvList)) {
+		if (checkTime(csvList)) {
 			return;
 		}
 
@@ -136,28 +167,114 @@ public class BatchFile extends RemoteFile {
 		if (checkNodes(csvList)) {
 			return;
 		}
+
+		// Transaction fee line (optional: if missing use the app default)
+		if (checkFee(csvList)) {
+			return;
+		}
+
+		// Transaction valid duration line (optional: if missing uses the app default)
+		if (checkTransactionValidDuration(csvList)) {
+			return;
+		}
+
+		// Parse transfers
 		checkTransfers(csvList);
+	}
+
+	/**
+	 * Finds the index of the beginning of the distributions
+	 *
+	 * @param csvList
+	 * 		a list of strings that have been read from a batch file
+	 * @return the index of the first line that contains a distribution
+	 */
+	private int getDistributionStart(List<String> csvList) {
+		int count = 0;
+		for (String s : csvList) {
+			count++;
+			if (s.toLowerCase(Locale.ROOT).startsWith(ACCOUNT_ID)) {
+				break;
+			}
+		}
+		return count;
 	}
 
 	/**
 	 * Checks the sender line of the csv file
 	 *
-	 * @param fileDetails
-	 * 		the details of the file
 	 * @param csvList
 	 * 		an array of strings that contains the csv file
 	 * @return true if the sender line is invalid
 	 */
-	private boolean checkSender(FileDetails fileDetails, List<String> csvList) {
+	private boolean checkSender(List<String> csvList) {
 		try {
-			var senderIDLine = csvList.get(0).replace(" ", "").split("[,]");
+			String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
+
 			if (senderIDLine.length != 2) {
-				errorBehavior(fileDetails, "Number of fields", "sender ID");
+				errorBehavior(getName(), NUMBER_OF_FIELDS, SENDER_ACCOUNT);
 				return true;
 			}
 			this.senderAccountID = Identifier.parse(senderIDLine[1]);
 		} catch (Exception e) {
-			logger.error("Unable to parse: {}", e.getMessage());
+			errorBehavior(getName(), e.getMessage(), SENDER_ACCOUNT);
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the fee payer line of the csv file. If the line does not exist, uses the sender as fee payer
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the sender line is invalid
+	 */
+	private boolean checkFeePayer(List<String> csvList) {
+		try {
+			String[] feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
+
+			if (feePayerIDLine.length == 0) {
+				this.feePayerAccountID = this.senderAccountID;
+				return false;
+			}
+
+			if (feePayerIDLine.length != 2) {
+				errorBehavior(getName(), NUMBER_OF_FIELDS, FEE_PAYER_ACCOUNT);
+				return true;
+			}
+			this.feePayerAccountID = Identifier.parse(feePayerIDLine[1]);
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), FEE_PAYER_ACCOUNT);
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the memo line of the csv file. If the line does not exist, the memo is empty
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the sender line is invalid
+	 */
+	private boolean checkMemo(List<String> csvList) {
+		try {
+			String[] memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
+
+			if (memoLine.length == 0) {
+				return false;
+			}
+
+			if (memoLine.length != 2) {
+				errorBehavior(getName(), NUMBER_OF_FIELDS, MEMO_STRING);
+				return true;
+			}
+			this.memo = memoLine[1];
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), MEMO_STRING);
 			setValid(false);
 			return true;
 		}
@@ -167,17 +284,15 @@ public class BatchFile extends RemoteFile {
 	/**
 	 * Checks the time line of the csv file
 	 *
-	 * @param fileDetails
-	 * 		the details of the file
 	 * @param csvList
 	 * 		an array of strings that contains the csv file
 	 * @return true if the time line is invalid
 	 */
-	private boolean checkTime(FileDetails fileDetails, List<String> csvList) {
+	private boolean checkTime(List<String> csvList) {
 		try {
-			var timeLine = csvList.get(1).replace(" ", "").split("[,:]");
+			String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
 			if (timeLine.length != 3) {
-				errorBehavior(fileDetails, "Number of fields", "time");
+				errorBehavior(getName(), NUMBER_OF_FIELDS, "time");
 				return true;
 			}
 			this.hoursUTC = Integer.parseInt(timeLine[1]);
@@ -192,7 +307,101 @@ public class BatchFile extends RemoteFile {
 				return true;
 			}
 		} catch (NumberFormatException e) {
-			errorBehavior(fileDetails, "time", "Number format");
+			errorBehavior(getName(), "time", "Number format");
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the nodes line of the csv file
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the node line is invalid
+	 */
+	private boolean checkNodes(List<String> csvList) {
+		nodeAccountID = new ArrayList<>();
+		try {
+			String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
+
+			if (nodeAccountIDLine.length == 0) {
+				setValid(false);
+				errorBehavior(getName(), "missing node line", "nodes");
+			}
+
+			nodeAccountID = new ArrayList<>();
+			for (var i = 1; i < nodeAccountIDLine.length; i++) {
+				if (!nodeAccountID.contains(Identifier.parse(nodeAccountIDLine[i]))) {
+					nodeAccountID.add(Identifier.parse(nodeAccountIDLine[i]));
+				}
+			}
+
+			if (nodeAccountID.size() > MAX_NUMBER_OF_NODES) {
+				logger.error("{} exceeds the maximum number of nodes allowed (Max = {})", nodeAccountID.size(),
+						MAX_NUMBER_OF_NODES);
+				setValid(false);
+				return true;
+			}
+		} catch (Exception e) {
+			errorBehavior(getName(), "nodes", e.getLocalizedMessage());
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the transaction fee line of the csv file
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the node line is invalid
+	 */
+	private boolean checkFee(List<String> csvList) {
+		try {
+			String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
+			// If there is no transaction fee line, just use the default;
+			if (feeLine.length == 0) {
+				this.transactionFee = properties.getDefaultTxFee();
+				return false;
+			}
+			if (feeLine.length != 2) {
+				errorBehavior(getName(), NUMBER_OF_FIELDS, TRANSACTION_FEE);
+				return true;
+			}
+			this.transactionFee = Long.parseLong(feeLine[1]);
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), TRANSACTION_FEE);
+			setValid(false);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks the transaction valid duration line of the csv file
+	 *
+	 * @param csvList
+	 * 		an array of strings that contains the csv file
+	 * @return true if the node line is invalid
+	 */
+	private boolean checkTransactionValidDuration(List<String> csvList) {
+		try {
+			String[] tvdLine = getStrings(csvList, DURATION, "[,]", true);
+			// If there is no transaction valid duration line, just use the default;
+			if (tvdLine.length == 0) {
+				this.txValidDuration = properties.getTxValidDuration();
+				return false;
+			}
+			if (tvdLine.length != 2) {
+				errorBehavior(getName(), NUMBER_OF_FIELDS, DURATION);
+				return true;
+			}
+			this.txValidDuration = Long.parseLong(tvdLine[1]);
+		} catch (Exception e) {
+			errorBehavior(getName(), e.getMessage(), DURATION);
+			setValid(false);
 			return true;
 		}
 		return false;
@@ -207,7 +416,7 @@ public class BatchFile extends RemoteFile {
 	private void checkTransfers(List<String> csvList) {
 		try {
 			transfers = new ArrayList<>();
-			for (var i = 4; i < csvList.size(); i++) {
+			for (var i = getDistributionStart(csvList); i < csvList.size(); i++) {
 				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
 			}
 			this.firstTransaction = getFirstDate();
@@ -220,37 +429,33 @@ public class BatchFile extends RemoteFile {
 		transfers = dedup(transfers);
 	}
 
+
 	/**
-	 * Checks the nodes line of the csv file
+	 * Finds and parses a line based on a query string
 	 *
 	 * @param csvList
-	 * 		an array of strings that contains the csv file
-	 * @return true if the node line is invalid
+	 * 		a list of strings
+	 * @param queryString
+	 * 		the string that the line must start with
+	 * @param regex
+	 * 		a regex string that determines how the line will be parsed
+	 * @return an array of strings
 	 */
-	private boolean checkNodes(List<String> csvList) {
-		nodeAccountID = new ArrayList<>();
-		try {
-			var nodeAccountIDLine = csvList.get(2).replace(" ", "").split("[,]");
-
-			nodeAccountID = new ArrayList<>();
-			for (var i = 1; i < nodeAccountIDLine.length; i++) {
-				if (!nodeAccountID.contains(Identifier.parse(nodeAccountIDLine[i]))) {
-					nodeAccountID.add((Identifier.parse(nodeAccountIDLine[i])));
+	@NotNull
+	private String[] getStrings(List<String> csvList, String queryString, String regex, boolean removeSpaces) {
+		String[] strings = new String[0];
+		for (String s : csvList) {
+			if (s.toLowerCase(Locale.ROOT).startsWith(queryString)) {
+				strings = removeSpaces ? s.replace(" ", "").split(regex) : s.split(regex);
+				String[] returnString = new String[strings.length];
+				// trim leading and trailing spaces
+				for (int i = 0, stringsLength = strings.length; i < stringsLength; i++) {
+					returnString[i] = strings[i].trim();
 				}
+				return returnString;
 			}
-
-			if (nodeAccountID.size() > MAX_NUMBER_OF_NODES) {
-				logger.error("{} exceeds the maximum number of nodes allowed (Max = {})", nodeAccountID.size(),
-						MAX_NUMBER_OF_NODES);
-				setValid(false);
-				return true;
-			}
-		} catch (Exception e) {
-			logger.error(CANNOT_PARSE_ERROR_MESSAGE, e.getLocalizedMessage());
-			setValid(false);
-			return true;
 		}
-		return false;
+		return strings;
 	}
 
 	/**
@@ -269,19 +474,26 @@ public class BatchFile extends RemoteFile {
 	/**
 	 * Logs an error if there is an error in a field of the csv
 	 *
-	 * @param fileDetails
-	 * 		the details of the file
+	 * @param filename
+	 * 		the name of the file
 	 * @param message
 	 * 		the message
 	 * @param field
 	 * 		the field
 	 */
-	private void errorBehavior(FileDetails fileDetails, String message, String field) {
+	private void errorBehavior(String filename, String message, String field) {
 		logger.error("Incorrect {} in csv file ({}): File {} will not be displayed", field, message,
-				fileDetails.getName());
+				filename);
 		setValid(false);
 	}
 
+	/**
+	 * Makes sure all transfers have a different transaction ID
+	 *
+	 * @param transfers
+	 * 		the list of read transfers
+	 * @return a list of transfers with distinct transaction valid starts
+	 */
 	private List<BatchLine> dedup(List<BatchLine> transfers) {
 		Set<Timestamp> dedupSet = new HashSet<>();
 		List<BatchLine> newTransfers = new ArrayList<>();
@@ -343,6 +555,14 @@ public class BatchFile extends RemoteFile {
 
 	public Identifier getSenderAccountID() {
 		return senderAccountID;
+	}
+
+	public Identifier getFeePayerAccountID() {
+		return feePayerAccountID;
+	}
+
+	public String getMemo() {
+		return memo;
 	}
 
 	public List<Identifier> getNodeAccountID() {
@@ -407,36 +627,54 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public GridPane buildGridPane() {
 		var detailsGridPane = new GridPane();
-		detailsGridPane.add(new Label("Sender account: "), 0, 0);
-
+		int row = 0;
 		try {
 			final var accounts = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					ACCOUNTS_MAP_FILE) : new JsonObject();
+			detailsGridPane.add(new Label("Sender account: "), LEFT, row);
 			detailsGridPane.add(
-					new Label(CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts)), 1,
-					0);
+					new Label(CommonMethods.nicknameOrNumber(getSenderAccountID(), accounts)), RIGHT, row++);
+			detailsGridPane.add(new Label("Fee payer account"), LEFT, row);
+			detailsGridPane.add(new Label(CommonMethods.nicknameOrNumber(getFeePayerAccountID(), accounts)), RIGHT,
+					row++);
 		} catch (HederaClientException e) {
 			logger.error(e);
 		}
+
+		var feeLabel = new Label("Single transaction maximum fee: ");
+		feeLabel.setWrapText(true);
+		detailsGridPane.add(feeLabel, LEFT, row);
+
+		var actualFeeLabel = new Label(Hbar.fromTinybars(getTransactionFee()).toString());
+		actualFeeLabel.setWrapText(true);
+		actualFeeLabel.setStyle(Constants.DEBIT);
+		detailsGridPane.add(actualFeeLabel, RIGHT, row++);
+
 		var firstTransactionLabel = new Label("First transaction date: ");
 		firstTransactionLabel.setWrapText(true);
 		firstTransactionLabel.setAlignment(Pos.CENTER_LEFT);
-		detailsGridPane.add(firstTransactionLabel, 0, 1);
+		detailsGridPane.add(firstTransactionLabel, LEFT, row);
+
 
 		var timestamp = getFirstTransactionTimeStamp();
 
 		var utcTime = getTimeLabel(timestamp, true);
 		utcTime.setWrapText(true);
-		detailsGridPane.add(utcTime, 1, 1);
+		detailsGridPane.add(utcTime, RIGHT, row++);
 
 		var utcLabel = new Label("All transactions will be sent at: ");
-		detailsGridPane.add(utcLabel, 0, 2);
+		detailsGridPane.add(utcLabel, LEFT, row);
 		utcLabel.setWrapText(true);
+		detailsGridPane.add(getTimeLabel(timestamp, false), RIGHT, row++);
 
-		detailsGridPane.add(getTimeLabel(timestamp, false), 1, 2);
+		var tvDuration = new Label("Transactions duration: ");
+		detailsGridPane.add(tvDuration, LEFT, row);
+		tvDuration.setWrapText(true);
+		detailsGridPane.add(new Label(String.format("%d seconds", getTxValidDuration())), RIGHT, row++);
+
 		var nLabel = new Label("Transactions will be submitted to nodes: ");
 		nLabel.setWrapText(true);
-		detailsGridPane.add(nLabel, 0, 3);
+		detailsGridPane.add(nLabel, LEFT, row);
 
 		JsonObject nicknames;
 		try {
@@ -451,8 +689,16 @@ public class BatchFile extends RemoteFile {
 			nodesString.append(n.toNicknameAndChecksum(nicknames)).append("\n");
 		}
 
-		detailsGridPane.add(new Label(nodesString.toString()), 1, 3);
-		detailsGridPane.add(new Label("More details: "), 0, 4);
+		detailsGridPane.add(new Label(nodesString.toString()), RIGHT, row++);
+
+		if (!"".equals(getMemo())) {
+			detailsGridPane.add(new Label("Memo: "), LEFT, row);
+			final var memoLabel = new Label(getMemo());
+			memoLabel.setWrapText(true);
+			detailsGridPane.add(memoLabel, RIGHT, row++);
+		}
+
+		detailsGridPane.add(new Label("More details: "), LEFT, row);
 		var hyperlink = new Hyperlink("Click to open CSV file");
 		hyperlink.setOnAction(actionEvent -> {
 			try {
@@ -461,7 +707,7 @@ public class BatchFile extends RemoteFile {
 				logger.error(e);
 			}
 		});
-		detailsGridPane.add(hyperlink, 1, 4);
+		detailsGridPane.add(hyperlink, RIGHT, row);
 
 		var cc1 = new ColumnConstraints();
 		cc1.prefWidthProperty().bind(detailsGridPane.widthProperty().divide(5).multiply(2));
@@ -478,7 +724,7 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
 		var tempStorage =
-				TEMP_FOLDER_LOCATION + (LocalDate.now()) + File.separator + RandomStringUtils.randomAlphanumeric(
+				TEMP_FOLDER_LOCATION + LocalDate.now() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		DoubleProperty progress = new SimpleDoubleProperty(1);
@@ -513,8 +759,13 @@ public class BatchFile extends RemoteFile {
 			var storageLocation =
 					tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
 							pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
-			var maker = new DistributionMaker(getSenderAccountID().asAccount(), nodeID.asAccount(),
-					new Timestamp(getTxValidDuration(), 0), getTransactionFee(), storageLocation,
+			var maker = new DistributionMaker(getSenderAccountID().asAccount(),
+					feePayerAccountID.asAccount(),
+					nodeID.asAccount(),
+					new Timestamp(getTxValidDuration(), 0),
+					getTransactionFee(),
+					memo,
+					storageLocation,
 					output + File.separator + user);
 
 
@@ -639,4 +890,5 @@ public class BatchFile extends RemoteFile {
 
 		return window;
 	}
+
 }
