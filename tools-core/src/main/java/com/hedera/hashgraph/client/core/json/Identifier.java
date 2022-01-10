@@ -37,7 +37,11 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.regex.Pattern;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_REGEX;
 import static org.apache.commons.lang3.StringUtils.isNumeric;
 
 public class Identifier implements Comparable<Identifier> {
@@ -158,19 +162,33 @@ public class Identifier implements Comparable<Identifier> {
 	 * @return an Identifier
 	 */
 	public static Identifier parse(final String id) {
-
 		if (id == null || id.isEmpty()) {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
 
-		// If it has a nickname, remove it.
-		var idC = id.contains("(") ? id.substring(id.indexOf("(") + 1, id.indexOf(")")) : id;
+		String idC = "";
+
+		final var pattern1 = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		final var pattern2 = Pattern.compile(FULL_ACCOUNT_REGEX);
+		final var pattern3 = Pattern.compile(NUMBER_REGEX);
+
+		final var matcher1 = pattern1.matcher(id);
+		final var matcher2 = pattern2.matcher(id);
+		final var matcher3 = pattern3.matcher(id);
+
+		if (matcher1.find()) {
+			idC = matcher1.group(0);
+		} else if (matcher2.find()) {
+			idC = matcher2.group(0);
+		} else if (matcher3.find()) {
+			idC = matcher3.group(0);
+		}
 
 		if (isNumeric(idC)) {
 			return new Identifier(0, 0, Long.parseLong(idC));
 		}
 
-		var address = AddressChecksums.parseAddress(idC);
+		final var address = AddressChecksums.parseAddress(idC);
 		if (address.getStatus() == AddressChecksums.parseStatus.BAD_FORMAT) {
 			throw new HederaClientRuntimeException(
 					String.format("Bad account format: Address \"%s\" cannot be parsed", id));
@@ -183,7 +201,7 @@ public class Identifier implements Comparable<Identifier> {
 		return new Identifier(address.getNum1(), address.getNum2(), address.getNum3());
 	}
 
-	public static final Identifier ZERO = new Identifier(0,0,0);
+	public static final Identifier ZERO = new Identifier(0, 0, 0);
 
 
 	public long getRealmNum() {
@@ -232,6 +250,10 @@ public class Identifier implements Comparable<Identifier> {
 
 	public String toNicknameAndChecksum(JsonObject accounts) {
 		return CommonMethods.nicknameOrNumber(this, accounts);
+	}
+
+	public String toReadableStringAndChecksum() {
+		return String.format("%s-%s", this.toReadableString(), AddressChecksums.checksum(this.toReadableString()));
 	}
 
 	@Override

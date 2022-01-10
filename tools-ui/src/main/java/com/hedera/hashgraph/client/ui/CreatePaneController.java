@@ -1110,10 +1110,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		amount.setStyle(null);
 		amount.setStyle(START_STYLE);
 
-		var newTransaction =
-				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+		AccountAmountStrings newTransaction;
+		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		final var status = parseAddress(newTransaction.getAccountID()).getStatus();
+		final var status = parseAddress(newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
@@ -2367,6 +2367,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setupTextFieldResizeProperty(TextField... textFields) {
 		for (TextField tf : textFields) {
+			tf.setMinWidth(300);
 			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
 		}
 
@@ -2545,9 +2546,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanAllTransferFields();
 		var transfers = transaction.getAccountAmountMap();
 		for (Map.Entry<Identifier, Hbar> entry : transfers.entrySet()) {
-			var newTransaction =
-					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
-							String.valueOf(Math.abs(entry.getValue().toTinybars())));
+			AccountAmountStrings newTransaction;
+			newTransaction = new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
+					String.valueOf(Math.abs(entry.getValue().toTinybars())));
 			var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}
