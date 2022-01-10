@@ -603,21 +603,21 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @return an account and checksum string if the pattern is found. An empty string otherwise
 	 */
 	public static String removeNickname(String value) {
-		var patternFull = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
-		var matcherFull = patternFull.matcher(value);
+		final var patternFull = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		final var matcherFull = patternFull.matcher(value);
 		if (matcherFull.find()) {
 			return matcherFull.group(0);
 		}
-		var patternAccount = Pattern.compile(FULL_ACCOUNT_REGEX);
-		var matcherAccount = patternAccount.matcher(value);
+		final var patternAccount = Pattern.compile(FULL_ACCOUNT_REGEX);
+		final var matcherAccount = patternAccount.matcher(value);
 		if (matcherAccount.find()) {
-			var identifier = Identifier.parse(matcherAccount.group(0));
+			final var identifier = Identifier.parse(matcherAccount.group(0));
 			return identifier.toReadableStringAndChecksum();
 		}
-		var patternDecimal = Pattern.compile(NUMBER_REGEX);
-		var matcherDecimal = patternDecimal.matcher(value);
+		final var patternDecimal = Pattern.compile(NUMBER_REGEX);
+		final var matcherDecimal = patternDecimal.matcher(value);
 		if (matcherDecimal.find()) {
-			var identifier = Identifier.parse(matcherDecimal.group(0));
+			final var identifier = Identifier.parse(matcherDecimal.group(0));
 			return identifier.toReadableStringAndChecksum();
 		}
 		return "";

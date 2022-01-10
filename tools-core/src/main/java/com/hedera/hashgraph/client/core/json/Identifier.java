@@ -168,13 +168,13 @@ public class Identifier implements Comparable<Identifier> {
 
 		String idC = "";
 
-		var pattern1 = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
-		var pattern2 = Pattern.compile(FULL_ACCOUNT_REGEX);
-		var pattern3 = Pattern.compile(NUMBER_REGEX);
+		final var pattern1 = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		final var pattern2 = Pattern.compile(FULL_ACCOUNT_REGEX);
+		final var pattern3 = Pattern.compile(NUMBER_REGEX);
 
-		var matcher1 = pattern1.matcher(id);
-		var matcher2 = pattern2.matcher(id);
-		var matcher3 = pattern3.matcher(id);
+		final var matcher1 = pattern1.matcher(id);
+		final var matcher2 = pattern2.matcher(id);
+		final var matcher3 = pattern3.matcher(id);
 
 		if (matcher1.find()) {
 			idC = matcher1.group(0);
@@ -188,7 +188,7 @@ public class Identifier implements Comparable<Identifier> {
 			return new Identifier(0, 0, Long.parseLong(idC));
 		}
 
-		var address = AddressChecksums.parseAddress(idC);
+		final var address = AddressChecksums.parseAddress(idC);
 		if (address.getStatus() == AddressChecksums.parseStatus.BAD_FORMAT) {
 			throw new HederaClientRuntimeException(
 					String.format("Bad account format: Address \"%s\" cannot be parsed", id));
