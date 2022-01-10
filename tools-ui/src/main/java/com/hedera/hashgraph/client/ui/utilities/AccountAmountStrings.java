@@ -20,7 +20,13 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonElement;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
+
+import java.util.regex.Pattern;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
 
 
 public class AccountAmountStrings {
@@ -28,26 +34,37 @@ public class AccountAmountStrings {
 	private String amount;
 
 	public AccountAmountStrings(String accountID, String amount) {
-		if (accountID.contains(".")) {
-			this.accountID = accountID;
-		} else {
-			this.accountID = String.format("0.0.%s", accountID);
-		}
-
-		var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
-
-		this.amount = ((amount.contains("-")) ? "- " : "") + Utilities.setHBarFormat(
-				Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
-
+		this.accountID = parseAccountString(accountID);
+		this.amount = parseAmountString(amount);
 	}
 
-	public AccountAmountStrings(JsonElement transferElement) {
-		this(transferElement.getAsJsonObject().get("accountID").getAsString(),
-				transferElement.getAsJsonObject().get("amount").getAsString());
+	private String parseAmountString(String amount) {
+		try {
+			var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
+			return (amount.contains("-") ? "- " : "") + Utilities.setHBarFormat(
+					Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
+		} catch (NumberFormatException e) {
+			throw new HederaClientRuntimeException(
+					String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
+		}
+	}
+
+	private String parseAccountString(String accountID) {
+		var pattern = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		var matcher = pattern.matcher(accountID);
+		if (matcher.find()) {
+			return accountID;
+		}
+		return Identifier.parse(accountID).toReadableStringAndChecksum();
 	}
 
 	public String getAccountID() {
 		return accountID;
+	}
+
+	public String getStrippedAccountID() {
+		final var value = this.accountID;
+		return CommonMethods.removeNickname(value);
 	}
 
 	public JsonElement getAccountAsJSON() {
@@ -55,11 +72,7 @@ public class AccountAmountStrings {
 	}
 
 	public void setAccountID(String accountID) {
-		if (accountID.contains(".")) {
-			this.accountID = accountID;
-		} else {
-			this.accountID = String.format("0.0.%s", accountID);
-		}
+		this.accountID = parseAccountString(accountID);
 	}
 
 	public String getAmount() {
@@ -67,8 +80,8 @@ public class AccountAmountStrings {
 	}
 
 	public long getAmountAsLong() {
-		var sign = (amount.contains("-")) ? -1L : 1L;
-		var temp = (amount.contains(".")) ? amount : amount + ".00000000";
+		var sign = amount.contains("-") ? -1L : 1L;
+		var temp = amount.contains(".") ? amount : amount + ".00000000";
 		return sign * Long.parseLong(temp.replace("\u0127", "")
 				.replace(" ", "")
 				.replace(".", "")
@@ -76,15 +89,29 @@ public class AccountAmountStrings {
 	}
 
 	public void setAmount(String amount) {
-		this.amount = Utilities.setHBarFormat(Long.parseLong(amount));
+		this.amount = parseAmountString(amount);
 	}
 
 	public AccountAmountStrings negate() {
-
 		if (this.amount.contains("-")) {
 			return new AccountAmountStrings(this.accountID, this.amount.replace("-", ""));
 		} else {
 			return new AccountAmountStrings(this.accountID, String.format("- %d", getAmountAsLong()));
 		}
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof AccountAmountStrings)) {
+			return false;
+		}
+
+		return this.accountID.equals(
+				((AccountAmountStrings) obj).getAccountID()) && getAmountAsLong() == ((AccountAmountStrings) obj).getAmountAsLong();
+	}
+
+	@Override
+	public int hashCode() {
+		return this.accountID.hashCode() + this.amount.hashCode();
 	}
 }
