@@ -180,6 +180,8 @@ public class BatchFile extends RemoteFile {
 
 		// Parse transfers
 		checkTransfers(csvList);
+
+		setShowAdditionalBoxes();
 	}
 
 	/**
@@ -428,7 +430,6 @@ public class BatchFile extends RemoteFile {
 		Collections.sort(transfers);
 		transfers = dedup(transfers);
 	}
-
 
 	/**
 	 * Finds and parses a line based on a query string

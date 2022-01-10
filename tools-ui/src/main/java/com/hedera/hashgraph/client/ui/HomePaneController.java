@@ -766,7 +766,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		checkBox.setSelected(true);
 		checkBoxListener(signersSet, keyFile, baseName, checkBox, logger);
 		if (oldSigningKeys.contains(keyFile)) {
-			checkBox.setDisable(true);
+			checkBox.setSelected(false);
 		}
 		return checkBox;
 	}

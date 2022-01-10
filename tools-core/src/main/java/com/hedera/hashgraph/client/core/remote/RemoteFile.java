@@ -100,6 +100,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	private boolean history = false;
 	private boolean valid = false;
 	private boolean hasComments = false;
+	private boolean showAdditionalBoxes = false;
+
 	private RemoteFile commentsFile;
 	private long signDateInSecs = 0;
 	private final TextArea commentArea = new TextArea();
@@ -207,6 +209,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	public void setType(FileType type) {
 		this.type = type;
+	}
+
+	public void setShowAdditionalBoxes() {
+		this.showAdditionalBoxes = true;
 	}
 
 	public String getName() {
@@ -447,7 +453,9 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		var detailsGridPane = buildGridPane();
 		detailsGridPane.setMinWidth(550);
-		if (getType().equals(TRANSACTION) || getType().equals(BATCH) || getType().equals(LARGE_BINARY)) {
+
+		// If the type of file allows it, show the history pane
+		if (showAdditionalBoxes) {
 			addHistory(detailsGridPane);
 		}
 
@@ -455,7 +463,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		hBox.getChildren().add(detailsGridPane);
 
-		if (getType().equals(TRANSACTION) || getType().equals(BATCH) || getType().equals(LARGE_BINARY)) {
+		// If the type of file allows it, show the comments pane
+		if (showAdditionalBoxes) {
 			hBox.getChildren().add(commentsVBox);
 			detailsGridPane.maxWidthProperty().bind(fileVBox.widthProperty().divide(2));
 		}

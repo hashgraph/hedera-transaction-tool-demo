@@ -95,7 +95,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 
-
 	public LargeBinaryFile() {
 		super();
 	}
@@ -195,6 +194,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.transactionFee = details.has("transactionFee") ? details.get("transactionFee").getAsLong() : 200000000;
 		this.memo = details.has("memo") ? details.get("memo").getAsString() : "";
 		this.content = bins[0];
+
+		setShowAdditionalBoxes();
 	}
 
 	/**
