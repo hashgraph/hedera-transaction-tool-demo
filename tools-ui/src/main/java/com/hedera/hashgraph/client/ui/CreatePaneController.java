@@ -823,7 +823,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// region CREATE ACCOUNT
 
-	private Pair<UserComments, ToolTransaction> createAccountTransactionAction() throws HederaClientException {
+	private Pair<UserComments, ToolTransaction> createAccountTransactionAction() {
 		if (!checkAndFlagCreateFields()) {
 			return null;
 		}
@@ -1283,7 +1283,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return flag && freezeFlag;
 	}
 
-	private Pair<UserComments, ToolTransaction> createSystemTransactionAction() throws HederaClientException {
+	private Pair<UserComments, ToolTransaction> createSystemTransactionAction() {
 		if (!checkAndFlagSystemFields()) {
 			return null;
 		}
@@ -1302,7 +1302,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private Pair<UserComments, ToolTransaction> createFreezeTransaction() throws HederaClientException {
+	private Pair<UserComments, ToolTransaction> createFreezeTransaction() {
 		if (!checkAndFlagFreezeFields()) {
 			return null;
 		}
@@ -1587,7 +1587,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 *
 	 * @return a json object with the all the information collected in the form
 	 */
-	private JsonObject buildJsonInput() throws HederaClientException {
+	private JsonObject buildJsonInput() {
 		var input = new JsonObject();
 		var transactionValidStart = startFieldsSet.getDate();
 
