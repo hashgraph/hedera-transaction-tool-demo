@@ -130,4 +130,18 @@ class AccountAmountStringsTest {
 		assertEquals(accountAmount2, accountAmount1.negate());
 
 	}
+
+	@Test
+	void hashCode_test() {
+		var account = "nickname (654654.9946546.3345667-cdtxd)";
+		var positiveAmount = "123 654.98 765 432 ħ";
+		var negativeAmount = "- 123 654.98 765 432 ħ";
+
+		var accountAmount1 = new AccountAmountStrings(account, positiveAmount);
+		var accountAmount2 = new AccountAmountStrings(account, negativeAmount);
+
+		assertEquals(21471835, accountAmount2.hashCode());
+		assertEquals(-928570296, accountAmount1.hashCode());
+
+	}
 }

@@ -44,7 +44,8 @@ public class AccountAmountStrings {
 			return (amount.contains("-") ? "- " : "") + Utilities.setHBarFormat(
 					Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
 		} catch (NumberFormatException e) {
-			throw new HederaClientRuntimeException(String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
+			throw new HederaClientRuntimeException(
+					String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
 		}
 	}
 
@@ -107,5 +108,10 @@ public class AccountAmountStrings {
 
 		return this.accountID.equals(
 				((AccountAmountStrings) obj).getAccountID()) && getAmountAsLong() == ((AccountAmountStrings) obj).getAmountAsLong();
+	}
+
+	@Override
+	public int hashCode() {
+		return this.accountID.hashCode() + this.amount.hashCode();
 	}
 }
