@@ -30,8 +30,8 @@ class PasswordAuthenticatorTest {
 
 	@Test
 	void test_encrypt_decrypt() throws InvalidKeySpecException, NoSuchAlgorithmException {
-		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
-		var hash = passwordAuthenticator.hash("alpha biome".toCharArray());
+		final PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
+		final var hash = passwordAuthenticator.hash("alpha biome".toCharArray());
 		assertFalse(passwordAuthenticator.authenticate("biome alpha".toCharArray(), hash));
 		assertTrue(passwordAuthenticator.authenticate("alpha biome".toCharArray(), hash));
 		assertFalse(passwordAuthenticator.authenticateLegacy("alpha biome".toCharArray(), hash));

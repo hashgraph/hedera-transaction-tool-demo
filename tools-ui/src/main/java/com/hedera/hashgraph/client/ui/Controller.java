@@ -145,7 +145,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private UserAccessibleProperties properties;
 
-	public void setProperties(UserAccessibleProperties properties) {
+	public void setProperties(final UserAccessibleProperties properties) {
 		this.properties = properties;
 	}
 
@@ -155,7 +155,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return thisPane;
 	}
 
-	public void setThisPane(Pane thisPane) {
+	public void setThisPane(final Pane thisPane) {
 		this.thisPane = thisPane;
 	}
 
@@ -178,18 +178,18 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	private KeyStructureUtility keyStructureUtility;
 	public final KeyPairUtility keyPairUtility = new KeyPairUtility();
 
-	void setDisableButtons(boolean disableButtons) {
+	void setDisableButtons(final boolean disableButtons) {
 		this.disableButtons = disableButtons;
 	}
 
 	@Override
-	public void initialize(URL location, ResourceBundle resources) {
+	public void initialize(final URL location, final ResourceBundle resources) {
 		resetButtonBackgrounds();
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		keyStructureUtility = new KeyStructureUtility(this);
 
-		var lastVersion = properties.getVersionString();
-		var thisVersion = getVersion();
+		final var lastVersion = properties.getVersionString();
+		final var thisVersion = getVersion();
 
 
 		if (!thisVersion.equalsIgnoreCase(lastVersion)) {
@@ -208,7 +208,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		if (!new File(getPreferredStorageDirectory()).exists()) {
 			try {
 				resetPreferences();
-			} catch (BackingStoreException | IOException e) {
+			} catch (final BackingStoreException | IOException e) {
 				logAndDisplayError(e);
 			}
 			setSetupPhase(INITIAL_SETUP_PHASE);
@@ -218,21 +218,21 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 		// Check if update from previous version is needed
-		var updateHelper = new UpdateHelper(properties.getPreferredStorageDirectory());
+		final var updateHelper = new UpdateHelper(properties.getPreferredStorageDirectory());
 
 		if ((getSetupPhase() == TEST_PHASE || getSetupPhase() == NORMAL_OPERATION_PHASE) && !updateHelper.isUpdated()) {
 			logger.info("Application directory needs to be updated");
 			try {
 				updateHelper.handleMigration();
 				replacePublicKey();
-			} catch (HederaClientException | IOException e) {
+			} catch (final HederaClientException | IOException e) {
 				logger.error("Cannot complete migration {}", e.getMessage());
 			}
 		}
 
 		// Home pane should load files periodically
 		if (getSetupPhase() == NORMAL_OPERATION_PHASE) {
-			var service = new ReloadFilesService(homePaneController);
+			final var service = new ReloadFilesService(homePaneController);
 			service.setPeriod(Duration.seconds(RELOAD_PERIOD));
 			service.start();
 		}
@@ -253,7 +253,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		settingsPane.setVisible(false);
 		hederaButton.setOnMouseClicked(mouseEvent -> {
 			if (mouseEvent.getClickCount() == 2) {
-				var version = getVersion().replace(", ", "\n").replace(" ", "\u00A0");
+				final var version = getVersion().replace(", ", "\n").replace(" ", "\u00A0");
 				PopupMessage.display("Hedera Transaction Tool", version, "CONTINUE");
 			}
 		});
@@ -261,7 +261,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	}
 
-	public void setDrivesChanged(boolean drivesChanged) {
+	public void setDrivesChanged(final boolean drivesChanged) {
 		this.drivesChanged = drivesChanged;
 	}
 
@@ -273,11 +273,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		// First delete the old key if it exists.
 		try {
 			Files.deleteIfExists(Path.of(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e.getMessage());
 		}
 		// Then replace it with the key provided in the app resources.
-		InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
+		final InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 
 		if (new File(SYSTEM_FOLDER).mkdirs()) {
 			logger.info("System folder created");
@@ -285,15 +285,15 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
 
-		try (OutputStream outputStream = new FileOutputStream(key)) {
+		try (final OutputStream outputStream = new FileOutputStream(key)) {
 			assert readStream != null;
 			IOUtils.copy(readStream, outputStream);
-		} catch (IOException exception) {
+		} catch (final IOException exception) {
 			logger.error(exception.getMessage());
 		}
 	}
 
-	private void newVersionAction(String lastVersion, String thisVersion) {
+	private void newVersionAction(final String lastVersion, final String thisVersion) {
 		// export version to server
 		setVersionString(thisVersion);
 		exportVersionToServers(lastVersion, thisVersion);
@@ -355,19 +355,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 
-	public void logAndDisplayError(Exception e) {
+	public void logAndDisplayError(final Exception e) {
 		logger.error(e.getMessage());
 		displaySystemMessage(e.toString());
 	}
 	//region NAVIGATION
 
-	public void changePaneImageClicked(javafx.event.ActionEvent event) {
+	public void changePaneImageClicked(final javafx.event.ActionEvent event) {
 		if (disableButtons) {
 			return;
 		}
 		resetButtonBackgrounds();
 
-		var button = (Button) event.getSource();
+		final var button = (Button) event.getSource();
 		button.setStyle(MENU_BUTTON_HIGHLIGHT_COLOR);
 		homePaneController.setForceUpdate(false);
 		switch (button.getId()) {
@@ -405,15 +405,15 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		Map<Identifier, AccountInfo> map = null;
 		try {
 			map = new HashMap<>();
-			var accountInfoMap = properties.getAccountInfoMap();
-			for (var entry : accountInfoMap.entrySet()) {
-				var infoFile = entry.getValue();
+			final var accountInfoMap = properties.getAccountInfoMap();
+			for (final var entry : accountInfoMap.entrySet()) {
+				final var infoFile = entry.getValue();
 				if (new File(infoFile).exists()) {
-					var info = AccountInfo.fromBytes(readBytes(infoFile));
+					final var info = AccountInfo.fromBytes(readBytes(infoFile));
 					map.put(new Identifier(info.accountId), info);
 				}
 			}
-		} catch (InvalidProtocolBufferException | HederaClientException e) {
+		} catch (final InvalidProtocolBufferException | HederaClientException e) {
 			logAndDisplayError(e);
 		}
 
@@ -421,19 +421,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	private void resetButtonBackgrounds() {
-		var buttons = menuButtonBar.getButtons();
-		for (var button : buttons) {
+		final var buttons = menuButtonBar.getButtons();
+		for (final var button : buttons) {
 			button.setStyle("-fx-background-color: white;");
 		}
 	}
 
-	void changeTab(Pane next) {
+	void changeTab(final Pane next) {
 		homePane.setVisible(false);
 		accountsPane.setVisible(false);
 		createPane.setVisible(false);
 		settingsPane.setVisible(false);
 		initialStartupPane.setVisible(false);
-		Pane lastPane = thisPane;
+		final Pane lastPane = thisPane;
 		lastPane.setVisible(false);
 		thisPane = next;
 		thisPane.setVisible(true);
@@ -451,11 +451,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getPreferredStorageDirectory();
 	}
 
-	public void setPreferredStorageDirectory(String directory) {
+	public void setPreferredStorageDirectory(final String directory) {
 		properties.setPreferredStorageDirectory(directory);
 	}
 
-	void setSetupPhase(SetupPhase phase) {
+	void setSetupPhase(final SetupPhase phase) {
 		properties.setSetupPhase(phase);
 	}
 
@@ -470,11 +470,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getSetupPhase();
 	}
 
-	void setVersionString(String versionString) {
+	void setVersionString(final String versionString) {
 		properties.setVersionString(versionString);
 	}
 
-	public void setUserName(String userName) {
+	public void setUserName(final String userName) {
 		preferences.put(USER_NAME, userName);
 	}
 
@@ -486,12 +486,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return preferences.getInt(LAST_INDEX, 0);
 	}
 
-	void setLastIndex(int index) {
+	void setLastIndex(final int index) {
 		preferences.putInt(LAST_INDEX, index);
 	}
 
 	void incrementIndex() {
-		var index = getLastIndex();
+		final var index = getLastIndex();
 		preferences.putInt(LAST_INDEX, index + 1);
 	}
 
@@ -504,19 +504,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	void resetApp() throws BackingStoreException, IOException {
-		var defaultStorageDirectory = DEFAULT_STORAGE;
-		var userDefStorageDirectory = settingsPaneController.loadStorageTextField.getText();
-		var sourceDir = userDefStorageDirectory.equals("") ? new File(
+		final var defaultStorageDirectory = DEFAULT_STORAGE;
+		final var userDefStorageDirectory = settingsPaneController.loadStorageTextField.getText();
+		final var sourceDir = userDefStorageDirectory.equals("") ? new File(
 				defaultStorageDirectory) : new File(userDefStorageDirectory);
 
 		logger.info("Default storage {}", defaultStorageDirectory);
 		logger.info("Before reset storage {}", sourceDir.getPath());
-		var secondsToArchive = Instant.now().getEpochSecond();
-		var resetStorageDirectory =
+		final var secondsToArchive = Instant.now().getEpochSecond();
+		final var resetStorageDirectory =
 				String.format("%s.%s", sourceDir.getPath(), secondsToArchive);
 		preferences.put(LAST_TRANSACTIONS_DIRECTORY, resetStorageDirectory);
 		resetPreferences();
-		var userPreferenceFile = new File(sourceDir.getPath(), USER_PREFERENCE_FILE);
+		final var userPreferenceFile = new File(sourceDir.getPath(), USER_PREFERENCE_FILE);
 		if (userPreferenceFile.createNewFile()) {
 			logger.info("New user preference file created");
 		} else {
@@ -524,7 +524,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 		preferences.exportNode(new FileOutputStream(userPreferenceFile, false));
 
-		var destination = new File(resetStorageDirectory);
+		final var destination = new File(resetStorageDirectory);
 		copyDirectory(sourceDir, destination);
 		logger.info("Transactions Tool storage archived to {}", destination.getPath());
 
@@ -542,8 +542,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 * @param error
 	 * 		the error to be displayed
 	 */
-	public void displaySystemMessage(String error) {
-		var d = new Date();
+	public void displaySystemMessage(final String error) {
+		final var d = new Date();
 		systemMessagesTextField.appendText(d + ": " + error + System.getProperty("line.separator"));
 	}
 
@@ -553,8 +553,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 * @param exception
 	 * 		an exception
 	 */
-	public void displaySystemMessage(Exception exception) {
-		var d = new Date();
+	public void displaySystemMessage(final Exception exception) {
+		final var d = new Date();
 		systemMessagesTextField.appendText(
 				d + ": " + exception.toString() + System.getProperty("line.separator"));
 		logger.error(exception.getMessage());
@@ -565,18 +565,18 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 * Version, Time the last build is done in UTC, Last commit ID in the build.
 	 */
 	public String getVersion() {
-		var buildProps = new Properties();
+		final var buildProps = new Properties();
 		var version = "";
 		try {
 			buildProperties(buildProps);
-			var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-			var dateTime = formatter.parse(buildProps.get("git.build.time").toString());
+			final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			final var dateTime = formatter.parse(buildProps.get("git.build.time").toString());
 			formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-			var dateTimeUTC = formatter.format(dateTime);
+			final var dateTimeUTC = formatter.format(dateTime);
 			version = String.format("Version: %s, UTC-BUILD-TIME: %s, COMMIT-ID: %s",
 					buildProps.get("git.build.version"),
 					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			logger.error("Error Printing Version {}", ex.getMessage());
 			displaySystemMessage(ex);
 		}
@@ -593,30 +593,30 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 * @param newVersion
 	 * 		version the app has been updated to
 	 */
-	private void exportVersionToServers(String oldVersion, String newVersion) {
-		var drives = properties.getOneDriveCredentials();
-		for (var entry : drives.entrySet()) {
-			var key = entry.getKey();
-			var value = entry.getValue();
+	private void exportVersionToServers(final String oldVersion, final String newVersion) {
+		final var drives = properties.getOneDriveCredentials();
+		for (final var entry : drives.entrySet()) {
+			final var key = entry.getKey();
+			final var value = entry.getValue();
 			final var cleanName = newVersion.replace(":", "-").replace(".", "-").replace(",", "").replace(" ", "");
 			final var fileName = String.format("%s/OutputFiles/%s/SoftwareUpdated-%s.txt", key, value, cleanName);
-			try (var writer = new BufferedWriter(new FileWriter(fileName))) {
+			try (final var writer = new BufferedWriter(new FileWriter(fileName))) {
 				writer.write(
 						String.format("Software updated from version %s to version %s on %s", oldVersion, newVersion,
 								new Date()));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e.getMessage());
 			}
 		}
 	}
 
-	private void buildProperties(Properties buildProps) throws URISyntaxException {
-		var localPath = new File(
+	private void buildProperties(final Properties buildProps) throws URISyntaxException {
+		final var localPath = new File(
 				StartUI.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent() +
 				"/build.properties";
-		try (InputStream inputStream = new FileInputStream(localPath)) {
+		try (final InputStream inputStream = new FileInputStream(localPath)) {
 			buildProps.load(inputStream);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logAndDisplayError(e);
 		}
 	}
@@ -637,11 +637,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.isLegacy();
 	}
 
-	public void setAccountInfoMap(Map<String, String> accountInfos) {
+	public void setAccountInfoMap(final Map<String, String> accountInfos) {
 		properties.setAccountInfoMap(accountInfos);
 	}
 
-	public void setLegacy(boolean b) {
+	public void setLegacy(final boolean b) {
 		properties.setLegacy(b);
 	}
 
@@ -649,7 +649,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		properties.resetProperties();
 	}
 
-	public void setOneDriveCredentials(Map<String, String> objectObjectHashMap) {
+	public void setOneDriveCredentials(final Map<String, String> objectObjectHashMap) {
 		properties.setOneDriveCredentials(objectObjectHashMap);
 	}
 
@@ -685,35 +685,35 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getAutoRenewPeriod();
 	}
 
-	public void setGenerateRecord(boolean b) {
+	public void setGenerateRecord(final boolean b) {
 		properties.setGenerateRecord(b);
 	}
 
-	public void setDefaultTxFee(long fee) {
+	public void setDefaultTxFee(final long fee) {
 		properties.setDefaultTxFee(fee);
 	}
 
-	public void setDefaultSeconds(int s) {
+	public void setDefaultSeconds(final int s) {
 		properties.setDefaultSeconds(s);
 	}
 
-	public void setDefaultMinutes(int m) {
+	public void setDefaultMinutes(final int m) {
 		properties.setDefaultMinutes(m);
 	}
 
-	public void setDefaultHours(int h) {
+	public void setDefaultHours(final int h) {
 		properties.setDefaultHours(h);
 	}
 
-	public void setTxValidDuration(int duration) {
+	public void setTxValidDuration(final int duration) {
 		properties.setTxValidDuration(duration);
 	}
 
-	public void setAutoRenewPeriod(int duration) {
+	public void setAutoRenewPeriod(final int duration) {
 		properties.setAutoRenewPeriod(duration);
 	}
 
-	public void setDefaultNodeID(String node) {
+	public void setDefaultNodeID(final String node) {
 		properties.setDefaultNodeID(node);
 	}
 
@@ -733,15 +733,15 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.hasSalt();
 	}
 
-	public void setHash(char[] password) throws HederaClientException {
+	public void setHash(final char[] password) throws HederaClientException {
 		properties.setHash(password);
 	}
 
-	public void setSalt(boolean b) {
+	public void setSalt(final boolean b) {
 		properties.setSalt(b);
 	}
 
-	public String getEmailFromMap(String path) {
+	public String getEmailFromMap(final String path) {
 		return properties.getEmailFromMap(path);
 	}
 
@@ -753,29 +753,29 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getCustomFeePayers();
 	}
 
-	public void addCustomFeePayer(Identifier identifier) {
+	public void addCustomFeePayer(final Identifier identifier) {
 		properties.addCustomFeePayer(identifier);
 	}
 
-	public void removeCustomFeePayer(Identifier identifier) {
+	public void removeCustomFeePayer(final Identifier identifier) {
 		properties.removeCustomFeePayer(identifier);
 	}
 
 	//endregion
 
-	public String jsonKeyToPrettyString(JsonObject key) {
+	public String jsonKeyToPrettyString(final JsonObject key) {
 		return keyStructureUtility.jsonKeyToPrettyString(key);
 	}
 
-	public String showKeyString(ByteString key) {
+	public String showKeyString(final ByteString key) {
 		return keyStructureUtility.showKeyString(key);
 	}
 
-	public TreeView<String> buildKeyTreeView(Key key) {
+	public TreeView<String> buildKeyTreeView(final Key key) {
 		return keyStructureUtility.buildKeyTreeView(key);
 	}
 
-	public TreeView<String> buildKeyTreeView(JsonObject key) {
+	public TreeView<String> buildKeyTreeView(final JsonObject key) {
 		return keyStructureUtility.buildKeyTreeView(key);
 	}
 
@@ -791,13 +791,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		JsonObject object = new JsonObject();
 		try {
 			object = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 		return object;
 	}
 
-	public void setLastBrowsedDirectory(File file) {
+	public void setLastBrowsedDirectory(final File file) {
 		if (file.isDirectory()) {
 			properties.setLastBrowsedDirectory(file);
 		} else {
@@ -811,11 +811,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		if (customNetworksFolder.mkdirs()) {
 			logger.info("Custom networks folder storage created");
 		}
-		File[] networks = customNetworksFolder.listFiles(
+		final File[] networks = customNetworksFolder.listFiles(
 				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert networks != null;
-		var networkSet = Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
-				Collectors.toSet());
+		final var networkSet =
+				Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
+						Collectors.toSet());
 		if (!networkSet.isEmpty()) {
 			properties.setCustomNetworks(networkSet);
 		}
@@ -823,7 +824,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	public Set<String> getDefaultNetworks() {
-		Set<String> defaultNetworks = new HashSet<>();
+		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
@@ -834,7 +835,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getCurrentNetwork();
 	}
 
-	public void setCurrentNetwork(String network) {
+	public void setCurrentNetwork(final String network) {
 		properties.setCurrentNetwork(network, getDefaultNetworks());
 	}
 
@@ -846,21 +847,21 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getDefaultFeePayer();
 	}
 
-	public void setDefaultFeePayer(Identifier feePayer) {
+	public void setDefaultFeePayer(final Identifier feePayer) {
 		properties.setDefaultFeePayer(feePayer);
 	}
 
-	void networkBoxSetup(ChoiceBox<Object> comboBox) {
+	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
 		comboBox.getItems().clear();
 		comboBox.getItems().addAll(getDefaultNetworks());
-		var customNetworks = getCustomNetworks();
+		final var customNetworks = getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
 			comboBox.getItems().add(new Separator());
 			comboBox.getItems().addAll(customNetworks);
 		}
 	}
 
-	String setupChoiceBoxFeePayer(ChoiceBox<Object> choiceBox, TextField textfield) {
+	String setupChoiceBoxFeePayer(final ChoiceBox<Object> choiceBox, final TextField textfield) {
 		final var defaultFeePayer = getDefaultFeePayer();
 
 		// In case the default was deleted
@@ -872,13 +873,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
 
 
-		List<String> accounts = getFeePayers().stream().map(
+		final List<String> accounts = getFeePayers().stream().map(
 				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
 				Collectors.toList());
 
-		List<String> customFeePayers = new ArrayList<>();
+		final List<String> customFeePayers = new ArrayList<>();
 		getCustomFeePayers().forEach(customFeePayer -> {
-			String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
+			final String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
 			if (accounts.contains(s)) {
 				removeCustomFeePayer(customFeePayer);
 			} else {
@@ -888,12 +889,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		customFeePayers.sort(null);
 
 
-		Set<String> allPayers = new HashSet<>(accounts);
+		final Set<String> allPayers = new HashSet<>(accounts);
 		allPayers.addAll(customFeePayers);
-		List<String> sortedAllPayers = new ArrayList<>(allPayers);
+		final List<String> sortedAllPayers = new ArrayList<>(allPayers);
 		Collections.sort(sortedAllPayers);
 
-		var custom = !customFeePayers.isEmpty();
+		final var custom = !customFeePayers.isEmpty();
 
 
 		choiceBox.getItems().clear();

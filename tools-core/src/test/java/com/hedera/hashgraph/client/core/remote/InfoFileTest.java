@@ -35,7 +35,6 @@ import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import javafx.scene.control.Label;
 import org.apache.commons.io.FileUtils;
@@ -53,8 +52,6 @@ import java.nio.file.Path;
 import java.security.KeyStoreException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -88,9 +85,9 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void constructor_test() throws IOException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var infoFile = new InfoFile(info);
+		final var infoFile = new InfoFile(info);
 		assertNotNull(infoFile);
 		assertTrue(infoFile.isValid());
 		assertEquals("0.0.2", infoFile.getAccountID().toReadableString());
@@ -100,8 +97,8 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 		assertTrue(infoFile.getActions().contains(FileActions.ACCEPT));
 		assertTrue(infoFile.getActions().contains(FileActions.DECLINE));
 
-		var badFile = new File("src/test/resources/Files/0.0.2.meta");
-		var badInfo = FileDetails.parse(badFile);
+		final var badFile = new File("src/test/resources/Files/0.0.2.meta");
+		final var badInfo = FileDetails.parse(badFile);
 		assertFalse(new InfoFile(badInfo).isValid());
 
 	}
@@ -109,7 +106,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void buildGridPane_test() throws IOException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
 		var infoFile = new InfoFile(info);
 		var gridPane = infoFile.buildGridPane();
@@ -154,19 +151,19 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	public void canSignThreshold_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException,
 			ReceiptStatusException, IOException {
-		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
+		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
 
-		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
 
-		var keyFiles =
+		final var keyFiles =
 				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
 		assert keyFiles != null;
-		var keys = Arrays.stream(keyFiles).map(
+		final var keys = Arrays.stream(keyFiles).map(
 				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
 
 		assertTrue(file.canSign(keys));
 
-		var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
+		final var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
 
 		assertFalse(file.canSign(smallSet));
 
@@ -178,19 +175,19 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	public void canSignList_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException,
 			ReceiptStatusException, IOException {
-		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeyList.json");
+		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeyList.json");
 
-		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
 
-		var keyFiles =
+		final var keyFiles =
 				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
 		assert keyFiles != null;
-		var keys = Arrays.stream(keyFiles).map(
+		final var keys = Arrays.stream(keyFiles).map(
 				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
 
 		assertTrue(file.canSign(keys));
 
-		var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
+		final var smallSet = ImmutableSet.copyOf(Iterables.limit(keys, 5));
 
 		assertFalse(file.canSign(smallSet));
 
@@ -202,18 +199,18 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	public void canSignSingle_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException,
 			ReceiptStatusException, IOException {
-		var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySingle.json");
+		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySingle.json");
 
-		var file = new InfoFile(FileDetails.parse(new File(infoFile)));
+		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
 
-		var keyFiles =
+		final var keyFiles =
 				new File("src/test/resources/KeyFiles").listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
 		assert keyFiles != null;
 
-		var small = Arrays.stream(keyFiles).filter(keyFile -> !keyFile.getName().contains("0")).map(
+		final var small = Arrays.stream(keyFiles).filter(keyFile -> !keyFile.getName().contains("0")).map(
 				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
 
-		var keys = Arrays.stream(keyFiles).map(
+		final var keys = Arrays.stream(keyFiles).map(
 				keyFile -> publicKeyFromFile(keyFile.getAbsolutePath())).collect(Collectors.toSet());
 
 		assertTrue(file.canSign(keys));
@@ -226,25 +223,27 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 
-	private String createAccountInfo(String filePath) throws KeyStoreException, HederaClientException, TimeoutException,
+	private String createAccountInfo(
+			final String filePath) throws KeyStoreException, HederaClientException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException {
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
-		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
-		var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
-		var transactionResponse = new AccountCreateTransaction()
+		final var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
+		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
 				.setInitialBalance(new Hbar(1))
 				.setAccountMemo("Test payer account")
 				.execute(client);
 
-		var account = transactionResponse.getReceipt(client).accountId;
+		final var account = transactionResponse.getReceipt(client).accountId;
 
-		var accountInfo = new AccountInfoQuery()
+		assert account != null;
+		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);
 

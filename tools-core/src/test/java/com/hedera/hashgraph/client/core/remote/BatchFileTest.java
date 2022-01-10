@@ -60,13 +60,13 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 	@Test
 	public void constructor_test() throws IOException {
-		var emptyFile = new BatchFile();
+		final var emptyFile = new BatchFile();
 		assertFalse(emptyFile.isValid());
 
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var batchFile = new BatchFile(info);
+		final var batchFile = new BatchFile(info);
 		assertNotNull(batchFile);
 		assertTrue(batchFile.isValid());
 
@@ -140,9 +140,9 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	@Test
 	public void loadLegacyCSV_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var batchFile = new BatchFile(info);
+		final var batchFile = new BatchFile(info);
 		assertNotNull(batchFile);
 
 		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
@@ -163,12 +163,12 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 		assertEquals("", batchFile.getMemo());
 
-		UserAccessibleProperties properties =
+		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setDefaultTxFee(123456789);
 		properties.setTxValidDuration(123);
 
-		var batchFile2 = new BatchFile(info);
+		final var batchFile2 = new BatchFile(info);
 		assertNotNull(batchFile2);
 		assertEquals(123456789, batchFile2.getTransactionFee());
 		assertEquals(123, batchFile2.getTxValidDuration());
@@ -176,7 +176,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 	@Test
 	public void loadCurrentCSV_test() throws IOException {
-		UserAccessibleProperties properties =
+		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setDefaultTxFee(123456789);
 		properties.setTxValidDuration(123);
@@ -184,8 +184,8 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals(123, properties.getTxValidDuration());
 
 		final var file = new File("src/test/resources/Files/batchFileTests/testNewCSV.csv");
-		var info = FileDetails.parse(file);
-		var batchFile = new BatchFile(info);
+		final var info = FileDetails.parse(file);
+		final var batchFile = new BatchFile(info);
 		assertNotNull(batchFile);
 
 		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
@@ -211,8 +211,8 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	@Test
 	public void loadMixedCSV_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testMixedCSV.csv");
-		var info = FileDetails.parse(file);
-		var batchFile = new BatchFile(info);
+		final var info = FileDetails.parse(file);
+		final var batchFile = new BatchFile(info);
 		assertNotNull(batchFile);
 
 		assertEquals(new Identifier(0, 0, 94), batchFile.getSenderAccountID());
@@ -250,8 +250,8 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	@Test
 	public void getters_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
-		var info = FileDetails.parse(file);
-		var batchFile = new BatchFile(info);
+		final var info = FileDetails.parse(file);
+		final var batchFile = new BatchFile(info);
 
 		assertEquals(100000000L, batchFile.getTransactionFee());
 		batchFile.setTransactionFee(2500000L);
@@ -280,17 +280,17 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		batchFile.setTxValidDuration(285);
 		assertEquals(180, batchFile.getTxValidDuration());
 
-		var transfers = batchFile.getTransfers();
+		final var transfers = batchFile.getTransfers();
 		assertEquals(22, transfers.size());
 	}
 
 	@Test
 	public void buildGridPaneLegacy_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var batchFile = new BatchFile(info);
-		var gridPane = batchFile.buildGridPane();
+		final var batchFile = new BatchFile(info);
+		final var gridPane = batchFile.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
 		assertEquals(16, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
@@ -322,10 +322,10 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	@Test
 	public void buildGridPane_test() throws IOException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testNewCSV.csv");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var batchFile = new BatchFile(info);
-		var gridPane = batchFile.buildGridPane();
+		final var batchFile = new BatchFile(info);
+		final var gridPane = batchFile.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
 		assertEquals(18, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);

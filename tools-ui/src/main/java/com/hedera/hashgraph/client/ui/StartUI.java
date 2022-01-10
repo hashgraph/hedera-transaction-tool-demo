@@ -28,21 +28,23 @@ import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Objects;
+
 public class StartUI extends Application {
 
 	private static final Logger logger = LogManager.getLogger(StartUI.class);
 
 	@Override
-	public void start(Stage primaryStage) throws Exception {
-		Parent root = FXMLLoader.load(getClass().getResource("UserInterface.fxml"));
-		var scene = new Scene(root, 1200, 950);
+	public void start(final Stage primaryStage) throws Exception {
+		final Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("UserInterface.fxml")));
+		final var scene = new Scene(root, 1200, 950);
 
 		scene.getStylesheets().add("tools.css");
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		logger.info("Hedera UI Tool is starting.");
 		Thread.setDefaultUncaughtExceptionHandler(Log4j2UncaughtExceptionHandler.get());
 		launch(args);

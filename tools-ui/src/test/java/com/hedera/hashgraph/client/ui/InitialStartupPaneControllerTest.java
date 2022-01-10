@@ -135,8 +135,8 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 
-		var controller = new Controller();
-		var version = controller.getVersion();
+		final var controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		logger.info("Setting up stage");
@@ -157,7 +157,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		try {
 			logger.info("clickOnRealItem_Test");
 			assertTrue(find(APP_PASSWORD_FIELD_1).isVisible());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -167,7 +167,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		try {
 			logger.info("Setup password, then enter path and email");
-			var pane = initialStartupPage
+			final var pane = initialStartupPage
 					.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
 					.acceptPassword()
@@ -179,7 +179,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("Path and email are verified: Add OneDrive folder button is visible");
 
 			sleep(500);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -191,11 +191,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
-		var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		var empty = emptyGrid.getChildren();
+		final var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		final var empty = emptyGrid.getChildren();
 		assertEquals(24, empty.size());
 		// Check all fields are empty
-		for (var n :
+		for (final var n :
 				empty) {
 			assertTrue(n instanceof TextField);
 			assertEquals("", ((TextField) n).getText());
@@ -203,14 +203,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("The grid is empty");
 
 		initialStartupPage.clickOnGenerateMnemonic();
-		var fullGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		var full = fullGrid.getChildren();
+		final var fullGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		final var full = fullGrid.getChildren();
 		assertEquals(24, full.size());
 		logger.info("Mnemonic is generated: the grid has been populated");
 		// Check all fields are full and collect them in one string
 
 		var words = "";
-		for (var n : full) {
+		for (final var n : full) {
 			assertTrue(n instanceof TextField);
 			assertNotEquals("", ((TextField) n).getText());
 			words = words.concat(((TextField) n).getText()).concat(" ");
@@ -231,11 +231,11 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(find("FINISH").isVisible());
 		logger.info("Next step is visible");
 
-		var salt = getSalt(properties.getHash(), properties.isLegacy());
-		var mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
+		final var salt = getSalt(properties.getHash(), properties.isLegacy());
+		final var mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
 				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-		var storedWords = mnemonic.toString();
+		final var storedWords = mnemonic.toString();
 
 		assertEquals(storedWords.concat(" ").toLowerCase(), words.toLowerCase());
 		logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using password");
@@ -255,7 +255,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("generatePassphraseFromProvidedWords_Text");
 			logger.info("Load stored mnemonic for testing");
 
-			var storedWords = storedMnemonic.toLowerCase().split(" ");
+			final var storedWords = storedMnemonic.toLowerCase().split(" ");
 
 			initialStartupPage.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
@@ -266,12 +266,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
 
-			var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-			var empty = emptyGrid.getChildren();
+			final var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+			final var empty = emptyGrid.getChildren();
 			assertEquals(24, empty.size());
 			// Check all fields are empty
 			var count = 0;
-			for (var n :
+			for (final var n :
 					empty) {
 				assertTrue(n instanceof TextField);
 				assertEquals("", ((TextField) n).getText());
@@ -295,16 +295,16 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			assertTrue(find("FINISH").isVisible());
 			logger.info("Next step is visible");
 
-			var mnemonic =
+			final var mnemonic =
 					getMnemonicFromFile(PASSWORD.toCharArray(), getSalt(properties.getHash(), properties.isLegacy()),
 							properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-			var recoveredWords = mnemonic.toString().split(" ");
+			final var recoveredWords = mnemonic.toString().split(" ");
 
 			assertArrayEquals(storedWords, recoveredWords);
 			logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using " +
 					"password");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -323,15 +323,15 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 		assertTrue(find("PASTE").isVisible());
 
-		var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		final var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		var longStringSelection = new StringSelection("test " + storedMnemonic);
-		var shortStringSelection =
+		final var longStringSelection = new StringSelection("test " + storedMnemonic);
+		final var shortStringSelection =
 				new StringSelection("Dignity domain involve report sail middle rhythm husband usage pretty");
-		var latinStringSelection = new StringSelection(
+		final var latinStringSelection = new StringSelection(
 				"magna di curant, parva neglegunt. magna di curant, parva neglegunt. magna di curant, parva neglegunt" +
 						". magna di curant, parva neglegunt. magna di curant, parva");
-		var goodStringSelection = new StringSelection(storedMnemonic);
+		final var goodStringSelection = new StringSelection(storedMnemonic);
 
 		clipboard.setContents(longStringSelection, longStringSelection);
 		initialStartupPage.pressPaste();
@@ -368,13 +368,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 				.acceptOneDrive();
 		logger.info("Password setup done; OneDrive setup done; Default storage accepted");
 
-		var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
-		var empty = emptyGrid.getChildren();
+		final var emptyGrid = (GridPane) ((VBox) find("#phraseBox")).getChildren().get(0);
+		final var empty = emptyGrid.getChildren();
 		assertEquals(24, empty.size());
 
 
 		assertTrue(empty.get(0) instanceof TextField);
-		var textField = (TextField) empty.get(0);
+		final var textField = (TextField) empty.get(0);
 		assertEquals("", textField.getText());
 		clickOn(textField);
 
@@ -412,7 +412,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	@Test
 	public void testCreateLocalOneDriveFolders_Test() throws IOException {
 		logger.info("Setup password, then enter path and email");
-		var pane = initialStartupPage
+		final var pane = initialStartupPage
 				.enterOneDriveFolder(DIR_TEST_ONE_DRIVE);
 
 		assertTrue(new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles").exists());
@@ -433,8 +433,8 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		logger.info("Path and email are verified: Add OneDrive folder button is visible");
 
-		var in = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles");
-		var ou = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles");
+		final var in = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "InputFiles");
+		final var ou = new File(CURRENT_RELATIVE_PATH + DIR_TEST_ONE_DRIVE, "OutputFiles");
 
 		if (in.exists()) {
 			deleteDirectory(in);
@@ -455,9 +455,9 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		logger.info("Setup password, then enter verify path and email exist");
 
-		var oneDrive = new File(DIR_TEST_ONE_DRIVE).getAbsolutePath();
-		var in = new File(oneDrive + "/InputFiles");
-		var out = new File(oneDrive + "/OutputFiles");
+		final var oneDrive = new File(DIR_TEST_ONE_DRIVE).getAbsolutePath();
+		final var in = new File(oneDrive + "/InputFiles");
+		final var out = new File(oneDrive + "/OutputFiles");
 
 		logger.info(in.getAbsolutePath());
 
@@ -470,7 +470,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(new File(out.getAbsolutePath() + "/test1.council2@hederacouncil.org").exists());
 		logger.info("Path and email are verified");
 
-		var box = find("#passphraseBox");
+		final var box = find("#passphraseBox");
 		assertTrue(box.isVisible());
 
 		if (in.exists()) {
@@ -502,16 +502,16 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			initialMap.deleteOnExit();
 		}
 
-		var map = properties.getOneDriveCredentials();
+		final var map = properties.getOneDriveCredentials();
 		assertEquals(Constants.DRIVE_LIMIT, map.size());
-		for (Map.Entry<String, String> entry : map.entrySet()) {
-			String drive = entry.getKey();
-			String email = entry.getValue();
-			int index = Integer.parseInt(drive.substring(drive.length() - 2));
+		for (final Map.Entry<String, String> entry : map.entrySet()) {
+			final String drive = entry.getKey();
+			final String email = entry.getValue();
+			final int index = Integer.parseInt(drive.substring(drive.length() - 2));
 			assertEquals(String.format("test1.council%02d@hederacouncil.org", index), email);
 		}
 
-		var box = find("#passphraseBox");
+		final var box = find("#passphraseBox");
 
 		assertTrue(box.isVisible());
 
@@ -530,7 +530,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		logger.info("Setup password, then enter verify path and email exist");
 
-		var box = find("#passphraseBox");
+		final var box = find("#passphraseBox");
 		assertFalse(box.isVisible());
 
 		if (initialMap.exists()) {
@@ -553,13 +553,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	@AfterEach
 	public void tearDown() throws IOException {
-		var currentRelativePath = Paths.get("");
-		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		final var currentRelativePath = Paths.get("");
+		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			deleteDirectory(new File(s));
 		}
 
-		var toolsFolder =
+		final var toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
 		if (new File(toolsFolder).exists()) {
 			deleteDirectory(new File(toolsFolder));
@@ -578,14 +578,14 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		release(new MouseButton[] { });
 	}
 
-	private Mnemonic getMnemonicFromFile(final char[] password, byte[] salt, String path) {
-		var mnemonicFile = new File(path);
+	private Mnemonic getMnemonicFromFile(final char[] password, final byte[] salt, final String path) {
+		final var mnemonicFile = new File(path);
 		Mnemonic mnemonic = null;
 		try {
 			if (mnemonicFile.exists()) {
 				mnemonic = SecurityUtilities.fromEncryptedFile(password, salt, path);
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		return mnemonic;
@@ -599,26 +599,26 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	 * 		the number of drives
 	 * @return the json file
 	 */
-	private File buildDrivesJson(int k) throws HederaClientException {
+	private File buildDrivesJson(final int k) throws HederaClientException {
 		final var initialMap = new File(USER_HOME + "Documents", "initialMap.json");
 		if (k == 0) {
 			writeJsonObject(initialMap.getAbsolutePath(), new JsonObject());
 			return initialMap;
 		}
 
-		var one = new File(DIR_TEST_ONE_DRIVE);
+		final var one = new File(DIR_TEST_ONE_DRIVE);
 		logger.info(one.getAbsolutePath());
-		var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
-		var user = new File(home);
+		final var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
+		final var user = new File(home);
 		logger.info(user.getAbsolutePath());
 		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));
 
-		var map = new JsonObject();
-		var array = new JsonArray();
+		final var map = new JsonObject();
+		final var array = new JsonArray();
 		final var drive = one.getAbsolutePath().replace(user.getAbsolutePath(), "");
 
 		for (var i = 0; i < k; i++) {
-			var element = new JsonObject();
+			final var element = new JsonObject();
 			element.addProperty("drive", String.format("%s%02d", drive, i));
 			element.addProperty("email", String.format("test1.council%02d@hederacouncil.org", i));
 			setupDummyOneDrive(i);
@@ -636,7 +636,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	 * @param i
 	 * 		the ordinal number of the drive
 	 */
-	private void setupDummyOneDrive(int i) {
+	private void setupDummyOneDrive(final int i) {
 		logger.info("Setting up dummy one drive");
 
 		final var dirName = String.format("%s%02d", DIR_TEST_ONE_DRIVE, i);
@@ -654,7 +654,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	 * @param i
 	 * 		the ordinal number of the drive
 	 */
-	private void deleteDummyDrive(int i) throws IOException {
+	private void deleteDummyDrive(final int i) throws IOException {
 		logger.info("Deleting up dummy one drive");
 		final var directory = new File(String.format("%s%02d", DIR_TEST_ONE_DRIVE, i));
 		if (directory.exists()) {

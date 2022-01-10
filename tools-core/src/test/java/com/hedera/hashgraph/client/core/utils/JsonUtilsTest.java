@@ -40,10 +40,10 @@ class JsonUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void accountInfoToJson() throws HederaClientException, InvalidProtocolBufferException {
-		AccountInfo info = AccountInfo.fromBytes(readBytes("src/test/resources/Files/0.0.2.info"));
+		final AccountInfo info = AccountInfo.fromBytes(readBytes("src/test/resources/Files/0.0.2.info"));
 		assertNotNull(info);
 
-		JsonObject infoJson = JsonUtils.accountInfoToJson(info);
+		final JsonObject infoJson = JsonUtils.accountInfoToJson(info);
 
 		assertTrue(infoJson.has("accountId"));
 		assertEquals(info.accountId.toString(), infoJson.get("accountId").getAsString());
@@ -89,8 +89,8 @@ class JsonUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void hBarsToJsonObject() {
-		var testBars0 = Hbar.fromTinybars(1234567890);
-		var jsonBars0 = JsonUtils.hBarsToJsonObject(testBars0);
+		final var testBars0 = Hbar.fromTinybars(1234567890);
+		final var jsonBars0 = JsonUtils.hBarsToJsonObject(testBars0);
 
 		assertTrue(jsonBars0.has(H_BARS));
 		assertEquals(12, jsonBars0.get(H_BARS).getAsLong());
@@ -98,8 +98,8 @@ class JsonUtilsTest implements GenericFileReadWriteAware {
 		assertTrue(jsonBars0.has(TINY_BARS));
 		assertEquals(34567890, jsonBars0.get(TINY_BARS).getAsInt());
 
-		var testBars1 = Hbar.fromTinybars(12345);
-		var jsonBars1 = JsonUtils.hBarsToJsonObject(testBars1);
+		final var testBars1 = Hbar.fromTinybars(12345);
+		final var jsonBars1 = JsonUtils.hBarsToJsonObject(testBars1);
 
 		assertTrue(jsonBars1.has(H_BARS));
 		assertEquals(0, jsonBars1.get(H_BARS).getAsLong());
@@ -107,39 +107,40 @@ class JsonUtilsTest implements GenericFileReadWriteAware {
 		assertTrue(jsonBars1.has(TINY_BARS));
 		assertEquals(12345, jsonBars1.get(TINY_BARS).getAsInt());
 
-		var testBars2 = Hbar.fromTinybars(-12345);
-		var jsonBars2 = JsonUtils.hBarsToJsonObject(testBars2);
+		final var testBars2 = Hbar.fromTinybars(-12345);
+		final var jsonBars2 = JsonUtils.hBarsToJsonObject(testBars2);
 
 		assertTrue(jsonBars2.has(TINY_BARS));
 		assertEquals(-12345, jsonBars2.get(TINY_BARS).getAsInt());
 
 		assertThrows(NumberFormatException.class, () -> JsonUtils.jsonToHBars(jsonBars2));
 
-		var jsonBars3 = new JsonObject();
+		final var jsonBars3 = new JsonObject();
 		jsonBars3.addProperty(H_BARS, 0);
 		jsonBars3.addProperty(TINY_BARS, 1234567890);
 
-		Hbar testBars3 = JsonUtils.jsonToHBars(jsonBars3);
-		JsonObject jsonBars31 = JsonUtils.hBarsToJsonObject(testBars3);
+		final Hbar testBars3 = JsonUtils.jsonToHBars(jsonBars3);
+		final JsonObject jsonBars31 = JsonUtils.hBarsToJsonObject(testBars3);
 		assertTrue(jsonBars31.has(H_BARS));
 		assertEquals(12, jsonBars31.get(H_BARS).getAsLong());
 
 		assertTrue(jsonBars31.has(TINY_BARS));
 		assertEquals(34567890, jsonBars31.get(TINY_BARS).getAsInt());
 
-		JsonObject jsonBars4 = new JsonObject();
+		final JsonObject jsonBars4 = new JsonObject();
 		jsonBars4.addProperty(H_BARS, 0);
 		jsonBars4.addProperty(TINY_BARS, -1000000);
 
-		Exception exception = assertThrows(HederaClientRuntimeException.class, () -> JsonUtils.jsonToHBars(jsonBars4));
+		final Exception exception =
+				assertThrows(HederaClientRuntimeException.class, () -> JsonUtils.jsonToHBars(jsonBars4));
 		assertEquals(String.format("Hedera Client Runtime: %s", POSITIVE_NUMBER_CURRENCY_ERROR_MESSAGE),
 				exception.getMessage());
 
-		JsonObject jsonBars41 = new JsonObject();
+		final JsonObject jsonBars41 = new JsonObject();
 		jsonBars41.addProperty(H_BARS, -10000);
 		jsonBars41.addProperty(TINY_BARS, 1000000);
 
-		Exception e = assertThrows(HederaClientRuntimeException.class, () -> JsonUtils.jsonToHBars(jsonBars41));
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> JsonUtils.jsonToHBars(jsonBars41));
 		assertEquals(String.format("Hedera Client Runtime: %s", POSITIVE_NUMBER_CURRENCY_ERROR_MESSAGE),
 				e.getMessage());
 

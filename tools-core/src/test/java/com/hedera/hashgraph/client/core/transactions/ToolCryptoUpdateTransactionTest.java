@@ -23,8 +23,8 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.testHelpers.TestHelpers;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.testHelpers.TestHelpers;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,19 +59,19 @@ class ToolCryptoUpdateTransactionTest implements GenericFileReadWriteAware {
 
 	@Test
 	void createUpdate_test() throws HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		JsonObject jsonObject = TestHelpers.buildUpdateJson(2, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final JsonObject jsonObject = TestHelpers.buildUpdateJson(2, startTime);
 		jsonObject.addProperty(JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME, 1776000);
-		Exception exception0 =
+		final Exception exception0 =
 				assertThrows(HederaClientException.class, () -> new ToolCryptoUpdateTransaction(jsonObject));
 		assertEquals("Hedera Client: Cannot validate input", exception0.getMessage());
 
 		jsonObject.addProperty(ACCOUNT_TO_UPDATE, 90);
-		Exception exception1 =
+		final Exception exception1 =
 				assertThrows(HederaClientException.class, () -> new ToolCryptoUpdateTransaction(jsonObject));
 		assertEquals("Hedera Client: Cannot validate input", exception1.getMessage());
 
-		JsonObject account = new JsonObject();
+		final JsonObject account = new JsonObject();
 		account.addProperty(ACCOUNT_NUM, 78);
 		jsonObject.add(ACCOUNT_TO_UPDATE, account);
 		var transaction = new ToolCryptoUpdateTransaction(jsonObject);
@@ -81,7 +81,7 @@ class ToolCryptoUpdateTransactionTest implements GenericFileReadWriteAware {
 				Objects.requireNonNull(transaction.getTransactionId().validStart).getEpochSecond());
 		assertNull(((AccountUpdateTransaction) transaction.transaction).getKey());
 
-		JsonObject key = readJsonObject(new File("src/test/resources/Keys/sampleJsonKey"));
+		final JsonObject key = readJsonObject(new File("src/test/resources/Keys/sampleJsonKey"));
 		jsonObject.add(JsonConstants.NEW_KEY_FIELD_NAME, key);
 		transaction = new ToolCryptoUpdateTransaction(jsonObject);
 		assertNotNull(((AccountUpdateTransaction) transaction.transaction).getKey());

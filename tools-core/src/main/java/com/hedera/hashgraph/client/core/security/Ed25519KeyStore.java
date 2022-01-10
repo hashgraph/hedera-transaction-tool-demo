@@ -110,7 +110,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 				try {
 					this.random = SecureRandom.getInstance("DRBG",
 							DrbgParameters.instantiation(256, DrbgParameters.Capability.RESEED_ONLY, null));
-				} catch (NoSuchAlgorithmException ex) {
+				} catch (final NoSuchAlgorithmException ex) {
 					throw new KeyStoreException(ex);
 				}
 			}
@@ -148,7 +148,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	public static Ed25519KeyStore read(final char[] password, final URL sourceUrl) throws KeyStoreException {
 		try {
 			return read(password, new File(sourceUrl.toURI()));
-		} catch (URISyntaxException ex) {
+		} catch (final URISyntaxException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -169,17 +169,17 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 			final var kp = createKeyPair();
 			this.add(kp);
 			return kp;
-		} catch (NoSuchAlgorithmException ex) {
+		} catch (final NoSuchAlgorithmException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
 
-	public KeyPair insertNewKeyPair(Ed25519PrivateKey privateKey) throws KeyStoreException {
+	public KeyPair insertNewKeyPair(final Ed25519PrivateKey privateKey) throws KeyStoreException {
 		try {
 			final var kp = EncryptionUtils.buildKeyPairFromMainNetPrivateKey(privateKey);
 			this.add(kp);
 			return kp;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new KeyStoreException(e);
 		}
 	}
@@ -188,12 +188,12 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 		write(new File(destFile));
 	}
 
-	public void write(final String destFile, final String app, long index, String version,
-			int hash) throws KeyStoreException {
-		try (var fos = new FileOutputStream(destFile)) {
+	public void write(final String destFile, final String app, final long index, final String version,
+			final int hash) throws KeyStoreException {
+		try (final var fos = new FileOutputStream(destFile)) {
 			write(fos, app, index, version, hash);
 			SecurityUtilities.ownerReadWritePermissions(destFile);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -203,9 +203,9 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 		if (dest.getParentFile() != null) {
 			dest.getParentFile().mkdirs();
 		}
-		try (var fos = new FileOutputStream(dest)) {
+		try (final var fos = new FileOutputStream(dest)) {
 			write(fos);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -225,12 +225,12 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 					.build();
 
 			try (final var pemWriter = new JcaPEMWriter(new OutputStreamWriter(ostream))) {
-				for (var kp : this) {
+				for (final var kp : this) {
 					pemWriter.writeObject(encodeKeyPair(kp, encryptor));
 				}
 				pemWriter.flush();
 			}
-		} catch (IOException | OperatorCreationException ex) {
+		} catch (final IOException | OperatorCreationException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -256,27 +256,27 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 				pemWriter.write(String.format(INDEX, index));
 				pemWriter.write(String.format(HASH, hash));
 
-				for (var kp : this) {
+				for (final var kp : this) {
 					pemWriter.writeObject(encodeKeyPair(kp, encryptor));
 				}
 				pemWriter.flush();
 			}
-		} catch (IOException | OperatorCreationException ex) {
+		} catch (final IOException | OperatorCreationException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
 
-	private PemObject encodeKeyPair(KeyPair keyPair, OutputEncryptor encryptor) throws KeyStoreException {
+	private PemObject encodeKeyPair(final KeyPair keyPair, final OutputEncryptor encryptor) throws KeyStoreException {
 		try {
 			return new JcaPKCS8Generator(keyPair.getPrivate(), encryptor).generate();
-		} catch (PemGenerationException ex) {
+		} catch (final PemGenerationException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
 
-	private KeyPair decodeKeyPair(Object rawObject) throws KeyStoreException {
+	private KeyPair decodeKeyPair(final Object rawObject) throws KeyStoreException {
 		try {
-			KeyPair kp;
+			final KeyPair kp;
 
 			if (rawObject instanceof PEMEncryptedKeyPair) {
 				final var ekp = (PEMEncryptedKeyPair) rawObject;
@@ -300,7 +300,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 			}
 
 			return kp;
-		} catch (IOException | OperatorCreationException | PKCSException ex) {
+		} catch (final IOException | OperatorCreationException | PKCSException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -314,7 +314,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 			while ((rawObject = parser.readObject()) != null) {
 				add(decodeKeyPair(rawObject));
 			}
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -322,7 +322,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	private void loadFile(final File source) throws KeyStoreException {
 		try (final var fis = new FileInputStream(source)) {
 			loadKeyPairs(fis);
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new KeyStoreException(ex);
 		}
 	}
@@ -335,16 +335,16 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	 * @return a String
 	 */
 	public static int getIndex(final String sourceFile) throws KeyStoreException {
-		try (var reader = new BufferedReader(new FileReader(sourceFile))) {
+		try (final var reader = new BufferedReader(new FileReader(sourceFile))) {
 			var line = reader.readLine();
 			while (line != null) {
 				if (line.contains("Index:")) {
-					var parsedLine = line.split(":");
+					final var parsedLine = line.split(":");
 					return Integer.parseInt(parsedLine[1].replace(" ", ""));
 				}
 				line = reader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new KeyStoreException(e);
 		}
 		return -1;
@@ -359,16 +359,16 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	 * @return a String
 	 */
 	public static String getVersion(final String sourceFile) throws KeyStoreException {
-		try (var reader = new BufferedReader(new FileReader(sourceFile))) {
+		try (final var reader = new BufferedReader(new FileReader(sourceFile))) {
 			var line = reader.readLine();
 			while (line != null) {
 				if (line.contains("Version:")) {
-					var parsedLine = line.split(":");
+					final var parsedLine = line.split(":");
 					return parsedLine[1].replace(" ", "");
 				}
 				line = reader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new KeyStoreException(e);
 		}
 		return "";
@@ -384,16 +384,16 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	 */
 	public static Integer getMnemonicHashCode(final String sourceFile) throws KeyStoreException {
 
-		try (var reader = new BufferedReader(new FileReader(sourceFile))) {
+		try (final var reader = new BufferedReader(new FileReader(sourceFile))) {
 			var line = reader.readLine();
 			while (line != null) {
 				if (line.contains(RECOVERY_PHRASE_HASH_MESSAGE)) {
-					var parsedLine = line.split(":");
+					final var parsedLine = line.split(":");
 					return Integer.parseInt(parsedLine[1].replace(" ", ""));
 				}
 				line = reader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new KeyStoreException(e);
 		}
 		return null;
@@ -406,7 +406,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 

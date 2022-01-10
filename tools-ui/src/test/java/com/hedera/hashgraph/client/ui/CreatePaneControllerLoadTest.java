@@ -102,15 +102,15 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 					new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-			Map<String, String> emailMap = new HashMap<>();
+			final Map<String, String> emailMap = new HashMap<>();
 
 			emailMap.put(
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
 
-			var objectMapper = new ObjectMapper();
-			var mapAsString = objectMapper.writeValueAsString(emailMap);
+			final var objectMapper = new ObjectMapper();
+			final var mapAsString = objectMapper.writeValueAsString(emailMap);
 			assertNotNull(mapAsString);
 
 			properties.setOneDriveCredentials(emailMap);
@@ -119,8 +119,8 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 			setupTransactionDirectory(DEFAULT_STORAGE);
 
-			var controller = new Controller();
-			var version = controller.getVersion();
+			final var controller = new Controller();
+			final var version = controller.getVersion();
 			properties.setVersionString(version);
 
 			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
@@ -140,13 +140,14 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			if (accountsPanePage == null) {
 				accountsPanePage = new AccountsPanePage(this);
 			}
-			var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+			final var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 			if (!new File(rootFolder).exists() && new File(rootFolder).mkdirs()) {
 				logger.info("Tools root folder created");
 			} else {
 				logger.info("Tools root directory exists.");
 			}
-			var toolsFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
+			final var toolsFolder =
+					new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
 			if (!new File(toolsFolder).exists() && new File(toolsFolder).mkdirs()) {
 				logger.info("Tools document directory created");
 			} else {
@@ -160,7 +161,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			TestUtil.copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -172,17 +173,17 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		try {
 			properties.resetProperties();
 			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			var transactions = new File(
+			final var transactions = new File(
 					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 					pathname -> {
-						var name = pathname.getName();
+						final var name = pathname.getName();
 						return name.endsWith(Constants.TXT_EXTENSION) ||
 								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
 								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
 					});
 
 			assert transactions != null;
-			for (var f :
+			for (final var f :
 					transactions) {
 				if (f.delete()) {
 					logger.debug(String.format("%s has been deleted", f.getName()));
@@ -191,7 +192,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			if (new File(DEFAULT_STORAGE).exists()) {
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -203,21 +204,21 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		createPanePage.createAndExport(resources);
 
 
-		var transactions = new File(
+		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
 
-		var original =
+		final var original =
 				new ToolTransferTransaction(new File("src/test/resources/createTransactions/transfer.tx"));
 		ToolTransferTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_99")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolTransferTransaction(f);
@@ -237,8 +238,8 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals(original.getMemo(), toolTransaction.getMemo());
 
-		var originalTransferMap = original.getAccountAmountMap();
-		var transferMap = toolTransaction.getAccountAmountMap();
+		final var originalTransferMap = original.getAccountAmountMap();
+		final var transferMap = toolTransaction.getAccountAmountMap();
 
 		assert original.getTransaction().getMaxTransactionFee() != null;
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
@@ -257,7 +258,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -268,7 +269,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		ToolTransferTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_10006")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolTransferTransaction(f);
@@ -304,21 +305,21 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		createPanePage.loadTransaction("src/test/resources/createTransactions/createAccount.tx");
 		createPanePage.createAndExport(resources);
 
-		var transactions = new File(
+		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
 
-		var original =
+		final var original =
 				new ToolCryptoCreateTransaction(new File("src/test/resources/createTransactions/createAccount.tx"));
 		ToolCryptoCreateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_8988")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoCreateTransaction(f);
@@ -337,8 +338,8 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals(original.getMemo(), toolTransaction.getMemo());
 
-		var originalKey = original.getKey();
-		var transferKey = toolTransaction.getKey();
+		final var originalKey = original.getKey();
+		final var transferKey = toolTransaction.getKey();
 
 		assert original.getTransaction().getMaxTransactionFee() != null;
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
@@ -352,21 +353,21 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
 		createPanePage.createAndExport(resources);
 
-		var transactions = new File(
+		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
 
-		var original =
+		final var original =
 				new ToolCryptoUpdateTransaction(new File("src/test/resources/createTransactions/accountUpdate.tx"));
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_89")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);
@@ -388,8 +389,8 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals(original.getMemo(), toolTransaction.getMemo());
 
-		var originalKey = original.getKey();
-		var transferKey = toolTransaction.getKey();
+		final var originalKey = original.getKey();
+		final var transferKey = toolTransaction.getKey();
 
 		assert original.getTransaction().getMaxTransactionFee() != null;
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
@@ -409,7 +410,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -420,7 +421,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_1009")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);
@@ -463,7 +464,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -474,7 +475,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_89")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);
@@ -510,21 +511,21 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	public void loadSystemTransaction_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/modifyContent.tx");
 		createPanePage.createAndExport(resources);
-		var transactions = new File(
+		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
 		assert transactions != null;
 
-		var original =
+		final var original =
 				new ToolSystemTransaction(new File("src/test/resources/createTransactions/modifyContent.tx"));
 		ToolSystemTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("0_0_878")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);

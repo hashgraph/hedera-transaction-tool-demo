@@ -43,15 +43,15 @@ class SignaturePairTest {
 
 	@Test
 	void write() throws KeyStoreException, HederaClientException {
-		JsonObject testJson = getJsonInputCT(50, 2, 50, new Timestamp(2000).asInstant());
-		ToolTransferTransaction toolTransaction = new ToolTransferTransaction(testJson);
-		PrivateKey privateKey = EncryptionUtils.getPrivateKeyFromPEM(RESOURCES_DIRECTORY + "Keys/genesis.pem");
-		PublicKey publicKey = privateKey.getPublicKey();
+		final JsonObject testJson = getJsonInputCT(50, 2, 50, new Timestamp(2000).asInstant());
+		final ToolTransferTransaction toolTransaction = new ToolTransferTransaction(testJson);
+		final PrivateKey privateKey = EncryptionUtils.getPrivateKeyFromPEM(RESOURCES_DIRECTORY + "Keys/genesis.pem");
+		final PublicKey publicKey = privateKey.getPublicKey();
 
-		SignaturePair signaturePair = new SignaturePair(publicKey, toolTransaction.sign(privateKey));
+		final SignaturePair signaturePair = new SignaturePair(publicKey, toolTransaction.sign(privateKey));
 		signaturePair.write(RESOURCES_DIRECTORY + "tempFile.sigpair");
 
-		SignaturePair newPair = new SignaturePair(RESOURCES_DIRECTORY + "tempFile.sigpair");
+		final SignaturePair newPair = new SignaturePair(RESOURCES_DIRECTORY + "tempFile.sigpair");
 		assertEquals(signaturePair.getPublicKey(), newPair.getPublicKey());
 		assertEquals(signaturePair.getSignature(), signaturePair.getSignature());
 

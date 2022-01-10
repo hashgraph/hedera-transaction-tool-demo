@@ -46,7 +46,7 @@ public class KeyStructureUtilityTest {
 
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtilityTest.class);
 
-	private static String keyName = "src/test/resources/TempKeys/testKey-";
+	private static final String keyName = "src/test/resources/TempKeys/testKey-";
 	private static KeyStructureUtility utility;
 
 	@BeforeClass

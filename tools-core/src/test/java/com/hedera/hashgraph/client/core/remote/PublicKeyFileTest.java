@@ -60,9 +60,9 @@ public class PublicKeyFileTest extends TestBase {
 	@Test
 	public void constructor_test() throws IOException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var publicKeyFile = new PublicKeyFile(info);
+		final var publicKeyFile = new PublicKeyFile(info);
 		assertNotNull(publicKeyFile);
 		assertTrue(publicKeyFile.isValid());
 
@@ -71,8 +71,8 @@ public class PublicKeyFileTest extends TestBase {
 		assertTrue(publicKeyFile.getActions().contains(FileActions.DECLINE));
 
 
-		var badFile = new File("src/test/resources/Files/0.0.2.meta");
-		var badInfo = FileDetails.parse(badFile);
+		final var badFile = new File("src/test/resources/Files/0.0.2.meta");
+		final var badInfo = FileDetails.parse(badFile);
 		assertFalse(new PublicKeyFile(badInfo).isValid());
 
 	}
@@ -80,7 +80,7 @@ public class PublicKeyFileTest extends TestBase {
 	@Test
 	public void buildGridPane_test() throws IOException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
 		var publicKeyFile = new PublicKeyFile(info);
 		assertFalse(publicKeyFile.duplicate());
@@ -120,7 +120,7 @@ public class PublicKeyFileTest extends TestBase {
 	@Test
 	public void duplicate_test() throws IOException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
 
 		var publicKeyFile = new PublicKeyFile(info);

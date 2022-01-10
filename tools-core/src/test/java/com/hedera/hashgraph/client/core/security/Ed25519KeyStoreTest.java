@@ -32,12 +32,12 @@ class Ed25519KeyStoreTest {
 
 	@Test
 	void read() throws KeyStoreException {
-		char[] password = PASSWORD.toCharArray();
-		Ed25519KeyStore keyStore0 = new Ed25519KeyStore.Builder().withPassword(password).build();
+		final char[] password = PASSWORD.toCharArray();
+		final Ed25519KeyStore keyStore0 = new Ed25519KeyStore.Builder().withPassword(password).build();
 		keyStore0.insertNewKeyPair();
 		keyStore0.write("src/test/resources/Keys/test0.pem");
 
-		Ed25519KeyStore keyStore = Ed25519KeyStore.read(password, "src/test/resources/Keys/test0.pem");
+		final Ed25519KeyStore keyStore = Ed25519KeyStore.read(password, "src/test/resources/Keys/test0.pem");
 
 		assertEquals(keyStore0.get(0).getPrivate(), keyStore.get(0).getPrivate());
 		assertEquals(keyStore0.get(0).getPublic(), keyStore.get(0).getPublic());

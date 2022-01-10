@@ -64,11 +64,11 @@ public class KeysPanePage {
 
 	private final TestBase driver;
 
-	public KeysPanePage(TestBase driver) {
+	public KeysPanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
-	public void typePassword(String s, PasswordField field) {
+	public void typePassword(final String s, final PasswordField field) {
 		field.setText(s);
 		driver.clickOn(field);
 		driver.type(KeyCode.SHIFT);
@@ -80,16 +80,16 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage enterNickName(String nickname) {
+	public KeysPanePage enterNickName(final String nickname) {
 		((TextField) driver.find(NICKNAME)).clear();
 		driver.clickOn(NICKNAME).write(nickname);
 		return this;
 	}
 
-	public KeysPanePage enterPopupPassword(String password) {
-		ObservableList<Node> nodes = getPopupNodes();
+	public KeysPanePage enterPopupPassword(final String password) {
+		final ObservableList<Node> nodes = getPopupNodes();
 		assert nodes != null;
-		for (Node n : nodes) {
+		for (final Node n : nodes) {
 			if (n instanceof PasswordField) {
 				driver.clickOn(n);
 				driver.write(password);
@@ -101,10 +101,10 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage pressCancelPassword() {
-		ObservableList<Node> nodes = getPopupNodes();
+		final ObservableList<Node> nodes = getPopupNodes();
 		assert nodes != null;
-		ObservableList<Node> buttons = ((HBox) nodes.get(3)).getChildren();
-		for (Node button : buttons) {
+		final ObservableList<Node> buttons = ((HBox) nodes.get(3)).getChildren();
+		for (final Node button : buttons) {
 			if (((Button) button).getText().equalsIgnoreCase("cancel")) {
 				driver.clickOn(button);
 				return this;
@@ -118,14 +118,14 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public Node find(String s) {
+	public Node find(final String s) {
 		return driver.find(s);
 	}
 
-	public KeysPanePage closePopup(String query) {
-		Set<Node> nodes = driver.findAll(query.toUpperCase());
+	public KeysPanePage closePopup(final String query) {
+		final Set<Node> nodes = driver.findAll(query.toUpperCase());
 
-		for (Node node : nodes) {
+		for (final Node node : nodes) {
 			if (node instanceof Button && node.isVisible()) {
 				driver.clickOn(node);
 			}
@@ -134,15 +134,15 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage closeOKPopup() {
-		ObservableList<Node> x = getPopupNodes();
+		final ObservableList<Node> x = getPopupNodes();
 		HBox hBox = null;
 		assert x != null;
 		if (x.get(0) instanceof VBox) {
-			ObservableList<Node> y = ((VBox) x.get(0)).getChildren();
+			final ObservableList<Node> y = ((VBox) x.get(0)).getChildren();
 			hBox = (y.get(1) instanceof HBox) ? (HBox) y.get(1) : null;
 		}
 		assert hBox != null;
-		for (Node node : hBox.getChildren()) {
+		for (final Node node : hBox.getChildren()) {
 			if (node instanceof Button) {
 				driver.clickOn(node);
 			}
@@ -150,8 +150,8 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage scrollPane(double vValue) {
-		ScrollPane scrollPane = driver.find(CURRENT_ACCOUNT_PANE);
+	public KeysPanePage scrollPane(final double vValue) {
+		final ScrollPane scrollPane = driver.find(CURRENT_ACCOUNT_PANE);
 		scrollPane.setVvalue(vValue);
 		return this;
 	}
@@ -161,7 +161,7 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage clickOn(Button button) {
+	public KeysPanePage clickOn(final Button button) {
 		driver.clickOn(button);
 		return this;
 	}
@@ -171,7 +171,7 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage enterIndex(int index) {
+	public KeysPanePage enterIndex(final int index) {
 		((TextField) driver.find(ACCOUNTS_RECOVER_KEY_INDEX)).clear();
 		driver.clickOn(ACCOUNTS_RECOVER_KEY_INDEX);
 		driver.write(Integer.toString(index));
@@ -184,7 +184,7 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage enterRecoverNickname(String nickname) {
+	public KeysPanePage enterRecoverNickname(final String nickname) {
 		((TextField) driver.find(ACCOUNTS_RECOVER_KEY_NICKNAME)).clear();
 		driver.clickOn(ACCOUNTS_RECOVER_KEY_NICKNAME);
 		driver.write(nickname);
@@ -208,9 +208,9 @@ public class KeysPanePage {
 		return getAllLabels(popupNodes);
 	}
 
-	List<Label> getAllLabels(ObservableList<Node> nodes) {
-		List<Label> labels = new ArrayList<>();
-		for (Node node : nodes) {
+	List<Label> getAllLabels(final ObservableList<Node> nodes) {
+		final List<Label> labels = new ArrayList<>();
+		for (final Node node : nodes) {
 			if (node instanceof HBox) {
 				labels.addAll(getAllLabels(((HBox) node).getChildren()));
 			}
@@ -230,9 +230,9 @@ public class KeysPanePage {
 		return getAllButtons(popupNodes);
 	}
 
-	List<Button> getAllButtons(ObservableList<Node> nodes) {
-		List<Button> buttons = new ArrayList<>();
-		for (Node node : nodes) {
+	List<Button> getAllButtons(final ObservableList<Node> nodes) {
+		final List<Button> buttons = new ArrayList<>();
+		for (final Node node : nodes) {
 			if (node instanceof HBox) {
 				buttons.addAll(getAllButtons(((HBox) node).getChildren()));
 			}
@@ -263,9 +263,9 @@ public class KeysPanePage {
 	}
 
 
-	List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
-		List<PasswordField> passwordFields = new ArrayList<>();
-		for (Node node : nodes) {
+	List<PasswordField> getAllPasswordFields(final ObservableList<Node> nodes) {
+		final List<PasswordField> passwordFields = new ArrayList<>();
+		for (final Node node : nodes) {
 			if (node instanceof HBox) {
 				passwordFields.addAll(getAllPasswordFields(((HBox) node).getChildren()));
 			}
@@ -279,9 +279,9 @@ public class KeysPanePage {
 		return passwordFields;
 	}
 
-	List<Label> getAllErrorFields(ObservableList<Node> nodes) {
-		List<Label> labels = new ArrayList<>();
-		for (Node node : nodes) {
+	List<Label> getAllErrorFields(final ObservableList<Node> nodes) {
+		final List<Label> labels = new ArrayList<>();
+		for (final Node node : nodes) {
 			if (node instanceof HBox) {
 				labels.addAll(getAllErrorFields(((HBox) node).getChildren()));
 			}
@@ -303,9 +303,9 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage pressPopupButton(String legend) {
-		var buttons = getPopupButtons();
-		for (Button n : buttons) {
+	public KeysPanePage pressPopupButton(final String legend) {
+		final var buttons = getPopupButtons();
+		for (final Button n : buttons) {
 			if (n != null && legend.equals(n.getText())) {
 				driver.clickOn(n);
 				break;
@@ -315,23 +315,23 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage closePasswordPopup() {
-		ObservableList<Node> nodes = getPopupNodes();
+		final ObservableList<Node> nodes = getPopupNodes();
 		assert nodes != null;
-		HBox hBox = (HBox) nodes.get(3);
-		Button button = (Button) hBox.getChildren().get(0);
+		final HBox hBox = (HBox) nodes.get(3);
+		final Button button = (Button) hBox.getChildren().get(0);
 		driver.clickOn(button);
 		return this;
 	}
 
 	public KeysPanePage pressOnCreateKeysButton() {
-		Node createKeys = driver.find("CREATE KEYS");
+		final Node createKeys = driver.find("CREATE KEYS");
 		driver.clickOn(createKeys);
 		return this;
 	}
 
 	public KeysPanePage pressContinue() {
-		ObservableList<Node> popupNodes;
-		ObservableList<Node> buttons;
+		final ObservableList<Node> popupNodes;
+		final ObservableList<Node> buttons;
 		popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assertEquals(3, popupNodes.size());
@@ -345,7 +345,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage pressPopupHyperlink() {
-		ObservableList<Node> popupNodes;
+		final ObservableList<Node> popupNodes;
 		popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		popupNodes.stream().filter(popupNode -> popupNode instanceof HBox && ((HBox) popupNode).getChildren().get(
@@ -354,30 +354,30 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage clickOnPopupButton(String buttonName) {
-		var button = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), buttonName);
+	public KeysPanePage clickOnPopupButton(final String buttonName) {
+		final var button = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), buttonName);
 		clickOn(button);
 		return this;
 	}
 
-	public KeysPanePage setWords(List<String> words) {
+	public KeysPanePage setWords(final List<String> words) {
 
 		assertNotNull(words);
 
-		for (String w : words) {
+		for (final String w : words) {
 			setNextWord(w);
 		}
 		return this;
 	}
 
-	public KeysPanePage setNextWord(String word) {
+	public KeysPanePage setNextWord(final String word) {
 
 		assertNotNull(word);
-		var nodes = getPopupNodes();
+		final var nodes = getPopupNodes();
 		assert nodes != null;
-		GridPane fullGrid = (GridPane) ((VBox) nodes.get(1)).getChildren().get(0);
-		ObservableList<Node> full = fullGrid.getChildren();
-		for (Node n : full) {
+		final GridPane fullGrid = (GridPane) ((VBox) nodes.get(1)).getChildren().get(0);
+		final ObservableList<Node> full = fullGrid.getChildren();
+		for (final Node n : full) {
 			assert n instanceof TextField;
 			if (((TextField) n).getText().isEmpty()) {
 				driver.clickOn(n);
@@ -388,15 +388,15 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage enterPasswordAndConfirm(String password) {
-		var passwordFields = getPopupPasswordFields();
+	public KeysPanePage enterPasswordAndConfirm(final String password) {
+		final var passwordFields = getPopupPasswordFields();
 		passwordFields.get(0).clear();
 		typePassword(password, passwordFields.get(0));
 		typePassword(password, passwordFields.get(1));
 		return this;
 	}
 
-	public KeysPanePage createKey(String name, String password) {
+	public KeysPanePage createKey(final String name, final String password) {
 		return pressGenerateKeyButton()
 				.enterNickName(name)
 				.pressOnCreateKeysButton()
@@ -405,9 +405,9 @@ public class KeysPanePage {
 
 	}
 
-	public KeysPanePage pressHyperlinkPassword(String message) {
-		var links = TestUtil.findHyperlinksInPopup();
-		for (Hyperlink link : links) {
+	public KeysPanePage pressHyperlinkPassword(final String message) {
+		final var links = TestUtil.findHyperlinksInPopup();
+		for (final Hyperlink link : links) {
 			if (message.equalsIgnoreCase(link.getText())) {
 				driver.clickOn(link);
 				break;
@@ -416,16 +416,16 @@ public class KeysPanePage {
 		return this;
 	}
 
-	public KeysPanePage enteMnemonicInPopup(String mnemonic) {
-		var mnemonicArray = mnemonic.toLowerCase(Locale.ROOT).split(" ");
-		var grid = TestUtil.findGridpanesInPopup();
+	public KeysPanePage enteMnemonicInPopup(final String mnemonic) {
+		final var mnemonicArray = mnemonic.toLowerCase(Locale.ROOT).split(" ");
+		final var grid = TestUtil.findGridpanesInPopup();
 		if (grid.size() == 1) {
-			var children = grid.get(0).getChildren();
+			final var children = grid.get(0).getChildren();
 			if (children.size() != mnemonicArray.length) {
 				return this;
 			}
 			int counter = 0;
-			for (Node child : children) {
+			for (final Node child : children) {
 				if (child instanceof AutoCompleteTextField) {
 					driver.clickOn(child);
 					driver.write(mnemonicArray[counter++]);

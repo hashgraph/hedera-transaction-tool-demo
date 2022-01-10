@@ -51,11 +51,11 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 	private final Set<SignaturePair> signaturePairs = new HashSet<>();
 	private ToolTransaction transaction;
-	private String transactionFile = "";
-	private String baseName = "";
+	private String transactionFile;
+	private final String baseName;
 	private final JsonArray comments = new JsonArray();
 
-	public CollatorHelper(File file) throws HederaClientException {
+	public CollatorHelper(final File file) throws HederaClientException {
 		switch (FilenameUtils.getExtension(file.getName())) {
 			case TRANSACTION_EXTENSION:
 				this.transaction = new ToolTransaction(file);
@@ -80,7 +80,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	private String setFileOutput(String absolutePath) {
+	private String setFileOutput(final String absolutePath) {
 		if ("".equals(absolutePath)) {
 			return this.transactionFile;
 		}
@@ -102,7 +102,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return transaction;
 	}
 
-	public void setTransaction(ToolTransaction transaction) {
+	public void setTransaction(final ToolTransaction transaction) {
 		this.transaction = transaction;
 	}
 
@@ -110,7 +110,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return transactionFile;
 	}
 
-	public void setTransactionFile(String transactionFile) {
+	public void setTransactionFile(final String transactionFile) {
 		this.transactionFile = transactionFile;
 	}
 
@@ -118,19 +118,19 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return baseName;
 	}
 
-	public void addSignature(Transaction<?> transaction) {
-		var signatures = transaction.getSignatures();
+	public void addSignature(final Transaction<?> transaction) {
+		final var signatures = transaction.getSignatures();
 		assert signatures.size() < 2;
-		for (var entry : signatures.entrySet()) {
-			var map = entry.getValue();
-			for (var mapEntry : map.entrySet()) {
-				var pair = new SignaturePair(mapEntry.getKey(), mapEntry.getValue());
+		for (final var entry : signatures.entrySet()) {
+			final var map = entry.getValue();
+			for (final var mapEntry : map.entrySet()) {
+				final var pair = new SignaturePair(mapEntry.getKey(), mapEntry.getValue());
 				signaturePairs.add(pair);
 			}
 		}
 	}
 
-	public void addTransaction(File file) throws HederaClientException {
+	public void addTransaction(final File file) throws HederaClientException {
 		if (this.transaction != null) {
 			throw new HederaClientException(NOT_EMPTY_FIELD_ERROR_MESSAGE);
 		}
@@ -142,12 +142,12 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		addSignature(this.transaction.getTransaction());
 	}
 
-	public void addSignature(PublicKey publicKey, byte[] signature) {
-		var newSignature = new SignaturePair(publicKey, signature);
+	public void addSignature(final PublicKey publicKey, final byte[] signature) {
+		final var newSignature = new SignaturePair(publicKey, signature);
 		signaturePairs.add(newSignature);
 	}
 
-	public void addSignature(SignaturePair signaturePair) {
+	public void addSignature(final SignaturePair signaturePair) {
 		signaturePairs.add(signaturePair);
 	}
 
@@ -155,24 +155,24 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return transaction.collate(signaturePairs);
 	}
 
-	public void addComments(File commentFile) throws HederaClientException {
+	public void addComments(final File commentFile) throws HederaClientException {
 		comments.add(readJsonObject(commentFile));
 	}
 
 	public JsonObject getComments() {
-		var object = new JsonObject();
+		final var object = new JsonObject();
 		object.add("comments", comments);
 		return object;
 	}
 
-	public boolean verify(AccountInfo info) throws HederaClientException {
-		var signed = transaction;
+	public boolean verify(final AccountInfo info) throws HederaClientException {
+		final var signed = transaction;
 		signed.collate(signaturePairs);
 		return signed.verify(info);
 	}
 
-	public boolean verify(PublicKey publicKey) {
-		var signed = transaction;
+	public boolean verify(final PublicKey publicKey) {
+		final var signed = transaction;
 		signed.collate(signaturePairs);
 		return signed.verify(publicKey);
 	}
@@ -191,11 +191,11 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	 * @param helper
 	 * 		a collator helper
 	 */
-	public void addAllSignatures(CollatorHelper helper) {
+	public void addAllSignatures(final CollatorHelper helper) {
 		signaturePairs.addAll(helper.getSignaturePairs());
 	}
 
-	public void addHelper(CollatorHelper helper) throws HederaClientException {
+	public void addHelper(final CollatorHelper helper) throws HederaClientException {
 		if (!this.baseName.equals(helper.baseName)) {
 			throw new HederaClientException("Transactions don't match");
 		}
@@ -215,7 +215,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		signaturePairs.addAll(helper.getSignaturePairs());
 	}
 
-	public String store(String key) throws HederaClientException {
+	public String store(final String key) throws HederaClientException {
 		var output = this.transactionFile;
 		final var outFile = new File(output);
 		if (outFile.isFile()) {
@@ -227,13 +227,13 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		if (new File(output).mkdirs()) {
 			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
 		}
-		var transactionBytes = transaction.toBytes();
+		final var transactionBytes = transaction.toBytes();
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
 		return output;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof CollatorHelper)) {
 			return false;
 		}
@@ -261,7 +261,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 		var signaturesBoolean = true;
 		if (this.signaturePairs.size() == objSignaturePairs.size()) {
-			for (var signaturePair : this.signaturePairs) {
+			for (final var signaturePair : this.signaturePairs) {
 				if (!objSignaturePairs.contains(signaturePair)) {
 					signaturesBoolean = false;
 					break;

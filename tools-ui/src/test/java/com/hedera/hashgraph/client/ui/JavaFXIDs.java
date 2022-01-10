@@ -19,31 +19,17 @@
 package com.hedera.hashgraph.client.ui;
 
 public class JavaFXIDs {
-	// Initial Startup Window
-	public final static String USERNAME_BUTTON_BAR = "#usernameButtonBar";
 	public static final String ONEDRIVE_PATH_TEXT_FIELD = "#pathTextField";
 
 	public final static String EMAIL_TEXT_FIELD = "#emailTextField";
-	public final static String STORAGE_BUTTON_BAR = "#storageButtonBar";
-	public final static String NETWORK_BUTTON_BAR = "#loadAddressBookButtonBar";
-	public final static String GENERATE_KEY_PAIR_BUTTON_BAR = "#generateKeyPairButtonBar";
-	public final static String PASSWORD_FIELD_ONE = "#passwordBox1";
-	public final static String PASSWORD_FIELD_TWO = "#passwordBox2";
 	public final static String GENERATE_KEYS_BUTTON = "#generateKeys";
 	public final static String COPY_TO_CLIPBOARD = "#copyToClipBoardButton";
 	public final static String FINISH_BOX = "#finishBox";
 	public final static String PASTE_FROM_CLIPBOARD = "#pasteFromClipBoardButton";
 	public final static String MNEMONIC_ERROR_MESSAGE = "#mnemonicErrorMessage";
 
-	public final static String FILES_PANE = "#filesGridPane";
-	public final static String KEYS_PANE = "#keysGridPane";
-	public final static String PASSPHRASE_BOX = "#passphraseBox";
-	public final static String LOAD_ADDRESS_BOOK_BUTTON = "#loadAddressBook";
-	public final static String HIDDEN_STARTUP_INFO_TEXTFIELD = "#hiddenPathInitial";
-	public final static String KEY_NICKNAME = "#nicknameTextBox";
 	public final static String APP_PASSWORD_FIELD_1 = "#appPasswordField";
 	public final static String APP_PASSWORD_FIELD_2 = "#reEnterPasswordField";
-	public final static String LINK_FOLDERS_VBOX = "#drivesBox";
 
 	// Main Pane
 	// region IDs
@@ -51,14 +37,10 @@ public class JavaFXIDs {
 	public final static String HOME_BUTTON = "#homeButton";
 	public final static String SIGNATURE_BUTTON = "#signatureButton";
 	public final static String CREATE_BUTTON = "#createButton";
-	public final static String BATCH_BUTTON = "#batchButton";
 	public final static String ACCOUNTS_BUTTON = "#accountsButton";
 	public final static String KEYS_BUTTON = "#keysButton";
 	public final static String SETTINGS_BUTTON = "#settingsButton";
 	public final static String CREATE_ANCHOR_PANE = "#createAnchorPane";
-
-	//Label
-	public final static String TITLE_LABEL = "#titleLabel";
 
 
 	// Home Pane
@@ -144,14 +126,11 @@ public class JavaFXIDs {
 	public final static String PUBLIC_KEYS_VBOX = "#signingKeysVBox";
 
 	public final static String KEYS_GENERATE_KEYS = "#btnCreateKeys";
-	public final static String KEYS_EXPORT_KEYS = "#btnExportKeys";
 	public final static String KEYS_RECOVER_KEYS = "#btnRegenerateKeys";
 	public final static String KEYS_RECOVERY_PHRASE_BUTTON = "#btnShowMnemonicWords";
 	public final static String KEYS_CREATE_KEYS = "#createKeysButton";
 	public final static String KEYS_CANCEL_KEYS = "#cancelCreationButton";
-	public final static String KEYS_MNEMONIC_PASSWORD = "#recoveryPasswordField";
 	public final static String KEYS_MNEMONIC_CLOSE_VIEW = "#cancelEditMnemonicButton";
-	public final static String KEYS_MNEMONIC_ACCEPT_PASSWORD = "#acceptRecoveryPassword";
 
 	public final static String CREATE_KEYS_VBOX = "#createKeysVBox";
 	public final static String NICKNAME = "#nicknameTextBox";
@@ -159,8 +138,6 @@ public class JavaFXIDs {
 	public final static String RETYPE_PASSWORD_BOX = "#retypePasswordBox";
 	public final static String HIDDEN_ACCOUNT_INFO_TEXTFIELD = "#hiddenPathAccount";
 	public final static String CURRENT_ACCOUNT_PANE = "#currentAccountPane";
-	public final static String CHOOSE_EXPORT_LOCATION = "#chooseExportLocationBtn";
-	public final static String CANCEL_EXPORT_KEYS = "#cancelExportButton";
 	public final static String ACCOUNTS_RECOVER_KEY_INDEX = "#recoverIndexField";
 	public final static String ACCOUNTS_RECOVER_KEY_NICKNAME = "#recoverNicknameField";
 	public final static String CANCEL_RECOVER_KEYS = "#cancelRecoverKeyButton";
@@ -183,7 +160,6 @@ public class JavaFXIDs {
 	public final static String CANCEL_ADD_FOLDER_BUTTON = "#cancelAddToEmailMapButton";
 	public final static String IMPORT_ACCOUNT_BUTTON = "#importAccountButton";
 
-	public static final String PASSWORD_CHECK_IMAGE = "#checkPassword";
 	public static final String ACCEPT_APP_PASSWORD = "#acceptPasswordButton";
 	public static final String SIGNING_KEYS_VBOX = "#signingKeysVBox";
 

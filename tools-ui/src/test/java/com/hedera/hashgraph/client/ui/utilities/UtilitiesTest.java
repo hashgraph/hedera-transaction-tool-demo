@@ -35,19 +35,19 @@ public class UtilitiesTest {
 
 	@Test
 	public void isNotLong() {
-		var aLong = "123456789123";
+		final var aLong = "123456789123";
 		assertFalse(Utilities.isNotLong(aLong));
-		var notALong = "testString";
+		final var notALong = "testString";
 		assertTrue(Utilities.isNotLong(notALong));
 	}
 
 	@Test
 	public void timestampFormat_test() {
-		var instant = Instant.ofEpochMilli(1633443320000L);
+		final var instant = Instant.ofEpochMilli(1633443320000L);
 		assertTrue(Utilities.instantToLocalTimeDate(instant).contains("2021-10-05"));
 		assertTrue(Utilities.instantToLocalTimeDate(instant).contains("15:20"));
 
-		var timeStamp = new Timestamp(1633443320, 0);
+		final var timeStamp = new Timestamp(1633443320, 0);
 		assertTrue(Utilities.timestampToString(timeStamp).contains("2021-10-05"));
 		assertTrue(Utilities.timestampToString(timeStamp).contains("15:20"));
 	}
@@ -80,74 +80,74 @@ public class UtilitiesTest {
 	@Test
 	public void parseAccountNumbers() {
 
-		var testString = "";
-		var parseList = Utilities.parseAccountNumbers(testString);
+		final var testString = "";
+		final var parseList = Utilities.parseAccountNumbers(testString);
 		assertTrue(parseList.isEmpty());
 
-		var testString0 = "1,2 ,3";
-		var parseList0 = Utilities.parseAccountNumbers(testString0);
+		final var testString0 = "1,2 ,3";
+		final var parseList0 = Utilities.parseAccountNumbers(testString0);
 
 		assertEquals(3, parseList0.size());
 		assertTrue(parseList0.contains(new Identifier(0, 0, 1).asAccount()));
 		assertTrue(parseList0.contains(new Identifier(0, 0, 2).asAccount()));
 		assertTrue(parseList0.contains(new Identifier(0, 0, 3).asAccount()));
 
-		var testString1 = "1,2 ,k";
-		var parseList1 = Utilities.parseAccountNumbers(testString1);
+		final var testString1 = "1,2 ,k";
+		final var parseList1 = Utilities.parseAccountNumbers(testString1);
 		assertTrue(parseList1.isEmpty());
 
-		var testString2 = "1-3";
-		var parseList2 = Utilities.parseAccountNumbers(testString2);
+		final var testString2 = "1-3";
+		final var parseList2 = Utilities.parseAccountNumbers(testString2);
 		assertTrue(parseList2.contains(new Identifier(0, 0, 1).asAccount()));
 		assertTrue(parseList2.contains(new Identifier(0, 0, 2).asAccount()));
 		assertTrue(parseList2.contains(new Identifier(0, 0, 3).asAccount()));
 
-		var testString3 = "1-2,3";
-		var parseList3 = Utilities.parseAccountNumbers(testString3);
+		final var testString3 = "1-2,3";
+		final var parseList3 = Utilities.parseAccountNumbers(testString3);
 		assertTrue(parseList3.contains(new Identifier(0, 0, 1).asAccount()));
 		assertTrue(parseList3.contains(new Identifier(0, 0, 2).asAccount()));
 		assertTrue(parseList3.contains(new Identifier(0, 0, 3).asAccount()));
 
-		var testString4 = "0.1";
-		var parseList4 = Utilities.parseAccountNumbers(testString4);
+		final var testString4 = "0.1";
+		final var parseList4 = Utilities.parseAccountNumbers(testString4);
 		assertTrue(parseList4.isEmpty());
 
-		var testString5 = "1.2.1-1.2.3";
-		var parseList5 = Utilities.parseAccountNumbers(testString5);
+		final var testString5 = "1.2.1-1.2.3";
+		final var parseList5 = Utilities.parseAccountNumbers(testString5);
 		assertTrue(parseList5.contains(new Identifier(1, 2, 1).asAccount()));
 		assertTrue(parseList5.contains(new Identifier(1, 2, 2).asAccount()));
 		assertTrue(parseList5.contains(new Identifier(1, 2, 3).asAccount()));
 
-		var testString6 = "1.2.1-2.2.3";
-		var parseList6 = Utilities.parseAccountNumbers(testString6);
+		final var testString6 = "1.2.1-2.2.3";
+		final var parseList6 = Utilities.parseAccountNumbers(testString6);
 		assertTrue(parseList6.isEmpty());
 
-		var testString7 = "1.2.1-1.k.3";
-		var parseList7 = Utilities.parseAccountNumbers(testString7);
+		final var testString7 = "1.2.1-1.k.3";
+		final var parseList7 = Utilities.parseAccountNumbers(testString7);
 		assertTrue(parseList7.isEmpty());
 
-		var testString8 = "l.2.1-1.2.3";
-		var parseList8 = Utilities.parseAccountNumbers(testString8);
+		final var testString8 = "l.2.1-1.2.3";
+		final var parseList8 = Utilities.parseAccountNumbers(testString8);
 		assertTrue(parseList8.isEmpty());
 
-		var testString9 = "121-";
-		var parseList9 = Utilities.parseAccountNumbers(testString9);
+		final var testString9 = "121-";
+		final var parseList9 = Utilities.parseAccountNumbers(testString9);
 		assertTrue(parseList9.isEmpty());
 
-		var testString10 = "121-156-6";
-		var parseList10 = Utilities.parseAccountNumbers(testString10);
+		final var testString10 = "121-156-6";
+		final var parseList10 = Utilities.parseAccountNumbers(testString10);
 		assertTrue(parseList10.isEmpty());
 	}
 
 	@Test
 	public void difference() {
-		JsonObject j1 = new JsonObject();
+		final JsonObject j1 = new JsonObject();
 		j1.addProperty("prop1", 1);
 		j1.addProperty("prop2", 2L);
 		j1.addProperty("prop3", "tres");
 		j1.addProperty("prop4", 4.008);
 
-		JsonObject j2 = new JsonObject();
+		final JsonObject j2 = new JsonObject();
 		j2.addProperty("prop1", 1);
 		j2.addProperty("prop2", 2L);
 		j2.addProperty("prop3", "tres");
@@ -157,12 +157,12 @@ public class UtilitiesTest {
 
 		j2.addProperty("prop1", "ONE");
 		assertEquals(1, Utilities.difference(j1, j2).size());
-		assertTrue(Utilities.difference(j1,j2).contains("prop1"));
+		assertTrue(Utilities.difference(j1, j2).contains("prop1"));
 
 		j2.addProperty("prop5", "A new one");
 		assertEquals(2, Utilities.difference(j1, j2).size());
-		assertTrue(Utilities.difference(j1,j2).contains("prop1"));
-		assertTrue(Utilities.difference(j1,j2).contains("prop5"));
+		assertTrue(Utilities.difference(j1, j2).contains("prop1"));
+		assertTrue(Utilities.difference(j1, j2).contains("prop5"));
 
 	}
 }

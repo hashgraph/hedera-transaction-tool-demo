@@ -52,9 +52,9 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Before
 	public void setUp() throws Exception {
-		JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
+		final JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
 		writeJsonObject("src/test/resources/Files/testJson.json", testJson);
-		ToolTransaction transaction = new ToolTransferTransaction(testJson);
+		final ToolTransaction transaction = new ToolTransferTransaction(testJson);
 		filename = transaction.store("src/test/resources/Files/testTransfer.tx");
 	}
 
@@ -66,7 +66,7 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Test
 	public void constructor_test() throws HederaClientException {
-		var remoteFile = new RemoteFile(filename);
+		final var remoteFile = new RemoteFile(filename);
 		assertNotNull(remoteFile);
 		assertTrue(remoteFile.isValid());
 		assertFalse(remoteFile.isExpired());
@@ -75,13 +75,13 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Test
 	public void getters_test() throws HederaClientException, IOException {
-		var remoteFile = new RemoteFile(filename);
+		final var remoteFile = new RemoteFile(filename);
 		assertEquals("src/test/resources/Files/testTransfer.tx", remoteFile.getPath());
 		assertEquals("testTransfer.tx", remoteFile.getName());
 		assertEquals(FileType.TRANSACTION, remoteFile.getType());
 		assertEquals("testTransfer", remoteFile.getBaseName());
-		var file = new File(filename);
-		var info = FileDetails.parse(file);
+		final var file = new File(filename);
+		final var info = FileDetails.parse(file);
 
 		assertEquals(info.getAttributes().lastModifiedTime().to(TimeUnit.SECONDS), remoteFile.getDate());
 	}

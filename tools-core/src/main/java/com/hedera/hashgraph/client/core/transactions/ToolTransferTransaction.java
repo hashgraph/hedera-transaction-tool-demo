@@ -55,13 +55,13 @@ public class ToolTransferTransaction extends ToolTransaction {
 
 	private Map<Identifier, Hbar> accountAmountMap;
 
-	public ToolTransferTransaction(JsonObject input) throws HederaClientException {
+	public ToolTransferTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.CRYPTO_TRANSFER;
 	}
 
 
-	public ToolTransferTransaction(File location) throws HederaClientException {
+	public ToolTransferTransaction(final File location) throws HederaClientException {
 		super(location);
 
 		if (!(transaction instanceof TransferTransaction)) {
@@ -69,7 +69,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 		}
 
 		accountAmountMap = new HashMap<>();
-		var transfers = ((TransferTransaction) transaction).getHbarTransfers();
+		final var transfers = ((TransferTransaction) transaction).getHbarTransfers();
 		transfers.keySet().forEach(
 				accountId -> accountAmountMap.put(new Identifier(accountId), transfers.get(accountId)));
 		setTransactionType(TransactionType.CRYPTO_TRANSFER);
@@ -80,7 +80,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) throws HederaClientRuntimeException {
+	public boolean checkInput(final JsonObject input) throws HederaClientRuntimeException {
 
 		// Check common fields first
 		var answer = super.checkInput(input);
@@ -92,18 +92,18 @@ public class ToolTransferTransaction extends ToolTransaction {
 		}
 
 		long total = 0;
-		var transfers = input.getAsJsonArray(TRANSFERS);
+		final var transfers = input.getAsJsonArray(TRANSFERS);
 		accountAmountMap = new HashMap<>();
-		for (var transfer : transfers) {
-			var jsonObject = transfer.getAsJsonObject();
-			Identifier identifier;
-			Hbar amount;
+		for (final var transfer : transfers) {
+			final var jsonObject = transfer.getAsJsonObject();
+			final Identifier identifier;
+			final Hbar amount;
 			try {
 				identifier = Identifier.parse(jsonObject.get(ACCOUNT).getAsJsonObject());
 				final var tinyBars = jsonObject.get(AMOUNT).getAsLong();
 				amount = Hbar.fromTinybars(tinyBars);
 				total += tinyBars;
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE,
 						jsonObject.get(ACCOUNT).getAsJsonObject().toString());
 				answer = false;
@@ -123,10 +123,10 @@ public class ToolTransferTransaction extends ToolTransaction {
 	@Override
 	public Transaction<?> build() throws HederaClientRuntimeException {
 		// Set common fields
-		var transactionId =
+		final var transactionId =
 				new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
 		transferTransaction.setMaxTransactionFee(transactionFee)
 				.setTransactionId(transactionId)
@@ -135,7 +135,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 				.setTransactionValidDuration(transactionValidDuration);
 
 		// Add transfers
-		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
 			transferTransaction.addHbarTransfer(entry.getKey().asAccount(), entry.getValue());
 		}
 		return transferTransaction.freeze();
@@ -146,18 +146,18 @@ public class ToolTransferTransaction extends ToolTransaction {
 		Map<AccountId, AccountInfo> infos = new HashMap<>();
 		try {
 			infos = loadAccountInfos();
-		} catch (HederaClientException | InvalidProtocolBufferException e) {
+		} catch (final HederaClientException | InvalidProtocolBufferException e) {
 			logger.warn("Unable to load account information, some required receiver signatures may be omitted", e);
 		}
-		var accountsSet = super.getSigningAccounts();
-		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+		final var accountsSet = super.getSigningAccounts();
+		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
 			final var accountId = entry.getKey().asAccount();
 			if (entry.getValue().toTinybars() < 0) {
 				accountsSet.add(accountId);
 				continue;
 			}
 			if (infos.containsKey(accountId)) {
-				var info = infos.get(accountId);
+				final var info = infos.get(accountId);
 				if (info.isReceiverSignatureRequired) {
 					accountsSet.add(accountId);
 				}
@@ -168,10 +168,10 @@ public class ToolTransferTransaction extends ToolTransaction {
 
 	@Override
 	public JsonObject asJson() {
-		var output = super.asJson();
-		var array = new JsonArray();
-		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
-			var line = new JsonObject();
+		final var output = super.asJson();
+		final var array = new JsonArray();
+		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+			final var line = new JsonObject();
 			line.add(ACCOUNT_ID_FIELD_NAME, entry.getKey().asJSON());
 			line.addProperty(AMOUNT, entry.getValue().toTinybars());
 			array.add(line);
@@ -181,7 +181,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		return super.equals(obj);
 	}
 
@@ -197,12 +197,12 @@ public class ToolTransferTransaction extends ToolTransaction {
 	 */
 	private Map<AccountId, AccountInfo> loadAccountInfos() throws HederaClientException,
 			InvalidProtocolBufferException {
-		Map<AccountId, AccountInfo> map = new HashMap<>();
-		var files = new File(Constants.ACCOUNTS_INFO_FOLDER).listFiles(
+		final Map<AccountId, AccountInfo> map = new HashMap<>();
+		final var files = new File(Constants.ACCOUNTS_INFO_FOLDER).listFiles(
 				(dir, name) -> INFO_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		if (files != null) {
-			for (File file : files) {
-				var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
+			for (final File file : files) {
+				final var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
 				map.put(info.accountId, info);
 			}
 		}

@@ -47,29 +47,29 @@ class SecurityUtilitiesTest {
 
 	@Test
 	void encryptDecryptFile() throws HederaClientException, IOException {
-		var testString = Mnemonic.generate24().toString();
+		final var testString = Mnemonic.generate24().toString();
 		final var key = SecurityUtilities.keyFromPasswordLegacy(PASSWORD.toCharArray());
 
 		SecurityUtilities.toEncryptedFile(key, TEST_AES_PATH, testString);
 		assertTrue(new File(TEST_AES_PATH).exists());
 
-		var path = Paths.get(TEST_AES_PATH);
-		var data = Files.readAllBytes(path);
-		var header = "AES|256|CBC|PKCS5Padding|".getBytes(UTF_8);
+		final var path = Paths.get(TEST_AES_PATH);
+		final var data = Files.readAllBytes(path);
+		final var header = "AES|256|CBC|PKCS5Padding|".getBytes(UTF_8);
 
-		var readHeader = Arrays.copyOfRange(data, 0, header.length);
+		final var readHeader = Arrays.copyOfRange(data, 0, header.length);
 		assertArrayEquals(header, readHeader);
 
-		var decrypted = SecurityUtilities.fromEncryptedFile(key, TEST_AES_PATH);
+		final var decrypted = SecurityUtilities.fromEncryptedFile(key, TEST_AES_PATH);
 		assertEquals(testString, decrypted.toString());
 	}
 
 	@Test
 	void readLegacyMnemonic_test() throws HederaClientException {
 		final var key = SecurityUtilities.keyFromPasswordLegacy(PASSWORD.toCharArray());
-		var decrypted = SecurityUtilities.fromEncryptedFile(key, "src/test/resources/legacy.aes");
+		final var decrypted = SecurityUtilities.fromEncryptedFile(key, "src/test/resources/legacy.aes");
 
-		String legacyString =
+		final String legacyString =
 				"egg scale cement between rocket aerobic alert parent portion sail narrow win valley country target " +
 						"confirm humor exile nation trial brisk journey crumble invest";
 

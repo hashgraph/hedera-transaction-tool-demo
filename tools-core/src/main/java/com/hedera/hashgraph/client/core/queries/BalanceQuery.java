@@ -36,10 +36,10 @@ import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWOR
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 
 public class BalanceQuery implements GenericFileReadWriteAware {
-	private String network;
-	private AccountId accountId;
+	private final String network;
+	private final AccountId accountId;
 
-	private BalanceQuery(String network, AccountId accountId) {
+	private BalanceQuery(final String network, final AccountId accountId) {
 		this.network = network;
 		this.accountId = accountId;
 	}
@@ -47,13 +47,13 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	public Hbar getBalance() throws PrecheckStatusException, TimeoutException, HederaClientException {
 		if (NetworkEnum.isNetwork(network.toUpperCase(Locale.ROOT)) &&
 				!NetworkEnum.INTEGRATION.getName().equals(network.toUpperCase(Locale.ROOT))) {
-			try (Client client = Client.forName(network.toLowerCase(Locale.ROOT))) {
+			try (final Client client = Client.forName(network.toLowerCase(Locale.ROOT))) {
 				return new AccountBalanceQuery().setAccountId(accountId)
 						.execute(client)
 						.hbars;
 			}
 		}
-		try (Client client = getClient()) {
+		try (final Client client = getClient()) {
 			return new AccountBalanceQuery().setAccountId(accountId)
 					.execute(client)
 					.hbars;
@@ -61,7 +61,7 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	}
 
 	private Client getClient() throws HederaClientException {
-		var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
+		final var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
 		return CommonMethods.getClient(customNetwork);
 	}
 
@@ -76,12 +76,12 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 			return new Builder();
 		}
 
-		public Builder withNetwork(String network) {
+		public Builder withNetwork(final String network) {
 			this.network = network;
 			return this;
 		}
 
-		public Builder withAccountId(AccountId accountId) {
+		public Builder withAccountId(final AccountId accountId) {
 			this.accountId = accountId;
 			return this;
 		}

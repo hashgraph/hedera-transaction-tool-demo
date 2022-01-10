@@ -135,16 +135,16 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		createAccounts();
 
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		Calendar cal = new Timestamp().plusSeconds(120).asCalendar();
-		var sdf1 = new SimpleDateFormat("MM/dd/yy");
-		var sdf2 = new SimpleDateFormat("HH:mm");
-		Date date = cal.getTime();
+		final Calendar cal = new Timestamp().plusSeconds(120).asCalendar();
+		final var sdf1 = new SimpleDateFormat("MM/dd/yy");
+		final var sdf2 = new SimpleDateFormat("HH:mm");
+		final Date date = cal.getTime();
 
 		// Create csv
-		List<String[]> distro = new ArrayList<>();
-		for (AccountId receiver : receivers) {
+		final List<String[]> distro = new ArrayList<>();
+		for (final AccountId receiver : receivers) {
 			for (int i = 0; i < 100; i++) {
-				var line = new String[] { String.valueOf(receiver), String.valueOf((i + 1)), sdf1.format(
+				final var line = new String[] { String.valueOf(receiver), String.valueOf((i + 1)), sdf1.format(
 						date), "memo line " + i };
 				distro.add(line);
 			}
@@ -175,7 +175,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 
 	@Test
 	public void signBatchTransaction_test() throws Exception {
-		List<String> keys = new ArrayList<>();
+		final List<String> keys = new ArrayList<>();
 		keys.add("KeyStore-0");
 		keys.add("KeyStore-1");
 		keys.add("KeyStore-2");
@@ -252,58 +252,58 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		do {
 			addSignature = find("ADD SIGNATURE");
 		} while (addSignature == null);
-		
+
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 
-		File[] summaryFiles = new File(
+		final File[] summaryFiles = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> name.contains("summary"));
 
 		assert summaryFiles != null;
 		assertEquals(6, summaryFiles.length);
 
-		File[] signatureFiles = new File(
+		final File[] signatureFiles = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> name.contains("signatures"));
 		assert signatureFiles != null;
 		assertEquals(6, signatureFiles.length);
 
 
-		File[] transactionFiles = new File(
+		final File[] transactionFiles = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> name.contains("transactions"));
 		assert transactionFiles != null;
 		assertEquals(6, transactionFiles.length);
 
-		Map<String, List<String>> map = new HashMap<>();
-		for (File summaryFile : summaryFiles) {
-			var summary = readCSV(summaryFile.getAbsolutePath());
+		final Map<String, List<String>> map = new HashMap<>();
+		for (final File summaryFile : summaryFiles) {
+			final var summary = readCSV(summaryFile.getAbsolutePath());
 			assertEquals(TEST_SIZE * 100 + 1, summary.size());
-			for (List<String> strings : summary) {
+			for (final List<String> strings : summary) {
 				final var key = strings.get(0);
 				final var value = strings.get(1);
 
 				if (key.equals("\"Filename\"")) {
 					continue;
 				}
-				List<String> tx = (map.containsKey(key)) ? map.get(key) : new ArrayList<>();
+				final List<String> tx = (map.containsKey(key)) ? map.get(key) : new ArrayList<>();
 				tx.add(value);
 				map.put(key, tx);
 			}
 		}
 
-		for (Map.Entry<String, List<String>> entry : map.entrySet()) {
-			var value = entry.getValue();
-			Set<String> set = new HashSet<>(value);
+		for (final Map.Entry<String, List<String>> entry : map.entrySet()) {
+			final var value = entry.getValue();
+			final Set<String> set = new HashSet<>(value);
 			assertEquals(2, set.size());
 		}
 
-		for (File transactionFile : transactionFiles) {
+		for (final File transactionFile : transactionFiles) {
 			Files.copy(transactionFile.toPath(), Path.of(TRANSACTIONS, transactionFile.getName()));
 		}
 
-		for (File signatureFile : signatureFiles) {
+		for (final File signatureFile : signatureFiles) {
 			Files.copy(signatureFile.toPath(), Path.of(TRANSACTIONS, signatureFile.getName()));
 		}
 
@@ -316,7 +316,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		final String[] args = { "collate", "-f", TRANSACTIONS, "-a", ACCOUNTS_INFO_FOLDER, "-k", KEYS_FOLDER };
 		ToolsMain.main(args);
 
-		for (File file : files) {
+		for (final File file : files) {
 			Files.deleteIfExists(file.toPath());
 		}
 
@@ -332,8 +332,8 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		final String[] argsSubmit = { "submit", "-t", unzipped, "-n", "INTEGRATION", "-o", RECEIPTS };
 		ToolsMain.main(argsSubmit);
 
-		for (AccountId receiver : receivers) {
-			var balance = new AccountBalanceQuery()
+		for (final AccountId receiver : receivers) {
+			final var balance = new AccountBalanceQuery()
 					.setAccountId(receiver)
 					.execute(client);
 
@@ -344,7 +344,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 	}
 
 	private void enterPasswordInPopup() throws HederaClientException {
-		var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()));
+		final var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()));
 		if (passwords == null) {
 			throw new HederaClientException("Unexpected popup");
 		}
@@ -356,25 +356,25 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 	private void createAccounts() throws KeyStoreException, HederaClientException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException {
 		// create payer account
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
-		var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
+		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
 		var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
 				.setInitialBalance(new Hbar(1000))
 				.setAccountMemo("Test payer account")
 				.execute(client);
 
-		var receipt = transactionResponse.getReceipt(client);
+		final var receipt = transactionResponse.getReceipt(client);
 		payerId = Objects.requireNonNull(receipt.accountId);
 		logger.info("Payer Id: {}", payerId.toString());
 
-		var accountInfo = new AccountInfoQuery()
+		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(payerId)
 				.execute(client);
 
@@ -396,15 +396,15 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		}
 	}
 
-	private void writeCSVWithDistribution(List<String[]> distro, String time) {
+	private void writeCSVWithDistribution(final List<String[]> distro, final String time) {
 		if (new File("src/test/resources/Transactions - Documents/InputFiles").mkdirs()) {
 			logger.info("InputFiles folder created");
 		}
-		File file = new File("src/test/resources/Transactions - Documents/InputFiles/testCSV.csv");
-		try (FileWriter fileWriter = new FileWriter(file)) {
-			CSVWriter writer = new CSVWriter(fileWriter);
+		final File file = new File("src/test/resources/Transactions - Documents/InputFiles/testCSV.csv");
+		try (final FileWriter fileWriter = new FileWriter(file)) {
+			final CSVWriter writer = new CSVWriter(fileWriter);
 
-			List<String[]> data = new ArrayList<>();
+			final List<String[]> data = new ArrayList<>();
 			data.add(new String[] { "Sender Account", payerId.toString() });
 			data.add(new String[] { "Sending Time", time });
 			data.add(new String[] { "Node IDs", "0.0.3", "0.0.4" });
@@ -412,7 +412,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			data.addAll(distro);
 			writer.writeAll(data);
 			writer.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e.getMessage());
 		}
 	}
@@ -452,7 +452,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			logger.info("Output directory created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
@@ -469,9 +469,9 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
 		}
 
-		var keys = new File("src/test/resources/KeyFiles").listFiles();
+		final var keys = new File("src/test/resources/KeyFiles").listFiles();
 		assert keys != null;
-		for (File key : keys) {
+		for (final File key : keys) {
 			FileUtils.copyFile(key, new File(KEYS_FOLDER, key.getName()));
 		}
 
@@ -482,10 +482,10 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 
 		clickOn("ACCEPT");
 
-		var nodes = TestUtil.getPopupNodes();
+		final var nodes = TestUtil.getPopupNodes();
 
 		assert nodes != null;
-		var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
+		final var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
 		clickOn(button);
 
 	}

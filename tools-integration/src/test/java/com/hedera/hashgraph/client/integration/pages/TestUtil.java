@@ -18,11 +18,6 @@
 
 package com.hedera.hashgraph.client.integration.pages;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
-import com.hedera.hashgraph.client.core.json.Identifier;
-import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.integration.TestBase;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -34,33 +29,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testfx.api.FxRobot;
 
-import java.io.File;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_KEY_LOCATION;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.REALM_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.SHARD_NUMBER;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
-
 public class TestUtil {
 	private static final TestBase driver = new TestBase();
-
-	private static FxRobot robot = new FxRobot();
+	private static final FxRobot robot = new FxRobot();
 	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 
 	/**
@@ -72,9 +47,9 @@ public class TestUtil {
 	 * 		the legend on the button
 	 * @return a button
 	 */
-	public static Button getButton(Node node, String legend) {
-		var buttons = getButtons(node);
-		for (Button button : buttons) {
+	public static Button getButton(final Node node, final String legend) {
+		final var buttons = getButtons(node);
+		for (final Button button : buttons) {
 			if (legend.equals(button.getText()) && button.isVisible()) {
 				return button;
 			}
@@ -89,8 +64,8 @@ public class TestUtil {
 	 * 		the parent node
 	 * @return a list of buttons
 	 */
-	public static List<Button> getButtons(Node parent) {
-		List<Button> buttons = new ArrayList<>();
+	public static List<Button> getButtons(final Node parent) {
+		final List<Button> buttons = new ArrayList<>();
 		if (parent instanceof Button) {
 			return Collections.singletonList((Button) parent);
 		}
@@ -105,7 +80,7 @@ public class TestUtil {
 			children = ((GridPane) parent).getChildren();
 		}
 		if (children != null) {
-			for (Node child : children) {
+			for (final Node child : children) {
 				buttons.addAll(getButtons(child));
 			}
 		}

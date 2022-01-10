@@ -99,14 +99,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		super();
 	}
 
-	public LargeBinaryFile(FileDetails fileDetails) throws HederaClientException {
+	public LargeBinaryFile(final FileDetails fileDetails) throws HederaClientException {
 		super(fileDetails);
 
-		var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
+		final var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
 		if (new File(destination).exists()) {
 			try {
 				FileUtils.deleteDirectory(new File(destination));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				handleError(e.getMessage());
 				return;
 			}
@@ -114,7 +114,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		try {
 			unZip(fileDetails.getFullPath(), destination);
-		} catch (HederaClientException exception) {
+		} catch (final HederaClientException exception) {
 			handleError(exception.getMessage());
 			return;
 		}
@@ -122,7 +122,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		// Check input
-		var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
+		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
 		assert jsons != null;
 		if (jsons.length != 1) {
 			final var formattedError =
@@ -131,7 +131,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
+		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
 		assert bins != null;
 		if (bins.length != 1) {
 			final var formattedError =
@@ -141,10 +141,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		JsonObject details;
+		final JsonObject details;
 		try {
 			details = readJsonObject(jsons[0].getPath());
-		} catch (HederaClientException exception) {
+		} catch (final HederaClientException exception) {
 			handleError(exception.getMessage());
 			return;
 		}
@@ -154,27 +154,27 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		Identifier fileIdentifier = getFileIdentifier(details);
+		final Identifier fileIdentifier = getFileIdentifier(details);
 		if (fileIdentifier == null) {
 			return;
 		}
 
-		Identifier nodeIdentifier = getNodeIdentifier(details);
+		final Identifier nodeIdentifier = getNodeIdentifier(details);
 		if (nodeIdentifier == null) {
 			return;
 		}
 
-		Identifier payerIdentifier = getPayerIdentifier(details);
+		final Identifier payerIdentifier = getPayerIdentifier(details);
 		if (payerIdentifier == null) {
 			return;
 		}
 
-		JsonObject tvStamp = getTransactionValidStamp(details);
+		final JsonObject tvStamp = getTransactionValidStamp(details);
 		if (tvStamp == null) {
 			return;
 		}
 
-		Timestamp timestamp = getTimestamp(tvStamp);
+		final Timestamp timestamp = getTimestamp(tvStamp);
 		if (timestamp == null) {
 			return;
 		}
@@ -206,17 +206,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the file id if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
-	private Identifier getFileIdentifier(JsonObject details) {
-		Identifier fileIdentifier;
+	private Identifier getFileIdentifier(final JsonObject details) {
+		final Identifier fileIdentifier;
 		if (!details.has("fileID")) {
 			handleError("Missing file ID in details file");
 			return null;
 		}
-		var fileJson = details.getAsJsonObject("fileID");
+		final var fileJson = details.getAsJsonObject("fileID");
 
 		try {
 			fileIdentifier = Identifier.parse(fileJson);
-		} catch (Exception exception) {
+		} catch (final Exception exception) {
 			handleError(exception.getMessage());
 			return null;
 		}
@@ -231,18 +231,18 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the node id if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
-	private Identifier getNodeIdentifier(JsonObject details) {
-		Identifier nodeIdentifier;
+	private Identifier getNodeIdentifier(final JsonObject details) {
+		final Identifier nodeIdentifier;
 		if (!details.has("nodeID")) {
 			handleError("Missing node ID in details file");
 			return null;
 		}
 
-		var nodeJson = details.getAsJsonObject("nodeID");
+		final var nodeJson = details.getAsJsonObject("nodeID");
 
 		try {
 			nodeIdentifier = Identifier.parse(nodeJson);
-		} catch (Exception exception) {
+		} catch (final Exception exception) {
 			handleError(exception.getMessage());
 			return null;
 		}
@@ -257,18 +257,18 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the fee payer id if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
-	private Identifier getPayerIdentifier(JsonObject details) {
+	private Identifier getPayerIdentifier(final JsonObject details) {
 		Identifier payerIdentifier = null;
 		if (!details.has("feePayerAccountId")) {
 			handleError("Missing fee payer ID in details file");
 			return null;
 		}
 
-		var payerJson = details.getAsJsonObject("feePayerAccountId");
+		final var payerJson = details.getAsJsonObject("feePayerAccountId");
 
 		try {
 			payerIdentifier = Identifier.parse(payerJson);
-		} catch (Exception exception) {
+		} catch (final Exception exception) {
 			handleError(exception.getMessage());
 		}
 		return payerIdentifier;
@@ -282,7 +282,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return a json object representing the transaction valid start if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
-	private JsonObject getTransactionValidStamp(JsonObject details) {
+	private JsonObject getTransactionValidStamp(final JsonObject details) {
 		JsonObject tvStamp = null;
 		if (!details.has("firsTransactionValidStart")) {
 			handleError("Missing transaction valid start");
@@ -300,11 +300,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the transaction valid start if it exists and is correct, Null otherwise.
 	 */
 	@Nullable
-	private Timestamp getTimestamp(JsonObject tvStamp) {
-		Timestamp timestamp;
+	private Timestamp getTimestamp(final JsonObject tvStamp) {
+		final Timestamp timestamp;
 		try {
 			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
-		} catch (Exception exception) {
+		} catch (final Exception exception) {
 			handleError(exception.getMessage());
 			return null;
 		}
@@ -322,7 +322,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param s
 	 * 		the string to be displayed in the logs
 	 */
-	private void handleError(String s) {
+	private void handleError(final String s) {
 		logger.error(s);
 		setValid(false);
 	}
@@ -364,7 +364,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	public String getChecksum() {
-		var digest = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
+		final var digest = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
 		if ("".equals(digest)) {
 			return "";
 		}
@@ -382,22 +382,23 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
+	public String execute(final Pair<String, KeyPair> pair, final String user,
+			final String output) throws HederaClientException {
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
-		List<File> toPack = new ArrayList<>();
+		final List<File> toPack = new ArrayList<>();
 
 		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
-		var tempStorage =
+		final var tempStorage =
 				TEMP_DIRECTORY + (LocalDate.now()) + File.separator + "LargeBinary" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 
 		final var pathname = String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
 				pair.getKey().replace(".pem", ""));
-		var finalZip = new File(pathname);
+		final var finalZip = new File(pathname);
 
 		if (pair.getValue() == null || !isValid() || content == null) {
 			return null;
@@ -412,12 +413,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				logger.info("Created temp folder {}", tempStorage);
 			}
 
-			try (var fileInputStream = new FileInputStream(content)) {
-				var buffer = new byte[chunkSize];
+			try (final var fileInputStream = new FileInputStream(content)) {
+				final var buffer = new byte[chunkSize];
 				var count = 1;
 				var inputStream = fileInputStream.read(buffer);
 
-				var input = new JsonObject();
+				final var input = new JsonObject();
 				input.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
 				input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccountId.asJSON());
 				input.add(FILE_ID_FIELD_NAME, fileID.asJSON());
@@ -433,7 +434,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				writeBytes(TEMP_LOCATION, trimmed);
 
 				// First transaction is an update
-				var updateTransaction = new ToolFileUpdateTransaction(input);
+				final var updateTransaction = new ToolFileUpdateTransaction(input);
 				updateTransaction.sign(privateKey);
 				final var filePath = String.format("%s%s-00000.%s", tempStorage, FilenameUtils.getBaseName(filename),
 						Constants.SIGNED_TRANSACTION_EXTENSION);
@@ -450,7 +451,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
 					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
-					var appendTransaction = new ToolFileAppendTransaction(input);
+					final var appendTransaction = new ToolFileAppendTransaction(input);
 					appendTransaction.sign(privateKey);
 					final var appendFilePath =
 							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
@@ -471,7 +472,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					if (Files.deleteIfExists(file.toPath())) {
 						logger.info("{} deleted", file.getAbsolutePath());
 					}
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					logger.error(e);
 				}
 			});
@@ -480,7 +481,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			Files.deleteIfExists(outputFile.toPath());
 			FileUtils.moveFile(finalZip, outputFile);
 			return outputFile.getAbsolutePath();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
@@ -488,20 +489,20 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	@Override
 	public GridPane buildGridPane() {
-		var detailsGridPane = super.buildGridPane();
+		final var detailsGridPane = super.buildGridPane();
 
 		try {
-			var map =
+			final var map =
 					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, map));
 			feePayerLabel.setWrapText(true);
 			detailsGridPane.add(feePayerLabel, 1, 0);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 
 
-		var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
+		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
@@ -511,21 +512,21 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(new Label(memo), 1, 2);
 		}
 
-		var timeLabel = getTimeLabel(transactionValidStart, true);
+		final var timeLabel = getTimeLabel(transactionValidStart, true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
 
 
-		var fileLink = new Hyperlink("Click for more details");
+		final var fileLink = new Hyperlink("Click for more details");
 		fileLink.setOnAction(actionEvent -> {
 			try {
 				final var copyName =
 						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
 				FileUtils.copyFile(getContent(), new File(copyName));
-				var r = Runtime.getRuntime();
-				var command = String.format("open -e %s", copyName);
+				final var r = Runtime.getRuntime();
+				final var command = String.format("open -e %s", copyName);
 				r.exec(command);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e.getMessage());
 			}
 		});
@@ -535,7 +536,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(fileLink, 1, 4);
 
 		detailsGridPane.add(new Label("File Hash"), 0, 5);
-		var checksum = new Text(getChecksum());
+		final var checksum = new Text(getChecksum());
 		checksum.setFont(Font.font("Courier New", 16));
 		detailsGridPane.add(checksum, 1, 5);
 
@@ -543,7 +544,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
 		detailsGridPane.add(new Label(formattedContentSize), 1, 6);
 
-		var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
+		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
@@ -555,7 +556,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final var formattedChunkNumber = String.format("%d", chunks);
 			detailsGridPane.add(new Label(formattedChunkNumber), 1, 8);
 
-			var interval = new Label("Interval between transactions");
+			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
 			detailsGridPane.add(interval, 0, 9);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
@@ -566,7 +567,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 

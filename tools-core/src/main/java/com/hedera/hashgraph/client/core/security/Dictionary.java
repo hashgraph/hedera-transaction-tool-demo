@@ -27,11 +27,11 @@ import java.util.stream.Collectors;
 
 public class Dictionary {
 
-	public boolean valid(String word) {
+	public boolean valid(final String word) {
 		if (word == null) {
 			return false;
 		}
-		for (var w : words) {
+		for (final var w : words) {
 			if (w.equalsIgnoreCase(word)) {
 				return true;
 			}
@@ -39,8 +39,8 @@ public class Dictionary {
 		return false;
 	}
 
-	public List<String> suggestWords(String text) {
-		var filteredEntries =
+	public List<String> suggestWords(final String text) {
+		final var filteredEntries =
 				Arrays.stream(words).filter(e -> e.toLowerCase().startsWith(text.toLowerCase())).sorted(
 						Comparator.naturalOrder()).collect(Collectors.toList());
 

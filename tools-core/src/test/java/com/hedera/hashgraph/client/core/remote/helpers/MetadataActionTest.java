@@ -20,12 +20,9 @@ package com.hedera.hashgraph.client.core.remote.helpers;
 
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import org.junit.jupiter.api.Test;
 
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NULL_OBJECT_COMPARISON_ERROR_MESSAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,13 +31,13 @@ class MetadataActionTest {
 
 	@Test
 	void getAction_test() throws HederaClientException {
-		var line = "{\"timestamp\":{\"seconds\":1610038031,\"nanos\":56883000},\"action\":\"ACCEPT\"," +
+		final var line = "{\"timestamp\":{\"seconds\":1610038031,\"nanos\":56883000},\"action\":\"ACCEPT\"," +
 				"\"location\":\"\\/Hedera Council\\/Transactions - Documents\"," +
 				"\"userComments\":\"user comments here\",\"keyName\":\"keyStore.pem\"}";
 
-		var actionLine = new MetadataAction(line);
+		final var actionLine = new MetadataAction(line);
 
-		var actionJson = actionLine.toJson();
+		final var actionJson = actionLine.toJson();
 		assertTrue(actionJson.has("timestamp"));
 		assertEquals(1610038031L, actionJson.get("timestamp").getAsJsonObject().get("seconds").getAsLong());
 		assertEquals(1610038031L, actionLine.getTimeStamp().getSeconds());
@@ -68,14 +65,14 @@ class MetadataActionTest {
 				assertThrows(HederaClientException.class, () -> new MetadataAction("iuhdfgiufhdifughidufhgiudfhiguh"));
 		assertEquals("Hedera Client: Cannot parse object", exception.getMessage());
 
-		var badLine0 = "{\"action\":\"ACCEPT\"," +
+		final var badLine0 = "{\"action\":\"ACCEPT\"," +
 				"\"location\":\"\\/Hedera Council\\/Transactions - Documents\"," +
 				"\"userComments\":\"user comments here\",\"keyName\":\"keyStore.pem\"}";
 		exception =
 				assertThrows(HederaClientException.class, () -> new MetadataAction(badLine0));
 		assertEquals("Hedera Client: Invalid metadata", exception.getMessage());
 
-		var badLine1 =
+		final var badLine1 =
 				"{\"timestamp\":{\"seconds\":1610038031,\"nanos\":56883000}, \"location\":\"\\/Hedera " +
 						"Council\\/Transactions - Documents\", \"userComments\":\"user comments here\"," +
 						"\"keyName\":\"keyStore.pem\"}";
@@ -88,7 +85,8 @@ class MetadataActionTest {
 
 	@Test
 	void compare_test() {
-		var action0 = new MetadataAction(new Timestamp(1610038031, 0), Actions.DECLINE, "user comments", "someKey");
+		final var action0 =
+				new MetadataAction(new Timestamp(1610038031, 0), Actions.DECLINE, "user comments", "someKey");
 
 		assertEquals(0, action0.compareTo(
 				new MetadataAction(new Timestamp(1610038031L, 0), Actions.DECLINE, "user comments", "someKey")));

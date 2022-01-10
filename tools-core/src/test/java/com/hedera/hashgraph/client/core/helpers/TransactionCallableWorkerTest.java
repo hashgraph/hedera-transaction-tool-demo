@@ -22,7 +22,6 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
@@ -57,9 +56,10 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 	@AfterEach
 	void tearDown() throws IOException {
-		File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
+		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
-		for (File receipt : receipts) {
+		assert receipts != null;
+		for (final File receipt : receipts) {
 			Files.deleteIfExists(receipt.toPath());
 		}
 
@@ -67,10 +67,10 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 	@Test
 	void call_test() throws Exception {
-		var transactionId =
+		final var transactionId =
 				new TransactionId(new AccountId(0, 0, 2), Instant.now().plusSeconds(10));
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
 		transferTransaction.setMaxTransactionFee(new Hbar(1000000))
 				.setTransactionId(transactionId)
@@ -87,15 +87,16 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
 
-		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 
-		var worker = new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
-		var x = worker.call();
-		File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
+		final var worker =
+				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
+		worker.call();
+		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
 		assertEquals(1, receipts.length);
-		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		final var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
 		assertNotNull(receipt);
 		assertEquals(Status.SUCCESS, receipt.status);
 	}
@@ -121,15 +122,16 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
 
-		var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 
-		var worker = new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
+		final var worker =
+				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
 		worker.call();
-		File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
+		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
 		assertEquals(1, receipts.length);
-		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		final var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
 		assertNotNull(receipt);
 		assertEquals(Status.SUCCESS, receipt.status);
 
@@ -149,9 +151,9 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
 
-		TransactionCallableWorker finalWorker =
+		final TransactionCallableWorker finalWorker =
 				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
-		Exception e = assertThrows(HederaClientRuntimeException.class, () -> finalWorker.call());
+		final Exception e = assertThrows(HederaClientRuntimeException.class, finalWorker::call);
 		assertEquals("Hedera Client Runtime: Transaction happens in the past.", e.getMessage());
 
 	}

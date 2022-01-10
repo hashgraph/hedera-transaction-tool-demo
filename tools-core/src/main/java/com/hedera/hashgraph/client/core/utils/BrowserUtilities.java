@@ -45,14 +45,14 @@ public class BrowserUtilities {
 	 * @param localPane        The pane from which the browse window will appear.
 	 * @return The selected directory.
 	 */
-	public static String browseDirectories(String initialPath, Pane localPane) {
+	public static String browseDirectories(final String initialPath, final Pane localPane) {
 
-		var directoryChooser = new DirectoryChooser();
+		final var directoryChooser = new DirectoryChooser();
 		if ((initialPath != null && !initialPath.equals("")) && new File(initialPath).exists()) {
 			directoryChooser.setInitialDirectory(new File(initialPath));
 		}
 
-		var directory = directoryChooser.showDialog(localPane.getScene().getWindow());
+		final var directory = directoryChooser.showDialog(localPane.getScene().getWindow());
 
 		return (directory != null) ? directory.getPath() : "";
 	}
@@ -65,14 +65,14 @@ public class BrowserUtilities {
 	 * @param localPane        The pane from which the browse window will appear.
 	 * @return The selected file.
 	 */
-	public static File browseFiles(String initialPath, Pane localPane) {
+	public static File browseFiles(String initialPath, final Pane localPane) {
 
 		if (initialPath == null || !(new File(initialPath)).exists()) {
 			initialPath =
 					new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 		}
 
-		var fileChooser = new FileChooser();
+		final var fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File((initialPath)));
 
 		return fileChooser.showOpenDialog(localPane.getScene().getWindow());
@@ -86,7 +86,8 @@ public class BrowserUtilities {
 	 * @param ext the allowed extensions
 	 * @return a file
 	 */
-	public static File browseFiles(String initialPath, Pane localPane, String type, String... ext) {
+	public static File browseFiles(final String initialPath, final Pane localPane, final String type,
+			final String... ext) {
 		return browseFiles(initialPath, localPane.getScene(), type, ext);
 	}
 
@@ -98,24 +99,24 @@ public class BrowserUtilities {
 	 * @param ext the allowed extensions
 	 * @return a file
 	 */
-	public static File browseFiles(String initialPath, Scene scene, String type, String... ext) {
+	public static File browseFiles(String initialPath, final Scene scene, final String type, final String... ext) {
 
 		if (initialPath == null || !(new File(initialPath)).exists()) {
 			initialPath =
 					new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 		}
 
-		var fileChooser = new FileChooser();
+		final var fileChooser = new FileChooser();
 
 
-		for (var e : ext) {
+		for (final var e : ext) {
 			fileChooser.getExtensionFilters().add(
 					new FileChooser.ExtensionFilter(String.format("%s [*.%s]", type, e), String.format("*.%s", e)));
 		}
 
 		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));
 
-		var initialPathFile = new File(initialPath);
+		final var initialPathFile = new File(initialPath);
 		if (!initialPathFile.exists() && initialPathFile.mkdirs()) {
 			logger.info("{} does not exist. Directory has been created", initialPath);
 		}
@@ -133,12 +134,13 @@ public class BrowserUtilities {
 	 * @param ext the allowed extensions
 	 * @return a list of files
 	 */
-	public static List<File> browseMultiFiles(String initialPath, Pane localPane, String type, String... ext) {
+	public static List<File> browseMultiFiles(String initialPath, final Pane localPane, final String type,
+			final String... ext) {
 		initialPath = (initialPath != null) ?
 				initialPath :
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
-		var fileChooser = new FileChooser();
-		for (var e : ext) {
+		final var fileChooser = new FileChooser();
+		for (final var e : ext) {
 			fileChooser.getExtensionFilters().add(
 					new FileChooser.ExtensionFilter(type + "-" + e, String.format("*.%s", e)));
 		}

@@ -37,15 +37,15 @@ public class MnemonicBox {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Boolean display(String title, String message, String[] words, String buttonName) {
-		var window = new Stage();
+	public static Boolean display(final String title, final String message, final String[] words, final String buttonName) {
+		final var window = new Stage();
 
 		window.setTitle(title);
 		window.sizeToScene();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 
-		var label = new Label();
+		final var label = new Label();
 		label.setWrapText(true);
 		label.setText(message);
 		label.setWrapText(true);
@@ -54,7 +54,7 @@ public class MnemonicBox {
 		label.setMaxWidth(400);
 		label.setStyle("-fx-font-size: 16");
 
-		var yesButton = new Button(buttonName.toUpperCase());
+		final var yesButton = new Button(buttonName.toUpperCase());
 		yesButton.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
 						"10;" +
@@ -62,10 +62,10 @@ public class MnemonicBox {
 		yesButton.setPrefWidth(150);
 
 
-		var mnemonic = new Label();
+		final var mnemonic = new Label();
 		var counter = 0;
 		var phrase = "";
-		for (var word :
+		for (final var word :
 				words) {
 			phrase = phrase.concat(word.toUpperCase());
 			if (counter < 23) {
@@ -84,7 +84,7 @@ public class MnemonicBox {
 		mnemonic.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		mnemonic.setStyle("-fx-font-size: 18");
 
-		var layout = new VBox();
+		final var layout = new VBox();
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
 		layout.setOnKeyPressed(event -> {
@@ -100,7 +100,7 @@ public class MnemonicBox {
 
 		layout.setStyle("-fx-font-size: 14");
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);

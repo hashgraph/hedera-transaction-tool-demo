@@ -48,50 +48,50 @@ public class MetadataFile extends RemoteFile {
 		super();
 	}
 
-	public MetadataFile(FileDetails f) {
+	public MetadataFile(final FileDetails f) {
 		super(f);
 		if (!isValid()) {
 			return;
 		}
 		List<String> lines = new ArrayList<>();
-		var location = new File(getPath());
+		final var location = new File(getPath());
 		try {
 			lines = Files.readAllLines(location.toPath());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 
-		for (var line : lines) {
+		for (final var line : lines) {
 			try {
 				metadataActions.add(new MetadataAction(line));
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
 		}
 	}
 
-	public void addAction(MetadataAction metadataAction) {
+	public void addAction(final MetadataAction metadataAction) {
 		metadataActions.add(metadataAction);
 		toFile(new File(Constants.DEFAULT_HISTORY, getName()));
 		setValid(true);
 	}
 
-	public MetadataFile(String name) throws HederaClientException {
+	public MetadataFile(final String name) throws HederaClientException {
 		super(new File(Constants.DEFAULT_HISTORY,
 				FilenameUtils.getBaseName(name) + "." + Constants.METADATA_EXTENSION).getAbsolutePath());
 		if (!isValid()) {
 			return;
 		}
-		List<String> lines;
-		var location = new File(Constants.DEFAULT_HISTORY,
+		final List<String> lines;
+		final var location = new File(Constants.DEFAULT_HISTORY,
 				FilenameUtils.getBaseName(name) + "." + Constants.METADATA_EXTENSION);
 		try {
 			lines = Files.readAllLines(location.toPath());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientException(e);
 		}
 
-		for (var line : lines) {
+		for (final var line : lines) {
 			metadataActions.add(new MetadataAction(line));
 		}
 
@@ -101,25 +101,25 @@ public class MetadataFile extends RemoteFile {
 		return new ArrayList<>(new TreeSet<>(metadataActions));
 	}
 
-	private void toFile(File location) {
-		List<MetadataAction> actionList = new ArrayList<>(new TreeSet<>(metadataActions));
+	private void toFile(final File location) {
+		final List<MetadataAction> actionList = new ArrayList<>(new TreeSet<>(metadataActions));
 		try {
-			var fr = new FileWriter(location, false);
-			var br = new BufferedWriter(fr);
-			var pr = new PrintWriter(br);
-			for (var metadataAction : actionList) {
+			final var fr = new FileWriter(location, false);
+			final var br = new BufferedWriter(fr);
+			final var pr = new PrintWriter(br);
+			for (final var metadataAction : actionList) {
 				pr.println(metadataAction.toString());
 			}
 			pr.close();
 			br.close();
 			fr.close();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 		}
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 

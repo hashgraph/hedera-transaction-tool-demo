@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.core.remote.helpers;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -27,14 +26,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserCommentsTest {
 
 	@Test
 	void parse_test() throws FileNotFoundException {
-		File comments = new File("src/test/resources/Files/commentsFile.txt");
-		var parsed = new UserComments().parse(comments);
+		final File comments = new File("src/test/resources/Files/commentsFile.txt");
+		final var parsed = new UserComments().parse(comments);
 		assertEquals("test1.council2@hederacouncil.org", parsed.getAuthor());
 		assertEquals("Contents of the comment", parsed.getComment());
 		assertEquals("2021-04-19 16:51:20", parsed.getTimestamp());
@@ -44,7 +43,7 @@ class UserCommentsTest {
 
 		parsed.toFile("src/test/resources/Files/commentsFile_new.txt");
 
-		var parsed_new = new UserComments().parse(new File("src/test/resources/Files/commentsFile_new.txt"));
+		final var parsed_new = new UserComments().parse(new File("src/test/resources/Files/commentsFile_new.txt"));
 		assertEquals("test1.council2@hederacouncil.org", parsed_new.getAuthor());
 		assertEquals("Contents of the comment", parsed_new.getComment());
 		assertEquals("2021-04-19 16:51:20", parsed_new.getTimestamp());

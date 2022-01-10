@@ -24,10 +24,11 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.text.TextFlow;
 
 public class FileTableRow extends AccountsAndTransfersTableRow {
-	private SimpleStringProperty modifiedFile;
+	private final SimpleStringProperty modifiedFile;
 
-	public FileTableRow(CheckBox cb, TextFlow fileType, String description, String modifiedFile, String paidBy,
-			Button sign) {
+	public FileTableRow(final CheckBox cb, final TextFlow fileType, final String description, final String modifiedFile,
+			final String paidBy,
+			final Button sign) {
 		super(cb, fileType, description, paidBy, sign);
 		this.modifiedFile = new SimpleStringProperty(modifiedFile);
 	}
@@ -36,7 +37,7 @@ public class FileTableRow extends AccountsAndTransfersTableRow {
 		return modifiedFile.get();
 	}
 
-	public void setModifiedFile(String modifiedFile) {
+	public void setModifiedFile(final String modifiedFile) {
 		this.modifiedFile.set(modifiedFile);
 	}
 }

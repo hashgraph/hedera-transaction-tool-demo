@@ -72,11 +72,11 @@ public class AccountHistoryPopup {
 		throw new IllegalStateException("Popup class");
 	}
 
-	public static void setController(Controller controller) {
+	public static void setController(final Controller controller) {
 		AccountHistoryPopup.controller = controller;
 	}
 
-	public static void display(AccountId accountId, Controller controller) {
+	public static void display(final AccountId accountId, final Controller controller) {
 		history.clear();
 		setController(controller);
 		try {
@@ -84,21 +84,21 @@ public class AccountHistoryPopup {
 			final var current = readJson(new File(ACCOUNTS_INFO_FOLDER, name + "." + JSON_EXTENSION));
 			final var lines = getTableLines(accountId, current);
 
-			var window = new Stage();
+			final var window = new Stage();
 
 			window.setTitle(String.format("Account %s history", name));
 			window.sizeToScene();
 			window.setMaxWidth(600);
 			window.initModality(Modality.APPLICATION_MODAL);
 
-			TableView<TableLine> tableView = getTableLineTableView(current, lines);
+			final TableView<TableLine> tableView = getTableLineTableView(current, lines);
 
 
-			var continueButton = new Button("CLOSE");
+			final var continueButton = new Button("CLOSE");
 			continueButton.setStyle(WHITE_BUTTON_STYLE);
 			continueButton.setPrefWidth(200);
 			continueButton.setOnAction(event -> window.close());
-			var layout = new VBox();
+			final var layout = new VBox();
 
 			layout.setSpacing(20);
 			layout.getChildren().add(tableView);
@@ -108,13 +108,13 @@ public class AccountHistoryPopup {
 			layout.setStyle("-fx-font-size: 14");
 			layout.setMinWidth(500);
 
-			var scene = new Scene(layout);
+			final var scene = new Scene(layout);
 			scene.getStylesheets().add("tools.css");
 
 			window.setScene(scene);
 
 			window.showAndWait();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e.getMessage());
 		}
 
@@ -122,12 +122,12 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static TableView<TableLine> getTableLineTableView(JsonObject current, List<TableLine> lines) {
-		TableView<TableLine> tableView = new TableView<>();
-		TableColumn<TableLine, String> dateColumn = new TableColumn<>("Date");
+	private static TableView<TableLine> getTableLineTableView(final JsonObject current, final List<TableLine> lines) {
+		final TableView<TableLine> tableView = new TableView<>();
+		final TableColumn<TableLine, String> dateColumn = new TableColumn<>("Date");
 		dateColumn.setCellValueFactory(new PropertyValueFactory<>("date"));
 		dateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(3));
-		TableColumn<TableLine, String> differencesColumn = new TableColumn<>("Fields changed");
+		final TableColumn<TableLine, String> differencesColumn = new TableColumn<>("Fields changed");
 		differencesColumn.setCellValueFactory(new PropertyValueFactory<>("differences"));
 		differencesColumn.setCellFactory(tv -> getTableCell());
 		differencesColumn.prefWidthProperty().bind(tableView.widthProperty().divide(3).multiply(2));
@@ -147,14 +147,15 @@ public class AccountHistoryPopup {
 		return tableView;
 	}
 
-	private static void doubleClickEvent(JsonObject current, TableRow<TableLine> row, MouseEvent mouseEvent) {
+	private static void doubleClickEvent(final JsonObject current, final TableRow<TableLine> row,
+			final MouseEvent mouseEvent) {
 		if (mouseEvent.getClickCount() != 2 || row.isEmpty()) {
 			return;
 		}
-		var rowData = row.getItem();
+		final var rowData = row.getItem();
 		try {
 			CompareInfosPopup.display(current, history.get(rowData.getSeconds()), controller);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 	}
@@ -163,12 +164,12 @@ public class AccountHistoryPopup {
 	private static TableCell<TableLine, String> getTableCell() {
 		return new TableCell<>() {
 			@Override
-			protected void updateItem(String s, boolean b) {
+			protected void updateItem(final String s, final boolean b) {
 				super.updateItem(s, b);
 				if (s != null && !b) {
-					VBox vBox = new VBox();
-					String[] textList = s.split(",");
-					for (String s1 : textList) {
+					final VBox vBox = new VBox();
+					final String[] textList = s.split(",");
+					for (final String s1 : textList) {
 						vBox.getChildren().add(new Label(s1));
 					}
 					setGraphic(vBox);
@@ -180,29 +181,30 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static List<TableLine> getTableLines(AccountId accountId, JsonObject current) throws IOException {
+	private static List<TableLine> getTableLines(final AccountId accountId,
+			final JsonObject current) throws IOException {
 		getHistory(accountId);
 
-		List<TableLine> lines = new ArrayList<>();
-		for (var entry : history.descendingKeySet()) {
-			var oldInfo = history.get(entry);
-			var diff = Utilities.difference(oldInfo, current);
-			List<String> titles =
+		final List<TableLine> lines = new ArrayList<>();
+		for (final var entry : history.descendingKeySet()) {
+			final var oldInfo = history.get(entry);
+			final var diff = Utilities.difference(oldInfo, current);
+			final List<String> titles =
 					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(
 							Collectors.toList());
-			var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
+			final var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
 			lines.add(new TableLine(entry, message));
 		}
 		return lines;
 	}
 
-	private static void getHistory(AccountId accountId) throws IOException {
-		var name = new Identifier(accountId).toReadableString();
-		var archive = new File(ACCOUNTS_INFO_FOLDER, "Archive").listFiles(
+	private static void getHistory(final AccountId accountId) throws IOException {
+		final var name = new Identifier(accountId).toReadableString();
+		final var archive = new File(ACCOUNTS_INFO_FOLDER, "Archive").listFiles(
 				(dir, filename) -> filename.contains(name + "_") && filename.endsWith(JSON_EXTENSION));
 
 		if (archive != null && archive.length > 0) {
-			for (var file : archive) {
+			for (final var file : archive) {
 				final var seconds = getSeconds(file);
 				if (seconds > 0) {
 					history.put(seconds, readJson(file));
@@ -211,18 +213,18 @@ public class AccountHistoryPopup {
 		}
 	}
 
-	private static long getSeconds(File file) {
+	private static long getSeconds(final File file) {
 		final var archiveName = FilenameUtils.getBaseName(file.getName());
 		try {
 			final String substring = archiveName.substring(archiveName.lastIndexOf("_") + 1);
 			return Long.parseLong(substring);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e.getMessage());
 		}
 		return -1;
 	}
 
-	private static JsonObject readJson(File file) throws IOException {
+	private static JsonObject readJson(final File file) throws IOException {
 		final var reader = new FileReader(file);
 		return parseReader(reader).getAsJsonObject();
 	}
@@ -232,9 +234,9 @@ public class AccountHistoryPopup {
 		private String differences;
 		private final Long seconds;
 
-		public TableLine(Long entry, String message) {
-			var entryDate = new Date(entry);
-			Format format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		public TableLine(final Long entry, final String message) {
+			final var entryDate = new Date(entry);
+			final Format format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			this.seconds = entry;
 			this.date = format.format(entryDate);
 			this.differences = message;
@@ -244,16 +246,8 @@ public class AccountHistoryPopup {
 			return date;
 		}
 
-		public void setDate(String date) {
+		public void setDate(final String date) {
 			this.date = date;
-		}
-
-		public String getDifferences() {
-			return differences;
-		}
-
-		public void setDifferences(String differences) {
-			this.differences = differences;
 		}
 
 		public Long getSeconds() {

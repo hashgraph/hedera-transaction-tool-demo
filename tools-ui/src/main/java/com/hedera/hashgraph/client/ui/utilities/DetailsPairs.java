@@ -27,7 +27,7 @@ public class DetailsPairs {
 		this.value = "";
 	}
 
-	public DetailsPairs(String field, String type) {
+	public DetailsPairs(final String field, final String type) {
 		this.field = field;
 		this.value = type;
 	}
@@ -36,7 +36,7 @@ public class DetailsPairs {
 		return field;
 	}
 
-	public void setField(String field) {
+	public void setField(final String field) {
 		this.field = field;
 	}
 
@@ -44,7 +44,7 @@ public class DetailsPairs {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(final String value) {
 		this.value = value;
 	}
 }

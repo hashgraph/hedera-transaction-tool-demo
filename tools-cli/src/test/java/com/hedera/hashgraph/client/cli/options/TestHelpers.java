@@ -57,25 +57,25 @@ public class TestHelpers {
 	 * 		initial balance
 	 * @return a Json object
 	 */
-	public static JsonObject getJsonInputCA(long tinyBars) {
-		var testJson = new JsonObject();
+	public static JsonObject getJsonInputCA(final long tinyBars) {
+		final var testJson = new JsonObject();
 
-		var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+		final var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		var balanceJson = new JsonObject();
+		final var balanceJson = new JsonObject();
 		balanceJson.addProperty(H_BARS, 0);
 		balanceJson.addProperty(TINY_BARS, tinyBars);
 
-		var feeJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		var feePayerAccount = new JsonObject();
+		final var feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
 
-		var node = new JsonObject();
+		final var node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -111,20 +111,21 @@ public class TestHelpers {
 	 * 		start Instant
 	 * @return a json object
 	 */
-	public static JsonObject getJsonInputCT(long tinyBars, long fromAccount, long toAccount, Instant startInstant) {
-		var testJson = new JsonObject();
-		var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+	public static JsonObject getJsonInputCT(
+			final long tinyBars, final long fromAccount, final long toAccount, final Instant startInstant) {
+		final var testJson = new JsonObject();
+		final var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		var feeJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		var feePayerAccount = new JsonObject();
+		final var feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
 
-		var node = new JsonObject();
+		final var node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -138,12 +139,12 @@ public class TestHelpers {
 		testJson.add(NODE_ID_FIELD_NAME, node);
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
 
-		var jsonArray = new JsonArray();
-		var from = new JsonObject();
+		final var jsonArray = new JsonArray();
+		final var from = new JsonObject();
 		from.add(ACCOUNT, new Identifier(0, 0, fromAccount).asJSON());
 		from.addProperty(AMOUNT, -tinyBars);
 
-		var to = new JsonObject();
+		final var to = new JsonObject();
 		to.add(ACCOUNT, new Identifier(0, 0, toAccount).asJSON());
 		to.addProperty(AMOUNT, tinyBars);
 		jsonArray.add(from);
@@ -159,30 +160,30 @@ public class TestHelpers {
 
 	}
 
-	public static JsonObject getJsonInput(long... accountNums) {
-		var testJson = new JsonObject();
+	public static JsonObject getJsonInput(final long... accountNums) {
+		final var testJson = new JsonObject();
 
-		var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+		final var key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		var feePayerAccount = new JsonObject();
+		final var feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
 
-		var accountArray = new JsonArray();
-		for (var num : accountNums) {
-			var account = new JsonObject();
+		final var accountArray = new JsonArray();
+		for (final var num : accountNums) {
+			final var account = new JsonObject();
 			account.addProperty(REALM_NUMBER, 0);
 			account.addProperty(SHARD_NUMBER, 0);
 			account.addProperty(ACCOUNT_NUMBER, num);
 			accountArray.add(account);
 		}
 
-		var feeJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 10000000);
 
-		var node = new JsonObject();
+		final var node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);

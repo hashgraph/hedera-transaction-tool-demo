@@ -26,11 +26,11 @@ class ActionsTest {
 
 	@Test
 	void getAction() {
-		Actions accept = Actions.ACCEPT;
+		final Actions accept = Actions.ACCEPT;
 		assertEquals("ACCEPT",accept.getAction());
 		assertEquals("accepted", accept.toString());
 
-		Actions decline = Actions.DECLINE;
+		final Actions decline = Actions.DECLINE;
 		assertEquals("DECLINE", decline.getAction());
 		assertEquals("declined", decline.toString());
 	}

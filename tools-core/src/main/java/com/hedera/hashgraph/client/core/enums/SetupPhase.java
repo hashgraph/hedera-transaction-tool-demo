@@ -34,7 +34,7 @@ public enum SetupPhase {
 		return value;
 	}
 
-	public static SetupPhase fromInt(int p) {
+	public static SetupPhase fromInt(final int p) {
 		switch (p) {
 			case -1:
 				return PASSWORD_RECOVERY_PHASE;

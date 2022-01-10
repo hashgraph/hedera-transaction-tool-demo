@@ -54,10 +54,10 @@ class FileAdapterFactoryTest {
 
 	@Test
 	void getAdapterExceptions_Test() {
-		Exception exception0 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(""));
+		final Exception exception0 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(""));
 		assertEquals("Hedera Client: Path cannot be null", exception0.getMessage());
 
-		Exception exception1 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(null));
+		final Exception exception1 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(null));
 		assertEquals("Hedera Client: Path cannot be null", exception1.getMessage());
 	}
 
@@ -68,7 +68,7 @@ class FileAdapterFactoryTest {
 		assertEquals("test/nonExistent/path", adapter.getPath());
 		assertEquals("nonExistent", adapter.getName());
 		assertFalse(adapter.exists());
-		File testResourcesDirectory = new File(System.getProperty("user.home"), "resources/Test");
+		final File testResourcesDirectory = new File(System.getProperty("user.home"), "resources/Test");
 
 		adapter = FileAdapterFactory.getAdapter(testResourcesDirectory.getAbsolutePath());
 		assertNotNull(adapter);

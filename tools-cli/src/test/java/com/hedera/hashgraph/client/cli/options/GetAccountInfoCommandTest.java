@@ -87,9 +87,9 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 
 		ToolsMain.main(args);
 
-		var infos = new File("src/test/resources/infos_temp").listFiles(
+		final var infos = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.INFO_EXTENSION));
-		var jsons = new File("src/test/resources/infos_temp").listFiles(
+		final var jsons = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.JSON_EXTENSION));
 
 		assert infos != null;
@@ -97,10 +97,10 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 		assert jsons != null;
 		assertEquals(1, jsons.length);
 
-		var info = AccountInfo.fromBytes(readBytes(infos[0]));
+		final var info = AccountInfo.fromBytes(readBytes(infos[0]));
 		assertEquals(50, info.accountId.num);
 
-		var json = readJsonObject(jsons[0]);
+		final var json = readJsonObject(jsons[0]);
 		assertEquals("0.0.50", json.get("accountId").getAsString());
 	}
 
@@ -111,9 +111,9 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 						"/test/resources/infos_temp", "-n", "integration" };
 		ToolsMain.main(args);
 
-		var infos = new File("src/test/resources/infos_temp").listFiles(
+		final var infos = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.INFO_EXTENSION));
-		var jsons = new File("src/test/resources/infos_temp").listFiles(
+		final var jsons = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.JSON_EXTENSION));
 
 		assert infos != null;
@@ -137,13 +137,13 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 		final String[] args1 =
 				{ "get-account-info", "-a", "0.50", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
 						"/test/resources/infos_temp", "-n", "integration" };
-		Exception exception1 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args1));
+		final Exception exception1 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args1));
 		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.50\" cannot be parsed", exception1.getMessage());
 
 		final String[] args2 =
 				{ "get-account-info", "-a", "0.0.50", "-p", "0.02", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
 						"/test/resources/infos_temp", "-n", "integration" };
-		Exception exception2 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args2));
+		final Exception exception2 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args2));
 		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.02\" cannot be parsed", exception2.getMessage());
 	}
 
@@ -155,7 +155,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 						"src/test/resources/infos_temp", "-n", "integration" };
 		ToolsMain.main(args);
 
-		var infos = new File("src/test/resources/infos_temp").listFiles(
+		final var infos = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.INFO_EXTENSION));
 		assert infos != null;
 		assertEquals(3, infos.length);
@@ -167,7 +167,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "50, 75, 98", "-p", "2", "-k", "src/test/resources/Keys/genesis.pem", "-o",
 						"src/test/resources/infos_temp", "-n", "ingrate" };
 
-		Exception e = assertThrows(IllegalArgumentException.class, () -> ToolsMain.main(args));
+		final Exception e = assertThrows(IllegalArgumentException.class, () -> ToolsMain.main(args));
 		assertEquals("No enum constant com.hedera.hashgraph.client.core.enums.NetworkEnum.INGRATE", e.getMessage());
 	}
 
@@ -176,7 +176,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 		final String[] args =
 				{ "get-account-info", "-a", "50, 75, 98", "-p", "2", "-k", "src/test/resources/Keys/gene.pem", "-o",
 						"src/test/resources/infos_temp", "-n", "integration" };
-		Exception e = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client: The file src/test/resources/Keys/gene.pem doesn't exist", e.getMessage());
 	}
 
@@ -185,7 +185,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 		final String[] args =
 				{ "get-account-info", "-a", "account", "-p", "2", "-k", "src/test/resources/Keys/genesis.pem", "-o",
 						"src/test/resources/infos_temp", "-n", "integration" };
-		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client Runtime: Bad account format: Address \"account\" cannot be parsed", e.getMessage());
 	}
 
@@ -195,7 +195,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "50", "-p", "account", "-k", "src/test/resources/Keys/genesis.pem", "-o",
 						"src/test/resources/infos_temp", "-n", "integration" };
 
-		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client Runtime: Bad account format: Address \"account\" cannot be parsed", e.getMessage());
 	}
 
@@ -220,7 +220,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "50", "-p", "2", "-k", "src/test/resources/Keys/KeyStore-0.pem", "-n",
 						"integration" };
 
-		Exception e = assertThrows(HederaClientRuntimeException.class,()-> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientRuntimeException.class,()-> ToolsMain.main(args));
 		assertTrue(e.getMessage().contains("failed pre-check with the status `INVALID_SIGNATURE`"));
 	}
 

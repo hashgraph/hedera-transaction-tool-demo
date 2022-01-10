@@ -41,13 +41,13 @@ public class BatchLine implements Comparable<BatchLine> {
 	private final long amount;
 	private Timestamp date;
 
-	private BatchLine(Identifier receiverAccountID, long amount, Timestamp date) {
+	private BatchLine(final Identifier receiverAccountID, final long amount, final Timestamp date) {
 		this.receiverAccountID = receiverAccountID;
 		this.amount = amount;
 		this.date = date;
 	}
 
-	public static BatchLine parse(String line, int hour, int minutes) throws HederaClientException {
+	public static BatchLine parse(final String line, final int hour, final int minutes) throws HederaClientException {
 		if (hour > 23 || hour < 0) {
 			throw new HederaClientException(OUT_OF_RANGE_EXCEPTION_MESSAGE + "hour");
 		}
@@ -56,7 +56,7 @@ public class BatchLine implements Comparable<BatchLine> {
 			throw new HederaClientException(OUT_OF_RANGE_EXCEPTION_MESSAGE + "minute");
 		}
 
-		var fields = line.replace("\"", "").split("[,]");
+		final var fields = line.replace("\"", "").split("[,]");
 		if (fields.length < 3) {
 			throw new HederaClientRuntimeException(String.format("Missing fields in: %s", line));
 		}
@@ -80,7 +80,7 @@ public class BatchLine implements Comparable<BatchLine> {
 		return date;
 	}
 
-	public void setDate(Timestamp date) {
+	public void setDate(final Timestamp date) {
 		this.date = date;
 	}
 
@@ -94,14 +94,14 @@ public class BatchLine implements Comparable<BatchLine> {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (this == o) {
 			return true;
 		}
 		if (!(o instanceof BatchLine)) {
 			return false;
 		}
-		var batchLine = (BatchLine) o;
+		final var batchLine = (BatchLine) o;
 		return amount == batchLine.amount &&
 				receiverAccountID.equals(batchLine.receiverAccountID) &&
 				date.equals(batchLine.date);
@@ -114,7 +114,7 @@ public class BatchLine implements Comparable<BatchLine> {
 	}
 
 	@Override
-	public int compareTo(@NotNull BatchLine o) {
+	public int compareTo(@NotNull final BatchLine o) {
 		if (getClass() != o.getClass()) {
 			throw new HederaClientRuntimeException(INCOMPATIBLE_TYPES_ERROR_MESSAGE);
 		}
@@ -144,16 +144,16 @@ public class BatchLine implements Comparable<BatchLine> {
 			// Empty default constructor
 		}
 
-		public Builder withReceiverAccountID(String stringAccountID) {
+		public Builder withReceiverAccountID(final String stringAccountID) {
 			this.receiverAccountID = Identifier.parse(stringAccountID);
 			return this;
 		}
 
-		public Builder withAmount(String amountString) {
-			long parsedAmount;
+		public Builder withAmount(final String amountString) {
+			final long parsedAmount;
 			try {
 				parsedAmount = Long.parseLong(amountString);
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				throw new HederaClientRuntimeException(String.format("Invalid amount: %s", amountString));
 			}
 
@@ -175,17 +175,18 @@ public class BatchLine implements Comparable<BatchLine> {
 		 * 		the minutes (0-59)
 		 * @return a TimeStamp builder
 		 */
-		public Builder withTimeStamp(String excelDate, int hour, int minutes) throws HederaClientException {
+		public Builder withTimeStamp(final String excelDate, final int hour,
+				final int minutes) throws HederaClientException {
 			final var formatter = new SimpleDateFormat("MM/dd/yy");
 			formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-			var calendar = Calendar.getInstance();
+			final var calendar = Calendar.getInstance();
 			try {
 				calendar.setTime(formatter.parse(excelDate));
 				calendar.add(Calendar.HOUR_OF_DAY, hour);
 				calendar.add(Calendar.MINUTE, minutes);
-				var millis = calendar.getTimeInMillis();
+				final var millis = calendar.getTimeInMillis();
 				this.timestamp = new Timestamp(millis / 1000, (int) (1000000 * millis % 1000));
-			} catch (ParseException ex) {
+			} catch (final ParseException ex) {
 				throw new HederaClientException("Cannot parse date");
 			}
 			return this;

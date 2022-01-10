@@ -19,7 +19,7 @@
 package com.hedera.hashgraph.client.ui;
 
 public class Main {
-	public static final void main(String[] args) {
+	public static void main(final String[] args) {
 		StartUI.main(args);
 	}
 }
