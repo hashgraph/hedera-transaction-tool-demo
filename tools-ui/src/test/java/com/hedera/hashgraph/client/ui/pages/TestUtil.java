@@ -60,10 +60,10 @@ import static org.junit.Assert.assertNotNull;
 public class TestUtil {
 
 	private static final TestBase driver = new TestBase();
-	private static FxRobot robot = new FxRobot();
+	private static final FxRobot robot = new FxRobot();
 	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 
-	public static void applyPath(String filePath) {
+	public static void applyPath(final String filePath) {
 		driver.press(KeyCode.COMMAND);
 		driver.press(KeyCode.SHIFT);
 		driver.press(KeyCode.G);
@@ -71,8 +71,8 @@ public class TestUtil {
 		driver.release(KeyCode.SHIFT);
 		driver.release(KeyCode.COMMAND);
 
-		var charPath = filePath.toCharArray();
-		for (var c : charPath) {
+		final var charPath = filePath.toCharArray();
+		for (final var c : charPath) {
 			pressButton(c);
 		}
 
@@ -84,7 +84,7 @@ public class TestUtil {
 		WaitForAsyncUtils.waitForFxEvents(1);
 	}
 
-	private static void pressButton(char c) {
+	private static void pressButton(final char c) {
 		if (Character.isLetter(c)) {
 			if (Character.isUpperCase(c)) {
 				driver.press(KeyCode.SHIFT);
@@ -116,17 +116,17 @@ public class TestUtil {
 
 	}
 
-	public static Button findButton(String buttonName, String buttonMessage) {
-		Button button = driver.find(buttonName);
+	public static Button findButton(final String buttonName, final String buttonMessage) {
+		final Button button = driver.find(buttonName);
 		if (button.getText().equals(buttonMessage)) {
 			return button;
 		}
 		return null;
 	}
 
-	public static Button findButtonFromPopup(ObservableList<Node> popupNodes,
-			String buttonName) {
-		for (var node : getPopupNodes()) {
+	public static Button findButtonFromPopup(final ObservableList<Node> popupNodes,
+			final String buttonName) {
+		for (final var node : getPopupNodes()) {
 			if (node.getClass().isAssignableFrom(Button.class) || node.toString().equalsIgnoreCase(buttonName)) {
 				return (Button) node;
 			}
@@ -135,8 +135,8 @@ public class TestUtil {
 	}
 
 
-	public static PasswordField findPasswordInPopup(ObservableList<Node> popupNodes) {
-		for (Node popupNode : popupNodes) {
+	public static PasswordField findPasswordInPopup(final ObservableList<Node> popupNodes) {
+		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof PasswordField) {
 				return (PasswordField) popupNode;
 			}
@@ -149,8 +149,9 @@ public class TestUtil {
 		}
 		return null;
 	}
+
 	public static ObservableList<Node> getPopupNodes() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		if (actualAlertDialog != null) {
 			final Node dialogPane = actualAlertDialog.getScene().getRoot();
 			if (dialogPane != null) {
@@ -166,26 +167,26 @@ public class TestUtil {
 	}
 
 	public static ObservableList<Node> getPopupNodesReset() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (DialogPane) actualAlertDialog.getScene().getRoot();
 		return dialogPane.getChildren();
 	}
 
 	public static ObservableList<Node> getPopupNodeCopyKeys() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (HBox) actualAlertDialog.getScene().getRoot();
-		var vbox = (VBox) dialogPane.getChildren().get(0);
-		var children = vbox.getChildren();
-		var label = ((Label) children.get(0)).getText();
+		final var vbox = (VBox) dialogPane.getChildren().get(0);
+		final var children = vbox.getChildren();
+		final var label = ((Label) children.get(0)).getText();
 		Assert.assertTrue(label.contains("signPaneKey.pub,signPaneKey1.pub"));
-		var hbox = (HBox) children.get(1);
+		final var hbox = (HBox) children.get(1);
 		return ((HBox) hbox.getChildren().get(1)).getChildren();
 	}
 
 	public static ObservableList<Node> getSavedTransactionPopupNodes() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (ScrollPane) actualAlertDialog.getScene().getRoot();
-		var vbox = (VBox) dialogPane.getContent();
+		final var vbox = (VBox) dialogPane.getContent();
 		return vbox.getChildren();
 	}
 
@@ -203,7 +204,7 @@ public class TestUtil {
 				.orElse(null);
 	}
 
-	public static void selectFromComboBox(String item, String boxName) {
+	public static void selectFromComboBox(final String item, final String boxName) {
 		driver.clickOn(boxName);
 		driver.clickOn(item);
 
@@ -213,7 +214,7 @@ public class TestUtil {
 		final List<Window> allWindows = new ArrayList<>(robot.robotContext().getWindowFinder().listWindows());
 		Collections.reverse(allWindows);
 
-		var s = (Stage) allWindows
+		final var s = (Stage) allWindows
 				.stream()
 				.filter(window -> window instanceof Stage)
 				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
@@ -226,16 +227,16 @@ public class TestUtil {
 		}
 	}
 
-	public static <T> long countChildren(TreeItem<T> treeItem) {
+	public static <T> long countChildren(final TreeItem<T> treeItem) {
 		long count = 0;
 
 		if (treeItem != null) {
-			var children = treeItem.getChildren();
+			final var children = treeItem.getChildren();
 
 			if (children != null) {
 				count += children.size();
 
-				for (var child : children) {
+				for (final var child : children) {
 					count += countChildren(child);
 				}
 			}
@@ -244,14 +245,14 @@ public class TestUtil {
 		return count;
 	}
 
-	public static List<TreeItem> getChildren(TreeItem treeItem) {
-		List<TreeItem> leaves = new ArrayList<>();
+	public static List<TreeItem> getChildren(final TreeItem treeItem) {
+		final List<TreeItem> leaves = new ArrayList<>();
 
 		if (treeItem.getChildren().isEmpty()) {
 			leaves.add(treeItem);
 		} else {
-			List<TreeItem> children = treeItem.getChildren();
-			for (var child : children) {
+			final List<TreeItem> children = treeItem.getChildren();
+			for (final var child : children) {
 				leaves.addAll(getChildren(child));
 			}
 		}
@@ -275,27 +276,27 @@ public class TestUtil {
 	 * 		the text in the button
 	 * @return a button
 	 */
-	public static Button findButtonInPopup(ObservableList<Node> popupNodes, String legend) {
-		for (var popupNode : popupNodes) {
+	public static Button findButtonInPopup(final ObservableList<Node> popupNodes, final String legend) {
+		for (final var popupNode : popupNodes) {
 			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
 				return (Button) popupNode;
 			} else if (popupNode instanceof ButtonBar) {
-				var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
+				final var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof VBox) {
-				var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof HBox) {
-				var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof GridPane) {
-				var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
@@ -311,9 +312,9 @@ public class TestUtil {
 	 * 		List of nodes in the popup
 	 * @return a list of TextFields
 	 */
-	public static List<TextField> findTextFieldsInPopup(ObservableList<Node> popupNodes) {
-		List<TextField> textFields = new ArrayList<>();
-		for (var popupNode : popupNodes) {
+	public static List<TextField> findTextFieldsInPopup(final ObservableList<Node> popupNodes) {
+		final List<TextField> textFields = new ArrayList<>();
+		for (final var popupNode : popupNodes) {
 			if (popupNode instanceof TextField) {
 				textFields.add((TextField) popupNode);
 			}
@@ -339,18 +340,18 @@ public class TestUtil {
 	public static void copyCreatePaneKeys() {
 		final var createPaneFolderSuffix = "CreatePaneTest";
 		final var testResourceFolder = "/src/test/resources";
-		var createPaneFolder =
+		final var createPaneFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents" + File.separator + createPaneFolderSuffix;
-		var testDirectory = new File(createPaneFolder);
+		final var testDirectory = new File(createPaneFolder);
 		if (!(testDirectory).exists() && testDirectory.mkdirs()) {
 			logger.info("Test folder created");
 		}
-		var keysDirectory = new File(testDirectory, "Keys");
+		final var keysDirectory = new File(testDirectory, "Keys");
 		if (!(keysDirectory).exists() && keysDirectory.mkdirs()) {
 			logger.info("Keys folder created");
 		}
 
-		var sourceCreatePaneTestDirectory = Paths.get(
+		final var sourceCreatePaneTestDirectory = Paths.get(
 				"").toAbsolutePath().toString() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator + "Keys";
 		logger.info("Test keys directory : {}", sourceCreatePaneTestDirectory);
 	}
@@ -362,9 +363,9 @@ public class TestUtil {
 	 * 		root of the tree
 	 * @return the number of nodes.
 	 */
-	public static int countTreeNodes(TreeItem<?> node) {
+	public static int countTreeNodes(final TreeItem<?> node) {
 		var count = 1;
-		for (TreeItem t : node.getChildren()) {
+		for (final TreeItem t : node.getChildren()) {
 			count += countTreeNodes(t);
 		}
 		return count;
@@ -378,17 +379,17 @@ public class TestUtil {
 	 * 		root of the tree
 	 * @return the number of leaves.
 	 */
-	public static int countTreeLeaves(TreeItem<?> node) {
+	public static int countTreeLeaves(final TreeItem<?> node) {
 		var count = 1;
-		for (TreeItem t : node.getChildren()) {
+		for (final TreeItem t : node.getChildren()) {
 			count += (t.isLeaf()) ? 1 : countTreeNodes(t);
 		}
 		return count;
 	}
 
-	public static void applyPath2(String filePath) {
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		StringSelection stringSelection = new StringSelection(filePath);
+	public static void applyPath2(final String filePath) {
+		final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		final StringSelection stringSelection = new StringSelection(filePath);
 		clipboard.setContents(stringSelection, stringSelection);
 		driver.press(KeyCode.BACK_SPACE);
 		driver.press(KeyCode.COMMAND).press(KeyCode.SHIFT).press(KeyCode.G);
@@ -399,16 +400,16 @@ public class TestUtil {
 	}
 
 	public static List<Hyperlink> findHyperlinksInPopup() {
-		var popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		if (popupNodes == null) {
 			return new ArrayList<>();
 		}
 		return findHyperlinksInPopup(popupNodes);
 	}
 
-	private static List<Hyperlink> findHyperlinksInPopup(ObservableList<Node> popupNodes) {
-		List<Hyperlink> nodes = new ArrayList<>();
-		for (Node popupNode : popupNodes) {
+	private static List<Hyperlink> findHyperlinksInPopup(final ObservableList<Node> popupNodes) {
+		final List<Hyperlink> nodes = new ArrayList<>();
+		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof Hyperlink) {
 				nodes.add((Hyperlink) popupNode);
 			} else if (popupNode instanceof HBox) {
@@ -424,16 +425,16 @@ public class TestUtil {
 	}
 
 	public static List<GridPane> findGridpanesInPopup() {
-		var popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		if (popupNodes == null) {
 			return new ArrayList<>();
 		}
 		return findGridPanesInPopup(popupNodes);
 	}
 
-	private static List<GridPane> findGridPanesInPopup(ObservableList<Node> popupNodes) {
-		List<GridPane> nodes = new ArrayList<>();
-		for (Node popupNode : popupNodes) {
+	private static List<GridPane> findGridPanesInPopup(final ObservableList<Node> popupNodes) {
+		final List<GridPane> nodes = new ArrayList<>();
+		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof GridPane) {
 				nodes.add((GridPane) popupNode);
 			} else if (popupNode instanceof HBox) {

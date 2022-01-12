@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
@@ -41,8 +40,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,16 +68,16 @@ public class MigrationTest extends TestBase {
 		}
 		FileUtils.copyDirectory(new File(OLD_TOOLS_FOLDER), new File(DOCUMENTS, TRANSACTION_TOOLS));
 
-		var properties = new UserAccessibleProperties(TRANSACTION_TOOL_PATH + "Files/user.properties", "");
+		final var properties = new UserAccessibleProperties(TRANSACTION_TOOL_PATH + "Files/user.properties", "");
 		properties.setPreferredStorageDirectory(TRANSACTION_TOOL_PATH);
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		Path currentRelativePath = Paths.get("");
-		Map<String, String> emailMap = new HashMap<>();
+		final Path currentRelativePath = Paths.get("");
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
@@ -93,7 +94,7 @@ public class MigrationTest extends TestBase {
 	public void handleMigration_test() throws Exception {
 
 		final var accountsFolder = TRANSACTION_TOOL_PATH + "Accounts";
-		var accountFolders = new File(accountsFolder).listFiles(
+		final var accountFolders = new File(accountsFolder).listFiles(
 				pathname -> pathname.isDirectory() && pathname.getName().contains("."));
 		assertNotNull(accountFolders);
 
@@ -102,7 +103,7 @@ public class MigrationTest extends TestBase {
 		assertFalse(new File(tTools.getAbsolutePath(), "Files/.System").exists());
 
 
-		var sizeBefore = Objects.requireNonNull(
+		final var sizeBefore = Objects.requireNonNull(
 				new File(TRANSACTION_TOOL_PATH, "History").listFiles(
 						(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
 
@@ -112,24 +113,24 @@ public class MigrationTest extends TestBase {
 
 		assertTrue(new File(tTools.getAbsolutePath(), "Files/.System").exists());
 
-		var accountFoldersAfter = new File(accountsFolder).listFiles(File::isDirectory);
+		final var accountFoldersAfter = new File(accountsFolder).listFiles(File::isDirectory);
 		assertNotNull(accountFoldersAfter);
 		assertEquals(0, accountFoldersAfter.length);
 
-		AccountsPanePage accountsPanePage = new AccountsPanePage(this);
-		MainWindowPage mainWindowPage = new MainWindowPage(this);
+		final AccountsPanePage accountsPanePage = new AccountsPanePage(this);
+		final MainWindowPage mainWindowPage = new MainWindowPage(this);
 
 		mainWindowPage.clickOnAccountsButton();
-		var accountFiles = new File(accountsFolder).listFiles(
+		final var accountFiles = new File(accountsFolder).listFiles(
 				(dir, name) -> INFO_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assertNotNull(accountFiles);
 
 		assertEquals(accountFolders.length, accountFiles.length);
 
-		var accounts = accountsPanePage.getAccounts();
+		final var accounts = accountsPanePage.getAccounts();
 		assertEquals(accounts.size(), accountFolders.length);
 
-		var sizeAfter = Objects.requireNonNull(
+		final var sizeAfter = Objects.requireNonNull(
 				new File(TRANSACTION_TOOL_PATH, "History").listFiles(
 						(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)))).length;
 
@@ -138,7 +139,7 @@ public class MigrationTest extends TestBase {
 		final var tempDir = Files.createTempDirectory("historyTest");
 		ZipUtil.unpack(archive, tempDir.toFile());
 
-		var after =
+		final var after =
 				sizeAfter + (Objects.requireNonNull(tempDir.toFile().listFiles()).length > 0 ? Objects.requireNonNull(
 						Objects.requireNonNull(tempDir.toFile().listFiles())[0].listFiles()).length : 0);
 

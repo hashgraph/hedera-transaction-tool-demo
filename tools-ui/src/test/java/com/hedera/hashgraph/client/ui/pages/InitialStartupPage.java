@@ -65,26 +65,26 @@ public class InitialStartupPage {
 
 	private final TestBase driver;
 
-	public InitialStartupPage(TestBase driver) {
+	public InitialStartupPage(final TestBase driver) {
 		this.driver = driver;
 	}
 
 	public InitialStartupPage skipUserName() {
-		Button b = findButtonInBar(USERNAME_BUTTON_BAR, "SKIP");
+		final Button b = findButtonInBar(USERNAME_BUTTON_BAR, "SKIP");
 		driver.clickOn(b);
 		return this;
 	}
 
-	public InitialStartupPage enterStringUsername(String test) {
-		TextField userName = driver.find(EMAIL_TEXT_FIELD);
+	public InitialStartupPage enterStringUsername(final String test) {
+		final TextField userName = driver.find(EMAIL_TEXT_FIELD);
 		driver.clickOn(userName);
 		driver.write(test);
 		return this;
 	}
 
-	public InitialStartupPage enterOneDriveFolder(String s) {
+	public InitialStartupPage enterOneDriveFolder(final String s) {
 
-		TextField pathTextField = driver.find(JavaFXIDs.ONEDRIVE_PATH_TEXT_FIELD);
+		final TextField pathTextField = driver.find(JavaFXIDs.ONEDRIVE_PATH_TEXT_FIELD);
 		pathTextField.clear();
 		driver.clickOn(pathTextField);
 		driver.write((System.getProperty("user.dir") + File.separator + s));
@@ -93,21 +93,21 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage acceptOneDrive() {
-		Button accept = driver.find("#confirmAddFolderButton");
+		final Button accept = driver.find("#confirmAddFolderButton");
 		driver.clickOn(accept);
 		return this;
 	}
 
 	public InitialStartupPage confirmUsername() {
-		Button b = findButtonInBar(USERNAME_BUTTON_BAR, "CONFIRM");
+		final Button b = findButtonInBar(USERNAME_BUTTON_BAR, "CONFIRM");
 		driver.clickOn(b);
 		return this;
 	}
 
-	public Button findButtonInBar(String buttonBarName, String buttonMessage) {
-		ButtonBar buttonBar = driver.find(buttonBarName);
-		ObservableList<Node> buttons = buttonBar.getButtons();
-		for (Node b :
+	public Button findButtonInBar(final String buttonBarName, final String buttonMessage) {
+		final ButtonBar buttonBar = driver.find(buttonBarName);
+		final ObservableList<Node> buttons = buttonBar.getButtons();
+		for (final Node b :
 				buttons) {
 			if (((Button) b).getText().equals(buttonMessage)) {
 				return (Button) b;
@@ -117,7 +117,7 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage browseFolders() {
-		Button browse = findButtonInBar(STORAGE_BUTTON_BAR, "CHANGE");
+		final Button browse = findButtonInBar(STORAGE_BUTTON_BAR, "CHANGE");
 		driver.clickOn(browse, MouseButton.PRIMARY);
 		return this;
 	}
@@ -132,12 +132,12 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage openBrowseFile() {
-		Button browse = findButtonInBar(NETWORK_BUTTON_BAR, "SELECT FILE");
+		final Button browse = findButtonInBar(NETWORK_BUTTON_BAR, "SELECT FILE");
 		driver.clickOn(browse, MouseButton.PRIMARY);
 		return this;
 	}
 
-	public InitialStartupPage enterNetworkAddress(String file) throws InterruptedException {
+	public InitialStartupPage enterNetworkAddress(final String file) throws InterruptedException {
 		TestUtil.applyPath(file);
 		return this;
 	}
@@ -152,20 +152,20 @@ public class InitialStartupPage {
 		return this;
 	}
 
-	public InitialStartupPage enterFirstPassword(String password) {
+	public InitialStartupPage enterFirstPassword(final String password) {
 		driver.clickOn(PASSWORD_FIELD_ONE);
 		driver.write(password);
 		return this;
 	}
 
-	public InitialStartupPage enterSecondPassword(String password) {
+	public InitialStartupPage enterSecondPassword(final String password) {
 		driver.clickOn(PASSWORD_FIELD_TWO);
 		driver.write(password);
 		return this;
 	}
 
 	public InitialStartupPage clearSecondPassword() {
-		TextField password2 = driver.find(PASSWORD_FIELD_TWO);
+		final TextField password2 = driver.find(PASSWORD_FIELD_TWO);
 		password2.clear();
 		return this;
 	}
@@ -175,9 +175,9 @@ public class InitialStartupPage {
 		return this;
 	}
 
-	public InitialStartupPage loadInfoFromHiddenTextField(String location) {
+	public InitialStartupPage loadInfoFromHiddenTextField(final String location) {
 
-		TextField path = driver.find(HIDDEN_STARTUP_INFO_TEXTFIELD);
+		final TextField path = driver.find(HIDDEN_STARTUP_INFO_TEXTFIELD);
 		path.setText(location);
 		driver.clickOn(path).press(KeyCode.ENTER).release(KeyCode.ENTER);
 
@@ -188,16 +188,16 @@ public class InitialStartupPage {
 		driver.clickOn("CONTINUE");
 	}
 
-	public InitialStartupPage enterKeyNickname(String testKey) {
-		TextField nickname = driver.find(KEY_NICKNAME);
+	public InitialStartupPage enterKeyNickname(final String testKey) {
+		final TextField nickname = driver.find(KEY_NICKNAME);
 		nickname.setText(testKey);
 		driver.clickOn(nickname).press(KeyCode.ENTER).release(KeyCode.ENTER);
 
 		return this;
 	}
 
-	public InitialStartupPage enterPassword(String s) {
-		PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_1);
+	public InitialStartupPage enterPassword(final String s) {
+		final PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_1);
 		passwordField.clear();
 		driver.clickOn(APP_PASSWORD_FIELD_1);
 		driver.write(s);
@@ -205,8 +205,8 @@ public class InitialStartupPage {
 		return this;
 	}
 
-	public InitialStartupPage reEnterPassword(String s) {
-		PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_2);
+	public InitialStartupPage reEnterPassword(final String s) {
+		final PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_2);
 		passwordField.clear();
 		driver.clickOn(APP_PASSWORD_FIELD_2);
 		driver.write(s);
@@ -214,21 +214,21 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage acceptPassword() {
-		Button passwordButton = driver.find(ACCEPT_APP_PASSWORD);
+		final Button passwordButton = driver.find(ACCEPT_APP_PASSWORD);
 		driver.clickOn(passwordButton);
 		return this;
 	}
 
 	public InitialStartupPage clickOnGenerateMnemonic() {
-		Button generate = driver.find(GENERATE_KEYS_BUTTON);
+		final Button generate = driver.find(GENERATE_KEYS_BUTTON);
 		driver.clickOn(generate);
 		return this;
 	}
 
-	public InitialStartupPage clickMnemonicPopupButton(String legend) {
-		Set<Node> nodes = driver.findAll(legend);
+	public InitialStartupPage clickMnemonicPopupButton(final String legend) {
+		final Set<Node> nodes = driver.findAll(legend);
 		Button ok = new Button();
-		for (Node n :
+		for (final Node n :
 				nodes) {
 			if (n instanceof Button && n.isVisible()) {
 				ok = (Button) n;
@@ -245,20 +245,20 @@ public class InitialStartupPage {
 		driver.clickOn("FINISH");
 	}
 
-	public InitialStartupPage enterPasswordInPopup(String password) {
+	public InitialStartupPage enterPasswordInPopup(final String password) {
 		try {
-			PasswordField passwordField = (PasswordField) TestUtil.getPopupNodes().get(1);
+			final PasswordField passwordField = (PasswordField) TestUtil.getPopupNodes().get(1);
 			passwordField.setText(password);
 			driver.clickOn(passwordField).press(KeyCode.ENTER).release(KeyCode.ENTER);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return this;
 	}
 
 	public Label getLabelFromPopup() {
-		ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
-		for (Node n :
+		final ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
+		for (final Node n :
 				popupNodes) {
 			if (n instanceof Label) {
 				return (Label) n;
@@ -269,8 +269,8 @@ public class InitialStartupPage {
 
 	public InitialStartupPage closePopup() {
 		Button button = null;
-		ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
-		for (Node n :
+		final ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
+		for (final Node n :
 				popupNodes) {
 			if (n instanceof Button) {
 				button = (Button) n;
@@ -283,22 +283,22 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage pressPaste() {
-		Button paste = driver.find(PASTE_FROM_CLIPBOARD);
+		final Button paste = driver.find(PASTE_FROM_CLIPBOARD);
 		driver.clickOn(paste);
 		return this;
 	}
 
-	public InitialStartupPage enterNewPasswordInPopup(String password) {
-		var passwordFields = getPopupPasswordFields();
+	public InitialStartupPage enterNewPasswordInPopup(final String password) {
+		final var passwordFields = getPopupPasswordFields();
 		passwordFields.get(0).clear();
 		typePassword(password, passwordFields.get(0));
 		typePassword(password, passwordFields.get(1));
-		var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
+		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
 		driver.clickOn(continueButton);
 		return this;
 	}
 
-	public void typePassword(String s, PasswordField field) {
+	public void typePassword(final String s, final PasswordField field) {
 		field.setText(s);
 		driver.clickOn(field);
 		driver.type(KeyCode.SHIFT);
@@ -310,9 +310,9 @@ public class InitialStartupPage {
 		return getAllPasswordFields(popupNodes);
 	}
 
-	private List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
-		List<PasswordField> passwordFields = new ArrayList<>();
-		for (Node node : nodes) {
+	private List<PasswordField> getAllPasswordFields(final ObservableList<Node> nodes) {
+		final List<PasswordField> passwordFields = new ArrayList<>();
+		for (final Node node : nodes) {
 			if (node instanceof HBox) {
 				passwordFields.addAll(getAllPasswordFields(((HBox) node).getChildren()));
 			}

@@ -110,7 +110,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		properties.setMnemonicHashCode(-915976044);
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
@@ -123,8 +123,8 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		setupTransactionDirectory(DEFAULT_STORAGE);
@@ -137,12 +137,12 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
-		Mnemonic mnemonic = Mnemonic.fromWords(testWords);
+		final Mnemonic mnemonic = Mnemonic.fromWords(testWords);
 		properties.setMnemonicHashCode(mnemonic.words.hashCode());
 		properties.setHash(TEST_PASSWORD.toCharArray());
 		properties.setLegacy(false);
-		var salt = Utilities.getSaltBytes(properties);
-		var passwordBytes = keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
+		final var salt = Utilities.getSaltBytes(properties);
+		final var passwordBytes = keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
 		toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
 				mnemonic.toString());
 
@@ -155,7 +155,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		}
 
 		keysPanePage = new KeysPanePage(this);
-		MainWindowPage mainWindowPage = new MainWindowPage(this);
+		final MainWindowPage mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnKeysButton();
 	}
 
@@ -186,15 +186,15 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		assertTrue(recoveryBox instanceof VBox);
 		assertTrue(recoveryBox.isVisible());
 
-		var children = ((VBox) recoveryBox).getChildren();
+		final var children = ((VBox) recoveryBox).getChildren();
 		assertEquals(2, children.size());
 		assertTrue(children.get(1) instanceof HBox);
-		var labels = ((HBox) children.get(1)).getChildren();
+		final var labels = ((HBox) children.get(1)).getChildren();
 		assertEquals(1, labels.size());
 		assertTrue(labels.get(0) instanceof Label);
 
-		String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (String testWord : testWords) {
+		final String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (final String testWord : testWords) {
 			assertTrue(words.contains(testWord));
 		}
 	}
@@ -204,19 +204,19 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		keysPanePage.createKey("testKey", TEST_PASSWORD);
 		doubleClickOn("testKey");
 
-		File pem = new File(DEFAULT_KEYS, "testKey.pem");
-		var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
+		final File pem = new File(DEFAULT_KEYS, "testKey.pem");
+		final var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 
-		ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
-		ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		final ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		final ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
 		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
 		assertTrue(privateKeyNodes.get(1) instanceof VBox);
 
-		VBox vBox = (VBox) privateKeyNodes.get(1);
+		final VBox vBox = (VBox) privateKeyNodes.get(1);
 		assertEquals(3, vBox.getChildren().size());
-		Node show = vBox.getChildren().get(0);
+		final Node show = vBox.getChildren().get(0);
 		assertTrue(show instanceof Button);
 		assertEquals("SHOW", ((Button) show).getText());
 		clickOn(show);
@@ -228,7 +228,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.enterPasswordAndConfirm("penthouseart")
 				.clickOnPopupButton("CONTINUE");
 
-		var keyStoreAfter = Ed25519KeyStore.read("penthouseart".toCharArray(), pem.getAbsolutePath());
+		final var keyStoreAfter = Ed25519KeyStore.read("penthouseart".toCharArray(), pem.getAbsolutePath());
 		assertArrayEquals(keyStoreBefore.get(0).getPrivate().getEncoded(),
 				keyStoreAfter.get(0).getPrivate().getEncoded());
 
@@ -238,19 +238,19 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	public void forgottenPasswordKeyDifferentMnemonic_test() throws KeyStoreException {
 		doubleClickOn("principalTestingKey");
 
-		File pem = new File(DEFAULT_KEYS, "principalTestingKey.pem");
-		var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
+		final File pem = new File(DEFAULT_KEYS, "principalTestingKey.pem");
+		final var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 
-		ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
-		ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		final ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		final ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
 		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
 		assertTrue(privateKeyNodes.get(1) instanceof VBox);
 
-		VBox vBox = (VBox) privateKeyNodes.get(1);
+		final VBox vBox = (VBox) privateKeyNodes.get(1);
 		assertEquals(3, vBox.getChildren().size());
-		Node show = vBox.getChildren().get(0);
+		final Node show = vBox.getChildren().get(0);
 		assertTrue(show instanceof Button);
 		assertEquals("SHOW", ((Button) show).getText());
 		clickOn(show);
@@ -260,7 +260,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.clickOnPopupButton("RESET");
 		keysPanePage.clickOnPopupButton("CONTINUE");
 
-		var keyStoreAfter = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
+		final var keyStoreAfter = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 		assertArrayEquals(keyStoreBefore.get(0).getPrivate().getEncoded(),
 				keyStoreAfter.get(0).getPrivate().getEncoded());
 		keysPanePage.clickOnPopupButton("CLOSE");
@@ -279,7 +279,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 
 		String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (String testWord : testWords) {
+		for (final String testWord : testWords) {
 			assertTrue(words.contains(testWord));
 		}
 		keysPanePage.pressCloseViewMnemonic();
@@ -323,7 +323,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		assertTrue(labels.get(0) instanceof Label);
 
 		words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (String testWord : testWords2) {
+		for (final String testWord : testWords2) {
 			assertTrue(words.contains(testWord));
 		}
 

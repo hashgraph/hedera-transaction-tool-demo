@@ -20,21 +20,18 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
-import javafx.scene.control.Label;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_BUTTON;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.BATCH_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.HOME_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SETTINGS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNATURE_BUTTON;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.TITLE_LABEL;
 
 public class MainWindowPage {
 	private final TestBase driver;
 
-	public MainWindowPage(TestBase driver) {
+	public MainWindowPage(final TestBase driver) {
 		this.driver = driver;
 	}
 
@@ -77,8 +74,8 @@ public class MainWindowPage {
 		return new MainWindowPage(driver);
 	}
 
-	public MainWindowPage clickPopupContinue(){
-		var nodes = TestUtil.getPopupNodes();
+	public MainWindowPage clickPopupContinue() {
+		final var nodes = TestUtil.getPopupNodes();
 		return this;
 	}
 }

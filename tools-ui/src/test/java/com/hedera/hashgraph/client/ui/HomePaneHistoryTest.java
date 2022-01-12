@@ -112,7 +112,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 			logger.info("Output directory created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents - " +
 						"empty/",
@@ -143,8 +143,8 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
-		var controller = new Controller();
-		var version = controller.getVersion();
+		final var controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		FxToolkit.registerPrimaryStage();
@@ -152,7 +152,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 		homePanePage = new HomePanePage(this);
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
 				systemBoxes, fileUpdateBoxes);
 
@@ -171,13 +171,13 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		softwareBoxes.clear();
 		systemBoxes.clear();
 
-		var currentRelativePath = Paths.get("");
-		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		final var currentRelativePath = Paths.get("");
+		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
-		var out =
+		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 		if (new File(out).exists()) {
@@ -191,7 +191,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void historyTest() {
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(0, newFiles.size());
 
 		var historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
@@ -265,7 +265,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 		files = historyVBox.getChildren();
 
-		for (var file : files) {
+		for (final var file : files) {
 			if (!(file instanceof VBox)) {
 				continue;
 			}
@@ -292,13 +292,13 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void filterTest() {
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(0, newFiles.size());
 
 		var historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
 		assertTrue(historyFiles.get(1) instanceof HBox);
 		assertTrue(historyFiles.get(historyFiles.size() - 1) instanceof HBox);
-		var topBox = (HBox) historyFiles.get(1);
+		final var topBox = (HBox) historyFiles.get(1);
 		HBox pagesBox;
 		var historyVBox = (VBox) historyFiles.get(historyFiles.size() - 2);
 
@@ -313,10 +313,10 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		ObservableList<Node> top;
 		assertTrue(topBox.getChildren().get(0) instanceof VBox);
 
-		var filters = ((VBox) find("#filterVBox")).getChildren();
+		final var filters = ((VBox) find("#filterVBox")).getChildren();
 		assertEquals(2, filters.size());
 		assertTrue(filters.get(0) instanceof HBox);
-		var buttons = ((HBox) filters.get(0)).getChildren();
+		final var buttons = ((HBox) filters.get(0)).getChildren();
 		assertTrue(buttons.get(0) instanceof Label);
 		assertTrue(buttons.get(1) instanceof Button);
 
@@ -332,7 +332,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		separateBoxes(files, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
 				systemBoxes, fileUpdateBoxes);
 
-		for (var file : files) {
+		for (final var file : files) {
 			if (!(file instanceof VBox)) {
 				continue;
 			}
@@ -377,14 +377,16 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 	}
 
 	// region Helper methods
-	private Button findButton(int i, ObservableList<Node> top) {
+	private Button findButton(final int i, final ObservableList<Node> top) {
 		return (Button) top.stream().filter(node -> node instanceof Button && ((Button) node).getText().equals(
 				String.valueOf(i))).findFirst().orElse(null);
 	}
 
-	private void separateBoxes(ObservableList<Node> newFiles, List<VBox> publicKeyBoxes, List<VBox> accountInfoBoxes,
-			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes,
-			List<VBox> fileUpdateBoxes) {
+	private void separateBoxes(final ObservableList<Node> newFiles, final List<VBox> publicKeyBoxes,
+			final List<VBox> accountInfoBoxes,
+			final List<VBox> batchBoxes, final List<VBox> transactionBoxes, final List<VBox> softwareBoxes,
+			final List<VBox> systemBoxes,
+			final List<VBox> fileUpdateBoxes) {
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
 		batchBoxes.clear();
@@ -392,16 +394,16 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		softwareBoxes.clear();
 		systemBoxes.clear();
 		fileUpdateBoxes.clear();
-		for (var box :
+		for (final var box :
 				newFiles) {
 			if (!(box instanceof VBox)) {
 				continue;
 			}
 
-			var lines = ((VBox) box).getChildren();
+			final var lines = ((VBox) box).getChildren();
 			if (lines.size() >= 3) {
 				assertTrue(lines.get(0) instanceof Label);
-				var l = ((Label) lines.get(0)).getText();
+				final var l = ((Label) lines.get(0)).getText();
 				if (l.contains("Batch")) {
 					batchBoxes.add((VBox) box);
 				} else if (l.contains("Transaction") && !l.contains("ZippedTransactions")) {
@@ -415,7 +417,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 				}
 			} else if (lines.size() == 2) {
 				assertTrue(lines.get(0) instanceof Label);
-				var l = ((Label) lines.get(0)).getText();
+				final var l = ((Label) lines.get(0)).getText();
 				if (l.contains("Account Information")) {
 					accountInfoBoxes.add((VBox) box);
 				} else if (l.contains("Public Key")) {
@@ -427,21 +429,19 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		}
 	}
 
-	private static void ensureVisible(ScrollPane scrollPane, Node node) {
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
+	private static void ensureVisible(final ScrollPane scrollPane, final Node node) {
+		final var viewport = scrollPane.getViewportBounds();
+		final var contentHeight =
 				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+		final var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+		final var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
 
 		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
+		final var vValueCurrent = scrollPane.getVvalue();
 
 		if (nodeMaxY < 0) {
-			// currently located above (remember, top left is (0,0))
 			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
 		} else if (nodeMinY > viewport.getHeight()) {
-			// currently located below
 			vValueDelta = (nodeMinY) / contentHeight;
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);

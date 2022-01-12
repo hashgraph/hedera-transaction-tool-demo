@@ -99,23 +99,26 @@ class UpdateHelperTest {
 
 	@Test
 	void handleAccounts_test() throws HederaClientException, IOException {
-		UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 
 		final var accountsFolder = DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Accounts";
-		var accountFolders = new File(accountsFolder).listFiles((dir, name) -> dir.isDirectory() && name.contains("."));
+		final var accountFolders =
+				new File(accountsFolder).listFiles((dir, name) -> dir.isDirectory() && name.contains("."));
 		assert accountFolders != null;
-		var keysBefore = new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
-				File::isFile);
+		final var keysBefore =
+				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
+						File::isFile);
 		assert keysBefore != null;
 
 		helper.handleAccounts();
 
-		var infoFiles = new File(accountsFolder).listFiles(File::isFile);
+		final var infoFiles = new File(accountsFolder).listFiles(File::isFile);
 		assert infoFiles != null;
-		var keysAfter = new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
-				File::isFile);
+		final var keysAfter =
+				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
+						File::isFile);
 		assert keysAfter != null;
 
 		assertEquals(accountFolders.length, (infoFiles.length - 1) / 2);
@@ -130,7 +133,7 @@ class UpdateHelperTest {
 
 	@Test
 	void handleKeys_test() throws IOException {
-		UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 		assertTrue(new File(DOCUMENTS, TRANSACTION_TOOLS + File.separator + "Keys/recovery.aes").exists());
@@ -145,17 +148,17 @@ class UpdateHelperTest {
 
 	@Test
 	void handleHistory_test() throws Exception {
-		UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 		final var accountsFolder = DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "History";
-		File[] history = new File(accountsFolder).listFiles(
+		final File[] history = new File(accountsFolder).listFiles(
 				(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		helper.handleHistory();
 		final var archive =
 				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Files/History_Archive.zip");
 		assertTrue(archive.exists());
-		File[] history2 = new File(accountsFolder).listFiles(
+		final File[] history2 = new File(accountsFolder).listFiles(
 				(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)));
 
 		final var tempDir = Files.createTempDirectory("historyTest");
