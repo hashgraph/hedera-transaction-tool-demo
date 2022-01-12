@@ -67,4 +67,8 @@ public class MainWindowPage {
 		return new MainWindowPage(driver);
 	}
 
+	public MainWindowPage clickPopupContinue() {
+		final var nodes = TestUtil.getPopupNodes();
+		return this;
+	}
 }

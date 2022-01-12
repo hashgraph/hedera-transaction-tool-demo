@@ -267,8 +267,10 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				.hbars;
 
 		final var transactionValidStart = Instant.now().plusSeconds(30);
-		final String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
-		final String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(), transactionValidStart);
+		final String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(),
+				transactionValidStart);
+		final String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(),
+				transactionValidStart);
 
 		logger.info("Submitting transactions");
 

@@ -32,8 +32,8 @@ class TimeUtilsTest {
 
 	@Test
 	void excelDateTimeToCalendar() {
-		final String dateString = "2025-12-25T08:32:11";
-		Calendar date = TimeUtils.excelDateTimeToCalendar(dateString);
+		final var dateString = "2025-12-25T08:32:11";
+		var date = TimeUtils.excelDateTimeToCalendar(dateString);
 		assertNotNull(date);
 		assertEquals(2025, date.get(Calendar.YEAR));
 		assertEquals(11, date.get(Calendar.MONTH));
@@ -41,13 +41,13 @@ class TimeUtilsTest {
 		assertEquals(32, date.get(Calendar.MINUTE));
 		assertEquals(11, date.get(Calendar.SECOND));
 
-		final String shortDate = "04/18/52";
+		final var shortDate = "04/18/52";
 		date = TimeUtils.excelDateTimeToCalendar(shortDate);
 		assertNotNull(date);
 		assertEquals(1952, date.get(Calendar.YEAR));
 		assertEquals(3, date.get(Calendar.MONTH));
 
-		final String badDate = "665465T564";
+		final var badDate = "665465T564";
 		date = TimeUtils.excelDateTimeToCalendar(badDate);
 		assertNull(date);
 	}

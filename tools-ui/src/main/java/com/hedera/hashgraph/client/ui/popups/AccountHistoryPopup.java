@@ -177,12 +177,19 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static List<TableLine> getTableLines(final AccountId accountId) throws IOException {
+	private static List<TableLine> getTableLines(final AccountId accountId,
+			final JsonObject current) throws IOException {
 		getHistory(accountId);
 
 		final List<TableLine> lines = new ArrayList<>();
 		for (final var entry : history.descendingKeySet()) {
-			lines.add(new TableLine(entry));
+			final var oldInfo = history.get(entry);
+			final var diff = Utilities.difference(oldInfo, current);
+			final List<String> titles =
+					diff.stream().map(s -> AccountInfoFields.valueOf(s.toUpperCase(Locale.ROOT)).getName()).collect(
+							Collectors.toList());
+			final var message = diff.isEmpty() ? "No difference" : String.join(",", titles);
+			lines.add(new TableLine(entry, message));
 		}
 		return lines;
 	}
@@ -222,7 +229,7 @@ public class AccountHistoryPopup {
 		private String date;
 		private final Long seconds;
 
-		public TableLine(final Long entry) {
+		public TableLine(final Long entry, final String message) {
 			final var entryDate = new Date(entry);
 			final Format format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			this.seconds = entry;
@@ -235,6 +242,14 @@ public class AccountHistoryPopup {
 
 		public void setDate(final String date) {
 			this.date = date;
+		}
+
+		public String getDifferences() {
+			return differences;
+		}
+
+		public void setDifferences(final String differences) {
+			this.differences = differences;
 		}
 
 		public Long getSeconds() {

@@ -32,10 +32,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -107,7 +105,8 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 	@Test
 	void happyPathStrings_test() throws Exception {
 		final String[] args =
-				{ "get-account-info", "-a", "0.0.50, 0.0.51", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
+				{ "get-account-info", "-a", "0.0.50, 0.0.51", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis" +
+						".pem", "-o", "src" +
 						"/test/resources/infos_temp", "-n", "integration" };
 		ToolsMain.main(args);
 
@@ -135,16 +134,20 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 	@Test
 	void badString_test() {
 		final String[] args1 =
-				{ "get-account-info", "-a", "0.50", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
+				{ "get-account-info", "-a", "0.50", "-p", "0.0.2", "-k", "src/test/resources/Keys/genesis.pem", "-o",
+						"src" +
 						"/test/resources/infos_temp", "-n", "integration" };
-		final Exception exception1 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args1));
-		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.50\" cannot be parsed", exception1.getMessage());
+		final Exception exception1 = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args1));
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.50\" cannot be parsed",
+				exception1.getMessage());
 
 		final String[] args2 =
-				{ "get-account-info", "-a", "0.0.50", "-p", "0.02", "-k", "src/test/resources/Keys/genesis.pem", "-o", "src" +
+				{ "get-account-info", "-a", "0.0.50", "-p", "0.02", "-k", "src/test/resources/Keys/genesis.pem", "-o",
+						"src" +
 						"/test/resources/infos_temp", "-n", "integration" };
-		final Exception exception2 = assertThrows(HederaClientRuntimeException.class, ()->ToolsMain.main(args2));
-		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.02\" cannot be parsed", exception2.getMessage());
+		final Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args2));
+		assertEquals("Hedera Client Runtime: Bad account format: Address \"0.02\" cannot be parsed",
+				exception2.getMessage());
 	}
 
 
@@ -220,7 +223,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				{ "get-account-info", "-a", "50", "-p", "2", "-k", "src/test/resources/Keys/KeyStore-0.pem", "-n",
 						"integration" };
 
-		final Exception e = assertThrows(HederaClientRuntimeException.class,()-> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
 		assertTrue(e.getMessage().contains("failed pre-check with the status `INVALID_SIGNATURE`"));
 	}
 

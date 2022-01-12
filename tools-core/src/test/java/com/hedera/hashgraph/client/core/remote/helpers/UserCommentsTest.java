@@ -32,7 +32,7 @@ class UserCommentsTest {
 
 	@Test
 	void parse_test() throws FileNotFoundException {
-		final File comments = new File("src/test/resources/Files/commentsFile.txt");
+		final var comments = new File("src/test/resources/Files/commentsFile.txt");
 		final var parsed = new UserComments().parse(comments);
 		assertEquals("test1.council2@hederacouncil.org", parsed.getAuthor());
 		assertEquals("Contents of the comment", parsed.getComment());

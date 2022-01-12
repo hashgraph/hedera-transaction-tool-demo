@@ -72,7 +72,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		final var emptyFile = new LargeBinaryFile();
 		assertFalse(emptyFile.isValid());
 
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);

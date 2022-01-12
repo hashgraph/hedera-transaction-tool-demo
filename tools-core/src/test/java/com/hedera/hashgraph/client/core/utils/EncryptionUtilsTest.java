@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.core.utils;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -56,7 +55,7 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@BeforeEach
 	void setUp() {
-		for (int i = 0; i < 20; i++) {
+		for (var i = 0; i < 20; i++) {
 			SecurityUtilities.generateAndStoreKey(String.format("%s%d.pem", keyName, i), "Hedera CLI Tool", mnemonic, i,
 					Constants.TEST_PASSWORD.toCharArray());
 		}
@@ -65,8 +64,8 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@AfterEach
 	void tearDown() {
-		for (int i = 0; i < 20; i++) {
-			final String name = String.format("%s%d.pem", keyName, i);
+		for (var i = 0; i < 20; i++) {
+			final var name = String.format("%s%d.pem", keyName, i);
 			if (new File(name).exists()) {
 				new File(name).deleteOnExit();
 			}
@@ -78,18 +77,18 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void jsonToKeyAndKeyToJson_single_test() throws IOException {
-		final JsonObject singleKeyJson = new JsonObject();
-		final String pubKey = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, 0))));
+		final var singleKeyJson = new JsonObject();
+		final var pubKey = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, 0))));
 		singleKeyJson.addProperty("Ed25519", pubKey);
-		final KeyList singleKey = EncryptionUtils.jsonToKey(singleKeyJson);
-		final JsonObject newJson = EncryptionUtils.keyToJson(singleKey);
+		final var singleKey = EncryptionUtils.jsonToKey(singleKeyJson);
+		final var newJson = EncryptionUtils.keyToJson(singleKey);
 		assertEquals(pubKey, newJson.get("Ed25519").getAsString());
 		logger.info("Finished single key test");
 	}
 
 	@Test
 	void jsonToKeyAndKeyToJson_singleBadFile_test() {
-		final JsonObject singleKeyJson = new JsonObject();
+		final var singleKeyJson = new JsonObject();
 		singleKeyJson.addProperty("key", String.format("%s%d.pub", keyName, 20));
 		final Exception e =
 				assertThrows(HederaClientRuntimeException.class, () -> EncryptionUtils.jsonToKey(singleKeyJson));
@@ -101,31 +100,31 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void jsonToKeyAndKeyToJson_KeyList_test() throws IOException {
-		final JsonObject keyListJson = new JsonObject();
+		final var keyListJson = new JsonObject();
 
-		final JsonArray jsonArray = new JsonArray();
-		for (int i = 0; i < 10; i++) {
-			final String name = String.format("%s%d.pub", keyName, i);
-			final String pubKey = new String(Files.readAllBytes(Path.of(name)));
-			final JsonObject singleKeyJson = new JsonObject();
+		final var jsonArray = new JsonArray();
+		for (var i = 0; i < 10; i++) {
+			final var name = String.format("%s%d.pub", keyName, i);
+			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
+			final var singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray.add(singleKeyJson);
 		}
 		keyListJson.add("keyList", jsonArray);
-		final KeyList keyList = EncryptionUtils.jsonToKey(keyListJson);
+		final var keyList = EncryptionUtils.jsonToKey(keyListJson);
 
-		for (final Key key : keyList) {
+		for (final var key : keyList) {
 			assertEquals(1, ((KeyList) key).size());
 		}
 
-		final JsonObject newJson = EncryptionUtils.keyToJson(keyList);
+		final var newJson = EncryptionUtils.keyToJson(keyList);
 		assertTrue(newJson.has("keyList"));
-		final JsonArray newListJson = newJson.getAsJsonArray("keyList");
+		final var newListJson = newJson.getAsJsonArray("keyList");
 		assertEquals(10, newListJson.size());
 
-		for (final JsonElement element : newListJson) {
+		for (final var element : newListJson) {
 			assertTrue(element.isJsonObject());
-			final JsonObject jsonObject = element.getAsJsonObject();
+			final var jsonObject = element.getAsJsonObject();
 			assertTrue(jsonObject.has("Ed25519"));
 			assertEquals(1, jsonObject.entrySet().size());
 		}
@@ -137,37 +136,37 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void jsonToKeyAndKeyToJson_thresholdKey_test() throws IOException {
-		final JsonObject thresholdKeyJson = new JsonObject();
+		final var thresholdKeyJson = new JsonObject();
 
-		final JsonObject thresholdJson = new JsonObject();
+		final var thresholdJson = new JsonObject();
 		thresholdJson.addProperty("threshold", 8);
-		final JsonArray jsonArray = new JsonArray();
-		for (int i = 0; i < 10; i++) {
-			final String name = String.format("%s%d.pub", keyName, i);
-			final String pubKey = new String(Files.readAllBytes(Path.of(name)));
-			final JsonObject singleKeyJson = new JsonObject();
+		final var jsonArray = new JsonArray();
+		for (var i = 0; i < 10; i++) {
+			final var name = String.format("%s%d.pub", keyName, i);
+			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
+			final var singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray.add(singleKeyJson);
 		}
 		thresholdJson.add("keyList", jsonArray);
 		thresholdKeyJson.add("thresholdKey", thresholdJson);
-		final KeyList keyList = EncryptionUtils.jsonToKey(thresholdKeyJson);
+		final var keyList = EncryptionUtils.jsonToKey(thresholdKeyJson);
 
 		assertEquals(10, keyList.size());
 
-		final JsonObject newJson = EncryptionUtils.keyToJson(keyList);
+		final var newJson = EncryptionUtils.keyToJson(keyList);
 		assertTrue(newJson.has("thresholdKey"));
-		final JsonObject newThresholdKeyJson = newJson.get("thresholdKey").getAsJsonObject();
+		final var newThresholdKeyJson = newJson.get("thresholdKey").getAsJsonObject();
 		assertTrue(newThresholdKeyJson.has("threshold"));
 		assertTrue(newThresholdKeyJson.has("keyList"));
 		assertEquals(8, newThresholdKeyJson.get("threshold").getAsInt());
 
-		final JsonArray newListJson = newThresholdKeyJson.getAsJsonArray("keyList");
+		final var newListJson = newThresholdKeyJson.getAsJsonArray("keyList");
 		assertEquals(10, newListJson.size());
 
-		for (final JsonElement element : newListJson) {
+		for (final var element : newListJson) {
 			assertTrue(element.isJsonObject());
-			final JsonObject jsonObject = element.getAsJsonObject();
+			final var jsonObject = element.getAsJsonObject();
 			assertTrue(jsonObject.has("Ed25519"));
 			assertEquals(1, jsonObject.entrySet().size());
 		}
@@ -179,13 +178,13 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void jsonToKeyAndKeyToJson_complexKey_test() throws IOException {
-		final JsonObject complexKeyJson = complexKeyFromBytes(0);
+		final var complexKeyJson = complexKeyFromBytes(0);
 
-		final KeyList complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
+		final var complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
 
 		assertEquals(3, complexKey.size());
 
-		for (final Key key : complexKey) {
+		for (final var key : complexKey) {
 			if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() == null) {
 				assertEquals(5, ((KeyList) key).size());
 			} else if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() != null) {
@@ -203,11 +202,11 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void jsonToKeyAndKeyToJson_complexKeyFromFiles_test() throws IOException {
-		final JsonObject complexKeyJson = complexKeyFromFiles();
-		final KeyList complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
+		final var complexKeyJson = complexKeyFromFiles();
+		final var complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
 		assertEquals(3, complexKey.size());
 
-		for (final Key key : complexKey) {
+		for (final var key : complexKey) {
 			if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() == null) {
 				assertEquals(5, ((KeyList) key).size());
 			} else if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() != null) {
@@ -225,15 +224,15 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void keyConversionExceptions_test() throws IOException {
-		final JsonObject thresholdKeyJson = new JsonObject();
+		final var thresholdKeyJson = new JsonObject();
 
-		final JsonObject thresholdJson = new JsonObject();
+		final var thresholdJson = new JsonObject();
 		thresholdJson.addProperty("threshold", 8);
-		final JsonArray jsonArray = new JsonArray();
-		for (int i = 0; i < 10; i++) {
-			final String name = String.format("%s%d.pub", keyName, i);
-			final String pubKey = new String(Files.readAllBytes(Path.of(name)));
-			final JsonObject singleKeyJson = new JsonObject();
+		final var jsonArray = new JsonArray();
+		for (var i = 0; i < 10; i++) {
+			final var name = String.format("%s%d.pub", keyName, i);
+			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
+			final var singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray.add(singleKeyJson);
 		}
@@ -272,7 +271,7 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 	void getFileDigest_test() {
 		final var digest = EncryptionUtils.getFileDigest(new File("src/test/resources/Files/0.0.2.info")).split("[ ]");
 		assertEquals(24, digest.length);
-		for (final String s : digest) {
+		for (final var s : digest) {
 			assertEquals(4, s.length());
 		}
 
@@ -282,8 +281,8 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void flatPublicKeys_test() throws IOException {
-		final JsonObject complexKeyJson0 = complexKeyFromBytes(0);
-		final KeyList complexKey0 = EncryptionUtils.jsonToKey(complexKeyJson0);
+		final var complexKeyJson0 = complexKeyFromBytes(0);
+		final var complexKey0 = EncryptionUtils.jsonToKey(complexKeyJson0);
 
 		final var flat0 = EncryptionUtils.flatPubKeys(Collections.singletonList(complexKey0));
 		assertNotNull(flat0);
@@ -292,8 +291,8 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		final List<Key> keyLists = new ArrayList<>();
 		keyLists.add(complexKey0);
 
-		final JsonObject complexKeyJson3 = complexKeyFromBytes(3);
-		final KeyList complexKey3 = EncryptionUtils.jsonToKey(complexKeyJson3);
+		final var complexKeyJson3 = complexKeyFromBytes(3);
+		final var complexKey3 = EncryptionUtils.jsonToKey(complexKeyJson3);
 
 		keyLists.add(complexKey3);
 		final var flat2 = EncryptionUtils.flatPubKeys(keyLists);
@@ -301,8 +300,8 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		assertEquals(13, flat2.size());
 
 
-		final JsonObject complexKeyJson7 = complexKeyFromBytes(7);
-		final KeyList complexKey7 = EncryptionUtils.jsonToKey(complexKeyJson7);
+		final var complexKeyJson7 = complexKeyFromBytes(7);
+		final var complexKey7 = EncryptionUtils.jsonToKey(complexKeyJson7);
 
 		keyLists.add(complexKey7);
 		final var flat3 = EncryptionUtils.flatPubKeys(keyLists);
@@ -311,21 +310,21 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 	}
 
 	private JsonObject complexKeyFromBytes(final int start) throws IOException {
-		final JsonObject complexKeyJson = new JsonObject();
-		final JsonArray jsonArray0 = new JsonArray();
+		final var complexKeyJson = new JsonObject();
+		final var jsonArray0 = new JsonArray();
 
 		// A single Key
-		final String pubKey0 = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, start))));
-		JsonObject singleKeyJson = new JsonObject();
+		final var pubKey0 = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, start))));
+		var singleKeyJson = new JsonObject();
 		singleKeyJson.addProperty("Ed25519", pubKey0);
 		jsonArray0.add(singleKeyJson);
 
 		// A KeyList
-		final JsonObject keyListJson = new JsonObject();
-		final JsonArray jsonArray1 = new JsonArray();
-		for (int i = 1; i < 6; i++) {
-			final String name = String.format("%s%d.pub", keyName, i + start);
-			final String pubKey = new String(Files.readAllBytes(Path.of(name)));
+		final var keyListJson = new JsonObject();
+		final var jsonArray1 = new JsonArray();
+		for (var i = 1; i < 6; i++) {
+			final var name = String.format("%s%d.pub", keyName, i + start);
+			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
 			singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray1.add(singleKeyJson);
@@ -334,18 +333,18 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		jsonArray0.add(keyListJson);
 
 		// A threshold key
-		final JsonObject thresholdKeyJson = new JsonObject();
-		final JsonArray jsonArray2 = new JsonArray();
-		for (int i = 6; i < 10; i++) {
-			final String name = String.format("%s%d.pub", keyName, i + start);
-			final String pubKey = new String(Files.readAllBytes(Path.of(name)));
+		final var thresholdKeyJson = new JsonObject();
+		final var jsonArray2 = new JsonArray();
+		for (var i = 6; i < 10; i++) {
+			final var name = String.format("%s%d.pub", keyName, i + start);
+			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
 			singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray2.add(singleKeyJson);
 		}
 		thresholdKeyJson.add("keyList", jsonArray2);
 		thresholdKeyJson.addProperty("threshold", 2);
-		final JsonObject jsonObject = new JsonObject();
+		final var jsonObject = new JsonObject();
 		jsonObject.add("thresholdKey", thresholdKeyJson);
 		jsonArray0.add(jsonObject);
 
@@ -354,20 +353,20 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 	}
 
 	private JsonObject complexKeyFromFiles() {
-		final JsonObject complexKeyJson = new JsonObject();
-		final JsonArray jsonArray0 = new JsonArray();
+		final var complexKeyJson = new JsonObject();
+		final var jsonArray0 = new JsonArray();
 
 		// A single Key
-		final String pubKey0 = String.format("%s0.pub", keyName);
-		JsonObject singleKeyJson = new JsonObject();
+		final var pubKey0 = String.format("%s0.pub", keyName);
+		var singleKeyJson = new JsonObject();
 		singleKeyJson.addProperty("key", pubKey0);
 		jsonArray0.add(singleKeyJson);
 
 		// A KeyList
-		final JsonObject keyListJson = new JsonObject();
-		final JsonArray jsonArray1 = new JsonArray();
-		for (int i = 1; i < 6; i++) {
-			final String name = String.format("%s%d.pub", keyName, i);
+		final var keyListJson = new JsonObject();
+		final var jsonArray1 = new JsonArray();
+		for (var i = 1; i < 6; i++) {
+			final var name = String.format("%s%d.pub", keyName, i);
 			singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("key", name);
 			jsonArray1.add(singleKeyJson);
@@ -376,17 +375,17 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		jsonArray0.add(keyListJson);
 
 		// A threshold key
-		final JsonObject thresholdKeyJson = new JsonObject();
-		final JsonArray jsonArray2 = new JsonArray();
-		for (int i = 6; i < 10; i++) {
-			final String name = String.format("%s%d.pub", keyName, i);
+		final var thresholdKeyJson = new JsonObject();
+		final var jsonArray2 = new JsonArray();
+		for (var i = 6; i < 10; i++) {
+			final var name = String.format("%s%d.pub", keyName, i);
 			singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("key", name);
 			jsonArray2.add(singleKeyJson);
 		}
 		thresholdKeyJson.add("keyList", jsonArray2);
 		thresholdKeyJson.addProperty("threshold", 2);
-		final JsonObject jsonObject = new JsonObject();
+		final var jsonObject = new JsonObject();
 		jsonObject.add("thresholdKey", thresholdKeyJson);
 		jsonArray0.add(jsonObject);
 

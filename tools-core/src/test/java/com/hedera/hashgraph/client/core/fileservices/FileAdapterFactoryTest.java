@@ -57,7 +57,8 @@ class FileAdapterFactoryTest {
 		final Exception exception0 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(""));
 		assertEquals("Hedera Client: Path cannot be null", exception0.getMessage());
 
-		final Exception exception1 = assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(null));
+		final Exception exception1 =
+				assertThrows(HederaClientException.class, () -> FileAdapterFactory.getAdapter(null));
 		assertEquals("Hedera Client: Path cannot be null", exception1.getMessage());
 	}
 

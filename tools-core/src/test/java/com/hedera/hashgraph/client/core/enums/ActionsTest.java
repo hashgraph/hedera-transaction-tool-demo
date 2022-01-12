@@ -20,14 +20,14 @@ package com.hedera.hashgraph.client.core.enums;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ActionsTest {
 
 	@Test
 	void getAction() {
 		final Actions accept = Actions.ACCEPT;
-		assertEquals("ACCEPT",accept.getAction());
+		assertEquals("ACCEPT", accept.getAction());
 		assertEquals("accepted", accept.toString());
 
 		final Actions decline = Actions.DECLINE;
