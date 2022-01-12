@@ -125,7 +125,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param controller
 	 * 		main controller
 	 */
-	void injectMainController(Controller controller) {
+	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
 
@@ -206,7 +206,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public void finishSetup() {
 		try {
 			writeJsonObject(ACCOUNTS_MAP_FILE, new JsonObject());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 
@@ -224,7 +224,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		try {
 			Files.deleteIfExists(Path.of(INITIAL_MAP_LOCATION));
 			logger.info("Initial map file deleted");
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error("Initial map cannot be deleted");
 		}
 
@@ -248,7 +248,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * Choose a directory (input folder)
 	 */
 	public void browseNewFolderAction() {
-		var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
+		final var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 		if (directory.isEmpty()) {
 			return;
 		}
@@ -308,7 +308,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 			passphraseBox.setVisible(false);
 		}
 		phraseBox.getChildren().clear();
-		var mnemonicGridPane = new GridPane();
+		final var mnemonicGridPane = new GridPane();
 		mnemonicPhraseHelper.setupEmptyMnemonicBox(mnemonicGridPane);
 		phraseBox.getChildren().add(mnemonicGridPane);
 	}
@@ -341,8 +341,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param nodes
 	 * 		list of nodes that can be visible or invisible
 	 */
-	private void setManagedProperties(Node... nodes) {
-		for (var n : nodes) {
+	private void setManagedProperties(final Node... nodes) {
+		for (final var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
 	}
@@ -353,8 +353,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param location
 	 * 		location where the transaction tool directory will be built
 	 */
-	private void setupTransactionDirectory(String location) {
-		var directory = new File(location);
+	private void setupTransactionDirectory(final String location) {
+		final var directory = new File(location);
 		if (!directory.exists() && !directory.mkdirs()) {
 			logger.info("Directory already exists");
 		}
@@ -371,8 +371,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param s
 	 * 		a set of strings
 	 */
-	private void setupDirectory(String location, String... s) {
-		for (String s1 : s) {
+	private void setupDirectory(final String location, final String... s) {
+		for (final String s1 : s) {
 			if (new File(location, s1).mkdirs()) {
 				logger.info("{} folder has been created", s1);
 			}
@@ -385,12 +385,12 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param keyEvent
 	 * 		key released event
 	 */
-	public void choosePath(KeyEvent keyEvent) {
+	public void choosePath(final KeyEvent keyEvent) {
 		if ((KeyCode.ENTER).equals(keyEvent.getCode())) {
-			var infoPath = (hiddenPathInitial.getText()).replace(" ", "");
-			var location = new File(infoPath);
+			final var infoPath = (hiddenPathInitial.getText()).replace(" ", "");
+			final var location = new File(infoPath);
 			if (location.exists() && location.isDirectory()) {
-				String directory;
+				final String directory;
 				if (hiddenPathInitial.getText().isEmpty()) {
 					directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 				} else {

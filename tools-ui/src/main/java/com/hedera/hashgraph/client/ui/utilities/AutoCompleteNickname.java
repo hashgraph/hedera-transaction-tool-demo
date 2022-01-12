@@ -58,7 +58,7 @@ public class AutoCompleteNickname extends TextField {
 	 * @param names
 	 * 		The list of strings that the class will use to check if the proposed string exists
 	 */
-	public AutoCompleteNickname(Set<String> names) {
+	public AutoCompleteNickname(final Set<String> names) {
 		super();
 		this.names = names;
 		setStyle(STYLE_STRING);
@@ -70,7 +70,7 @@ public class AutoCompleteNickname extends TextField {
 		setOnKeyReleased(this::keyReleasedAction);
 	}
 
-	private void keyReleasedAction(KeyEvent keyEvent) {
+	private void keyReleasedAction(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
 			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
 			noise.set(true);
@@ -80,7 +80,7 @@ public class AutoCompleteNickname extends TextField {
 				return;
 			}
 			noise.set(false);
-			var text = this.getText().toLowerCase().replace(" ", "");
+			final var text = this.getText().toLowerCase().replace(" ", "");
 
 			final var firstItem = getFirstItem();
 			if (!"".equals(text) && (text.equals(firstItem) || isSingleItem())) {
@@ -90,7 +90,7 @@ public class AutoCompleteNickname extends TextField {
 		}
 	}
 
-	public void setDefault(String defaultName) {
+	public void setDefault(final String defaultName) {
 		if (names.contains(defaultName)) {
 			noise.set(true);
 			this.setText(defaultName);
@@ -134,15 +134,15 @@ public class AutoCompleteNickname extends TextField {
 	 * @param searchResult
 	 * 		The set of matching strings.
 	 */
-	private void populatePopup(List<String> searchResult) {
-		List<CustomMenuItem> menuItems = new LinkedList<>();
+	private void populatePopup(final List<String> searchResult) {
+		final List<CustomMenuItem> menuItems = new LinkedList<>();
 		// If you'd like more entries, modify this line.
-		var maxEntries = 10;
-		var count = Math.min(searchResult.size(), maxEntries);
+		final var maxEntries = 10;
+		final var count = Math.min(searchResult.size(), maxEntries);
 		for (var i = 0; i < count; i++) {
 			final var result = searchResult.get(i);
-			var entryLabel = new Label(result);
-			var item = new CustomMenuItem(entryLabel, true);
+			final var entryLabel = new Label(result);
+			final var item = new CustomMenuItem(entryLabel, true);
 			item.setOnAction(actionEvent -> {
 				setText(result);
 				entriesPopup.hide();
@@ -162,8 +162,8 @@ public class AutoCompleteNickname extends TextField {
 	 * 		a String containing the first few letters of a string
 	 * @return A subset of the words list, whose members start with the input text
 	 */
-	public List<String> suggestWords(String text) {
-		var filteredEntries =
+	public List<String> suggestWords(final String text) {
+		final var filteredEntries =
 				Arrays.stream(names.toArray(new String[0])).filter(
 						e -> e.toLowerCase().contains(text.toLowerCase())).sorted(
 						Comparator.naturalOrder()).collect(Collectors.toList());
@@ -171,11 +171,12 @@ public class AutoCompleteNickname extends TextField {
 		return filteredEntries.isEmpty() ? new ArrayList<>() : filteredEntries;
 	}
 
-	private void textPropertyListenerAction(ObservableValue<? extends String> observableValue, String s, String s2) {
-		var text = s2.toLowerCase().replace(" ", "");
+	private void textPropertyListenerAction(final ObservableValue<? extends String> observableValue, final String s,
+			final String s2) {
+		final var text = s2.toLowerCase().replace(" ", "");
 		if (getText().length() != 0) {
 			if (!noise.get()) {
-				var searchResult = suggestWords(text);
+				final var searchResult = suggestWords(text);
 				if (searchResult.isEmpty()) {
 					setStyle(STYLE_STRING + "-fx-text-fill: red");
 					valid.set(false);
@@ -203,7 +204,7 @@ public class AutoCompleteNickname extends TextField {
 	 * @param searchResult
 	 * 		the matching search results
 	 */
-	private void singleResultAction(String text, List<String> searchResult) {
+	private void singleResultAction(final String text, final List<String> searchResult) {
 		if (searchResult.size() != 1) {
 			return;
 		}

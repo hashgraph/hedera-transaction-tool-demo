@@ -27,7 +27,7 @@ public class ResponseTuple {
 		nickname = "";
 	}
 
-	public ResponseTuple(ResponseEnum responseEnum, String nickname) {
+	public ResponseTuple(final ResponseEnum responseEnum, final String nickname) {
 		this.responseEnum = responseEnum;
 		this.nickname = nickname;
 	}
@@ -36,7 +36,7 @@ public class ResponseTuple {
 		return responseEnum;
 	}
 
-	public void setResponseEnum(ResponseEnum responseEnum) {
+	public void setResponseEnum(final ResponseEnum responseEnum) {
 		this.responseEnum = responseEnum;
 	}
 
@@ -44,7 +44,7 @@ public class ResponseTuple {
 		return nickname;
 	}
 
-	public void setNickname(String nickname) {
+	public void setNickname(final String nickname) {
 		this.nickname = nickname;
 	}
 }

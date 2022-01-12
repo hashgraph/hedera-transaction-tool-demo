@@ -147,7 +147,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param publicKeys
 	 * 		the map of public keys
 	 */
-	public KeyDesignerPopup(Map<String, PublicKey> publicKeys) {
+	public KeyDesignerPopup(final Map<String, PublicKey> publicKeys) {
 		this.publicKeys = publicKeys;
 		this.key = null;
 	}
@@ -160,7 +160,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param key
 	 * 		if there is an initial key to be updated. Otherwise, an empty key.
 	 */
-	public KeyDesignerPopup(Map<String, PublicKey> publicKeys, Key key) {
+	public KeyDesignerPopup(final Map<String, PublicKey> publicKeys, final Key key) {
 		this.publicKeys = publicKeys;
 		this.key = key;
 	}
@@ -175,17 +175,17 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		window.setTitle(DESIGNER_TITLE);
 		window.sizeToScene();
 
-		var menuBar = new MenuBar();
+		final var menuBar = new MenuBar();
 		layout = new VBox(menuBar);
 		layout.setStyle("-fx-font-size: 16");
 		layout.setAlignment(Pos.CENTER);
 		layout.setMinWidth(800);
 		layout.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-		var fileMenu = buildFileMenu();
+		final var fileMenu = buildFileMenu();
 		menuBar.getMenus().addAll(fileMenu);
 
-		var workBox = new HBox();
+		final var workBox = new HBox();
 		workBox.setSpacing(10);
 		workBox.setAlignment(Pos.CENTER);
 		VBox.setVgrow(workBox, Priority.ALWAYS);
@@ -195,9 +195,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		setupAccountsBox();
 		setupKeysBox();
 		setupDesignBox();
-		var accordion = setupAccordionPane();
+		final var accordion = setupAccordionPane();
 
-		var designWithTitle = new TitledPane("Key", design);
+		final var designWithTitle = new TitledPane("Key", design);
 		designWithTitle.setMaxHeight(Double.MAX_VALUE);
 		designWithTitle.setCollapsible(false);
 		HBox.setHgrow(designWithTitle, Priority.ALWAYS);
@@ -207,18 +207,18 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		VBox.setVgrow(designWithTitle, Priority.ALWAYS);
 		publicKeysBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-		var saveBox = new HBox();
-		var region = new Region();
+		final var saveBox = new HBox();
+		final var region = new Region();
 		region.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		region.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		HBox.setHgrow(region, Priority.ALWAYS);
 
-		var saveButton = new Button("SAVE");
+		final var saveButton = new Button("SAVE");
 		saveButton.setStyle(BLUE_BUTTON_STYLE);
 		saveButton.setPrefWidth(150);
 		saveButton.setOnAction(actionEvent -> {
 			missingThresholds.clear();
-			var keyList = treeToKeyList(treeView.getRoot());
+			final var keyList = treeToKeyList(treeView.getRoot());
 			if (keyList != null) {
 				jsonKey = EncryptionUtils.keyToJson(keyList);
 				window.close();
@@ -227,7 +227,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			}
 		});
 
-		var cancelButton = new Button("CANCEL");
+		final var cancelButton = new Button("CANCEL");
 		cancelButton.setStyle(WHITE_BUTTON_STYLE);
 		cancelButton.setPrefWidth(150);
 		cancelButton.setOnAction(actionEvent -> {
@@ -239,7 +239,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		saveBox.setAlignment(Pos.CENTER);
 		saveBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
 
-		var vBox = new VBox();
+		final var vBox = new VBox();
 		vBox.setSpacing(20);
 		vBox.setPadding(new Insets(10));
 
@@ -248,7 +248,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		layout.getChildren().add(vBox);
 		VBox.setVgrow(vBox, Priority.ALWAYS);
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();
@@ -261,13 +261,13 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @return an accordion Pane
 	 */
 	private Accordion setupAccordionPane() {
-		var accountsTitledPane = new TitledPane("Accounts", accountsBox);
+		final var accountsTitledPane = new TitledPane("Accounts", accountsBox);
 		accountsTitledPane.setGraphic(getImageViewWithTooltip(ToolTipMessages.ACCOUNTS_BOX_DESIGNER_TOOLTIP_TEXT));
 		accountsTitledPane.setContentDisplay(ContentDisplay.RIGHT);
 		accountsTitledPane.setAnimated(false);
 
 
-		var keysTitledPane = new TitledPane("Public keys", publicKeysBox);
+		final var keysTitledPane = new TitledPane("Public keys", publicKeysBox);
 		keysTitledPane.setGraphic(getImageViewWithTooltip(ToolTipMessages.PUBLIC_KEYS_BOX_DESIGNER_TOOLTIP_TEXT));
 		keysTitledPane.setContentDisplay(ContentDisplay.RIGHT);
 		keysTitledPane.setAnimated(false);
@@ -275,7 +275,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		buttonsKeys.visibleProperty().bind(keysTitledPane.expandedProperty());
 		buttonsAccounts.visibleProperty().bind(accountsTitledPane.expandedProperty());
 
-		var accordion = new Accordion();
+		final var accordion = new Accordion();
 		accordion.getPanes().addAll(keysTitledPane, accountsTitledPane);
 		accordion.setExpandedPane(keysTitledPane);
 		return accordion;
@@ -288,12 +288,12 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the tooltip
 	 * @return an image
 	 */
-	private ImageView getImageViewWithTooltip(String message) {
-		var img = new ImageView(new Image("icons/helpIcon.png"));
+	private ImageView getImageViewWithTooltip(final String message) {
+		final var img = new ImageView(new Image("icons/helpIcon.png"));
 
 		img.setPreserveRatio(true);
 		img.setFitHeight(20);
-		var tooltip = new Tooltip(message);
+		final var tooltip = new Tooltip(message);
 		tooltip.setShowDelay(new Duration(200));
 		tooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
 		tooltip.setMaxWidth(300);
@@ -308,21 +308,21 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @return a menu bar
 	 */
 	private Menu buildFileMenu() {
-		var fileMenu = new Menu("File");
-		var load = new Menu("Load key...");
-		var load1 = new MenuItem("from transaction (TX or TXSIG)");
+		final var fileMenu = new Menu("File");
+		final var load = new Menu("Load key...");
+		final var load1 = new MenuItem("from transaction (TX or TXSIG)");
 		load1.setOnAction(actionEvent -> {
 			browseTransactions();
 			refreshTree();
 		});
 
-		var load2 = new MenuItem("from account or entity (INFO)");
+		final var load2 = new MenuItem("from account or entity (INFO)");
 		load2.setOnAction(actionEvent -> {
 			browseInfos();
 			refreshTree();
 		});
 
-		var load3 = new MenuItem("from json file (JSON)");
+		final var load3 = new MenuItem("from json file (JSON)");
 		load3.setOnAction(actionEvent -> {
 			browseJsons();
 			refreshTree();
@@ -330,13 +330,13 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 		load.getItems().addAll(load1, load2, load3);
 
-		var importPub = new MenuItem("Import public key (PUB)");
+		final var importPub = new MenuItem("Import public key (PUB)");
 		importPub.setOnAction(actionEvent -> {
 			importPublicKey();
 			setupKeysBox();
 		});
 
-		var save = new MenuItem("Save as json file");
+		final var save = new MenuItem("Save as json file");
 		save.setOnAction(actionEvent -> saveAsJson());
 		fileMenu.getItems().addAll(load, importPub, save);
 
@@ -344,38 +344,38 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Sets the accounts box: Displays the accounts currently known by the app. If the user double clicks on any
+	 * Sets the accounts box: Displays the accounts currently known by the app. If the user double-clicks on any
 	 * account, its key replaces whatever is currently in the Key Design box
 	 */
 	private void setupAccountsBox() {
-		JsonObject nicknameMap;
+		final JsonObject nicknameMap;
 		try {
-			var accountInfoMap = properties.getAccountInfoMap();
+			final var accountInfoMap = properties.getAccountInfoMap();
 			nicknameMap =
 					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
-			for (var entry : accountInfoMap.entrySet()) {
-				var nn = CommonMethods.nicknameOrNumber(Identifier.parse(entry.getKey()), nicknameMap);
+			for (final var entry : accountInfoMap.entrySet()) {
+				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(entry.getKey()), nicknameMap);
 				if (nicknameMap.has(entry.getKey())) {
 					accountsAddresses.put(nn, AccountInfo.fromBytes(readBytes(entry.getValue())).key);
 				}
 			}
 
-		} catch (HederaClientException | InvalidProtocolBufferException e) {
+		} catch (final HederaClientException | InvalidProtocolBufferException e) {
 			logger.error(e);
 		}
 
 
 		final List<String> sortedList = new ArrayList<>(accountsAddresses.keySet());
 		Collections.sort(sortedList);
-		for (var keyName : sortedList) {
+		for (final var keyName : sortedList) {
 			accountKeyList.getItems().add(keyName);
 		}
 
 		accountKeyList.setOnMouseClicked(event -> {
 			if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 &&
 					event.getTarget() instanceof LabeledText) {
-				var accountNickname = ((LabeledText) event.getTarget()).getText();
+				final var accountNickname = ((LabeledText) event.getTarget()).getText();
 				key = accountsAddresses.get(accountNickname);
 				refreshTree();
 			}
@@ -394,7 +394,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	/**
 	 * Sets the public keys box: Displays the public keys currently known to the app, as well as the public keys
 	 * imported by the user (imported keys are not imported to the app).
-	 * The user can drag any public key to the design. The user can double click a key to display its information.
+	 * The user can drag any public key to the design. The user can double-click a key to display its information.
 	 */
 	private void setupKeysBox() {
 		publicKeysBox.getChildren().clear();
@@ -407,7 +407,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		extraPubKeyList.maxHeightProperty().bind(Bindings.size(extraPubKeyList.getItems()).multiply(34.5).add(15));
 
 
-		var keys = new VBox();
+		final var keys = new VBox();
 		keys.getChildren().add(appPubKeyList);
 		if (!extraPubKeyList.getItems().isEmpty()) {
 			keys.getChildren().add(new Separator());
@@ -424,11 +424,11 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * highlighted to the current design; and "Remove" (cross) that erases the portion of the designed key that is
 	 * highlighted.
 	 */
-	private void setupCenterButtonsBox(VBox buttons) {
+	private void setupCenterButtonsBox(final VBox buttons) {
 
-		var add = new Button();
-		var arrowImage = new Image("icons/outline_east_black_48pt_3x.png");
-		var arrowView = new ImageView(arrowImage);
+		final var add = new Button();
+		final var arrowImage = new Image("icons/outline_east_black_48pt_3x.png");
+		final var arrowView = new ImageView(arrowImage);
 		arrowView.setFitHeight(20);
 		arrowView.setPreserveRatio(true);
 		add.setGraphic(arrowView);
@@ -439,12 +439,12 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				logger.info("No source selected");
 				return;
 			}
-			var source =
+			final var source =
 					(appPubKeyList.getSelectionModel().getSelectedItem() != null) ?
 							appPubKeyList.getSelectionModel().getSelectedItem() :
 							extraPubKeyList.getSelectionModel().getSelectedItem();
 
-			var destination =
+			final var destination =
 					(treeView.getSelectionModel().getSelectedItem() != null) ?
 							treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
 			logger.info("Copying {} to {}", source, destination.getValue());
@@ -458,7 +458,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			setSizes(treeView.getRoot());
 		});
 
-		var remove = new Button("\u2718");
+		final var remove = new Button("\u2718");
 		remove.setOnAction(event -> removeFromTree(treeView.getSelectionModel().getSelectedItem()));
 		remove.setStyle(REMOVE_BUTTON_STYLE);
 		remove.setMinWidth(50);
@@ -470,15 +470,15 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		buttonsKeys.managedProperty().bind(buttonsKeys.visibleProperty());
 		buttons.getChildren().add(buttonsKeys);
 
-		var addAccount = new Button();
-		var arrowView2 = new ImageView(arrowImage);
+		final var addAccount = new Button();
+		final var arrowView2 = new ImageView(arrowImage);
 		arrowView2.setFitHeight(20);
 		arrowView2.setPreserveRatio(true);
 		addAccount.setGraphic(arrowView2);
 		addAccount.setMinWidth(50);
 		addAccount.setStyle("-fx-background-color: transparent; -fx-border-color: darkgray; -fx-border-radius: 5");
 		addAccount.setOnAction(event -> {
-			var accountNickname = accountKeyList.getSelectionModel().getSelectedItem();
+			final var accountNickname = accountKeyList.getSelectionModel().getSelectedItem();
 			key = accountsAddresses.get(accountNickname);
 			refreshTree();
 		});
@@ -498,7 +498,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		design.setStyle("-fx-border-color: transparent");
 
 		//TreeView
-		var buildKeysTreeView = buildKeysTreeView();
+		final var buildKeysTreeView = buildKeysTreeView();
 		buildKeysTreeView.setStyle(FX_BORDER_COLOR_BLACK);
 		VBox.setVgrow(buildKeysTreeView, Priority.ALWAYS);
 		design.getChildren().clear();
@@ -515,16 +515,16 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	private void saveAsJson() {
 		logger.info("saving progress");
 		missingThresholds.clear();
-		var keyList = treeToKeyList(treeView.getRoot());
+		final var keyList = treeToKeyList(treeView.getRoot());
 		if (keyList == null) {
 			PopupMessage.display("Thresholds not set", getErrorMessage(), CONTINUE_MESSAGE);
 			return;
 		}
 
-		var fileChooser = new FileChooser();
+		final var fileChooser = new FileChooser();
 		fileChooser.setTitle("Save key as json");
 		fileChooser.setInitialDirectory(new File(properties.getLastBrowsedDirectory()));
-		var file = fileChooser.showSaveDialog(window);
+		final var file = fileChooser.showSaveDialog(window);
 		if (file != null) {
 			try {
 				if (file.exists()) {
@@ -533,7 +533,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				}
 				writeJsonObject(file.getAbsolutePath(), EncryptionUtils.keyToJson(keyList));
 				properties.setLastBrowsedDirectory(file);
-			} catch (IOException | HederaClientException ex) {
+			} catch (final IOException | HederaClientException ex) {
 				logger.error(ex);
 			}
 		}
@@ -546,9 +546,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @return an error message string
 	 */
 	private String getErrorMessage() {
-		var builder = new StringBuilder(THRESHOLDS_NOT_SET_ERROR);
+		final var builder = new StringBuilder(THRESHOLDS_NOT_SET_ERROR);
 		var separator = "\t - ";
-		for (var missingThreshold : missingThresholds) {
+		for (final var missingThreshold : missingThresholds) {
 			builder.append(separator).append(missingThreshold);
 			separator = "\n\t - ";
 		}
@@ -560,7 +560,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private void importPublicKey() {
 		logger.info("import public key");
-		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
+		final var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
 				"Json Key", PUB_EXTENSION);
 		if (file == null) {
 			return;
@@ -568,7 +568,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		properties.setLastBrowsedDirectory(file);
 		final var absolutePath = file.getAbsolutePath();
 
-		var truncated =
+		final var truncated =
 				absolutePath.substring(0, 16) + "\u2026" + absolutePath.substring(absolutePath.lastIndexOf("/"));
 		keyAddresses.put(truncated, absolutePath);
 		extraKeys.put(truncated, EncryptionUtils.publicKeyFromFile(absolutePath));
@@ -580,7 +580,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private void browseJsons() {
 		logger.info("browsing jsons");
-		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
+		final var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
 				"Json Key", JSON_EXTENSION);
 		if (file == null) {
 			return;
@@ -588,7 +588,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		properties.setLastBrowsedDirectory(file);
 		try {
 			key = EncryptionUtils.jsonToKey(readJsonObject(file));
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error("Cannot parse json object into a key");
 		}
 	}
@@ -598,7 +598,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private void browseInfos() {
 		logger.info("browsing infos");
-		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
+		final var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
 				"Transaction", INFO_EXTENSION);
 		if (file == null) {
 			return;
@@ -606,7 +606,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		properties.setLastBrowsedDirectory(file);
 		try {
 			key = AccountInfo.fromBytes(readBytes(file.getAbsolutePath())).key;
-		} catch (InvalidProtocolBufferException | HederaClientException e) {
+		} catch (final InvalidProtocolBufferException | HederaClientException e) {
 			logger.error(e);
 			key = null;
 		}
@@ -620,7 +620,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		logger.info("browsing transactions");
 
 		Key newKey = null;
-		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
+		final var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), layout,
 				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION);
 		if (file == null) {
 			return;
@@ -629,7 +629,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 
 		try {
-			var transaction = new ToolTransaction().parseFile(file);
+			final var transaction = new ToolTransaction().parseFile(file);
 			logger.info("Transaction loaded");
 			if (transaction instanceof ToolCryptoCreateTransaction) {
 				newKey = ((ToolCryptoCreateTransaction) transaction).getKey();
@@ -640,7 +640,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 						CONTINUE_MESSAGE);
 			}
 			key = newKey;
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error("Cannot read transaction");
 		}
 	}
@@ -668,7 +668,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 		var root = (key == null) ? new TreeItem<>(THRESHOLD_KEY_X_OF_X) : keyToTreeView(key);
 		if (!root.getValue().contains(THRESHOLD_STRING)) {
-			var newRoot = new TreeItem<>(THRESHOLD_KEY_1_OF_1);
+			final var newRoot = new TreeItem<>(THRESHOLD_KEY_1_OF_1);
 			newRoot.getChildren().add(root);
 			root = newRoot;
 		}
@@ -690,24 +690,24 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private Callback<TreeView<String>, TreeCell<String>> getTreeCallback() {
 		return new Callback<>() {
-			private void handleDrag(DragEvent event) {
+			private void handleDrag(final DragEvent event) {
 				treeCellDragOverEvent(event);
 			}
 
 			@Override
-			public TreeCell<String> call(TreeView<String> stringTreeView) {
-				TreeCell<String> treeCell = new TreeCell<>() {
+			public TreeCell<String> call(final TreeView<String> stringTreeView) {
+				final TreeCell<String> treeCell = new TreeCell<>() {
 					@Override
-					protected void updateItem(String item, boolean empty) {
+					protected void updateItem(final String item, final boolean empty) {
 						super.updateItem(item, empty);
 						updateAction(item);
 					}
 
-					private void updateAction(String item) {
+					private void updateAction(final String item) {
 						if (item != null) {
 							setText(item);
 							final var contextMenu = new ContextMenu();
-							var deleteMenu = new MenuItem("delete");
+							final var deleteMenu = new MenuItem("delete");
 							deleteMenu.setOnAction(
 									actionEvent -> removeFromTree(treeView.getSelectionModel().getSelectedItem()));
 							contextMenu.getItems().add(deleteMenu);
@@ -720,16 +720,16 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 						setGraphic(null);
 					}
 
-					private void handleThresholds(String item, ContextMenu contextMenu) {
+					private void handleThresholds(final String item, final ContextMenu contextMenu) {
 						if (item.contains(THRESHOLD_MARKER)) {
-							var addThresholdMenu = new MenuItem("add threshold key");
+							final var addThresholdMenu = new MenuItem("add threshold key");
 							addThresholdMenu.setOnAction(actionEvent -> addThresholdMenuEvent());
 							contextMenu.getItems().add(addThresholdMenu);
 						}
 					}
 
 					private void addThresholdMenuEvent() {
-						var newThreshold = new TreeItem<>(THRESHOLD_KEY_X_OF_X);
+						final var newThreshold = new TreeItem<>(THRESHOLD_KEY_X_OF_X);
 						getTreeItem().getChildren().add(newThreshold);
 						logger.info("Added threshold to tree");
 					}
@@ -747,7 +747,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		};
 	}
 
-	private void treeCellMouseClickedEvent(TreeCell<String> treeCell, MouseEvent mouseEvent) {
+	private void treeCellMouseClickedEvent(final TreeCell<String> treeCell, final MouseEvent mouseEvent) {
 		if (treeCell.getTreeItem() == null) {
 			return;
 		}
@@ -758,26 +758,26 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			return;
 		}
 
-		var item = treeCell.getTreeItem();
+		final var item = treeCell.getTreeItem();
 		try {
-			var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
+			final var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
 					"Enter the threshold");
 			if (thresholdString == null) {
 				return;
 			}
-			var threshold = Integer.parseInt(thresholdString);
+			final var threshold = Integer.parseInt(thresholdString);
 			final var formattedItem = String.format("%s(%d of %d)",
 					item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
 					item.getChildren().size());
 			item.setValue(formattedItem);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 	}
 
-	private void treeCellDragDroppedEvent(TreeCell<String> treeCell, DragEvent event) {
+	private void treeCellDragDroppedEvent(final TreeCell<String> treeCell, final DragEvent event) {
 		logger.info("treeCell.setOnDragDropped");
-		var db = event.getDragboard();
+		final var db = event.getDragboard();
 		var success = false;
 		if (treeCell.getTreeItem() != null && db.hasString()) {
 			final var value = treeCell.getTreeItem().getValue();
@@ -794,25 +794,25 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		event.consume();
 	}
 
-	private void treeCellDragOverEvent(DragEvent event) {
-		var db = event.getDragboard();
+	private void treeCellDragOverEvent(final DragEvent event) {
+		final var db = event.getDragboard();
 		if (db.hasString()) {
 			event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
 		}
 		event.consume();
 	}
 
-	private void treeCellDragDoneEvent(TreeCell<String> treeCell, DragEvent event) {
+	private void treeCellDragDoneEvent(final TreeCell<String> treeCell, final DragEvent event) {
 		if (event.getTransferMode().equals(TransferMode.MOVE)) {
 			removeFromTree(treeCell.getTreeItem());
 		}
 		event.consume();
 	}
 
-	private void treeCellDragAction(TreeCell<String> treeCell, MouseEvent event) {
+	private void treeCellDragAction(final TreeCell<String> treeCell, final MouseEvent event) {
 		if (treeCell.getTreeItem().isLeaf()) {
-			var db = treeCell.startDragAndDrop(TransferMode.MOVE);
-			var content = new ClipboardContent();
+			final var db = treeCell.startDragAndDrop(TransferMode.MOVE);
+			final var content = new ClipboardContent();
 			content.putString(treeCell.getItem());
 			db.setContent(content);
 			event.consume();
@@ -826,9 +826,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the key to be displayed
 	 * @return the root of a TreeView
 	 */
-	private TreeItem<String> keyToTreeView(Key key) {
+	private TreeItem<String> keyToTreeView(final Key key) {
 		if (key instanceof KeyList && ((KeyList) key).size() == 1) {
-			var object = ((KeyList) key).toArray()[0];
+			final var object = ((KeyList) key).toArray()[0];
 			assert object instanceof Key;
 			return keyToTreeView((Key) object);
 		}
@@ -847,7 +847,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the root of the tree
 	 * @return the KeyList represented by the Tree structure
 	 */
-	private KeyList treeToKeyList(TreeItem<String> root) {
+	private KeyList treeToKeyList(final TreeItem<String> root) {
 		if (root.isLeaf()) {
 			return null;
 		}
@@ -865,14 +865,14 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param root
 	 * 		initial node
 	 */
-	private void checkTree(TreeItem<String> root) {
+	private void checkTree(final TreeItem<String> root) {
 		if (root.isLeaf()) {
 			return;
 		}
 		if (getThresholdFromString(root.getValue(), root.getChildren().size()) == -1) {
 			missingThresholds.add(root.getValue());
 		}
-		for (var child : root.getChildren()) {
+		for (final var child : root.getChildren()) {
 			checkTree(child);
 		}
 	}
@@ -885,15 +885,15 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		an inner node in the TreeView
 	 * @return The threshold key represented by the structure
 	 */
-	private KeyList thresholdKey(TreeItem<String> thresholdTree) {
-		var thresholdKey = new KeyList();
-		var threshold = getThresholdFromString(thresholdTree.getValue(), thresholdTree.getChildren().size());
+	private KeyList thresholdKey(final TreeItem<String> thresholdTree) {
+		final var thresholdKey = new KeyList();
+		final var threshold = getThresholdFromString(thresholdTree.getValue(), thresholdTree.getChildren().size());
 		if (threshold == -1) {
 			return null;
 		}
 
 		thresholdKey.setThreshold(threshold);
-		for (var child : thresholdTree.getChildren()) {
+		for (final var child : thresholdTree.getChildren()) {
 			final var childValue = child.getValue();
 			if (!child.isLeaf()) {
 				final var keyList = thresholdKey(child);
@@ -903,7 +903,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				thresholdKey.add(keyList);
 				continue;
 			}
-			var publicKey = getPublicKeyFromMaps(childValue);
+			final var publicKey = getPublicKeyFromMaps(childValue);
 
 			final var addOK = thresholdKey.add(publicKey);
 			if (addOK) {
@@ -921,7 +921,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the name of the public key
 	 * @return a public key if it is found. null otherwise
 	 */
-	private PublicKey getPublicKeyFromMaps(String keyName) {
+	private PublicKey getPublicKeyFromMaps(final String keyName) {
 		if (publicKeys.containsKey(keyName)) {
 			return publicKeys.get(keyName);
 		}
@@ -941,23 +941,23 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		a KeyList
 	 * @return the root of a threshold key with the name set accordingly
 	 */
-	private TreeItem<String> getTreeItem(KeyList keyList) {
-		var size = keyList.size();
+	private TreeItem<String> getTreeItem(final KeyList keyList) {
+		final var size = keyList.size();
 		var threshold = size;
 		if (keyList.getThreshold() != null) {
 			threshold = keyList.getThreshold();
 		}
 
-		var root = new TreeItem<>("placeholder");
-		for (var keyMember : keyList) {
+		final var root = new TreeItem<>("placeholder");
+		for (final var keyMember : keyList) {
 			if (keyMember instanceof PublicKey) {
 				root.getChildren().add(new TreeItem<>(getKeyName((PublicKey) keyMember)));
 				continue;
 			}
 			root.getChildren().add(keyToTreeView(keyMember));
 		}
-		var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
-		var commonName = getCommonName(lcp);
+		final var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
+		final var commonName = getCommonName(lcp);
 		root.setValue(String.format("%s key (%d of %d)", commonName, threshold, size));
 		return root;
 	}
@@ -972,10 +972,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the size of the KeyList (for checking)
 	 * @return an integer representing the set threshold. -1 if the threshold has not been set.
 	 */
-	private int getThresholdFromString(String value, int size) {
-		var split = value.split("[ ()]+");
-		var thresholdString = split[2];
-		var expectedSizeString = split[4];
+	private int getThresholdFromString(final String value, final int size) {
+		final var split = value.split("[ ()]+");
+		final var thresholdString = split[2];
+		final var expectedSizeString = split[4];
 		if (thresholdString.equals("x") || expectedSizeString.equals("x")) {
 			return -1;
 		}
@@ -987,7 +987,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				return -1;
 			}
 			return threshold;
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			return -1;
 		}
 
@@ -999,18 +999,18 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param root
 	 * 		an inner node of the tree view
 	 */
-	private void setSizes(TreeItem<String> root) {
+	private void setSizes(final TreeItem<String> root) {
 		final var value = root.getValue();
 
 		if (!value.contains(THRESHOLD_MARKER)) {
 			return;
 		}
 
-		var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
-		var newValue = getCommonName(lcp);
+		final var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
+		final var newValue = getCommonName(lcp);
 		root.setValue(String.format("%s key (x of %d)", newValue, root.getChildren().size()));
 
-		for (var child : root.getChildren()) {
+		for (final var child : root.getChildren()) {
 			setSizes(child);
 		}
 	}
@@ -1020,10 +1020,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		an inner node of the tree structure
 	 * @return a list of the names of the root's children
 	 */
-	private List<String> getNamesList(TreeItem<String> root) {
-		List<String> keys = new ArrayList<>();
-		for (var child : root.getChildren()) {
-			var name = child.getValue().startsWith("/") ? child.getValue().substring(
+	private List<String> getNamesList(final TreeItem<String> root) {
+		final List<String> keys = new ArrayList<>();
+		for (final var child : root.getChildren()) {
+			final var name = child.getValue().startsWith("/") ? child.getValue().substring(
 					child.getValue().lastIndexOf("/") + 1) : child.getValue();
 			keys.add(name);
 		}
@@ -1032,13 +1032,13 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 	/**
 	 * Builds the name for the threshold. Discards any special characters at the end of the string. If the input is
-	 * empty or it already contains the "Threshold" keyword it returns "Threshold"
+	 * empty, or it already contains the "Threshold" keyword it returns "Threshold"
 	 *
 	 * @param lcp
 	 * 		the longest common prefix of a series of strings
 	 * @return the name for the threshold key
 	 */
-	private String getCommonName(String lcp) {
+	private String getCommonName(final String lcp) {
 		return lcp.equals("") || lcp.contains(THRESHOLD_MARKER) ? THRESHOLD_STRING : StringUtils.stripEnd(lcp,
 				"!@#$%^&*())_-+=?");
 	}
@@ -1049,8 +1049,8 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param treeItem
 	 * 		the item to be removed
 	 */
-	private void removeFromTree(TreeItem<String> treeItem) {
-		var p = treeItem.getParent();
+	private void removeFromTree(final TreeItem<String> treeItem) {
+		final var p = treeItem.getParent();
 		if (p == null) {
 			// We are at the root, reset tree
 			final var children = treeItem.getChildren();
@@ -1081,19 +1081,19 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		a set of strings
 	 * @return a ListView
 	 */
-	private ListView<String> getPublicKeyListView(Set<String> items) {
-		var stringListView = new ListView<String>();
+	private ListView<String> getPublicKeyListView(final Set<String> items) {
+		final var stringListView = new ListView<String>();
 
 		final List<String> sortedList = new ArrayList<>(items);
 		Collections.sort(sortedList);
-		for (var keyName : sortedList) {
+		for (final var keyName : sortedList) {
 			stringListView.getItems().add(keyName);
 		}
 
 		stringListView.setOnMouseClicked(event -> {
 			if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 &&
 					event.getTarget() instanceof LabeledText) {
-				var textKey = ((LabeledText) event.getTarget()).getText();
+				final var textKey = ((LabeledText) event.getTarget()).getText();
 				displayKeyPopup(textKey);
 			}
 
@@ -1101,18 +1101,18 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 		stringListView.setCellFactory(new Callback<>() {
 			@Override
-			public ListCell<String> call(ListView<String> param) {
-				ListCell<String> listCell = new ListCell<>() {
+			public ListCell<String> call(final ListView<String> param) {
+				final ListCell<String> listCell = new ListCell<>() {
 					@Override
-					protected void updateItem(String item, boolean empty) {
+					protected void updateItem(final String item, final boolean empty) {
 						super.updateItem(item, empty);
 						setText(item);
 					}
 				};
 
 				listCell.setOnDragDetected((MouseEvent event) -> {
-					var db = listCell.startDragAndDrop(TransferMode.COPY);
-					var content = new ClipboardContent();
+					final var db = listCell.startDragAndDrop(TransferMode.COPY);
+					final var content = new ClipboardContent();
 					content.putString(listCell.getItem());
 					db.setContent(content);
 					event.consume();
@@ -1133,9 +1133,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @return the name of the public key. If no name is found, the method returns a string containing the hex code of
 	 * 		the key
 	 */
-	private String getKeyName(PublicKey key) {
-		var name = trimTo64(key);
-		for (var entry : publicKeys.entrySet()) {
+	private String getKeyName(final PublicKey key) {
+		final var name = trimTo64(key);
+		for (final var entry : publicKeys.entrySet()) {
 			if (entry.getValue().equals(key)) {
 				return entry.getKey();
 			}
@@ -1150,12 +1150,12 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * @param key
 	 * 		the name of a public key
 	 */
-	private void displayKeyPopup(String key) {
-		var pubKeyFiles = new File(properties.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
+	private void displayKeyPopup(final String key) {
+		final var pubKeyFiles = new File(properties.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(key + "." + PUB_EXTENSION));
 		assert pubKeyFiles != null;
 		assert pubKeyFiles.length < 2;
-		var address = (pubKeyFiles.length == 0) ? keyAddresses.get(key) : pubKeyFiles[0].getAbsolutePath();
+		final var address = (pubKeyFiles.length == 0) ? keyAddresses.get(key) : pubKeyFiles[0].getAbsolutePath();
 		CompleteKeysPopup.display(address, false);
 	}
 	// endregion

@@ -33,25 +33,25 @@ public class AccountAmountStrings {
 	private String accountID;
 	private String amount;
 
-	public AccountAmountStrings(String accountID, String amount) {
+	public AccountAmountStrings(final String accountID, final String amount) {
 		this.accountID = parseAccountString(accountID);
 		this.amount = parseAmountString(amount);
 	}
 
-	private String parseAmountString(String amount) {
+	private String parseAmountString(final String amount) {
 		try {
-			var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
+			final var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
 			return (amount.contains("-") ? "- " : "") + Utilities.setHBarFormat(
 					Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new HederaClientRuntimeException(
 					String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
 		}
 	}
 
-	private String parseAccountString(String accountID) {
-		var pattern = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
-		var matcher = pattern.matcher(accountID);
+	private String parseAccountString(final String accountID) {
+		final var pattern = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		final var matcher = pattern.matcher(accountID);
 		if (matcher.find()) {
 			return accountID;
 		}
@@ -71,7 +71,7 @@ public class AccountAmountStrings {
 		return Identifier.parse(accountID).asJSON();
 	}
 
-	public void setAccountID(String accountID) {
+	public void setAccountID(final String accountID) {
 		this.accountID = parseAccountString(accountID);
 	}
 
@@ -80,15 +80,15 @@ public class AccountAmountStrings {
 	}
 
 	public long getAmountAsLong() {
-		var sign = amount.contains("-") ? -1L : 1L;
-		var temp = amount.contains(".") ? amount : amount + ".00000000";
+		final var sign = amount.contains("-") ? -1L : 1L;
+		final var temp = amount.contains(".") ? amount : amount + ".00000000";
 		return sign * Long.parseLong(temp.replace("\u0127", "")
 				.replace(" ", "")
 				.replace(".", "")
 				.replace("-", ""));
 	}
 
-	public void setAmount(String amount) {
+	public void setAmount(final String amount) {
 		this.amount = parseAmountString(amount);
 	}
 
@@ -101,7 +101,7 @@ public class AccountAmountStrings {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof AccountAmountStrings)) {
 			return false;
 		}
