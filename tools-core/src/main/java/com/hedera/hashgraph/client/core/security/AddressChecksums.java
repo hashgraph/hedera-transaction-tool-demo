@@ -38,7 +38,7 @@ public class AddressChecksums {
 	}
 
 	/**
-	 * the result returned by {@link }#parseAddress(addr)}, including all 4 components of addr, and correct checksum
+	 * the result returned by {@link #parseAddress(String)}, including all 4 components of addr, and correct checksum
 	 * .
 	 */
 	public static class ParsedAddress {
@@ -102,9 +102,9 @@ public class AddressChecksums {
 	 *
 	 * @return the address components, checksum, and forms
 	 */
-	public static ParsedAddress parseAddress(String addr) {
-		var results = new ParsedAddress();
-		var match = ADDRESS_INPUT_FORMAT.matcher(addr);
+	public static ParsedAddress parseAddress(final String addr) {
+		final var results = new ParsedAddress();
+		final var match = ADDRESS_INPUT_FORMAT.matcher(addr);
 		if (!match.matches()) {
 			results.isValid = false;
 			results.status = parseStatus.BAD_FORMAT; //when status==BAD_FORMAT, the rest of the fields should be ignored
@@ -113,8 +113,8 @@ public class AddressChecksums {
 		results.num1 = Integer.parseInt(match.group(1));
 		results.num2 = Integer.parseInt(match.group(2));
 		results.num3 = Integer.parseInt(match.group(3));
-		var ad = results.num1 + "." + results.num2 + "." + results.num3;
-		var c = checksum(ad);
+		final var ad = results.num1 + "." + results.num2 + "." + results.num3;
+		final var c = checksum(ad);
 		final var matchGroup = match.group(4).toLowerCase();
 		if ("".equals(matchGroup)) {
 			results.status = parseStatus.GOOD_NO_CHECKSUM;
@@ -157,10 +157,10 @@ public class AddressChecksums {
 	 * 		no-checksum address string without leading zeros or extra characters (so ==00.00.00123== becomes 0.0.123)
 	 * @return the checksum
 	 */
-	public static String checksum(byte[] ledgerId, String addr) {
-		var a = addr;      //address, such as "0.0.123"
-		var d = new int[addr.length()]; //digits of address, with 10 for '.', such as [0,10,0,10,1,2,3]
-		var h = ledgerId;  //ledger ID as an array of unsigned bytes
+	public static String checksum(final byte[] ledgerId, final String addr) {
+		final var a = addr;      //address, such as "0.0.123"
+		final var d = new int[addr.length()]; //digits of address, with 10 for '.', such as [0,10,0,10,1,2,3]
+		final var h = ledgerId;  //ledger ID as an array of unsigned bytes
 		var sd0 = 0;           //sum of even positions (mod 11)
 		var sd1 = 0;           //sum of odd positions (mod 11)
 		var sd = 0;            //weighted sum of all positions (mod p3)
@@ -185,7 +185,7 @@ public class AddressChecksums {
 				sd1 = (sd1 + d[i]) % 11;
 			}
 		}
-		for (var sb : h) {
+		for (final var sb : h) {
 			sh = (w * sh + (sb & 0xff)) % p5; //convert signed byte to unsigned before adding
 		}
 		for (var i = 0; i < 6; i++) { //process 6 zeros as if they were appended to the ledger ID
@@ -202,7 +202,7 @@ public class AddressChecksums {
 
 	//Given an address like "0.0.123", return a checksum like "laujm" .
 	//The address must be in no-checksum format, with no extra characters (so not "0.0.00123" or "==0.0.123==")
-	public static String checksum(String addr) {
+	public static String checksum(final String addr) {
 		return checksum(new byte[1], addr);
 	}
 

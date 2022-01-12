@@ -41,7 +41,7 @@ public enum NetworkEnum {
 		return name;
 	}
 
-	public static boolean isNetwork(String network) {
+	public static boolean isNetwork(final String network) {
 		return (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(
 				s -> s.equalsIgnoreCase(network)));
 	}

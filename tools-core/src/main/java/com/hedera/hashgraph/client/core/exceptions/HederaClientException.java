@@ -23,20 +23,20 @@ public class HederaClientException extends Exception {
 		super();
 	}
 
-	public HederaClientException(String message) {
+	public HederaClientException(final String message) {
 		super("Hedera Client: " + message);
 	}
 
-	public HederaClientException(String message, Throwable cause) {
+	public HederaClientException(final String message, final Throwable cause) {
 		super("Hedera Client: " + message, cause);
 	}
 
-	public HederaClientException(Throwable cause) {
+	public HederaClientException(final Throwable cause) {
 		super(cause);
 	}
 
-	protected HederaClientException(String message, Throwable cause, boolean enableSuppression,
-			boolean writableStackTrace) {
+	protected HederaClientException(final String message, final Throwable cause, final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

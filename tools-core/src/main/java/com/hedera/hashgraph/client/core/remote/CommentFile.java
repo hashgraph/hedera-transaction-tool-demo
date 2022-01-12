@@ -39,15 +39,15 @@ public class CommentFile extends RemoteFile {
 	@JsonProperty(value = "linkedFile", required = true)
 	private String linkedFile;
 
-	public CommentFile(FileDetails file) {
+	public CommentFile(final FileDetails file) {
 		super(file);
 		if (file == null) {
 			return;
 		}
 		this.timestamp = new Timestamp(file.getAttributes().creationTime().toInstant());
-		var files = new File(file.getPath()).listFiles();
+		final var files = new File(file.getPath()).listFiles();
 		assert files != null;
-		for (var file1 : files) {
+		for (final var file1 : files) {
 			if (file1.getName().endsWith(Constants.TXT_EXTENSION)) {
 				continue;
 			}
@@ -63,7 +63,7 @@ public class CommentFile extends RemoteFile {
 		if (new File(getPath()).exists()) {
 			try {
 				contents = readJsonObject(getPath());
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
 		}
@@ -84,7 +84,7 @@ public class CommentFile extends RemoteFile {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 

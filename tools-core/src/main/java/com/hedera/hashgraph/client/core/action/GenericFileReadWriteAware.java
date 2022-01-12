@@ -62,7 +62,7 @@ public interface GenericFileReadWriteAware {
 	 * 		path to the file to be read
 	 * @return a byte array
 	 */
-	default byte[] readBytes(String filePath) throws HederaClientException {
+	default byte[] readBytes(final String filePath) throws HederaClientException {
 		return readBytes(new File(filePath));
 	}
 
@@ -73,7 +73,7 @@ public interface GenericFileReadWriteAware {
 	 * 		the file containing the array
 	 * @return a byte array
 	 */
-	default byte[] readBytes(File filePath) throws HederaClientException {
+	default byte[] readBytes(final File filePath) throws HederaClientException {
 		if (filePath == null || !filePath.exists()) {
 			throw new HederaClientRuntimeException(
 					String.format("Unable to get input stream from empty source: %s.",
@@ -81,7 +81,7 @@ public interface GenericFileReadWriteAware {
 		}
 		try (final var fis = new FileInputStream(filePath)) {
 			return fis.readAllBytes();
-		} catch (IOException cause) {
+		} catch (final IOException cause) {
 			throw new HederaClientException(String.format("Unable to read a file: %s.", filePath.getPath()),
 					cause);
 		}
@@ -105,7 +105,7 @@ public interface GenericFileReadWriteAware {
 		try {
 			final var file = new FileReader(filePath);
 			return JsonParser.parseReader(file).getAsJsonObject();
-		} catch (JsonIOException | JsonSyntaxException | ClassCastException | FileNotFoundException cause) {
+		} catch (final JsonIOException | JsonSyntaxException | ClassCastException | FileNotFoundException cause) {
 			throw new HederaClientException(String.format("Unable to read Json object from file: %s", filePath), cause);
 		}
 	}
@@ -140,9 +140,9 @@ public interface GenericFileReadWriteAware {
 		}
 
 		// Read file into object
-		try (var file = new FileReader(filePath)) {
+		try (final var file = new FileReader(filePath)) {
 			return JsonParser.parseReader(file).getAsJsonArray();
-		} catch (JsonIOException | JsonSyntaxException | IOException cause) {
+		} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
 			throw new HederaClientException(String.format("Unable to read Json array from file: %s", filePath), cause);
 		}
 	}
@@ -170,11 +170,11 @@ public interface GenericFileReadWriteAware {
 					String.format("Unable to write object of class %s", jsonObject.getClass().toString()));
 		}
 
-		try (var file = new FileWriter(filePath)) {
-			var gson = new GsonBuilder().setPrettyPrinting().create();
+		try (final var file = new FileWriter(filePath)) {
+			final var gson = new GsonBuilder().setPrettyPrinting().create();
 			file.write(gson.toJson(jsonObject));
 			file.flush();
-		} catch (IOException cause) {
+		} catch (final IOException cause) {
 			throw new HederaClientException(String.format("Unable to write Json object to file: %s",
 					filePath), cause);
 		}
@@ -200,9 +200,9 @@ public interface GenericFileReadWriteAware {
 		if (file.getParentFile() != null && !file.getParentFile().exists()) {
 			file.getParentFile().mkdirs();
 		}
-		try (var fos = new FileOutputStream(filePath)) {
+		try (final var fos = new FileOutputStream(filePath)) {
 			fos.write(contents);
-		} catch (IOException cause) {
+		} catch (final IOException cause) {
 			throw new HederaClientException(String.format("Unable to store bytes to location: %s", filePath));
 		}
 	}
@@ -217,14 +217,14 @@ public interface GenericFileReadWriteAware {
 	 * 		Path to the destination
 	 * @return the destination directory
 	 */
-	default File unZip(String source, String destination) throws HederaClientException {
-		var destinationFolder = new File(destination);
+	default File unZip(final String source, final String destination) throws HederaClientException {
+		final var destinationFolder = new File(destination);
 		if (!new File(source).exists()) {
 			throw new HederaClientException(String.format("The file %s does not exist", source));
 		}
 		try {
 			unpack(new File(source), destinationFolder);
-		} catch (Exception cause) {
+		} catch (final Exception cause) {
 			throw new HederaClientException(
 					String.format("Unzip error, %s, with source at location %s", cause.getCause(), source));
 		}
@@ -238,9 +238,9 @@ public interface GenericFileReadWriteAware {
 	 * 		directory where all files to be compressed are located
 	 * @return a file pointing to the zip created.
 	 */
-	default File zipFolder(String source) {
+	default File zipFolder(final String source) {
 		final var destination = new File(source + "." + ZIP_EXTENSION);
-		var toPack = new File(source).listFiles();
+		final var toPack = new File(source).listFiles();
 		assert toPack != null;
 		ZipUtil.packEntries(toPack, destination);
 
@@ -287,7 +287,7 @@ public interface GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if an IOException is thrown
 	 */
-	default File zipFiles(File[] toPack, String storageLocation) throws HederaClientException {
+	default File zipFiles(final File[] toPack, final String storageLocation) throws HederaClientException {
 		try {
 			if (toPack == null) {
 				throw new HederaClientException("Files to pack are null");
@@ -295,19 +295,20 @@ public interface GenericFileReadWriteAware {
 
 			final var zipFile = new File(storageLocation);
 			if (zipFile.exists()) {
-				var name = findFileName(zipFile.getParentFile().toPath(), FilenameUtils.getBaseName(storageLocation),
-						FilenameUtils.getExtension(storageLocation));
+				final var name =
+						findFileName(zipFile.getParentFile().toPath(), FilenameUtils.getBaseName(storageLocation),
+								FilenameUtils.getExtension(storageLocation));
 				Files.move(Path.of(storageLocation), name);
 			}
 
 			ZipUtil.packEntries(toPack, zipFile);
 
 			// Delete unzipped transactions
-			for (var file : toPack) {
+			for (final var file : toPack) {
 				Files.deleteIfExists(file.toPath());
 			}
 			return zipFile;
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 	}
@@ -317,17 +318,17 @@ public interface GenericFileReadWriteAware {
 			throw new IllegalArgumentException("Path must be a directory.");
 		}
 
-		try (var bos = new BufferedOutputStream(new FileOutputStream(path + "." + ZIP_EXTENSION))) {
-			try (var out = new ZipOutputStream(bos)) {
+		try (final var bos = new BufferedOutputStream(new FileOutputStream(path + "." + ZIP_EXTENSION))) {
+			try (final var out = new ZipOutputStream(bos)) {
 				addZipDir(out, path.getFileName(), path);
 			}
 		}
 	}
 
 	private void addZipDir(final ZipOutputStream out, final Path root, final Path dir) throws IOException {
-		try (var stream = Files.newDirectoryStream(dir)) {
-			for (var child : stream) {
-				var entry = buildPath(root, child.getFileName());
+		try (final var stream = Files.newDirectoryStream(dir)) {
+			for (final var child : stream) {
+				final var entry = buildPath(root, child.getFileName());
 				if (Files.isDirectory(child)) {
 					addZipDir(out, entry, child);
 				} else {
@@ -354,15 +355,15 @@ public interface GenericFileReadWriteAware {
 	 * 		the location of the csv
 	 * @return a List of Lists of Strings
 	 */
-	default List<List<String>> readCSV(String csvFile) {
-		List<List<String>> records = new ArrayList<>();
-		try (var br = new BufferedReader(new FileReader(csvFile))) {
+	default List<List<String>> readCSV(final String csvFile) {
+		final List<List<String>> records = new ArrayList<>();
+		try (final var br = new BufferedReader(new FileReader(csvFile))) {
 			String line;
 			while ((line = br.readLine()) != null) {
-				var values = line.split(Constants.COMMA_DELIMITER);
+				final var values = line.split(Constants.COMMA_DELIMITER);
 				records.add(Arrays.asList(values));
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 		return records;
@@ -378,17 +379,17 @@ public interface GenericFileReadWriteAware {
 	 */
 	default void writeCSV(final String filePath,
 			final Map<String, List<String>> listOfStrings) throws HederaClientException {
-		var eol = System.getProperty("line.separator");
+		final var eol = System.getProperty("line.separator");
 		final var separator = ",";
-		try (Writer writer = new FileWriter(filePath)) {
-			for (var entry : listOfStrings.entrySet()) {
+		try (final Writer writer = new FileWriter(filePath)) {
+			for (final var entry : listOfStrings.entrySet()) {
 				writer.append(entry.getKey());
-				for (var s : entry.getValue()) {
+				for (final var s : entry.getValue()) {
 					writer.append(separator).append(s);
 				}
 				writer.append(eol);
 			}
-		} catch (IOException ex) {
+		} catch (final IOException ex) {
 			throw new HederaClientException(ex);
 		}
 	}

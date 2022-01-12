@@ -33,7 +33,7 @@ public final class Log4j2UncaughtExceptionHandler implements Thread.UncaughtExce
 	}
 
 	@Override
-	public void uncaughtException(Thread t, Throwable e) {
+	public void uncaughtException(final Thread t, final Throwable e) {
 		final var errorMessage =
 				String.format("ERROR: uncaught exception occurs, check app.err log file for details. %nMessage: %s",
 						e.getMessage());

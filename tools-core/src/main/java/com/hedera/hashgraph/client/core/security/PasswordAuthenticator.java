@@ -40,7 +40,7 @@ public final class PasswordAuthenticator {
 	private final int keyLength; //key length in bits
 	private final int iterationCount;
 
-	public PasswordAuthenticator(int length, int count) {
+	public PasswordAuthenticator(final int length, final int count) {
 		this.keyLength = length;
 		this.iterationCount = count;
 	}
@@ -54,15 +54,15 @@ public final class PasswordAuthenticator {
 	 * @param password a char array that contains the password
 	 * @return a string with the salt and the hash of the password
 	 */
-	public String hash(char[] password) {
-		var salt = SecurityUtilities.generateRandomBytes(Constants.SALT_LENGTH);
-		var hash = SecurityUtilities.generateArgon2id(password, salt);
-		var tokenBytes = new byte[salt.length + hash.length];
+	public String hash(final char[] password) {
+		final var salt = SecurityUtilities.generateRandomBytes(Constants.SALT_LENGTH);
+		final var hash = SecurityUtilities.generateArgon2id(password, salt);
+		final var tokenBytes = new byte[salt.length + hash.length];
 
 		System.arraycopy(salt, 0, tokenBytes, 0, salt.length);
 		System.arraycopy(hash, 0, tokenBytes, salt.length, hash.length);
 
-		var encoder = Base64.getEncoder();
+		final var encoder = Base64.getEncoder();
 
 		return encoder.encodeToString(tokenBytes);
 
@@ -79,21 +79,21 @@ public final class PasswordAuthenticator {
 	 * @throws InvalidKeySpecException
 	 * @throws NoSuchAlgorithmException
 	 */
-	public boolean authenticateLegacy(char[] password, String token) throws InvalidKeySpecException,
+	public boolean authenticateLegacy(final char[] password, final String token) throws InvalidKeySpecException,
 			NoSuchAlgorithmException {
-		var decoder = Base64.getDecoder();
+		final var decoder = Base64.getDecoder();
 
-		var tokenBytes = decoder.decode(token);
+		final var tokenBytes = decoder.decode(token);
 		if (tokenBytes.length != Constants.SALT_LENGTH + keyLength / 8) {
 			logger.error("Token size check failed");
 			return false;
 		}
-		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-		var hash = Arrays.copyOfRange(tokenBytes, salt.length, tokenBytes.length);
+		final var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+		final var hash = Arrays.copyOfRange(tokenBytes, salt.length, tokenBytes.length);
 
-		KeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
-		var factory = SecretKeyFactory.getInstance(ALGORITHM);
-		var check = factory.generateSecret(spec).getEncoded();
+		final KeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
+		final var factory = SecretKeyFactory.getInstance(ALGORITHM);
+		final var check = factory.generateSecret(spec).getEncoded();
 
 		return Arrays.equals(hash, check);
 
@@ -110,17 +110,17 @@ public final class PasswordAuthenticator {
 	 * @throws InvalidKeySpecException
 	 * @throws NoSuchAlgorithmException
 	 */
-	public boolean authenticate(char[] password, String token) {
-		var decoder = Base64.getDecoder();
+	public boolean authenticate(final char[] password, final String token) {
+		final var decoder = Base64.getDecoder();
 
-		var tokenBytes = decoder.decode(token);
+		final var tokenBytes = decoder.decode(token);
 		if (tokenBytes.length != Constants.SALT_LENGTH + keyLength / 8) {
 			logger.error("Token size check failed");
 			return false;
 		}
-		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-		var hash = Arrays.copyOfRange(tokenBytes, salt.length, tokenBytes.length);
-		var check = SecurityUtilities.generateArgon2id(password, salt);
+		final var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+		final var hash = Arrays.copyOfRange(tokenBytes, salt.length, tokenBytes.length);
+		final var check = SecurityUtilities.generateArgon2id(password, salt);
 
 		return Arrays.equals(hash, check);
 	}

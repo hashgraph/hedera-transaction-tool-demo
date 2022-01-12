@@ -38,18 +38,18 @@ public class TimeUtils {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Calendar excelDateTimeToCalendar(String excelDate) {
+	public static Calendar excelDateTimeToCalendar(final String excelDate) {
 
 		final var applyingPattern = excelDate.contains(
 				"T") ? DATE_TIME_FULL_PATTERN : DATE_TIME_SHORT_MM_FIRST_PATTERN;
 		final var formatter = new SimpleDateFormat(applyingPattern);
 		formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-		var calendar = Calendar.getInstance();
+		final var calendar = Calendar.getInstance();
 
 		try {
 			calendar.setTime(formatter.parse(excelDate));
-		} catch (ParseException ex) {
+		} catch (final ParseException ex) {
 			logger.error("Parsing error: {}", ex.getMessage());
 			return null;
 		}
