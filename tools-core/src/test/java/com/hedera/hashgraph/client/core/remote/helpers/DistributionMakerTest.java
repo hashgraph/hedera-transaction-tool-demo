@@ -35,11 +35,9 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,16 +50,16 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 	@Test
 	void buildBundleLegacy_Test() throws HederaClientException, KeyStoreException {
-		String storageLocation = "src/test/resources/Files";
-		var maker =
+		final var storageLocation = "src/test/resources/Files";
+		final var maker =
 				new DistributionMaker(new AccountId(1001), new AccountId(1001), new AccountId(12), new Timestamp(125,
 						0), 98765432, "", storageLocation, OUTPUT);
 
 		assertNotNull(maker);
-		var keyPairs =
+		final var keyPairs =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		for (var i = 0; i < 1000; i++) {
-			BatchLine line =
+			final var line =
 					new BatchLine.Builder()
 							.withAmount("123654")
 							.withReceiverAccountID(new Identifier(0, 0, 1003 + i).toReadableString())
@@ -72,27 +70,27 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 		}
 
 		maker.pack();
-		var csv = readCSV("src/test/resources/Files/output/user/Files_summary.csv");
-		var transactions = getZipNames("src/test/resources/Files/output/user/Files_transactions.zip");
-		var signatures = getZipNames("src/test/resources/Files/output/user/Files_signatures.zip");
+		final var csv = readCSV("src/test/resources/Files/output/user/Files_summary.csv");
+		final var transactions = getZipNames("src/test/resources/Files/output/user/Files_transactions.zip");
+		final var signatures = getZipNames("src/test/resources/Files/output/user/Files_signatures.zip");
 
 		assertNotNull(transactions);
 		assertNotNull(signatures);
 
 		assertEquals(transactions.size(), signatures.size());
-		Set<String> names = new HashSet<>();
-		for (String signature : signatures) {
+		final Set<String> names = new HashSet<>();
+		for (final var signature : signatures) {
 			names.add(FilenameUtils.getBaseName(signature));
 		}
-		for (String transaction : transactions) {
+		for (final var transaction : transactions) {
 			names.add(FilenameUtils.getBaseName(transaction));
 		}
 		assertNotNull(names);
 		assertEquals(signatures.size(), names.size());
 
-		for (List<String> transaction : csv) {
-			String nameString = transaction.get(0).replace("\"", "");
-			String jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
+		for (final var transaction : csv) {
+			final var nameString = transaction.get(0).replace("\"", "");
+			final var jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
 			if ("Filename".equals(nameString)) {
 				continue;
 			}
@@ -106,16 +104,16 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 	@Test
 	void buildBundle_Test() throws HederaClientException, KeyStoreException {
-		String storageLocation = "src/test/resources/Files";
-		var maker =
+		final var storageLocation = "src/test/resources/Files";
+		final var maker =
 				new DistributionMaker(new AccountId(1001), new AccountId(1007), new AccountId(12), new Timestamp(125,
 						0), 98765432, "a memo line", storageLocation, OUTPUT);
 
 		assertNotNull(maker);
-		var keyPairs =
+		final var keyPairs =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		for (var i = 0; i < 1000; i++) {
-			BatchLine line =
+			final var line =
 					new BatchLine.Builder()
 							.withAmount("123654")
 							.withReceiverAccountID(new Identifier(0, 0, 1003 + i).toReadableString())
@@ -126,27 +124,27 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 		}
 
 		maker.pack();
-		var csv = readCSV("src/test/resources/Files/output/user/Files_summary.csv");
-		var transactions = getZipNames("src/test/resources/Files/output/user/Files_transactions.zip");
-		var signatures = getZipNames("src/test/resources/Files/output/user/Files_signatures.zip");
+		final var csv = readCSV("src/test/resources/Files/output/user/Files_summary.csv");
+		final var transactions = getZipNames("src/test/resources/Files/output/user/Files_transactions.zip");
+		final var signatures = getZipNames("src/test/resources/Files/output/user/Files_signatures.zip");
 
 		assertNotNull(transactions);
 		assertNotNull(signatures);
 
 		assertEquals(transactions.size(), signatures.size());
-		Set<String> names = new HashSet<>();
-		for (String signature : signatures) {
+		final Set<String> names = new HashSet<>();
+		for (final var signature : signatures) {
 			names.add(FilenameUtils.getBaseName(signature));
 		}
-		for (String transaction : transactions) {
+		for (final var transaction : transactions) {
 			names.add(FilenameUtils.getBaseName(transaction));
 		}
 		assertNotNull(names);
 		assertEquals(signatures.size(), names.size());
 
-		for (List<String> transaction : csv) {
-			String nameString = transaction.get(0).replace("\"", "");
-			String jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
+		for (final var transaction : csv) {
+			final var nameString = transaction.get(0).replace("\"", "");
+			final var jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
 			if ("Filename".equals(nameString)) {
 				continue;
 			}
@@ -164,14 +162,14 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 		}
 	}
 
-	private List<String> getZipNames(String zip) throws HederaClientException {
-		List<String> zipNames = new ArrayList<>();
-		try (ZipFile zipFile = new ZipFile(zip)) {
-			Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+	private List<String> getZipNames(final String zip) throws HederaClientException {
+		final List<String> zipNames = new ArrayList<>();
+		try (final var zipFile = new ZipFile(zip)) {
+			final var zipEntries = zipFile.entries();
 			while (zipEntries.hasMoreElements()) {
 				zipNames.add(zipEntries.nextElement().getName());
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException("Invalid zip");
 		}
 		return zipNames;

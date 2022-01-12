@@ -20,24 +20,20 @@ package com.hedera.hashgraph.client.core.utils;
 
 import org.junit.jupiter.api.Test;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TimeUtilsTest {
 
 	@Test
 	void excelDateTimeToCalendar() {
-		String dateString = "2025-12-25T08:32:11";
-		Calendar date = TimeUtils.excelDateTimeToCalendar(dateString);
+		final var dateString = "2025-12-25T08:32:11";
+		var date = TimeUtils.excelDateTimeToCalendar(dateString);
 		assertNotNull(date);
 		assertEquals(2025, date.get(Calendar.YEAR));
 		assertEquals(11, date.get(Calendar.MONTH));
@@ -45,13 +41,13 @@ class TimeUtilsTest {
 		assertEquals(32, date.get(Calendar.MINUTE));
 		assertEquals(11, date.get(Calendar.SECOND));
 
-		String shortDate = "04/18/52";
+		final var shortDate = "04/18/52";
 		date = TimeUtils.excelDateTimeToCalendar(shortDate);
 		assertNotNull(date);
 		assertEquals(1952, date.get(Calendar.YEAR));
 		assertEquals(3, date.get(Calendar.MONTH));
 
-		String badDate = "665465T564";
+		final var badDate = "665465T564";
 		date = TimeUtils.excelDateTimeToCalendar(badDate);
 		assertNull(date);
 	}
@@ -60,7 +56,7 @@ class TimeUtilsTest {
 	void notNegativeValueCheck() {
 		assertDoesNotThrow(() -> TimeUtils.notNegativeValueCheck(1, "aField"));
 
-		Exception exception1 =
+		final Exception exception1 =
 				assertThrows(IllegalArgumentException.class, () -> TimeUtils.notNegativeValueCheck(-1, "aField"));
 		assertEquals("aField must be greater than zero", exception1.getMessage());
 

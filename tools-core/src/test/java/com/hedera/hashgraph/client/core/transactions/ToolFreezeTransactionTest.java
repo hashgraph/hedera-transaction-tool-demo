@@ -63,39 +63,41 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildExceptionsPart1_test() {
-		JsonObject testJson = getBasicJsonObject();
-		Exception exception0 = assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
+		final var testJson = getBasicJsonObject();
+		final Exception exception0 =
+				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception0.getMessage());
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "random");
 		testJson.addProperty(FREEZE_START_TIME_FIELD_NAME, "random");
-		Exception exception1 = assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
+		final Exception exception1 =
+				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception1.getMessage());
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		testJson.remove(FREEZE_START_TIME_FIELD_NAME);
-		Exception exception2 =
+		final Exception exception2 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time must be specified", exception2.getMessage());
 
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().minusSeconds(100)).asJSON());
-		Exception exception2b =
+		final Exception exception2b =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time cannot be in the past", exception2b.getMessage());
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "PREPARE_UPGRADE");
 		testJson.remove(FREEZE_START_TIME_FIELD_NAME);
-		Exception exception3 =
+		final Exception exception3 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: File ID must be specified", exception3.getMessage());
 
 		testJson.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 123).asJSON());
-		Exception exception4 =
+		final Exception exception4 =
 				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception4.getMessage());
 
 		testJson.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "");
-		Exception exception5 =
+		final Exception exception5 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Empty file hash", exception5.getMessage());
 
@@ -103,27 +105,27 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildExceptionsPart2_test() {
-		JsonObject testJson = getBasicJsonObject();
+		final var testJson = getBasicJsonObject();
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
-		Exception exception0 =
+		final Exception exception0 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time must be specified", exception0.getMessage());
 
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().minusSeconds(100)).asJSON());
-		Exception exception1 =
+		final Exception exception1 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time cannot be in the past", exception1.getMessage());
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().plusSeconds(100)).asJSON());
 		testJson.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 123).asJSON());
-		Exception exception2 =
+		final Exception exception2 =
 				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception2.getMessage());
 
 		testJson.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "");
-		Exception exception3 =
+		final Exception exception3 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Empty file hash", exception3.getMessage());
 
@@ -131,24 +133,24 @@ class ToolFreezeTransactionTest {
 		testJson.remove(FREEZE_START_TIME_FIELD_NAME);
 		testJson.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		Exception exception4 =
+		final Exception exception4 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time must be specified", exception4.getMessage());
 
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().minusSeconds(100)).asJSON());
-		Exception exception5 =
+		final Exception exception5 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Start time cannot be in the past", exception5.getMessage());
 
 		testJson.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(Instant.now().plusSeconds(100)).asJSON());
 		testJson.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 123).asJSON());
 		testJson.remove(FREEZE_FILE_HASH_FIELD_NAME);
-		Exception exception6 =
+		final Exception exception6 =
 				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception6.getMessage());
 
 		testJson.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "");
-		Exception exception7 =
+		final Exception exception7 =
 				assertThrows(HederaClientRuntimeException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client Runtime: Empty file hash", exception7.getMessage());
 
@@ -160,22 +162,22 @@ class ToolFreezeTransactionTest {
 		final var startTime = new Timestamp(Instant.now().plusSeconds(100));
 		final var fileIdentifier = new Identifier(0, 0, 123);
 
-		JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startTime.asJSON());
 
-		var freezeOnly = new ToolFreezeTransaction(input);
-		var fileFreezeOnlyFile = freezeOnly.store("src/test/resources");
-		var freezeOnlyFromFile = new ToolFreezeTransaction(new File(fileFreezeOnlyFile));
+		final var freezeOnly = new ToolFreezeTransaction(input);
+		final var fileFreezeOnlyFile = freezeOnly.store("src/test/resources");
+		final var freezeOnlyFromFile = new ToolFreezeTransaction(new File(fileFreezeOnlyFile));
 		assertEquals(freezeOnly, freezeOnlyFromFile);
 		Files.deleteIfExists(Path.of(fileFreezeOnlyFile));
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
 		input.remove(FREEZE_START_TIME_FIELD_NAME);
 
-		var abort = new ToolFreezeTransaction(input);
-		var abortFile = abort.store("src/test/resources");
-		var abortFromFile = new ToolFreezeTransaction(new File(abortFile));
+		final var abort = new ToolFreezeTransaction(input);
+		final var abortFile = abort.store("src/test/resources");
+		final var abortFromFile = new ToolFreezeTransaction(new File(abortFile));
 		assertEquals(abort, abortFromFile);
 		Files.deleteIfExists(Path.of(abortFile));
 
@@ -183,25 +185,25 @@ class ToolFreezeTransactionTest {
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		var prepareUpgrade = new ToolFreezeTransaction(input);
-		var prepareUpgradeFile = prepareUpgrade.store("src/test/resources");
-		var prepareUpgradeFromFile = new ToolFreezeTransaction(new File(prepareUpgradeFile));
+		final var prepareUpgrade = new ToolFreezeTransaction(input);
+		final var prepareUpgradeFile = prepareUpgrade.store("src/test/resources");
+		final var prepareUpgradeFromFile = new ToolFreezeTransaction(new File(prepareUpgradeFile));
 		assertEquals(prepareUpgrade, prepareUpgradeFromFile);
 		Files.deleteIfExists(Path.of(prepareUpgradeFile));
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startTime.asJSON());
 
-		var freezeUpgrade = new ToolFreezeTransaction(input);
-		var freezeUpgradeFile = freezeUpgrade.store("src/test/resources");
-		var freezeUpgradeFromFile = new ToolFreezeTransaction(new File(freezeUpgradeFile));
+		final var freezeUpgrade = new ToolFreezeTransaction(input);
+		final var freezeUpgradeFile = freezeUpgrade.store("src/test/resources");
+		final var freezeUpgradeFromFile = new ToolFreezeTransaction(new File(freezeUpgradeFile));
 		assertEquals(freezeUpgrade, freezeUpgradeFromFile);
 		Files.deleteIfExists(Path.of(freezeUpgradeFile));
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "TELEMETRY_UPGRADE");
-		var telemetryUpgrade = new ToolFreezeTransaction(input);
-		var telemetryUpgradeFile = telemetryUpgrade.store("src/test/resources");
-		var telemetryUpgradeFromFile = new ToolFreezeTransaction(new File(telemetryUpgradeFile));
+		final var telemetryUpgrade = new ToolFreezeTransaction(input);
+		final var telemetryUpgradeFile = telemetryUpgrade.store("src/test/resources");
+		final var telemetryUpgradeFromFile = new ToolFreezeTransaction(new File(telemetryUpgradeFile));
 		assertEquals(telemetryUpgrade, telemetryUpgradeFromFile);
 		Files.deleteIfExists(Path.of(telemetryUpgradeFile));
 	}
@@ -210,14 +212,14 @@ class ToolFreezeTransactionTest {
 	void buildFreezeOnly_test() throws HederaClientException {
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject inputFreezeOnly = getBasicJsonObject();
+		final var inputFreezeOnly = getBasicJsonObject();
 		inputFreezeOnly.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		inputFreezeOnly.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 
-		var freezeOnly = new ToolFreezeTransaction(inputFreezeOnly);
+		final var freezeOnly = new ToolFreezeTransaction(inputFreezeOnly);
 		assertEquals(FreezeType.FREEZE_ONLY, freezeOnly.getFreezeType());
 		assertEquals(startFreeze, freezeOnly.getStartTime());
-		var freezeOnlyTransaction = (FreezeTransaction) freezeOnly.getTransaction();
+		final var freezeOnlyTransaction = (FreezeTransaction) freezeOnly.getTransaction();
 		assertEquals(FreezeType.FREEZE_ONLY, freezeOnlyTransaction.getFreezeType());
 		assertEquals(startFreeze.asInstant(), freezeOnlyTransaction.getStartTime());
 	}
@@ -225,12 +227,12 @@ class ToolFreezeTransactionTest {
 	@Test
 	void buildFreezeAbort_test() throws HederaClientException {
 		// Not clear if freeze abort needs a start time
-		JsonObject inputFreezeAbort = getBasicJsonObject();
+		final var inputFreezeAbort = getBasicJsonObject();
 		inputFreezeAbort.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
 
-		var freezeAbort = new ToolFreezeTransaction(inputFreezeAbort);
+		final var freezeAbort = new ToolFreezeTransaction(inputFreezeAbort);
 		assertEquals(FreezeType.FREEZE_ABORT, freezeAbort.getFreezeType());
-		var freezeAbortTransaction = (FreezeTransaction) freezeAbort.getTransaction();
+		final var freezeAbortTransaction = (FreezeTransaction) freezeAbort.getTransaction();
 		assertEquals(FreezeType.FREEZE_ABORT, freezeAbortTransaction.getFreezeType());
 	}
 
@@ -238,17 +240,17 @@ class ToolFreezeTransactionTest {
 	void buildPrepareUpgrade() throws HederaClientException {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 
-		JsonObject inputPrepareUpgrade = getBasicJsonObject();
+		final var inputPrepareUpgrade = getBasicJsonObject();
 		inputPrepareUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "PREPARE_UPGRADE");
 		inputPrepareUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputPrepareUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		var prepareUpgrade = new ToolFreezeTransaction(inputPrepareUpgrade);
+		final var prepareUpgrade = new ToolFreezeTransaction(inputPrepareUpgrade);
 		assertEquals(FreezeType.PREPARE_UPGRADE, prepareUpgrade.getFreezeType());
 		assertEquals(fileIdentifier, prepareUpgrade.getFileID());
 		assertEquals("123abc", prepareUpgrade.getFileHash());
 
-		var prepareUpgradeTransaction = (FreezeTransaction) prepareUpgrade.getTransaction();
+		final var prepareUpgradeTransaction = (FreezeTransaction) prepareUpgrade.getTransaction();
 		assertEquals(FreezeType.PREPARE_UPGRADE, prepareUpgradeTransaction.getFreezeType());
 		assertEquals(fileIdentifier.asFile(), prepareUpgradeTransaction.getFileId());
 		assertArrayEquals(Hex.decode("123abc"), prepareUpgradeTransaction.getFileHash());
@@ -259,19 +261,19 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject inputFreezeUpgrade = getBasicJsonObject();
+		final var inputFreezeUpgrade = getBasicJsonObject();
 		inputFreezeUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		inputFreezeUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputFreezeUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 		inputFreezeUpgrade.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 
-		var freezeUpgrade = new ToolFreezeTransaction(inputFreezeUpgrade);
+		final var freezeUpgrade = new ToolFreezeTransaction(inputFreezeUpgrade);
 		assertEquals(FreezeType.FREEZE_UPGRADE, freezeUpgrade.getFreezeType());
 		assertEquals(fileIdentifier, freezeUpgrade.getFileID());
 		assertEquals("123abc", freezeUpgrade.getFileHash());
 		assertEquals(startFreeze, freezeUpgrade.getStartTime());
 
-		var freezeUpgradeTransaction = (FreezeTransaction) freezeUpgrade.getTransaction();
+		final var freezeUpgradeTransaction = (FreezeTransaction) freezeUpgrade.getTransaction();
 		assertEquals(FreezeType.FREEZE_UPGRADE, freezeUpgradeTransaction.getFreezeType());
 		assertEquals(fileIdentifier.asFile(), freezeUpgradeTransaction.getFileId());
 		assertArrayEquals(Hex.decode("123abc"), freezeUpgradeTransaction.getFileHash());
@@ -283,19 +285,19 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject inputTelemetryUpgrade = getBasicJsonObject();
+		final var inputTelemetryUpgrade = getBasicJsonObject();
 		inputTelemetryUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "TELEMETRY_UPGRADE");
 		inputTelemetryUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputTelemetryUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 		inputTelemetryUpgrade.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 
-		var telemetryUpgrade = new ToolFreezeTransaction(inputTelemetryUpgrade);
+		final var telemetryUpgrade = new ToolFreezeTransaction(inputTelemetryUpgrade);
 		assertEquals(FreezeType.TELEMETRY_UPGRADE, telemetryUpgrade.getFreezeType());
 		assertEquals(fileIdentifier, telemetryUpgrade.getFileID());
 		assertEquals("123abc", telemetryUpgrade.getFileHash());
 		assertEquals(startFreeze, telemetryUpgrade.getStartTime());
 
-		var freezeUpgradeTransaction = (FreezeTransaction) telemetryUpgrade.getTransaction();
+		final var freezeUpgradeTransaction = (FreezeTransaction) telemetryUpgrade.getTransaction();
 		assertEquals(FreezeType.TELEMETRY_UPGRADE, freezeUpgradeTransaction.getFreezeType());
 		assertEquals(fileIdentifier.asFile(), freezeUpgradeTransaction.getFileId());
 		assertArrayEquals(Hex.decode("123abc"), freezeUpgradeTransaction.getFileHash());
@@ -308,14 +310,14 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		var transaction = new ToolFreezeTransaction(input);
-		var signers = transaction.getSigningAccounts();
+		final var transaction = new ToolFreezeTransaction(input);
+		final var signers = transaction.getSigningAccounts();
 
 		assertTrue(signers.contains(new AccountId(0, 0, 50)));
 	}
@@ -325,14 +327,14 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		var prepareUpgrade = new ToolFreezeTransaction(input);
-		var output = prepareUpgrade.asJson();
+		final var prepareUpgrade = new ToolFreezeTransaction(input);
+		final var output = prepareUpgrade.asJson();
 		assertTrue(output.has(FREEZE_TYPE_FIELD_NAME));
 		assertEquals("FREEZE_UPGRADE", output.get(FREEZE_TYPE_FIELD_NAME).getAsString());
 		assertTrue(output.has(FREEZE_FILE_ID_FIELD_NAME));
@@ -349,33 +351,33 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
-		var transaction0 = new ToolFreezeTransaction(input);
-		var other = new ToolFreezeTransaction(input);
+		final var transaction0 = new ToolFreezeTransaction(input);
+		final var other = new ToolFreezeTransaction(input);
 		assertEquals(transaction0, other);
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
-		var differentOP = new ToolFreezeTransaction(input);
+		final var differentOP = new ToolFreezeTransaction(input);
 		assertNotEquals(transaction0, differentOP);
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.plusSeconds(1).asJSON());
-		var differentStart = new ToolFreezeTransaction(input);
+		final var differentStart = new ToolFreezeTransaction(input);
 		assertNotEquals(transaction0, differentStart);
 
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 122).asJSON());
-		var differentFile = new ToolFreezeTransaction(input);
+		final var differentFile = new ToolFreezeTransaction(input);
 		assertNotEquals(transaction0, differentFile);
 
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abd");
-		var differentHash = new ToolFreezeTransaction(input);
+		final var differentHash = new ToolFreezeTransaction(input);
 		assertNotEquals(transaction0, differentHash);
 	}
 
@@ -385,52 +387,52 @@ class ToolFreezeTransactionTest {
 		final var startFreeze = new Timestamp(1761418184, 123);
 		final var validStart = new Timestamp(1761418084, 123);
 
-		JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 		input.add(TRANSACTION_VALID_START_FIELD_NAME, validStart.asJSON());
 
-		var transaction0 = new ToolFreezeTransaction(input);
-		var other = new ToolFreezeTransaction(input);
+		final var transaction0 = new ToolFreezeTransaction(input);
+		final var other = new ToolFreezeTransaction(input);
 		assertEquals(transaction0.hashCode(), other.hashCode());
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
-		var differentOP = new ToolFreezeTransaction(input);
+		final var differentOP = new ToolFreezeTransaction(input);
 		assertEquals(2034111097, differentOP.hashCode());
 
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.plusSeconds(1).asJSON());
-		var differentStart = new ToolFreezeTransaction(input);
+		final var differentStart = new ToolFreezeTransaction(input);
 		assertEquals(-1656949329, differentStart.hashCode());
 
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, new Identifier(0, 0, 122).asJSON());
-		var differentFile = new ToolFreezeTransaction(input);
+		final var differentFile = new ToolFreezeTransaction(input);
 		assertEquals(-1639517521, differentFile.hashCode());
 
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abd");
-		var differentHash = new ToolFreezeTransaction(input);
+		final var differentHash = new ToolFreezeTransaction(input);
 		assertEquals(301134255, differentHash.hashCode());
 	}
 
 	@NotNull
 	private JsonObject getBasicJsonObject() {
-		JsonObject testJson = new JsonObject();
-		JsonObject feeJson = new JsonObject();
+		final var testJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		JsonObject feePayerAccount = new JsonObject();
+		final var feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 50);
 
 		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
 
-		JsonObject node = new JsonObject();
+		final var node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);

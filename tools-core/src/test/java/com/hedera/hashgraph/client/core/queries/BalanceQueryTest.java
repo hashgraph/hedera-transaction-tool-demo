@@ -42,7 +42,7 @@ public class BalanceQueryTest {
 
 	@Test
 	public void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException, IOException {
-		BalanceQuery query = BalanceQuery.Builder.aBalanceQuery()
+		var query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(new AccountId(0, 0, 101))
 				.withNetwork("mainnet")
 				.build();

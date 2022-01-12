@@ -20,17 +20,17 @@ package com.hedera.hashgraph.client.core.enums;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ActionsTest {
 
 	@Test
 	void getAction() {
-		Actions accept = Actions.ACCEPT;
-		assertEquals("ACCEPT",accept.getAction());
+		final Actions accept = Actions.ACCEPT;
+		assertEquals("ACCEPT", accept.getAction());
 		assertEquals("accepted", accept.toString());
 
-		Actions decline = Actions.DECLINE;
+		final Actions decline = Actions.DECLINE;
 		assertEquals("DECLINE", decline.getAction());
 		assertEquals("declined", decline.toString());
 	}
