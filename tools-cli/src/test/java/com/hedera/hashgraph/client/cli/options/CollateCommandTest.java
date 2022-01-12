@@ -79,7 +79,6 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final String RESOURCES_DIRECTORY =
 			((isInCircleCi.getAsBoolean()) ? "/repo/tools-cli/" : "") + "src/test/resources/";
-	private Client client = null;
 	private final int threshold = 3;
 	private final int size = 5;
 
@@ -87,6 +86,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	void setUp() throws IOException {
 		final var files = new File(RESOURCES_DIRECTORY + "collation_test").listFiles(
 				(dir, name) -> name.contains("_unzipped"));
+		assert files != null;
 		for (final var file : files) {
 			if (file.isDirectory()) {
 				FileUtils.deleteDirectory(file);
@@ -221,7 +221,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		createSignatures(threshold, size, location, list);
 		ToolsMain.main(args);
 
-		// Finally submit and check results
+		// Finally, submit and check results
 		final String[] argsSubmit =
 				{ "submit", "-t", location.replace(Constants.TRANSACTION_EXTENSION,
 						Constants.SIGNED_TRANSACTION_EXTENSION), "-n", "INTEGRATION", "-o", "src/test/resources" +
@@ -299,7 +299,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 
 	private AccountId createAccount(final KeyList keyList) throws KeyStoreException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException, HederaClientException {
-		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final Client client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		final var keyStore =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		client.setOperator(new AccountId(0, 0, 2), PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded()));

@@ -20,22 +20,19 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import javafx.beans.property.SimpleStringProperty;
 
-import java.util.Collections;
 import java.util.List;
 
 public class KeysTableRow {
 
 	private final SimpleStringProperty keyName;
-	private SimpleStringProperty accountList;
 	private String index;
-	private boolean signer;
+	private final boolean signer;
 	private String mnemonic;
-	private String iconFile;
+	private final String iconFile;
 
 	public KeysTableRow(final SimpleStringProperty keyName, final SimpleStringProperty accountList, final String index,
 			final boolean signer, final boolean mnemonic) {
 		this.keyName = keyName;
-		this.accountList = accountList;
 		this.index = index;
 		this.signer = signer;
 		if (mnemonic && signer) {
@@ -67,31 +64,14 @@ public class KeysTableRow {
 	public KeysTableRow(final String keyName, final List<String> accounts, final String index, final boolean signer,
 			final boolean mnemonic) {
 		this(keyName, index, signer, mnemonic);
-		this.accountList = new SimpleStringProperty(getStringAccountList(accounts));
 	}
 
 	public String getKeyName() {
 		return keyName.get();
 	}
 
-	public SimpleStringProperty keyNameProperty() {
-		return keyName;
-	}
-
 	public void setKeyName(final String keyName) {
 		this.keyName.set(keyName);
-	}
-
-	public String getAccountList() {
-		return accountList.get();
-	}
-
-	public SimpleStringProperty accountListProperty() {
-		return accountList;
-	}
-
-	public void setAccountList(final String accountList) {
-		this.accountList.set(accountList);
 	}
 
 	public String getIndex() {
@@ -104,10 +84,6 @@ public class KeysTableRow {
 
 	public boolean isSigner() {
 		return signer;
-	}
-
-	public void setSigner(final boolean signer) {
-		this.signer = signer;
 	}
 
 	public String getMnemonic() {
@@ -124,28 +100,4 @@ public class KeysTableRow {
 		}
 	}
 
-	public String getIconFile() {
-		return iconFile;
-	}
-
-	public void setIconFile(final String iconFile) {
-		this.iconFile = iconFile;
-	}
-
-	private String getStringAccountList(final List<String> accounts) {
-		Collections.sort(accounts);
-		if (accounts.isEmpty()) {
-			return "No account found";
-		}
-
-		final var builder = new StringBuilder();
-		accounts.forEach(account -> {
-			if (builder.length() != 0) {
-				builder.append(", ");
-			}
-			builder.append(account);
-		});
-
-		return builder.toString();
-	}
 }

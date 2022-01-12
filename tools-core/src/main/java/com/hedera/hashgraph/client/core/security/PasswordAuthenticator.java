@@ -76,8 +76,6 @@ public final class PasswordAuthenticator {
 	 * @param token
 	 * 		the hashed password that was stored
 	 * @return true if the password corresponds to the token
-	 * @throws InvalidKeySpecException
-	 * @throws NoSuchAlgorithmException
 	 */
 	public boolean authenticateLegacy(final char[] password, final String token) throws InvalidKeySpecException,
 			NoSuchAlgorithmException {
@@ -107,8 +105,6 @@ public final class PasswordAuthenticator {
 	 * @param token
 	 * 		the hashed password that was stored
 	 * @return true if the password corresponds to the token
-	 * @throws InvalidKeySpecException
-	 * @throws NoSuchAlgorithmException
 	 */
 	public boolean authenticate(final char[] password, final String token) {
 		final var decoder = Base64.getDecoder();

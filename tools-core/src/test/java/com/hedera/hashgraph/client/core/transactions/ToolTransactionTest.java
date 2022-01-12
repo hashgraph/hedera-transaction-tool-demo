@@ -88,13 +88,11 @@ class ToolTransactionTest {
 	@BeforeEach
 	void setUp() throws IOException {
 		Files.deleteIfExists(Path.of("src/test/resources/Files/TransactionFileTests/temp.tx"));
-
 	}
 
 	@AfterEach
 	void tearDown() throws IOException {
 		Files.deleteIfExists(Path.of("src/test/resources/Files/TransactionFileTests/temp.tx"));
-
 	}
 
 	@Test
@@ -154,7 +152,9 @@ class ToolTransactionTest {
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
 		final var transfer2 = new ToolTransferTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
+		//noinspection SimplifiableAssertion
 		assertTrue(transfer1.equals(transfer2));
+		//noinspection SimplifiableAssertion,EqualsBetweenInconvertibleTypes
 		assertFalse(transfer1.equals(update));
 
 	}

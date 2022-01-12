@@ -34,7 +34,6 @@ import java.util.TimeZone;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TimestampTest {
 
@@ -170,11 +169,14 @@ class TimestampTest {
 		assertEquals("{\"seconds\":1603506625,\"nanos\":123654447}", timestamp1.toString());
 	}
 
+	@SuppressWarnings("SimplifiableAssertion")
 	@Test
 	void equals_Test() {
 		final var timestamp = new Timestamp();
-		assertTrue(timestamp.equals(timestamp));
+		assertEquals(timestamp, timestamp);
+		//noinspection ConstantConditions
 		assertFalse(timestamp.equals(null));
+		//noinspection EqualsBetweenInconvertibleTypes
 		assertFalse(timestamp.equals("A string"));
 	}
 

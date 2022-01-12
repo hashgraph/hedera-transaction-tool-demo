@@ -19,7 +19,7 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 public class ResponseTuple {
-	private ResponseEnum responseEnum;
+	private final ResponseEnum responseEnum;
 	private String nickname;
 
 	public ResponseTuple() {
@@ -34,10 +34,6 @@ public class ResponseTuple {
 
 	public ResponseEnum getResponseEnum() {
 		return responseEnum;
-	}
-
-	public void setResponseEnum(final ResponseEnum responseEnum) {
-		this.responseEnum = responseEnum;
 	}
 
 	public String getNickname() {

@@ -71,7 +71,6 @@ public class FileDetails {
 	 * @param file
 	 * 		the file
 	 * @return a File details object
-	 * @throws IOException
 	 */
 	public static FileDetails parse(final File file) throws IOException {
 		final var attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
