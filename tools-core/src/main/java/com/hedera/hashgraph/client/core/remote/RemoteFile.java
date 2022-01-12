@@ -69,13 +69,19 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_FIELD_CHARACTER_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_BOX_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.REGULAR_BOX_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.SOFTWARE_UPDATE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_TYPE_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
 import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
@@ -750,21 +756,21 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	private static FileType parseType(final String extension) throws HederaClientException {
 		switch (extension) {
-			case "txt":
+			case TXT_EXTENSION:
 				return COMMENT;
-			case "tx":
+			case TRANSACTION_EXTENSION:
 				return TRANSACTION;
-			case "info":
+			case INFO_EXTENSION:
 				return ACCOUNT_INFO;
-			case "pub":
+			case PUB_EXTENSION:
 				return PUBLIC_KEY;
-			case "pkg":
+			case SOFTWARE_UPDATE_EXTENSION:
 				return SOFTWARE_UPDATE;
-			case "csv":
+			case BATCH_TRANSACTION_EXTENSION:
 				return BATCH;
-			case "zip":
+			case LARGE_BINARY_EXTENSION:
 				return LARGE_BINARY;
-			case "meta":
+			case METADATA_EXTENSION:
 				return METADATA;
 			default:
 				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
