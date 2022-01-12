@@ -52,12 +52,12 @@ public class ConvertToKeyCommand implements ToolCommand {
 			throw new HederaClientException(String.format("Cannot find key file %s", key));
 		}
 
-		var jsonObject = readJsonObject(key);
+		final var jsonObject = readJsonObject(key);
 		if (!jsonObject.has("operator")) {
 			throw new HederaClientException("Cannot find operator information");
 		}
 
-		var operator = jsonObject.get("operator").getAsJsonObject();
+		final var operator = jsonObject.get("operator").getAsJsonObject();
 		if (!operator.has("privateKey")) {
 			throw new HederaClientException("Cannot find private key");
 		}
@@ -77,7 +77,7 @@ public class ConvertToKeyCommand implements ToolCommand {
 		}
 
 		while (true) {
-			var passwordConfirmation =
+			final var passwordConfirmation =
 					readPasswordFromStdIn("Enter the password again for confirmation");
 			if (passwordConfirmation.length == 0) {
 				return;
@@ -90,29 +90,29 @@ public class ConvertToKeyCommand implements ToolCommand {
 		}
 
 
-		var privateKey = operator.get("privateKey").getAsString();
-		var operatorKey = PrivateKey.fromBytes(Hex.decode(privateKey));
-		var publicKey = operatorKey.getPublicKey();
+		final var privateKey = operator.get("privateKey").getAsString();
+		final var operatorKey = PrivateKey.fromBytes(Hex.decode(privateKey));
+		final var publicKey = operatorKey.getPublicKey();
 
-		var publicKeyString = operator.get("publicKey").getAsString();
+		final var publicKeyString = operator.get("publicKey").getAsString();
 		if (publicKeyString.equals(publicKey.toString())) {
 			logger.info("Public Keys match");
 		}
 
-		var pemName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
+		final var pemName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
 				key) + "." + Constants.PK_EXTENSION;
-		var pubName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
+		final var pubName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(
 				key) + "." + Constants.PUB_EXTENSION;
 
-		var ed25519PrivateKey = Ed25519PrivateKey.fromBytes(operatorKey.toBytes());
-		Ed25519KeyStore ed25519KeyStore;
+		final var ed25519PrivateKey = Ed25519PrivateKey.fromBytes(operatorKey.toBytes());
+		final Ed25519KeyStore ed25519KeyStore;
 
 		try {
 			ed25519KeyStore = new Ed25519KeyStore.Builder().withPassword(password)
 					.build();
 			ed25519KeyStore.insertNewKeyPair(ed25519PrivateKey);
 			ed25519KeyStore.write(pemName);
-		} catch (KeyStoreException e) {
+		} catch (final KeyStoreException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
