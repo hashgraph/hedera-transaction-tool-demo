@@ -120,6 +120,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -1468,7 +1469,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final var toPack = new File[] { jsonFile, contents };
 
-		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, ZIP_EXTENSION));
+		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION));
 
 		ZipUtil.packEntries(toPack, destZipFile);
@@ -1511,7 +1512,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 */
 	@FXML
 	private void browseToContentsFile() {
-		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane);
+		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane, "Content",
+				ZIP_EXTENSION);
+//		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane);
 		if (contents == null) {
 			return;
 		}
@@ -1979,7 +1982,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private File loadTransaction() {
 		logger.info("browsing transactions");
 		final var file = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane,
-				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION, ZIP_EXTENSION);
+				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION, LARGE_BINARY_EXTENSION);
 		if (file == null) {
 			return null;
 		}
@@ -2437,7 +2440,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (transactionFile == null) {
 			return;
 		}
-		if (ZIP_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
+		if (LARGE_BINARY_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
 			try {
 				loadLargeFileUpdateToForm(transactionFile);
 			} catch (final HederaClientException e) {
@@ -2552,7 +2555,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final AccountAmountStrings newTransaction;
 			newTransaction =
 					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
-					String.valueOf(Math.abs(entry.getValue().toTinybars())));
+							String.valueOf(Math.abs(entry.getValue().toTinybars())));
 			final var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}

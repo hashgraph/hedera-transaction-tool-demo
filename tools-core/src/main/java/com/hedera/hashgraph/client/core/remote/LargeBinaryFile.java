@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -63,6 +62,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
@@ -78,7 +80,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION =
-			TEMP_DIRECTORY + File.separator + "content." + Constants.CONTENT_EXTENSION;
+			TEMP_DIRECTORY + File.separator + "content." + LARGE_BINARY_EXTENSION;
 
 	private String filename;
 	private Identifier fileID;
@@ -131,11 +133,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
+		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(ZIP_EXTENSION));
 		assert bins != null;
 		if (bins.length != 1) {
 			final var formattedError =
-					String.format("There should be exactly one binary file in the zip archive. We found: %d",
+					String.format("There should be exactly one content file in the lfu archive. We found: %d",
 							bins.length);
 			handleError(formattedError);
 			return;
@@ -437,7 +439,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				final var updateTransaction = new ToolFileUpdateTransaction(input);
 				updateTransaction.sign(privateKey);
 				final var filePath = String.format("%s%s-00000.%s", tempStorage, FilenameUtils.getBaseName(filename),
-						Constants.SIGNED_TRANSACTION_EXTENSION);
+						SIGNED_TRANSACTION_EXTENSION);
 				writeBytes(filePath, updateTransaction.getTransaction().toBytes());
 				toPack.add(new File(filePath));
 
@@ -455,7 +457,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					appendTransaction.sign(privateKey);
 					final var appendFilePath =
 							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
-									Constants.SIGNED_TRANSACTION_EXTENSION);
+									SIGNED_TRANSACTION_EXTENSION);
 					writeBytes(appendFilePath, appendTransaction.getTransaction().toBytes());
 					toPack.add(new File(appendFilePath));
 					count++;
@@ -521,7 +523,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		fileLink.setOnAction(actionEvent -> {
 			try {
 				final var copyName =
-						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
+						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + LARGE_BINARY_EXTENSION;
 				FileUtils.copyFile(getContent(), new File(copyName));
 				final var r = Runtime.getRuntime();
 				final var command = String.format("open -e %s", copyName);
