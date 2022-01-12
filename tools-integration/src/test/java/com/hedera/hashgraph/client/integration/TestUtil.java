@@ -87,7 +87,7 @@ import static org.junit.Assert.assertNotNull;
 public class TestUtil {
 
 	private static final TestBase driver = new TestBase();
-	private static FxRobot robot = new FxRobot();
+	private static final FxRobot robot = new FxRobot();
 	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 	private static final String RESOURCES_DIRECTORY = "src/test/resources";
 
@@ -102,20 +102,20 @@ public class TestUtil {
 	 * 		receiver
 	 * @return a json object
 	 */
-	public static JsonObject getJsonInputCT(long tinyBars, long fromAccount, long toAccount) {
-		JsonObject testJson = new JsonObject();
-		File key = new File(RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+	public static JsonObject getJsonInputCT(final long tinyBars, final long fromAccount, final long toAccount) {
+		final JsonObject testJson = new JsonObject();
+		final File key = new File(RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		JsonObject feeJson = new JsonObject();
+		final JsonObject feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		JsonObject feePayerAccount = new JsonObject();
+		final JsonObject feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, fromAccount);
 
-		JsonObject node = new JsonObject();
+		final JsonObject node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -129,12 +129,12 @@ public class TestUtil {
 		testJson.add(NODE_ID_FIELD_NAME, node);
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
 
-		JsonArray jsonArray = new JsonArray();
-		JsonObject from = new JsonObject();
+		final JsonArray jsonArray = new JsonArray();
+		final JsonObject from = new JsonObject();
 		from.add(ACCOUNT, new Identifier(0, 0, fromAccount).asJSON());
 		from.addProperty(AMOUNT, -tinyBars);
 
-		JsonObject to = new JsonObject();
+		final JsonObject to = new JsonObject();
 		to.add(ACCOUNT, new Identifier(0, 0, toAccount).asJSON());
 		to.addProperty(AMOUNT, tinyBars);
 		jsonArray.add(from);
@@ -142,7 +142,7 @@ public class TestUtil {
 
 		testJson.add(TRANSFERS, jsonArray);
 
-		var startInstant = Instant.now().plusMillis(500);
+		final var startInstant = Instant.now().plusMillis(500);
 		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(startInstant).asRFCString());
 
 		testJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, 120);
@@ -154,16 +154,16 @@ public class TestUtil {
 	}
 
 
-	public static Button findButton(String buttonName, String buttonMessage) {
-		Button button = driver.find(buttonName);
+	public static Button findButton(final String buttonName, final String buttonMessage) {
+		final Button button = driver.find(buttonName);
 		if (button.getText().equals(buttonMessage)) {
 			return button;
 		}
 		return null;
 	}
 
-	public static Button findButtonFromPopup(String buttonName) {
-		for (var node : Objects.requireNonNull(getPopupNodes())) {
+	public static Button findButtonFromPopup(final String buttonName) {
+		for (final var node : Objects.requireNonNull(getPopupNodes())) {
 			if (node.getClass().isAssignableFrom(Button.class) || node.toString().equalsIgnoreCase(buttonName)) {
 				return (Button) node;
 			}
@@ -172,7 +172,7 @@ public class TestUtil {
 	}
 
 	public static ObservableList<Node> getPopupNodes() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		if (actualAlertDialog != null) {
 			final Node dialogPane = actualAlertDialog.getScene().getRoot();
 			if (dialogPane != null) {
@@ -188,26 +188,26 @@ public class TestUtil {
 	}
 
 	public static ObservableList<Node> getPopupNodesReset() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (DialogPane) actualAlertDialog.getScene().getRoot();
 		return dialogPane.getChildren();
 	}
 
 	public static ObservableList<Node> getPopupNodeCopyKeys() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (HBox) actualAlertDialog.getScene().getRoot();
-		var vbox = (VBox) dialogPane.getChildren().get(0);
-		var children = vbox.getChildren();
-		var label = ((Label) children.get(0)).getText();
+		final var vbox = (VBox) dialogPane.getChildren().get(0);
+		final var children = vbox.getChildren();
+		final var label = ((Label) children.get(0)).getText();
 		Assert.assertTrue(label.contains("signPaneKey.pub,signPaneKey1.pub"));
-		var hbox = (HBox) children.get(1);
+		final var hbox = (HBox) children.get(1);
 		return ((HBox) hbox.getChildren().get(1)).getChildren();
 	}
 
 	public static ObservableList<Node> getSavedTransactionPopupNodes() {
-		var actualAlertDialog = findModalWindow();
+		final var actualAlertDialog = findModalWindow();
 		final var dialogPane = (ScrollPane) actualAlertDialog.getScene().getRoot();
-		var vbox = (VBox) dialogPane.getContent();
+		final var vbox = (VBox) dialogPane.getContent();
 		return vbox.getChildren();
 	}
 
@@ -233,7 +233,7 @@ public class TestUtil {
 				.orElse(null);
 	}
 
-	public static void selectFromComboBox(String item, String boxName) {
+	public static void selectFromComboBox(final String item, final String boxName) {
 		driver.clickOn(boxName);
 		driver.clickOn(item);
 
@@ -243,7 +243,7 @@ public class TestUtil {
 		final List<Window> allWindows = new ArrayList<>(robot.robotContext().getWindowFinder().listWindows());
 		Collections.reverse(allWindows);
 
-		var s = (Stage) allWindows
+		final var s = (Stage) allWindows
 				.stream()
 				.filter(window -> window instanceof Stage)
 				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
@@ -256,16 +256,16 @@ public class TestUtil {
 		}
 	}
 
-	public static <T> long countChildren(TreeItem<T> treeItem) {
+	public static <T> long countChildren(final TreeItem<T> treeItem) {
 		long count = 0;
 
 		if (treeItem != null) {
-			var children = treeItem.getChildren();
+			final var children = treeItem.getChildren();
 
 			if (children != null) {
 				count += children.size();
 
-				for (var child : children) {
+				for (final var child : children) {
 					count += countChildren(child);
 				}
 			}
@@ -274,14 +274,14 @@ public class TestUtil {
 		return count;
 	}
 
-	public static List<TreeItem> getChildren(TreeItem treeItem) {
-		List<TreeItem> leaves = new ArrayList<>();
+	public static List<TreeItem> getChildren(final TreeItem treeItem) {
+		final List<TreeItem> leaves = new ArrayList<>();
 
 		if (treeItem.getChildren().isEmpty()) {
 			leaves.add(treeItem);
 		} else {
-			List<TreeItem> children = treeItem.getChildren();
-			for (var child : children) {
+			final List<TreeItem> children = treeItem.getChildren();
+			for (final var child : children) {
 				leaves.addAll(getChildren(child));
 			}
 		}
@@ -305,27 +305,27 @@ public class TestUtil {
 	 * 		the text in the button
 	 * @return a button
 	 */
-	public static Button findButtonInPopup(ObservableList<Node> popupNodes, String legend) {
-		for (var popupNode : popupNodes) {
+	public static Button findButtonInPopup(final ObservableList<Node> popupNodes, final String legend) {
+		for (final var popupNode : popupNodes) {
 			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
 				return (Button) popupNode;
 			} else if (popupNode instanceof ButtonBar) {
-				var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
+				final var f = findButtonInPopup(((ButtonBar) popupNode).getButtons(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof VBox) {
-				var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((VBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof HBox) {
-				var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((HBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof GridPane) {
-				var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
+				final var f = findButtonInPopup(((GridPane) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
@@ -343,22 +343,22 @@ public class TestUtil {
 	 * 		the text in the button
 	 * @return a button
 	 */
-	public static CheckBox findCheckBoxInPopup(ObservableList<Node> popupNodes, String legend) {
-		for (var popupNode : popupNodes) {
+	public static CheckBox findCheckBoxInPopup(final ObservableList<Node> popupNodes, final String legend) {
+		for (final var popupNode : popupNodes) {
 			if (popupNode instanceof CheckBox && legend.equalsIgnoreCase(((CheckBox) popupNode).getText())) {
 				return (CheckBox) popupNode;
 			} else if (popupNode instanceof VBox) {
-				var f = findCheckBoxInPopup(((VBox) popupNode).getChildren(), legend);
+				final var f = findCheckBoxInPopup(((VBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof HBox) {
-				var f = findCheckBoxInPopup(((HBox) popupNode).getChildren(), legend);
+				final var f = findCheckBoxInPopup(((HBox) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
 			} else if (popupNode instanceof GridPane) {
-				var f = findCheckBoxInPopup(((GridPane) popupNode).getChildren(), legend);
+				final var f = findCheckBoxInPopup(((GridPane) popupNode).getChildren(), legend);
 				if (f != null) {
 					return f;
 				}
@@ -373,18 +373,18 @@ public class TestUtil {
 	public static void copyCreatePaneKeys() {
 		final var createPaneFolderSuffix = "CreatePaneTest";
 		final var testResourceFolder = "/src/test/resources";
-		var createPaneFolder =
+		final var createPaneFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents" + File.separator + createPaneFolderSuffix;
-		var testDirectory = new File(createPaneFolder);
+		final var testDirectory = new File(createPaneFolder);
 		if (!(testDirectory).exists() && testDirectory.mkdirs()) {
 			logger.info("Test folder created");
 		}
-		var keysDirectory = new File(testDirectory, "Keys");
+		final var keysDirectory = new File(testDirectory, "Keys");
 		if (!(keysDirectory).exists() && keysDirectory.mkdirs()) {
 			logger.info("Keys folder created");
 		}
 
-		var sourceCreatePaneTestDirectory = Paths.get(
+		final var sourceCreatePaneTestDirectory = Paths.get(
 				"").toAbsolutePath().toString() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator + "Keys";
 		logger.info("Test keys directory : {}", sourceCreatePaneTestDirectory);
 	}
@@ -396,9 +396,9 @@ public class TestUtil {
 	 * 		root of the tree
 	 * @return the number of nodes.
 	 */
-	public static int countTreeNodes(TreeItem<?> node) {
+	public static int countTreeNodes(final TreeItem<?> node) {
 		var count = 1;
-		for (TreeItem t : node.getChildren()) {
+		for (final TreeItem t : node.getChildren()) {
 			count += countTreeNodes(t);
 		}
 		return count;
@@ -412,17 +412,17 @@ public class TestUtil {
 	 * 		root of the tree
 	 * @return the number of leaves.
 	 */
-	public static int countTreeLeaves(TreeItem<?> node) {
+	public static int countTreeLeaves(final TreeItem<?> node) {
 		var count = 1;
-		for (TreeItem t : node.getChildren()) {
+		for (final TreeItem t : node.getChildren()) {
 			count += (t.isLeaf()) ? 1 : countTreeNodes(t);
 		}
 		return count;
 	}
 
-	public static void applyPath2(String filePath) {
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		StringSelection stringSelection = new StringSelection(filePath);
+	public static void applyPath2(final String filePath) {
+		final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		final StringSelection stringSelection = new StringSelection(filePath);
 		clipboard.setContents(stringSelection, stringSelection);
 		driver.press(KeyCode.BACK_SPACE);
 		driver.press(KeyCode.COMMAND).press(KeyCode.SHIFT).press(KeyCode.G);
@@ -432,8 +432,8 @@ public class TestUtil {
 		driver.push(KeyCode.ENTER);
 	}
 
-	public static PasswordField findPasswordInPopup(ObservableList<Node> popupNodes) {
-		for (Node popupNode : popupNodes) {
+	public static PasswordField findPasswordInPopup(final ObservableList<Node> popupNodes) {
+		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof PasswordField) {
 				return (PasswordField) popupNode;
 			}
@@ -448,8 +448,8 @@ public class TestUtil {
 	}
 
 
-	public static TextField findTextFieldInPopup(ObservableList<Node> popupNodes) {
-		for (Node popupNode : popupNodes) {
+	public static TextField findTextFieldInPopup(final ObservableList<Node> popupNodes) {
+		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof TextField) {
 				return (TextField) popupNode;
 			} else if (popupNode instanceof HBox) {
@@ -471,13 +471,14 @@ public class TestUtil {
 	 * @param amount
 	 * 		the amount to be transfered
 	 */
-	public static void transfer(AccountId payer, AccountId receiver, Hbar amount) throws HederaClientException,
+	public static void transfer(final AccountId payer, final AccountId receiver,
+			final Hbar amount) throws HederaClientException,
 			InterruptedException, KeyStoreException {
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
-		JsonObject testJson = getJsonInputCT(amount.toTinybars(), payer.num, receiver.num);
-		ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final JsonObject testJson = getJsonInputCT(amount.toTinybars(), payer.num, receiver.num);
+		final ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
 		transaction.sign(genesisKey);
 		transaction.submit();
 

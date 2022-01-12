@@ -22,19 +22,17 @@ import com.hedera.hashgraph.client.integration.TestBase;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
-import static java.lang.Thread.sleep;
-
 public class SettingsPanePage {
 	private final TestBase driver;
 
-	public SettingsPanePage(TestBase driver) {
+	public SettingsPanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
 
-	public SettingsPanePage enterFeePayer(String account) {
-		TextField textField = driver.find("#customFeePayerTextField");
-		if (!textField.isVisible()){
+	public SettingsPanePage enterFeePayer(final String account) {
+		final TextField textField = driver.find("#customFeePayerTextField");
+		if (!textField.isVisible()) {
 			driver.clickOn("#addCustomPayerButton");
 		}
 		assert textField.isVisible();
