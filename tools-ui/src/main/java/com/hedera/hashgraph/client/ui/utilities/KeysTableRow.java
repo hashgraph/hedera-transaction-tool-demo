@@ -25,15 +25,15 @@ import java.util.List;
 
 public class KeysTableRow {
 
-	private SimpleStringProperty keyName;
+	private final SimpleStringProperty keyName;
 	private SimpleStringProperty accountList;
 	private String index;
 	private boolean signer;
 	private String mnemonic;
 	private String iconFile;
 
-	public KeysTableRow(SimpleStringProperty keyName, SimpleStringProperty accountList, String index,
-			boolean signer, boolean mnemonic) {
+	public KeysTableRow(final SimpleStringProperty keyName, final SimpleStringProperty accountList, final String index,
+			final boolean signer, final boolean mnemonic) {
 		this.keyName = keyName;
 		this.accountList = accountList;
 		this.index = index;
@@ -54,15 +54,18 @@ public class KeysTableRow {
 		}
 	}
 
-	public KeysTableRow(String keyName, String index, boolean signer, boolean mnemonic) {
+	public KeysTableRow(final String keyName, final String index, final boolean signer, final boolean mnemonic) {
 		this(new SimpleStringProperty(keyName), new SimpleStringProperty("No account found"), index, signer, mnemonic);
 	}
 
-	public KeysTableRow(String keyName, String accountList, String index, boolean signer, boolean mnemonic) {
+	public KeysTableRow(
+			final String keyName, final String accountList, final String index, final boolean signer,
+			final boolean mnemonic) {
 		this(new SimpleStringProperty(keyName), new SimpleStringProperty(accountList), index, signer, mnemonic);
 	}
 
-	public KeysTableRow(String keyName, List<String> accounts, String index, boolean signer, boolean mnemonic) {
+	public KeysTableRow(final String keyName, final List<String> accounts, final String index, final boolean signer,
+			final boolean mnemonic) {
 		this(keyName, index, signer, mnemonic);
 		this.accountList = new SimpleStringProperty(getStringAccountList(accounts));
 	}
@@ -75,7 +78,7 @@ public class KeysTableRow {
 		return keyName;
 	}
 
-	public void setKeyName(String keyName) {
+	public void setKeyName(final String keyName) {
 		this.keyName.set(keyName);
 	}
 
@@ -87,7 +90,7 @@ public class KeysTableRow {
 		return accountList;
 	}
 
-	public void setAccountList(String accountList) {
+	public void setAccountList(final String accountList) {
 		this.accountList.set(accountList);
 	}
 
@@ -95,7 +98,7 @@ public class KeysTableRow {
 		return index;
 	}
 
-	public void setIndex(String index) {
+	public void setIndex(final String index) {
 		this.index = index;
 	}
 
@@ -103,7 +106,7 @@ public class KeysTableRow {
 		return signer;
 	}
 
-	public void setSigner(boolean signer) {
+	public void setSigner(final boolean signer) {
 		this.signer = signer;
 	}
 
@@ -111,7 +114,7 @@ public class KeysTableRow {
 		return mnemonic;
 	}
 
-	public void setMnemonic(boolean mnemonic) {
+	public void setMnemonic(final boolean mnemonic) {
 		if (mnemonic && signer) {
 			this.mnemonic = "\u2713";
 		} else if (!mnemonic && signer) {
@@ -125,17 +128,17 @@ public class KeysTableRow {
 		return iconFile;
 	}
 
-	public void setIconFile(String iconFile) {
+	public void setIconFile(final String iconFile) {
 		this.iconFile = iconFile;
 	}
 
-	private String getStringAccountList(List<String> accounts) {
+	private String getStringAccountList(final List<String> accounts) {
 		Collections.sort(accounts);
 		if (accounts.isEmpty()) {
 			return "No account found";
 		}
 
-		var builder = new StringBuilder();
+		final var builder = new StringBuilder();
 		accounts.forEach(account -> {
 			if (builder.length() != 0) {
 				builder.append(", ");

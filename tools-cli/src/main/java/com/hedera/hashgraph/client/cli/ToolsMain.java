@@ -39,7 +39,7 @@ public class ToolsMain {
 
 			try {
 				parsed = commandLine.parseArgs(args);
-			} catch (CommandLine.MissingParameterException | CommandLine.UnmatchedArgumentException ex) {
+			} catch (final CommandLine.MissingParameterException | CommandLine.UnmatchedArgumentException ex) {
 				CommandLine.usage(ex.getCommandLine().getCommand(), System.out);
 				return;
 			}
@@ -53,17 +53,17 @@ public class ToolsMain {
 				return;
 			}
 
-			var toolCommand = (ToolCommand) parsed.asCommandLineList().get(1).getCommand();
+			final var toolCommand = (ToolCommand) parsed.asCommandLineList().get(1).getCommand();
 			commandCopy = toolCommand;
 			toolCommand.execute();
-		} catch (Exception cause) {
+		} catch (final Exception cause) {
 			logger.error("Error in executing command: {}, message: {}",
 					commandCopy != null ? commandCopy.getClass() : null, cause.getMessage());
 			throw cause;
 		}
 	}
 
-	private static void verifyOrPrintHelp(String... args) {
+	private static void verifyOrPrintHelp(final String... args) {
 		if (args == null || args.length < 1) {
 			final var arguments = Arrays.toString(args);
 			logger.info("invalid command argument. {}", arguments);

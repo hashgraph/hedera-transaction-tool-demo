@@ -59,20 +59,20 @@ public class KeyPairUtility {
 	public KeyPairUtility() {
 	}
 
-	public Pair<String, KeyPair> getAccountKeyPair(File pemFile) {
-		var message = "Enter your password to sign transactions, using the key: ".concat(pemFile.getName());
-		var keyPair = getKeyPairFromPEM(pemFile, message);
+	public Pair<String, KeyPair> getAccountKeyPair(final File pemFile) {
+		final var message = "Enter your password to sign transactions, using the key: ".concat(pemFile.getName());
+		final var keyPair = getKeyPairFromPEM(pemFile, message);
 		if (keyPair == null) {
 			return null;
 		}
 		return Pair.of(pemFile.getName(), keyPair);
 	}
 
-	public KeyPair getKeyPairFromPEM(File pemFile, String message) {
+	public KeyPair getKeyPairFromPEM(final File pemFile, final String message) {
 		KeyPair keyPair = null;
 		try {
 			keyPair = getKeyPair(pemFile, message);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			PopupMessage.display("Error loading key", String.format("Unable to load private key: %s", e.getMessage()));
 			logger.error(e.getMessage());
 		}
@@ -81,7 +81,7 @@ public class KeyPairUtility {
 
 
 	@Nullable
-	private KeyPair getKeyPair(File pemFile, String message) {
+	private KeyPair getKeyPair(final File pemFile, final String message) {
 		KeyPair keyPair = null;
 		var pwd = display("Enter password", message, pemFile.getAbsolutePath(), true);
 		if (pwd == null || pwd.length == 0) {
@@ -91,7 +91,7 @@ public class KeyPairUtility {
 			try {
 				keyPair = getKeyPair(pemFile.getPath(), pwd);
 				Arrays.fill(pwd, 'x');
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				pwd = askForPasswordAgain(pemFile);
 				if (pwd == null || Arrays.equals(new char[0], pwd)) {
 					return null;
@@ -108,12 +108,12 @@ public class KeyPairUtility {
 	 * 		the file where the pem file is stored;
 	 * @return the new password
 	 */
-	public static char[] resetPassword(String pemFile) throws HederaClientException, KeyStoreException {
-		var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+	public static char[] resetPassword(final String pemFile) throws HederaClientException, KeyStoreException {
+		final var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
 		// Check Hashcode
-		var storedHashCode = properties.getMnemonicHashCode();
-		var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
+		final var storedHashCode = properties.getMnemonicHashCode();
+		final var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
 		if (hashCode == null) {
 			logger.error("Hashcode is null");
 			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
@@ -126,39 +126,40 @@ public class KeyPairUtility {
 		}
 
 		// get password bytes
-		var token = properties.getHash();
-		var decoder = Base64.getDecoder();
-		var index = Ed25519KeyStore.getIndex(pemFile);
-		var tokenBytes = decoder.decode(token);
+		final var token = properties.getHash();
+		final var decoder = Base64.getDecoder();
+		final var index = Ed25519KeyStore.getIndex(pemFile);
+		final var tokenBytes = decoder.decode(token);
 		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 			logger.error("Token size check failed");
 			return new char[0];
 		}
-		var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+		final var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 
 		// load mnemonic
-		var mnemonicPwd = PasswordBox.display("Password", "Please enter your recovery phrase password.", "", false);
-		var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
+		final var mnemonicPwd =
+				PasswordBox.display("Password", "Please enter your recovery phrase password.", "", false);
+		final var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
 				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
 		// Store key with new password
-		var newPassword = NewPasswordPopup.display();
+		final var newPassword = NewPasswordPopup.display();
 		SecurityUtilities.generateAndStoreKey(pemFile, "Transaction Tool UI", mnemonic, index, newPassword);
 		return newPassword;
 	}
 
 	@Nullable
-	private char[] askForPasswordAgain(File pemFile) {
+	private char[] askForPasswordAgain(final File pemFile) {
 		return display("Error", "The password entered does not match " + pemFile.getName() + ". Please try again.",
 				pemFile.getAbsolutePath(),
 				true);
 	}
 
-	private KeyPair getKeyPair(String path, char[] pwd) throws HederaClientException {
+	private KeyPair getKeyPair(final String path, final char[] pwd) throws HederaClientException {
 		final KeyStore keyPairs;
 		try {
 			keyPairs = Ed25519KeyStore.read(pwd, path);
-		} catch (KeyStoreException e) {
+		} catch (final KeyStoreException e) {
 			throw new HederaClientException(e);
 		}
 		return (!keyPairs.isEmpty()) ? keyPairs.get(0) : null;

@@ -26,7 +26,7 @@ public class MainWindowPage {
 	private static final String ACCOUNTS_BUTTON = "#accountsButton";
 	private static final String SETTINGS_PANE = "#settingsButton";
 
-	public MainWindowPage(TestBase driver) {
+	public MainWindowPage(final TestBase driver) {
 		this.driver = driver;
 	}
 

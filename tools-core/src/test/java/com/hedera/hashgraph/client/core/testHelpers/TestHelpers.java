@@ -56,25 +56,25 @@ public class TestHelpers {
 	 * 		initial balance
 	 * @return a Json object
 	 */
-	public static JsonObject getJsonInputCA(long tinyBars) {
-		JsonObject testJson = new JsonObject();
+	public static JsonObject getJsonInputCA(final long tinyBars) {
+		final JsonObject testJson = new JsonObject();
 
-		File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+		final File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		JsonObject balanceJson = new JsonObject();
+		final JsonObject balanceJson = new JsonObject();
 		balanceJson.addProperty(H_BARS, 0);
 		balanceJson.addProperty(TINY_BARS, tinyBars);
 
-		JsonObject feeJson = new JsonObject();
+		final JsonObject feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		JsonObject feePayerAccount = new JsonObject();
+		final JsonObject feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
 
-		JsonObject node = new JsonObject();
+		final JsonObject node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -108,20 +108,21 @@ public class TestHelpers {
 	 * 		start Instant
 	 * @return a json object
 	 */
-	public static JsonObject getJsonInputCT(long tinyBars, long fromAccount, long toAccount, Instant startInstant) {
-		JsonObject testJson = new JsonObject();
-		File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+	public static JsonObject getJsonInputCT(
+			final long tinyBars, final long fromAccount, final long toAccount, final Instant startInstant) {
+		final JsonObject testJson = new JsonObject();
+		final File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		JsonObject feeJson = new JsonObject();
+		final JsonObject feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		JsonObject feePayerAccount = new JsonObject();
+		final JsonObject feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, fromAccount);
 
-		JsonObject node = new JsonObject();
+		final JsonObject node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -135,12 +136,12 @@ public class TestHelpers {
 		testJson.add(NODE_ID_FIELD_NAME, node);
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
 
-		JsonArray jsonArray = new JsonArray();
-		JsonObject from = new JsonObject();
+		final JsonArray jsonArray = new JsonArray();
+		final JsonObject from = new JsonObject();
 		from.add(ACCOUNT, new Identifier(0, 0, fromAccount).asJSON());
 		from.addProperty(AMOUNT, -tinyBars);
 
-		JsonObject to = new JsonObject();
+		final JsonObject to = new JsonObject();
 		to.add(ACCOUNT, new Identifier(0, 0, toAccount).asJSON());
 		to.addProperty(AMOUNT, tinyBars);
 		jsonArray.add(from);
@@ -158,30 +159,30 @@ public class TestHelpers {
 
 	}
 
-	public static JsonObject getJsonInput(long... accountNums) {
-		JsonObject testJson = new JsonObject();
+	public static JsonObject getJsonInput(final long... accountNums) {
+		final JsonObject testJson = new JsonObject();
 
-		File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+		final File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		JsonObject feePayerAccount = new JsonObject();
+		final JsonObject feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
 
-		JsonArray accountArray = new JsonArray();
-		for (long num : accountNums) {
-			JsonObject account = new JsonObject();
+		final JsonArray accountArray = new JsonArray();
+		for (final long num : accountNums) {
+			final JsonObject account = new JsonObject();
 			account.addProperty(REALM_NUMBER, 0);
 			account.addProperty(SHARD_NUMBER, 0);
 			account.addProperty(ACCOUNT_NUMBER, num);
 			accountArray.add(account);
 		}
 
-		JsonObject feeJson = new JsonObject();
+		final JsonObject feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 10000000);
 
-		JsonObject node = new JsonObject();
+		final JsonObject node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);
@@ -196,20 +197,20 @@ public class TestHelpers {
 		return testJson;
 	}
 
-	public static JsonObject buildUpdateJson(int feePayer, Instant startInstant) {
-		JsonObject testJson = new JsonObject();
-		File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+	public static JsonObject buildUpdateJson(final int feePayer, final Instant startInstant) {
+		final JsonObject testJson = new JsonObject();
+		final File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
 
-		JsonObject feeJson = new JsonObject();
+		final JsonObject feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		JsonObject feePayerAccount = new JsonObject();
+		final JsonObject feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, feePayer);
 
-		JsonObject node = new JsonObject();
+		final JsonObject node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);

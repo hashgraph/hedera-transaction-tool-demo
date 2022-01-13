@@ -51,8 +51,9 @@ public class TimeFieldSet {
 	private final Label utcLabel;
 	private final Label errorLabel;
 
-	public TimeFieldSet(DatePicker datePicker, TextField hours, TextField minutes, TextField seconds,
-			TextField nanos, HBox timeZoneBox, Label utcLabel, Label errorLabel) {
+	public TimeFieldSet(final DatePicker datePicker, final TextField hours, final TextField minutes,
+			final TextField seconds,
+			final TextField nanos, final HBox timeZoneBox, final Label utcLabel, final Label errorLabel) {
 		this.datePicker = datePicker;
 		this.hours = hours;
 		this.minutes = minutes;
@@ -115,7 +116,7 @@ public class TimeFieldSet {
 	 * @param start
 	 * 		a LocalDateTime. Dates before start will be disabled.
 	 */
-	public void configureDateTime(LocalDateTime start) {
+	public void configureDateTime(final LocalDateTime start) {
 		setupNumberField(hours, 24);
 		setupNumberField(minutes, 60);
 		setupNumberField(seconds, 60);
@@ -175,7 +176,7 @@ public class TimeFieldSet {
 		utcLabel.setStyle("-fx-text-fill: " + (beforeNow ? "red" : "black"));
 		errorLabel.setVisible(beforeNow);
 
-		var dateTimeFormatter =
+		final var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
 
 		utcLabel.setText(dateTimeFormatter.format(tvsInstant) + " Coordinated Universal Time");
@@ -190,17 +191,17 @@ public class TimeFieldSet {
 	public Timestamp getDate() {
 		try {
 			final var textH = hours.getText();
-			var hour = "".equals(textH) ? 0 : Integer.parseInt(textH);
+			final var hour = "".equals(textH) ? 0 : Integer.parseInt(textH);
 			final var textM = minutes.getText();
-			var minute = "".equals(textM) ? 0 : Integer.parseInt(textM);
+			final var minute = "".equals(textM) ? 0 : Integer.parseInt(textM);
 			final var textS = seconds.getText();
-			var second = "".equals(textS) ? 0 : Integer.parseInt(textS);
+			final var second = "".equals(textS) ? 0 : Integer.parseInt(textS);
 			final var textN = nanos.getText();
-			var nano = "".equals(textN) ? 0 : Integer.parseInt(textN);
-			var localDateTime = LocalDateTime.of(datePicker.getValue() != null ? datePicker.getValue() :
+			final var nano = "".equals(textN) ? 0 : Integer.parseInt(textN);
+			final var localDateTime = LocalDateTime.of(datePicker.getValue() != null ? datePicker.getValue() :
 					LocalDate.now(), LocalTime.of(hour, minute, second));
 			return new Timestamp(localDateTime.atZone(timeZone.toZoneId()).toInstant()).plusNanos(nano);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Cannot parse local date time");
 			return new Timestamp(0, 0);
 		}
@@ -208,7 +209,7 @@ public class TimeFieldSet {
 
 	public LocalDateTime getLocalDateTime() {
 		if (datePicker.getValue() != null) {
-			var localTime =
+			final var localTime =
 					LocalTime.of(Integer.parseInt(hours.getText()),
 							Integer.parseInt(minutes.getText()),
 							Integer.parseInt(seconds.getText()));
@@ -218,7 +219,7 @@ public class TimeFieldSet {
 		return LocalDateTime.now();
 	}
 
-	public void setDate(Instant instant) {
+	public void setDate(final Instant instant) {
 		final var zonedDateTime = instant.atZone(ZoneId.of(timeZone.getID()));
 		hours.setText(String.format("%02d", zonedDateTime.getHour()));
 		minutes.setText(String.format("%02d", zonedDateTime.getMinute()));
@@ -228,7 +229,7 @@ public class TimeFieldSet {
 		setUTCDateString();
 	}
 
-	public void reset(int defaultHours, int defaultMinutes, int defaultSeconds) {
+	public void reset(final int defaultHours, final int defaultMinutes, final int defaultSeconds) {
 		datePicker.setValue(null);
 		hours.setText(String.format("%02d", defaultHours));
 		minutes.setText(String.format("%02d", defaultMinutes));
@@ -247,18 +248,18 @@ public class TimeFieldSet {
 	 * are in the list of Java's available time zones
 	 */
 	private void configureTimeZoneChooser() {
-		var chooser = new AutoCompleteNickname(ZoneId.getAvailableZoneIds());
+		final var chooser = new AutoCompleteNickname(ZoneId.getAvailableZoneIds());
 		chooser.setDefault(TimeZone.getDefault().getID());
 		timeZoneBox.getChildren().clear(); // need to clear the hox before entering the new Field.
 		timeZoneBox.getChildren().add(chooser);
 		chooser.textProperty().addListener((observableValue, aBoolean, t1) -> {
-			var timeZones = ZoneId.getAvailableZoneIds();
+			final var timeZones = ZoneId.getAvailableZoneIds();
 			if (!timeZones.contains(chooser.getText())) {
 				return;
 			}
 			if (datePicker.getValue() != null) {
-				var instant = getDate().asInstant();
-				var ldt = LocalDateTime.ofInstant(instant, ZoneId.of(chooser.getText()));
+				final var instant = getDate().asInstant();
+				final var ldt = LocalDateTime.ofInstant(instant, ZoneId.of(chooser.getText()));
 				datePicker.setValue(ldt.toLocalDate());
 				hours.setText(String.valueOf(ldt.getHour()));
 				minutes.setText(String.format("%02d", ldt.getMinute()));
@@ -281,14 +282,14 @@ public class TimeFieldSet {
 	 * 		the maximum allowed value.
 	 * @return true is the value is between 0 and the limit.
 	 */
-	private boolean checkTimeField(String value, int limit) {
+	private boolean checkTimeField(final String value, final int limit) {
 		if (value.equals("")) {
 			return true;
 		}
 		try {
-			int intValue = Integer.parseInt(value);
+			final int intValue = Integer.parseInt(value);
 			return intValue < 0 || intValue >= limit;
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			return true;
 		}
 	}
@@ -299,9 +300,9 @@ public class TimeFieldSet {
 	 * @return a timezone
 	 */
 	private TimeZone getZoneFromBox() {
-		var zone = timeZoneBox.getChildren().get(0);
+		final var zone = timeZoneBox.getChildren().get(0);
 		assert zone instanceof AutoCompleteNickname;
-		var zoneString = ((AutoCompleteNickname) zone).getText();
+		final var zoneString = ((AutoCompleteNickname) zone).getText();
 		if (!ZoneId.getAvailableZoneIds().contains(zoneString)) {
 			logger.error("Zone is not available");
 			return TimeZone.getDefault();
@@ -318,7 +319,7 @@ public class TimeFieldSet {
 	 * @param limit
 	 * 		the maximum allowed value for the field
 	 */
-	private void setupNumberField(TextField timeField, int limit) {
+	private void setupNumberField(final TextField timeField, final int limit) {
 		timeField.textProperty().addListener((observable, oldValue, newValue) -> {
 			if (!newValue.matches("\\d*")) {
 				timeField.setText(newValue.replaceAll("[^\\d]", ""));
@@ -329,7 +330,7 @@ public class TimeFieldSet {
 						final var corrected = Math.min(Math.abs(Integer.parseInt(timeField.getText())), limit - 1);
 						timeField.setText(
 								limit > 100 ? String.format("%09d", corrected) : String.format("%02d", corrected));
-					} catch (NumberFormatException e) {
+					} catch (final NumberFormatException e) {
 						logger.error("Cannot parse field");
 					}
 				}
@@ -346,15 +347,15 @@ public class TimeFieldSet {
 	 * 		the earlies possible datetime for the parameter
 	 * @return a DateCell that will be disabled if before {@code start}
 	 */
-	private DateCell disablePastDates(LocalDateTime start) {
+	private DateCell disablePastDates(final LocalDateTime start) {
 		return new DateCell() {
 			@Override
-			public void updateItem(LocalDate date, boolean empty) {
+			public void updateItem(final LocalDate date, final boolean empty) {
 				super.updateItem(date, empty);
-				var localTime =
+				final var localTime =
 						LocalTime.of(Integer.parseInt(hours.getText()), Integer.parseInt(minutes.getText()),
 								Integer.parseInt(seconds.getText()));
-				var dateTime = LocalDateTime.of(date, localTime);
+				final var dateTime = LocalDateTime.of(date, localTime);
 
 				setDisable(empty || dateTime.compareTo(start) <= 0);
 			}
@@ -367,7 +368,7 @@ public class TimeFieldSet {
 	 * @param field
 	 * 		a TextField
 	 */
-	private void removeFocusOnEnter(TextField field) {
+	private void removeFocusOnEnter(final TextField field) {
 		field.setOnKeyPressed(event -> {
 			if (KeyCode.ENTER.equals(event.getCode())) {
 				field.getParent().requestFocus();
@@ -385,7 +386,7 @@ public class TimeFieldSet {
 	 * @param text
 	 * 		the new value of the field
 	 */
-	private void setChangeListener(Boolean newPropertyValue, String field, String text) {
+	private void setChangeListener(final Boolean newPropertyValue, final String field, final String text) {
 		if (datePicker.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
 			logger.info("{} text field changed to: {}", field, text);
 			setUTCDateString();

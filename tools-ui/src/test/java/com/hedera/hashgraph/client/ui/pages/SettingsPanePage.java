@@ -49,12 +49,12 @@ import static org.junit.Assert.assertTrue;
 public class SettingsPanePage {
 	private final TestBase driver;
 
-	public SettingsPanePage(TestBase driver) {
+	public SettingsPanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
-	public SettingsPanePage setNodeID(String node) {
-		TextField nodeID = driver.find(NODE_ID_TF);
+	public SettingsPanePage setNodeID(final String node) {
+		final TextField nodeID = driver.find(NODE_ID_TF);
 		nodeID.clear();
 		driver.clickOn(NODE_ID_TF);
 		driver.write(node);
@@ -62,42 +62,42 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage setTransactionVD(String transactionVD) {
+	public SettingsPanePage setTransactionVD(final String transactionVD) {
 		driver.doubleClickOn(TX_VALID_DURATION_TF);
 		driver.write(transactionVD);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
-	public SettingsPanePage setAutoRenewPeriod(String autoRenewPeriod) {
+	public SettingsPanePage setAutoRenewPeriod(final String autoRenewPeriod) {
 		driver.doubleClickOn(AUTO_RENEW_PERIOD_TF);
 		driver.write(autoRenewPeriod);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
-	public SettingsPanePage setHours(String hours) {
+	public SettingsPanePage setHours(final String hours) {
 		driver.doubleClickOn(TVS_HOURS_TF);
 		driver.write(hours);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
-	public SettingsPanePage setMinutes(String minutes) {
+	public SettingsPanePage setMinutes(final String minutes) {
 		driver.doubleClickOn(TVS_MINUTES_TF);
 		driver.write(minutes);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
-	public SettingsPanePage setSeconds(String seconds) {
+	public SettingsPanePage setSeconds(final String seconds) {
 		driver.doubleClickOn(TVS_SECONDS_TF);
 		driver.write(seconds);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}
 
-	public SettingsPanePage setTransactionFee(String transactionFee) {
+	public SettingsPanePage setTransactionFee(final String transactionFee) {
 		driver.doubleClickOn(TRANSACTION_FEE_TF);
 		driver.write(transactionFee);
 		driver.type(KeyCode.ENTER);
@@ -114,14 +114,14 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage pressEditFolder(HBox hBox) {
-		Node edit = hBox.getChildren().get(1);
+	public SettingsPanePage pressEditFolder(final HBox hBox) {
+		final Node edit = hBox.getChildren().get(1);
 		assertTrue(edit instanceof Button);
 		driver.clickOn(edit);
 		return this;
 	}
 
-	public SettingsPanePage setPathAndEmail(String path, String email) {
+	public SettingsPanePage setPathAndEmail(final String path, final String email) {
 		driver.clickOn(ONEDRIVE_PATH_TF);
 		driver.write(path);
 		driver.clickOn(ONEDRIVE_PATH_TF);
@@ -137,8 +137,8 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage setPath(String path) {
-		Node pathField = driver.find(ONEDRIVE_PATH_TF);
+	public SettingsPanePage setPath(final String path) {
+		final Node pathField = driver.find(ONEDRIVE_PATH_TF);
 		((TextField) pathField).clear();
 		driver.clickOn(ONEDRIVE_PATH_TF);
 		driver.write(path);
@@ -148,30 +148,30 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage setEmail(String email) {
+	public SettingsPanePage setEmail(final String email) {
 		driver.clickOn(ONEDRIVE_EMAIL_TF);
 		driver.write(email);
 		return this;
 	}
 
 	public SettingsPanePage createPopup() {
-		ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var children = ((VBox) popupNodes.get(0)).getChildren();
-		var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
+		final var children = ((VBox) popupNodes.get(0)).getChildren();
+		final var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
 		assertEquals(2, buttons.size());
 
 		driver.clickOn(buttons.get(0));
 		return this;
 	}
 
-	public SettingsPanePage openNetworksCombobox(String network) {
+	public SettingsPanePage openNetworksCombobox(final String network) {
 		driver.clickOn("#networkChoicebox");
 		driver.clickOn(network);
 		return this;
 	}
 
-	public SettingsPanePage addNetwork(String nickname, String location) {
+	public SettingsPanePage addNetwork(final String nickname, final String location) {
 		driver.clickOn("#addCustomNetworkButton");
 		addNetworkNickname(nickname);
 		addCustomLocation(location);
@@ -179,18 +179,18 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage clickOnButton(String legend) {
-		ObservableList<Node> popupNodes = getPopupNodes();
+	public SettingsPanePage clickOnButton(final String legend) {
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var button = findButtonInPopup(popupNodes, legend);
+		final var button = findButtonInPopup(popupNodes, legend);
 		driver.clickOn(button);
 		return this;
 	}
 
-	public SettingsPanePage addNetworkNickname(String nickname) {
-		ObservableList<Node> popupNodes = getPopupNodes();
+	public SettingsPanePage addNetworkNickname(final String nickname) {
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var textFields = findTextFieldsInPopup(popupNodes);
+		final var textFields = findTextFieldsInPopup(popupNodes);
 		assert textFields.size() == 2;
 		driver.clickOn(textFields.get(0));
 		driver.write(nickname);
@@ -198,10 +198,10 @@ public class SettingsPanePage {
 		return this;
 	}
 
-	public SettingsPanePage addCustomLocation(String location) {
-		ObservableList<Node> popupNodes = getPopupNodes();
+	public SettingsPanePage addCustomLocation(final String location) {
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var textFields = findTextFieldsInPopup(popupNodes);
+		final var textFields = findTextFieldsInPopup(popupNodes);
 		driver.clickOn(textFields.get(1));
 		driver.write(new File(location).getAbsolutePath());
 		driver.type(KeyCode.ENTER);

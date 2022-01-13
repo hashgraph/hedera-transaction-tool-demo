@@ -92,40 +92,41 @@ public class SecurityUtilities {
 	 * 		the mnemonic phrase to be encrypted
 	 * @throws HederaClientException
 	 */
-	public static void toEncryptedFile(byte[] key, String path, String mnemonic) throws HederaClientException {
-		byte[] cipherText;
+	public static void toEncryptedFile(final byte[] key, final String path,
+			final String mnemonic) throws HederaClientException {
+		final byte[] cipherText;
 		try {
-			var iv = generateRandomBytes(Constants.GCM_IV_LENGTH);
+			final var iv = generateRandomBytes(Constants.GCM_IV_LENGTH);
 			// Get Cipher Instance
-			var cipher = Cipher.getInstance("AES/GCM/NoPadding");
+			final var cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 			// Create SecretKeySpec
-			var keySpec = new SecretKeySpec(key, "AES");
+			final var keySpec = new SecretKeySpec(key, "AES");
 
 			// Create GCMParameterSpec
-			var gcmParameterSpec = new GCMParameterSpec(Constants.GCM_TAG_LENGTH * 8, iv);
+			final var gcmParameterSpec = new GCMParameterSpec(Constants.GCM_TAG_LENGTH * 8, iv);
 
 			// Initialize Cipher for ENCRYPT_MODE
 			cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmParameterSpec);
 
 			// Perform Encryption
 			cipherText = ArrayUtils.addAll(iv, cipher.doFinal(mnemonic.getBytes(UTF_8)));
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (final NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException e) {
 			throw new HederaClientException(e);
 		}
 
-		try (var outputStream = new FileOutputStream(path)) {
+		try (final var outputStream = new FileOutputStream(path)) {
 			outputStream.write("AES|256|CBC|PKCS5Padding|".getBytes(UTF_8));
 			outputStream.write(cipherText);
 			ownerReadWritePermissions(path);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 	}
 
 
 	/**
-	 * Loads a mnemonic from a password protected file
+	 * Loads a mnemonic from a password-protected file
 	 *
 	 * @param passwordChar
 	 * 		char array containing the password
@@ -136,8 +137,8 @@ public class SecurityUtilities {
 	 * @return a Mnemonic object
 	 * @throws HederaClientException
 	 */
-	public static Mnemonic fromEncryptedFile(char[] passwordChar, byte[] salt,
-			String path) throws HederaClientException {
+	public static Mnemonic fromEncryptedFile(final char[] passwordChar, final byte[] salt,
+			final String path) throws HederaClientException {
 
 		return (Arrays.equals(new byte[Constants.SALT_LENGTH], salt)) ?
 				fromEncryptedFile(keyFromPasswordLegacy(passwordChar), path) :
@@ -145,46 +146,46 @@ public class SecurityUtilities {
 	}
 
 	/***
-	 * Loads a mnemonic from a password protected file
+	 * Loads a mnemonic from a password-protected file
 	 * @param key byte array where the key is stored
 	 * @param path path of the file where the mnemonic is stored
 	 * @throws HederaClientException in place of all exceptions
 	 */
-	public static Mnemonic fromEncryptedFile(byte[] key, String path) throws HederaClientException {
-		byte[] data;
+	public static Mnemonic fromEncryptedFile(final byte[] key, final String path) throws HederaClientException {
+		final byte[] data;
 		try {
 			data = Files.readAllBytes(Paths.get(path));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 
-		var header = "AES|256|CBC|PKCS5Padding|".getBytes(UTF_8);
+		final var header = "AES|256|CBC|PKCS5Padding|".getBytes(UTF_8);
 		if (data.length < header.length || (!Arrays.equals(header, Arrays.copyOfRange(data, 0, header.length)))) {
 			return legacyEncryption(key, data);
 		}
 
-		var cipherText = Arrays.copyOfRange(data, header.length + Constants.GCM_IV_LENGTH, data.length);
-		var iv = Arrays.copyOfRange(data, header.length, header.length + Constants.GCM_IV_LENGTH);
+		final var cipherText = Arrays.copyOfRange(data, header.length + Constants.GCM_IV_LENGTH, data.length);
+		final var iv = Arrays.copyOfRange(data, header.length, header.length + Constants.GCM_IV_LENGTH);
 		try {
 			// Get Cipher Instance
-			var cipher = Cipher.getInstance("AES/GCM/NoPadding");
+			final var cipher = Cipher.getInstance("AES/GCM/NoPadding");
 
 			// Create SecretKeySpec
-			var keySpec = new SecretKeySpec(key, "AES");
+			final var keySpec = new SecretKeySpec(key, "AES");
 
 			// Create GCMParameterSpec
-			var gcmParameterSpec = new GCMParameterSpec(Constants.GCM_TAG_LENGTH * 8, iv);
+			final var gcmParameterSpec = new GCMParameterSpec(Constants.GCM_TAG_LENGTH * 8, iv);
 
 			// Initialize Cipher for DECRYPT_MODE
 			cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmParameterSpec);
 
 			// Perform Decryption
-			var decryptedText = cipher.doFinal(cipherText);
-			var decryptedWords = new String(decryptedText);
+			final var decryptedText = cipher.doFinal(cipherText);
+			final var decryptedWords = new String(decryptedText);
 
 			return Mnemonic.fromString(decryptedWords);
 
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | BadMnemonicException e) {
+		} catch (final NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | BadMnemonicException e) {
 			throw new HederaClientException(e);
 		}
 	}
@@ -196,7 +197,7 @@ public class SecurityUtilities {
 	 * 		a char[]
 	 * @return a byte[] of size ARGON_SALT_SIZE + 32;
 	 */
-	public static byte[] keyFromPassword(char[] password, byte[] salt) {
+	public static byte[] keyFromPassword(final char[] password, final byte[] salt) {
 		return generateArgon2id(password, salt);
 	}
 
@@ -215,19 +216,20 @@ public class SecurityUtilities {
 	 * 		password that will be used to store the encrypted pem
 	 * @return true if the key creation succeeded.
 	 */
-	public static boolean generateAndStoreKey(String keyName, String application, Mnemonic mnemonic, int index,
-			char[] password) {
+	public static boolean generateAndStoreKey(final String keyName, final String application, final Mnemonic mnemonic,
+			final int index,
+			final char[] password) {
 		try {
-			var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
-			var privateKey = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
-			var keyPair = keyStore.insertNewKeyPair(privateKey);
+			final var keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
+			final var privateKey = Ed25519PrivateKey.fromMnemonic(mnemonic).derive(index);
+			final var keyPair = keyStore.insertNewKeyPair(privateKey);
 			keyStore.write(keyName, application, index, "0.1", mnemonic.words.hashCode());
 
-			var pubFile = keyName.replace(Constants.PK_EXTENSION, Constants.PUB_EXTENSION);
-			try (var fos = new FileOutputStream(pubFile)) {
+			final var pubFile = keyName.replace(Constants.PK_EXTENSION, Constants.PUB_EXTENSION);
+			try (final var fos = new FileOutputStream(pubFile)) {
 				fos.write(Hex.encode(((EdDSAPublicKey) keyPair.getPublic()).getAbyte()));
 			}
-		} catch (KeyStoreException | IOException e) {
+		} catch (final KeyStoreException | IOException e) {
 			logger.error(e);
 			return false;
 		}
@@ -241,9 +243,9 @@ public class SecurityUtilities {
 	 * 		the size of the array
 	 * @return a byte[]
 	 */
-	public static byte[] generateRandomBytes(int size) {
-		var secureRandom = new SecureRandom();
-		var salt = new byte[size];
+	public static byte[] generateRandomBytes(final int size) {
+		final var secureRandom = new SecureRandom();
+		final var salt = new byte[size];
 		secureRandom.nextBytes(salt);
 		return salt;
 	}
@@ -257,20 +259,20 @@ public class SecurityUtilities {
 	 * 		an array of random bytes
 	 * @return a 32 byte array
 	 */
-	public static byte[] generateArgon2id(char[] password, byte[] salt) {
-		var opsLimit = 3;
-		var memLimit = 262144;
-		var outputLength = 32;
-		var parallelism = 1;
-		var builder = new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+	public static byte[] generateArgon2id(final char[] password, final byte[] salt) {
+		final var opsLimit = 3;
+		final var memLimit = 262144;
+		final var outputLength = 32;
+		final var parallelism = 1;
+		final var builder = new Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
 				.withVersion(Argon2Parameters.ARGON2_VERSION_13) // 19
 				.withIterations(opsLimit)
 				.withMemoryAsKB(memLimit)
 				.withParallelism(parallelism)
 				.withSalt(salt);
-		var gen = new Argon2BytesGenerator();
+		final var gen = new Argon2BytesGenerator();
 		gen.init(builder.build());
-		var result = new byte[outputLength];
+		final var result = new byte[outputLength];
 		gen.generateBytes(new String(password).getBytes(StandardCharsets.UTF_8), result, 0, result.length);
 		return result;
 	}
@@ -286,14 +288,14 @@ public class SecurityUtilities {
 	 * @return a mnemonic
 	 * @throws HederaClientException
 	 */
-	private static Mnemonic legacyEncryption(byte[] key, byte[] data) throws HederaClientException {
+	private static Mnemonic legacyEncryption(final byte[] key, final byte[] data) throws HederaClientException {
 		try {
-			var c = Cipher.getInstance("AES");
-			var k = new SecretKeySpec(key, "AES");
+			final var c = Cipher.getInstance("AES");
+			final var k = new SecretKeySpec(key, "AES");
 			c.init(Cipher.DECRYPT_MODE, k);
-			var decryptedWords = new String(c.doFinal(data));
+			final var decryptedWords = new String(c.doFinal(data));
 			return Mnemonic.fromString(decryptedWords);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | BadMnemonicException e) {
+		} catch (final NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException | BadMnemonicException e) {
 			throw new HederaClientException(e);
 		}
 
@@ -305,18 +307,18 @@ public class SecurityUtilities {
 	 * @return a byte array 
 	 * @throws NoSuchAlgorithmException
 	 */
-	public static byte[] keyFromPasswordLegacy(char[] password) throws HederaClientException {
+	public static byte[] keyFromPasswordLegacy(final char[] password) throws HederaClientException {
 		/* Derive the key, given password and salt. */
 		final var iterationCount = 65536;
 		final var keyLength = 256;
-		var salt = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+		final var salt = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
 		try {
-			var factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
-			var tmp = factory.generateSecret(spec);
-			SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+			final var factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+			final KeySpec spec = new PBEKeySpec(password, salt, iterationCount, keyLength);
+			final var tmp = factory.generateSecret(spec);
+			final SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
 			return secret.getEncoded();
-		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+		} catch (final NoSuchAlgorithmException | InvalidKeySpecException e) {
 			throw new HederaClientException(e);
 		}
 	}
@@ -334,36 +336,36 @@ public class SecurityUtilities {
 	 * @throws IOException
 	 * @throws PGPException
 	 */
-	public static boolean verifyFile(String filePath, String pathToSignature,
-			String pathToPublicKey) throws IOException, PGPException, HederaClientException {
+	public static boolean verifyFile(final String filePath, final String pathToSignature,
+			final String pathToPublicKey) throws IOException, PGPException, HederaClientException {
 
 		CommonMethods.checkFiles(filePath, pathToPublicKey, pathToSignature);
 
 		InputStream in = new BufferedInputStream((new FileInputStream(pathToSignature)));
 		Security.addProvider(new BouncyCastleProvider());
 		final boolean verify;
-		try (InputStream keyIn = new BufferedInputStream(new FileInputStream(pathToPublicKey))) {
+		try (final InputStream keyIn = new BufferedInputStream(new FileInputStream(pathToPublicKey))) {
 			in = getDecoderStream(in);
 			var pgpFactory = new JcaPGPObjectFactory(in);
-			PGPSignatureList p3;
+			final PGPSignatureList p3;
 
-			var object = pgpFactory.nextObject();
+			final var object = pgpFactory.nextObject();
 			if (object instanceof PGPCompressedData) {
-				var c1 = (PGPCompressedData) object;
+				final var c1 = (PGPCompressedData) object;
 				pgpFactory = new JcaPGPObjectFactory(c1.getDataStream());
 				p3 = (PGPSignatureList) pgpFactory.nextObject();
 			} else {
 				p3 = (PGPSignatureList) object;
 			}
 
-			var pgpPubRingCollection =
+			final var pgpPubRingCollection =
 					new PGPPublicKeyRingCollection(getDecoderStream(keyIn), new JcaKeyFingerprintCalculator());
 
-			PGPSignature sig;
-			try (InputStream dIn = new BufferedInputStream(new FileInputStream(filePath))) {
+			final PGPSignature sig;
+			try (final InputStream dIn = new BufferedInputStream(new FileInputStream(filePath))) {
 
 				sig = p3.get(0);
-				var key = pgpPubRingCollection.getPublicKey(sig.getKeyID());
+				final var key = pgpPubRingCollection.getPublicKey(sig.getKeyID());
 
 				sig.init(new JcaPGPContentVerifierBuilderProvider().setProvider("BC"), key);
 
@@ -393,8 +395,8 @@ public class SecurityUtilities {
 	 * @throws IOException
 	 * 		if there are issues changing permissions
 	 */
-	public static void ownerReadWritePermissions(String path) throws IOException {
-		Set<PosixFilePermission> perms = new HashSet<>();
+	public static void ownerReadWritePermissions(final String path) throws IOException {
+		final Set<PosixFilePermission> perms = new HashSet<>();
 		perms.add(PosixFilePermission.OWNER_READ);
 		perms.add(PosixFilePermission.OWNER_WRITE);
 		Files.setPosixFilePermissions(Path.of(path), perms);

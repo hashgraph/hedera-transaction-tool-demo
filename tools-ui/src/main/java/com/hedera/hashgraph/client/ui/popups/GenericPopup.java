@@ -40,19 +40,20 @@ public class GenericPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static String display(String title, String acceptMessage, String cancelMessage, boolean showTextField,
-			boolean isInteger, String... message) throws HederaClientException {
+	public static String display(
+			final String title, final String acceptMessage, final String cancelMessage, final boolean showTextField,
+			final boolean isInteger, final String... message) throws HederaClientException {
 		if ("".equals(acceptMessage) && "".equals(cancelMessage)) {
 			throw new HederaClientException("At least one button must have a legend");
 		}
 
-		var window = new Stage();
+		final var window = new Stage();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setTitle(title);
 		window.sizeToScene();
 
-		var layout = new VBox();
+		final var layout = new VBox();
 		layout.setStyle("-fx-font-size: 16");
 		layout.setPadding(new Insets(20, 30, 20, 30));
 		layout.setSpacing(20);
@@ -60,21 +61,21 @@ public class GenericPopup {
 		layout.setAlignment(Pos.CENTER);
 
 		if (!"".equals(title)) {
-			var titleLabel = new Label();
+			final var titleLabel = new Label();
 			titleLabel.setText(title);
 			titleLabel.setStyle("-fx-font-size: 22");
 			layout.getChildren().add(titleLabel);
 		}
 
 		// Setup Text
-		for (var s : message) {
-			var label = new Label();
+		for (final var s : message) {
+			final var label = new Label();
 			label.setText(s);
 			label.setWrapText(true);
 			layout.getChildren().add(label);
 		}
 
-		var answerField = new TextField();
+		final var answerField = new TextField();
 		if (showTextField) {
 
 			if (isInteger) {
@@ -88,12 +89,12 @@ public class GenericPopup {
 		}
 
 
-		var buttonBar = new ButtonBar();
+		final var buttonBar = new ButtonBar();
 		buttonBar.setButtonMinWidth(75);
 
 		// Buttons setup
 		if (!"".equals(acceptMessage)) {
-			var acceptButton = new Button(acceptMessage);
+			final var acceptButton = new Button(acceptMessage);
 			acceptButton.setStyle(
 					"-fx-background-color: #0b9dfd ; -fx-border-color: #0b9dfd; -fx-text-fill: white; " +
 							"-fx-border-radius: 10; -fx-background-radius: 10;");
@@ -107,7 +108,7 @@ public class GenericPopup {
 		}
 
 		if (!"".equals(cancelMessage)) {
-			var cancelButton = new Button(cancelMessage);
+			final var cancelButton = new Button(cancelMessage);
 			cancelButton.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; " +
 					"-fx-border-radius: 10; -fx-background-radius: 10;");
 
@@ -120,7 +121,7 @@ public class GenericPopup {
 
 		layout.getChildren().add(buttonBar);
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();

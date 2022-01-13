@@ -47,8 +47,8 @@ public class FinishBox {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static void display(final File createdKeysFileName, String titleLabel, String displayMessage) {
-		var window = new Stage();
+	public static void display(final File createdKeysFileName, final String titleLabel, final String displayMessage) {
+		final var window = new Stage();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setTitle(titleLabel);
@@ -57,21 +57,21 @@ public class FinishBox {
 		window.setWidth(450);
 
 
-		var label1 = new Label();
+		final var label1 = new Label();
 		label1.setText(titleLabel);
 		label1.setStyle("-fx-font-size: 20");
 
-		var vBox = new VBox();
+		final var vBox = new VBox();
 		vBox.getChildren().add(label1);
 
 
-		var label2 = new Label(displayMessage);
+		final var label2 = new Label(displayMessage);
 		label2.setWrapText(true);
 		label2.setStyle(FX_FONT_SIZE_16);
 		vBox.getChildren().add(label2);
 
-		var path = createdKeysFileName.getParentFile().getPath();
-		var file = new Hyperlink(path);
+		final var path = createdKeysFileName.getParentFile().getPath();
+		final var file = new Hyperlink(path);
 		if (path.length() > 50) {
 			file.setText(String.format("...%s", path.substring(path.length() - 50)));
 		}
@@ -79,7 +79,7 @@ public class FinishBox {
 		file.setOnAction(event -> {
 			try {
 				openFolder(createdKeysFileName.getPath());
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 			}
 		});
@@ -87,22 +87,22 @@ public class FinishBox {
 
 		buildContinueButton(window, vBox);
 
-		var scene = new Scene(vBox);
+		final var scene = new Scene(vBox);
 
 		window.setScene(scene);
 
 		window.showAndWait();
 	}
 
-	private static void openFolder(String filename) throws IOException {
+	private static void openFolder(final String filename) throws IOException {
 		Desktop.getDesktop().open(new File(filename.substring(0, filename.lastIndexOf('/'))));
 	}
 
-	private static void buildContinueButton(Stage window, VBox vBox) {
-		var close = new Button("CONTINUE");
+	private static void buildContinueButton(final Stage window, final VBox vBox) {
+		final var close = new Button("CONTINUE");
 		close.setStyle(BUTTON_STYLE_STRING);
 		close.setMinWidth(150);
-		var hBox = new HBox();
+		final var hBox = new HBox();
 		hBox.getChildren().add(close);
 		hBox.setAlignment(Pos.CENTER);
 		close.setOnAction(event -> window.close());

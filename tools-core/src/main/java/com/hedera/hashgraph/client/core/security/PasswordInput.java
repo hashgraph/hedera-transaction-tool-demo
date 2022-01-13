@@ -41,7 +41,7 @@ public class PasswordInput {
 	 * 		the rest of the arguments
 	 * @return a char array
 	 */
-	public static char[] readPasswordFromStdIn(String message, Object... args) {
+	public static char[] readPasswordFromStdIn(final String message, final Object... args) {
 		if (System.console() != null) {
 			return System.console().readPassword(message, args);
 		} else {
@@ -62,8 +62,8 @@ public class PasswordInput {
 	 * 		the rest of the arguments
 	 * @return a char array
 	 */
-	public static char[] readPasswordAndConfirm(String message, String confirmation,
-			Object... args) {
+	public static char[] readPasswordAndConfirm(final String message, final String confirmation,
+			final Object... args) {
 
 		while (true) {
 			final char[] password;

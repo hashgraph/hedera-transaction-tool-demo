@@ -47,7 +47,8 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	private final String location;
 	private final Client client;
 
-	public TransactionCallableWorker(Transaction<?> tx, int delay, String location, Client client) {
+	public TransactionCallableWorker(final Transaction<?> tx, final int delay, final String location,
+			final Client client) {
 		this.tx = tx;
 		this.delay = delay;
 		this.location = location;
@@ -58,8 +59,9 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	public String call() throws Exception {
 		assert tx != null;
 		assert tx.getTransactionValidDuration() != null;
-		if (Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
-				tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
+		if (Objects.requireNonNull(
+				Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
+						tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
 			throw new HederaClientRuntimeException("Transaction happens in the past.");
 		}
 
@@ -68,17 +70,17 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
 		try {
-			var response = submit(tx);
+			final var response = submit(tx);
 			assert response != null;
 
 			final var status = response.getReceipt(client).status;
 			logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
-			var storageLocation = storeResponse(response, idString);
+			final var storageLocation = storeResponse(response, idString);
 			if (status.equals(Status.SUCCESS)) {
 				return storageLocation;
 			}
-		} catch (TimeoutException | PrecheckStatusException | ReceiptStatusException | HederaClientException e) {
+		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException | HederaClientException e) {
 			logger.info("Worker: Transaction: {}, failed with error: {}", idString, e.getMessage());
 		}
 		return "";
@@ -86,34 +88,35 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 	private void sleepUntilNeeded() throws InterruptedException {
 		assert tx != null;
-		var startTime = Objects.requireNonNull(tx.getTransactionId()).validStart;
+		final var startTime = Objects.requireNonNull(tx.getTransactionId()).validStart;
 		assert startTime != null;
-		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond() - delay;
+		final var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond() - delay;
 		if (difference < 0) {
 			logger.info("Transactions occur in the future. Sleeping for {} second(s)", -difference);
 			sleep(-1000 * difference);
 		}
 	}
 
-	private TransactionResponse submit(Transaction<?> tx) {
+	private TransactionResponse submit(final Transaction<?> tx) {
 		// Submit transaction
 		try {
 			return tx.execute(client);
-		} catch (TimeoutException | PrecheckStatusException e) {
+		} catch (final TimeoutException | PrecheckStatusException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
 
-	private String storeResponse(TransactionResponse response, String idString) throws HederaClientException {
+	private String storeResponse(final TransactionResponse response,
+			final String idString) throws HederaClientException {
 		// Store the response in the out folder
 		try {
-			var receipt = response.getReceipt(client);
+			final var receipt = response.getReceipt(client);
 			final var filePath =
 					location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
 			writeBytes(filePath, receipt.toBytes());
 			logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
 			return filePath;
-		} catch (TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
+		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
 			throw new HederaClientException(e);
 		}
 	}

@@ -73,7 +73,7 @@ import static org.junit.Assert.assertTrue;
 public class SettingsPaneTest extends TestBase {
 
 	private SettingsPanePage settingsPanePage;
-	private MainWindowPage mainWindowPage = new MainWindowPage(this);
+	private final MainWindowPage mainWindowPage = new MainWindowPage(this);
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
@@ -118,7 +118,7 @@ public class SettingsPaneTest extends TestBase {
 			FileUtils.cleanDirectory(new File(Constants.CUSTOM_NETWORK_FOLDER));
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
@@ -130,8 +130,8 @@ public class SettingsPaneTest extends TestBase {
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 		setupTransactionDirectory(DEFAULT_STORAGE);
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
@@ -197,7 +197,7 @@ public class SettingsPaneTest extends TestBase {
 					Long.parseLong(((TextField) find(TRANSACTION_FEE_TF)).getText().replaceAll(" ", "")));
 			assertEquals(properties.getGenerateRecord(),
 					((ToggleSwitch) find(GENERATE_RECORD_SLIDER)).isSelected());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 			logger.error(e);
 		}
@@ -224,7 +224,7 @@ public class SettingsPaneTest extends TestBase {
 			assertEquals(200000000, properties.getDefaultTxFee());
 			assertEquals(properties.getGenerateRecord(),
 					((ToggleSwitch) find(GENERATE_RECORD_SLIDER)).isSelected());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 
@@ -296,20 +296,20 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	public void addFolderNoStructureCancel_Tests() {
-		Node node = find("#transactionFoldersVBoxSP");
+		final Node node = find("#transactionFoldersVBoxSP");
 		assertTrue(node instanceof VBox);
 		settingsPanePage.pressAddFolder()
 				.setPath("src/test/resources");
-		ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
+		final ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
 		assert popupNodes != null;
 		assertEquals(1, popupNodes.size());
 		assertTrue(popupNodes.get(0) instanceof VBox);
-		var children = ((VBox) popupNodes.get(0)).getChildren();
+		final var children = ((VBox) popupNodes.get(0)).getChildren();
 
 		assertTrue(children.get(0) instanceof Label);
 		assertTrue(children.get(1) instanceof HBox);
 
-		var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
+		final var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
 		assertEquals(2, buttons.size());
 		assertTrue(buttons.get(0) instanceof Button);
 		assertTrue(buttons.get(1) instanceof Button);
@@ -325,7 +325,7 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	public void addFolderNoStructureCreate_Tests() {
-		Node node = find("#transactionFoldersVBoxSP");
+		final Node node = find("#transactionFoldersVBoxSP");
 		assertTrue(node instanceof VBox);
 		settingsPanePage.pressAddFolder()
 				.setPath("src/test/resources")
@@ -372,10 +372,10 @@ public class SettingsPaneTest extends TestBase {
 		settingsPanePage.addCustomLocation("src/test/resources/customNetwork_bad.json");
 		settingsPanePage.clickOnButton("CONTINUE");
 
-		var newNodes = TestUtil.getPopupNodes();
+		final var newNodes = TestUtil.getPopupNodes();
 		assertNotNull(newNodes);
 		assertTrue(newNodes.get(0) instanceof VBox);
-		var children = ((VBox) newNodes.get(0)).getChildren();
+		final var children = ((VBox) newNodes.get(0)).getChildren();
 		assertEquals("The json file does not contain a valid network", ((Label) children.get(0)).getText());
 		clickOn(TestUtil.findButtonInPopup(newNodes, "CONTINUE"));
 
@@ -385,7 +385,7 @@ public class SettingsPaneTest extends TestBase {
 		assertFalse(find("#deleteCustomNetworkButton").isDisabled());
 		clickOn("#deleteCustomNetworkButton");
 
-		var deleteNetworkNodes = TestUtil.getPopupNodes();
+		final var deleteNetworkNodes = TestUtil.getPopupNodes();
 		clickOn(TestUtil.findButtonInPopup(deleteNetworkNodes, "CONTINUE"));
 
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
@@ -401,13 +401,13 @@ public class SettingsPaneTest extends TestBase {
 
 	@After
 	public void tearDown() throws IOException {
-		Path currentRelativePath = Paths.get("");
-		String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		final Path currentRelativePath = Paths.get("");
+		final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
-		String out =
+		final String out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 		FileUtils.cleanDirectory(new File(out));

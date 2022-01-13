@@ -83,7 +83,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-			if (new File(currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+			if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 					"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 				logger.info("Output path created");
 			}
@@ -101,15 +101,15 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 					new File(DEFAULT_STORAGE, MNEMONIC_PATH));
 
-			Map<String, String> emailMap = new HashMap<>();
+			final Map<String, String> emailMap = new HashMap<>();
 
 			emailMap.put(
-					currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - Documents/",
+					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
 
-			var objectMapper = new ObjectMapper();
-			var mapAsString = objectMapper.writeValueAsString(emailMap);
+			final var objectMapper = new ObjectMapper();
+			final var mapAsString = objectMapper.writeValueAsString(emailMap);
 
 			properties.setOneDriveCredentials(emailMap);
 			properties.setHash("123456789".toCharArray());
@@ -117,8 +117,8 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 			setupTransactionDirectory(DEFAULT_STORAGE);
 
-			Controller controller = new Controller();
-			var version = controller.getVersion();
+			final Controller controller = new Controller();
+			final var version = controller.getVersion();
 			properties.setVersionString(version);
 
 			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
@@ -138,13 +138,14 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			if (accountsPanePage == null) {
 				accountsPanePage = new AccountsPanePage(this);
 			}
-			var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+			final var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 			if (!(new File(rootFolder)).exists() && new File(rootFolder).mkdirs()) {
 				logger.info("Tools root folder created");
 			} else {
 				logger.info("Tools root directory exists.");
 			}
-			var toolsFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
+			final var toolsFolder =
+					new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
 			if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
 				logger.info("Tools document directory created");
 			} else {
@@ -154,7 +155,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -167,15 +168,15 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		try {
 			properties.resetProperties();
 			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			var transactions = (new File(
+			final var transactions = (new File(
 					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
 					pathname -> {
-						var name = pathname.getName();
+						final var name = pathname.getName();
 						return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
 					});
 
 			assert transactions != null;
-			for (var f :
+			for (final var f :
 					transactions) {
 				if (f.delete()) {
 					logger.debug(String.format("%s has been deleted", f.getName()));
@@ -184,7 +185,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			if (new File(DEFAULT_STORAGE).exists()) {
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -195,7 +196,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setCreateKey();
 
-		var accountTitledPane =
+		final var accountTitledPane =
 				createPanePage.getTitledPane(ACCOUNTS);
 
 		final var arrowButton = createPanePage.getCenterButton(CenterButtons.ARROW_BUTTON);
@@ -206,31 +207,31 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertFalse(crossButton.getParent().isVisible());
 
 
-		var accountTitledPaneContent = accountTitledPane.getContent();
+		final var accountTitledPaneContent = accountTitledPane.getContent();
 		assertTrue(accountTitledPaneContent instanceof VBox);
-		var accountsList = ((VBox) accountTitledPaneContent).getChildren();
+		final var accountsList = ((VBox) accountTitledPaneContent).getChildren();
 		assertEquals(1, accountsList.size());
 		assertTrue(accountsList.get(0) instanceof ListView);
 
-		var accounts = ((ListView<?>) accountsList.get(0)).getItems();
+		final var accounts = ((ListView<?>) accountsList.get(0)).getItems();
 
 		assertEquals(5, accounts.size());
 
-		var publicKeyTitledPane = createPanePage.getTitledPane(PUBLIC_KEYS);
+		final var publicKeyTitledPane = createPanePage.getTitledPane(PUBLIC_KEYS);
 
 		assertTrue(arrowButton.getParent().isVisible());
 		assertTrue(crossButton.getParent().isVisible());
 
-		var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
+		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
 		assertTrue(publicKeyTitledPaneContent instanceof VBox);
-		var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
+		final var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
 		assertEquals(1, innerVBox.size());
 		assertTrue(innerVBox.get(0) instanceof VBox);
 
-		var lists = ((VBox) innerVBox.get(0)).getChildren();
+		final var lists = ((VBox) innerVBox.get(0)).getChildren();
 		assertEquals(1, lists.size());
 
-		var publicKeys = ((ListView<?>) lists.get(0)).getItems();
+		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
 		assertEquals(1, publicKeys.size());
 
 		createPanePage.clickOnKeyDesignerCancel();
@@ -242,17 +243,17 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setCreateKey();
 
-		var publicKeyTitledPane = createPanePage.getTitledPane(PUBLIC_KEYS);
-		var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
+		final var publicKeyTitledPane = createPanePage.getTitledPane(PUBLIC_KEYS);
+		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
 		assertTrue(publicKeyTitledPaneContent instanceof VBox);
-		var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
+		final var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
 		assertEquals(1, innerVBox.size());
 		assertTrue(innerVBox.get(0) instanceof VBox);
 
-		var lists = ((VBox) innerVBox.get(0)).getChildren();
+		final var lists = ((VBox) innerVBox.get(0)).getChildren();
 		assertEquals(1, lists.size());
 
-		var publicKeys = ((ListView<?>) lists.get(0)).getItems();
+		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
 		assertEquals(1, publicKeys.size());
 
 		createPanePage.clickOnKeyDesignerCancel();
@@ -263,14 +264,14 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setCreateKey();
 
-		var accountsTitledPane = createPanePage.getTitledPane(ACCOUNTS);
-		var accountsTitledPaneContent = accountsTitledPane.getContent();
+		final var accountsTitledPane = createPanePage.getTitledPane(ACCOUNTS);
+		final var accountsTitledPaneContent = accountsTitledPane.getContent();
 		assertTrue(accountsTitledPaneContent instanceof VBox);
-		var innerVBox = ((VBox) accountsTitledPaneContent).getChildren();
+		final var innerVBox = ((VBox) accountsTitledPaneContent).getChildren();
 		assertEquals(1, innerVBox.size());
 		assertTrue(innerVBox.get(0) instanceof ListView);
 		createPanePage.clickOnAccountKey("ninetyFour");
-		TreeView<?> treeView = getDesignTreeView();
+		final TreeView<?> treeView = getDesignTreeView();
 		assertEquals(9, countTreeNodes(treeView.getRoot()));
 
 		createPanePage.clickOnAccountKey("treasury");
@@ -281,12 +282,12 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 	}
 
 	private TreeView<?> getDesignTreeView() {
-		var popupNodes = getPopupNodes();
-		var node = ((HBox) ((VBox) popupNodes.get(1)).getChildren().get(0)).getChildren().get(2);
+		final var popupNodes = getPopupNodes();
+		final var node = ((HBox) ((VBox) popupNodes.get(1)).getChildren().get(0)).getChildren().get(2);
 		assert node instanceof TitledPane;
-		var content = ((TitledPane) node).getContent();
+		final var content = ((TitledPane) node).getContent();
 		assert content instanceof VBox;
-		var nodes = ((VBox) content).getChildren();
+		final var nodes = ((VBox) content).getChildren();
 		assert nodes.get(0) instanceof TreeView;
 		return (TreeView<?>) nodes.get(0);
 	}

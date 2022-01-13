@@ -47,19 +47,19 @@ public class AccountsPanePage {
 	private final TestBase driver;
 	private final static String ACCOUNTS_SCROLL_PANE = "#accountsScrollPane";
 
-	public AccountsPanePage(TestBase driver) {
+	public AccountsPanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
-	public AccountsPanePage expandRow(String nickname) {
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+	public AccountsPanePage expandRow(final String nickname) {
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		AccountLineInformation info = null;
 		final TableView accountTable = (TableView) table;
 		int row = 0;
-		for (Object item : accountTable.getItems()) {
+		for (final Object item : accountTable.getItems()) {
 			assertTrue(item instanceof AccountLineInformation);
 			if (((AccountLineInformation) item).getNickname().equals(nickname)) {
 				info = (AccountLineInformation) item;
@@ -70,7 +70,7 @@ public class AccountsPanePage {
 		}
 
 		assertTrue(accountTable.getColumns().get(0) instanceof TableRowExpanderColumn);
-		TableRowExpanderColumn<AccountLineInformation> expanderColumn =
+		final TableRowExpanderColumn<AccountLineInformation> expanderColumn =
 				(TableRowExpanderColumn<AccountLineInformation>) accountTable.getColumns().get(0);
 		if (info != null && !expanderColumn.getExpandedProperty(info).get()) {
 			expanderColumn.toggleExpanded(row);
@@ -79,19 +79,19 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage requestNewBalance(String nickname) throws InterruptedException {
+	public AccountsPanePage requestNewBalance(final String nickname) throws InterruptedException {
 		sleep(1000);
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		AccountLineInformation info = null;
 		final TableView<AccountLineInformation> accountTable = (TableView<AccountLineInformation>) table;
 		assertTrue(accountTable.getColumns().get(0) instanceof TableRowExpanderColumn);
-		TableRowExpanderColumn<AccountLineInformation> expanderColumn =
+		final TableRowExpanderColumn<AccountLineInformation> expanderColumn =
 				(TableRowExpanderColumn<AccountLineInformation>) accountTable.getColumns().get(0);
 
-		for (AccountLineInformation item : accountTable.getItems()) {
+		for (final AccountLineInformation item : accountTable.getItems()) {
 			assertNotNull(item);
 			if (item.getNickname().equals(nickname)) {
 				info = item;
@@ -100,24 +100,24 @@ public class AccountsPanePage {
 		}
 
 		if (info != null && expanderColumn.getExpandedProperty(info).get()) {
-			var node = expanderColumn.getExpandedNode(info);
-			var button = TestUtil.getButton(node, "");
+			final var node = expanderColumn.getExpandedNode(info);
+			final var button = TestUtil.getButton(node, "");
 			driver.clickOn(button);
 		}
 
 		return this;
 	}
 
-	public Hbar getBalance(String nickname) throws HederaClientException {
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+	public Hbar getBalance(final String nickname) throws HederaClientException {
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		AccountLineInformation info = null;
 		final TableView<AccountLineInformation> accountTable = (TableView<AccountLineInformation>) table;
 		assertTrue(accountTable.getColumns().get(0) instanceof TableRowExpanderColumn);
 
-		for (AccountLineInformation item : accountTable.getItems()) {
+		for (final AccountLineInformation item : accountTable.getItems()) {
 			assertNotNull(item);
 			if (item.getNickname().equals(nickname)) {
 				info = item;
@@ -130,12 +130,12 @@ public class AccountsPanePage {
 
 	public AccountsPanePage selectAllCheckBoxes() throws InterruptedException {
 		sleep(1000);
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 
-		var columns = table.getColumns();
-		var graphic = columns.get(1).getGraphic();
+		final var columns = table.getColumns();
+		final var graphic = columns.get(1).getGraphic();
 		assertTrue(graphic instanceof CheckBox);
 		if (!((CheckBox) graphic).isSelected()) {
 			driver.clickOn(graphic);
@@ -145,23 +145,23 @@ public class AccountsPanePage {
 
 	public AccountsPanePage requestSelectedBalances() throws InterruptedException {
 		sleep(1000);
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 
-		var columns = table.getColumns();
-		var graphic = columns.get(5).getGraphic();
+		final var columns = table.getColumns();
+		final var graphic = columns.get(5).getGraphic();
 		driver.clickOn(((HBox) graphic).getChildren().get(1));
 		return this;
 	}
 
-	public AccountsPanePage selectRow(String nickname) throws InterruptedException {
+	public AccountsPanePage selectRow(final String nickname) throws InterruptedException {
 		sleep(1000);
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 		AccountLineInformation info = null;
-		for (AccountLineInformation item : table.getItems()) {
+		for (final AccountLineInformation item : table.getItems()) {
 			if (nickname.equals(item.getNickname())) {
 				info = item;
 			}
@@ -174,32 +174,32 @@ public class AccountsPanePage {
 
 	public AccountsPanePage requestSelectedInfo() throws InterruptedException {
 		sleep(1000);
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 
-		var columns = table.getColumns();
-		var graphic = columns.get(3).getGraphic();
+		final var columns = table.getColumns();
+		final var graphic = columns.get(3).getGraphic();
 		driver.clickOn(((HBox) graphic).getChildren().get(1));
 		return this;
 	}
 
-	public AccountsPanePage enterPasswordInPopup(String text) throws HederaClientException {
+	public AccountsPanePage enterPasswordInPopup(final String text) throws HederaClientException {
 		final var popupNodes = Objects.requireNonNull(com.hedera.hashgraph.client.integration.TestUtil.getPopupNodes());
-		var passwords = com.hedera.hashgraph.client.integration.TestUtil.findPasswordInPopup(popupNodes);
+		final var passwords = com.hedera.hashgraph.client.integration.TestUtil.findPasswordInPopup(popupNodes);
 		if (passwords == null) {
 			throw new HederaClientException("Unexpected popup");
 		}
-		var continueButton = findButtonInPopup(popupNodes, "CONFIRM");
+		final var continueButton = findButtonInPopup(popupNodes, "CONFIRM");
 		passwords.setText(text);
 
 		driver.clickOn(continueButton);
 		return this;
 	}
 
-	public void pressPopupButton(String legend) {
+	public void pressPopupButton(final String legend) {
 		final var popupNodes = Objects.requireNonNull(com.hedera.hashgraph.client.integration.TestUtil.getPopupNodes());
-		var button = findButtonInPopup(popupNodes, legend);
+		final var button = findButtonInPopup(popupNodes, legend);
 		driver.clickOn(button);
 	}
 
@@ -208,8 +208,8 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage enterAccounts(String s) {
-		var textField = driver.find("#accountsToUpdateTextField");
+	public AccountsPanePage enterAccounts(final String s) {
+		final var textField = driver.find("#accountsToUpdateTextField");
 		assert textField instanceof TextField;
 		((TextField) textField).setText(s);
 		return this;
@@ -222,43 +222,43 @@ public class AccountsPanePage {
 
 	public AccountsPanePage acceptAllNickNames() {
 		final var popupNodes = Objects.requireNonNull(getPopupNodes());
-		CheckBox checkBox = findCheckBoxInPopup(popupNodes, "Apply to all");
+		final CheckBox checkBox = findCheckBoxInPopup(popupNodes, "Apply to all");
 		driver.clickOn(checkBox);
-		Button button = findButtonInPopup(popupNodes, "ACCEPT");
+		final Button button = findButtonInPopup(popupNodes, "ACCEPT");
 		driver.clickOn(button);
 		return this;
 	}
 
 	public List<AccountLineInformation> getAccounts() {
-		ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 		return table.getItems();
 	}
 
-	public AccountsPanePage selectCheckBoxInPopup(String name) {
+	public AccountsPanePage selectCheckBoxInPopup(final String name) {
 		final var popupNodes = Objects.requireNonNull(getPopupNodes());
-		CheckBox checkBox = findCheckBoxInPopup(popupNodes, name);
+		final CheckBox checkBox = findCheckBoxInPopup(popupNodes, name);
 		driver.clickOn(checkBox);
 		return this;
 	}
 
-	public AccountsPanePage clickOnPopupButton(String name) {
+	public AccountsPanePage clickOnPopupButton(final String name) {
 		final var popupNodes = Objects.requireNonNull(getPopupNodes());
-		Button button = findButtonInPopup(popupNodes, name);
+		final Button button = findButtonInPopup(popupNodes, name);
 		driver.clickOn(button);
 		return this;
 	}
 
-	public AccountsPanePage deleteAccount(String nickname) {
+	public AccountsPanePage deleteAccount(final String nickname) {
 		driver.clickOn(nickname + "T");
 		driver.clickOn("CONTINUE");
 		return this;
 	}
 
-	public AccountsPanePage enterTextInPopup(String name) {
+	public AccountsPanePage enterTextInPopup(final String name) {
 		final var popupNodes = Objects.requireNonNull(getPopupNodes());
-		TextField textField = findTextFieldInPopup(popupNodes);
+		final TextField textField = findTextFieldInPopup(popupNodes);
 		driver.doubleClickOn(textField);
 		driver.write(name);
 		driver.type(KeyCode.ENTER);

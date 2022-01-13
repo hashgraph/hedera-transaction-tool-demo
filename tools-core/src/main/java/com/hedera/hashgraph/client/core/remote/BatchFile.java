@@ -129,17 +129,17 @@ public class BatchFile extends RemoteFile {
 		super();
 	}
 
-	public BatchFile(FileDetails fileDetails) {
+	public BatchFile(final FileDetails fileDetails) {
 		super(fileDetails);
 
 		if (!isValid() || !FileType.BATCH.equals(getType())) {
 			setValid(false);
 			return;
 		}
-		List<String> csvList;
+		final List<String> csvList;
 		try {
 			csvList = readCSVFromFile(new File(getParentPath(), getName()));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Unable to parse: {}", e.getMessage());
 			setValid(false);
 			return;
@@ -189,9 +189,9 @@ public class BatchFile extends RemoteFile {
 	 * 		a list of strings that have been read from a batch file
 	 * @return the index of the first line that contains a distribution
 	 */
-	private int getDistributionStart(List<String> csvList) {
+	private int getDistributionStart(final List<String> csvList) {
 		int count = 0;
-		for (String s : csvList) {
+		for (final String s : csvList) {
 			count++;
 			if (s.toLowerCase(Locale.ROOT).startsWith(ACCOUNT_ID)) {
 				break;
@@ -207,16 +207,16 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the sender line is invalid
 	 */
-	private boolean checkSender(List<String> csvList) {
+	private boolean checkSender(final List<String> csvList) {
 		try {
-			String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
+			final String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
 
 			if (senderIDLine.length != 2) {
 				errorBehavior(getName(), NUMBER_OF_FIELDS, SENDER_ACCOUNT);
 				return true;
 			}
 			this.senderAccountID = Identifier.parse(senderIDLine[1]);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), e.getMessage(), SENDER_ACCOUNT);
 			setValid(false);
 			return true;
@@ -231,9 +231,9 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the sender line is invalid
 	 */
-	private boolean checkFeePayer(List<String> csvList) {
+	private boolean checkFeePayer(final List<String> csvList) {
 		try {
-			String[] feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
+			final String[] feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
 
 			if (feePayerIDLine.length == 0) {
 				this.feePayerAccountID = this.senderAccountID;
@@ -245,7 +245,7 @@ public class BatchFile extends RemoteFile {
 				return true;
 			}
 			this.feePayerAccountID = Identifier.parse(feePayerIDLine[1]);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), e.getMessage(), FEE_PAYER_ACCOUNT);
 			setValid(false);
 			return true;
@@ -260,9 +260,9 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the sender line is invalid
 	 */
-	private boolean checkMemo(List<String> csvList) {
+	private boolean checkMemo(final List<String> csvList) {
 		try {
-			String[] memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
+			final String[] memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
 
 			if (memoLine.length == 0) {
 				return false;
@@ -273,7 +273,7 @@ public class BatchFile extends RemoteFile {
 				return true;
 			}
 			this.memo = memoLine[1];
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), e.getMessage(), MEMO_STRING);
 			setValid(false);
 			return true;
@@ -288,9 +288,9 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the time line is invalid
 	 */
-	private boolean checkTime(List<String> csvList) {
+	private boolean checkTime(final List<String> csvList) {
 		try {
-			String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
+			final String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
 			if (timeLine.length != 3) {
 				errorBehavior(getName(), NUMBER_OF_FIELDS, "time");
 				return true;
@@ -306,7 +306,7 @@ public class BatchFile extends RemoteFile {
 				timeErrorBehavior("minutes", minutesUTC);
 				return true;
 			}
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			errorBehavior(getName(), "time", "Number format");
 			return true;
 		}
@@ -320,10 +320,10 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the node line is invalid
 	 */
-	private boolean checkNodes(List<String> csvList) {
+	private boolean checkNodes(final List<String> csvList) {
 		nodeAccountID = new ArrayList<>();
 		try {
-			String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
+			final String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
 
 			if (nodeAccountIDLine.length == 0) {
 				setValid(false);
@@ -343,7 +343,7 @@ public class BatchFile extends RemoteFile {
 				setValid(false);
 				return true;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), "nodes", e.getLocalizedMessage());
 			setValid(false);
 			return true;
@@ -358,9 +358,9 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the node line is invalid
 	 */
-	private boolean checkFee(List<String> csvList) {
+	private boolean checkFee(final List<String> csvList) {
 		try {
-			String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
+			final String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
 			// If there is no transaction fee line, just use the default;
 			if (feeLine.length == 0) {
 				this.transactionFee = properties.getDefaultTxFee();
@@ -371,7 +371,7 @@ public class BatchFile extends RemoteFile {
 				return true;
 			}
 			this.transactionFee = Long.parseLong(feeLine[1]);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), e.getMessage(), TRANSACTION_FEE);
 			setValid(false);
 			return true;
@@ -386,9 +386,9 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 * @return true if the node line is invalid
 	 */
-	private boolean checkTransactionValidDuration(List<String> csvList) {
+	private boolean checkTransactionValidDuration(final List<String> csvList) {
 		try {
-			String[] tvdLine = getStrings(csvList, DURATION, "[,]", true);
+			final String[] tvdLine = getStrings(csvList, DURATION, "[,]", true);
 			// If there is no transaction valid duration line, just use the default;
 			if (tvdLine.length == 0) {
 				this.txValidDuration = properties.getTxValidDuration();
@@ -399,7 +399,7 @@ public class BatchFile extends RemoteFile {
 				return true;
 			}
 			this.txValidDuration = Long.parseLong(tvdLine[1]);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			errorBehavior(getName(), e.getMessage(), DURATION);
 			setValid(false);
 			return true;
@@ -413,14 +413,14 @@ public class BatchFile extends RemoteFile {
 	 * @param csvList
 	 * 		an array of strings that contains the csv file
 	 */
-	private void checkTransfers(List<String> csvList) {
+	private void checkTransfers(final List<String> csvList) {
 		try {
 			transfers = new ArrayList<>();
 			for (var i = getDistributionStart(csvList); i < csvList.size(); i++) {
 				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
 			}
 			this.firstTransaction = getFirstDate();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			logger.error("Unable to parse transfers");
 			setValid(false);
@@ -442,12 +442,13 @@ public class BatchFile extends RemoteFile {
 	 * @return an array of strings
 	 */
 	@NotNull
-	private String[] getStrings(List<String> csvList, String queryString, String regex, boolean removeSpaces) {
+	private String[] getStrings(final List<String> csvList, final String queryString, final String regex,
+			final boolean removeSpaces) {
 		String[] strings = new String[0];
-		for (String s : csvList) {
+		for (final String s : csvList) {
 			if (s.toLowerCase(Locale.ROOT).startsWith(queryString)) {
 				strings = removeSpaces ? s.replace(" ", "").split(regex) : s.split(regex);
-				String[] returnString = new String[strings.length];
+				final String[] returnString = new String[strings.length];
 				// trim leading and trailing spaces
 				for (int i = 0, stringsLength = strings.length; i < stringsLength; i++) {
 					returnString[i] = strings[i].trim();
@@ -466,7 +467,7 @@ public class BatchFile extends RemoteFile {
 	 * @param field
 	 * 		the value of the field
 	 */
-	private void timeErrorBehavior(String fieldName, int field) {
+	private void timeErrorBehavior(final String fieldName, final int field) {
 		logger.error("Invalid {} field: {}", fieldName, field);
 		setValid(false);
 	}
@@ -481,7 +482,7 @@ public class BatchFile extends RemoteFile {
 	 * @param field
 	 * 		the field
 	 */
-	private void errorBehavior(String filename, String message, String field) {
+	private void errorBehavior(final String filename, final String message, final String field) {
 		logger.error("Incorrect {} in csv file ({}): File {} will not be displayed", field, message,
 				filename);
 		setValid(false);
@@ -494,12 +495,12 @@ public class BatchFile extends RemoteFile {
 	 * 		the list of read transfers
 	 * @return a list of transfers with distinct transaction valid starts
 	 */
-	private List<BatchLine> dedup(List<BatchLine> transfers) {
-		Set<Timestamp> dedupSet = new HashSet<>();
-		List<BatchLine> newTransfers = new ArrayList<>();
-		for (var transfer : transfers) {
+	private List<BatchLine> dedup(final List<BatchLine> transfers) {
+		final Set<Timestamp> dedupSet = new HashSet<>();
+		final List<BatchLine> newTransfers = new ArrayList<>();
+		for (final var transfer : transfers) {
 			var timestamp = transfer.getDate();
-			var seconds = timestamp.getSeconds();
+			final var seconds = timestamp.getSeconds();
 			var nanos = timestamp.getNanos() + SORTING_CONSTANT; // added a fixed amount to make sorting by time easier
 			timestamp = new Timestamp(seconds, nanos);
 			while (dedupSet.contains(timestamp)) {
@@ -521,9 +522,9 @@ public class BatchFile extends RemoteFile {
 	 * @throws HederaClientException
 	 * 		if there are IO exceptions
 	 */
-	private static List<String> readCSVFromFile(File csvFile) throws HederaClientException {
-		List<String> csvList = new ArrayList<>();
-		try (var bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile)))) {
+	private static List<String> readCSVFromFile(final File csvFile) throws HederaClientException {
+		final List<String> csvList = new ArrayList<>();
+		try (final var bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(csvFile)))) {
 			String sCurrentLine;
 			while ((sCurrentLine = bufferedReader.readLine()) != null) {
 				if (sCurrentLine.equals("")) {
@@ -531,7 +532,7 @@ public class BatchFile extends RemoteFile {
 				}
 				csvList.add(sCurrentLine.replace("\"", ""));
 			}
-		} catch (IOException cause) {
+		} catch (final IOException cause) {
 			throw new HederaClientException(cause);
 		}
 
@@ -543,13 +544,13 @@ public class BatchFile extends RemoteFile {
 	 */
 	private LocalDate getFirstDate() {
 		var first = Long.MAX_VALUE;
-		for (var b : transfers) {
-			var seconds = b.getDate().getSeconds();
+		for (final var b : transfers) {
+			final var seconds = b.getDate().getSeconds();
 			if (seconds < first) {
 				first = seconds;
 			}
 		}
-		var instant = new Timestamp(first, 0).asInstant();
+		final var instant = new Timestamp(first, 0).asInstant();
 		return LocalDate.ofInstant(instant, ZoneId.of("UTC"));
 	}
 
@@ -586,8 +587,8 @@ public class BatchFile extends RemoteFile {
 	}
 
 	public Timestamp getFirstTransactionTimeStamp() {
-		var localTime = LocalTime.of(getHoursUTC(), getMinutesUTC());
-		var localDateTime = LocalDateTime.of(getFirstDate(), localTime);
+		final var localTime = LocalTime.of(getHoursUTC(), getMinutesUTC());
+		final var localDateTime = LocalDateTime.of(getFirstDate(), localTime);
 		return new Timestamp(localDateTime.atZone(ZoneId.of("UTC")).toInstant());
 
 	}
@@ -596,7 +597,7 @@ public class BatchFile extends RemoteFile {
 		return transactionFee;
 	}
 
-	public void setTransactionFee(long transactionFee) {
+	public void setTransactionFee(final long transactionFee) {
 		if (transactionFee < 0) {
 			return;
 		}
@@ -626,7 +627,7 @@ public class BatchFile extends RemoteFile {
 
 	@Override
 	public GridPane buildGridPane() {
-		var detailsGridPane = new GridPane();
+		final var detailsGridPane = new GridPane();
 		int row = 0;
 		try {
 			final var accounts = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
@@ -637,55 +638,55 @@ public class BatchFile extends RemoteFile {
 			detailsGridPane.add(new Label("Fee payer account"), LEFT, row);
 			detailsGridPane.add(new Label(CommonMethods.nicknameOrNumber(getFeePayerAccountID(), accounts)), RIGHT,
 					row++);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 
-		var feeLabel = new Label("Single transaction maximum fee: ");
+		final var feeLabel = new Label("Single transaction maximum fee: ");
 		feeLabel.setWrapText(true);
 		detailsGridPane.add(feeLabel, LEFT, row);
 
-		var actualFeeLabel = new Label(Hbar.fromTinybars(getTransactionFee()).toString());
+		final var actualFeeLabel = new Label(Hbar.fromTinybars(getTransactionFee()).toString());
 		actualFeeLabel.setWrapText(true);
 		actualFeeLabel.setStyle(Constants.DEBIT);
 		detailsGridPane.add(actualFeeLabel, RIGHT, row++);
 
-		var firstTransactionLabel = new Label("First transaction date: ");
+		final var firstTransactionLabel = new Label("First transaction date: ");
 		firstTransactionLabel.setWrapText(true);
 		firstTransactionLabel.setAlignment(Pos.CENTER_LEFT);
 		detailsGridPane.add(firstTransactionLabel, LEFT, row);
 
 
-		var timestamp = getFirstTransactionTimeStamp();
+		final var timestamp = getFirstTransactionTimeStamp();
 
-		var utcTime = getTimeLabel(timestamp, true);
+		final var utcTime = getTimeLabel(timestamp, true);
 		utcTime.setWrapText(true);
 		detailsGridPane.add(utcTime, RIGHT, row++);
 
-		var utcLabel = new Label("All transactions will be sent at: ");
+		final var utcLabel = new Label("All transactions will be sent at: ");
 		detailsGridPane.add(utcLabel, LEFT, row);
 		utcLabel.setWrapText(true);
 		detailsGridPane.add(getTimeLabel(timestamp, false), RIGHT, row++);
 
-		var tvDuration = new Label("Transactions duration: ");
+		final var tvDuration = new Label("Transactions duration: ");
 		detailsGridPane.add(tvDuration, LEFT, row);
 		tvDuration.setWrapText(true);
 		detailsGridPane.add(new Label(String.format("%d seconds", getTxValidDuration())), RIGHT, row++);
 
-		var nLabel = new Label("Transactions will be submitted to nodes: ");
+		final var nLabel = new Label("Transactions will be submitted to nodes: ");
 		nLabel.setWrapText(true);
 		detailsGridPane.add(nLabel, LEFT, row);
 
 		JsonObject nicknames;
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			nicknames = new JsonObject();
 		}
 
-		var nodesString = new StringBuilder();
-		for (var n : getNodeAccountID()) {
+		final var nodesString = new StringBuilder();
+		for (final var n : getNodeAccountID()) {
 			nodesString.append(n.toNicknameAndChecksum(nicknames)).append("\n");
 		}
 
@@ -699,19 +700,19 @@ public class BatchFile extends RemoteFile {
 		}
 
 		detailsGridPane.add(new Label("More details: "), LEFT, row);
-		var hyperlink = new Hyperlink("Click to open CSV file");
+		final var hyperlink = new Hyperlink("Click to open CSV file");
 		hyperlink.setOnAction(actionEvent -> {
 			try {
 				Desktop.getDesktop().open(new File(getPath()));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 			}
 		});
 		detailsGridPane.add(hyperlink, RIGHT, row);
 
-		var cc1 = new ColumnConstraints();
+		final var cc1 = new ColumnConstraints();
 		cc1.prefWidthProperty().bind(detailsGridPane.widthProperty().divide(5).multiply(2));
-		var cc2 = new ColumnConstraints();
+		final var cc2 = new ColumnConstraints();
 		cc2.prefWidthProperty().bind(detailsGridPane.widthProperty().divide(5).multiply(3));
 		detailsGridPane.getColumnConstraints().addAll(cc1, cc2);
 		detailsGridPane.setHgap(20);
@@ -722,44 +723,45 @@ public class BatchFile extends RemoteFile {
 	}
 
 	@Override
-	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
-		var tempStorage =
+	public String execute(final Pair<String, KeyPair> pair, final String user,
+			final String output) throws HederaClientException {
+		final var tempStorage =
 				TEMP_FOLDER_LOCATION + LocalDate.now() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
-		DoubleProperty progress = new SimpleDoubleProperty(1);
+		final DoubleProperty progress = new SimpleDoubleProperty(1);
 
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
 			setHistory(true);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		try {
 			if (new File(tempStorage).exists()) {
 				FileUtils.deleteDirectory(new File(tempStorage));
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 			throw new HederaClientException(e);
 		}
 
-		var transactionsProgressBar = new ProgressBar();
+		final var transactionsProgressBar = new ProgressBar();
 		transactionsProgressBar.progressProperty().bind(progress);
 		transactionsProgressBar.setVisible(true);
-		var compressingProgressBar = new ProgressBar();
+		final var compressingProgressBar = new ProgressBar();
 		compressingProgressBar.setProgress(-1);
 
-		var cancelButton = new Button("CANCEL");
-		var window = setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
+		final var cancelButton = new Button("CANCEL");
+		final var window = setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
 
 		cancelButton.visibleProperty().bind(transactionsProgressBar.progressProperty().lessThan(1));
 
-		for (var nodeID : getNodeAccountID()) {
-			var storageLocation =
+		for (final var nodeID : getNodeAccountID()) {
+			final var storageLocation =
 					tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
 							pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
-			var maker = new DistributionMaker(getSenderAccountID().asAccount(),
+			final var maker = new DistributionMaker(getSenderAccountID().asAccount(),
 					feePayerAccountID.asAccount(),
 					nodeID.asAccount(),
 					new Timestamp(getTxValidDuration(), 0),
@@ -769,16 +771,16 @@ public class BatchFile extends RemoteFile {
 					output + File.separator + user);
 
 
-			Task<Void> task = new Task<>() {
+			final Task<Void> task = new Task<>() {
 				// Create transactions and signatures
 				@Override
 				public Void call() {
 					final var max = transfers.size();
 					var i = 0;
-					for (var transfer : transfers) {
+					for (final var transfer : transfers) {
 						try {
 							maker.buildBundle(transfer, pair.getValue());
-						} catch (HederaClientException e) {
+						} catch (final HederaClientException e) {
 							logger.error(e);
 						}
 						updateProgress(++i, (long) max - 1);
@@ -786,7 +788,7 @@ public class BatchFile extends RemoteFile {
 					transactionsProgressBar.setVisible(false);
 					try {
 						maker.pack();
-					} catch (HederaClientException e) {
+					} catch (final HederaClientException e) {
 						logger.error(e);
 					}
 					return null;
@@ -815,7 +817,7 @@ public class BatchFile extends RemoteFile {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 
@@ -824,14 +826,14 @@ public class BatchFile extends RemoteFile {
 		return super.hashCode();
 	}
 
-	private Stage setupProgressPopup(ProgressBar bar, ProgressBar bar2, Button cancelButton) {
-		var layout = new VBox();
+	private Stage setupProgressPopup(final ProgressBar bar, final ProgressBar bar2, final Button cancelButton) {
+		final var layout = new VBox();
 		layout.setAlignment(Pos.CENTER);
 		layout.setSpacing(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 		layout.setMaxWidth(400);
 
-		var window = new Stage();
+		final var window = new Stage();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setTitle("Batch Transactions");
@@ -840,22 +842,22 @@ public class BatchFile extends RemoteFile {
 		window.setWidth(450);
 
 
-		var label1 = new Label();
+		final var label1 = new Label();
 		label1.setText("Batch Transactions");
 		label1.setStyle("-fx-font-size: 20");
 
-		var label2 = new Label(
+		final var label2 = new Label(
 				"Please wait while the transactions are being created and signed.");
 		label2.setWrapText(true);
 		label2.setStyle("-fx-font-size: 16");
 
-		var label3 =
+		final var label3 =
 				new Label("Transactions are now being compressed and exported to the output folder");
 		label3.setWrapText(true);
 		label3.setStyle("-fx-font-size: 16");
 		label3.setVisible(false);
 
-		var box = new HBox();
+		final var box = new HBox();
 		box.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		box.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		box.setAlignment(Pos.CENTER);
@@ -880,7 +882,7 @@ public class BatchFile extends RemoteFile {
 
 		layout.getChildren().addAll(label1, box, bar, bar2, cancelButton);
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 
 		scene.getStylesheets().add("tools.css");
 

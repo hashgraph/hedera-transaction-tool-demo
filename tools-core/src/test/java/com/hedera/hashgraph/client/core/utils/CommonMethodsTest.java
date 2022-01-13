@@ -60,7 +60,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		if (new File("src/test/resources/out").mkdirs()) {
 			logger.info("Output directory created");
 		}
-		var file = new File("recovery.aes");
+		final var file = new File("recovery.aes");
 		if (file.exists() && file.delete()) {
 			logger.info("File deleted");
 		}
@@ -74,20 +74,20 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void getClient() {
-		var integration = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var integration = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		assertEquals(4, integration.getNetwork().size());
-		var mainNet = CommonMethods.getClient(NetworkEnum.MAINNET);
+		final var mainNet = CommonMethods.getClient(NetworkEnum.MAINNET);
 		assertTrue(mainNet.getNetwork().size() >= 10);
-		var testNet = CommonMethods.getClient(NetworkEnum.TESTNET);
+		final var testNet = CommonMethods.getClient(NetworkEnum.TESTNET);
 		assertTrue(testNet.getNetwork().size() >= 4);
-		var previewNet = CommonMethods.getClient(NetworkEnum.PREVIEWNET);
+		final var previewNet = CommonMethods.getClient(NetworkEnum.PREVIEWNET);
 		assertTrue(previewNet.getNetwork().size() >= 4);
 	}
 
 
 	@Test
 	void longestCommonPrefix_test() {
-		List<String> words = new ArrayList<>();
+		final List<String> words = new ArrayList<>();
 		assertEquals("", CommonMethods.longestCommonPrefix(words));
 		words.add("test");
 		assertEquals("test", CommonMethods.longestCommonPrefix(words));
@@ -101,41 +101,45 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void setupClient() throws HederaClientException {
-		var testInput = new JsonObject();
-		Exception exception0 = assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
+		final var testInput = new JsonObject();
+		final Exception exception0 =
+				assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals("Hedera Client: Missing critical fields in the JSON input to set up the client",
 				exception0.getMessage());
 
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
-		Exception exception1 = assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
+		final Exception exception1 =
+				assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals("Hedera Client: Missing critical fields in the JSON input to set up the client",
 				exception1.getMessage());
 
 		testInput.remove(JsonConstants.NETWORK_FIELD_NAME);
 		testInput.addProperty(JsonConstants.TRANSACTION_FEE_FIELD_NAME, 1000);
-		Exception exception2 = assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
+		final Exception exception2 =
+				assertThrows(HederaClientException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals("Hedera Client: Missing critical fields in the JSON input to set up the client",
 				exception2.getMessage());
 
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, "not_a_network");
-		Exception exception3 = assertThrows(IllegalArgumentException.class, () -> CommonMethods.setupClient(testInput));
+		final Exception exception3 =
+				assertThrows(IllegalArgumentException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals("No enum constant com.hedera.hashgraph.client.core.enums.NetworkEnum.not_a_network",
 				exception3.getMessage());
 
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
-		Exception exception4 = assertThrows(ClassCastException.class, () -> CommonMethods.setupClient(testInput));
+		final Exception exception4 = assertThrows(ClassCastException.class, () -> CommonMethods.setupClient(testInput));
 		assertEquals(
 				"class com.google.gson.JsonPrimitive cannot be cast to class com.google.gson.JsonObject (com.google" +
 						".gson.JsonPrimitive and com.google.gson.JsonObject are in unnamed module of loader 'app')",
 				exception4.getMessage());
 
-		var feeJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 		testInput.add(JsonConstants.TRANSACTION_FEE_FIELD_NAME, feeJson);
 
-		var client = CommonMethods.setupClient(testInput);
-		Map<String, AccountId> network = new HashMap<>();
+		final var client = CommonMethods.setupClient(testInput);
+		final Map<String, AccountId> network = new HashMap<>();
 		network.put("34.74.191.8:50211", new AccountId(3L));
 		network.put("35.245.150.69:50211", new AccountId(4L));
 		network.put("34.70.193.123:50211", new AccountId(5L));
@@ -153,17 +157,17 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 			logger.info("Output folder created");
 		}
 
-		Exception exception0 =
+		final Exception exception0 =
 				assertThrows(HederaClientException.class, () -> CommonMethods.setupRecoveryPhrase("recovery.aes"));
 		assertEquals("Hedera Client: Cannot open file recovery.aes", exception0.getMessage());
 
-		var mnemonic0 = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
+		final var mnemonic0 = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
 		assertNotNull(mnemonic0);
 
-		var mnemonic1 = CommonMethods.setupRecoveryPhrase("src/test/resources/out");
+		final var mnemonic1 = CommonMethods.setupRecoveryPhrase("src/test/resources/out");
 		assertNotNull(mnemonic1);
 		assertTrue(new File("src/test/resources/out/recovery.aes").exists());
-		var mnemonic2 =
+		final var mnemonic2 =
 				SecurityUtilities.fromEncryptedFile(
 						SecurityUtilities.keyFromPasswordLegacy(Constants.TEST_PASSWORD.toCharArray()),
 						"src/test/resources/out/recovery.aes");
@@ -176,29 +180,29 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		if (new File("src/test/resources/keyStores").mkdirs()) {
 			logger.info("Output folder created");
 		}
-		var keyName0 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName0 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertFalse(keyName0.isEmpty());
 		assertEquals("src/test/resources/keyStores/KeyStore-0.pem", keyName0);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName0));
 
 
-		var keyName1 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName1 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertEquals("src/test/resources/keyStores/KeyStore-1.pem", keyName1);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName1));
 
-		var keyName2 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName2 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertEquals("src/test/resources/keyStores/KeyStore-2.pem", keyName2);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName2));
 
-		var keyName3 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName3 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertEquals("src/test/resources/keyStores/KeyStore-3.pem", keyName3);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName3));
 
-		var keyName4 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName4 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertEquals("src/test/resources/keyStores/KeyStore-4.pem", keyName4);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName4));
 
-		var keyName5 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
+		final var keyName5 = CommonMethods.buildKeyName("KeyStore", "src/test/resources/keyStores");
 		assertEquals("src/test/resources/keyStores/KeyStore-5.pem", keyName5);
 		FileUtils.copyFile(new File("src/test/resources/Keys/genesis.pem"), new File(keyName5));
 
@@ -213,7 +217,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 			logger.info("Output folder created");
 		}
 
-		var mnemonic = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
+		final var mnemonic = CommonMethods.setupRecoveryPhrase("src/test/resources/recovery.aes");
 		final var singleKeyAsJson =
 				CommonMethods.createSingleKeyAsJson(mnemonic, Constants.TEST_PASSWORD.toCharArray(), 7,
 						"src/test/resources/Keys/Temp");
@@ -222,11 +226,11 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		assertEquals("2b4fb0101d1f2d405feba7187ae2fd7bba8db91741d66e0c00599df69109be28",
 				singleKeyAsJson.get("Ed25519").getAsString());
 
-		Exception e1 = assertThrows(HederaClientException.class,
+		final Exception e1 = assertThrows(HederaClientException.class,
 				() -> CommonMethods.createSingleKeyAsJson(mnemonic, null, 7, "src/test/resources/Keys/Temp"));
 		assertEquals("Hedera Client: " + ErrorMessages.PASSWORD_CANNOT_BE_EMPTY_ERROR_MESSAGE, e1.getMessage());
 
-		Exception e2 = assertThrows(HederaClientException.class,
+		final Exception e2 = assertThrows(HederaClientException.class,
 				() -> CommonMethods.createSingleKeyAsJson(null, Constants.TEST_PASSWORD.toCharArray(), 7,
 						"src/test/resources/Keys/Temp"));
 		assertEquals("Hedera Client: " + ErrorMessages.MNEMONIC_CANNOT_BE_NULL_ERROR_MESSAGE, e2.getMessage());
@@ -255,28 +259,28 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void splitStringDigest_test() {
-		var words =
+		final var words =
 				"Lorem ipsum dolor sit amet consectetur adipiscing elit Aliquam tincidunt sapien eu neque malesuada " +
 						"ultrices Etiam ultrices venenatis ex at imperdiet nisi dapibus ac Integer sem magna " +
 						"ultricies a mi vitae sodales hendrerit leo Cras a";
 		var split = CommonMethods.splitStringDigest(words, 9);
 		var pieces = split.split("\n");
 		assertEquals(4, pieces.length);
-		for (var piece : pieces) {
+		for (final var piece : pieces) {
 			assertEquals(9, piece.split("\u00A0").length);
 		}
 
 		split = CommonMethods.splitStringDigest(words, 3);
 		pieces = split.split("\n");
 		assertEquals(12, pieces.length);
-		for (var piece : pieces) {
+		for (final var piece : pieces) {
 			assertEquals(3, piece.split("\u00A0").length);
 		}
 	}
 
 	@Test
 	void nickNameOrNumber_Test() throws HederaClientException {
-		var nicknames = readJsonObject("src/test/resources/accountMapFile.json");
+		final var nicknames = readJsonObject("src/test/resources/accountMapFile.json");
 
 		var testString = CommonMethods.nicknameOrNumber(new Identifier(0, 0, 1), nicknames);
 		assertEquals("zero1 (0.0.1-dfkxr)", testString);
@@ -293,20 +297,20 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void checkJsonInput_test() {
-		var input = new JsonObject();
+		final var input = new JsonObject();
 		input.addProperty("testPropInt", 42);
 		input.addProperty("testPropString", "forty two");
-		var fortyTwo = new JsonObject();
+		final var fortyTwo = new JsonObject();
 		fortyTwo.addProperty("tens", 4);
 		fortyTwo.addProperty("units", "two");
 		input.add("testPropJson", fortyTwo);
-		List<String> props = new ArrayList<>();
+		final List<String> props = new ArrayList<>();
 		props.add("testPropInt");
 		props.add("testPropMap");
 		props.add("testPropString");
 		props.add("testPropLong");
 		props.add("testPropJson");
-		var missing = CommonMethods.checkJsonInput(input, props);
+		final var missing = CommonMethods.checkJsonInput(input, props);
 		assertEquals(2, missing.size());
 		assertTrue(missing.contains("testPropMap"));
 		assertTrue(missing.contains("testPropLong"));
@@ -314,10 +318,10 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void verifyFieldExist_test() {
-		var input = new JsonObject();
+		final var input = new JsonObject();
 		input.addProperty("testPropInt", 42);
 		input.addProperty("testPropString", "forty two");
-		var fortyTwo = new JsonObject();
+		final var fortyTwo = new JsonObject();
 		fortyTwo.addProperty("tens", 4);
 		fortyTwo.addProperty("units", "two");
 		input.add("testPropJson", fortyTwo);
@@ -337,20 +341,21 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 	@Test
 	void fromString() throws HederaClientException {
-		var bar = new Hbar(1);
+		final var bar = new Hbar(1);
 		assertEquals(bar, CommonMethods.fromString(bar.toString()));
-		var tinyBar = Hbar.fromTinybars(1);
+		final var tinyBar = Hbar.fromTinybars(1);
 		assertEquals(tinyBar, CommonMethods.fromString(tinyBar.toString()));
 
-		var barTinyBar = Hbar.fromTinybars(110000020);
+		final var barTinyBar = Hbar.fromTinybars(110000020);
 		assertEquals(barTinyBar, CommonMethods.fromString(barTinyBar.toString()));
 
 		assertEquals(Hbar.from(1), CommonMethods.fromString("1"));
 
-		Exception exception0 = assertThrows(NumberFormatException.class, () -> CommonMethods.fromString("not an hbar"));
+		final Exception exception0 =
+				assertThrows(NumberFormatException.class, () -> CommonMethods.fromString("not an hbar"));
 		assertEquals("For input string: \"not\"", exception0.getMessage());
 
-		Exception exception1 = assertThrows(HederaClientException.class, () -> CommonMethods.fromString("1.1.1"));
+		final Exception exception1 = assertThrows(HederaClientException.class, () -> CommonMethods.fromString("1.1.1"));
 		assertEquals("Hedera Client: Cannot parse String \"1.1.1\" to hbars", exception1.getMessage());
 
 	}
@@ -366,7 +371,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		assertEquals("", CommonMethods.removeNickname("a.1.2"));
 		assertEquals("", CommonMethods.removeNickname("1.oio.2"));
 
-		var id = new Identifier(78098098, 987987, 987987);
+		final var id = new Identifier(78098098, 987987, 987987);
 		assertEquals("78098098.987987.987987-fydsl", CommonMethods.removeNickname(id.toReadableStringAndChecksum()));
 	}
 }

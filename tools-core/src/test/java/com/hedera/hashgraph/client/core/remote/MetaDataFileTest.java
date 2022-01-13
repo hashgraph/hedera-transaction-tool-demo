@@ -50,14 +50,14 @@ public class MetaDataFileTest extends TestBase {
 	@Test
 	public void constructor_test() throws IOException {
 		final var file = new File("src/test/resources/Files/0.0.2.meta");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var metaDataFile = new MetadataFile(info);
+		final var metaDataFile = new MetadataFile(info);
 		assertNotNull(metaDataFile);
 		assertTrue(metaDataFile.isValid());
 
-		var badFile = new File("src/test/resources/Files/0.0.2.meta");
-		var badInfo = FileDetails.parse(badFile);
+		final var badFile = new File("src/test/resources/Files/0.0.2.meta");
+		final var badInfo = FileDetails.parse(badFile);
 		assertFalse(new InfoFile(badInfo).isValid());
 
 	}
@@ -69,14 +69,14 @@ public class MetaDataFileTest extends TestBase {
 				fileCopy);
 
 		final var file = fileCopy;
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var metaDataFile = new MetadataFile(info);
-		var initialActions = metaDataFile.getMetadataActions();
+		final var metaDataFile = new MetadataFile(info);
+		final var initialActions = metaDataFile.getMetadataActions();
 		assertEquals(1, initialActions.size());
 
 
-		var action = new MetadataAction("{\"timestamp\":{\"seconds\":1610396976,\"nanos\":203273000}," +
+		final var action = new MetadataAction("{\"timestamp\":{\"seconds\":1610396976,\"nanos\":203273000}," +
 				"\"action\":\"ACCEPT\",\"location\":\"\\/Users\\/davidmatusevich\\/Hedera Council\\/Transactions - " +
 				"Documents\",\"userComments\":\"a comment from the user\",\"keyName\":\"\"}");
 		metaDataFile.addAction(action);

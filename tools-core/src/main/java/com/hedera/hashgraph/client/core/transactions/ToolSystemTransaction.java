@@ -54,18 +54,18 @@ public class ToolSystemTransaction extends ToolTransaction {
 	private boolean isDelete;
 	private static final Logger logger = LogManager.getLogger(ToolSystemTransaction.class);
 
-	public ToolSystemTransaction(JsonObject input) throws HederaClientException {
+	public ToolSystemTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;
 	}
 
-	public ToolSystemTransaction(File inputFile) throws HederaClientException {
+	public ToolSystemTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.isDelete = transaction instanceof SystemDeleteTransaction;
-		var contract =
+		final var contract =
 				(isDelete) ? ((SystemDeleteTransaction) transaction).getContractId() :
 						((SystemUndeleteTransaction) transaction).getContractId();
-		var file =
+		final var file =
 				(isDelete) ? ((SystemDeleteTransaction) transaction).getFileId() :
 						((SystemUndeleteTransaction) transaction).getFileId();
 
@@ -99,7 +99,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 		if (!CommonMethods.verifyFieldExist(input, ENTITY_TO_DEL_UNDEL, DEL_UNDEL_SWITCH,
 				FILE_CONTRACT_SWITCH)) {
@@ -109,21 +109,21 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 		try {
 			entity = Identifier.parse(input.get(ENTITY_TO_DEL_UNDEL).getAsJsonObject());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ENTITY_TO_DEL_UNDEL);
 			answer = false;
 		}
 
 		try {
 			isDelete = input.get(DEL_UNDEL_SWITCH).getAsString().contains("Remove");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, DEL_UNDEL_SWITCH);
 			answer = false;
 		}
 
 		try {
 			isFile = input.get(FILE_CONTRACT_SWITCH).getAsString().contains("File");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, FILE_CONTRACT_SWITCH);
 			answer = false;
 		}
@@ -135,7 +135,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 		try {
 			expiration = new Timestamp(input.get(EXPIRATION_DATE_TIME)).asInstant();
-		} catch (NumberFormatException | ParseException e) {
+		} catch (final NumberFormatException | ParseException e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, EXPIRATION_DATE_TIME);
 			answer = false;
 		}
@@ -145,10 +145,10 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 	@Override
 	public Transaction<?> build() throws HederaClientRuntimeException {
-		var transactionId = new TransactionId(feePayerID.asAccount(), transactionValidStart);
+		final var transactionId = new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
 		if (isDelete) {
-			var systemTransaction = new SystemDeleteTransaction()
+			final var systemTransaction = new SystemDeleteTransaction()
 					.setExpirationTime(expiration)
 					.setTransactionId(transactionId)
 					.setTransactionMemo(memo)
@@ -161,7 +161,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 			}
 			return systemTransaction.setContractId(entity.asContract()).freeze();
 		}
-		var systemTransaction = new SystemUndeleteTransaction()
+		final var systemTransaction = new SystemUndeleteTransaction()
 				.setTransactionId(transactionId)
 				.setTransactionMemo(memo)
 				.setMaxTransactionFee(transactionFee)
@@ -178,7 +178,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 	@Override
 	public JsonObject asJson() {
-		var asJson = super.asJson();
+		final var asJson = super.asJson();
 		asJson.add(ENTITY_TO_DEL_UNDEL, entity.asJSON());
 		asJson.addProperty(FILE_CONTRACT_SWITCH, isFile);
 		asJson.addProperty(DEL_UNDEL_SWITCH, isDelete);
@@ -190,14 +190,14 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
-		Set<AccountId> accountIds = new HashSet<>();
+		final Set<AccountId> accountIds = new HashSet<>();
 		accountIds.add(new Identifier(0, 0, 2).asAccount());
 		accountIds.add(new Identifier(0, 0, 50).asAccount());
 		return accountIds;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		return super.equals(obj);
 	}
 

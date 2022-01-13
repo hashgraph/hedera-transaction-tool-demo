@@ -67,7 +67,7 @@ import static java.nio.file.Files.readAllBytes;
  * The first section shows the key's nickname and gives the user the option of changing the nickname (button).
  * The second section shows the public key, and allows the user to export it to one of the remote drives (or a place of
  * the user's choosing).
- * The last section will only be shown in the case the key has a PEM file. By default the private key will be hidden. If
+ * The last section will only be shown in the case the key has a PEM file. By default, the private key will be hidden. If
  * the user presses the "SHOW" button, a second popup will appear asking for the user's password to decrypt the PEM and
  * show it in the window.
  */
@@ -96,22 +96,22 @@ public class CompleteKeysPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Boolean display(String pubKeyAddress, boolean showNicknameEdit) {
+	public static Boolean display(final String pubKeyAddress, final boolean showNicknameEdit) {
 		initializeOutputDirectories();
 		publicKey = pubKeyAddress;
 		privateKey = pubKeyAddress.replace(PUB_EXTENSION, PK_EXTENSION).replace(TXT_EXTENSION, PK_EXTENSION);
 		keyName = FilenameUtils.getBaseName(publicKey);
 
-		var pemExists = new File(privateKey).exists();
+		final var pemExists = new File(privateKey).exists();
 
-		var window = new Stage();
+		final var window = new Stage();
 
 		window.setTitle("Key details");
 		window.sizeToScene();
 		window.setMaxWidth(600);
 		window.initModality(Modality.APPLICATION_MODAL);
 
-		var chars = new char[96];
+		final var chars = new char[96];
 		Arrays.fill(chars, '\u2022');
 
 
@@ -122,41 +122,41 @@ public class CompleteKeysPopup {
 			publicKeyLabel.setStyle(WHITE_WITH_BLUE_BORDER_STYLE);
 			publicKeyLabel.setEditable(false);
 			publicKeyLabel.setPrefRowCount(3);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 		}
 
-		var nick = new TextField();
+		final var nick = new TextField();
 		nick.setStyle(WHITE_WITH_BLUE_BORDER_STYLE + " -fx-padding: 5,5,5,5");
 		HBox.setHgrow(nick, Priority.ALWAYS);
 		nick.setText(keyName);
 
-		var privateKeyLabel = new TextArea(new String(chars));
+		final var privateKeyLabel = new TextArea(new String(chars));
 		privateKeyLabel.setWrapText(true);
 		privateKeyLabel.setStyle(WHITE_WITH_BLUE_BORDER_STYLE + " -fx-opacity: 1;");
 		privateKeyLabel.setEditable(false);
 		privateKeyLabel.setDisable(true);
 		privateKeyLabel.setPrefRowCount(3);
 
-		var layout = new VBox();
+		final var layout = new VBox();
 
 		// Buttons: Continue, export and view pk
-		var continueButton = new Button("CLOSE");
+		final var continueButton = new Button("CLOSE");
 		continueButton.setStyle(WHITE_BUTTON_STYLE);
 		continueButton.setPrefWidth(200);
 		continueButton.setOnAction(event -> window.close());
 
-		var showPrivateButton = new Button("SHOW");
+		final var showPrivateButton = new Button("SHOW");
 		showPrivateButton.setVisible(true);
-		var hidePrivateButton = new Button("HIDE");
+		final var hidePrivateButton = new Button("HIDE");
 		hidePrivateButton.setVisible(false);
-		var changePasswordButton = new Button("CHANGE PASSWORD");
+		final var changePasswordButton = new Button("CHANGE PASSWORD");
 
 		showPrivateButton.setStyle(WHITE_BUTTON_STYLE);
 		showPrivateButton.setMinWidth(200);
 		showPrivateButton.setOnAction(actionEvent -> {
-			var utility = new KeyPairUtility();
-			var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
+			final var utility = new KeyPairUtility();
+			final var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
 					String.format("Please enter the password for key %s", keyName));
 			if (keyPair != null) {
 				privateKeyLabel.setText(Hex.toHexString(keyPair.getPrivate().getEncoded()));
@@ -181,7 +181,7 @@ public class CompleteKeysPopup {
 		changePasswordButton.setStyle(WHITE_BUTTON_STYLE);
 		changePasswordButton.setMinWidth(200);
 		changePasswordButton.setOnAction(actionEvent -> {
-			var answer =
+			final var answer =
 					PopupMessage.display("Change password", "This will change the key's password.", true, "CONTINUE",
 							"DECLINE");
 			if (Boolean.TRUE.equals(answer)) {
@@ -190,78 +190,78 @@ public class CompleteKeysPopup {
 			}
 		});
 
-		var updateButton = new Button("CHANGE");
+		final var updateButton = new Button("CHANGE");
 		updateButton.setStyle(WHITE_BUTTON_STYLE);
 		updateButton.setMinWidth(200);
 		updateButton.setOnAction(event -> updateNickname(nick.getText()));
 		updateButton.setVisible(showNicknameEdit);
 
-		var buttonBox = new VBox();
+		final var buttonBox = new VBox();
 		buttonBox.getChildren().addAll(showPrivateButton, hidePrivateButton, changePasswordButton);
 		buttonBox.setSpacing(5);
 
-		var menuButton = new MenuButton("EXPORT");
+		final var menuButton = new MenuButton("EXPORT");
 		menuButton.setAlignment(Pos.CENTER);
 		menuButton.setStyle(WHITE_BUTTON_STYLE);
 		menuButton.setMinWidth(200);
 		initializeExportPublicKeysMenuButton(menuButton, layout);
 
-		var nicknameBox = new HBox();
+		final var nicknameBox = new HBox();
 		nicknameBox.getChildren().addAll(nick, updateButton);
 		nicknameBox.setSpacing(10);
 		nicknameBox.setMinWidth(500);
 		nicknameBox.setMaxWidth(500);
 
-		var publicKeyBox = new HBox();
+		final var publicKeyBox = new HBox();
 		publicKeyBox.getChildren().addAll(publicKeyLabel, menuButton);
 		publicKeyBox.setSpacing(10);
 		publicKeyBox.setMinWidth(500);
 		publicKeyBox.setMaxWidth(500);
 
-		var privateKeyBox = new HBox();
+		final var privateKeyBox = new HBox();
 		privateKeyBox.getChildren().addAll(privateKeyLabel, buttonBox);
 		privateKeyBox.setSpacing(10);
 		privateKeyBox.setMinWidth(500);
 		privateKeyBox.setMaxWidth(500);
 
-		var nickTitle = new Label(NICKNAME_EXPLANATION);
+		final var nickTitle = new Label(NICKNAME_EXPLANATION);
 		nickTitle.setStyle(FX_FONT_SIZE);
 		nickTitle.setMaxWidth(500);
 		nickTitle.setWrapText(true);
 
-		var publicKeyTitle = new Label(PUBLIC_KEY_EXPLANATION);
+		final var publicKeyTitle = new Label(PUBLIC_KEY_EXPLANATION);
 		publicKeyTitle.setStyle(FX_FONT_SIZE);
 		publicKeyTitle.setMaxWidth(500);
 		publicKeyTitle.setWrapText(true);
 
-		var privateKeyTitle = new Label(PRIVATE_KEY_EXPLANATION);
+		final var privateKeyTitle = new Label(PRIVATE_KEY_EXPLANATION);
 		privateKeyTitle.setStyle(FX_FONT_SIZE);
 		privateKeyTitle.setMaxWidth(500);
 		privateKeyTitle.setWrapText(true);
 
 
-		var indexLabel = new Label();
+		final var indexLabel = new Label();
 		try {
 			if (pemExists) {
-				var index = (Ed25519KeyStore.getIndex(privateKey)) < 0 ? "not available" : String.valueOf(
+				final var index = (Ed25519KeyStore.getIndex(privateKey)) < 0 ? "not available" : String.valueOf(
 						Ed25519KeyStore.getIndex(privateKey));
 				indexLabel.setText(String.format("Index: %s", index));
 			}
-		} catch (KeyStoreException e) {
+		} catch (final KeyStoreException e) {
 			logger.error(e);
 		}
 
-		var nickNameVBox = new VBox();
+		final var nickNameVBox = new VBox();
 		nickNameVBox.getChildren().addAll(nickTitle, nicknameBox);
 		nickNameVBox.setAlignment(Pos.CENTER_LEFT);
 		nickNameVBox.setSpacing(5);
 
-		var publicKeyVBox = new VBox();
+		final var publicKeyVBox = new VBox();
 		publicKeyVBox.getChildren().addAll(publicKeyTitle, publicKeyBox);
 		publicKeyVBox.setAlignment(Pos.CENTER_LEFT);
 		publicKeyVBox.setSpacing(5);
 
-		var privateKeyVBox = new VBox();
+		final var privateKeyVBox = new VBox();
 		privateKeyVBox.getChildren().addAll(privateKeyTitle, indexLabel, privateKeyBox);
 		privateKeyVBox.setVisible(pemExists);
 		privateKeyVBox.managedProperty().bind(privateKeyVBox.visibleProperty());
@@ -280,7 +280,7 @@ public class CompleteKeysPopup {
 
 		layout.setStyle("-fx-font-size: 14");
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);
@@ -292,13 +292,13 @@ public class CompleteKeysPopup {
 
 	private static void changeKeyPassword() {
 		logger.info("Changing the password for key \"{}\"", privateKey);
-		var utility = new KeyPairUtility();
-		var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
+		final var utility = new KeyPairUtility();
+		final var keyPair = utility.getKeyPairFromPEM(new File(privateKey),
 				String.format("Please enter the password for key %s", keyName));
 		if (keyPair == null) {
 			return;
 		}
-		char[] password = NewPasswordPopup.display();
+		final char[] password = NewPasswordPopup.display();
 
 		if (password == null || Arrays.equals(password, new char[0])) {
 			PopupMessage.display("Password",
@@ -307,27 +307,27 @@ public class CompleteKeysPopup {
 		}
 
 		try {
-			Ed25519KeyStore store = new Ed25519KeyStore.Builder().withPassword(password).build();
-			var index = Ed25519KeyStore.getIndex(privateKey);
-			var version = Ed25519KeyStore.getVersion(privateKey);
-			var hashCode = Ed25519KeyStore.getMnemonicHashCode(privateKey);
+			final Ed25519KeyStore store = new Ed25519KeyStore.Builder().withPassword(password).build();
+			final var index = Ed25519KeyStore.getIndex(privateKey);
+			final var version = Ed25519KeyStore.getVersion(privateKey);
+			final var hashCode = Ed25519KeyStore.getMnemonicHashCode(privateKey);
 			store.add(keyPair);
 			store.write(privateKey, "Transaction Tool UI", index, version, hashCode);
 			PopupMessage.display("Password",
 					String.format("The password for %s has been changed", FilenameUtils.getBaseName(privateKey)));
-		} catch (KeyStoreException e) {
+		} catch (final KeyStoreException e) {
 			logger.error(e.getMessage());
 		}
 	}
 
-	private static void updateNickname(String text) {
+	private static void updateNickname(final String text) {
 		if (text.equals(keyName)) {
 			reloadTable = false;
 		} else {
-			var oldPem = privateKey;
-			var oldPub = publicKey;
-			var newPem = privateKey.replace(keyName, text);
-			var newPub = publicKey.replace(keyName, text);
+			final var oldPem = privateKey;
+			final var oldPub = publicKey;
+			final var newPem = privateKey.replace(keyName, text);
+			final var newPub = publicKey.replace(keyName, text);
 			if (new File(newPem).exists() || new File(newPub).exists()) {
 				reloadTable = false;
 				PopupMessage.display("Duplicated key name",
@@ -347,7 +347,7 @@ public class CompleteKeysPopup {
 							String.format("The nickname for this key has been updated to: %s", text));
 					reloadTable = true;
 					address.setText(publicKey);
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					logger.error(e);
 					PopupMessage.display("Error updating nickname",
 							String.format(
@@ -360,14 +360,14 @@ public class CompleteKeysPopup {
 		}
 	}
 
-	private static void initializeExportPublicKeysMenuButton(MenuButton menuButton, Pane pane) {
+	private static void initializeExportPublicKeysMenuButton(final MenuButton menuButton, final Pane pane) {
 
 		menuButton.getItems().clear();
 		// setup button text
 		if (outputDirectories != null) {
-			for (var s :
+			for (final var s :
 					outputDirectories) {
-				var menuItem =
+				final var menuItem =
 						new MenuItem(s.getPath().replace(System.getProperty("user.home") + File.separator, ""));
 				menuItem.setOnAction(actionEvent -> exportKeysToFileService(s));
 				menuButton.getItems().add(menuItem);
@@ -376,11 +376,11 @@ public class CompleteKeysPopup {
 			menuButton.setDisable(true);
 		}
 
-		var menuItem = new MenuItem("browse for directory");
+		final var menuItem = new MenuItem("browse for directory");
 		menuItem.setOnAction(actionEvent -> {
 			FileService fs = null;
 			try {
-				var s =
+				final var s =
 						browseDirectories(FileSystemView.getFileSystemView().getDefaultDirectory().getPath(), pane);
 				if (!"".equals(s)) {
 					fs = FileAdapterFactory.getAdapter(s);
@@ -388,7 +388,7 @@ public class CompleteKeysPopup {
 					properties.setLastBrowsedDirectory(new File(s));
 				}
 
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error(e);
 
 			}
@@ -399,20 +399,20 @@ public class CompleteKeysPopup {
 		menuButton.getItems().add(menuItem);
 	}
 
-	private static void exportKeysToFileService(FileService fs) {
-		var path = publicKey;
+	private static void exportKeysToFileService(final FileService fs) {
+		final var path = publicKey;
 		assert new File(path).exists();
 		try {
 			if (fs.exists("/OutputFiles")) {
-				var user = properties.getOneDriveCredentials().get(fs.getPath());
-				var remote = "/OutputFiles/" + ((fs.getPath().contains("Volumes")) ? "" : user);
+				final var user = properties.getOneDriveCredentials().get(fs.getPath());
+				final var remote = "/OutputFiles/" + ((fs.getPath().contains("Volumes")) ? "" : user);
 				fs.upload(path, remote);
 				logger.info("Key {} uploaded to {}", keyName, remote);
 			} else {
 				fs.upload(path, "/");
 				logger.info("Key {} uploaded", keyName);
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 	}
@@ -420,18 +420,18 @@ public class CompleteKeysPopup {
 	private static void initializeOutputDirectories() {
 		try {
 			if (properties.getOneDriveCredentials() != null) {
-				var inputs = properties.getOneDriveCredentials().keySet();
+				final var inputs = properties.getOneDriveCredentials().keySet();
 				outputDirectories = new ArrayList<>();
-				for (var s :
+				for (final var s :
 						inputs) {
-					var fs = FileAdapterFactory.getAdapter(s);
+					final var fs = FileAdapterFactory.getAdapter(s);
 					assert fs != null;
 					if (fs.exists()) {
 						outputDirectories.add(fs);
 					}
 				}
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 	}

@@ -55,17 +55,17 @@ class ControllerTest {
 			if (new File(DEFAULT_STORAGE).exists()) {
 				org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
-			Preferences preferences = Preferences.userNodeForPackage(Controller.class);
+			final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 			preferences.clear();
 			assertEquals(0, preferences.keys().length);
-			String defaultStorage =
-					Paths.get("").toAbsolutePath().toString() + "/src/test/resources/testDirectory/TransactionTools";
+			final String defaultStorage =
+					Paths.get("").toAbsolutePath() + "/src/test/resources/testDirectory/TransactionTools";
 			preferences.put(PREFERRED_STORAGE_DIRECTORY, defaultStorage);
 			controller = new Controller();
 			controller.setProperties(new UserAccessibleProperties(defaultStorage + "/Files/user", ""));
 			controller.resetProperties();
 			controller.setVersionString(controller.getVersion());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -73,24 +73,24 @@ class ControllerTest {
 	@Test
 	void storeMapInPreferences_test() {
 		try {
-			Map<String, String> testMap = new HashMap<>();
+			final Map<String, String> testMap = new HashMap<>();
 			testMap.put("test1@somewhere.com", "/here/there/everyWhere");
 			testMap.put("test2@somewhere.else.com", "somewhere/nowhere/everywhere");
 
 			controller.setOneDriveCredentials(testMap);
-			Map<String, String> recoveredMap = controller.getOneDriveCredentials();
+			final Map<String, String> recoveredMap = controller.getOneDriveCredentials();
 
-			for (String key :
+			for (final String key :
 					testMap.keySet()) {
 				assertEquals(testMap.get(key), recoveredMap.get(key));
 			}
 
-			for (String key :
+			for (final String key :
 					recoveredMap.keySet()) {
 				assertEquals(recoveredMap.get(key), testMap.get(key));
 			}
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -100,7 +100,7 @@ class ControllerTest {
 		try {
 			controller.setLastBrowsedDirectory(new File(CURRENT_RELATIVE_PATH));
 			assertEquals(CURRENT_RELATIVE_PATH, controller.getLastTransactionsDirectory());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -110,7 +110,7 @@ class ControllerTest {
 		try {
 			controller.setPreferredStorageDirectory(CURRENT_RELATIVE_PATH);
 			assertEquals(CURRENT_RELATIVE_PATH, controller.getPreferredStorageDirectory());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -120,7 +120,7 @@ class ControllerTest {
 		try {
 			controller.setDefaultTxFee(123456789);
 			assertEquals(123456789, controller.getDefaultTxFee());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -131,7 +131,7 @@ class ControllerTest {
 			controller.setDefaultNodeID(new Identifier(
 					AccountID.newBuilder().setRealmNum(2).setShardNum(1).setAccountNum(3).build()).toReadableString());
 			assertEquals("1.2.3", controller.getDefaultNodeID());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -147,7 +147,7 @@ class ControllerTest {
 
 			controller.setTxValidDuration(200);
 			assertEquals(120, controller.getTxValidDuration());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -158,7 +158,7 @@ class ControllerTest {
 			assertEquals(SetupPhase.INITIAL_SETUP_PHASE, controller.getSetupPhase());
 			controller.setSetupPhase(SetupPhase.NORMAL_OPERATION_PHASE);
 			assertEquals(SetupPhase.NORMAL_OPERATION_PHASE, controller.getSetupPhase());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 
@@ -170,7 +170,7 @@ class ControllerTest {
 			assertFalse(controller.getGenerateRecord());
 			controller.setGenerateRecord(true);
 			assertTrue(controller.getGenerateRecord());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -185,7 +185,7 @@ class ControllerTest {
 			assertEquals(7000000, controller.getAutoRenewPeriod());
 			controller.setAutoRenewPeriod(7500000);
 			assertEquals(7500000, controller.getAutoRenewPeriod());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -224,7 +224,7 @@ class ControllerTest {
 
 			controller.setDefaultSeconds(31);
 			assertEquals(31, controller.getDefaultSeconds());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -235,7 +235,7 @@ class ControllerTest {
 		try {
 			assertFalse(controller.getVersion().isEmpty());
 			assertNotEquals("", controller.getVersion());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -243,13 +243,13 @@ class ControllerTest {
 	@Test
 	void hash_test() {
 		try {
-			PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
+			final PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
 			assertEquals("", controller.getHash());
 
 			controller.setHash("12345679".toCharArray());
-			String hash = controller.getHash();
+			final String hash = controller.getHash();
 			assertTrue(passwordAuthenticator.authenticate("12345679".toCharArray(), hash));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
@@ -262,7 +262,7 @@ class ControllerTest {
 			assertEquals(1, controller.getLastIndex());
 			controller.incrementIndex();
 			assertEquals(2, controller.getLastIndex());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 

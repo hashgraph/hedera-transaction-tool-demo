@@ -76,7 +76,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	@Override
-	public void start(Stage stage) {
+	public void start(final Stage stage) {
 		stage.show();
 	}
 
@@ -89,7 +89,7 @@ public class TestBase extends ApplicationTest {
 
 		try {
 			return (T) lookup(query).queryAll().iterator().next();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
@@ -102,15 +102,15 @@ public class TestBase extends ApplicationTest {
 
 	public boolean exists(final String query) {
 		try {
-			Node x = lookup(query).queryAll().iterator().next();
+			final Node x = lookup(query).queryAll().iterator().next();
 			return x != null;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 	}
 
 	public void remakeTransactionTools() {
-		String toolsFolder =
+		final String toolsFolder =
 				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
 		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
 			logger.info("Folder {} created", toolsFolder);
@@ -125,7 +125,7 @@ public class TestBase extends ApplicationTest {
 					new File(toolsFolder, KEYS_STRING).mkdirs()) {
 				logger.info("{} folder created", KEYS_STRING);
 			}
-		} catch (Exception cause) {
+		} catch (final Exception cause) {
 			logger.error("Unable to remake Transaction folders.", cause);
 		}
 	}
@@ -136,15 +136,15 @@ public class TestBase extends ApplicationTest {
 	 * @param defaultStorage
 	 * 		Storage location
 	 */
-	public static void fixMissingMnemonicHashCode(String defaultStorage) throws KeyStoreException, IOException {
-		File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
+	public static void fixMissingMnemonicHashCode(final String defaultStorage) throws KeyStoreException, IOException {
+		final File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
 		assert keyFiles != null;
-		for (File keyFile : keyFiles) {
+		for (final File keyFile : keyFiles) {
 			final Integer mnemonicHash =
 					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
 			logger.info("{} has hash {}", keyFile.getAbsolutePath(), mnemonicHash);
 			if (mnemonicHash == null) {
-				BufferedWriter output =
+				final BufferedWriter output =
 						new BufferedWriter(new FileWriter(keyFile.getAbsolutePath(), true));
 				output.append("Recovery Phrase Hash: -915976044");
 				output.close();
@@ -159,8 +159,8 @@ public class TestBase extends ApplicationTest {
 	 * @param location
 	 * 		root folder
 	 */
-	public static void setupTransactionDirectory(String location) throws IOException {
-		File directory = new File(location);
+	public static void setupTransactionDirectory(final String location) throws IOException {
+		final File directory = new File(location);
 		if (!directory.exists()) {
 			if (!directory.mkdirs()) {
 				logger.info("Directory already exists");
@@ -193,42 +193,42 @@ public class TestBase extends ApplicationTest {
 	 * 		a string that contains a salt and a password salt
 	 * @return the salt
 	 */
-	public byte[] getSalt(String token, boolean legacy) {
+	public byte[] getSalt(final String token, final boolean legacy) {
 
 		if (legacy) {
 			return new byte[SALT_LENGTH];
 		}
 
-		var decoder = Base64.getDecoder();
+		final var decoder = Base64.getDecoder();
 
-		var tokenBytes = decoder.decode(token);
+		final var tokenBytes = decoder.decode(token);
 		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 			logger.error("Token size check failed");
 		}
 		return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
 	}
 
-	public void ensureVisible(Node node) {
+	public void ensureVisible(final Node node) {
 		Node p = node.getParent();
 		while (!(p instanceof ScrollPane)) {
 			try {
 				p = p.getParent();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				//not inside a scroll pane
 				logger.error(e.getMessage());
 				return;
 			}
 		}
 
-		var scrollPane = (ScrollPane) p;
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
+		final var scrollPane = (ScrollPane) p;
+		final var viewport = scrollPane.getViewportBounds();
+		final var contentHeight =
 				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+		final var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+		final var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
 
 		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
+		final var vValueCurrent = scrollPane.getVvalue();
 
 		if (nodeMaxY < 0) {
 			// currently, located above (remember, top left is (0,0))

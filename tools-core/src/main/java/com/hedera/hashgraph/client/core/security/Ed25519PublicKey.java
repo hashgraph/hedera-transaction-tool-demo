@@ -41,7 +41,7 @@ import java.security.PublicKey;
 public final class Ed25519PublicKey {
 	private final Ed25519PublicKeyParameters pubKeyParams;
 
-	Ed25519PublicKey(Ed25519PublicKeyParameters pubKeyParams) {
+	Ed25519PublicKey(final Ed25519PublicKeyParameters pubKeyParams) {
 		this.pubKeyParams = pubKeyParams;
 	}
 
@@ -51,7 +51,7 @@ public final class Ed25519PublicKey {
 	 * @throws AssertionError
 	 * 		if {@code bytes.length != 32}
 	 */
-	public static Ed25519PublicKey fromBytes(byte[] bytes) {
+	public static Ed25519PublicKey fromBytes(final byte[] bytes) {
 		if (bytes.length != Ed25519.PUBLIC_KEY_SIZE) {
 			throw new HederaClientRuntimeException("Incorrect public key file");
 		}
@@ -69,15 +69,15 @@ public final class Ed25519PublicKey {
 	 * @throws AssertionError
 	 * 		if the hex string decodes to the wrong number of bytes
 	 */
-	public static Ed25519PublicKey fromString(String publicKeyString) {
-		var keyBytes = Hex.decode(publicKeyString);
+	public static Ed25519PublicKey fromString(final String publicKeyString) {
+		final var keyBytes = Hex.decode(publicKeyString);
 
 		// if the decoded bytes matches the length of a public key, try that
 		if (keyBytes.length == Ed25519.PUBLIC_KEY_SIZE) {
 			return fromBytes(keyBytes);
 		}
 
-		var publicKeyInfo = SubjectPublicKeyInfo.getInstance(keyBytes);
+		final var publicKeyInfo = SubjectPublicKeyInfo.getInstance(keyBytes);
 		return fromBytes(publicKeyInfo.getPublicKeyData().getBytes());
 	}
 
@@ -91,7 +91,7 @@ public final class Ed25519PublicKey {
 		if (ed25529KeyBytes == null || ed25529KeyBytes.length < 1) {
 			throw new HederaClientRuntimeException("Ed25519 byte array is empty.");
 		}
-		var pubKeySpec =
+		final var pubKeySpec =
 				new EdDSAPublicKeySpec(ed25529KeyBytes, EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519));
 		return new EdDSAPublicKey(pubKeySpec);
 	}
@@ -102,21 +102,21 @@ public final class Ed25519PublicKey {
 
 	@Override
 	public String toString() {
-		SubjectPublicKeyInfo publicKeyInfo;
+		final SubjectPublicKeyInfo publicKeyInfo;
 
 		try {
 			publicKeyInfo = SubjectPublicKeyInfoFactory.createSubjectPublicKeyInfo(pubKeyParams);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 
 		// I'd love to dedup this with the code in `Ed25519PrivateKey.toString()`
 		// but there's no way to do that without creating an entirely public class
-		byte[] encoded;
+		final byte[] encoded;
 
 		try {
 			encoded = publicKeyInfo.getEncoded("DER");
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 

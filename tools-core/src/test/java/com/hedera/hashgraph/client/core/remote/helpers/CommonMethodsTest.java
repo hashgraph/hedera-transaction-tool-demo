@@ -29,9 +29,9 @@ public class CommonMethodsTest extends TestBase {
 
 	@Test
 	public void getTimeLabel_test() {
-		var label = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), false);
+		final var label = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), false);
 		assertTrue(label.getText().contains("11:53:06 UTC"));
-		var label2 = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), true);
+		final var label2 = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), true);
 		assertTrue(label2.getText().contains("1976-07-20 11:53:06 UTC"));
 	}
 }

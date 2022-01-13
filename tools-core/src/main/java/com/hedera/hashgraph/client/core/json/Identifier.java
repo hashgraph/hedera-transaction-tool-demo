@@ -68,11 +68,11 @@ public class Identifier implements Comparable<Identifier> {
 		this.accountNum = accountNum;
 	}
 
-	public Identifier(AccountID accountID) {
+	public Identifier(final AccountID accountID) {
 		this(accountID.getShardNum(), accountID.getRealmNum(), accountID.getAccountNum());
 	}
 
-	public Identifier(AccountId accountId) {
+	public Identifier(final AccountId accountId) {
 		if (accountId != null) {
 			this.shardNum = accountId.shard;
 			this.realmNum = accountId.realm;
@@ -80,27 +80,27 @@ public class Identifier implements Comparable<Identifier> {
 		}
 	}
 
-	public Identifier(FileID fileID) {
+	public Identifier(final FileID fileID) {
 		this(fileID.getShardNum(), fileID.getRealmNum(), fileID.getFileNum());
 	}
 
-	public Identifier(FileId fileId) {
+	public Identifier(final FileId fileId) {
 		this(fileId.shard, fileId.realm, fileId.num);
 	}
 
-	public Identifier(ContractID contractID) {
+	public Identifier(final ContractID contractID) {
 		this(contractID.getShardNum(), contractID.getRealmNum(), contractID.getContractNum());
 	}
 
-	public Identifier(ContractId contractId) {
+	public Identifier(final ContractId contractId) {
 		this(contractId.shard, contractId.realm, contractId.num);
 	}
 
-	public static Identifier parse(JsonObject jsonObject) throws HederaClientException {
+	public static Identifier parse(final JsonObject jsonObject) throws HederaClientException {
 		handleShardOrRealmNumber(jsonObject, REALM_NUM);
 		handleShardOrRealmNumber(jsonObject, SHARD_NUM);
 
-		long num = handleNumber(jsonObject);
+		final long num = handleNumber(jsonObject);
 		if (num == -1) {
 			throw new HederaClientException("Invalid json object");
 		}
@@ -111,7 +111,7 @@ public class Identifier implements Comparable<Identifier> {
 				num));
 	}
 
-	private static long handleNumber(JsonObject jsonObject) throws HederaClientException {
+	private static long handleNumber(final JsonObject jsonObject) throws HederaClientException {
 		long num = -1;
 		try {
 			if (jsonObject.has(ACCOUNT_NUM)) {
@@ -132,15 +132,16 @@ public class Identifier implements Comparable<Identifier> {
 					throw new HederaClientException("Invalid contract number");
 				}
 			}
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new HederaClientException(e);
 		}
 		return num;
 	}
 
-	private static void handleShardOrRealmNumber(JsonObject jsonObject, String field) throws HederaClientException {
+	private static void handleShardOrRealmNumber(final JsonObject jsonObject,
+			final String field) throws HederaClientException {
 		if (jsonObject.has(field)) {
-			var num = jsonObject.get(field).getAsLong();
+			final var num = jsonObject.get(field).getAsLong();
 			if (num < 0) {
 				throw new HederaClientException(String.format("Invalid field %s", field));
 			}
@@ -248,7 +249,7 @@ public class Identifier implements Comparable<Identifier> {
 		return String.format("%d.%d.%d", shardNum, realmNum, accountNum);
 	}
 
-	public String toNicknameAndChecksum(JsonObject accounts) {
+	public String toNicknameAndChecksum(final JsonObject accounts) {
 		return CommonMethods.nicknameOrNumber(this, accounts);
 	}
 
@@ -285,7 +286,7 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	public JsonElement asJSON() {
-		var id = new JsonObject();
+		final var id = new JsonObject();
 		id.addProperty(REALM_NUM, realmNum);
 		id.addProperty(SHARD_NUM, shardNum);
 		id.addProperty(ACCOUNT_NUM, accountNum);
@@ -293,7 +294,7 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	@Override
-	public int compareTo(@NotNull Identifier o) {
+	public int compareTo(@NotNull final Identifier o) {
 		if (this == o) {
 			return 0;
 		}

@@ -60,14 +60,14 @@ public final class Ed25519PrivateKey {
 	@Nullable
 	private final KeyParameter chainCode;
 
-	private Ed25519PrivateKey(Ed25519PrivateKeyParameters privateKeyParameters) {
+	private Ed25519PrivateKey(final Ed25519PrivateKeyParameters privateKeyParameters) {
 		this.privateKeyParams = privateKeyParameters;
 		chainCode = null;
 	}
 
 	private Ed25519PrivateKey(
-			Ed25519PrivateKeyParameters privateKeyParameters,
-			@Nullable Ed25519PublicKeyParameters publicKeyParameters) {
+			final Ed25519PrivateKeyParameters privateKeyParameters,
+			@Nullable final Ed25519PublicKeyParameters publicKeyParameters) {
 		this.privateKeyParams = privateKeyParameters;
 
 		if (publicKeyParameters != null) {
@@ -76,14 +76,15 @@ public final class Ed25519PrivateKey {
 		chainCode = null;
 	}
 
-	private Ed25519PrivateKey(Ed25519PrivateKeyParameters privateKeyParameters, @Nullable KeyParameter chainCode) {
+	private Ed25519PrivateKey(final Ed25519PrivateKeyParameters privateKeyParameters,
+			@Nullable final KeyParameter chainCode) {
 		this.privateKeyParams = privateKeyParameters;
 		this.publicKey = new Ed25519PublicKey(privateKeyParameters.generatePublicKey());
 		this.chainCode = chainCode;
 	}
 
-	public static Ed25519PrivateKey fromBytes(byte[] keyBytes) {
-		Ed25519PrivateKeyParameters privateKeyParams;
+	public static Ed25519PrivateKey fromBytes(final byte[] keyBytes) {
+		final Ed25519PrivateKeyParameters privateKeyParams;
 		Ed25519PublicKeyParameters pubKeyParams = null;
 
 		if (keyBytes.length == Ed25519.SECRET_KEY_SIZE) {
@@ -99,24 +100,24 @@ public final class Ed25519PrivateKey {
 				pubKeyParams = new Ed25519PublicKeyParameters(keyBytes, Ed25519.SECRET_KEY_SIZE);
 
 				return new Ed25519PrivateKey(privateKeyParams, pubKeyParams);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new HederaClientRuntimeException(e);
 			}
 		} else {
 			// decode a properly DER-encoded private key descriptor
-			var privateKeyInfo = PrivateKeyInfo.getInstance(keyBytes);
+			final var privateKeyInfo = PrivateKeyInfo.getInstance(keyBytes);
 
 			try {
-				var privateKey = privateKeyInfo.parsePrivateKey();
+				final var privateKey = privateKeyInfo.parsePrivateKey();
 				privateKeyParams = new Ed25519PrivateKeyParameters(((ASN1OctetString) privateKey).getOctets(), 0);
 
-				var pubKeyData = privateKeyInfo.getPublicKeyData();
+				final var pubKeyData = privateKeyInfo.getPublicKeyData();
 
 				if (pubKeyData != null) {
 					pubKeyParams = new Ed25519PublicKeyParameters(pubKeyData.getOctets(), 0);
 				}
 
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new HederaClientRuntimeException(e);
 			}
 		}
@@ -130,7 +131,7 @@ public final class Ed25519PrivateKey {
 	}
 
 	/** @return a new private key using the given {@link SecureRandom} */
-	public static Ed25519PrivateKey generate(SecureRandom secureRandom) {
+	public static Ed25519PrivateKey generate(final SecureRandom secureRandom) {
 		return new Ed25519PrivateKey(new Ed25519PrivateKeyParameters(secureRandom));
 	}
 
@@ -144,21 +145,21 @@ public final class Ed25519PrivateKey {
 
 	@Override
 	public String toString() {
-		PrivateKeyInfo privateKeyInfo;
+		final PrivateKeyInfo privateKeyInfo;
 
 		try {
 			privateKeyInfo = new PrivateKeyInfo(
 					new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed25519),
 					new DEROctetString(privateKeyParams.getEncoded()));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 
-		byte[] encoded;
+		final byte[] encoded;
 
 		try {
 			encoded = privateKeyInfo.getEncoded("DER");
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 
@@ -179,16 +180,16 @@ public final class Ed25519PrivateKey {
 	 * @return the recovered key; use {@link #derive(int)} to get a key for an account index (0
 	 * 		for default account)
 	 */
-	public static Ed25519PrivateKey fromMnemonic(Mnemonic mnemonic, String passphrase) {
+	public static Ed25519PrivateKey fromMnemonic(final Mnemonic mnemonic, final String passphrase) {
 		// BIP-39 seed generation
-		var salt = "mnemonic" + Normalizer.normalize(passphrase, Normalizer.Form.NFKD);
-		var pbkdf2 = new PKCS5S2ParametersGenerator(new SHA512Digest());
+		final var salt = "mnemonic" + Normalizer.normalize(passphrase, Normalizer.Form.NFKD);
+		final var pbkdf2 = new PKCS5S2ParametersGenerator(new SHA512Digest());
 		pbkdf2.init(
 				Normalizer.normalize(mnemonic.toString(), Normalizer.Form.NFKD).getBytes(StandardCharsets.UTF_8),
 				salt.getBytes(StandardCharsets.UTF_8),
 				2048);
 
-		var key = (KeyParameter) pbkdf2.generateDerivedParameters(512);
+		final var key = (KeyParameter) pbkdf2.generateDerivedParameters(512);
 		final var seed = key.getKey();
 
 		final var hmacSha512 = new HMac(new SHA512Digest());
@@ -204,14 +205,14 @@ public final class Ed25519PrivateKey {
 		// we pre-derive most of the path as the mobile wallets don't expose more than the index
 		// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
 		// https://github.com/satoshilabs/slips/blob/master/slip-0044.md
-		for (var index : new int[] { 44, 3030, 0, 0 }) {
+		for (final var index : new int[] { 44, 3030, 0, 0 }) {
 			derivedKey = derivedKey.derive(index);
 		}
 
 		return derivedKey;
 	}
 
-	private static Ed25519PrivateKey derivableKey(byte[] deriveData) {
+	private static Ed25519PrivateKey derivableKey(final byte[] deriveData) {
 		final var privateKeyParameters = new Ed25519PrivateKeyParameters(deriveData, 0);
 		final var chainCode = new KeyParameter(deriveData, 32, 32);
 		return new Ed25519PrivateKey(privateKeyParameters, chainCode);
@@ -228,7 +229,7 @@ public final class Ed25519PrivateKey {
 	 * @return the recovered key; use {@link #derive(int)} to get a key for an account index (0
 	 * 		for default account)
 	 */
-	public static Ed25519PrivateKey fromMnemonic(Mnemonic mnemonic) {
+	public static Ed25519PrivateKey fromMnemonic(final Mnemonic mnemonic) {
 		return fromMnemonic(mnemonic, "");
 	}
 
@@ -244,7 +245,7 @@ public final class Ed25519PrivateKey {
 	 * 		the index of the requested key. index = 0 should return the wallet key
 	 * @return the recovered key;
 	 */
-	public static Ed25519PrivateKey fromMnemonic(Mnemonic mnemonic, int index) {
+	public static Ed25519PrivateKey fromMnemonic(final Mnemonic mnemonic, final int index) {
 		return fromMnemonic(mnemonic, "").derive(index);
 	}
 
@@ -269,7 +270,7 @@ public final class Ed25519PrivateKey {
 	 * 		if this key does not support derivation.
 	 * @see #supportsDerivation()
 	 */
-	public Ed25519PrivateKey derive(int index) {
+	public Ed25519PrivateKey derive(final int index) {
 		if (!supportsDerivation()) {
 			throw new IllegalStateException("this private key does not support derivation");
 		}
@@ -290,7 +291,7 @@ public final class Ed25519PrivateKey {
 
 		hmacSha512.update(indexBytes, 0, indexBytes.length);
 
-		var output = new byte[64];
+		final var output = new byte[64];
 		hmacSha512.doFinal(output, 0);
 
 		final var childKeyParams = new Ed25519PrivateKeyParameters(output, 0);

@@ -108,7 +108,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public ToolTransaction() {
 	}
 
-	public ToolTransaction(JsonObject input) throws HederaClientException {
+	public ToolTransaction(final JsonObject input) throws HederaClientException {
 		if (checkInput(input)) {
 			this.input = input;
 			this.transaction = build();
@@ -117,7 +117,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 	}
 
-	public ToolTransaction(File inputFile) throws HederaClientException {
+	public ToolTransaction(final File inputFile) throws HederaClientException {
 		switch (FilenameUtils.getExtension(inputFile.getName())) {
 			case TRANSACTION_EXTENSION:
 				try {
@@ -128,13 +128,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					this.transactionValidStart = Objects.requireNonNull(transaction.getTransactionId().validStart);
 					this.transactionValidDuration = transaction.getTransactionValidDuration();
 					this.memo = transaction.getTransactionMemo();
-				} catch (InvalidProtocolBufferException e) {
+				} catch (final InvalidProtocolBufferException e) {
 					logger.error(e);
 					throw new HederaClientException(CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE);
 				}
 				break;
 			case JSON_EXTENSION:
-				var jsonObject = readJsonObject(inputFile);
+				final var jsonObject = readJsonObject(inputFile);
 				if (checkInput(jsonObject)) {
 					this.input = jsonObject;
 					this.transaction = build();
@@ -147,10 +147,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 	}
 
-	public ToolTransaction parseFile(File inputFile) throws HederaClientException {
+	public ToolTransaction parseFile(final File inputFile) throws HederaClientException {
 		try {
 			transaction = Transaction.fromBytes(readBytes(inputFile.getAbsolutePath()));
-		} catch (InvalidProtocolBufferException e) {
+		} catch (final InvalidProtocolBufferException e) {
 			throw new HederaClientException(e);
 		}
 		if (transaction instanceof TransferTransaction) {
@@ -207,49 +207,49 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transactionType;
 	}
 
-	public void setTransactionType(TransactionType transactionType) {
+	public void setTransactionType(final TransactionType transactionType) {
 		this.transactionType = transactionType;
 	}
 
 	@Override
-	public byte[] sign(PrivateKey key) throws HederaClientRuntimeException {
+	public byte[] sign(final PrivateKey key) throws HederaClientRuntimeException {
 		return key.signTransaction(transaction);
 	}
 
 	@Override
 	public Transaction<? extends Transaction<?>> collate(
-			Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
-		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
+			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+		for (final Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}
 		return transaction;
 	}
 
 	@Override
-	public Transaction<?> collate(Transaction<?> otherTransaction) throws HederaClientRuntimeException {
-		var signatures = otherTransaction.getSignatures();
+	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+		final var signatures = otherTransaction.getSignatures();
 		assert signatures.size() == 1;
-		for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
-			var nodeSignatures = entry.getValue();
+		for (final Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
+			final var nodeSignatures = entry.getValue();
 			collate(nodeSignatures);
 		}
 		return transaction;
 	}
 
 	@Override
-	public Transaction<?> collate(Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
-		for (var signaturePair : signaturePairs) {
-			var publicKey = signaturePair.getPublicKey();
-			var signature = signaturePair.getSignature();
+	public Transaction<?> collate(final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+		for (final var signaturePair : signaturePairs) {
+			final var publicKey = signaturePair.getPublicKey();
+			final var signature = signaturePair.getSignature();
 			transaction.addSignature(publicKey, signature);
 		}
 		return transaction;
 	}
 
 	@Override
-	public boolean verify(PublicKey publicKey) throws HederaClientRuntimeException {
-		Map<AccountId, Map<PublicKey, byte[]>> signatures = transaction.getSignatures();
-		for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
+	public boolean verify(final PublicKey publicKey) throws HederaClientRuntimeException {
+		final Map<AccountId, Map<PublicKey, byte[]>> signatures = transaction.getSignatures();
+		for (final Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
 			if (entry.getValue().containsKey(publicKey)) {
 				return true;
 			}
@@ -258,21 +258,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public boolean verify(AccountInfo info) throws HederaClientException {
+	public boolean verify(final AccountInfo info) throws HederaClientException {
 		return verifyWithKey(info.key);
 	}
 
-	private boolean verifyWithKey(Key key) {
+	private boolean verifyWithKey(final Key key) {
 		if (key instanceof PublicKey) {
 			return verify((PublicKey) key);
 		}
 		return verifyWithKeyList((KeyList) key);
 	}
 
-	private boolean verifyWithKeyList(KeyList keyList) {
-		int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
+	private boolean verifyWithKeyList(final KeyList keyList) {
+		final int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
 		var count = 0;
-		for (var key : keyList) {
+		for (final var key : keyList) {
 			if (verifyWithKey(key)) {
 				count++;
 			}
@@ -286,18 +286,18 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	@Override
 	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException {
 
-		TransactionReceipt receipt;
-		try (var client = setupClient(input)) {
-			var start = (Objects.requireNonNull(transaction.getTransactionId()).validStart);
+		final TransactionReceipt receipt;
+		try (final var client = setupClient(input)) {
+			final var start = (Objects.requireNonNull(transaction.getTransactionId()).validStart);
 			assert start != null;
-			var delay = start.getEpochSecond() - (new Timestamp().asInstant()).getEpochSecond();
+			final var delay = start.getEpochSecond() - (new Timestamp().asInstant()).getEpochSecond();
 			if (delay > 0) {
 				logger.info(Messages.DELAY_MESSAGE, delay);
 				sleep(delay * 1000);
 			}
-			var transactionResponse = transaction.execute(client);
+			final var transactionResponse = transaction.execute(client);
 			receipt = transactionResponse.getReceipt(client);
-		} catch (HederaClientException | TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
+		} catch (final HederaClientException | TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
 			logger.error(e);
 			throw new HederaClientRuntimeException(e);
 		}
@@ -306,7 +306,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = true;
 
 		// Checks the common fields in the input
@@ -317,17 +317,17 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 
 		try {
-			var feePayer = input.getAsJsonObject(FEE_PAYER_ACCOUNT_FIELD_NAME);
+			final var feePayer = input.getAsJsonObject(FEE_PAYER_ACCOUNT_FIELD_NAME);
 			feePayerID = Identifier.parse(feePayer);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, FEE_PAYER_ACCOUNT_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
-			var node = input.getAsJsonObject(NODE_ID_FIELD_NAME);
+			final var node = input.getAsJsonObject(NODE_ID_FIELD_NAME);
 			nodeID = Identifier.parse(node);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, NODE_ID_FIELD_NAME);
 			answer = false;
 		}
@@ -338,7 +338,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					(element.isJsonPrimitive()) ? Hbar.from(element.getAsLong(), HbarUnit.TINYBAR) : jsonToHBars(
 							element.getAsJsonObject());
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, TRANSACTION_FEE_FIELD_NAME);
 			answer = false;
 		}
@@ -348,21 +348,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				final var networkName = input.get(NETWORK_FIELD_NAME).getAsString();
 				network = NetworkEnum.valueOf(networkName);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NETWORK_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
 			transactionValidStart = new Timestamp(input.get(TRANSACTION_VALID_START_FIELD_NAME)).asInstant();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, TRANSACTION_VALID_START_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
 			transactionValidDuration = Duration.ofSeconds(input.get(TRANSACTION_VALID_DURATION_FIELD_NAME).getAsLong());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, TRANSACTION_VALID_DURATION_FIELD_NAME);
 			answer = false;
 		}
@@ -378,12 +378,12 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public String store(String location) throws HederaClientException {
-		var transactionBytes = transaction.toBytes();
-		var name = Objects.requireNonNull(transaction.getTransactionId()).toString().replace("@",
+	public String store(final String location) throws HederaClientException {
+		final var transactionBytes = transaction.toBytes();
+		final var name = Objects.requireNonNull(transaction.getTransactionId()).toString().replace("@",
 				"_").replace(".", "-");
 
-		String filePath;
+		final String filePath;
 		if (new File(location).isDirectory()) {
 			filePath = location + File.separator + name + "." + TRANSACTION_EXTENSION;
 		} else {
@@ -391,7 +391,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 		try {
 			Files.deleteIfExists(Path.of(filePath));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
@@ -400,7 +400,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public boolean read(String location) throws HederaClientException {
+	public boolean read(final String location) throws HederaClientException {
 		if (FilenameUtils.getExtension(location).equalsIgnoreCase(TRANSACTION_EXTENSION)) {
 			parseFile(new File(location));
 			this.memo = transaction.getTransactionMemo();
@@ -416,7 +416,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public JsonObject asJson() {
-		var jsonTransaction = new JsonObject();
+		final var jsonTransaction = new JsonObject();
 		if (feePayerID != null) {
 			jsonTransaction.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerID.asJSON());
 		}
@@ -465,16 +465,16 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 *
 	 * @return a list of ByteStrings
 	 */
-	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
-		Set<ByteString> keysSet = new HashSet<>();
-		var accounts = getSigningAccounts();
+	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
+		final Set<ByteString> keysSet = new HashSet<>();
+		final var accounts = getSigningAccounts();
 		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
 				accountString -> new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION)).filter(
 				File::exists).forEach(accountFile -> {
 			try {
-				var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
 				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-			} catch (InvalidProtocolBufferException | HederaClientException e) {
+			} catch (final InvalidProtocolBufferException | HederaClientException e) {
 				logger.error(e);
 			}
 		});
@@ -489,13 +489,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * @return a Set of AccountId
 	 */
 	public Set<AccountId> getSigningAccounts() {
-		Set<AccountId> signingAccounts = new HashSet<>();
+		final Set<AccountId> signingAccounts = new HashSet<>();
 		signingAccounts.add(Objects.requireNonNull(transaction.getTransactionId()).accountId);
 		return signingAccounts;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof ToolTransaction)) {
 			return false;
 		}

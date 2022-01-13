@@ -35,12 +35,12 @@ public class FileAdapterFactory {
 	private FileAdapterFactory() {
 	}
 
-	public static FileService getAdapter(String path) throws HederaClientException {
+	public static FileService getAdapter(final String path) throws HederaClientException {
 		if (path != null && !Objects.requireNonNull(path).isEmpty()) {
 			try {
 				if (path.contains("USB")) {
 					logger.debug("USB path {} has been detected", path);
-					var usbPath = findVolumes();
+					final var usbPath = findVolumes();
 					if ("".equals(usbPath)) {
 						return null;
 					}
@@ -50,7 +50,7 @@ public class FileAdapterFactory {
 					logger.debug("Local path {} has been detected", path);
 					return new LocalFileServiceAdapter(path);
 				}
-			} catch (InvalidPathException e) {
+			} catch (final InvalidPathException e) {
 				throw new HederaClientException("No FileService is created.");
 			}
 		} else {
@@ -61,12 +61,12 @@ public class FileAdapterFactory {
 	private static String findVolumes() {
 		final var volume = new File(File.separator + "Volumes");
 		if (volume.exists()) {
-			var roots = volume.listFiles();
+			final var roots = volume.listFiles();
 			assert roots != null;
 			logger.debug("Found {} volumes", roots.length);
 			//Scan all volumes (MAC only)
 			if (roots.length > 0) {
-				for (var volumes : roots) {
+				for (final var volumes : roots) {
 					// The volume containing the string "HD" is the default name for the laptop's hard drive
 					// Added MACOS to the ignored volumes list, as rebuilt laptops might use it as the name for the
 					// hard drive (08/03/2021)

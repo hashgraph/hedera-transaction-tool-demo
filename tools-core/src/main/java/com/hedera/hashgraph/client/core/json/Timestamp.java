@@ -74,21 +74,21 @@ public class Timestamp {
 		this.nanos = jsonObject.get(NANOS).getAsInt();
 	}
 
-	public Timestamp(Duration duration) {
+	public Timestamp(final Duration duration) {
 		this(duration.getSeconds(), duration.getNano());
 	}
 
-	public Timestamp(String rfcTimeString) throws ParseException {
-		var sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+	public Timestamp(final String rfcTimeString) throws ParseException {
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		var date = sdf.parse(rfcTimeString);
+		final var date = sdf.parse(rfcTimeString);
 		this.seconds = date.getTime() / 1000;
 		this.nanos = 0;
 	}
 
-	public Timestamp(JsonElement jsonElement) throws ParseException {
+	public Timestamp(final JsonElement jsonElement) throws ParseException {
 
-		var timestamp = jsonElement.isJsonPrimitive() ? new Timestamp(jsonElement.getAsString()) : new Timestamp(
+		final var timestamp = jsonElement.isJsonPrimitive() ? new Timestamp(jsonElement.getAsString()) : new Timestamp(
 				jsonElement.getAsJsonObject());
 		this.seconds = timestamp.getSeconds();
 		this.nanos = timestamp.getNanos();
@@ -98,11 +98,11 @@ public class Timestamp {
 		return seconds;
 	}
 
-	public Timestamp plusSeconds(long seconds) {
+	public Timestamp plusSeconds(final long seconds) {
 		return new Timestamp(this.seconds + seconds, this.nanos);
 	}
 
-	public Timestamp plusNanos(int nanos) {
+	public Timestamp plusNanos(final int nanos) {
 		if (this.nanos + nanos < 1000000000) {
 			return new Timestamp(this.seconds, this.nanos + nanos);
 		} else {
@@ -143,40 +143,40 @@ public class Timestamp {
 	}
 
 	public String asUTCString() {
-		var date = new Date(seconds * 1000);
-		var sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+		final var date = new Date(seconds * 1000);
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
 	}
 
 	public String asReadableLocalString() {
-		var date = new Date(seconds * 1000);
-		var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		final var date = new Date(seconds * 1000);
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		return sdf.format(date) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
 	}
 
 	public String asRFCString() {
-		var date = new Date(seconds * 1000);
-		var sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		final var date = new Date(seconds * 1000);
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return sdf.format(date);
 	}
 
 
 	public Calendar asCalendar() {
-		var cal = Calendar.getInstance();
+		final var cal = Calendar.getInstance();
 		cal.setTime(new Date(this.getSeconds() * 1000 + this.getNanos() / 1000000));
 		return cal;
 	}
 
 	public Calendar asCalendarUTC() {
-		var cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		final var cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		cal.setTime(new Date(this.getSeconds() * 1000 + this.getNanos() / 1000000));
 		return cal;
 	}
 
 	public JsonObject asJSON() {
-		var jsonObject = new JsonObject();
+		final var jsonObject = new JsonObject();
 		jsonObject.addProperty(SECONDS, this.seconds);
 		jsonObject.addProperty(NANOS, this.nanos);
 		return jsonObject;

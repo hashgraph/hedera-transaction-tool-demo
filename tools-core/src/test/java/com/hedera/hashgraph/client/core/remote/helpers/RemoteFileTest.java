@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.core.remote.helpers;
 
-import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -38,10 +37,10 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class RemoteFileTest extends TestBase implements GenericFileReadWriteAware {
@@ -52,9 +51,9 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Before
 	public void setUp() throws Exception {
-		JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
+		final var testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
 		writeJsonObject("src/test/resources/Files/testJson.json", testJson);
-		ToolTransaction transaction = new ToolTransferTransaction(testJson);
+		final ToolTransaction transaction = new ToolTransferTransaction(testJson);
 		filename = transaction.store("src/test/resources/Files/testTransfer.tx");
 	}
 
@@ -66,7 +65,7 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Test
 	public void constructor_test() throws HederaClientException {
-		var remoteFile = new RemoteFile(filename);
+		final var remoteFile = new RemoteFile(filename);
 		assertNotNull(remoteFile);
 		assertTrue(remoteFile.isValid());
 		assertFalse(remoteFile.isExpired());
@@ -75,13 +74,13 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 
 	@Test
 	public void getters_test() throws HederaClientException, IOException {
-		var remoteFile = new RemoteFile(filename);
+		final var remoteFile = new RemoteFile(filename);
 		assertEquals("src/test/resources/Files/testTransfer.tx", remoteFile.getPath());
 		assertEquals("testTransfer.tx", remoteFile.getName());
 		assertEquals(FileType.TRANSACTION, remoteFile.getType());
 		assertEquals("testTransfer", remoteFile.getBaseName());
-		var file = new File(filename);
-		var info = FileDetails.parse(file);
+		final var file = new File(filename);
+		final var info = FileDetails.parse(file);
 
 		assertEquals(info.getAttributes().lastModifiedTime().to(TimeUnit.SECONDS), remoteFile.getDate());
 	}

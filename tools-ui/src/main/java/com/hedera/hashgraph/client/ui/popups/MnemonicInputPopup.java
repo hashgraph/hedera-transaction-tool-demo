@@ -64,38 +64,38 @@ public class MnemonicInputPopup {
 		throw new IllegalStateException("Popup class");
 	}
 
-	public static char[] display(String storageDirectory) {
-		var window = new Stage();
+	public static char[] display(final String storageDirectory) {
+		final var window = new Stage();
 		window.setTitle("Recovery phrase reset");
 		window.sizeToScene();
 		window.initModality(Modality.APPLICATION_MODAL);
 
-		Label recoverMnemonicErrorMessage = new Label(ERROR_MESSAGE);
+		final Label recoverMnemonicErrorMessage = new Label(ERROR_MESSAGE);
 		recoverMnemonicErrorMessage.setStyle("-fx-text-fill: red");
 		recoverMnemonicErrorMessage.setVisible(false);
 
-		Label explanation = new Label(MESSAGE_LABEL);
+		final Label explanation = new Label(MESSAGE_LABEL);
 		explanation.setMaxWidth(450);
 		explanation.setWrapText(true);
 
-		VBox recoverPhraseBox = new VBox();
-		VBox recoverPasswordVBox = new VBox();
+		final VBox recoverPhraseBox = new VBox();
+		final VBox recoverPasswordVBox = new VBox();
 
-		Button recoverPhraseButton = new Button("RECOVER");
+		final Button recoverPhraseButton = new Button("RECOVER");
 		recoverPhraseButton.setStyle(Constants.WHITE_BUTTON_STYLE);
 		recoverPhraseButton.setVisible(false);
 		recoverPhraseButton.managedProperty().bind(recoverPhraseButton.visibleProperty());
 
-		Button pasteFromClipboard = new Button("PASTE");
+		final Button pasteFromClipboard = new Button("PASTE");
 		pasteFromClipboard.setStyle(Constants.WHITE_BUTTON_STYLE);
 		pasteFromClipboard.setOnAction(actionEvent -> pastePhraseFromClipBoard());
 
-		Button cancelButton = new Button(CANCEL);
+		final Button cancelButton = new Button(CANCEL);
 		cancelButton.setStyle(Constants.BLUE_BUTTON_STYLE);
 		cancelButton.setOnAction(actionEvent -> window.close());
 
 
-		HBox buttonBox = new HBox();
+		final HBox buttonBox = new HBox();
 		pasteFromClipboard.setPrefWidth(150);
 		recoverPhraseButton.setPrefWidth(150);
 		cancelButton.setPrefWidth(150);
@@ -111,11 +111,11 @@ public class MnemonicInputPopup {
 				.withFinishBox(recoverPasswordVBox)
 				.build();
 
-		var mnemonicGridPane = new GridPane();
+		final var mnemonicGridPane = new GridPane();
 		mnemonicPhraseHelper.setupEmptyMnemonicBox(mnemonicGridPane);
 		recoverPhraseBox.getChildren().add(mnemonicGridPane);
 
-		VBox layout = new VBox();
+		final VBox layout = new VBox();
 		layout.setPadding(new Insets(20, 20, 20, 20));
 
 		layout.setAlignment(Pos.CENTER);
@@ -127,26 +127,27 @@ public class MnemonicInputPopup {
 		recoverPhraseButton.setOnAction(
 				actionEvent -> recoverEvent(storageDirectory, window, recoverMnemonicErrorMessage));
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();
 		return answer;
 	}
 
-	private static void recoverEvent(String storageDirectory, Stage window, Label recoverMnemonicErrorMessage) {
-		var words = mnemonicPhraseHelper.getWordsFromGridPane();
+	private static void recoverEvent(final String storageDirectory, final Stage window,
+			final Label recoverMnemonicErrorMessage) {
+		final var words = mnemonicPhraseHelper.getWordsFromGridPane();
 		if (!checkWordsMatch(words)) {
 			return;
 		}
 
-		var password = NewPasswordPopup.display();
+		final var password = NewPasswordPopup.display();
 		if (password.length == 0) {
 			return;
 		}
 		try {
 			setPassword(password);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 
@@ -157,28 +158,28 @@ public class MnemonicInputPopup {
 		}
 
 		try {
-			Mnemonic mnemonic = Mnemonic.fromWords(words);
+			final Mnemonic mnemonic = Mnemonic.fromWords(words);
 			recoverMnemonicErrorMessage.setVisible(false);
-			var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
+			final var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
-			var passwordBytes = keyFromPassword(password, getSalt());
+			final var passwordBytes = keyFromPassword(password, getSalt());
 			toEncryptedFile(passwordBytes, storageDirectory + File.separator + Constants.MNEMONIC_PATH,
 					mnemonic.toString());
 			window.close();
-		} catch (BadMnemonicException | HederaClientException e) {
+		} catch (final BadMnemonicException | HederaClientException e) {
 			logger.error(e);
 			recoverMnemonicErrorMessage.setVisible(true);
 		}
 	}
 
-	private static boolean checkWordsMatch(List<CharSequence> words) {
-		var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		var storedHashCode = properties.getMnemonicHashCode();
-		var newHashCode = words.hashCode();
+	private static boolean checkWordsMatch(final List<CharSequence> words) {
+		final var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		final var storedHashCode = properties.getMnemonicHashCode();
+		final var newHashCode = words.hashCode();
 		if (storedHashCode == newHashCode) {
 			return true;
 		}
-		var mismatch = PopupMessage.display("Recovery phrase mismatch",
+		final var mismatch = PopupMessage.display("Recovery phrase mismatch",
 				"The recovery phrase entered does not match what is stored in the app. If this is intended, please " +
 						"press \"CONTINUE\", otherwise \"CANCEL\"", true,
 				CONTINUE, CANCEL);
@@ -194,17 +195,17 @@ public class MnemonicInputPopup {
 	}
 
 	private static byte[] getSalt() {
-		UserAccessibleProperties properties =
+		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setLegacy(false);
 		return Utilities.getSaltBytes(properties);
 	}
 
-	private static void setPassword(char[] password) throws HederaClientException {
+	private static void setPassword(final char[] password) throws HederaClientException {
 		if (password.length == 0) {
 			return;
 		}
-		UserAccessibleProperties properties =
+		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setHash(password);
 		answer = password;

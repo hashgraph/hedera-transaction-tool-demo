@@ -57,9 +57,9 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		super();
 	}
 
-	public PublicKeyFile(FileDetails f) {
+	public PublicKeyFile(final FileDetails f) {
 		super(f);
-		var l = f.getAttributes().lastModifiedTime().toMillis();
+		final var l = f.getAttributes().lastModifiedTime().toMillis();
 		this.timestamp = new Timestamp(l / 1000, (int) (l % 1000) * 1000000);
 		if (this.isValid()) {
 			setValid(validPubKey(this.getPath()));
@@ -74,7 +74,7 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		if (!new File(KEYS_FOLDER).exists()) {
 			return false;
 		}
-		var fileList =
+		final var fileList =
 				new File(DEFAULT_STORAGE, "Keys").list(
 						(dir, name) -> FilenameUtils.getBaseName(name).equals(getBaseName()));
 		assert fileList != null;
@@ -85,7 +85,7 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		if (!new File(KEYS_FOLDER).exists()) {
 			return false;
 		}
-		var location = KEYS_FOLDER + getName();
+		final var location = KEYS_FOLDER + getName();
 		if (exists()) {
 			// If I have a pem corresponding to this pub, I will not replace it
 			if (getName().endsWith(PUB_EXTENSION) && new File(location.replace(PUB_EXTENSION, PK_EXTENSION)).exists()) {
@@ -98,12 +98,12 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		return false;
 	}
 
-	private boolean validPubKey(String file) {
+	private boolean validPubKey(final String file) {
 		try {
-			var publicKeyString = new String(Files.readAllBytes(Paths.get(file)));
+			final var publicKeyString = new String(Files.readAllBytes(Paths.get(file)));
 			Ed25519PublicKey.fromString(publicKeyString);
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Cannot parse public key");
 			return false;
 		}
@@ -116,11 +116,11 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 
 	@Override
 	public GridPane buildGridPane() {
-		var detailsGridPane = new GridPane();
+		final var detailsGridPane = new GridPane();
 		List<Label> messages = new ArrayList<>();
 
 
-		var l = new Label(exists() ?
+		final var l = new Label(exists() ?
 				String.format("Would you like to replace %s with a new version?", getName()) :
 				String.format("Would you like to import the following public key: %s", getName()));
 
@@ -130,13 +130,13 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		if (isHistory()) {
 			try {
 				messages = getHistory("key");
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
 		}
 
 		var count = 0;
-		for (var message : messages) {
+		for (final var message : messages) {
 			detailsGridPane.add(message, 0, count++);
 		}
 
@@ -147,14 +147,14 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 	public boolean isExpired() {
 		try {
 			return duplicate();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 		}
 		return false;
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 
