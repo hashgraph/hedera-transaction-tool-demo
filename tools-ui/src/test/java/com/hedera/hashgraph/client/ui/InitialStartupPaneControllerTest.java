@@ -241,7 +241,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using password");
 	}
 
-
 	@Test
 	public void generatePassphraseFromProvidedWords_Text() {
 

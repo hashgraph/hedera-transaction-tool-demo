@@ -69,6 +69,7 @@ public class InitialStartupPage {
 		this.driver = driver;
 	}
 
+
 	public InitialStartupPage skipUserName() {
 		final Button b = findButtonInBar(USERNAME_BUTTON_BAR, "SKIP");
 		driver.clickOn(b);
