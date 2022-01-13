@@ -19,9 +19,11 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.AccountInfoFields;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -51,7 +53,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static com.google.gson.JsonParser.parseReader;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -78,7 +82,7 @@ public class AccountHistoryPopup {
 		try {
 			final var name = new Identifier(accountId).toReadableString();
 			final var current = readJson(new File(ACCOUNTS_INFO_FOLDER, name + "." + JSON_EXTENSION));
-			final var lines = getTableLines(accountId);
+			final var lines = getTableLines(accountId, current);
 
 			final var window = new Stage();
 
@@ -143,8 +147,7 @@ public class AccountHistoryPopup {
 		return tableView;
 	}
 
-	private static void doubleClickEvent(final JsonObject current, final TableRow<TableLine> row,
-			final MouseEvent mouseEvent) {
+	private static void doubleClickEvent(final JsonObject current, final TableRow<TableLine> row, final MouseEvent mouseEvent) {
 		if (mouseEvent.getClickCount() != 2 || row.isEmpty()) {
 			return;
 		}
@@ -177,8 +180,7 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static List<TableLine> getTableLines(final AccountId accountId,
-			final JsonObject current) throws IOException {
+	private static List<TableLine> getTableLines(final AccountId accountId, final JsonObject current) throws IOException {
 		getHistory(accountId);
 
 		final List<TableLine> lines = new ArrayList<>();
@@ -227,6 +229,7 @@ public class AccountHistoryPopup {
 
 	public static class TableLine {
 		private String date;
+		private String differences;
 		private final Long seconds;
 
 		public TableLine(final Long entry, final String message) {
@@ -234,6 +237,7 @@ public class AccountHistoryPopup {
 			final Format format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			this.seconds = entry;
 			this.date = format.format(entryDate);
+			this.differences = message;
 		}
 
 		public String getDate() {
