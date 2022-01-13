@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import javafx.beans.property.SimpleStringProperty;
 
+import java.util.Collections;
 import java.util.List;
 
 public class KeysTableRow {
@@ -27,9 +28,9 @@ public class KeysTableRow {
 	private final SimpleStringProperty keyName;
 	private SimpleStringProperty accountList;
 	private String index;
-	private final boolean signer;
+	private boolean signer;
 	private String mnemonic;
-	private final String iconFile;
+	private String iconFile;
 
 	public KeysTableRow(final SimpleStringProperty keyName, final SimpleStringProperty accountList, final String index,
 			final boolean signer, final boolean mnemonic) {
