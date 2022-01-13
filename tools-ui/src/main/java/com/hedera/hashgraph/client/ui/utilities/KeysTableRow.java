@@ -25,6 +25,7 @@ import java.util.List;
 public class KeysTableRow {
 
 	private final SimpleStringProperty keyName;
+	private SimpleStringProperty accountList;
 	private String index;
 	private final boolean signer;
 	private String mnemonic;
@@ -70,8 +71,24 @@ public class KeysTableRow {
 		return keyName.get();
 	}
 
+	public SimpleStringProperty keyNameProperty() {
+		return keyName;
+	}
+
 	public void setKeyName(final String keyName) {
 		this.keyName.set(keyName);
+	}
+
+	public String getAccountList() {
+		return accountList.get();
+	}
+
+	public SimpleStringProperty accountListProperty() {
+		return accountList;
+	}
+
+	public void setAccountList(final String accountList) {
+		this.accountList.set(accountList);
 	}
 
 	public String getIndex() {
@@ -84,6 +101,10 @@ public class KeysTableRow {
 
 	public boolean isSigner() {
 		return signer;
+	}
+
+	public void setSigner(final boolean signer) {
+		this.signer = signer;
 	}
 
 	public String getMnemonic() {
@@ -100,4 +121,28 @@ public class KeysTableRow {
 		}
 	}
 
+	public String getIconFile() {
+		return iconFile;
+	}
+
+	public void setIconFile(final String iconFile) {
+		this.iconFile = iconFile;
+	}
+
+	private String getStringAccountList(final List<String> accounts) {
+		Collections.sort(accounts);
+		if (accounts.isEmpty()) {
+			return "No account found";
+		}
+
+		final var builder = new StringBuilder();
+		accounts.forEach(account -> {
+			if (builder.length() != 0) {
+				builder.append(", ");
+			}
+			builder.append(account);
+		});
+
+		return builder.toString();
+	}
 }

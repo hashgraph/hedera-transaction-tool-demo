@@ -71,7 +71,9 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS
 
 public class TestUtil {
 
+	private static final TestBase driver = new TestBase();
 	private static final FxRobot robot = new FxRobot();
+	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 	private static final String RESOURCES_DIRECTORY = "src/test/resources";
 
 	/**

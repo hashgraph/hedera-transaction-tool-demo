@@ -280,6 +280,7 @@ public class NewPasswordPopupTest extends TestBase {
 		Assert.assertTrue(gridPaneVBox.isVisible());
 		final var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
 		Assert.assertTrue(boxChildren.get(0) instanceof Label);
+		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
 
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase()
