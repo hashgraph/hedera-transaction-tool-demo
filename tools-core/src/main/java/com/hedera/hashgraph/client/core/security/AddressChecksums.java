@@ -38,7 +38,8 @@ public class AddressChecksums {
 	}
 
 	/**
-	 * the result returned by {@link #parseAddress(String)}, including all 4 components of addr, and correct checksum.
+	 * the result returned by {@link #parseAddress(String)}, including all 4 components of addr, and correct checksum
+	 * .
 	 */
 	public static class ParsedAddress {
 		/** is this a valid address? (If it's valid, then it either has a correct checksum, or no checksum) */
@@ -76,7 +77,7 @@ public class AddressChecksums {
 			return correctChecksum;
 		}
 
-		public String getChecksum() {
+    public String getChecksum() {
 			return givenChecksum;
 		}
 

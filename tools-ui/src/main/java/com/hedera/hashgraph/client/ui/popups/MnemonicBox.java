@@ -37,7 +37,8 @@ public class MnemonicBox {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Boolean display(final String title, final String message, final String[] words, final String buttonName) {
+	public static Boolean display(final String title, final String message, final String[] words,
+			final String buttonName) {
 		final var window = new Stage();
 
 		window.setTitle(title);

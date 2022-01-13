@@ -75,7 +75,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CollateCommandTest implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CollateCommandTest.class);
-	private static BooleanSupplier isInCircleCi = () ->
+	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final String RESOURCES_DIRECTORY =
 			((isInCircleCi.getAsBoolean()) ? "/repo/tools-cli/" : "") + "src/test/resources/";
@@ -233,7 +233,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		assertEquals(Status.SUCCESS, receipt.status);
 
 		Files.deleteIfExists(
-				new File(RESOURCES_DIRECTORY, String.format("infos/%s.info", newAccount.toString())).toPath());
+				new File(RESOURCES_DIRECTORY, String.format("infos/%s.info", newAccount)).toPath());
 
 	}
 
@@ -311,7 +311,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		final var newAccount = transactionResponse.getReceipt(client).accountId;
 		assert newAccount != null;
 		final var response = new AccountInfoQuery().setAccountId(newAccount).execute(client);
-		writeBytes(String.format("src/test/resources/infos/%s.info", newAccount.toString()), response.toBytes());
+		writeBytes(String.format("src/test/resources/infos/%s.info", newAccount), response.toBytes());
 		assertEquals(new Hbar(10), response.balance);
 		assertEquals(size, ((KeyList) response.key).size());
 		assertEquals(threshold, ((KeyList) response.key).getThreshold());

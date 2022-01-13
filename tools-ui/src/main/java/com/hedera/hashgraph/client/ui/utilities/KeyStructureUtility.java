@@ -300,8 +300,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private JsonObject handlePublicKey(final JsonObject keyJson) {
 		final JsonObject cleanKey = new JsonObject();
 		final var ed = keyJson.get(ED_25519).getAsString();
-		final var value =
-				(pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
+		final var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
 		cleanKey.addProperty(ED_25519, value);
 		return cleanKey;
 	}

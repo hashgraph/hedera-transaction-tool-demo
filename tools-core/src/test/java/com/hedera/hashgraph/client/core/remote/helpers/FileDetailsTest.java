@@ -33,20 +33,20 @@ class FileDetailsTest {
 
 	@Test
 	void parse_test() throws IOException {
-		final File badFile = new File("src/test/resources/Files/0.0.3.info");
+		final var badFile = new File("src/test/resources/Files/0.0.3.info");
 		final Exception exception = assertThrows(NoSuchFileException.class, () -> FileDetails.parse(badFile));
 
 		assertEquals("src/test/resources/Files/0.0.3.info", exception.getMessage());
 
 
 		final var file = new File("src/test/resources/Files/0.0.2.info");
-		final FileDetails fileDetails = FileDetails.parse(file);
+		final var fileDetails = FileDetails.parse(file);
 		assertEquals("0.0.2", fileDetails.getBaseName());
 		assertEquals("0.0.2.info", fileDetails.getName());
 		assertEquals(file.getParent(), fileDetails.getPath());
 		assertEquals("src/test/resources/Files/0.0.2.info", fileDetails.getFullPath());
 		assertEquals("info", fileDetails.getExtension());
-		final BasicFileAttributes attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+		final var attributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
 		assertEquals(attributes.creationTime(), fileDetails.getAttributes().creationTime());
 		assertEquals(attributes.lastModifiedTime(), fileDetails.getAttributes().lastModifiedTime());
 	}
