@@ -100,7 +100,6 @@ public class AccountLineInformationTest {
 		assertNotEquals(line1, line6);
 		assertNotEquals(line1, line7);
 
-		//noinspection SimplifiableAssertion,EqualsBetweenInconvertibleTypes
 		assertFalse(line1.equals("not a line"));
 
 		assertEquals(0, line1.compareTo(line2));

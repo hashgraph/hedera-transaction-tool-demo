@@ -242,7 +242,6 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var account = transactionResponse.getReceipt(client).accountId;
 
-		assert account != null;
 		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);

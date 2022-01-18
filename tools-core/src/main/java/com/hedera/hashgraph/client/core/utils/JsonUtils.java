@@ -40,7 +40,7 @@ public class JsonUtils {
 	 * Converts an AccountInfo object to a Json object
 	 *
 	 * @param accountInfo
-	 * 		an account info object
+	 * 		an account
 	 * @return a Json object
 	 */
 	public static JsonObject accountInfoToJson(final AccountInfo accountInfo) {

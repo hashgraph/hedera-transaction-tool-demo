@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -50,28 +51,28 @@ public class KeyStructureUtilityTest {
 
 	@BeforeClass
 	public static void beforeClass() {
-		final var mnemonic = Mnemonic.generate24();
+		Mnemonic mnemonic = Mnemonic.generate24();
 		if (new File("src/test/resources/TempKeys/").mkdirs()) {
 			logger.info("Temp folder created");
 		}
 
-		for (var i = 0; i < 20; i++) {
+		for (int i = 0; i < 20; i++) {
 			SecurityUtilities.generateAndStoreKey(String.format("%s%d.pem", keyName, i), "Hedera UI Tool", mnemonic, i,
 					Constants.TEST_PASSWORD.toCharArray());
 		}
 
-		final Map<String, Path> pubFiles = new HashMap<>();
-		final var keysFolder = new File("src/test/resources/TempKeys");
+		Map<String, Path> pubFiles = new HashMap<>();
+		var keysFolder = new File("src/test/resources/TempKeys");
 		if (!keysFolder.exists()) {
 			return;
 		}
 		try {
-			final var publicKeys = keysFolder.listFiles((dir, name) -> name.endsWith(Constants.PUB_EXTENSION));
-			for (final var publicKey : Objects.requireNonNull(publicKeys)) {
-				final var path = publicKey.toPath();
+			var publicKeys = keysFolder.listFiles((dir, name) -> name.endsWith(Constants.PUB_EXTENSION));
+			for (var publicKey : Objects.requireNonNull(publicKeys)) {
+				var path = publicKey.toPath();
 				pubFiles.put(new String(Files.readAllBytes(path)), path);
 			}
-		} catch (final Exception ex) {
+		} catch (Exception ex) {
 			logger.error(ex);
 		}
 		utility = new KeyStructureUtility(pubFiles);
@@ -85,31 +86,31 @@ public class KeyStructureUtilityTest {
 
 	@Test
 	public void replaceAvailableHexfromKey_single() throws IOException {
-		final var singleKeyJson = new JsonObject();
-		final var pubKey = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, 0))));
+		JsonObject singleKeyJson = new JsonObject();
+		String pubKey = new String(Files.readAllBytes(Path.of(String.format("%s%d.pub", keyName, 0))));
 		singleKeyJson.addProperty("Ed25519", pubKey);
-		final var singleKey = EncryptionUtils.jsonToKey(singleKeyJson);
-		final var newJson = EncryptionUtils.keyToJson(singleKey);
+		KeyList singleKey = EncryptionUtils.jsonToKey(singleKeyJson);
+		JsonObject newJson = EncryptionUtils.keyToJson(singleKey);
 
-		final var cleanJson = utility.replaceAvailableHexfromKey(newJson).toString();
+		var cleanJson = utility.replaceAvailableHexfromKey(newJson).toString();
 		assertEquals("{\"Ed25519\":\"testKey-0\"}", cleanJson);
 
 	}
 
 	@Test
 	public void replaceAvailableHexfromKey_KeyList() throws IOException {
-		final var keyListJson = new JsonObject();
-		final var jsonArray = new JsonArray();
-		for (var i = 0; i < 10; i++) {
-			final var name = String.format("%s%d.pub", keyName, i);
-			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
-			final var singleKeyJson = new JsonObject();
+		JsonObject keyListJson = new JsonObject();
+		JsonArray jsonArray = new JsonArray();
+		for (int i = 0; i < 10; i++) {
+			String name = String.format("%s%d.pub", keyName, i);
+			String pubKey = new String(Files.readAllBytes(Path.of(name)));
+			JsonObject singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray.add(singleKeyJson);
 		}
 		keyListJson.add("keyList", jsonArray);
 
-		final var cleanJson = utility.replaceAvailableHexfromKey(keyListJson).toString();
+		var cleanJson = utility.replaceAvailableHexfromKey(keyListJson).toString();
 		assertEquals("{\"keyList\":[{\"Ed25519\":\"testKey-0\"},{\"Ed25519\":\"testKey-1\"}," +
 				"{\"Ed25519\":\"testKey-2\"},{\"Ed25519\":\"testKey-3\"},{\"Ed25519\":\"testKey-4\"}," +
 				"{\"Ed25519\":\"testKey-5\"},{\"Ed25519\":\"testKey-6\"},{\"Ed25519\":\"testKey-7\"}," +
@@ -118,22 +119,22 @@ public class KeyStructureUtilityTest {
 
 	@Test
 	public void replaceAvailableHexfromKey_ThresholdKey() throws IOException {
-		final var thresholdKeyJson = new JsonObject();
+		JsonObject thresholdKeyJson = new JsonObject();
 
-		final var thresholdJson = new JsonObject();
+		JsonObject thresholdJson = new JsonObject();
 		thresholdJson.addProperty("threshold", 8);
-		final var jsonArray = new JsonArray();
-		for (var i = 0; i < 10; i++) {
-			final var name = String.format("%s%d.pub", keyName, i);
-			final var pubKey = new String(Files.readAllBytes(Path.of(name)));
-			final var singleKeyJson = new JsonObject();
+		JsonArray jsonArray = new JsonArray();
+		for (int i = 0; i < 10; i++) {
+			String name = String.format("%s%d.pub", keyName, i);
+			String pubKey = new String(Files.readAllBytes(Path.of(name)));
+			JsonObject singleKeyJson = new JsonObject();
 			singleKeyJson.addProperty("Ed25519", pubKey);
 			jsonArray.add(singleKeyJson);
 		}
 		thresholdJson.add("keyList", jsonArray);
 		thresholdKeyJson.add("thresholdKey", thresholdJson);
 
-		final var cleanJson = utility.replaceAvailableHexfromKey(thresholdKeyJson).toString();
+		var cleanJson = utility.replaceAvailableHexfromKey(thresholdKeyJson).toString();
 		assertEquals("{\"threshold\":8,\"keyList\":{\"keyList\":[{\"Ed25519\":\"testKey-0\"}," +
 				"{\"Ed25519\":\"testKey-1\"},{\"Ed25519\":\"testKey-2\"},{\"Ed25519\":\"testKey-3\"}," +
 				"{\"Ed25519\":\"testKey-4\"},{\"Ed25519\":\"testKey-5\"},{\"Ed25519\":\"testKey-6\"}," +

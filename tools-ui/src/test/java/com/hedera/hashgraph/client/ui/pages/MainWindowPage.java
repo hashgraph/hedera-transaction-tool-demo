@@ -26,8 +26,8 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.HOME_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SETTINGS_BUTTON;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNATURE_BUTTON;
 
-@SuppressWarnings("UnusedReturnValue")
 public class MainWindowPage {
 	private final TestBase driver;
 

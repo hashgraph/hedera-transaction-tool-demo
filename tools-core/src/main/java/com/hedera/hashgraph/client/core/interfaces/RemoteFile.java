@@ -58,19 +58,15 @@ public interface RemoteFile {
 
 	/**
 	 * Checks if the current object is equal to another
-	 *
-	 * @param o
-	 * 		an object to be compared
+	 * @param o an object to be compared
 	 * @return true if the objects are the same.
 	 */
 	boolean equalTo(Object o) throws HederaClientException;
 
 	/**
 	 * Compares to another object
-	 *
-	 * @param o
-	 * 		another object
-	 * @return -1 if less than, 0 if equal, 1 if more than
+	 * @param o another object
+	 * @return -1 if less, 0 if equal 1 if more
 	 */
 	int compareTo(Object o) throws HederaClientException;
 }

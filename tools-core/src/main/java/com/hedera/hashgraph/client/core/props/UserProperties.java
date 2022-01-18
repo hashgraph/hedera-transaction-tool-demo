@@ -130,9 +130,9 @@ public class UserProperties {
 	 * Set an account Identifier property and store to the local file
 	 *
 	 * @param key
-	 * 		string that will be associated with the property
+	 * 		string used as a key
 	 * @param account
-	 * 		an account
+	 * 		the account
 	 */
 	public void setProperty(final String key, final Identifier account) {
 		loadProperties();
@@ -292,7 +292,7 @@ public class UserProperties {
 	 * Load the properties map and return the property value as a map
 	 *
 	 * @param key
-	 * 		the string key
+	 * 		the key used for the property
 	 * @param defaultMap
 	 * 		Map<String, String>
 	 * @return Map<String, String>
@@ -352,8 +352,8 @@ public class UserProperties {
 	/**
 	 * Converts the properties into a Json object that can be exported
 	 *
-	 * @return all the properties in a json format
- 	 */
+	 * @return the properties in json format
+	 */
 	public JsonObject propertiesToJson() {
 		loadProperties();
 		final var jsonObject = new JsonObject();

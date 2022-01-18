@@ -39,7 +39,6 @@ import java.util.Objects;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static java.lang.Thread.sleep;
 
-@SuppressWarnings("UnusedReturnValue")
 public class HomePanePage {
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
 	private final TestBase driver;
@@ -106,7 +105,6 @@ public class HomePanePage {
 		throw new HederaClientException(String.format("The checkbox with legend %s could not be found", keyName));
 	}
 
-	@SuppressWarnings("BusyWait")
 	public HomePanePage waitForWindow() {
 		while (!"".equals(TestUtil.getModalWindowTitle())) {
 			try {
