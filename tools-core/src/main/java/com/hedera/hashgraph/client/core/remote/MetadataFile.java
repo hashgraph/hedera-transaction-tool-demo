@@ -44,10 +44,6 @@ public class MetadataFile extends RemoteFile {
 
 	private final Set<MetadataAction> metadataActions = new HashSet<>();
 
-	public MetadataFile() {
-		super();
-	}
-
 	public MetadataFile(final FileDetails f) {
 		super(f);
 		if (!isValid()) {

@@ -35,7 +35,6 @@ public class JavaFXIDs {
 	// region IDs
 
 	public final static String HOME_BUTTON = "#homeButton";
-	public final static String SIGNATURE_BUTTON = "#signatureButton";
 	public final static String CREATE_BUTTON = "#createButton";
 	public final static String ACCOUNTS_BUTTON = "#accountsButton";
 	public final static String KEYS_BUTTON = "#keysButton";

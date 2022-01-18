@@ -64,7 +64,7 @@ public class TestBase extends ApplicationTest {
 
 	public boolean exists(final String query) {
 		try {
-			final Node x = lookup(query).queryAll().iterator().next();
+			lookup(query).queryAll().iterator().next();
 			return true;
 		} catch (final Exception e) {
 			return false;

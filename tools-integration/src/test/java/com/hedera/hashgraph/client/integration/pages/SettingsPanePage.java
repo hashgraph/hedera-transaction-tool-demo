@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.integration.TestBase;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
+@SuppressWarnings("UnusedReturnValue")
 public class SettingsPanePage {
 	private final TestBase driver;
 

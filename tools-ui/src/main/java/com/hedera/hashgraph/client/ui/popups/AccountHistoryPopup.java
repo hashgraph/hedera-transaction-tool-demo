@@ -250,10 +250,6 @@ public class AccountHistoryPopup {
 			this.date = date;
 		}
 
-		public String getDifferences() {
-			return differences;
-		}
-
 		public void setDifferences(final String differences) {
 			this.differences = differences;
 		}
