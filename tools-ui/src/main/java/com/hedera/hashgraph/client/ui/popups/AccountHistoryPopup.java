@@ -147,7 +147,8 @@ public class AccountHistoryPopup {
 		return tableView;
 	}
 
-	private static void doubleClickEvent(final JsonObject current, final TableRow<TableLine> row, final MouseEvent mouseEvent) {
+	private static void doubleClickEvent(final JsonObject current, final TableRow<TableLine> row,
+			final MouseEvent mouseEvent) {
 		if (mouseEvent.getClickCount() != 2 || row.isEmpty()) {
 			return;
 		}
@@ -180,7 +181,8 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static List<TableLine> getTableLines(final AccountId accountId, final JsonObject current) throws IOException {
+	private static List<TableLine> getTableLines(final AccountId accountId,
+			final JsonObject current) throws IOException {
 		getHistory(accountId);
 
 		final List<TableLine> lines = new ArrayList<>();

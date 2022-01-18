@@ -72,6 +72,10 @@ public class NewPasswordPopupTest extends TestBase {
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 
+	private final String storedMnemonic =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
+
 	@Before
 	public void setUp() throws Exception {
 
@@ -275,10 +279,8 @@ public class NewPasswordPopupTest extends TestBase {
 		Assert.assertTrue(gridPaneVBox.isVisible());
 		final var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
 		Assert.assertTrue(boxChildren.get(0) instanceof Label);
+		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
 
-		final String storedMnemonic =
-				"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
-						"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase()
 				.pressHyperlinkPassword("Forgot your password?")

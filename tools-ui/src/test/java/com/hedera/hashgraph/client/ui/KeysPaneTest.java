@@ -93,6 +93,9 @@ public class KeysPaneTest extends TestBase {
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	private final String storedMnemonic =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	@Before
 	public void setUp() throws Exception {
@@ -191,7 +194,8 @@ public class KeysPaneTest extends TestBase {
 		assertNotNull(gridPaneVBox);
 		assertTrue(gridPaneVBox.isVisible());
 
-		final var mnemonicAfterCancel = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterCancel =
+				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 		assertEquals(mnemonic, mnemonicAfterCancel);
 		assertTrue(change.isVisible());
 		clickOn(change);
@@ -206,7 +210,8 @@ public class KeysPaneTest extends TestBase {
 
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword("tempura sushi");
-		final var mnemonicAfterChange = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterChange =
+				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 
 		assertEquals(mnemonic, mnemonicAfterChange);
 
@@ -596,7 +601,6 @@ public class KeysPaneTest extends TestBase {
 		final var popupNodes = getPopupNodes();
 
 		// Show private key
-		assert popupNodes != null;
 		final var privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
 		final var privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
 		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
@@ -647,6 +651,7 @@ public class KeysPaneTest extends TestBase {
 		final var privateKeyNodes1 = ((HBox) privateKeyVBoxNodes1.get(2)).getChildren();
 		assertTrue(privateKeyNodes1.get(0) instanceof TextArea);
 		assertTrue(privateKeyNodes1.get(1) instanceof VBox);
+		final var hiddenArea = (TextArea) privateKeyNodes1.get(0);
 
 		final var buttons1 = ((VBox) privateKeyNodes1.get(1)).getChildren();
 		assertTrue(buttons1.get(0) instanceof Button);
@@ -711,13 +716,13 @@ public class KeysPaneTest extends TestBase {
 	public void tearDown() {
 		try {
 			final var currentRelativePath = Paths.get("");
-			final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+			final var s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
 			if ((new File(s)).exists()) {
 				FileUtils.deleteDirectory(new File(s));
 			}
 
 			final var out =
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+					currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
 							"Documents/OutputFiles/test1.council2@hederacouncil.org";
 			FileUtils.cleanDirectory(new File(out));
 

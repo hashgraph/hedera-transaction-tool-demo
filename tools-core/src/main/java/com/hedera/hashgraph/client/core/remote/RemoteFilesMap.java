@@ -289,7 +289,8 @@ public class RemoteFilesMap {
 	}
 
 	private static FileType getType(final String extension) throws HederaClientException {
-		for (final var type : FileType.values()) {
+		for (final var type :
+				FileType.values()) {
 			if (type.getExtension().equals(extension)) {
 				return type;
 			}

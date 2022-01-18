@@ -72,7 +72,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		final var emptyFile = new LargeBinaryFile();
 		assertFalse(emptyFile.isValid());
 
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);
@@ -89,63 +89,63 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		var badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/2jsons.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/2jsons.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/2bins.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/2bins.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badBin.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badBin.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badFileID.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badFileID.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badJson.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badJson.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badNode.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badNode.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badPayer.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badPayer.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/badStart.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/badStart.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidFile.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidFile.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidNode.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidNode.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidPayer.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/invalidPayer.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/noFileID.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/noFileID.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/noNode.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/noNode.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/noPayer.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/noPayer.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
-		badFile = new File("src/test/resources/Files/largeBinaryTests/noStart.lfu");
+		badFile = new File("src/test/resources/Files/largeBinaryTests/noStart.zip");
 		badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new LargeBinaryFile(badFileDetails).isValid());
 
@@ -153,7 +153,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void buildGridPane_test() throws IOException, HederaClientException {
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);
@@ -196,7 +196,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	@Test
 	public void getters_test() throws IOException, HederaClientException {
 
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		final var info = FileDetails.parse(file);
 		final var largeBinary = new LargeBinaryFile(info);
 
@@ -216,7 +216,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void execute_test() throws IOException, HederaClientException, KeyStoreException {
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.zip");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);
@@ -262,7 +262,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 	private void unzip(final File zip) throws IOException {
 		final var fileZip = zip.getAbsolutePath();
-		final var destDir = new File(zip.getParent(), FilenameUtils.getBaseName(fileZip));
+		final var destDir = new File(fileZip.replace(".zip", ""));
 		if (destDir.mkdirs()) {
 			logger.info("Destination directory created");
 		}
@@ -285,7 +285,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void chunkTooLarge_test() throws IOException {
-		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.lfu");
+		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.zip");
 		final var info = FileDetails.parse(file);
 		final Exception exception = assertThrows(HederaClientException.class, () -> new LargeBinaryFile(info));
 		assertEquals("Hedera Client: Maximum chunk size is 1024 for unsigned file update transactions.",
