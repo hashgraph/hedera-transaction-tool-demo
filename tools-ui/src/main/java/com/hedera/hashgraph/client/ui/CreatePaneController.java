@@ -1705,7 +1705,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var info = accountsInfoMap.getOrDefault(account, null);
 
 		// Key
-		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0) {
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey)) {
 			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
 		}
 

@@ -163,6 +163,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	private static final long THREAD_PAUSE_TIME = 1000;
 	public static final int TENTH_OF_A_SECOND = 100;
+	public static final int AUTO_RENEW_DEFAULT = 7000013;
+	public static final String CLOUD_OUTPUT_DIRECTORY =
+			"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org";
 	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
 			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
@@ -197,10 +200,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-			if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-					"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
+			if (new File(currentRelativePath.toAbsolutePath() + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
 				logger.info("Output path created");
 			}
+
+			FileUtils.cleanDirectory(new File(CLOUD_OUTPUT_DIRECTORY));
 
 			remakeTransactionTools();
 
@@ -277,7 +281,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 
 			final var outputDirectory = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+					CLOUD_OUTPUT_DIRECTORY);
 			FileUtils.cleanDirectory(outputDirectory);
 
 			TestUtil.copyCreatePaneKeys();
@@ -684,7 +688,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -793,7 +797,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.createAndExport(resources);
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -909,7 +913,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.createAndExport(resources);
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -946,7 +950,96 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
-		assertNotNull(((AccountUpdateTransaction) toolTransaction.getTransaction()).getKey());
+		final var accountUpdateTransaction = (AccountUpdateTransaction) toolTransaction.getTransaction();
+		assertNotNull(accountUpdateTransaction.getKey());
+		assertNull(accountUpdateTransaction.getAutoRenewPeriod());
+
+		assertTrue(comment.has("Author"));
+		assertEquals("test1.council2@hederacouncil.org", comment.get("Author").getAsString());
+		assertTrue(comment.has("Contents"));
+		assertEquals("this is a comment that will go with the update transaction",
+				comment.get("Contents").getAsString());
+		assertTrue(comment.has("Timestamp"));
+	}
+
+	@Test
+	public void createAccountUpdateAutoRenew_test() throws HederaClientException {
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+		find(CREATE_LOCAL_TIME_LABEL);
+
+
+		final var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		final var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+				LocalTime.of(2, 30, 45));
+
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+
+		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
+				.setComment("this is a comment that will go with the update transaction")
+				.setUpdateAccount(73);
+
+		createPanePage.setDate(datePickerFormat.format(date))
+				.setHours(2)
+				.setMinutes(30)
+				.setSeconds(45)
+				.setMemo("A memo")
+				.setFeePayerAccount(1059)
+				.setNodeAccount(42)
+				.setAutoRenew(AUTO_RENEW_DEFAULT);
+
+		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+		logger.info("Exporting to \"{}\"", resources);
+		createPanePage.createAndExport(resources);
+
+
+
+		final var transactions = new File(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
+				});
+
+		assert transactions != null;
+
+		ToolCryptoUpdateTransaction toolTransaction = null;
+		var comment = new JsonObject();
+
+		for (final var f : transactions) {
+			if (f.getName().contains("1059")) {
+				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
+					toolTransaction = new ToolCryptoUpdateTransaction(f);
+				}
+				if (f.getName().endsWith(Constants.TXT_EXTENSION)) {
+					comment = readJsonObject(f.getAbsolutePath());
+				}
+			}
+		}
+
+		assertNotNull(toolTransaction);
+
+		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals("A memo", toolTransaction.getMemo());
+
+		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
+
+		assertEquals(new Identifier(0, 0, 1059).asAccount(),
+				toolTransaction.getTransactionId().accountId);
+
+		assertEquals(transactionValidStart.getTime() / 1000,
+				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
+		assertEquals("A memo", toolTransaction.getMemo());
+
+		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
+		final var accountUpdateTransaction = (AccountUpdateTransaction) toolTransaction.getTransaction();
+		assertNull(accountUpdateTransaction.getKey());
+		assertNotNull(accountUpdateTransaction.getAutoRenewPeriod());
+		assertEquals(AUTO_RENEW_DEFAULT, accountUpdateTransaction.getAutoRenewPeriod().getSeconds());
 
 		assertTrue(comment.has("Author"));
 		assertEquals("test1.council2@hederacouncil.org", comment.get("Author").getAsString());
@@ -990,7 +1083,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.createAndExport(resources);
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.LARGE_BINARY_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1069,7 +1162,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		FileUtils.deleteDirectory(new File("src/test/resources/unzipped"));
 		FileUtils.cleanDirectory(
-				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org"));
+				new File(CLOUD_OUTPUT_DIRECTORY));
 	}
 
 	@Test
@@ -1122,7 +1215,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1192,7 +1285,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1244,7 +1337,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var expiration = LocalDateTime.now().plusMinutes(5);
 
 		final var outputDirectory = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+				CLOUD_OUTPUT_DIRECTORY);
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setComment("this is a comment that will go with the system transaction - Contract Delete")
@@ -1310,7 +1403,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1378,7 +1471,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				pathname -> {
 					var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1883,7 +1976,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
@@ -1922,7 +2015,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
@@ -1969,7 +2062,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
@@ -2015,7 +2108,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.createAndExport(resources);
 
 		var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				CLOUD_OUTPUT_DIRECTORY).listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
@@ -2042,7 +2135,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.resetProperties();
 			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
 			var transactions = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+					CLOUD_OUTPUT_DIRECTORY).listFiles(
 					pathname -> {
 						var name = pathname.getName();
 						return name.endsWith(Constants.TXT_EXTENSION) ||
