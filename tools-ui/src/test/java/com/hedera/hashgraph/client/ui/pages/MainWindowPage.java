@@ -41,6 +41,13 @@ public class MainWindowPage {
 		return new MainWindowPage(driver);
 	}
 
+	public MainWindowPage clickOnSignButton() {
+
+		driver.find(SIGNATURE_BUTTON);
+		driver.clickOn(SIGNATURE_BUTTON);
+		return new MainWindowPage(driver);
+	}
+
 	public MainWindowPage clickOnAccountsButton() {
 
 		driver.clickOn(ACCOUNTS_BUTTON);
@@ -67,4 +74,8 @@ public class MainWindowPage {
 		return new MainWindowPage(driver);
 	}
 
+	public MainWindowPage clickPopupContinue() {
+		final var nodes = TestUtil.getPopupNodes();
+		return this;
+	}
 }

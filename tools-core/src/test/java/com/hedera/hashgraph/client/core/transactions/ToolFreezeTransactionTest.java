@@ -63,7 +63,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildExceptionsPart1_test() {
-		final JsonObject testJson = getBasicJsonObject();
+		final var testJson = getBasicJsonObject();
 		final Exception exception0 =
 				assertThrows(HederaClientException.class, () -> new ToolFreezeTransaction(testJson));
 		assertEquals("Hedera Client: Cannot validate input", exception0.getMessage());
@@ -105,7 +105,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildExceptionsPart2_test() {
-		final JsonObject testJson = getBasicJsonObject();
+		final var testJson = getBasicJsonObject();
 
 		testJson.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		final Exception exception0 =
@@ -162,7 +162,7 @@ class ToolFreezeTransactionTest {
 		final var startTime = new Timestamp(Instant.now().plusSeconds(100));
 		final var fileIdentifier = new Identifier(0, 0, 123);
 
-		final JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startTime.asJSON());
 
@@ -212,7 +212,7 @@ class ToolFreezeTransactionTest {
 	void buildFreezeOnly_test() throws HederaClientException {
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject inputFreezeOnly = getBasicJsonObject();
+		final var inputFreezeOnly = getBasicJsonObject();
 		inputFreezeOnly.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ONLY");
 		inputFreezeOnly.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 
@@ -227,7 +227,7 @@ class ToolFreezeTransactionTest {
 	@Test
 	void buildFreezeAbort_test() throws HederaClientException {
 		// Not clear if freeze abort needs a start time
-		final JsonObject inputFreezeAbort = getBasicJsonObject();
+		final var inputFreezeAbort = getBasicJsonObject();
 		inputFreezeAbort.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_ABORT");
 
 		final var freezeAbort = new ToolFreezeTransaction(inputFreezeAbort);
@@ -240,7 +240,7 @@ class ToolFreezeTransactionTest {
 	void buildPrepareUpgrade() throws HederaClientException {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 
-		final JsonObject inputPrepareUpgrade = getBasicJsonObject();
+		final var inputPrepareUpgrade = getBasicJsonObject();
 		inputPrepareUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "PREPARE_UPGRADE");
 		inputPrepareUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputPrepareUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
@@ -261,7 +261,7 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject inputFreezeUpgrade = getBasicJsonObject();
+		final var inputFreezeUpgrade = getBasicJsonObject();
 		inputFreezeUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		inputFreezeUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputFreezeUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
@@ -285,7 +285,7 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject inputTelemetryUpgrade = getBasicJsonObject();
+		final var inputTelemetryUpgrade = getBasicJsonObject();
 		inputTelemetryUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "TELEMETRY_UPGRADE");
 		inputTelemetryUpgrade.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
 		inputTelemetryUpgrade.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
@@ -310,7 +310,7 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
@@ -327,7 +327,7 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
@@ -351,7 +351,7 @@ class ToolFreezeTransactionTest {
 		final var fileIdentifier = new Identifier(0, 0, 123);
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
-		final JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
@@ -387,7 +387,7 @@ class ToolFreezeTransactionTest {
 		final var startFreeze = new Timestamp(1761418184, 123);
 		final var validStart = new Timestamp(1761418084, 123);
 
-		final JsonObject input = getBasicJsonObject();
+		final var input = getBasicJsonObject();
 		input.addProperty(FREEZE_TYPE_FIELD_NAME, "FREEZE_UPGRADE");
 		input.add(FREEZE_START_TIME_FIELD_NAME, startFreeze.asJSON());
 		input.add(FREEZE_FILE_ID_FIELD_NAME, fileIdentifier.asJSON());
@@ -420,19 +420,19 @@ class ToolFreezeTransactionTest {
 
 	@NotNull
 	private JsonObject getBasicJsonObject() {
-		final JsonObject testJson = new JsonObject();
-		final JsonObject feeJson = new JsonObject();
+		final var testJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, 100000000);
 
-		final JsonObject feePayerAccount = new JsonObject();
+		final var feePayerAccount = new JsonObject();
 		feePayerAccount.addProperty(REALM_NUMBER, 0);
 		feePayerAccount.addProperty(SHARD_NUMBER, 0);
 		feePayerAccount.addProperty(ACCOUNT_NUMBER, 50);
 
 		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
 
-		final JsonObject node = new JsonObject();
+		final var node = new JsonObject();
 		node.addProperty(REALM_NUMBER, 0);
 		node.addProperty(SHARD_NUMBER, 0);
 		node.addProperty(ACCOUNT_NUMBER, 3);

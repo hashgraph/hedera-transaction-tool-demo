@@ -42,7 +42,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSIO
 public class AccountInfoQuery implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(AccountInfoQuery.class);
 	private String network = "mainnet";
-	private AccountId feePayer;
+	private final AccountId feePayer;
 	private Hbar fee = Hbar.from(1);
 
 	private final List<PrivateKey> signingKeys;

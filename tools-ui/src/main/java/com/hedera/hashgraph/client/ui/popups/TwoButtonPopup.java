@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class introduces a popup with 2 buttons, to be used when loading info files.
- * The options are `ACCEPT` (accepts the file and uses the nickname chosen in the text field), DECLINE (does not import
+ * The options are "ACCEPT" (accepts the file and uses the nickname chosen in the text field), "DECLINE" (does not import
  * the file)
  * The popup also contains a checkbox that will only be shown if there are more of one file that needs to be acted upon.
  * If the checkbox is checked, then all files will have the same action.

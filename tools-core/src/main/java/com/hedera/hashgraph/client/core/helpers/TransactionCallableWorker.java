@@ -47,7 +47,8 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	private final String location;
 	private final Client client;
 
-	public TransactionCallableWorker(final Transaction<?> tx, final int delay, final String location, final Client client) {
+	public TransactionCallableWorker(final Transaction<?> tx, final int delay, final String location,
+			final Client client) {
 		this.tx = tx;
 		this.delay = delay;
 		this.location = location;
@@ -58,8 +59,9 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	public String call() throws Exception {
 		assert tx != null;
 		assert tx.getTransactionValidDuration() != null;
-		if (Objects.requireNonNull(Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
-				tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
+		if (Objects.requireNonNull(
+				Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
+						tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
 			throw new HederaClientRuntimeException("Transaction happens in the past.");
 		}
 
@@ -104,7 +106,8 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		}
 	}
 
-	private String storeResponse(final TransactionResponse response, final String idString) throws HederaClientException {
+	private String storeResponse(final TransactionResponse response,
+			final String idString) throws HederaClientException {
 		// Store the response in the out folder
 		try {
 			final var receipt = response.getReceipt(client);

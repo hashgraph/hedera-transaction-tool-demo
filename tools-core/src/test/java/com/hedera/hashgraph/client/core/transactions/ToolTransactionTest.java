@@ -99,60 +99,60 @@ class ToolTransactionTest {
 
 	@Test
 	void checkInput_test() {
-		var startTime = new Timestamp(20).asInstant();
-		var testJsonMissingInput = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJsonMissingInput = getJsonInputCT(50, sender, receiver, startTime);
 		testJsonMissingInput.remove(FEE_PAYER_ACCOUNT_FIELD_NAME);
-		Exception e0 = assertThrows(HederaClientException.class, () -> new ToolTransaction(testJsonMissingInput));
+		final Exception e0 = assertThrows(HederaClientException.class, () -> new ToolTransaction(testJsonMissingInput));
 		assertEquals("Hedera Client: Cannot validate input", e0.getMessage());
 
-		var badPayerId = getJsonInputCT(50, sender, receiver, startTime);
+		final var badPayerId = getJsonInputCT(50, sender, receiver, startTime);
 		badPayerId.addProperty(FEE_PAYER_ACCOUNT_FIELD_NAME, "bad");
-		Exception e1 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badPayerId));
+		final Exception e1 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badPayerId));
 		assertEquals("Hedera Client: Cannot validate input", e1.getMessage());
 
-		var badNodeId = getJsonInputCT(50, sender, receiver, startTime);
+		final var badNodeId = getJsonInputCT(50, sender, receiver, startTime);
 		badNodeId.addProperty(NODE_ID_FIELD_NAME, "bad");
-		Exception e2 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNodeId));
+		final Exception e2 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNodeId));
 		assertEquals("Hedera Client: Cannot validate input", e2.getMessage());
 
-		var badFee = getJsonInputCT(50, sender, receiver, startTime);
+		final var badFee = getJsonInputCT(50, sender, receiver, startTime);
 		badFee.addProperty(TRANSACTION_FEE_FIELD_NAME, "bad");
-		Exception e3 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badFee));
+		final Exception e3 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badFee));
 		assertEquals("Hedera Client: Cannot validate input", e3.getMessage());
 
-		var badNetwork = getJsonInputCT(50, sender, receiver, startTime);
+		final var badNetwork = getJsonInputCT(50, sender, receiver, startTime);
 		badNetwork.addProperty(NETWORK_FIELD_NAME, "bad");
-		Exception e4 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNetwork));
+		final Exception e4 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNetwork));
 		assertEquals("Hedera Client: Cannot validate input", e4.getMessage());
 
-		var badStart = getJsonInputCT(50, sender, receiver, startTime);
+		final var badStart = getJsonInputCT(50, sender, receiver, startTime);
 		badStart.addProperty(TRANSACTION_VALID_START_FIELD_NAME, "bad");
-		Exception e5 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badStart));
+		final Exception e5 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badStart));
 		assertEquals("Hedera Client: Cannot validate input", e5.getMessage());
 
-		var badDuration = getJsonInputCT(50, sender, receiver, startTime);
+		final var badDuration = getJsonInputCT(50, sender, receiver, startTime);
 		badDuration.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, "bad");
-		Exception e6 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badDuration));
+		final Exception e6 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badDuration));
 		assertEquals("Hedera Client: Cannot validate input", e6.getMessage());
 
 	}
 
 	@Test
 	void checkEquals_test() throws HederaClientException {
-		var transaction0 = new ToolTransaction();
+		final var transaction0 = new ToolTransaction();
 
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
-		var transaction1 = new ToolTransaction(testJson);
-		var transaction2 = new ToolTransaction(testJson);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var transaction1 = new ToolTransaction(testJson);
+		final var transaction2 = new ToolTransaction(testJson);
 		assertNotEquals(transaction0, transaction1);
 		assertEquals(transaction1, transaction2);
 
-		var update = new ToolCryptoUpdateTransaction(
+		final var update = new ToolCryptoUpdateTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/updateAccount.tx"));
-		var transfer1 = new ToolTransferTransaction(
+		final var transfer1 = new ToolTransferTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
-		var transfer2 = new ToolTransferTransaction(
+		final var transfer2 = new ToolTransferTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
 		assertTrue(transfer1.equals(transfer2));
 		assertFalse(transfer1.equals(update));
@@ -161,8 +161,8 @@ class ToolTransactionTest {
 
 	@Test
 	void getTransactionFields_test() throws HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var emptyTransaction = new ToolTransaction();
+		final var startTime = new Timestamp(20).asInstant();
+		final var emptyTransaction = new ToolTransaction();
 		assertNull(emptyTransaction.getMemo());
 		assertNull(emptyTransaction.getTransactionFee());
 		assertNull(emptyTransaction.getTransactionValidDuration());
@@ -171,13 +171,13 @@ class ToolTransactionTest {
 		assertNull(emptyTransaction.getNodeID());
 		assertNull(emptyTransaction.getNetwork());
 
-		var testJsonBad = getJsonInputCT(50, sender, receiver, startTime);
+		final var testJsonBad = getJsonInputCT(50, sender, receiver, startTime);
 		testJsonBad.remove(FEE_PAYER_ACCOUNT_FIELD_NAME);
-		Exception e = assertThrows(HederaClientException.class, () -> new ToolTransaction(testJsonBad));
+		final Exception e = assertThrows(HederaClientException.class, () -> new ToolTransaction(testJsonBad));
 		assertEquals("Hedera Client: Cannot validate input", e.getMessage());
 
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
-		var transaction = new ToolTransaction(testJson);
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var transaction = new ToolTransaction(testJson);
 
 		assertEquals("a memo to go with the transaction", transaction.getMemo());
 		assertEquals(Hbar.fromTinybars(100000000), transaction.getTransactionFee());
@@ -190,11 +190,11 @@ class ToolTransactionTest {
 
 	@Test
 	void transferTransaction_test() throws HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 
-		var transfer = new ToolTransferTransaction(testJson);
-		var transactionId = transfer.getTransactionId();
+		final var transfer = new ToolTransferTransaction(testJson);
+		final var transactionId = transfer.getTransactionId();
 		assertEquals(new Identifier(0, 0, sender).asAccount(), transactionId.accountId);
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transactionId.validStart);
 
@@ -206,10 +206,10 @@ class ToolTransactionTest {
 		assertEquals(new Identifier(0, 0, 3), transfer.getNodeID());
 		assertEquals(NetworkEnum.INTEGRATION, transfer.getNetwork());
 
-		var actualTransfer = transfer.getTransaction();
+		final var actualTransfer = transfer.getTransaction();
 		assertTrue(actualTransfer instanceof TransferTransaction);
 
-		var transferList = ((TransferTransaction) actualTransfer).getHbarTransfers();
+		final var transferList = ((TransferTransaction) actualTransfer).getHbarTransfers();
 		assertNotNull(transferList);
 		assertEquals(2, transferList.size());
 		assertTrue(transferList.containsKey(new Identifier(0, 0, sender).asAccount()));
@@ -219,7 +219,7 @@ class ToolTransactionTest {
 
 		assertEquals(TransactionType.CRYPTO_TRANSFER, transfer.getTransactionType());
 
-		var signers = transfer.getSigningAccounts();
+		final var signers = transfer.getSigningAccounts();
 		assertEquals(1, signers.size());
 		assertTrue(signers.contains(new Identifier(0, 0, sender).asAccount()));
 
@@ -227,10 +227,10 @@ class ToolTransactionTest {
 
 	@Test
 	void constructorFromFile_test() throws HederaClientException {
-		var transfer = new ToolTransferTransaction(
+		final var transfer = new ToolTransferTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
 
-		var transactionId = transfer.getTransactionId();
+		final var transactionId = transfer.getTransactionId();
 		assertEquals(new Identifier(0, 0, 76).asAccount(), transactionId.accountId);
 		assert transactionId.validStart != null;
 		assertEquals("2029-05-05T22:10:07", new Timestamp(transactionId.validStart).asRFCString());
@@ -243,10 +243,10 @@ class ToolTransactionTest {
 		assertEquals(new Identifier(0, 0, 3), transfer.getNodeID());
 		assertNull(transfer.getNetwork());
 
-		var actualTransfer = transfer.getTransaction();
+		final var actualTransfer = transfer.getTransaction();
 		assertTrue(actualTransfer instanceof TransferTransaction);
 
-		var transferList = ((TransferTransaction) actualTransfer).getHbarTransfers();
+		final var transferList = ((TransferTransaction) actualTransfer).getHbarTransfers();
 		assertNotNull(transferList);
 		assertEquals(2, transferList.size());
 		assertTrue(transferList.containsKey(new Identifier(0, 0, 50).asAccount()));
@@ -256,7 +256,7 @@ class ToolTransactionTest {
 
 		assertEquals(TransactionType.CRYPTO_TRANSFER, transfer.getTransactionType());
 
-		var signers = transfer.getSigningAccounts();
+		final var signers = transfer.getSigningAccounts();
 		assertEquals(2, signers.size());
 		assertTrue(signers.contains(new Identifier(0, 0, 76).asAccount()));
 		assertTrue(signers.contains(new Identifier(0, 0, 50).asAccount()));
@@ -264,28 +264,28 @@ class ToolTransactionTest {
 
 	@Test
 	void parseFile_test() throws HederaClientException {
-		var transfer = new ToolTransaction().parseFile(
+		final var transfer = new ToolTransaction().parseFile(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
 
 		assertTrue(transfer instanceof ToolTransferTransaction);
 		assertTrue(transfer.transaction instanceof TransferTransaction);
 		assertEquals(TransactionType.CRYPTO_TRANSFER, transfer.getTransactionType());
 
-		var create = new ToolTransaction().parseFile(
+		final var create = new ToolTransaction().parseFile(
 				new File("src/test/resources/Files/TransactionFileTests/createAccount.tx"));
 
 		assertTrue(create instanceof ToolCryptoCreateTransaction);
 		assertTrue(create.transaction instanceof AccountCreateTransaction);
 		assertEquals(TransactionType.CRYPTO_CREATE, create.getTransactionType());
 
-		var update = new ToolTransaction().parseFile(
+		final var update = new ToolTransaction().parseFile(
 				new File("src/test/resources/Files/TransactionFileTests/updateAccount.tx"));
 
 		assertTrue(update instanceof ToolCryptoUpdateTransaction);
 		assertTrue(update.transaction instanceof AccountUpdateTransaction);
 		assertEquals(TransactionType.CRYPTO_UPDATE, update.getTransactionType());
 
-		var system = new ToolTransaction().parseFile(
+		final var system = new ToolTransaction().parseFile(
 				new File("src/test/resources/Files/TransactionFileTests/systemDelete.tx"));
 
 		assertTrue(system instanceof ToolSystemTransaction);
@@ -295,14 +295,14 @@ class ToolTransactionTest {
 
 	@Test
 	void storeRead_test() throws HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 
 		transfer.store("src/test/resources/Files/TransactionFileTests/temp.tx");
 
-		ToolTransaction transaction = new ToolTransaction();
+		final ToolTransaction transaction = new ToolTransaction();
 		assertFalse(transaction.read("src/test/resources/Files/0.0.2.meta"));
 		assertTrue(transaction.read("src/test/resources/Files/TransactionFileTests/temp.tx"));
 
@@ -317,9 +317,9 @@ class ToolTransactionTest {
 
 	@Test
 	void asJson_test() throws HederaClientException {
-		ToolTransaction transaction = new ToolTransaction();
+		final ToolTransaction transaction = new ToolTransaction();
 		assertTrue(transaction.read("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
-		var jsonTransaction = transaction.asJson();
+		final var jsonTransaction = transaction.asJson();
 		assertTrue(jsonTransaction.has(FEE_PAYER_ACCOUNT_FIELD_NAME));
 		assertTrue(jsonTransaction.has(NODE_ID_FIELD_NAME));
 		assertTrue(jsonTransaction.has(TRANSACTION_FEE_FIELD_NAME));
@@ -343,10 +343,10 @@ class ToolTransactionTest {
 
 	@Test
 	void testSigningKeys() throws HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 		var keys = transfer.getSigningKeys("src/test/resources/BadInfo");
 		assertEquals(0, keys.size());
 
@@ -358,21 +358,21 @@ class ToolTransactionTest {
 	@Test
 	void sign_test() throws KeyStoreException, HederaClientException {
 
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 
 
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 
 		final var privateKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
-		var signature = transfer.sign(privateKey);
+		final var signature = transfer.sign(privateKey);
 		assertNotNull(signature);
 		assertEquals(64, signature.length);
 		var nonZero = false;
-		for (byte b : signature) {
+		for (final byte b : signature) {
 			if (b != 0) {
 				nonZero = true;
 				break;
@@ -383,43 +383,43 @@ class ToolTransactionTest {
 
 	@Test
 	void collate_test() throws KeyStoreException, HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 		final var nodeId = new Identifier(0, 0, 3).asAccount();
 
-		Map<PublicKey, byte[]> signatures = new HashMap<>();
+		final Map<PublicKey, byte[]> signatures = new HashMap<>();
 
-		var transfer0 = new ToolTransferTransaction(testJson);
+		final var transfer0 = new ToolTransferTransaction(testJson);
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		signatures.put(privateKey0.getPublicKey(), transfer0.sign(privateKey0));
 
-		var transfer1 = new ToolTransferTransaction(testJson);
+		final var transfer1 = new ToolTransferTransaction(testJson);
 		final var privateKey1 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-1.pem").get(0).getPrivate().getEncoded());
 		signatures.put(privateKey1.getPublicKey(), transfer1.sign(privateKey1));
 
-		var transfer2 = new ToolTransferTransaction(testJson);
+		final var transfer2 = new ToolTransferTransaction(testJson);
 		final var privateKey2 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-2.pem").get(0).getPrivate().getEncoded());
 		signatures.put(privateKey2.getPublicKey(), transfer2.sign(privateKey2));
 
-		var transfer3 = new ToolTransferTransaction(testJson);
+		final var transfer3 = new ToolTransferTransaction(testJson);
 		final var privateKey3 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-3.pem").get(0).getPrivate().getEncoded());
 		signatures.put(privateKey3.getPublicKey(), transfer3.sign(privateKey3));
 
-		var transfer = new ToolTransferTransaction(testJson);
-		var sigMapBefore = transfer.getTransaction().getSignatures();
+		final var transfer = new ToolTransferTransaction(testJson);
+		final var sigMapBefore = transfer.getTransaction().getSignatures();
 		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(signatures);
-		var sigMapAfter = transfer.getTransaction().getSignatures();
+		final var sigMapAfter = transfer.getTransaction().getSignatures();
 		assertTrue(sigMapAfter.containsKey(nodeId));
 		final var collatedMap = sigMapAfter.get(nodeId);
 		assertEquals(4, collatedMap.size());
 
-		for (Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
+		for (final Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
 			assertTrue(collatedMap.containsKey(entry.getKey()));
 			assertArrayEquals(collatedMap.get(entry.getKey()), entry.getValue());
 			entry.getKey().verifyTransaction(transfer.getTransaction());
@@ -430,28 +430,28 @@ class ToolTransactionTest {
 
 	@Test
 	void collateTransactions_test() throws KeyStoreException, HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 		final var nodeId = new Identifier(0, 0, 3).asAccount();
 
-		var transfer0 = new ToolTransferTransaction(testJson);
+		final var transfer0 = new ToolTransferTransaction(testJson);
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		final var signature0 = transfer0.sign(privateKey0);
 
-		var transfer1 = new ToolTransferTransaction(testJson);
+		final var transfer1 = new ToolTransferTransaction(testJson);
 		final var privateKey1 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-1.pem").get(0).getPrivate().getEncoded());
 		final var signature1 = transfer1.sign(privateKey1);
 
-		var sigMapBefore = transfer0.getTransaction().getSignatures();
+		final var sigMapBefore = transfer0.getTransaction().getSignatures();
 		assertTrue(sigMapBefore.containsKey(nodeId));
 		assertEquals(1, sigMapBefore.get(nodeId).size());
 		assertArrayEquals(signature0, sigMapBefore.get(nodeId).get(privateKey0.getPublicKey()));
 
 		transfer0.collate(transfer1.getTransaction());
 
-		var sigMapAfter = transfer0.getTransaction().getSignatures();
+		final var sigMapAfter = transfer0.getTransaction().getSignatures();
 		assertTrue(sigMapAfter.containsKey(nodeId));
 		assertEquals(2, sigMapAfter.get(nodeId).size());
 		assertArrayEquals(signature0, sigMapAfter.get(nodeId).get(privateKey0.getPublicKey()));
@@ -461,43 +461,43 @@ class ToolTransactionTest {
 
 	@Test
 	void collateSignaturePairs_test() throws KeyStoreException, HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 		final var nodeId = new Identifier(0, 0, 3).asAccount();
 
-		Set<SignaturePair> pairs = new HashSet<>();
+		final Set<SignaturePair> pairs = new HashSet<>();
 
-		var transfer0 = new ToolTransferTransaction(testJson);
+		final var transfer0 = new ToolTransferTransaction(testJson);
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey0.getPublicKey(), transfer0.sign(privateKey0)));
 
-		var transfer1 = new ToolTransferTransaction(testJson);
+		final var transfer1 = new ToolTransferTransaction(testJson);
 		final var privateKey1 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-1.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey1.getPublicKey(), transfer1.sign(privateKey1)));
 
-		var transfer2 = new ToolTransferTransaction(testJson);
+		final var transfer2 = new ToolTransferTransaction(testJson);
 		final var privateKey2 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-2.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey2.getPublicKey(), transfer2.sign(privateKey2)));
 
-		var transfer3 = new ToolTransferTransaction(testJson);
+		final var transfer3 = new ToolTransferTransaction(testJson);
 		final var privateKey3 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-3.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey3.getPublicKey(), transfer3.sign(privateKey3)));
 
-		var transfer = new ToolTransferTransaction(testJson);
-		var sigMapBefore = transfer.getTransaction().getSignatures();
+		final var transfer = new ToolTransferTransaction(testJson);
+		final var sigMapBefore = transfer.getTransaction().getSignatures();
 		assertFalse(sigMapBefore.containsKey(nodeId));
 
 		transfer.collate(pairs);
-		var sigMapAfter = transfer.getTransaction().getSignatures();
+		final var sigMapAfter = transfer.getTransaction().getSignatures();
 		assertTrue(sigMapAfter.containsKey(nodeId));
 		final var collatedMap = sigMapAfter.get(nodeId);
 		assertEquals(4, collatedMap.size());
 
-		for (SignaturePair pair : pairs) {
+		for (final SignaturePair pair : pairs) {
 			assertTrue(collatedMap.containsKey(pair.getPublicKey()));
 			assertArrayEquals(pair.getSignature(), collatedMap.get(pair.getPublicKey()));
 			pair.getPublicKey().verifyTransaction(transfer.getTransaction());
@@ -506,40 +506,40 @@ class ToolTransactionTest {
 
 	@Test
 	void verify_test() throws KeyStoreException, HederaClientException {
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, sender, receiver, startTime);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
 
-		Set<SignaturePair> pairs = new HashSet<>();
-		List<PublicKey> publicKeys = new ArrayList<>();
+		final Set<SignaturePair> pairs = new HashSet<>();
+		final List<PublicKey> publicKeys = new ArrayList<>();
 
-		var transfer0 = new ToolTransferTransaction(testJson);
+		final var transfer0 = new ToolTransferTransaction(testJson);
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey0.getPublicKey(), transfer0.sign(privateKey0)));
 		publicKeys.add(privateKey0.getPublicKey());
 
-		var transfer1 = new ToolTransferTransaction(testJson);
+		final var transfer1 = new ToolTransferTransaction(testJson);
 		final var privateKey1 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-1.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey1.getPublicKey(), transfer1.sign(privateKey1)));
 		publicKeys.add(privateKey1.getPublicKey());
 
-		var transfer2 = new ToolTransferTransaction(testJson);
+		final var transfer2 = new ToolTransferTransaction(testJson);
 		final var privateKey2 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-2.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey2.getPublicKey(), transfer2.sign(privateKey2)));
 		publicKeys.add(privateKey2.getPublicKey());
 
-		var transfer3 = new ToolTransferTransaction(testJson);
+		final var transfer3 = new ToolTransferTransaction(testJson);
 		final var privateKey3 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-3.pem").get(0).getPrivate().getEncoded());
 		pairs.add(new SignaturePair(privateKey3.getPublicKey(), transfer3.sign(privateKey3)));
 		publicKeys.add(privateKey3.getPublicKey());
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 		transfer.collate(pairs);
 
-		for (PublicKey publicKey : publicKeys) {
+		for (final PublicKey publicKey : publicKeys) {
 			assertTrue(transfer.verify(publicKey));
 		}
 
@@ -548,7 +548,7 @@ class ToolTransactionTest {
 	@Test
 	void verifyWithInfoAndSubmit() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			ReceiptStatusException, HederaClientException, InterruptedException {
-		List<PublicKey> publicKeys = new ArrayList<>();
+		final List<PublicKey> publicKeys = new ArrayList<>();
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		publicKeys.add(privateKey0.getPublicKey());
@@ -562,45 +562,45 @@ class ToolTransactionTest {
 				"src/test/resources/Keys/KeyStore-3.pem").get(0).getPrivate().getEncoded());
 		publicKeys.add(privateKey3.getPublicKey());
 
-		KeyList keys = new KeyList();
+		final KeyList keys = new KeyList();
 		keys.addAll(publicKeys);
 		keys.setThreshold(2);
 
 		assertEquals(4, keys.size());
 
-		AccountInfo info = createAccount(keys);
-		var startTime = new Timestamp(20).asInstant();
-		var testJson = getJsonInputCT(50, info.accountId.num, receiver, startTime);
+		final AccountInfo info = createAccount(keys);
+		final var startTime = new Timestamp(20).asInstant();
+		final var testJson = getJsonInputCT(50, info.accountId.num, receiver, startTime);
 
-		Set<SignaturePair> pairs = new HashSet<>();
+		final Set<SignaturePair> pairs = new HashSet<>();
 
-		var transfer0 = new ToolTransferTransaction(testJson);
+		final var transfer0 = new ToolTransferTransaction(testJson);
 		pairs.add(new SignaturePair(privateKey0.getPublicKey(), transfer0.sign(privateKey0)));
 		assertFalse(transfer0.verify(info));
 
-		var transfer1 = new ToolTransferTransaction(testJson);
+		final var transfer1 = new ToolTransferTransaction(testJson);
 		pairs.add(new SignaturePair(privateKey1.getPublicKey(), transfer1.sign(privateKey1)));
 		assertFalse(transfer1.verify(info));
 
-		var transfer2 = new ToolTransferTransaction(testJson);
+		final var transfer2 = new ToolTransferTransaction(testJson);
 		pairs.add(new SignaturePair(privateKey2.getPublicKey(), transfer2.sign(privateKey2)));
 		assertFalse(transfer2.verify(info));
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 
 		transfer.collate(pairs);
 		assertTrue(transfer.verify(info));
 
-		var receipt = transfer.submit();
+		final var receipt = transfer.submit();
 		assertEquals(Status.SUCCESS, receipt.status);
-		var endTime = new Timestamp().asInstant();
+		final var endTime = new Timestamp().asInstant();
 		assertTrue(endTime.isAfter(startTime));
 	}
 
 	@Test
 	void badTransactionSubmit_test() throws KeyStoreException, ReceiptStatusException, PrecheckStatusException,
 			TimeoutException, HederaClientException {
-		List<PublicKey> publicKeys = new ArrayList<>();
+		final List<PublicKey> publicKeys = new ArrayList<>();
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
 		publicKeys.add(privateKey0.getPublicKey());
@@ -614,39 +614,40 @@ class ToolTransactionTest {
 				"src/test/resources/Keys/KeyStore-3.pem").get(0).getPrivate().getEncoded());
 		publicKeys.add(privateKey3.getPublicKey());
 
-		KeyList keys = new KeyList();
+		final KeyList keys = new KeyList();
 		keys.addAll(publicKeys);
 		keys.setThreshold(2);
 
 		assertEquals(4, keys.size());
 
-		AccountInfo info = createAccount(keys);
-		var startTime = new Timestamp(1).asInstant();
-		var testJson = getJsonInputCT(50, info.accountId.num, receiver, startTime);
+		final AccountInfo info = createAccount(keys);
+		final var startTime = new Timestamp(1).asInstant();
+		final var testJson = getJsonInputCT(50, info.accountId.num, receiver, startTime);
 
-		var transfer = new ToolTransferTransaction(testJson);
+		final var transfer = new ToolTransferTransaction(testJson);
 
-		Exception e = assertThrows(HederaClientRuntimeException.class, transfer::submit);
+		final Exception e = assertThrows(HederaClientRuntimeException.class, transfer::submit);
 		assertTrue(e.getMessage().contains("failed pre-check with the status `INVALID_SIGNATURE`"));
 
-		var endTime = new Timestamp().asInstant();
+		final var endTime = new Timestamp().asInstant();
 		assertTrue(endTime.isAfter(startTime));
 	}
 
 	private AccountInfo createAccount(
-			KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException, ReceiptStatusException {
-		Client client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		PrivateKey genesisKey = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
+			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
+			ReceiptStatusException {
+		final Client client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final PrivateKey genesisKey = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/genesis.pem").get(0).getPrivate().getEncoded());
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 
-		TransactionResponse response = new AccountCreateTransaction()
+		final TransactionResponse response = new AccountCreateTransaction()
 				.setKey(keys)
 				.setInitialBalance(Hbar.fromTinybars(1000000))
 				.execute(client);
-		TransactionReceipt receipt = response.getReceipt(client);
+		final TransactionReceipt receipt = response.getReceipt(client);
 
-		AccountId newAccountId = receipt.accountId;
+		final AccountId newAccountId = receipt.accountId;
 		assert newAccountId != null;
 
 		return new AccountInfoQuery().setAccountId(newAccountId).execute(client);

@@ -35,11 +35,9 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,7 +50,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 	@Test
 	void buildBundleLegacy_Test() throws HederaClientException, KeyStoreException {
-		final String storageLocation = "src/test/resources/Files";
+		final var storageLocation = "src/test/resources/Files";
 		final var maker =
 				new DistributionMaker(new AccountId(1001), new AccountId(1001), new AccountId(12), new Timestamp(125,
 						0), 98765432, "", storageLocation, OUTPUT);
@@ -61,7 +59,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 		final var keyPairs =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		for (var i = 0; i < 1000; i++) {
-			final BatchLine line =
+			final var line =
 					new BatchLine.Builder()
 							.withAmount("123654")
 							.withReceiverAccountID(new Identifier(0, 0, 1003 + i).toReadableString())
@@ -81,18 +79,18 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 		assertEquals(transactions.size(), signatures.size());
 		final Set<String> names = new HashSet<>();
-		for (final String signature : signatures) {
+		for (final var signature : signatures) {
 			names.add(FilenameUtils.getBaseName(signature));
 		}
-		for (final String transaction : transactions) {
+		for (final var transaction : transactions) {
 			names.add(FilenameUtils.getBaseName(transaction));
 		}
 		assertNotNull(names);
 		assertEquals(signatures.size(), names.size());
 
-		for (final List<String> transaction : csv) {
-			final String nameString = transaction.get(0).replace("\"", "");
-			final String jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
+		for (final var transaction : csv) {
+			final var nameString = transaction.get(0).replace("\"", "");
+			final var jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
 			if ("Filename".equals(nameString)) {
 				continue;
 			}
@@ -106,7 +104,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 	@Test
 	void buildBundle_Test() throws HederaClientException, KeyStoreException {
-		final String storageLocation = "src/test/resources/Files";
+		final var storageLocation = "src/test/resources/Files";
 		final var maker =
 				new DistributionMaker(new AccountId(1001), new AccountId(1007), new AccountId(12), new Timestamp(125,
 						0), 98765432, "a memo line", storageLocation, OUTPUT);
@@ -115,7 +113,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 		final var keyPairs =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		for (var i = 0; i < 1000; i++) {
-			final BatchLine line =
+			final var line =
 					new BatchLine.Builder()
 							.withAmount("123654")
 							.withReceiverAccountID(new Identifier(0, 0, 1003 + i).toReadableString())
@@ -135,18 +133,18 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 		assertEquals(transactions.size(), signatures.size());
 		final Set<String> names = new HashSet<>();
-		for (final String signature : signatures) {
+		for (final var signature : signatures) {
 			names.add(FilenameUtils.getBaseName(signature));
 		}
-		for (final String transaction : transactions) {
+		for (final var transaction : transactions) {
 			names.add(FilenameUtils.getBaseName(transaction));
 		}
 		assertNotNull(names);
 		assertEquals(signatures.size(), names.size());
 
-		for (final List<String> transaction : csv) {
-			final String nameString = transaction.get(0).replace("\"", "");
-			final String jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
+		for (final var transaction : csv) {
+			final var nameString = transaction.get(0).replace("\"", "");
+			final var jsonString = transaction.get(1).replace("\"\"", "\"").replace(";", ",");
 			if ("Filename".equals(nameString)) {
 				continue;
 			}
@@ -166,8 +164,8 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 
 	private List<String> getZipNames(final String zip) throws HederaClientException {
 		final List<String> zipNames = new ArrayList<>();
-		try (final ZipFile zipFile = new ZipFile(zip)) {
-			final Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
+		try (final var zipFile = new ZipFile(zip)) {
+			final var zipEntries = zipFile.entries();
 			while (zipEntries.hasMoreElements()) {
 				zipNames.add(zipEntries.nextElement().getName());
 			}

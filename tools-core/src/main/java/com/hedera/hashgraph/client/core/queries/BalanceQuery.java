@@ -61,7 +61,8 @@ public class BalanceQuery implements GenericFileReadWriteAware {
 	}
 
 	private Client getClient() throws HederaClientException {
-		final var customNetwork = readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
+		final var customNetwork =
+				readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION);
 		return CommonMethods.getClient(customNetwork);
 	}
 

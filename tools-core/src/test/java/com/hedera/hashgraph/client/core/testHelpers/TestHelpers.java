@@ -28,6 +28,7 @@ import java.io.File;
 import java.time.Instant;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_NUMBER;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
@@ -156,6 +157,44 @@ public class TestHelpers {
 
 		return testJson;
 
+	}
+
+	public static JsonObject getJsonInput(final long... accountNums) {
+		final JsonObject testJson = new JsonObject();
+
+		final File key = new File(TestConstants.RESOURCES_DIRECTORY + "/Keys/genesis.pem");
+
+		final JsonObject feePayerAccount = new JsonObject();
+		feePayerAccount.addProperty(REALM_NUMBER, 0);
+		feePayerAccount.addProperty(SHARD_NUMBER, 0);
+		feePayerAccount.addProperty(ACCOUNT_NUMBER, 2);
+
+		final JsonArray accountArray = new JsonArray();
+		for (final long num : accountNums) {
+			final JsonObject account = new JsonObject();
+			account.addProperty(REALM_NUMBER, 0);
+			account.addProperty(SHARD_NUMBER, 0);
+			account.addProperty(ACCOUNT_NUMBER, num);
+			accountArray.add(account);
+		}
+
+		final JsonObject feeJson = new JsonObject();
+		feeJson.addProperty(H_BARS, 0);
+		feeJson.addProperty(TINY_BARS, 10000000);
+
+		final JsonObject node = new JsonObject();
+		node.addProperty(REALM_NUMBER, 0);
+		node.addProperty(SHARD_NUMBER, 0);
+		node.addProperty(ACCOUNT_NUMBER, 3);
+
+		testJson.addProperty(FEE_PAYER_KEY_LOCATION, key.getAbsolutePath());
+		testJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccount);
+		testJson.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+
+		testJson.add(ACCOUNT_ID_FIELD_NAME, accountArray);
+		testJson.add(NODE_ID_FIELD_NAME, node);
+		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
+		return testJson;
 	}
 
 	public static JsonObject buildUpdateJson(final int feePayer, final Instant startInstant) {

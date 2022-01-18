@@ -28,14 +28,14 @@ class DictionaryTest {
 
 	@Test
 	void valid_test() {
-		final Dictionary dictionary = new Dictionary();
+		final var dictionary = new Dictionary();
 		assertTrue(dictionary.valid("pass"));
 		assertFalse(dictionary.valid("abecee"));
 	}
 
 	@Test
 	void suggested_test() {
-		final Dictionary dictionary = new Dictionary();
+		final var dictionary = new Dictionary();
 		var list = dictionary.suggestWords("ab");
 		assertEquals(10, list.size());
 
