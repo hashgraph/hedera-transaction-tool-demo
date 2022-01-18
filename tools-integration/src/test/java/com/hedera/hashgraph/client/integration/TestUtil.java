@@ -34,13 +34,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.DialogPane;
-import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TreeItem;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -49,21 +44,14 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
 import org.testfx.api.FxRobot;
 
-import javax.swing.JFileChooser;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.io.File;
-import java.nio.file.Paths;
 import java.security.KeyStoreException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
@@ -82,7 +70,6 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
-import static org.junit.Assert.assertNotNull;
 
 public class TestUtil {
 
@@ -154,23 +141,6 @@ public class TestUtil {
 	}
 
 
-	public static Button findButton(final String buttonName, final String buttonMessage) {
-		final Button button = driver.find(buttonName);
-		if (button.getText().equals(buttonMessage)) {
-			return button;
-		}
-		return null;
-	}
-
-	public static Button findButtonFromPopup(final String buttonName) {
-		for (final var node : Objects.requireNonNull(getPopupNodes())) {
-			if (node.getClass().isAssignableFrom(Button.class) || node.toString().equalsIgnoreCase(buttonName)) {
-				return (Button) node;
-			}
-		}
-		return null;
-	}
-
 	public static ObservableList<Node> getPopupNodes() {
 		final var actualAlertDialog = findModalWindow();
 		if (actualAlertDialog != null) {
@@ -185,30 +155,6 @@ public class TestUtil {
 			}
 		}
 		return null;
-	}
-
-	public static ObservableList<Node> getPopupNodesReset() {
-		final var actualAlertDialog = findModalWindow();
-		final var dialogPane = (DialogPane) actualAlertDialog.getScene().getRoot();
-		return dialogPane.getChildren();
-	}
-
-	public static ObservableList<Node> getPopupNodeCopyKeys() {
-		final var actualAlertDialog = findModalWindow();
-		final var dialogPane = (HBox) actualAlertDialog.getScene().getRoot();
-		final var vbox = (VBox) dialogPane.getChildren().get(0);
-		final var children = vbox.getChildren();
-		final var label = ((Label) children.get(0)).getText();
-		Assert.assertTrue(label.contains("signPaneKey.pub,signPaneKey1.pub"));
-		final var hbox = (HBox) children.get(1);
-		return ((HBox) hbox.getChildren().get(1)).getChildren();
-	}
-
-	public static ObservableList<Node> getSavedTransactionPopupNodes() {
-		final var actualAlertDialog = findModalWindow();
-		final var dialogPane = (ScrollPane) actualAlertDialog.getScene().getRoot();
-		final var vbox = (VBox) dialogPane.getContent();
-		return vbox.getChildren();
 	}
 
 	public static Stage findModalWindow() {
@@ -231,69 +177,6 @@ public class TestUtil {
 				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
 				.findFirst()
 				.orElse(null);
-	}
-
-	public static void selectFromComboBox(final String item, final String boxName) {
-		driver.clickOn(boxName);
-		driver.clickOn(item);
-
-	}
-
-	public static String getModalWindowTitle() {
-		final List<Window> allWindows = new ArrayList<>(robot.robotContext().getWindowFinder().listWindows());
-		Collections.reverse(allWindows);
-
-		final var s = (Stage) allWindows
-				.stream()
-				.filter(window -> window instanceof Stage)
-				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
-				.findFirst()
-				.orElse(null);
-		if (s != null) {
-			return s.getTitle();
-		} else {
-			return "";
-		}
-	}
-
-	public static <T> long countChildren(final TreeItem<T> treeItem) {
-		long count = 0;
-
-		if (treeItem != null) {
-			final var children = treeItem.getChildren();
-
-			if (children != null) {
-				count += children.size();
-
-				for (final var child : children) {
-					count += countChildren(child);
-				}
-			}
-		}
-
-		return count;
-	}
-
-	public static List<TreeItem> getChildren(final TreeItem treeItem) {
-		final List<TreeItem> leaves = new ArrayList<>();
-
-		if (treeItem.getChildren().isEmpty()) {
-			leaves.add(treeItem);
-		} else {
-			final List<TreeItem> children = treeItem.getChildren();
-			for (final var child : children) {
-				leaves.addAll(getChildren(child));
-			}
-		}
-		return leaves;
-	}
-
-	public static String[] testPopupWindow() {
-		final var actualAlertDialog = findModalWindow();
-		assertNotNull(actualAlertDialog);
-
-		final var dialogPane = (DialogPane) actualAlertDialog.getScene().getRoot();
-		return new String[] { dialogPane.getHeaderText(), dialogPane.getContentText() };
 	}
 
 	/**
@@ -367,70 +250,6 @@ public class TestUtil {
 		return null;
 	}
 
-	/**
-	 * Initialize keys folder with test keys.
-	 */
-	public static void copyCreatePaneKeys() {
-		final var createPaneFolderSuffix = "CreatePaneTest";
-		final var testResourceFolder = "/src/test/resources";
-		final var createPaneFolder =
-				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents" + File.separator + createPaneFolderSuffix;
-		final var testDirectory = new File(createPaneFolder);
-		if (!(testDirectory).exists() && testDirectory.mkdirs()) {
-			logger.info("Test folder created");
-		}
-		final var keysDirectory = new File(testDirectory, "Keys");
-		if (!(keysDirectory).exists() && keysDirectory.mkdirs()) {
-			logger.info("Keys folder created");
-		}
-
-		final var sourceCreatePaneTestDirectory = Paths.get(
-				"").toAbsolutePath().toString() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator + "Keys";
-		logger.info("Test keys directory : {}", sourceCreatePaneTestDirectory);
-	}
-
-	/**
-	 * Count the nodes in a tree
-	 *
-	 * @param node
-	 * 		root of the tree
-	 * @return the number of nodes.
-	 */
-	public static int countTreeNodes(final TreeItem<?> node) {
-		var count = 1;
-		for (final TreeItem t : node.getChildren()) {
-			count += countTreeNodes(t);
-		}
-		return count;
-	}
-
-
-	/**
-	 * Count the leaves in a tree
-	 *
-	 * @param node
-	 * 		root of the tree
-	 * @return the number of leaves.
-	 */
-	public static int countTreeLeaves(final TreeItem<?> node) {
-		var count = 1;
-		for (final TreeItem t : node.getChildren()) {
-			count += (t.isLeaf()) ? 1 : countTreeNodes(t);
-		}
-		return count;
-	}
-
-	public static void applyPath2(final String filePath) {
-		final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		final StringSelection stringSelection = new StringSelection(filePath);
-		clipboard.setContents(stringSelection, stringSelection);
-		driver.press(KeyCode.BACK_SPACE);
-		driver.press(KeyCode.COMMAND).press(KeyCode.SHIFT).press(KeyCode.G);
-		driver.release(KeyCode.G).release(KeyCode.SHIFT).release(KeyCode.COMMAND);
-
-		driver.press(KeyCode.CONTROL).press(KeyCode.V).release(KeyCode.V).release(KeyCode.CONTROL);
-		driver.push(KeyCode.ENTER);
-	}
 
 	public static PasswordField findPasswordInPopup(final ObservableList<Node> popupNodes) {
 		for (final Node popupNode : popupNodes) {

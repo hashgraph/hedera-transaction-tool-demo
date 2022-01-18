@@ -256,6 +256,7 @@ class IdentifierTest {
 		assertEquals(accountJson, identifier.asJSON());
 	}
 
+	@SuppressWarnings("SimplifiableAssertion")
 	@Test
 	void equals_test() {
 		final var id1 = new Identifier(1, 2, 3);
@@ -266,8 +267,10 @@ class IdentifierTest {
 		assertEquals(id1, id1);
 		assertNotEquals(id1, id3);
 
+		//noinspection EqualsBetweenInconvertibleTypes
 		assertFalse(id1.equals("1.2.3"));
-		assertFalse(id1.equals(null));
+		final Identifier nullIdentifier= null;
+		assertFalse(id1.equals(nullIdentifier));
 	}
 
 	@Test
@@ -297,7 +300,8 @@ class IdentifierTest {
 	@Test
 	void compare_test() {
 		final var id0 = new Identifier(1, 2, 369);
-		assertEquals(0, id0.compareTo(id0));
+		final var id1 = new Identifier(1, 2, 369);
+		assertEquals(0, id0.compareTo(id1));
 		assertEquals(0, id0.compareTo(new Identifier(1, 2, 369)));
 		assertEquals(-1, id0.compareTo(new Identifier(2, 2, 369)));
 		assertEquals(-1, id0.compareTo(new Identifier(1, 3, 369)));

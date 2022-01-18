@@ -81,6 +81,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("rawtypes")
 public class KeysPaneTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -388,7 +389,7 @@ public class KeysPaneTest extends TestBase {
 		final VBox gridPaneVBox1 = find("#recoveryVBox");
 		assertNotNull(gridPaneVBox1);
 		final var text = (Label) ((HBox) gridPaneVBox1.getChildren().get(1)).getChildren().get(0);
-		final var mnemonicWords = text.getText().replace("\n", " ").split("\\ +");
+		final var mnemonicWords = text.getText().replace("\n", " ").split(" +");
 
 		assertEquals(24, mnemonicWords.length);
 

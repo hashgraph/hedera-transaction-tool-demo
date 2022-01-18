@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.integration.pages;
 
 import com.hedera.hashgraph.client.integration.TestBase;
 
+@SuppressWarnings("UnusedReturnValue")
 public class MainWindowPage {
 
 	private final TestBase driver;

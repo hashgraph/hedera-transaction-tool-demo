@@ -132,6 +132,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 		}
 		executorServiceTransactions.shutdown();
+		//noinspection StatementWithEmptyBody
 		while (!executorServiceTransactions.isTerminated()) {
 			// wait loop
 		}

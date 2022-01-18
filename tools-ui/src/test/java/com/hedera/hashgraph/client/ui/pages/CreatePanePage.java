@@ -92,6 +92,7 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 
+@SuppressWarnings("UnusedReturnValue")
 public class CreatePanePage {
 
 	private final TestBase driver;
@@ -553,6 +554,7 @@ public class CreatePanePage {
 		return this;
 	}
 
+	@SuppressWarnings("BusyWait")
 	public CreatePanePage clickOnPopupButton(final String legend) throws InterruptedException {
 		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;

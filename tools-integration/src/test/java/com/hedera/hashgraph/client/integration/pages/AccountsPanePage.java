@@ -43,6 +43,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings({ "rawtypes", "UnusedReturnValue" })
 public class AccountsPanePage {
 	private final TestBase driver;
 	private final static String ACCOUNTS_SCROLL_PANE = "#accountsScrollPane";
@@ -196,12 +197,6 @@ public class AccountsPanePage {
 
 		driver.clickOn(continueButton);
 		return this;
-	}
-
-	public void pressPopupButton(final String legend) {
-		final var popupNodes = Objects.requireNonNull(com.hedera.hashgraph.client.integration.TestUtil.getPopupNodes());
-		final var button = findButtonInPopup(popupNodes, legend);
-		driver.clickOn(button);
 	}
 
 	public AccountsPanePage openAccordion() {
