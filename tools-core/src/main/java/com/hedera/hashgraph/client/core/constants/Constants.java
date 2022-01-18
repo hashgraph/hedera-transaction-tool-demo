@@ -48,12 +48,12 @@ public class Constants {
 	public static final String JSON_EXTENSION = "json";
 	public static final String BATCH_TRANSACTION_EXTENSION = "csv";
 	public static final String SOFTWARE_UPDATE_EXTENSION = "pkg";
-	public static final String LARGE_BINARY_EXTENSION = "lfu";
+	public static final String LARGE_BINARY_EXTENSION = "zip";
 	public static final String COMMENT_EXTENSION = "txt";
 	public static final String CONFIGURATION_EXTENSION = "cfg";
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
-
+	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
 
