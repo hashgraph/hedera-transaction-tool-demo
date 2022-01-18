@@ -31,8 +31,10 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.pages.InitialStartupPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -53,6 +55,7 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -73,6 +76,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -218,7 +222,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		logger.info("The words in the grid correspond to the words generated");
 
 		initialStartupPage.clickMnemonicPopupButton("OK")
-				.enterNewPasswordInPopup(PASSWORD);
+				.clickOnPopupButton("CANCEL");
+		final var nodes = TestUtil.getPopupNodes();
+		assertNotNull(nodes);
+		assertTrue(nodes.get(1) instanceof Label);
+		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again") );
+		initialStartupPage.enterNewPasswordInPopup(PASSWORD);
 
 
 		assertFalse(find(GENERATE_KEYS_BUTTON).isVisible());
@@ -231,16 +240,15 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(find("FINISH").isVisible());
 		logger.info("Next step is visible");
 
-		var salt = getSalt(properties.getHash(), properties.isLegacy());
-		var mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
+		final var salt = getSalt(properties.getHash(), properties.isLegacy());
+		final var mnemonic = getMnemonicFromFile(PASSWORD.toCharArray(), salt,
 				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
 
-		var storedWords = mnemonic.toString();
+		final var storedWords = mnemonic.toString();
 
 		assertEquals(storedWords.concat(" ").toLowerCase(), words.toLowerCase());
 		logger.info("The stored mnemonic is the same as the words displayed: Mnemonic can be decrypted using password");
 	}
-
 
 	@Test
 	public void generatePassphraseFromProvidedWords_Text() {
@@ -540,7 +548,6 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			deleteDummyDrive(i);
 		}
 	}
-
 
 	@Test
 	public void passwordPolicy_test() {
