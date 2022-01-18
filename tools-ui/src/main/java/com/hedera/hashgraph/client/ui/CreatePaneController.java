@@ -60,6 +60,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -439,13 +440,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupTransferFields() {
 		transferTableEvents(transferFromAccountIDTextField, transferFromAmountTextField, fromTransferTable,
 				acceptFromAccountButton, errorInvalidFromAccount);
-		fromTransferTable.prefWidthProperty().bind(fromHBox.widthProperty());
-		fromTransferTable.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
-
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
 				acceptToAccountButton, errorInvalidToAccount);
-		toTransferTable.prefWidthProperty().bind(toHBox.widthProperty());
-		toTransferTable.prefHeightProperty().bind(toTransferTable.heightProperty().multiply(.4));
+
 		transferFromAmountTextField.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
 						"[^\\d.]"));
@@ -1060,8 +1057,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		table.getColumns().clear();
 		table.getColumns().addAll(accountColumn, amountColumn);
 
-		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
-		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.60));
+		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.6));
+		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
 
 		accountColumn.setResizable(false);
 		amountColumn.setResizable(false);
@@ -1115,7 +1112,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var newTransaction =
 				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		final var status = parseAddress(newTransaction.getAccountID()).getStatus();
+		final var status =
+				parseAddress(newTransaction.getAccountIdentifier().toReadableAccountAndChecksum()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
@@ -1132,6 +1130,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		thisTable.getItems().add(newTransaction);
 
+		transferCurrencyVBox.setAlignment(Pos.CENTER);
 		updateTotalAmount();
 		account.clear();
 		amount.clear();
@@ -1140,6 +1139,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void transferTableEvents(TextField accountIDTextField, TextField amountTextField,
 			TableView<AccountAmountStrings> table, Button acceptButton, Label errorLabel) {
+
+		table.prefWidthProperty().bind(transferCurrencyVBox.widthProperty().multiply(2).divide(3));
+		table.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
+
 
 		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
 
@@ -2386,8 +2389,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupTextFieldResizeProperty(TextField... textFields) {
-		for (TextField tf : textFields) {
+	private void setupTextFieldResizeProperty(final TextField... textFields) {
+		for (final TextField tf : textFields) {
+			tf.setMinWidth(300);
+			tf.setMaxWidth(800);
+			tf.setAlignment(Pos.CENTER_LEFT);
 			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
 		}
 

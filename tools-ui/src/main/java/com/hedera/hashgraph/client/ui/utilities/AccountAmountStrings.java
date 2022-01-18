@@ -19,6 +19,7 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.gson.JsonElement;
 import com.hedera.hashgraph.client.core.json.Identifier;
 
@@ -28,14 +29,8 @@ public class AccountAmountStrings {
 	private String amount;
 
 	public AccountAmountStrings(String accountID, String amount) {
-		if (accountID.contains(".")) {
-			this.accountID = accountID;
-		} else {
-			this.accountID = String.format("0.0.%s", accountID);
-		}
-
+		this.accountID = accountID;
 		var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
-
 		this.amount = ((amount.contains("-")) ? "- " : "") + Utilities.setHBarFormat(
 				Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
 
@@ -50,16 +45,12 @@ public class AccountAmountStrings {
 		return accountID;
 	}
 
-	public JsonElement getAccountAsJSON() {
-		return Identifier.parse(accountID).asJSON();
+	public Identifier getAccountIdentifier(){
+		return Identifier.parse(this.accountID);
 	}
 
-	public void setAccountID(String accountID) {
-		if (accountID.contains(".")) {
-			this.accountID = accountID;
-		} else {
-			this.accountID = String.format("0.0.%s", accountID);
-		}
+	public JsonElement getAccountAsJSON() {
+		return Identifier.parse(accountID).asJSON();
 	}
 
 	public String getAmount() {

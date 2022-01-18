@@ -164,6 +164,10 @@ public class Constants {
 	public static final int KEY_LENGTH = 256;
 	// endregion
 
+	// regex
+	public static final String FULL_ACCOUNT_CHECKSUM_REGEX = "\\d+.\\d+.\\d+-[a-z]{5}";
+	public static final String FULL_ACCOUNT_REGEX = "^\\d+.\\d+.\\d+$";
+	public static final String NUMBER_REGEX = "^[0-9]+$";
 
 	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
 }
