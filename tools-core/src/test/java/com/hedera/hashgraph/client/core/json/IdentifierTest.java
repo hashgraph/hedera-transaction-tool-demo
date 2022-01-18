@@ -269,8 +269,8 @@ class IdentifierTest {
 
 		//noinspection EqualsBetweenInconvertibleTypes
 		assertFalse(id1.equals("1.2.3"));
-		//noinspection ConstantConditions
-		assertFalse(id1.equals(null));
+		final Identifier nullIdentifier= null;
+		assertFalse(id1.equals(nullIdentifier));
 	}
 
 	@Test

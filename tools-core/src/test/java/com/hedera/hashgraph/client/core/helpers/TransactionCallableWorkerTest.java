@@ -58,7 +58,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 	void tearDown() throws IOException {
 		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
-		assert receipts != null;
+		assertNotNull(receipts);
 		for (final File receipt : receipts) {
 			Files.deleteIfExists(receipt.toPath());
 		}

@@ -175,7 +175,8 @@ class TimestampTest {
 		final var timestamp = new Timestamp();
 		assertEquals(timestamp, timestamp);
 		//noinspection ConstantConditions
-		assertFalse(timestamp.equals(null));
+		final Timestamp nullTimestamp = null;
+		assertFalse(timestamp.equals(nullTimestamp));
 		//noinspection EqualsBetweenInconvertibleTypes
 		assertFalse(timestamp.equals("A string"));
 	}
