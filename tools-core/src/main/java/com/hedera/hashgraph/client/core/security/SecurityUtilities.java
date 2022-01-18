@@ -90,7 +90,6 @@ public class SecurityUtilities {
 	 * 		path to the file where the mnemonic will be stored
 	 * @param mnemonic
 	 * 		the mnemonic phrase to be encrypted
-	 * @throws HederaClientException
 	 */
 	public static void toEncryptedFile(final byte[] key, final String path,
 			final String mnemonic) throws HederaClientException {
@@ -135,7 +134,6 @@ public class SecurityUtilities {
 	 * @param path
 	 * 		location of the mnemonic
 	 * @return a Mnemonic object
-	 * @throws HederaClientException
 	 */
 	public static Mnemonic fromEncryptedFile(final char[] passwordChar, final byte[] salt,
 			final String path) throws HederaClientException {
@@ -286,7 +284,6 @@ public class SecurityUtilities {
 	 * @param data
 	 * 		byte array containing the encrypted mnemonic
 	 * @return a mnemonic
-	 * @throws HederaClientException
 	 */
 	private static Mnemonic legacyEncryption(final byte[] key, final byte[] data) throws HederaClientException {
 		try {
@@ -304,8 +301,7 @@ public class SecurityUtilities {
 	/***
 	 * Converts a char array to a byte array with 32 elements
 	 * @param password char array
-	 * @return a byte array 
-	 * @throws NoSuchAlgorithmException
+	 * @return a byte array
 	 */
 	public static byte[] keyFromPasswordLegacy(final char[] password) throws HederaClientException {
 		/* Derive the key, given password and salt. */
@@ -333,8 +329,6 @@ public class SecurityUtilities {
 	 * @param pathToPublicKey
 	 * 		path to the gpg public key
 	 * @return true if the key has signed the file
-	 * @throws IOException
-	 * @throws PGPException
 	 */
 	public static boolean verifyFile(final String filePath, final String pathToSignature,
 			final String pathToPublicKey) throws IOException, PGPException, HederaClientException {

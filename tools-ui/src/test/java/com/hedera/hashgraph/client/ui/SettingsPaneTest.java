@@ -358,6 +358,7 @@ public class SettingsPaneTest extends TestBase {
 		clickOn("#addCustomNetworkButton");
 		settingsPanePage.addNetworkNickname("custom");
 		var nodes = TestUtil.getPopupNodes();
+		assert nodes != null;
 		assertTrue(nodes.get(1).isVisible());
 		assertTrue(nodes.get(1) instanceof Label);
 		assertEquals("The network nickname already exists.", ((Label) nodes.get(1)).getText());

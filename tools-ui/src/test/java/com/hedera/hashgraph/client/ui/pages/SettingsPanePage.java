@@ -46,6 +46,7 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("UnusedReturnValue")
 public class SettingsPanePage {
 	private final TestBase driver;
 

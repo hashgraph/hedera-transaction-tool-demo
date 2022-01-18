@@ -276,7 +276,7 @@ public class Utilities {
 
 
 		for (final String single : singles) {
-			if (!isIdentifier(single)) {
+			if (isNotIdentifier(single)) {
 				logger.error("String {} cannot be parsed.", single);
 				return new ArrayList<>();
 			}
@@ -291,7 +291,7 @@ public class Utilities {
 				return new ArrayList<>();
 			}
 
-			if (!isIdentifier(range[0]) || !isIdentifier(range[1])) {
+			if (isNotIdentifier(range[0]) || isNotIdentifier(range[1])) {
 				logger.error("Cannot parse account");
 				return new ArrayList<>();
 			}
@@ -346,12 +346,12 @@ public class Utilities {
 		return sorted;
 	}
 
-	private static boolean isIdentifier(final String s) {
+	private static boolean isNotIdentifier(final String s) {
 		try {
 			Identifier.parse(s);
-			return true;
-		} catch (final Exception e) {
 			return false;
+		} catch (final Exception e) {
+			return true;
 		}
 	}
 }

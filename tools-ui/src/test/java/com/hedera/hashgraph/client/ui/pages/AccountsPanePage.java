@@ -52,6 +52,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings({ "UnusedReturnValue", "rawtypes" })
 public class AccountsPanePage {
 
 	private final TestBase driver;
@@ -262,28 +263,6 @@ public class AccountsPanePage {
 		driver.clickOn(x);
 		//		driver.clickOn(path).press(KeyCode.ENTER).release(KeyCode.ENTER);
 
-		return this;
-	}
-
-	public AccountsPanePage dontReplaceAccount() {
-		final ObservableList<Node> popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		final HBox buttons = (HBox) popupNodes.get(1);
-
-		final Button decline = (Button) buttons.getChildren().get(0);
-
-		driver.clickOn(decline);
-		return this;
-	}
-
-	public AccountsPanePage replaceAccount() {
-		final ObservableList<Node> popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		final HBox buttons = (HBox) popupNodes.get(1);
-
-		final Button replace = (Button) buttons.getChildren().get(1);
-
-		driver.clickOn(replace);
 		return this;
 	}
 

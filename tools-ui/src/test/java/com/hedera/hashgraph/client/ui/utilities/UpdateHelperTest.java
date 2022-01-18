@@ -22,8 +22,6 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,8 +39,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UpdateHelperTest {
-
-	private static final Logger logger = LogManager.getLogger(UpdateHelperTest.class);
 
 	private static final String DOCUMENTS =
 			FileSystemView.getFileSystemView().getDefaultDirectory().getPath() + File.separator + "Documents";

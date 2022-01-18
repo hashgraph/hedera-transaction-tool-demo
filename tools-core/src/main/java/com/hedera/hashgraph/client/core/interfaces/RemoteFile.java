@@ -36,7 +36,6 @@ public interface RemoteFile {
 	 * detailing the action.
 	 *
 	 * @return true if the execution has succeeded.
-	 * @throws HederaClientRuntimeException
 	 */
 	boolean execute() throws HederaClientRuntimeException;
 
@@ -45,7 +44,6 @@ public interface RemoteFile {
 	 * are created detailing the action.
 	 *
 	 * @return true if the file has been moved to the history folder successfully.
-	 * @throws HederaClientRuntimeException
 	 */
 	boolean decline() throws HederaClientRuntimeException;
 
@@ -60,15 +58,19 @@ public interface RemoteFile {
 
 	/**
 	 * Checks if the current object is equal to another
-	 * @param o an object to be compared
+	 *
+	 * @param o
+	 * 		an object to be compared
 	 * @return true if the objects are the same.
 	 */
 	boolean equalTo(Object o) throws HederaClientException;
 
 	/**
 	 * Compares to another object
-	 * @param o another object
-	 * @return -1 if less, 0 if equal 1 if more
+	 *
+	 * @param o
+	 * 		another object
+	 * @return -1 if less than, 0 if equal, 1 if more than
 	 */
 	int compareTo(Object o) throws HederaClientException;
 }
