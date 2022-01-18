@@ -175,6 +175,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String MENU_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
+	private Map<Identifier, AccountInfo> accountsInfoMap;
+
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
@@ -928,7 +930,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void findAccountInfoAndPreloadFields() {
-		var accountsInfoMap = controller.getAccountInfoMap();
+		accountsInfoMap = controller.getAccountInfoMap();
 		try {
 			var account = Identifier.parse(updateAccountID.getText());
 			if (accountsInfoMap.containsKey(account)) {
@@ -1588,30 +1590,36 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * @return a json object with the all the information collected in the form
 	 */
 	private JsonObject buildJsonInput() {
-		var input = new JsonObject();
-		var transactionValidStart = startFieldsSet.getDate();
+		final var input = new JsonObject();
+		final var transactionValidStart = startFieldsSet.getDate();
 
 		// Common elements
 		addCommonElements(input, transactionValidStart);
-
-		// Crypto create account fields
-		addCryptoCreateElements(input);
-
-		// Crypto update account fields
-		addCryptoUpdateElements(input);
-
-		// Transfer fields
-		addCryptoTransferElements(input);
-
-		// System delete/un-delete fields
-		addSystemElements(input);
-
-		// Freeze fields
-		if (addFreezeNetworkFields(input)) {
-			return null;
+		switch (transactionType) {
+			case CREATE:
+				// Crypto create account fields
+				addCryptoCreateElements(input);
+				break;
+			case UPDATE:
+				// Crypto update account fields
+				addCryptoUpdateElements(input);
+				break;
+			case TRANSFER:
+				// Transfer fields
+				addCryptoTransferElements(input);
+				break;
+			case SYSTEM:
+				// System delete/un-delete fields
+				addSystemElements(input);
+				break;
+			case FREEZE:
+				// Freeze fields
+				if (addFreezeNetworkFields(input)) {
+					return null;
+				}
+				break;
 		}
 		return input;
-
 	}
 
 	private boolean addFreezeNetworkFields(JsonObject input) {
@@ -1693,14 +1701,27 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!"".equals(updateAccountID.getText())) {
 			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
 		}
+		final var account = Identifier.parse(updateAccountID.getText());
+		final var info = accountsInfoMap.getOrDefault(account, null);
+
+		// Key
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0) {
+			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
+		}
 
 		// Auto renew
-		if (!"".equals(updateAutoRenew.getText())) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(updateAutoRenew.getText()));
+		final var originalARP = info != null ? info.autoRenewPeriod.getSeconds() : 0;
+		final var newARP = Long.parseLong(updateAutoRenew.getText());
+		if (originalARP != newARP) {
+			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
 		}
 
 		// Receiver Sig Required
-		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, updateReceiverSignatureRequired.isSelected());
+		final var originalSigRequired = info != null && info.isReceiverSignatureRequired;
+		final var newSigRequired = updateReceiverSignatureRequired.isSelected();
+		if (originalSigRequired != newSigRequired) {
+			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
+		}
 	}
 
 	private void addCryptoCreateElements(JsonObject input) {
