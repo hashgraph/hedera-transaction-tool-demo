@@ -1621,6 +1621,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					return null;
 				}
 				break;
+			default:
+				break;
 		}
 		return input;
 	}

@@ -19,7 +19,6 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.gson.JsonElement;
 import com.hedera.hashgraph.client.core.json.Identifier;
 
@@ -45,7 +44,7 @@ public class AccountAmountStrings {
 		return accountID;
 	}
 
-	public Identifier getAccountIdentifier(){
+	public Identifier getAccountIdentifier() {
 		return Identifier.parse(this.accountID);
 	}
 
