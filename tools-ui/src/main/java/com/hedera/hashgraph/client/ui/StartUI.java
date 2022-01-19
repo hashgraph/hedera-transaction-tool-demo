@@ -28,13 +28,15 @@ import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Objects;
+
 public class StartUI extends Application {
 
 	private static final Logger logger = LogManager.getLogger(StartUI.class);
 
 	@Override
 	public void start(final Stage primaryStage) throws Exception {
-		final Parent root = FXMLLoader.load(getClass().getResource("UserInterface.fxml"));
+		final Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("UserInterface.fxml")));
 		final var scene = new Scene(root, 1200, 950);
 
 		scene.getStylesheets().add("tools.css");

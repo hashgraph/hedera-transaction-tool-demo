@@ -33,6 +33,9 @@ public interface FileService {
 	 * 		Remote location of the file (could be cloud or USB)
 	 * @param localDestination
 	 * 		Location where we will store the file locally
+	 * @return a file
+	 * @throws HederaClientException
+	 * 		if file does not exist, is a directory or in case of an IOException
 	 */
 	File download(String path, String localDestination) throws HederaClientException;
 
@@ -41,24 +44,31 @@ public interface FileService {
 	 *
 	 * @param file
 	 * 		Path to the file to be uploaded
+	 * @throws HederaClientException
+	 * 		if destination is a directory or in case of IOException
 	 */
 	void upload(String file, String remoteDestination) throws HederaClientException;
 
 	/**
 	 * List all files in the root path
 	 *
+	 * @throws HederaClientException
+	 * 		if the path does not exist, is not a directory or in case of IOException
 	 */
 	List<FileDetails> listFiles() throws HederaClientException;
 
 	/***
 	 * List all files in the directory pointed on by path+folder
 	 * @param path inner directory where we are searching for files
+	 * @throws HederaClientException if the path does not exist, is not a directory or in case of IOException
 	 */
 	List<FileDetails> listFiles(String path) throws HederaClientException;
 
 	/**
 	 * List all files in the root path
 	 *
+	 * @throws HederaClientException
+	 * 		if the paths do not exist, is not a directory or in case of IOException
 	 */
 	List<String> listFilePaths() throws HederaClientException;
 
@@ -67,6 +77,8 @@ public interface FileService {
 	 *
 	 * @param name
 	 * 		Name of the file that we are searching for.
+	 * @throws HederaClientException
+	 * 		if the root path does not exist, is not a directory or in case of IOException
 	 */
 	FileDetails find(String name) throws HederaClientException;
 
@@ -75,6 +87,8 @@ public interface FileService {
 	 *
 	 * @param name
 	 * 		Name of the file we are searching for
+	 * @throws HederaClientException
+	 * 		if the root path does not exist, is not a directory or in case of IOException
 	 */
 	boolean exists(String name) throws HederaClientException;
 
@@ -92,12 +106,13 @@ public interface FileService {
 	 * Returns true if the remote service is up (in the case of local files, if the directory exists or the USB is
 	 * plugged in)
 	 *
+	 * @throws HederaClientException
+	 * 		in case of IOException
 	 */
 	boolean exists() throws HederaClientException;
 
 	/**
 	 * Returns a name that represents the file service
-	 *
 	 */
 	String getName();
 
@@ -107,6 +122,8 @@ public interface FileService {
 	 * Returns the time in milliseconds of the last modified file
 	 *
 	 * @return a long
+	 * @throws HederaClientException
+	 * 		in case of IOException
 	 */
 	long lastModified() throws HederaClientException;
 }

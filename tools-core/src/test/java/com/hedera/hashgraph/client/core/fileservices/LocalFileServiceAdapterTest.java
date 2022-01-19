@@ -62,7 +62,7 @@ class LocalFileServiceAdapterTest {
 	void listFiles_badFile() {
 		assertThrows(HederaClientException.class, () -> {
 			final var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH + "genesis.pem");
-			final var x = localFileServiceAdapter.listFiles();
+			localFileServiceAdapter.listFiles();
 		});
 	}
 

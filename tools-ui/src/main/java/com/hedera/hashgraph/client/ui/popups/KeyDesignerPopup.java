@@ -85,6 +85,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.BLUE_BUTTON_STYLE;
@@ -102,6 +103,7 @@ import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.trimTo64;
 
 public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
+	public static final Pattern DECIMAL_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
 	private static final Logger logger = LogManager.getLogger(KeyDesignerPopup.class);
 	public static final String FX_BORDER_COLOR_BLACK = "-fx-border-color: black";
 	public static final String THRESHOLD_KEY_X_OF_X = "Threshold key (x of x)";
@@ -352,7 +354,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		try {
 			final var accountInfoMap = properties.getAccountInfoMap();
 			nicknameMap =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			for (final var entry : accountInfoMap.entrySet()) {
 				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(entry.getKey()), nicknameMap);
@@ -440,12 +442,12 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				return;
 			}
 			final var source =
-					(appPubKeyList.getSelectionModel().getSelectedItem() != null) ?
+					appPubKeyList.getSelectionModel().getSelectedItem() != null ?
 							appPubKeyList.getSelectionModel().getSelectedItem() :
 							extraPubKeyList.getSelectionModel().getSelectedItem();
 
 			final var destination =
-					(treeView.getSelectionModel().getSelectedItem() != null) ?
+					treeView.getSelectionModel().getSelectedItem() != null ?
 							treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
 			logger.info("Copying {} to {}", source, destination.getValue());
 			final var value = destination.getValue();
@@ -666,7 +668,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private TreeView<String> buildKeysTreeView() {
 
-		var root = (key == null) ? new TreeItem<>(THRESHOLD_KEY_X_OF_X) : keyToTreeView(key);
+		var root = key == null ? new TreeItem<>(THRESHOLD_KEY_X_OF_X) : keyToTreeView(key);
 		if (!root.getValue().contains(THRESHOLD_STRING)) {
 			final var newRoot = new TreeItem<>(THRESHOLD_KEY_1_OF_1);
 			newRoot.getChildren().add(root);
@@ -1006,9 +1008,19 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			return;
 		}
 
+		final var currentValue = root.getValue();
+		// The currentValue is always of the form "thresholdName (A of B)".
+		final var oldSizeString = currentValue.substring(currentValue.lastIndexOf(" ") + 1, currentValue.lastIndexOf(")"));
+		final var oldSize = DECIMAL_PATTERN.matcher(oldSizeString).matches() ? Integer.parseInt(oldSizeString) : -1;
+		final var newSize = root.getChildren().size();
+
+		// The threshold will reset if the size of the key has changed, forcing the user to set it manually.
+		final var thresholdString = oldSize == newSize ? currentValue.substring(currentValue.lastIndexOf("(") + 1,
+				currentValue.lastIndexOf("o") - 1) : "x";
+
 		final var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
 		final var newValue = getCommonName(lcp);
-		root.setValue(String.format("%s key (x of %d)", newValue, root.getChildren().size()));
+		root.setValue(String.format("%s key (%s of %d)", newValue, thresholdString, newSize));
 
 		for (final var child : root.getChildren()) {
 			setSizes(child);
@@ -1155,7 +1167,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				(dir, name) -> name.endsWith(key + "." + PUB_EXTENSION));
 		assert pubKeyFiles != null;
 		assert pubKeyFiles.length < 2;
-		final var address = (pubKeyFiles.length == 0) ? keyAddresses.get(key) : pubKeyFiles[0].getAbsolutePath();
+		final var address = pubKeyFiles.length == 0 ? keyAddresses.get(key) : pubKeyFiles[0].getAbsolutePath();
 		CompleteKeysPopup.display(address, false);
 	}
 	// endregion
