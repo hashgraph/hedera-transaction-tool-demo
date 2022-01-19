@@ -61,9 +61,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for the" +
-			" " +
-			"account(s) corresponding to the transaction", split = ",")
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
+			"the account(s) corresponding to the transaction", split = ",")
 	private String[] infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
@@ -166,13 +165,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	 */
 	private void loadVerificationFiles(final String[] files, final String extension) throws HederaClientException {
 		if (files != null && files.length > 0) {
-			for (final String file : files) {
-				if (!extension.equals(FilenameUtils.getExtension(file))) {
-					throw new HederaClientException(
-							String.format("Incorrect file in filelist: Needed %s, found %s", extension,
-									FilenameUtils.getExtension(file)));
-				}
-			}
 			final var infoArray = Arrays.stream(files).map(File::new).toArray(File[]::new);
 			parseFiles(infoArray, extension);
 		}
