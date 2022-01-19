@@ -123,29 +123,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
-		assert jsons != null;
-		if (jsons.length != 1) {
-			final var formattedError =
-					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length);
-			handleError(formattedError);
+		if (checkInputFile(jsons, "json")) {
 			return;
 		}
 
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
-		assert bins != null;
-		if (bins.length != 1) {
-			final var formattedError =
-					String.format("There should be exactly one binary file in the zip archive. We found: %d",
-							bins.length);
-			handleError(formattedError);
+		if (checkInputFile(bins, "content")) {
 			return;
 		}
 
-		final JsonObject details;
-		try {
-			details = readJsonObject(jsons[0].getPath());
-		} catch (final HederaClientException exception) {
-			handleError(exception.getMessage());
+		final JsonObject details = getJsonObject(jsons);
+		if (details == null) {
 			return;
 		}
 
@@ -196,6 +184,30 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
+	}
+
+	@Nullable
+	private JsonObject getJsonObject(final File[] jsons) {
+		final JsonObject details;
+		try {
+			details = readJsonObject(jsons[0].getPath());
+		} catch (final HederaClientException exception) {
+			handleError(exception.getMessage());
+			return null;
+		}
+		return details;
+	}
+
+	private boolean checkInputFile(final File[] jsons, final String type) {
+		assert jsons != null;
+		if (jsons.length != 1) {
+			final var formattedError =
+					String.format("There should be exactly one %s file in the zip archive. We found: %d", type,
+							jsons.length);
+			handleError(formattedError);
+			return true;
+		}
+		return false;
 	}
 
 	/**
