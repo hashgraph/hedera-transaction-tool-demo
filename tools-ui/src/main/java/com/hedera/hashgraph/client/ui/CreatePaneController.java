@@ -120,6 +120,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -1468,7 +1469,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final var toPack = new File[] { jsonFile, contents };
 
-		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, ZIP_EXTENSION));
+		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION));
 
 		ZipUtil.packEntries(toPack, destZipFile);
@@ -2437,7 +2438,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (transactionFile == null) {
 			return;
 		}
-		if (ZIP_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
+		if (LARGE_BINARY_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
 			try {
 				loadLargeFileUpdateToForm(transactionFile);
 			} catch (final HederaClientException e) {

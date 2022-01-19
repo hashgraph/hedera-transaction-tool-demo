@@ -396,7 +396,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				TEMP_DIRECTORY + (LocalDate.now()) + File.separator + "LargeBinary" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 
-		final var pathname = String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
+		final var pathname = String.format("%s%s_%s.zip", tempStorage, FilenameUtils.getBaseName(this.getName()),
 				pair.getKey().replace(".pem", ""));
 		final var finalZip = new File(pathname);
 
