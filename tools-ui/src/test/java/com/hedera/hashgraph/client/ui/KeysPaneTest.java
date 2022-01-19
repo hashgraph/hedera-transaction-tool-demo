@@ -194,8 +194,7 @@ public class KeysPaneTest extends TestBase {
 		assertNotNull(gridPaneVBox);
 		assertTrue(gridPaneVBox.isVisible());
 
-		final var mnemonicAfterCancel =
-				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterCancel = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 		assertEquals(mnemonic, mnemonicAfterCancel);
 		assertTrue(change.isVisible());
 		clickOn(change);
@@ -210,8 +209,7 @@ public class KeysPaneTest extends TestBase {
 
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword("tempura sushi");
-		final var mnemonicAfterChange =
-				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterChange = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 
 		assertEquals(mnemonic, mnemonicAfterChange);
 
