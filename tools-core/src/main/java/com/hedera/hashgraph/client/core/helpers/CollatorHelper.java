@@ -52,7 +52,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	private final Set<SignaturePair> signaturePairs = new HashSet<>();
 	private ToolTransaction transaction;
 	private String transactionFile = "";
-	private String baseName = "";
+	private final String baseName;
 	private final JsonArray comments = new JsonArray();
 
 	public CollatorHelper(final File file) throws HederaClientException {

@@ -122,6 +122,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var tvd = transaction.getTransactionValidDuration();
 
 		expiration = new Timestamp(tvs.getEpochSecond() + tvd.getSeconds(), tvs.getNano() + tvd.getNano());
+		setShowAdditionalBoxes();
 	}
 
 	public ToolTransaction getTransaction() {
