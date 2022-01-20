@@ -249,7 +249,12 @@ public class Identifier implements Comparable<Identifier> {
 		return String.format("%d.%d.%d", shardNum, realmNum, accountNum);
 	}
 
-	public String toNicknameAndChecksum(final JsonObject accounts) {
+	public String toReadableAccountAndChecksum(){
+		final var name = this.toReadableString();
+		return String.format("%s-%s", name, AddressChecksums.checksum(name));
+	}
+
+	public String toNicknameAndChecksum(JsonObject accounts) {
 		return CommonMethods.nicknameOrNumber(this, accounts);
 	}
 

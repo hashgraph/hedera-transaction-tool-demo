@@ -60,6 +60,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -175,6 +176,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String MENU_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
+	private Map<Identifier, AccountInfo> accountsInfoMap;
+
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
@@ -437,13 +440,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupTransferFields() {
 		transferTableEvents(transferFromAccountIDTextField, transferFromAmountTextField, fromTransferTable,
 				acceptFromAccountButton, errorInvalidFromAccount);
-		fromTransferTable.prefWidthProperty().bind(fromHBox.widthProperty());
-		fromTransferTable.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
-
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
 				acceptToAccountButton, errorInvalidToAccount);
-		toTransferTable.prefWidthProperty().bind(toHBox.widthProperty());
-		toTransferTable.prefHeightProperty().bind(toTransferTable.heightProperty().multiply(.4));
+
 		transferFromAmountTextField.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
 						"[^\\d.]"));
@@ -1059,8 +1058,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		table.getColumns().clear();
 		table.getColumns().addAll(accountColumn, amountColumn);
 
-		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
-		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.60));
+		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.6));
+		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
 
 		accountColumn.setResizable(false);
 		amountColumn.setResizable(false);
@@ -1131,6 +1130,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		thisTable.getItems().add(newTransaction);
 
+		transferCurrencyVBox.setAlignment(Pos.CENTER);
 		updateTotalAmount();
 		account.clear();
 		amount.clear();
@@ -1139,6 +1139,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void transferTableEvents(final TextField accountIDTextField, final TextField amountTextField,
 			final TableView<AccountAmountStrings> table, final Button acceptButton, final Label errorLabel) {
+
+		table.prefWidthProperty().bind(transferCurrencyVBox.widthProperty().multiply(2).divide(3));
+		table.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
+
 
 		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
 
@@ -1594,25 +1598,33 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Common elements
 		addCommonElements(input, transactionValidStart);
-
-		// Crypto create account fields
-		addCryptoCreateElements(input);
-
-		// Crypto update account fields
-		addCryptoUpdateElements(input);
-
-		// Transfer fields
-		addCryptoTransferElements(input);
-
-		// System delete/un-delete fields
-		addSystemElements(input);
-
-		// Freeze fields
-		if (addFreezeNetworkFields(input)) {
-			return null;
+		switch (transactionType) {
+			case CREATE:
+				// Crypto create account fields
+				addCryptoCreateElements(input);
+				break;
+			case UPDATE:
+				// Crypto update account fields
+				addCryptoUpdateElements(input);
+				break;
+			case TRANSFER:
+				// Transfer fields
+				addCryptoTransferElements(input);
+				break;
+			case SYSTEM:
+				// System delete/un-delete fields
+				addSystemElements(input);
+				break;
+			case FREEZE:
+				// Freeze fields
+				if (addFreezeNetworkFields(input)) {
+					return null;
+				}
+				break;
+			default:
+				break;
 		}
 		return input;
-
 	}
 
 	private boolean addFreezeNetworkFields(final JsonObject input) {
@@ -1694,14 +1706,27 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!"".equals(updateAccountID.getText())) {
 			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
 		}
+		final var account = Identifier.parse(updateAccountID.getText());
+		final var info = accountsInfoMap.getOrDefault(account, null);
+
+		// Key
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey)) {
+			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
+		}
 
 		// Auto renew
-		if (!"".equals(updateAutoRenew.getText())) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(updateAutoRenew.getText()));
+		final var originalARP = info != null ? info.autoRenewPeriod.getSeconds() : 0;
+		final var newARP = Long.parseLong(updateAutoRenew.getText());
+		if (originalARP != newARP) {
+			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
 		}
 
 		// Receiver Sig Required
-		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, updateReceiverSignatureRequired.isSelected());
+		final var originalSigRequired = info != null && info.isReceiverSignatureRequired;
+		final var newSigRequired = updateReceiverSignatureRequired.isSelected();
+		if (originalSigRequired != newSigRequired) {
+			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
+		}
 	}
 
 	private void addCryptoCreateElements(final JsonObject input) {

@@ -24,9 +24,12 @@ import com.hedera.hashgraph.client.ui.TestBase;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
@@ -40,31 +43,48 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCEPT_APP_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_1;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.APP_PASSWORD_FIELD_2;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.EMAIL_TEXT_FIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.FILES_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_KEYS_BUTTON;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_KEY_PAIR_BUTTON_BAR;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.HIDDEN_STARTUP_INFO_TEXTFIELD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_PANE;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEY_NICKNAME;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.LOAD_ADDRESS_BOOK_BUTTON;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.NETWORK_BUTTON_BAR;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSPHRASE_BOX;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_FIELD_ONE;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_FIELD_TWO;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.STORAGE_BUTTON_BAR;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.USERNAME_BUTTON_BAR;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 
 
-@SuppressWarnings("UnusedReturnValue")
 public class InitialStartupPage {
 
 	private final TestBase driver;
 
-	public InitialStartupPage(final TestBase driver) {
+	public InitialStartupPage(TestBase driver) {
 		this.driver = driver;
 	}
 
-	public InitialStartupPage enterStringUsername(final String test) {
-		final TextField userName = driver.find(EMAIL_TEXT_FIELD);
+	public InitialStartupPage skipUserName() {
+		Button b = findButtonInBar(USERNAME_BUTTON_BAR, "SKIP");
+		driver.clickOn(b);
+		return this;
+	}
+
+	public InitialStartupPage enterStringUsername(String test) {
+		TextField userName = driver.find(EMAIL_TEXT_FIELD);
 		driver.clickOn(userName);
 		driver.write(test);
 		return this;
 	}
 
-	public InitialStartupPage enterOneDriveFolder(final String s) {
+	public InitialStartupPage enterOneDriveFolder(String s) {
 
-		final TextField pathTextField = driver.find(JavaFXIDs.ONEDRIVE_PATH_TEXT_FIELD);
+		TextField pathTextField = driver.find(JavaFXIDs.ONEDRIVE_PATH_TEXT_FIELD);
 		pathTextField.clear();
 		driver.clickOn(pathTextField);
 		driver.write((System.getProperty("user.dir") + File.separator + s));
@@ -73,13 +93,111 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage acceptOneDrive() {
-		final Button accept = driver.find("#confirmAddFolderButton");
+		Button accept = driver.find("#confirmAddFolderButton");
 		driver.clickOn(accept);
 		return this;
 	}
 
-	public InitialStartupPage enterPassword(final String s) {
-		final PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_1);
+	public InitialStartupPage confirmUsername() {
+		Button b = findButtonInBar(USERNAME_BUTTON_BAR, "CONFIRM");
+		driver.clickOn(b);
+		return this;
+	}
+
+	public Button findButtonInBar(String buttonBarName, String buttonMessage) {
+		ButtonBar buttonBar = driver.find(buttonBarName);
+		ObservableList<Node> buttons = buttonBar.getButtons();
+		for (Node b :
+				buttons) {
+			if (((Button) b).getText().equals(buttonMessage)) {
+				return (Button) b;
+			}
+		}
+		return null;
+	}
+
+	public InitialStartupPage browseFolders() {
+		Button browse = findButtonInBar(STORAGE_BUTTON_BAR, "CHANGE");
+		driver.clickOn(browse, MouseButton.PRIMARY);
+		return this;
+	}
+
+	public InitialStartupPage acceptAddressBook() throws Exception {
+		if (driver.find(FILES_PANE).isVisible()) {
+			driver.clickOn(LOAD_ADDRESS_BOOK_BUTTON, MouseButton.PRIMARY);
+		} else {
+			throw new Exception("Address Button Bar not found");
+		}
+		return this;
+	}
+
+	public InitialStartupPage openBrowseFile() {
+		Button browse = findButtonInBar(NETWORK_BUTTON_BAR, "SELECT FILE");
+		driver.clickOn(browse, MouseButton.PRIMARY);
+		return this;
+	}
+
+	public InitialStartupPage enterNetworkAddress(String file) throws InterruptedException {
+		TestUtil.applyPath(file);
+		return this;
+	}
+
+	public InitialStartupPage declineKey() throws Exception {
+		if (driver.find(KEYS_PANE).isVisible() && driver.find(PASSPHRASE_BOX).isVisible()) {
+			driver.clickOn(findButtonInBar(GENERATE_KEY_PAIR_BUTTON_BAR, "SKIP"), MouseButton.PRIMARY);
+		} else {
+			throw new Exception("No Key Pane found");
+		}
+
+		return this;
+	}
+
+	public InitialStartupPage enterFirstPassword(String password) {
+		driver.clickOn(PASSWORD_FIELD_ONE);
+		driver.write(password);
+		return this;
+	}
+
+	public InitialStartupPage enterSecondPassword(String password) {
+		driver.clickOn(PASSWORD_FIELD_TWO);
+		driver.write(password);
+		return this;
+	}
+
+	public InitialStartupPage clearSecondPassword() {
+		TextField password2 = driver.find(PASSWORD_FIELD_TWO);
+		password2.clear();
+		return this;
+	}
+
+	public InitialStartupPage generateKeys() {
+		driver.clickOn(findButtonInBar(GENERATE_KEY_PAIR_BUTTON_BAR, "GENERATE KEYS"));
+		return this;
+	}
+
+	public InitialStartupPage loadInfoFromHiddenTextField(String location) {
+
+		TextField path = driver.find(HIDDEN_STARTUP_INFO_TEXTFIELD);
+		path.setText(location);
+		driver.clickOn(path).press(KeyCode.ENTER).release(KeyCode.ENTER);
+
+		return this;
+	}
+
+	public void finishSetup() {
+		driver.clickOn("CONTINUE");
+	}
+
+	public InitialStartupPage enterKeyNickname(String testKey) {
+		TextField nickname = driver.find(KEY_NICKNAME);
+		nickname.setText(testKey);
+		driver.clickOn(nickname).press(KeyCode.ENTER).release(KeyCode.ENTER);
+
+		return this;
+	}
+
+	public InitialStartupPage enterPassword(String s) {
+		PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_1);
 		passwordField.clear();
 		driver.clickOn(APP_PASSWORD_FIELD_1);
 		driver.write(s);
@@ -87,8 +205,8 @@ public class InitialStartupPage {
 		return this;
 	}
 
-	public InitialStartupPage reEnterPassword(final String s) {
-		final PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_2);
+	public InitialStartupPage reEnterPassword(String s) {
+		PasswordField passwordField = driver.find(APP_PASSWORD_FIELD_2);
 		passwordField.clear();
 		driver.clickOn(APP_PASSWORD_FIELD_2);
 		driver.write(s);
@@ -96,21 +214,21 @@ public class InitialStartupPage {
 	}
 
 	public InitialStartupPage acceptPassword() {
-		final Button passwordButton = driver.find(ACCEPT_APP_PASSWORD);
+		Button passwordButton = driver.find(ACCEPT_APP_PASSWORD);
 		driver.clickOn(passwordButton);
 		return this;
 	}
 
 	public InitialStartupPage clickOnGenerateMnemonic() {
-		final Button generate = driver.find(GENERATE_KEYS_BUTTON);
+		Button generate = driver.find(GENERATE_KEYS_BUTTON);
 		driver.clickOn(generate);
 		return this;
 	}
 
-	public InitialStartupPage clickMnemonicPopupButton(final String legend) {
-		final Set<Node> nodes = driver.findAll(legend);
+	public InitialStartupPage clickMnemonicPopupButton(String legend) {
+		Set<Node> nodes = driver.findAll(legend);
 		Button ok = new Button();
-		for (final Node n :
+		for (Node n :
 				nodes) {
 			if (n instanceof Button && n.isVisible()) {
 				ok = (Button) n;
@@ -123,23 +241,70 @@ public class InitialStartupPage {
 		return this;
 	}
 
+	public void clickOnFinishSetup() {
+		driver.clickOn("FINISH");
+	}
+
+	public InitialStartupPage enterPasswordInPopup(String password) {
+		try {
+			PasswordField passwordField = (PasswordField) TestUtil.getPopupNodes().get(1);
+			passwordField.setText(password);
+			driver.clickOn(passwordField).press(KeyCode.ENTER).release(KeyCode.ENTER);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return this;
+	}
+
+	public Label getLabelFromPopup() {
+		ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
+		for (Node n :
+				popupNodes) {
+			if (n instanceof Label) {
+				return (Label) n;
+			}
+		}
+		return new Label();
+	}
+
+	public InitialStartupPage closePopup() {
+		Button button = null;
+		ObservableList<Node> popupNodes = ((VBox) TestUtil.getPopupNodes().get(0)).getChildren();
+		for (Node n :
+				popupNodes) {
+			if (n instanceof Button) {
+				button = (Button) n;
+			}
+		}
+		if (button != null) {
+			driver.clickOn(button);
+		}
+		return this;
+	}
+
 	public InitialStartupPage pressPaste() {
-		final Button paste = driver.find(PASTE_FROM_CLIPBOARD);
+		Button paste = driver.find(PASTE_FROM_CLIPBOARD);
 		driver.clickOn(paste);
 		return this;
 	}
 
-	public InitialStartupPage enterNewPasswordInPopup(final String password) {
-		final var passwordFields = getPopupPasswordFields();
+	public InitialStartupPage enterNewPasswordInPopup(String password) {
+		var passwordFields = getPopupPasswordFields();
 		passwordFields.get(0).clear();
 		typePassword(password, passwordFields.get(0));
 		typePassword(password, passwordFields.get(1));
-		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
+		var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
 		driver.clickOn(continueButton);
 		return this;
 	}
 
-	public void typePassword(final String s, final PasswordField field) {
+	public InitialStartupPage clickOnPopupButton(final String text) {
+		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), text);
+		driver.clickOn(continueButton);
+		return this;
+	}
+
+	public void typePassword(String s, PasswordField field) {
 		field.setText(s);
 		driver.clickOn(field);
 		driver.type(KeyCode.SHIFT);
@@ -151,9 +316,9 @@ public class InitialStartupPage {
 		return getAllPasswordFields(popupNodes);
 	}
 
-	private List<PasswordField> getAllPasswordFields(final ObservableList<Node> nodes) {
-		final List<PasswordField> passwordFields = new ArrayList<>();
-		for (final Node node : nodes) {
+	private List<PasswordField> getAllPasswordFields(ObservableList<Node> nodes) {
+		List<PasswordField> passwordFields = new ArrayList<>();
+		for (Node node : nodes) {
 			if (node instanceof HBox) {
 				passwordFields.addAll(getAllPasswordFields(((HBox) node).getChildren()));
 			}
@@ -166,5 +331,6 @@ public class InitialStartupPage {
 		}
 		return passwordFields;
 	}
+
 
 }

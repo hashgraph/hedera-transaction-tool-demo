@@ -743,6 +743,13 @@ public class CreatePanePage {
 		return this;
 	}
 
+	public CreatePanePage setAutoRenew(final long seconds) {
+		driver.ensureVisible(driver.find("#updateAutoRenew"));
+		driver.doubleClickOn("#updateAutoRenew");
+		driver.write(String.valueOf(seconds));
+		return this;
+	}
+
 
 	public enum OperationType {
 		delete, undelete
