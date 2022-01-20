@@ -1556,7 +1556,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param nickname
 	 * 		the nickname assigned to the file
 	 */
-	private void importFromFile(final File file, final String nickname) throws HederaClientException {
+	void importFromFile(final File file, final String nickname) throws HederaClientException {
 		final var newAccountID = getAccountIDFromInfoFile(file).toReadableString();
 		final var account = new JsonObject();
 		account.addProperty("accountID", newAccountID);

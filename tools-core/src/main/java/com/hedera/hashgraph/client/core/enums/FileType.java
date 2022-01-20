@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.enums;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONFIGURATION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
@@ -38,6 +39,7 @@ public enum FileType {
 	COMMENT(COMMENT_EXTENSION),
 	CONFIG(CONFIGURATION_EXTENSION),
 	METADATA(METADATA_EXTENSION),
+	BUNDLE(BUNDLE_EXTENSION),
 	UNKNOWN("");
 
 	private final String extension;
@@ -61,7 +63,6 @@ public enum FileType {
 				return "Large File Update";
 			default:
 				return super.toString();
-
 		}
 	}
 
@@ -82,6 +83,8 @@ public enum FileType {
 				return "Software Update";
 			case LARGE_BINARY:
 				return "File Contents Update";
+			case BUNDLE:
+				return "Information Bundle";
 			case METADATA:
 			case UNKNOWN:
 				break;

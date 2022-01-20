@@ -233,6 +233,9 @@ public class RemoteFilesMap {
 			case PUBLIC_KEY:
 				remoteFile = new PublicKeyFile(fileDetails);
 				break;
+			case BUNDLE:
+				remoteFile = new BundleFile(fileDetails);
+				break;
 			case SOFTWARE_UPDATE:
 			case CONFIG:
 				remoteFile = getSoftwareUpdateFile(version, fileDetails);

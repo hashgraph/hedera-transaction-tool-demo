@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
+import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
@@ -558,9 +559,20 @@ public class HomePaneController implements GenericFileReadWriteAware {
 					final var keysFile = new File(KEYS_FOLDER + rf.getName());
 					Files.deleteIfExists(keysFile.toPath());
 					FileUtils.copyFile(new File(rf.getPath()), keysFile);
-				} else {
+				} else if (rf.getType().equals(FileType.ACCOUNT_INFO)) {
 					controller.accountsPaneController.importInfoFiles(
 							Collections.singletonList(new File(rf.getPath())));
+				} else if (rf.getType().equals(FileType.BUNDLE)) {
+					for (final Map.Entry<BundleFile.InfoKey, File> entry :
+							((BundleFile) rf).getAccountInfoMap().entrySet()) {
+						controller.accountsPaneController.importFromFile(entry.getValue(),
+								entry.getKey().getNickname());
+					}
+					for (final Map.Entry<String, File> entry : ((BundleFile) rf).getPublicKeyMap().entrySet()) {
+						final var destination = new File(KEYS_FOLDER, entry.getKey());
+						Files.deleteIfExists(destination.toPath());
+						FileUtils.copyFile(entry.getValue(), destination);
+					}
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");

@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_FIELD_CHARACTER_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_BOX_STYLE;
@@ -85,6 +86,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_TYPE_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
 import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
+import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.LARGE_BINARY;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -772,6 +774,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				return LARGE_BINARY;
 			case METADATA_EXTENSION:
 				return METADATA;
+			case BUNDLE_EXTENSION:
+				return BUNDLE;
 			default:
 				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
 		}
