@@ -298,6 +298,12 @@ public class InitialStartupPage {
 		return this;
 	}
 
+	public InitialStartupPage clickOnPopupButton(final String text) {
+		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), text);
+		driver.clickOn(continueButton);
+		return this;
+	}
+
 	public void typePassword(String s, PasswordField field) {
 		field.setText(s);
 		driver.clickOn(field);
@@ -325,5 +331,6 @@ public class InitialStartupPage {
 		}
 		return passwordFields;
 	}
+
 
 }
