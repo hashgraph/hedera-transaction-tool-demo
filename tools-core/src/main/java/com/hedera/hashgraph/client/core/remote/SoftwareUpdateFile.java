@@ -78,7 +78,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	public SoftwareUpdateFile() {
 		super();
-		this.version = "1.0.0";
+		this.version = "0.0.1";
 		this.setType(FileType.SOFTWARE_UPDATE);
 		this.digest = "";
 	}
