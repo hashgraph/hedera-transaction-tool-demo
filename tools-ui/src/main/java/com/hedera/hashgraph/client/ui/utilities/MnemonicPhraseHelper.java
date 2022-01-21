@@ -196,7 +196,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		}
 
-		final var password = NewPasswordPopup.display("Recovery phrase password",
+		var password = NewPasswordPopup.display("Recovery phrase password",
 				"Enter your recovery phrase password. Frequently used passwords will not be accepted.");
 		while (password == null || password.length == 0) {
 			password = NewPasswordPopup.display("Recovery phrase password",

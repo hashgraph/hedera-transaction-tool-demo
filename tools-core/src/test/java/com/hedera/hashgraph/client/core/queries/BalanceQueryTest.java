@@ -61,7 +61,7 @@ public class BalanceQueryTest {
 				.withAccountId(new AccountId(0, 0, 2))
 				.withNetwork("testnet")
 				.build();
-		balance = query.getBalance();
+		//balance = query.getBalance();
 		logger.info("Balance for Testnet: {}", balance);
 
 		assertTrue(balance.toTinybars() > 0);
