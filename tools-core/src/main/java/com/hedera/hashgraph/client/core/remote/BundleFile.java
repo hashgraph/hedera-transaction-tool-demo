@@ -18,13 +18,17 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import org.apache.commons.io.FilenameUtils;
@@ -36,10 +40,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 
@@ -49,13 +55,17 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 	private final Map<InfoKey, File> accountInfoMap = new TreeMap<>();
 	private final Map<String, File> publicKeyMap = new TreeMap<>();
+	private final Map<AccountId, String> existingInfosMap = new HashMap<>();
 	private final List<FileActions> actions = Arrays.asList(FileActions.ACCEPT, FileActions.DECLINE);
+	private final CheckBox checkBox = new CheckBox("Replace existing nicknames");
 
 	public BundleFile(final FileDetails file) {
 		super(file);
 		if (file == null) {
 			return;
 		}
+
+		loadExistingInfos();
 
 		try {
 			final var tempFile = Files.createTempDirectory("tmpDirPrefix").toFile();
@@ -80,6 +90,21 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		}
 	}
 
+	private void loadExistingInfos() {
+		try {
+			final var nicknames =
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			final var entries = nicknames.entrySet();
+			for (final Map.Entry<String, JsonElement> entry : entries) {
+				existingInfosMap.put(Identifier.parse(entry.getKey()).asAccount(), entry.getValue().getAsString());
+			}
+
+		} catch (final HederaClientException e) {
+			logger.error("Exception {} on line {}", e.getMessage(), e.getStackTrace()[0].getLineNumber());
+		}
+
+	}
+
 	public Map<InfoKey, File> getAccountInfoMap() {
 		return accountInfoMap;
 	}
@@ -88,6 +113,9 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return publicKeyMap;
 	}
 
+	public boolean replaceNicknames() {
+		return checkBox.isSelected();
+	}
 
 	@Override
 	public List<FileActions> getActions() {
@@ -115,10 +143,14 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 			details.add(message, 0, count++);
 		}
 
+		if (!accountInfoMap.isEmpty()) {
+			checkBox.setSelected(true);
+			details.add(checkBox, 0, count);
+		}
+
 		details.setVgap(10);
 		return details;
 	}
-
 
 	@Override
 	public boolean equals(final Object o) {
@@ -142,7 +174,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return code;
 	}
 
-
 	/**
 	 * Add the names (nicknames) of the presented information to the list of messages
 	 *
@@ -165,19 +196,22 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 	public class InfoKey implements Comparable<InfoKey> {
 		private final String nickname;
 		private final Identifier id;
+		private final String oldNickname;
 
 		public InfoKey(final File file) throws HederaClientException, InvalidProtocolBufferException {
 			final var info = AccountInfo.fromBytes(readBytes(file));
 			final var accountMemo = info.accountMemo;
 
 			this.id = new Identifier(info.accountId);
-			this.nickname = (accountMemo != null && !"".equals(accountMemo)) ?
+			this.nickname = accountMemo != null && !"".equals(accountMemo) ?
 					accountMemo :
 					FilenameUtils.getBaseName(file.getName());
+			this.oldNickname =
+					existingInfosMap.getOrDefault(info.accountId, new Identifier(info.accountId).toReadableString());
 		}
 
 		public String getNickname() {
-			return nickname;
+			return replaceNicknames() ? nickname : oldNickname;
 		}
 
 		public Identifier getId() {
@@ -199,9 +233,20 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 		@Override
 		public String toString() {
-			return (nickname.equals(id.toReadableString())) ?
-					id.toReadableStringAndChecksum() :
-					String.format("%s (%s)", nickname, id.toReadableStringAndChecksum());
+			// case 1 info not in app; nickname == account number -> xx.xx.xxx-aaaaa
+			// case 2 info not in app; nickname != account number -> nickname (xx.xx.xxx-aaaaa)
+			// case 3 info in app -> nickname (xx.xx.xxx-aaaaa) replaces oldnickname (xx.xx.xxx-aaaaa)
+
+			final var idChecksum = id.toReadableStringAndChecksum();
+			if (!existingInfosMap.containsKey(id.asAccount())) {
+				return nickname.equals(id.toReadableString()) ?
+						idChecksum :
+						String.format("%s (%s)", nickname, idChecksum);
+			}
+			return oldNickname.equals(nickname) ?
+					String.format("%s (%s)", nickname, idChecksum) :
+					String.format("%s (%s) -> replaces the previous nickname: \"%s\"", nickname, idChecksum,
+							oldNickname);
 		}
 
 		@Override
