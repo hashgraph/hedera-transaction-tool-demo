@@ -47,6 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeroturnaround.zip.ZipUtil;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -123,12 +124,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
-		if (checkInputFile(jsons, "json")) {
+		if (failedCheckInputFile(jsons, "json")) {
 			return;
 		}
 
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
-		if (checkInputFile(bins, "content")) {
+		if (failedCheckInputFile(bins, "content")) {
 			return;
 		}
 
@@ -187,7 +188,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Nullable
-	private JsonObject getJsonObject(final File[] jsons) {
+	private JsonObject getJsonObject(@Nonnull final File[] jsons) {
 		final JsonObject details;
 		try {
 			details = readJsonObject(jsons[0].getPath());
@@ -198,7 +199,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return details;
 	}
 
-	private boolean checkInputFile(final File[] jsons, final String type) {
+	private boolean failedCheckInputFile(final File[] jsons, final String type) {
 		assert jsons != null;
 		if (jsons.length != 1) {
 			final var formattedError =
