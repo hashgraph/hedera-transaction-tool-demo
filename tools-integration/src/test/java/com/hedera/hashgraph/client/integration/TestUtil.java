@@ -212,25 +212,30 @@ public class TestUtil {
 	}
 
 	public static Stage findModalWindow() {
-		// Get a list of windows but ordered from top[0] to bottom[n] ones.
-		// It is needed to get the first found modal window.
-		final var windowFinder = robot.robotContext().getWindowFinder();
-		if (windowFinder == null) {
+		try {
+			// Get a list of windows but ordered from top[0] to bottom[n] ones.
+			// It is needed to get the first found modal window.
+			final var windowFinder = robot.robotContext().getWindowFinder();
+			if (windowFinder == null) {
+				return null;
+			}
+			final List<Window> allWindows = new ArrayList<>(windowFinder.listWindows());
+			if (allWindows.isEmpty()) {
+				return null;
+			}
+
+			Collections.reverse(allWindows);
+
+			return (Stage) allWindows
+					.stream()
+					.filter(window -> window instanceof Stage)
+					.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
+					.findFirst()
+					.orElse(null);
+		} catch (final Exception e) {
+			logger.error(e.getMessage());
 			return null;
 		}
-		final List<Window> allWindows = new ArrayList<>(windowFinder.listWindows());
-		if (allWindows.isEmpty()) {
-			return null;
-		}
-
-		Collections.reverse(allWindows);
-
-		return (Stage) allWindows
-				.stream()
-				.filter(window -> window instanceof Stage)
-				.filter(window -> ((Stage) window).getModality() == Modality.APPLICATION_MODAL)
-				.findFirst()
-				.orElse(null);
 	}
 
 	public static void selectFromComboBox(final String item, final String boxName) {
