@@ -19,17 +19,22 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -39,22 +44,29 @@ import org.testfx.api.FxToolkit;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAware {
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
 	protected static final String PASSWORD = "123456789";
+	protected static final String MESSAGE_FORMAT =
+			"The administrator has shared information regarding the following %s.";
 	public static final int ONE_SECOND = 1000;
 	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
@@ -72,6 +84,7 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 	private final List<VBox> softwareBoxes = new ArrayList<>();
 	private final List<VBox> systemBoxes = new ArrayList<>();
 	private final List<VBox> freezeBoxes = new ArrayList<>();
+	private final List<VBox> bundleBoxes = new ArrayList<>();
 
 
 	@Before
@@ -96,8 +109,8 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 			logger.info("Keys path created");
 		}
 
-		// Special case for test: Does not ask for password during setup
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
+
 		final var pathname =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -105,10 +118,10 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 		if (new File(pathname).exists()) {
 			FileUtils.deleteDirectory(new File(pathname));
 		}
-
 		if (new File(pathname).mkdirs()) {
 			logger.info("Output directory created");
 		}
+
 
 		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
@@ -123,7 +136,7 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final Controller controller = new Controller();
+		final var controller = new Controller();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
@@ -135,6 +148,13 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
+		FileUtils.copyFile(new File("src/test/resources/Bundles/bundle.zip"),
+				new File("src/test/resources/Transactions - Documents/InputFiles/bundle.zip"));
+		FileUtils.copyFile(new File("src/test/resources/Bundles/infoBundle.zip"),
+				new File("src/test/resources/Transactions - Documents/InputFiles/infoBundle.zip"));
+		FileUtils.copyFile(new File("src/test/resources/Bundles/keyBundle.zip"),
+				new File("src/test/resources/Transactions - Documents/InputFiles/keyBundle.zip"));
+
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
 		FxToolkit.registerPrimaryStage();
@@ -144,11 +164,10 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 		mainWindowPage = new MainWindowPage(this);
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
+		separateBoxes(newFiles);
 
 		assertEquals(newFiles.size(),
-				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size() + bundleBoxes.size());
 	}
 
 	@After
@@ -163,7 +182,7 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 
 		final var currentRelativePath = Paths.get("");
 		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
-		if ((new File(s)).exists()) {
+		if (new File(s).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
@@ -177,48 +196,275 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
+
+		Files.deleteIfExists(Path.of("src/test/resources/Transactions - Documents/InputFiles/bundle.zip"));
+		Files.deleteIfExists(Path.of("src/test/resources/Transactions - Documents/InputFiles/infoBundle.zip"));
+		Files.deleteIfExists(Path.of("src/test/resources/Transactions - Documents/InputFiles/keyBundle.zip"));
 	}
 
 	@Test
-	public void findAccountInfosAndAcceptOne_Test() {
+	public void bundleBoxesExist_test() {
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
+		assertEquals(21, totalBoxes);
 
 		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 
-		sleep(ONE_SECOND);
-		homePanePage.clickOn2ButtonBar(0, accountInfoBoxes.get(1));
+		final var publicKeysBundle = findInBoxes("public keys", "accounts");
+		assertTrue(publicKeysBundle.getChildren().size() > 0);
+		final var publicKeys = getLabelsFromGrid(publicKeysBundle).get(1).getText().split("\n");
+		assertEquals(6, publicKeys.length);
 
-		sleep(ONE_SECOND);
+		final var accountsBundle = findInBoxes("accounts", "public keys");
+		assertTrue(accountsBundle.getChildren().size() > 0);
+		final var accountKeys = getLabelsFromGrid(accountsBundle).get(1).getText().split("\n");
+		assertEquals(5, accountKeys.length);
+		assertTrue(getLabelsFromGrid(accountsBundle).get(1).getText().contains("Treasury test"));
 
-		homePanePage.enterStringInPopup("testAccount");
-		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var mixedBundle = findInBoxes("public keys,accounts", "");
+		assertTrue(mixedBundle.getChildren().size() > 0);
+		final var publicKeys2 = getLabelsFromGrid(mixedBundle).get(1).getText().split("\n");
+		assertEquals(6, publicKeys2.length);
+		final var accountKeys2 = getLabelsFromGrid(mixedBundle).get(3).getText().split("\n");
+		assertEquals(5, accountKeys2.length);
+		assertTrue(getLabelsFromGrid(mixedBundle).get(3).getText().contains("Treasury test"));
+	}
 
-		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size()); // see other note
+	@Test
+	public void acceptAccounts_test() throws HederaClientException {
+		final var accountsBundle = findInBoxes("accounts", "public keys");
+		assertTrue(accountsBundle.getChildren().size() > 0);
+		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(5, initialAcountObject.keySet().size());
+		assertTrue(initialAcountObject.has("0.0.2"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
 
+		final var button = TestUtil.findButtonInPopup(accountsBundle.getChildren(), "ACCEPT");
+		ensureVisible(button);
+		clickOn(button);
+		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(9, finalAccountObject.keySet().size());
+		assertTrue(finalAccountObject.has("0.0.1"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2"));
+		assertEquals("Treasury test", finalAccountObject.get("0.0.2").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3"));
+		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
+	}
 
-		final var acceptedKey = (VBox) historyFiles.get(0);
-		final var legend =
-				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+	@Test
+	public void acceptAccountsKeepNicknames_test() throws HederaClientException {
+		final var accountsBundle = findInBoxes("accounts", "public keys");
+		assertTrue(accountsBundle.getChildren().size() > 0);
+		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(5, initialAcountObject.keySet().size());
+		assertTrue(initialAcountObject.has("0.0.2"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
 
+		final var checkBox = findCheckBoxInGridpane(accountsBundle);
+		assertNotNull(checkBox);
+		assertTrue(checkBox.isSelected());
+		ensureVisible(checkBox);
+		clickOn(checkBox);
+		assertFalse(checkBox.isSelected());
 
-		assertTrue(legend instanceof Label);
-		assertTrue(((Label) legend).getText().contains("accepted on"));
-
-		assertEquals(12,
-				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
+		final var button = TestUtil.findButtonInPopup(accountsBundle.getChildren(), "ACCEPT");
+		ensureVisible(button);
+		clickOn(button);
+		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(9, finalAccountObject.keySet().size());
+		assertTrue(finalAccountObject.has("0.0.1"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2"));
+		assertEquals("treasury", finalAccountObject.get("0.0.2").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3"));
+		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
 	}
 
 
-	private void separateBoxes(final ObservableList<Node> newFiles, final List<VBox> publicKeyBoxes,
-			final List<VBox> accountInfoBoxes,
-			final List<VBox> batchBoxes, final List<VBox> transactionBoxes, final List<VBox> softwareBoxes,
-			final List<VBox> systemBoxes,
-			final List<VBox> freezeBoxes) {
+	@Test
+	public void declineAccounts_test() throws HederaClientException {
+		final var accountsBundle = findInBoxes("accounts", "public keys");
+		assertTrue(accountsBundle.getChildren().size() > 0);
+		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(5, initialAcountObject.keySet().size());
+		assertTrue(initialAcountObject.has("0.0.2"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+
+		final var button = TestUtil.findButtonInPopup(accountsBundle.getChildren(), "DECLINE");
+		ensureVisible(button);
+		clickOn(button);
+		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(initialAcountObject, finalAccountObject);
+	}
+
+	@Test
+	public void acceptKeys_test() {
+		final var keysBundle = findInBoxes("public keys", "accounts");
+		assertTrue(keysBundle.getChildren().size() > 0);
+
+		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var initialKeys = Arrays.stream(initialPublicKeys).map(File::getName).collect(Collectors.toSet());
+		assertEquals(1, initialKeys.size());
+		assertTrue(initialKeys.contains("principalTestingKey.pub"));
+
+		final var button = TestUtil.findButtonInPopup(keysBundle.getChildren(), "ACCEPT");
+		ensureVisible(button);
+		clickOn(button);
+
+		final var finalPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var finalKeys = Arrays.stream(finalPublicKeys).map(File::getName).collect(Collectors.toSet());
+
+		assertEquals(7, finalKeys.size());
+		assertTrue(finalKeys.contains("principalTestingKey.pub"));
+		assertTrue(finalKeys.contains("genesis.pub"));
+		assertTrue(finalKeys.contains("testPubKey.pub"));
+		assertTrue(finalKeys.contains("KeyStore-0.pub"));
+		assertTrue(finalKeys.contains("KeyStore-1.pub"));
+		assertTrue(finalKeys.contains("KeyStore-2.pub"));
+		assertTrue(finalKeys.contains("KeyStore-3.pub"));
+	}
+
+	@Test
+	public void declineKeys_test() {
+		final var keysBundle = findInBoxes("public keys", "accounts");
+		assertTrue(keysBundle.getChildren().size() > 0);
+
+		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var initialKeys = Arrays.stream(initialPublicKeys).map(File::getName).collect(Collectors.toSet());
+		assertEquals(1, initialKeys.size());
+		assertTrue(initialKeys.contains("principalTestingKey.pub"));
+
+		final var button = TestUtil.findButtonInPopup(keysBundle.getChildren(), "DECLINE");
+		ensureVisible(button);
+		clickOn(button);
+
+		final var finalPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var finalKeys = Arrays.stream(finalPublicKeys).map(File::getName).collect(Collectors.toSet());
+
+		assertEquals(1, finalKeys.size());
+		assertTrue(finalKeys.contains("principalTestingKey.pub"));
+	}
+
+	@Test
+	public void acceptMixed_test() throws HederaClientException {
+		final var bundle = findInBoxes("accounts,public keys", "");
+		assertTrue(bundle.getChildren().size() > 0);
+		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(5, initialAcountObject.keySet().size());
+		assertTrue(initialAcountObject.has("0.0.2"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+
+		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var initialKeys = Arrays.stream(initialPublicKeys).map(File::getName).collect(Collectors.toSet());
+		assertEquals(1, initialKeys.size());
+		assertTrue(initialKeys.contains("principalTestingKey.pub"));
+
+		final var button = TestUtil.findButtonInPopup(bundle.getChildren(), "ACCEPT");
+		ensureVisible(button);
+		clickOn(button);
+		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(9, finalAccountObject.keySet().size());
+		assertTrue(finalAccountObject.has("0.0.1"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2"));
+		assertEquals("Treasury test", finalAccountObject.get("0.0.2").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3"));
+		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
+
+		final var finalPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var finalKeys = Arrays.stream(finalPublicKeys).map(File::getName).collect(Collectors.toSet());
+
+		assertEquals(7, finalKeys.size());
+		assertTrue(finalKeys.contains("principalTestingKey.pub"));
+		assertTrue(finalKeys.contains("genesis.pub"));
+		assertTrue(finalKeys.contains("testPubKey.pub"));
+		assertTrue(finalKeys.contains("KeyStore-0.pub"));
+		assertTrue(finalKeys.contains("KeyStore-1.pub"));
+		assertTrue(finalKeys.contains("KeyStore-2.pub"));
+		assertTrue(finalKeys.contains("KeyStore-3.pub"));
+	}
+
+	@Test
+	public void declineMixed_test() throws HederaClientException {
+		final var bundle = findInBoxes("accounts,public keys", "");
+		assertTrue(bundle.getChildren().size() > 0);
+		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(5, initialAcountObject.keySet().size());
+		assertTrue(initialAcountObject.has("0.0.2"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+
+		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var initialKeys = Arrays.stream(initialPublicKeys).map(File::getName).collect(Collectors.toSet());
+		assertEquals(1, initialKeys.size());
+		assertTrue(initialKeys.contains("principalTestingKey.pub"));
+
+
+		final var button = TestUtil.findButtonInPopup(bundle.getChildren(), "DECLINE");
+		ensureVisible(button);
+		clickOn(button);
+
+
+		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
+		assertEquals(initialAcountObject, finalAccountObject);
+
+		final var finalPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
+				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		final var finalKeys = Arrays.stream(finalPublicKeys).map(File::getName).collect(Collectors.toSet());
+
+		assertEquals(1, finalKeys.size());
+		assertTrue(finalKeys.contains("principalTestingKey.pub"));
+	}
+
+
+	private VBox findInBoxes(final String inclusions, final String exclusions) {
+		final var include = inclusions.split(",");
+		final var exclude = exclusions.split(",");
+		for (final var bundleBox : bundleBoxes) {
+			var countInclude = 0;
+			var countExclude = 0;
+			final var labels = getLabelsFromGrid(bundleBox);
+			for (final var label : labels) {
+				for (final var s : include) {
+					if (label.getText().equals(String.format(MESSAGE_FORMAT, s))) {
+						countInclude++;
+					}
+				}
+				for (final var s : exclude) {
+					if (label.getText().equals(String.format(MESSAGE_FORMAT, s))) {
+						countExclude++;
+					}
+				}
+			}
+			if (countExclude == 0 && countInclude == include.length) {
+				return bundleBox;
+			}
+		}
+		return new VBox();
+	}
+
+	private void separateBoxes(final ObservableList<Node> newFiles) {
 		for (final var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
@@ -241,11 +487,42 @@ public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAwar
 					systemBoxes.add((VBox) box);
 				} else if (l.contains("Freeze") || l.contains("Upgrade")) {
 					freezeBoxes.add((VBox) box);
+				} else if (l.contains("Bundle")) {
+					bundleBoxes.add((VBox) box);
 				} else {
 					logger.info("here");
 				}
 			}
 		}
+	}
+
+	private List<Label> getLabelsFromGrid(final VBox box) {
+		assertEquals(3, box.getChildren().size());
+		assertTrue(box.getChildren().get(1) instanceof HBox);
+		assertEquals(1, ((HBox) box.getChildren().get(1)).getChildren().size());
+		assertTrue(((HBox) box.getChildren().get(1)).getChildren().get(0) instanceof GridPane);
+		final var labels = ((GridPane) ((HBox) box.getChildren().get(1)).getChildren().get(0)).getChildren();
+		final List<Label> returnLabels = new ArrayList<>();
+		for (final var label : labels) {
+			if (label instanceof Label) {
+				returnLabels.add((Label) label);
+			}
+		}
+		return returnLabels;
+	}
+
+	private CheckBox findCheckBoxInGridpane(final VBox box) {
+		assertEquals(3, box.getChildren().size());
+		assertTrue(box.getChildren().get(1) instanceof HBox);
+		assertEquals(1, ((HBox) box.getChildren().get(1)).getChildren().size());
+		assertTrue(((HBox) box.getChildren().get(1)).getChildren().get(0) instanceof GridPane);
+		final var nodes = ((GridPane) ((HBox) box.getChildren().get(1)).getChildren().get(0)).getChildren();
+		for (final var node : nodes) {
+			if (node instanceof CheckBox) {
+				return (CheckBox) node;
+			}
+		}
+		return null;
 	}
 
 

@@ -39,6 +39,7 @@ import java.util.Objects;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static java.lang.Thread.sleep;
 
+@SuppressWarnings("UnusedReturnValue")
 public class HomePanePage {
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
 	private final TestBase driver;
@@ -133,7 +134,6 @@ public class HomePanePage {
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
-
 
 	public HomePanePage clickOn2ButtonBar(final int index, final VBox vBox) {
 		final var v1 = (VBox) vBox.getChildren().get(2);

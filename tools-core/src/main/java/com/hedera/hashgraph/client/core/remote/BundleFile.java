@@ -51,7 +51,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 
 public class BundleFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(BundleFile.class);
-	public static final String MESSAGE_FORMAT = "The administrator has shared information regarding the following %s.";
+	private static final String MESSAGE_FORMAT = "The administrator has shared information regarding the following %s.";
 
 	private final Map<InfoKey, File> accountInfoMap = new TreeMap<>();
 	private final Map<String, File> publicKeyMap = new TreeMap<>();
@@ -207,11 +207,11 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 					accountMemo :
 					FilenameUtils.getBaseName(file.getName());
 			this.oldNickname =
-					existingInfosMap.getOrDefault(info.accountId, new Identifier(info.accountId).toReadableString());
+					existingInfosMap.getOrDefault(info.accountId, "");
 		}
 
 		public String getNickname() {
-			return replaceNicknames() ? nickname : oldNickname;
+			return replaceNicknames() || "".equals(oldNickname) ? nickname : oldNickname;
 		}
 
 		public Identifier getId() {
