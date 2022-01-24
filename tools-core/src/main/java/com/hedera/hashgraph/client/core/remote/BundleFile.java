@@ -81,7 +81,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 						publicKeyMap.put(name, unzipped);
 						break;
 					default:
-						logger.error("Unexpected value: " + name);
+						logger.error("Unexpected value: {}", name);
 				}
 			}
 			setValid(!(publicKeyMap.isEmpty() && accountInfoMap.isEmpty()));

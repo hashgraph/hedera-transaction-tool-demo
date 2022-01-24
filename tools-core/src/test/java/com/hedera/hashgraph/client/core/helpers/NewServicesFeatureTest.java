@@ -32,7 +32,7 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class NewServicesFeatureTest implements GenericFileReadWriteAware {
+class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	@Test
 	void newAccounInfo_test() throws HederaClientException, InvalidProtocolBufferException {
 		final var info = AccountInfo.fromBytes(readBytes(new File("src/test/resources/AccountInfos/0.0.2.info")));

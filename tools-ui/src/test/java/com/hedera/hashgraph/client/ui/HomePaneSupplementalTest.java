@@ -62,7 +62,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class HomePaneTestV2 extends TestBase implements GenericFileReadWriteAware {
+public class HomePaneSupplementalTest extends TestBase implements GenericFileReadWriteAware {
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
 	protected static final String PASSWORD = "123456789";
 	protected static final String MESSAGE_FORMAT =
