@@ -99,7 +99,6 @@ public interface FileService {
 	 * 		Original name of the file
 	 * @param newName
 	 * 		New name of the file
-	 * @throws HederaClientException
 	 */
 	void rename(String oldName, String newName) throws HederaClientException;
 

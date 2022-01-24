@@ -292,7 +292,7 @@ public class UserProperties {
 	 * Load the properties map and return the property value as a map
 	 *
 	 * @param key
-	 * 		the string key
+	 * 		the key used for the property
 	 * @param defaultMap
 	 * 		Map<String, String>
 	 * @return Map<String, String>

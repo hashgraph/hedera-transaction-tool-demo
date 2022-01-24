@@ -61,9 +61,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for the" +
-			" " +
-			"account(s) corresponding to the transaction", split = ",")
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
+			"the account(s) corresponding to the transaction", split = ",")
 	private String[] infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
@@ -91,16 +90,12 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
 		// Parse account info files form inputs
-		if (infoFiles != null && infoFiles.length > 0) {
-			final var infoArray = Arrays.stream(infoFiles).map(File::new).toArray(File[]::new);
-			parseFiles(infoArray, Constants.INFO_EXTENSION);
-		}
+		loadVerificationFiles(infoFiles, Constants.INFO_EXTENSION);
 
 		// Parse public key files from inputs
-		if (keyFiles != null && keyFiles.length > 0) {
-			final var keys = Arrays.stream(keyFiles).map(File::new).toArray(File[]::new);
-			parseFiles(keys, Constants.PUB_EXTENSION);
-		}
+		loadVerificationFiles(keyFiles, Constants.PUB_EXTENSION);
+
+		// Parse transactions
 		loadTransactions(root);
 
 		for (final var unzip : unzips) {
@@ -125,7 +120,21 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 		logger.info("Transactions collated and stored");
 
+		moveToOutput(outputs);
 
+		logger.info("Collation done");
+	}
+
+
+	/**
+	 * Moves the files to the designate output directory
+	 *
+	 * @param outputs
+	 * 		the output files produced by the collator
+	 * @throws IOException
+	 * 		if the file move or deletion fails
+	 */
+	private void moveToOutput(final Set<String> outputs) throws IOException {
 		for (final var output : outputs) {
 			final var files = Objects.requireNonNull(new File(output).listFiles());
 			if (moreThanOneFile(output, files)) {
@@ -142,8 +151,23 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			FileUtils.moveFile(files[0], destination);
 			FileUtils.deleteDirectory(new File(output));
 		}
+	}
 
-		logger.info("Collation done");
+	/**
+	 * Loads the files used for verification
+	 *
+	 * @param files
+	 * 		An array of file paths
+	 * @param extension
+	 * 		the extension of the files to load.
+	 * @throws HederaClientException
+	 * 		if an incorrect extension is found or the app encounters an IOException
+	 */
+	private void loadVerificationFiles(final String[] files, final String extension) throws HederaClientException {
+		if (files != null && files.length > 0) {
+			final var infoArray = Arrays.stream(files).map(File::new).toArray(File[]::new);
+			parseFiles(infoArray, extension);
+		}
 	}
 
 	private boolean moreThanOneFile(final String output, final File[] files) throws IOException {
