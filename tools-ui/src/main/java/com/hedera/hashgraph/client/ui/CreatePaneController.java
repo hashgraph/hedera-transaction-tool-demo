@@ -176,7 +176,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String MENU_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
-	private Map<Identifier, AccountInfo> accountsInfoMap;
 
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
@@ -425,6 +424,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void makeBoxesInvisible() {
+		commentsVBox.setVisible(false);
 		commonFieldsVBox.setVisible(false);
 		createAccountVBox.setVisible(false);
 		updateAccountVBox.setVisible(false);
@@ -1707,7 +1707,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
 		}
 		final var account = Identifier.parse(updateAccountID.getText());
-		final var info = accountsInfoMap.getOrDefault(account, null);
+		final var info = controller.getAccountInfoMap().getOrDefault(account, null);
 
 		// Key
 		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey)) {
@@ -2577,7 +2577,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final AccountAmountStrings newTransaction;
 			newTransaction =
 					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
-					String.valueOf(Math.abs(entry.getValue().toTinybars())));
+							String.valueOf(Math.abs(entry.getValue().toTinybars())));
 			final var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}
