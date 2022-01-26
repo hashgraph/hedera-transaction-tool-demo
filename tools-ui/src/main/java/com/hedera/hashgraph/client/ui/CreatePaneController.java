@@ -424,6 +424,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void makeBoxesInvisible() {
+		commentsVBox.setVisible(false);
 		commonFieldsVBox.setVisible(false);
 		createAccountVBox.setVisible(false);
 		updateAccountVBox.setVisible(false);
