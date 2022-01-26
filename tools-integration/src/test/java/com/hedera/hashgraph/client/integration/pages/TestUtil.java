@@ -18,18 +18,25 @@
 
 package com.hedera.hashgraph.client.integration.pages;
 
+import com.hedera.hashgraph.client.integration.TestBase;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.testfx.api.FxRobot;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class TestUtil {
+	private static final TestBase driver = new TestBase();
+	private static final FxRobot robot = new FxRobot();
+	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 
 	/**
 	 * Get a button from a node

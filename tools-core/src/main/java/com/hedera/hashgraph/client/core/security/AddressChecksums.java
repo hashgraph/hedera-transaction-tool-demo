@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
  * Static methods and classes useful for dealing with Hedera address checksums, as defined in
  * <a href="https://github.com/hashgraph/hedera-improvement-proposal/issues/35>HIP-1</a>
  */
-@SuppressWarnings("ALL")
 public class AddressChecksums {
 	/** regex accepting both no-checksum and with-checksum formats, with 4 capture groups: 3 numbers and a checksum */
 	private static final Pattern ADDRESS_INPUT_FORMAT = Pattern.compile(

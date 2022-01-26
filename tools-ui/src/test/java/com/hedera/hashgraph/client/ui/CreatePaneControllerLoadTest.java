@@ -558,7 +558,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 
 	@Test
 	public void largeFileUpdate_test() {
-		createPanePage.loadTransaction("src/test/resources/createTransactions/largeFileUpdate.zip");
+		createPanePage.loadTransaction("src/test/resources/createTransactions/largeFileUpdate.lfu");
 		createPanePage.createAndExport(resources);
 		var n = find("#updateFileID");
 		assertTrue(n instanceof TextField);
@@ -571,7 +571,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assertTrue(((TextField) n).getText().contains("0.0.3"));
 		n = find("#chunkSizeTextField");
 		assertTrue(n instanceof TextField);
-		assertEquals("2048", ((TextField) n).getText());
+		assertEquals("1024", ((TextField) n).getText());
 		n = find("#intervalTextField");
 		assertTrue(n instanceof TextField);
 		assertEquals("100", ((TextField) n).getText());

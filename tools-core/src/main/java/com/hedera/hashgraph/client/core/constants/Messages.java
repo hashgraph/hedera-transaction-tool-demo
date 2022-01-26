@@ -29,7 +29,9 @@ public class Messages {
 	public static final String REQUEST_PASSWORD_MESSAGE = "Enter the password for key %s";
 	public static final String REMOVE_DRIVE_MESSAGE =
 			"This operation will delete information regarding this shared folder from your application and you will " +
-					"no longer access files from this location. Are you sure?";
+					"no" +
+					" " +
+					"longer access files from this location. Are you sure?";
 	public static final String LINKED_PUBLIC_KEY_TOOLTIP_TEXT =
 			"A key pair that is recoverable using the current application recovery phrase. This key can be used to " +
 					"sign transactions.";

@@ -58,7 +58,6 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 	void tearDown() throws IOException {
 		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
-		assertNotNull(receipts);
 		for (final File receipt : receipts) {
 			Files.deleteIfExists(receipt.toPath());
 		}
@@ -91,7 +90,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 		final var worker =
 				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
-		worker.call();
+		final var x = worker.call();
 		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
@@ -153,7 +152,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 		final TransactionCallableWorker finalWorker =
 				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
-		final Exception e = assertThrows(HederaClientRuntimeException.class, finalWorker::call);
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> finalWorker.call());
 		assertEquals("Hedera Client Runtime: Transaction happens in the past.", e.getMessage());
 
 	}

@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -47,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.zeroturnaround.zip.ZipUtil;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,6 +62,8 @@ import java.util.List;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
@@ -78,8 +78,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFile.class);
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
-	private static final String TEMP_LOCATION =
-			TEMP_DIRECTORY + File.separator + "content." + Constants.CONTENT_EXTENSION;
+	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
 
 	private String filename;
 	private Identifier fileID;
@@ -124,17 +123,29 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
-		if (failedCheckInputFile(jsons, "json")) {
+		assert jsons != null;
+		if (jsons.length != 1) {
+			final var formattedError =
+					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length);
+			handleError(formattedError);
 			return;
 		}
 
-		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(Constants.CONTENT_EXTENSION));
-		if (failedCheckInputFile(bins, "content")) {
+		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
+		assert bins != null;
+		if (bins.length != 1) {
+			final var formattedError =
+					String.format("There should be exactly one binary file in the zip archive. We found: %d",
+							bins.length);
+			handleError(formattedError);
 			return;
 		}
 
-		final JsonObject details = getJsonObject(jsons);
-		if (details == null) {
+		final JsonObject details;
+		try {
+			details = readJsonObject(jsons[0].getPath());
+		} catch (final HederaClientException exception) {
+			handleError(exception.getMessage());
 			return;
 		}
 
@@ -185,30 +196,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
-	}
-
-	@Nullable
-	private JsonObject getJsonObject(@Nonnull final File[] jsons) {
-		final JsonObject details;
-		try {
-			details = readJsonObject(jsons[0].getPath());
-		} catch (final HederaClientException exception) {
-			handleError(exception.getMessage());
-			return null;
-		}
-		return details;
-	}
-
-	private boolean failedCheckInputFile(final File[] jsons, final String type) {
-		assert jsons != null;
-		if (jsons.length != 1) {
-			final var formattedError =
-					String.format("There should be exactly one %s file in the zip archive. We found: %d", type,
-							jsons.length);
-			handleError(formattedError);
-			return true;
-		}
-		return false;
 	}
 
 	/**
@@ -409,7 +396,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				TEMP_DIRECTORY + (LocalDate.now()) + File.separator + "LargeBinary" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 
-		final var pathname = String.format("%s%s_%s.zip", tempStorage, this.getName().replace(".zip", ""),
+		final var pathname = String.format("%s%s_%s.zip", tempStorage, FilenameUtils.getBaseName(this.getName()),
 				pair.getKey().replace(".pem", ""));
 		final var finalZip = new File(pathname);
 
@@ -450,7 +437,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				final var updateTransaction = new ToolFileUpdateTransaction(input);
 				updateTransaction.sign(privateKey);
 				final var filePath = String.format("%s%s-00000.%s", tempStorage, FilenameUtils.getBaseName(filename),
-						Constants.SIGNED_TRANSACTION_EXTENSION);
+						SIGNED_TRANSACTION_EXTENSION);
 				writeBytes(filePath, updateTransaction.getTransaction().toBytes());
 				toPack.add(new File(filePath));
 
@@ -468,7 +455,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					appendTransaction.sign(privateKey);
 					final var appendFilePath =
 							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
-									Constants.SIGNED_TRANSACTION_EXTENSION);
+									SIGNED_TRANSACTION_EXTENSION);
 					writeBytes(appendFilePath, appendTransaction.getTransaction().toBytes());
 					toPack.add(new File(appendFilePath));
 					count++;
@@ -534,7 +521,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		fileLink.setOnAction(actionEvent -> {
 			try {
 				final var copyName =
-						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + Constants.CONTENT_EXTENSION;
+						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + CONTENT_EXTENSION;
 				FileUtils.copyFile(getContent(), new File(copyName));
 				final var r = Runtime.getRuntime();
 				final var command = String.format("open -e %s", copyName);

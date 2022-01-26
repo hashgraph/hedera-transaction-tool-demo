@@ -51,6 +51,7 @@ public class TestUtil {
 	private static final FxRobot robot = new FxRobot();
 	private static final Logger logger = LogManager.getLogger(TestUtil.class);
 
+
 	public static PasswordField findPasswordInPopup(final ObservableList<Node> popupNodes) {
 		for (final Node popupNode : popupNodes) {
 			if (popupNode instanceof PasswordField) {
@@ -212,8 +213,7 @@ public class TestUtil {
 		}
 
 		final var sourceCreatePaneTestDirectory = Paths.get(
-				"").toAbsolutePath() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator +
-				"Keys";
+				"").toAbsolutePath() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator + "Keys";
 		logger.info("Test keys directory : {}", sourceCreatePaneTestDirectory);
 	}
 

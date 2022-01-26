@@ -106,7 +106,6 @@ public class HomePanePage {
 		throw new HederaClientException(String.format("The checkbox with legend %s could not be found", keyName));
 	}
 
-	@SuppressWarnings("BusyWait")
 	public HomePanePage waitForWindow() {
 		while (!"".equals(TestUtil.getModalWindowTitle())) {
 			try {
@@ -135,7 +134,6 @@ public class HomePanePage {
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
-
 
 	public HomePanePage clickOn2ButtonBar(final int index, final VBox vBox) {
 		final var v1 = (VBox) vBox.getChildren().get(2);

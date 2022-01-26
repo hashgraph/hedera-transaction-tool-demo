@@ -87,8 +87,6 @@ class MetadataActionTest {
 	void compare_test() {
 		final var action0 =
 				new MetadataAction(new Timestamp(1610038031, 0), Actions.DECLINE, "user comments", "someKey");
-		final var action1 =
-				new MetadataAction(new Timestamp(1610038031, 0), Actions.DECLINE, "user comments", "someKey");
 
 		assertEquals(0, action0.compareTo(
 				new MetadataAction(new Timestamp(1610038031L, 0), Actions.DECLINE, "user comments", "someKey")));
@@ -98,7 +96,7 @@ class MetadataActionTest {
 				new MetadataAction(new Timestamp(2610038031L, 0), Actions.DECLINE, "user comments", "someKey")) < 0);
 		assertTrue(action0.compareTo(new MetadataAction(new Timestamp(1610038031L, 0), Actions.DECLINE, "user comments",
 				"someOtherKey")) < 0);
-		assertEquals(0, action0.compareTo(action1));
+		assertEquals(0, action0.compareTo(action0));
 	}
 
 }

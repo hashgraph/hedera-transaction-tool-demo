@@ -35,6 +35,7 @@ public class KeysTableRow {
 	public KeysTableRow(final SimpleStringProperty keyName, final SimpleStringProperty accountList, final String index,
 			final boolean signer, final boolean mnemonic) {
 		this.keyName = keyName;
+		this.accountList = accountList;
 		this.index = index;
 		this.signer = signer;
 		if (mnemonic && signer) {
@@ -66,6 +67,7 @@ public class KeysTableRow {
 	public KeysTableRow(final String keyName, final List<String> accounts, final String index, final boolean signer,
 			final boolean mnemonic) {
 		this(keyName, index, signer, mnemonic);
+		this.accountList = new SimpleStringProperty(getStringAccountList(accounts));
 	}
 
 	public String getKeyName() {
