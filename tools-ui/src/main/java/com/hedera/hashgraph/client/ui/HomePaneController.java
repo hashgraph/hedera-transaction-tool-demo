@@ -106,6 +106,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
 	private static final String OUTPUT_FILES = "OutputFiles";
 	private static final String INPUT_FILES = "InputFiles";
+	public static final double VBOX_SPACING = 20;
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
@@ -151,6 +152,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		loadPubKeys();
 		loadPKMap();
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
+		newFilesViewVBox.setSpacing(VBOX_SPACING);
 		historyFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
@@ -244,6 +246,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var historyNodes = displayFiles(remoteFilesMap, true);
 		historyFilesVBox.getChildren().clear();
 		historyFilesVBox.getChildren().addAll(historyNodes);
+		historyFilesVBox.setSpacing(VBOX_SPACING);
 	}
 
 	/**
