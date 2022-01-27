@@ -118,6 +118,8 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	public static final String REMOVE_BUTTON_STYLE =
 			"-fx-background-color: transparent; -fx-text-fill: red;-fx-border-color: indianred; " +
 					"-fx-border-radius: 5";
+	public static final String CANNOT_UPDATE_THRESHOLD =
+			"The selected threshold does not have a list of keys associated with it. The threshold cannot be updated";
 
 	private final Map<String, PublicKey> publicKeys;
 	private final Map<String, PublicKey> orphanKeys = new HashMap<>();
@@ -757,6 +759,9 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			return;
 		}
 		if (treeCell.getTreeItem().isLeaf()) {
+			if (treeCell.getTreeItem().getValue().contains(THRESHOLD_MARKER)) {
+				PopupMessage.display("Cannot Update", CANNOT_UPDATE_THRESHOLD);
+			}
 			return;
 		}
 
@@ -1010,7 +1015,8 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
 		final var currentValue = root.getValue();
 		// The currentValue is always of the form "thresholdName (A of B)".
-		final var oldSizeString = currentValue.substring(currentValue.lastIndexOf(" ") + 1, currentValue.lastIndexOf(")"));
+		final var oldSizeString =
+				currentValue.substring(currentValue.lastIndexOf(" ") + 1, currentValue.lastIndexOf(")"));
 		final var oldSize = DECIMAL_PATTERN.matcher(oldSizeString).matches() ? Integer.parseInt(oldSizeString) : -1;
 		final var newSize = root.getChildren().size();
 
@@ -1018,7 +1024,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		final var thresholdString = oldSize == newSize ? currentValue.substring(currentValue.lastIndexOf("(") + 1,
 				currentValue.lastIndexOf("o") - 1) : "x";
 
-		final var lcp = CommonMethods.longestCommonPrefix(getNamesList(root));
+		final var lcp = (getNamesList(root).size() > 1) ? CommonMethods.longestCommonPrefix(getNamesList(root)) : "";
 		final var newValue = getCommonName(lcp);
 		root.setValue(String.format("%s key (%s of %d)", newValue, thresholdString, newSize));
 
