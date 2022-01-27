@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import javafx.scene.control.CheckBox;
@@ -29,7 +28,11 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -44,6 +47,11 @@ public class BundleFileTest extends TestBase {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
 		}
+		if (new File(ACCOUNTS_MAP_FILE).mkdirs()) {
+			logger.info("System folder created");
+		}
+		Files.deleteIfExists(Path.of(ACCOUNTS_MAP_FILE));
+		Files.copy(Path.of("src/test/resources/accountMapFile.json"), Path.of(ACCOUNTS_MAP_FILE));
 	}
 
 	@Test
@@ -113,6 +121,36 @@ public class BundleFileTest extends TestBase {
 		assertEquals(5, children.size());
 		assertTrue(children.get(4) instanceof CheckBox);
 		assertTrue(((CheckBox) children.get(4)).isSelected());
+	}
+
+	@Test
+	public void nickname_test() throws IOException {
+		final var file = new File("src/test/resources/Files/bundleFileTests/mixed.zip");
+		final var details = FileDetails.parse(file);
+
+		final BundleFile bundleFile = new BundleFile(details);
+		for (final Map.Entry<BundleFile.InfoKey, File> entry : bundleFile.getAccountInfoMap().entrySet()) {
+			if (entry.getValue().getName().equals("AccountOne.info")) {
+				assertEquals("AccountOne (0.0.1-dfkxr) -> replaces the previous nickname: \"zero1\"",
+						entry.getKey().toString());
+			}
+			if (entry.getValue().getName().equals("0.0.2.info")) {
+				assertEquals("Treasury test (0.0.2-lpifi) -> replaces the previous nickname: \"treasury\"",
+						entry.getKey().toString());
+			}
+			if (entry.getValue().getName().equals("node1.info")) {
+				assertEquals("node1 (0.0.3-tzfmz)", entry.getKey().toString());
+			}
+			if (entry.getValue().getName().equals("0.0.4.info")) {
+				assertEquals("0.0.4 (0.0.4-cjcuq)", entry.getKey().toString());
+			}
+			if (entry.getValue().getName().equals("AnotherNode.info")) {
+				assertEquals("AnotherNode (0.0.6-tcxjy) -> replaces the previous nickname: \"node4\"",
+						entry.getKey().toString());
+			}
+		}
+
+
 	}
 
 	@Test
