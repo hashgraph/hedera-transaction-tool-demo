@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -66,27 +67,51 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		}
 
 		loadExistingInfos();
+		accountInfoMap.clear();
+		publicKeyMap.clear();
 
 		try {
 			final var tempFile = Files.createTempDirectory("tmpDirPrefix").toFile();
 			unZip(file.getFullPath(), tempFile.getAbsolutePath());
 			final var files = tempFile.listFiles();
-			for (final File unzipped : files) {
-				final var name = unzipped.getName();
-				switch (FilenameUtils.getExtension(name)) {
-					case INFO_EXTENSION:
-						accountInfoMap.put(new InfoKey(unzipped), unzipped);
-						break;
-					case PUB_EXTENSION:
-						publicKeyMap.put(name, unzipped);
-						break;
-					default:
-						logger.error("Unexpected value: {}", name);
-				}
-			}
+			loadMaps(files);
 			setValid(!(publicKeyMap.isEmpty() && accountInfoMap.isEmpty()));
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * Loads files fom the map
+	 *
+	 * @param files
+	 * 		an array of files
+	 * @throws HederaClientException
+	 * 		if the info file cannot be read
+	 * @throws HederaClientException
+	 * 		if the info file cannot be parsed
+	 */
+	private void loadMaps(final File[] files) throws HederaClientException, InvalidProtocolBufferException {
+		for (final File file : files) {
+			if (file.getName().toLowerCase(Locale.ROOT).contains("macosx") ||
+					file.getName().toLowerCase(Locale.ROOT).contains("ds_store")) {
+				continue;
+			}
+			if (file.isDirectory()) {
+				loadMaps(file.listFiles());
+				continue;
+			}
+			final var name = file.getName();
+			switch (FilenameUtils.getExtension(name)) {
+				case INFO_EXTENSION:
+					accountInfoMap.put(new InfoKey(file), file);
+					break;
+				case PUB_EXTENSION:
+					publicKeyMap.put(name, file);
+					break;
+				default:
+					logger.error("Unexpected value: {}", name);
+			}
 		}
 	}
 
@@ -152,24 +177,58 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return details;
 	}
 
+	public List<Integer> getInfos() throws HederaClientException {
+		final List<Integer> infos = new ArrayList<>();
+		for (final File file : accountInfoMap.values()) {
+			infos.add(Arrays.hashCode(readBytes(file)));
+		}
+		return infos;
+	}
+
+	public List<Integer> getPublicKeys() throws HederaClientException {
+		final List<Integer> keys = new ArrayList<>();
+		for (final File file : publicKeyMap.values()) {
+			keys.add(Arrays.hashCode(readBytes(file)));
+		}
+		return keys;
+	}
+
 	@Override
 	public boolean equals(final Object o) {
 		if (!(o instanceof BundleFile)) {
 			return false;
 		}
-		return super.equals(o) &&
-				this.accountInfoMap.equals(((BundleFile) o).getAccountInfoMap()) &&
-				this.publicKeyMap.equals(((BundleFile) o).getPublicKeyMap());
+		try {
+			return getInfos().equals(((BundleFile) o).getInfos()) &&
+					getPublicKeys().equals(((BundleFile) o).getPublicKeys());
+		} catch (final HederaClientException e) {
+			logger.error(e);
+		}
+		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		var code = super.hashCode();
+		var code = 0;
 		for (final Map.Entry<InfoKey, File> entry : accountInfoMap.entrySet()) {
-			code += entry.getKey().hashCode() + entry.getValue().hashCode();
+			code += (entry.getKey().hashCode());
+		}
+		try {
+			for (final Integer info : getInfos()) {
+				code += info;
+			}
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
 		}
 		for (final Map.Entry<String, File> entry : publicKeyMap.entrySet()) {
-			code += entry.getKey().hashCode() + entry.getValue().hashCode();
+			code += entry.getKey().hashCode();
+		}
+		try {
+			for (final Integer publicKey : getPublicKeys()) {
+				code += publicKey;
+			}
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
 		}
 		return code;
 	}
@@ -199,7 +258,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		private final String oldNickname;
 
 		public InfoKey(final File file) throws HederaClientException, InvalidProtocolBufferException {
-			final var info = AccountInfo.fromBytes(readBytes(file));
+			final AccountInfo info = AccountInfo.fromBytes(readBytes(file));
 			final var accountMemo = info.accountMemo;
 
 			this.id = new Identifier(info.accountId);
