@@ -103,22 +103,22 @@ import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.trimTo64;
 
 public class KeyDesignerPopup implements GenericFileReadWriteAware {
 
-	public static final Pattern DECIMAL_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
+	private static final Pattern DECIMAL_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
 	private static final Logger logger = LogManager.getLogger(KeyDesignerPopup.class);
-	public static final String FX_BORDER_COLOR_BLACK = "-fx-border-color: black";
-	public static final String THRESHOLD_KEY_X_OF_X = "Threshold key (x of x)";
-	public static final String THRESHOLD_KEY_1_OF_1 = "Threshold key (1 of 1)";
+	private static final String FX_BORDER_COLOR_BLACK = "-fx-border-color: black";
+	private static final String THRESHOLD_KEY_X_OF_X = "Threshold key (x of x)";
+	private static final String THRESHOLD_KEY_1_OF_1 = "Threshold key (1 of 1)";
 	private static final String KEYS_STRING = "/Keys/";
-	public static final String THRESHOLD_STRING = "Threshold";
-	public static final String THRESHOLD_MARKER = " key (";
-	public static final String THRESHOLDS_NOT_SET_ERROR =
+	private static final String THRESHOLD_STRING = "Threshold";
+	private static final String THRESHOLD_MARKER = " key (";
+	private static final String THRESHOLDS_NOT_SET_ERROR =
 			"The following threshold key values have not been set. Please enter a valid threshold value and try again" +
 					".\n";
-	public static final String DESIGNER_TITLE = "Key";
-	public static final String REMOVE_BUTTON_STYLE =
+	private static final String DESIGNER_TITLE = "Key";
+	private static final String REMOVE_BUTTON_STYLE =
 			"-fx-background-color: transparent; -fx-text-fill: red;-fx-border-color: indianred; " +
 					"-fx-border-radius: 5";
-	public static final String CANNOT_UPDATE_THRESHOLD =
+	private static final String CANNOT_UPDATE_THRESHOLD =
 			"The selected threshold does not have a list of keys associated with it. The threshold cannot be updated";
 
 	private final Map<String, PublicKey> publicKeys;
