@@ -40,7 +40,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class BundleFileTest extends TestBase {
-	public static final Logger logger = LogManager.getLogger(BundleFileTest.class);
+	private static final Logger logger = LogManager.getLogger(BundleFileTest.class);
 
 	@Before
 	public void setUp() throws Exception {
