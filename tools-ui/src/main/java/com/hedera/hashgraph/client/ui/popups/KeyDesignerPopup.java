@@ -551,10 +551,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 */
 	private String getErrorMessage() {
 		final var builder = new StringBuilder(THRESHOLDS_NOT_SET_ERROR);
-		var separator = "\t - ";
+		var separator = "\t\u2022\u00A0";
 		for (final var missingThreshold : missingThresholds) {
 			builder.append(separator).append(missingThreshold);
-			separator = "\n\t - ";
+			separator = "\n\t\u2022\u00A0";
 		}
 		return builder.toString();
 	}
