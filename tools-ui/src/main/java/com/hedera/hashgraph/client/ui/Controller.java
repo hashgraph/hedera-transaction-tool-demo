@@ -53,7 +53,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,7 +84,6 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -121,7 +119,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					"its current form by anyone other than members of the Hedera Council and Hedera personnel. " +
 					"If you are not a Hedera Council member or staff member, use of this application or of the " +
 					"code in its current form is not recommended and is at your own risk.";
-	private static final long EXPIRATION_TIME = 15L;
 	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
 	private boolean disableButtons = false;
 	private boolean drivesChanged = false;
@@ -144,10 +141,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public TextArea systemMessagesTextField;
 	public ButtonBar menuButtonBar;
 
-	private final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<char[], Integer> expirationPolicy =
-			new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(EXPIRATION_TIME,
-					TimeUnit.MINUTES);
-	private final PassiveExpiringMap<char[], Integer> expiringMap = new PassiveExpiringMap<>(expirationPolicy);
 
 	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 
@@ -928,11 +921,4 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return feePayer;
 	}
 
-	void addToPassiveMap(char[] charArray){
-		expiringMap.put(charArray, 1);
-	}
-
-	Set<char[]> getKeys(){
-		return expiringMap.keySet();
-	}
 }
