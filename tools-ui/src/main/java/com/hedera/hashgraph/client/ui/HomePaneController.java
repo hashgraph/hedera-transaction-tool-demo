@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
+import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
@@ -106,6 +107,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
 	private static final String OUTPUT_FILES = "OutputFiles";
 	private static final String INPUT_FILES = "InputFiles";
+	public static final double VBOX_SPACING = 20;
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
@@ -151,6 +153,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		loadPubKeys();
 		loadPKMap();
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
+		newFilesViewVBox.setSpacing(VBOX_SPACING);
 		historyFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
@@ -244,6 +247,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var historyNodes = displayFiles(remoteFilesMap, true);
 		historyFilesVBox.getChildren().clear();
 		historyFilesVBox.getChildren().addAll(historyNodes);
+		historyFilesVBox.setSpacing(VBOX_SPACING);
 	}
 
 	/**
@@ -534,8 +538,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var addMoreButton = buildWhiteButton("ADD MORE");
 		addMoreButton.setOnAction(actionEvent -> {
 			rf.addExtraSigners(ExtraKeysSelectorPopup.display(rf.getSignerSet()));
-			fillKeysGridPane(rf.getOldSigners(), extraSignersGridPane, new ArrayList<>(rf.getExtraSigners()),
-					rf.getSignerSet());
+			fillKeysGridPane(extraSignersGridPane, new ArrayList<>(rf.getExtraSigners()), rf.getSignerSet());
 		});
 		return addMoreButton;
 	}
@@ -544,8 +547,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var browseButton = buildWhiteButton("BROWSE");
 		browseButton.setOnAction(actionEvent -> {
 			rf.addExtraSigners(loadKeyFiles());
-			fillKeysGridPane(rf.getOldSigners(), extraSignersGridPane, new ArrayList<>(rf.getExtraSigners()),
-					rf.getSignerSet());
+			fillKeysGridPane(extraSignersGridPane, new ArrayList<>(rf.getExtraSigners()), rf.getSignerSet());
 		});
 		return browseButton;
 	}
@@ -558,9 +560,20 @@ public class HomePaneController implements GenericFileReadWriteAware {
 					final var keysFile = new File(KEYS_FOLDER + rf.getName());
 					Files.deleteIfExists(keysFile.toPath());
 					FileUtils.copyFile(new File(rf.getPath()), keysFile);
-				} else {
+				} else if (rf.getType().equals(FileType.ACCOUNT_INFO)) {
 					controller.accountsPaneController.importInfoFiles(
 							Collections.singletonList(new File(rf.getPath())));
+				} else if (rf.getType().equals(FileType.BUNDLE)) {
+					for (final Map.Entry<BundleFile.InfoKey, File> entry :
+							((BundleFile) rf).getAccountInfoMap().entrySet()) {
+						controller.accountsPaneController.importFromFile(entry.getValue(),
+								entry.getKey().getNickname());
+					}
+					for (final Map.Entry<String, File> entry : ((BundleFile) rf).getPublicKeyMap().entrySet()) {
+						final var destination = new File(KEYS_FOLDER, entry.getKey());
+						Files.deleteIfExists(destination.toPath());
+						FileUtils.copyFile(entry.getValue(), destination);
+					}
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
@@ -743,7 +756,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 		var counter = 0;
 		for (final var requiredKey : requiredKeys) {
-			final var checkBox = formatCheckBox(rf.getOldSigners(), rf.getSignerSet(), requiredKey);
+			final var checkBox = formatCheckBox(rf.getSignerSet(), requiredKey);
+			checkBox.setSelected(!rf.getOldSigners().contains(requiredKey));
 			if (requiredKeys.size() < KEYS_COLUMNS) {
 				keysHBox.getChildren().add(checkBox);
 			} else {
@@ -761,14 +775,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return signBox;
 	}
 
-	private CheckBox formatCheckBox(final Set<File> oldSigningKeys, final Set<File> signersSet, final File keyFile) {
+	private CheckBox formatCheckBox(final Set<File> signersSet, final File keyFile) {
 		final var baseName = FilenameUtils.getBaseName(keyFile.getName());
 		final var checkBox = new CheckBox(baseName);
 		checkBox.setSelected(true);
 		checkBoxListener(signersSet, keyFile, baseName, checkBox, logger);
-		if (oldSigningKeys.contains(keyFile)) {
-			checkBox.setSelected(false);
-		}
 		return checkBox;
 	}
 
@@ -840,13 +851,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return files;
 	}
 
-	private void fillKeysGridPane(final Set<File> oldSigningKeys, final GridPane extraSignersGridPane,
+	private void fillKeysGridPane(final GridPane extraSignersGridPane,
 			final List<File> extraSignersList, final Set<File> signersSet) {
 		extraSignersList.sort(new SortByFileBaseName());
 		extraSignersGridPane.getChildren().clear();
 		var counter = 0;
 		for (final var file : extraSignersList) {
-			final var checkBox = formatCheckBox(oldSigningKeys, signersSet, file);
+			final var checkBox = formatCheckBox(signersSet, file);
 			final var tooltip = new Tooltip(file.getPath());
 			tooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
 			checkBox.setTooltip(tooltip);

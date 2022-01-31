@@ -283,7 +283,6 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 	private TreeView<?> getDesignTreeView() {
 		final var popupNodes = getPopupNodes();
-		assert popupNodes != null;
 		final var node = ((HBox) ((VBox) popupNodes.get(1)).getChildren().get(0)).getChildren().get(2);
 		assert node instanceof TitledPane;
 		final var content = ((TitledPane) node).getContent();

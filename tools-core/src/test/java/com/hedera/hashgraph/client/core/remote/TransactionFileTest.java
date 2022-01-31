@@ -144,7 +144,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(transactionFile.getActions().contains(FileActions.BROWSE));
 
 		file = new File(
-				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/hundredThousandBytes.zip");
+				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/hundredThousandBytes.lfu");
 		info = FileDetails.parse(file);
 		transactionFile = new TransactionFile(info);
 		assertFalse(transactionFile.isValid());

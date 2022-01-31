@@ -74,7 +74,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 
 		assertEquals(digest, softwareUpdateFile.getDigest().replace("\u00a0", " ").replace("\n", " "));
 
-		var empty = new SoftwareUpdateFile();
+		final var empty = new SoftwareUpdateFile();
 		assertEquals("0.0.1", empty.getVersion());
 		assertEquals("", empty.getDigest());
 	}

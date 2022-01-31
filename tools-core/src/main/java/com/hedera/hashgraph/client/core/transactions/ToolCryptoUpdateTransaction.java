@@ -147,6 +147,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			accountUpdateTransaction.setKey(key);
 		}
 		if (autoRenewDuration != null) {
+			//noinspection deprecation
 			accountUpdateTransaction.setAutoRenewPeriod(autoRenewDuration);
 		}
 		if (receiverSignatureRequired != null) {

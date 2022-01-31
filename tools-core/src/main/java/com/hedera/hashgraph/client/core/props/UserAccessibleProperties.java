@@ -74,6 +74,11 @@ public class UserAccessibleProperties {
 		this.message = message;
 	}
 
+	public UserAccessibleProperties(final File file, final String message) {
+		this.properties = new UserProperties(file.getAbsolutePath(), message);
+		this.location = file.getAbsolutePath();
+		this.message = message;
+	}
 
 	public void setKeyLocationProperty(final String location) {
 		properties.setProperty(JsonConstants.PREFERRED_KEY_LOCATION, location);
