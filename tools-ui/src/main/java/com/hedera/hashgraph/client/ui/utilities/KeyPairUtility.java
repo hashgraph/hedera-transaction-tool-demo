@@ -90,7 +90,7 @@ public class KeyPairUtility {
 
 	@Nullable
 	private KeyPair getKeyPair(final File pemFile, final String message) {
-		KeyPair keyPair = getKeyPairP(pemFile);
+		KeyPair keyPair = useStored(pemFile);
 		if (keyPair != null) {
 			return keyPair;
 		}
@@ -113,16 +113,23 @@ public class KeyPairUtility {
 		return keyPair;
 	}
 
-	private KeyPair getKeyPairP(final File pem) {
+	/**
+	 * Check if any of the keys of the expiring map can be used to decrypt the KeyPair
+	 *
+	 * @param pem
+	 * 		the file that contains an encrypted key pair
+	 * @return a decrypted key pair if the map contains the right key. Null otherwise
+	 */
+	private KeyPair useStored(final File pem) {
 		KeyPair keyPair = null;
 		int count = 0;
 		logger.info("Trying stored passwords.");
-		for (char[] chars : expiringMap.keySet()) {
+		for (final char[] chars : expiringMap.keySet()) {
 			try {
 				keyPair = getKeyPair(pem.getPath(), chars);
 				logger.info("Password found");
 				return keyPair;
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.info("Trying password {}", count);
 				count++;
 			}
@@ -196,5 +203,8 @@ public class KeyPairUtility {
 		return (!keyPairs.isEmpty()) ? keyPairs.get(0) : null;
 	}
 
+	public int getStoredKeysCount(){
+		return expiringMap.size();
+	}
 
 }
