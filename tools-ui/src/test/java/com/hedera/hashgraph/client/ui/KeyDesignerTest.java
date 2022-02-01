@@ -25,13 +25,16 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.CreatePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
@@ -41,22 +44,28 @@ import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.CenterButtons;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.copyCreatePaneKeys;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.countTreeNodes;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findLabelsInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 
 public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAware {
@@ -109,7 +118,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 
 			final var objectMapper = new ObjectMapper();
-			final var mapAsString = objectMapper.writeValueAsString(emailMap);
+			objectMapper.writeValueAsString(emailMap);
 
 			properties.setOneDriveCredentials(emailMap);
 			properties.setHash("123456789".toCharArray());
@@ -125,6 +134,15 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 					new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
 			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 					new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+
+			final var testPublicKeys = new File("src/test/resources/Keys").listFiles(
+					(dir, name) -> PUB_EXTENSION.equals(FilenameUtils.getExtension(name)) && name.startsWith(
+							"KeyStore"));
+			for (final File testPublicKey : testPublicKeys) {
+				if (!new File(KEYS_FOLDER, testPublicKey.getName()).exists()) {
+					FileUtils.copyFile(testPublicKey, new File(KEYS_FOLDER, testPublicKey.getName()));
+				}
+			}
 
 			TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 			FxToolkit.registerPrimaryStage();
@@ -232,7 +250,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(1, lists.size());
 
 		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
-		assertEquals(1, publicKeys.size());
+		assertEquals(11, publicKeys.size());
 
 		createPanePage.clickOnKeyDesignerCancel();
 
@@ -254,7 +272,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(1, lists.size());
 
 		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
-		assertEquals(1, publicKeys.size());
+		assertEquals(11, publicKeys.size());
 
 		createPanePage.clickOnKeyDesignerCancel();
 	}
@@ -270,15 +288,211 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		final var innerVBox = ((VBox) accountsTitledPaneContent).getChildren();
 		assertEquals(1, innerVBox.size());
 		assertTrue(innerVBox.get(0) instanceof ListView);
-		createPanePage.clickOnAccountKey("ninetyFour");
+		createPanePage.doubleClickOnAccountKey("ninetyFour");
 		final TreeView<?> treeView = getDesignTreeView();
 		assertEquals(9, countTreeNodes(treeView.getRoot()));
 
-		createPanePage.clickOnAccountKey("treasury");
+		createPanePage.doubleClickOnAccountKey("treasury");
 		assertEquals(17, countTreeNodes(getDesignTreeView().getRoot()));
 
 		createPanePage.clickOnKeyDesignerCancel();
 
+	}
+
+	@Test
+	public void testPlanItem1_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey();
+
+		final var initialSize = createPanePage.getKeyTreeSize();
+
+		createPanePage.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton();
+
+		assertEquals(initialSize, createPanePage.getKeyTreeSize() - 1);
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem2_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnAccountKey("ninetyFour")
+				.clickOnAddAccountButton();
+
+		assertEquals(9, createPanePage.getKeyTreeSize());
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem3_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton()
+				.selectKeyInTree("KeyStore-1")
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton();
+
+		assertEquals(5, createPanePage.getKeyTreeSize());
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem4_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton();
+
+		var node = find("Threshold key (x of 3)");
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(2);
+
+		node = find("Threshold key (x of 3)");
+		assertNull(node);
+
+		node = find("Threshold key (2 of 3)");
+		assertNotNull(node);
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem5_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.selectKeyInTree("KeyStore-0")
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton();
+
+		var node = find("KeyStore key (x of 2)");
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(2);
+
+		node = find("KeyStore key (x of 2)");
+		assertNull(node);
+
+		node = find("KeyStore key (2 of 2)");
+		assertNotNull(node);
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem6_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton()
+				.deleteKeyFromTree("principalTestingKey");
+
+		final var node = find("Threshold key (x of 0)");
+		assertNotNull(node);
+		doubleClickOn(node);
+
+		final var labels = findLabelsInPopup(getPopupNodes());
+		assertEquals(1, labels.size());
+		assertTrue(labels.get(0) instanceof Label);
+		assertTrue((labels.get(0)).getText().toLowerCase(Locale.ROOT).contains(
+				"selected threshold does not have a list of keys associated with it."));
+
+		clickOn(TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), "CONTINUE"));
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem9_10_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.selectKeyInTree("KeyStore-0")
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-2")
+				.clickOnAddPublicKeyButton();
+
+		var node = find("KeyStore key (x of 3)");
+		assertNotNull(node);
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(2);
+		node = find("KeyStore key (2 of 3)");
+		assertNotNull(node);
+
+		node = find("Threshold key (x of 2)");
+		assertNotNull(node);
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(1);
+		node = find("Threshold key (1 of 2)");
+		assertNotNull(node);
+		createPanePage.expandTree();
+
+		createPanePage.selectKeyInTree("KeyStore key (2 of 3)")
+				.clickOnPublicKey("KeyStore-3")
+				.clickOnAddPublicKeyButton();
+
+		node = find("Threshold key (1 of 2)");
+		assertNotNull(node);
+
+		node = find("KeyStore key (x of 4)");
+		assertNotNull(node);
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem11a_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.selectKeyInTree("KeyStore-0")
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-2")
+				.clickOnAddPublicKeyButton();
+		final int initialCount = createPanePage.getKeyTreeSize();
+		createPanePage.deleteKeyFromTree("KeyStore-1");
+		assertEquals(initialCount, createPanePage.getKeyTreeSize() + 1);
+
+		createPanePage.deleteKeyFromTree("KeyStore key (x of 2)");
+		assertEquals(2, createPanePage.getKeyTreeSize());
+		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem11b_test() throws IOException {
+		FileUtils.deleteDirectory(new File(KEYS_FOLDER));
+		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original/Keys"), new File(KEYS_FOLDER));
+
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnAccountKey("seventySix")
+				.clickOnAddAccountButton()
+				.clickOnPublicKey("nmody-tx");
+
+		final int initialCount = createPanePage.getKeyTreeSize();
+		createPanePage.deleteKeyFromTree("aharris-tx");
+		assertEquals(initialCount, createPanePage.getKeyTreeSize() + 1);
+		var node = find("Threshold key (x of 3)");
+		assertNotNull(node);
+		createPanePage.closePopup();
 	}
 
 	private TreeView<?> getDesignTreeView() {

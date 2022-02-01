@@ -680,7 +680,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setTransactionFee(1.2345678911)
 				.setInitialBalance(1000)
 				.setCreateKey()
-				.clickOnAccountKey("treasury")
+				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
@@ -1538,7 +1538,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
 
 		createPanePage.setCreateKey()
-				.clickOnAccountKey("treasury")
+				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 		assertFalse(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
