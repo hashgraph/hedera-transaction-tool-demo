@@ -52,7 +52,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 
 public class BundleFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(BundleFile.class);
-	private static final String MESSAGE_FORMAT = "The administrator has shared information regarding the following %s.";
+	private static final String MESSAGE_FORMAT = "%s updates";
 
 	private final Map<InfoKey, File> accountInfoMap = new TreeMap<>();
 	private final Map<String, File> publicKeyMap = new TreeMap<>();
@@ -153,14 +153,14 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 		final List<Label> messages = new ArrayList<>();
 		if (!publicKeyMap.isEmpty()) {
-			messages.addAll(addMap("public keys", new ArrayList<>(publicKeyMap.keySet())));
+			messages.addAll(addMap("Public key", new ArrayList<>(publicKeyMap.keySet())));
 		}
 		if (!accountInfoMap.isEmpty()) {
 			final List<String> strings = new ArrayList<>();
 			for (final InfoKey infoKey : accountInfoMap.keySet()) {
 				strings.add(infoKey.toString());
 			}
-			messages.addAll(addMap("accounts", strings));
+			messages.addAll(addMap("Account information", strings));
 		}
 
 		var count = 0;
@@ -172,6 +172,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 			checkBox.setSelected(true);
 			details.add(checkBox, 0, count);
 		}
+		checkBox.setDisable(isHistory());
 
 		details.setVgap(10);
 		return details;
