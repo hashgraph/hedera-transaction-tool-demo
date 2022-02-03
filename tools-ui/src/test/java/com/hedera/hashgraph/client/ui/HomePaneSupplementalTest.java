@@ -56,6 +56,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -63,11 +64,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class HomePaneSupplementalTest extends TestBase implements GenericFileReadWriteAware {
-	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
-	protected static final String PASSWORD = "123456789";
-	protected static final String MESSAGE_FORMAT =
-			"The administrator has shared information regarding the following %s.";
-	public static final int ONE_SECOND = 1000;
+
 	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
 
@@ -212,18 +209,18 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 
-		final var publicKeysBundle = findInBoxes("public keys", "accounts");
+		final var publicKeysBundle = findInBoxes("Public key", "Account information");
 		assertTrue(publicKeysBundle.getChildren().size() > 0);
 		final var publicKeys = getLabelsFromGrid(publicKeysBundle).get(1).getText().split("\n");
 		assertEquals(6, publicKeys.length);
 
-		final var accountsBundle = findInBoxes("accounts", "public keys");
+		final var accountsBundle = findInBoxes("Account information", "Public key");
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var accountKeys = getLabelsFromGrid(accountsBundle).get(1).getText().split("\n");
 		assertEquals(5, accountKeys.length);
 		assertTrue(getLabelsFromGrid(accountsBundle).get(1).getText().contains("Treasury test"));
 
-		final var mixedBundle = findInBoxes("public keys,accounts", "");
+		final var mixedBundle = findInBoxes("Public key,Account information", "");
 		assertTrue(mixedBundle.getChildren().size() > 0);
 		final var publicKeys2 = getLabelsFromGrid(mixedBundle).get(1).getText().split("\n");
 		assertEquals(6, publicKeys2.length);
@@ -234,7 +231,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void acceptAccounts_test() throws HederaClientException {
-		final var accountsBundle = findInBoxes("accounts", "public keys");
+		final var accountsBundle = findInBoxes("Account information", "Public key");
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
@@ -260,7 +257,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void acceptAccountsKeepNicknames_test() throws HederaClientException {
-		final var accountsBundle = findInBoxes("accounts", "public keys");
+		final var accountsBundle = findInBoxes("Account information", "Public key");
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
@@ -294,7 +291,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void declineAccounts_test() throws HederaClientException {
-		final var accountsBundle = findInBoxes("accounts", "public keys");
+		final var accountsBundle = findInBoxes("Account information", "Public key");
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
@@ -310,7 +307,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void acceptKeys_test() {
-		final var keysBundle = findInBoxes("public keys", "accounts");
+		final var keysBundle = findInBoxes("Public key", "Account information");
 		assertTrue(keysBundle.getChildren().size() > 0);
 
 		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
@@ -339,7 +336,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void declineKeys_test() {
-		final var keysBundle = findInBoxes("public keys", "accounts");
+		final var keysBundle = findInBoxes("Public key", "Account information");
 		assertTrue(keysBundle.getChildren().size() > 0);
 
 		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
@@ -362,7 +359,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void acceptMixed_test() throws HederaClientException {
-		final var bundle = findInBoxes("accounts,public keys", "");
+		final var bundle = findInBoxes("Account information,Public key", "");
 		assertTrue(bundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
@@ -407,7 +404,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Test
 	public void declineMixed_test() throws HederaClientException {
-		final var bundle = findInBoxes("accounts,public keys", "");
+		final var bundle = findInBoxes("Account information,Public key", "");
 		assertTrue(bundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
@@ -447,12 +444,12 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 			final var labels = getLabelsFromGrid(bundleBox);
 			for (final var label : labels) {
 				for (final var s : include) {
-					if (label.getText().equals(String.format(MESSAGE_FORMAT, s))) {
+					if (label.getText().equals(String.format(BUNDLE_TITLE_MESSAGE_FORMAT, s))) {
 						countInclude++;
 					}
 				}
 				for (final var s : exclude) {
-					if (label.getText().equals(String.format(MESSAGE_FORMAT, s))) {
+					if (label.getText().equals(String.format(BUNDLE_TITLE_MESSAGE_FORMAT, s))) {
 						countExclude++;
 					}
 				}

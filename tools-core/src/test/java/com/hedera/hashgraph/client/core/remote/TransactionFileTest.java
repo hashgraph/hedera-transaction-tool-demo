@@ -242,7 +242,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 
 		final var signers = transfer.getSigningPublicKeys();
 		assertNotNull(signers);
-		assertEquals(4, signers.size());
+		assertEquals(18, signers.size());
 	}
 
 	@Test
