@@ -490,9 +490,37 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		final int initialCount = createPanePage.getKeyTreeSize();
 		createPanePage.deleteKeyFromTree("aharris-tx");
 		assertEquals(initialCount, createPanePage.getKeyTreeSize() + 1);
-		var node = find("Threshold key (x of 3)");
+		final var node = find("Threshold key (x of 3)");
 		assertNotNull(node);
 		createPanePage.closePopup();
+	}
+
+	@Test
+	public void thresholdPopup_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.selectKeyInTree("KeyStore-0")
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton();
+
+		final var node = find("KeyStore key (x of 2)");
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(5);
+
+		final var popupNodes = TestUtil.getPopupNodes();
+		final var labels = TestUtil.findLabelsInPopup(popupNodes);
+
+		assertFalse(labels.isEmpty());
+		assertTrue(labels.get(1).getText().contains("try again"));
+		createPanePage.setThreshold(1);
+
+		final var node1 = find("KeyStore key (1 of 2)");
+		assertNotNull(node1);
 	}
 
 	private TreeView<?> getDesignTreeView() {
