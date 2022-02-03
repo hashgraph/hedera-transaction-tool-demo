@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
-import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -53,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
@@ -64,9 +62,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class HomePaneSupplementalTest extends TestBase implements GenericFileReadWriteAware {
-
-	private HomePanePage homePanePage;
-	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -156,9 +151,6 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
-
-		homePanePage = new HomePanePage(this);
-		mainWindowPage = new MainWindowPage(this);
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		separateBoxes(newFiles);
@@ -287,7 +279,6 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(finalAccountObject.has("0.0.6"));
 		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
 	}
-
 
 	@Test
 	public void declineAccounts_test() throws HederaClientException {
