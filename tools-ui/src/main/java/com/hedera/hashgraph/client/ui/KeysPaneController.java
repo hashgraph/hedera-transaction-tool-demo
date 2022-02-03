@@ -594,12 +594,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void handleOrphanPem() {
-		try {
-			GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
-					MISSING_PUBLIC_KEY_MESSAGE);
-		} catch (final HederaClientException exception) {
-			logger.error(exception);
-		}
+		GenericPopup.display("Missing Public Keys", ACCEPT_MESSAGE, "", false, false,
+				MISSING_PUBLIC_KEY_MESSAGE);
 
 		for (final var entry : orphanPEMs.entrySet()) {
 			final var key = entry.getKey();

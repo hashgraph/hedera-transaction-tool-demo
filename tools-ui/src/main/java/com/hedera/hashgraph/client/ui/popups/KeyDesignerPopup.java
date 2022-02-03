@@ -766,20 +766,31 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		}
 
 		final var item = treeCell.getTreeItem();
-		try {
+
+		var threshold = 0;
+		int count = 0;
+		final var size = item.getChildren().size();
+		while (threshold < 1 || threshold > size) {
+			final var message = (count == 0) ?
+					"Enter the threshold" :
+					String.format("The key threshold should be an integer between 1 and %s, please try again.", size);
 			final var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
-					"Enter the threshold");
+					message);
 			if (thresholdString == null) {
 				return;
 			}
-			final var threshold = Integer.parseInt(thresholdString);
-			final var formattedItem = String.format("%s(%d of %d)",
-					item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
-					item.getChildren().size());
-			item.setValue(formattedItem);
-		} catch (final HederaClientException e) {
-			logger.error(e);
+			try {
+				threshold = Integer.parseInt(thresholdString);
+			} catch (final NumberFormatException e) {
+				logger.error("Cannot parse threshold {}", thresholdString);
+			}
+			count++;
 		}
+		final var formattedItem = String.format("%s(%d of %d)",
+				item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
+				size);
+		item.setValue(formattedItem);
+
 	}
 
 	private void treeCellDragDroppedEvent(final TreeCell<String> treeCell, final DragEvent event) {
