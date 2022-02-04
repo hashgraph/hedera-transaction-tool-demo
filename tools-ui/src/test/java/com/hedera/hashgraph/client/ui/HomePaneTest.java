@@ -63,6 +63,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -71,6 +72,7 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLP
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -167,13 +169,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
 
-		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
-
-		assertEquals(newFiles.size(),
-				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+		initBoxes();
 	}
+
 
 	@Test
 	public void clickOnBogusItem() {
@@ -644,7 +642,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var zips = findByStringExtension(new File(out), "zip");
 		assertEquals(0, zips.size());
-
 	}
 
 	@Test
@@ -817,6 +814,162 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var nicknames = findAll("nineFour (0.0.94-ioaex)");
 		assertEquals(0, nicknames.size());
+	}
+
+	@Test
+	public void transactionSignHistory_Test() throws IOException, HederaClientException {
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
+
+		Supplier<Integer> findTxnBox = () -> {
+			boolean found = false;
+			int k = 0;
+
+			// Check the time and local time are correct
+			while (k < transactionBoxes.size()) {
+				final var gridPane =
+						((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+				final var timestamp = new Timestamp(1675214610, 0);
+				final var localDateTime = timestamp.asReadableLocalString();
+				final var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+				for (final var n : gridPane.getChildren()) {
+					if (n instanceof Label) {
+						final var text = ((Label) n).getText();
+						if (text.contains("UTC")) {
+							found = (text.contains(utcDateTime)) && (text.contains(localDateTime));
+						}
+					}
+				}
+				if (found) {
+					break;
+				}
+				k++;
+			}
+			return found ? k : -1;
+		};
+
+		int k = findTxnBox.get();
+
+
+		assertTrue(k >= 0);
+
+
+		//DECLINE
+		logger.info("starting decline click, transactionBoxes.size()={}", transactionBoxes.size());
+		var children = (transactionBoxes.get(k)).getChildren();
+		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
+
+		moveTo(reject);
+		sleep(ONE_SECOND);
+		clickOn(reject);
+
+		// click add a signature in history
+		logger.info("starting add signature click");
+
+		for (int x = 0; x < 10; ++x) {
+			var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+			var addSigButton = TestUtil.findButtonInPopup(historyFiles, "ADD SIGNATURE");
+
+			if (addSigButton == null) {
+				logger.info("addSigButton gone, breaking");
+				break;
+			}
+			logger.info("addSigButton exist, clicking it");
+
+			ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), addSigButton);
+
+			sleep(ONE_SECOND);
+
+			clickOn(addSigButton);
+
+			sleep(ONE_SECOND);
+		}
+
+		for (int x = 0; (x < 10) && (((VBox) find(NEW_FILES_VBOX)).getChildren().size() != totalBoxes); ++x) {
+			logger.info("NEW_FILES_VBOX size {}, does not equal ", ((VBox) find(NEW_FILES_VBOX)).getChildren().size(), totalBoxes);
+			sleep(ONE_SECOND);
+		}
+
+		// accept the txn
+		initBoxes();
+		k = findTxnBox.get();
+
+		logger.info("starting accept txn, k={}, transactionBoxes.size()={}", k, transactionBoxes.size());
+		assertTrue(k >= 0);
+
+		children = (transactionBoxes.get(k)).getChildren();
+
+		final var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		final var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
+		clickOn(addMore);
+
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(k).getChildren().get(2));
+
+		sleep(ONE_SECOND);
+		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
+
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		clickOn(acceptButton);
+
+		assert sign != null;
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), sign);
+
+		clickOn(sign);
+
+		sleep(ONE_SECOND);
+
+		homePanePage.enterPasswordInPopup(PASSWORD)
+				.waitForWindow();
+
+		sleep(ONE_SECOND);
+
+		// make sure history order is correct
+		logger.info("checking history order", k);
+		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+
+		var declinedFound = false;
+		var keyFound = false;
+		for (var node : nodes) {
+			if (node instanceof Label) {
+				var text = ((Label) node).getText();
+				if (text.contains("Declined on")) {
+					declinedFound = true;
+				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
+					keyFound = true;
+
+					// declined should be first
+					assertTrue(declinedFound);
+				}
+			}
+		}
+
+		assertTrue(declinedFound);
+		assertTrue(keyFound);
+
+	}
+
+	private void initBoxes() {
+		publicKeyBoxes.clear();
+		accountInfoBoxes.clear();
+		batchBoxes.clear();
+		transactionBoxes.clear();
+		softwareBoxes.clear();
+		systemBoxes.clear();
+		freezeBoxes.clear();
+
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
+				systemBoxes, freezeBoxes);
+
+		assertEquals(newFiles.size(),
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size()
+						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
 	}
 
 	private List<File> findByStringExtension(final File dir, final String ext) {

@@ -24,6 +24,7 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -40,6 +41,7 @@ public class BalanceQueryTest {
 
 	private static final Logger logger = LogManager.getLogger(BalanceQueryTest.class);
 
+	@Ignore
 	@Test
 	public void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException, IOException {
 		var query = BalanceQuery.Builder.aBalanceQuery()
