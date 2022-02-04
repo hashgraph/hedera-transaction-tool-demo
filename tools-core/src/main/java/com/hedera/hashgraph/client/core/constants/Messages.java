@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class Messages {
+
 	private Messages() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -53,4 +54,6 @@ public class Messages {
 	public static final String NICKNAME_IN_USE_MESSAGE =
 			"The nickname \"%s\" is already in use. Please choose another one.";
 	public static final String CONTINUE_MESSAGE = "CONTINUE";
+	public static final String BUNDLE_TITLE_MESSAGE_FORMAT = "%s updates";
+
 }
