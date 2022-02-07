@@ -217,13 +217,6 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		final var accountTitledPane =
 				createPanePage.getTitledPane(ACCOUNTS);
 
-		final var arrowButton = createPanePage.getCenterButton(CenterButtons.ARROW_BUTTON);
-		assertNotNull(arrowButton);
-		assertFalse(arrowButton.getParent().isVisible());
-		final var crossButton = createPanePage.getCenterButton(CenterButtons.CROSS_BUTTON);
-		assertNotNull(crossButton);
-		assertFalse(crossButton.getParent().isVisible());
-
 
 		final var accountTitledPaneContent = accountTitledPane.getContent();
 		assertTrue(accountTitledPaneContent instanceof VBox);
@@ -236,9 +229,6 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(5, accounts.size());
 
 		final var publicKeyTitledPane = createPanePage.getTitledPane(PUBLIC_KEYS);
-
-		assertTrue(arrowButton.getParent().isVisible());
-		assertTrue(crossButton.getParent().isVisible());
 
 		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
 		assertTrue(publicKeyTitledPaneContent instanceof VBox);
@@ -293,7 +283,8 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(9, countTreeNodes(treeView.getRoot()));
 
 		createPanePage.doubleClickOnAccountKey("treasury");
-		assertEquals(17, countTreeNodes(getDesignTreeView().getRoot()));
+
+		assertEquals(26, countTreeNodes(getDesignTreeView().getRoot()));
 
 		createPanePage.clickOnKeyDesignerCancel();
 
@@ -521,6 +512,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		final var node1 = find("KeyStore key (1 of 2)");
 		assertNotNull(node1);
+		createPanePage.closePopup();
 	}
 
 	private TreeView<?> getDesignTreeView() {

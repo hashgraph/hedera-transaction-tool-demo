@@ -897,7 +897,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setMemo("A memo")
 				.setFeePayerAccount(1019)
 				.setNodeAccount(42)
-				.setUpdateKey("treasury")
+				.setUpdateKey("treasury");
+
+		sleep(10000);
+		createPanePage
 				.saveKey();
 
 
@@ -996,7 +999,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
-
 
 
 		final var transactions = new File(
@@ -1540,6 +1542,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.setCreateKey()
 				.doubleClickOnAccountKey("treasury")
 				.saveKey();
+
 		assertFalse(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
 		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
