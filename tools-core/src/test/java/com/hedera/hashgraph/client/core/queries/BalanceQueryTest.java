@@ -41,7 +41,6 @@ public class BalanceQueryTest {
 
 	private static final Logger logger = LogManager.getLogger(BalanceQueryTest.class);
 
-	@Ignore
 	@Test
 	public void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException, IOException {
 		var query = BalanceQuery.Builder.aBalanceQuery()
