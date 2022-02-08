@@ -745,15 +745,11 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				label.setWrapText(true);
 				detailsGridPane.add(label, 0, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
-			}
-		}
-		for (final var metadataAction : signingHistory) {
-			if (Actions.DECLINE.equals(metadataAction.getActions())) {
+			} else if (Actions.DECLINE.equals(metadataAction.getActions())) {
 				detailsGridPane.add(new Label("Declined on: "), 0, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			}
 		}
-
 	}
 
 	private static FileType parseType(final String extension) throws HederaClientException {
