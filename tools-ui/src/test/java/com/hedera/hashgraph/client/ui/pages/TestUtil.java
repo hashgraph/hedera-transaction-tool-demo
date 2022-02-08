@@ -24,6 +24,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Hyperlink;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
@@ -196,6 +197,35 @@ public class TestUtil {
 	}
 
 	/**
+	 * Returns a list of Labels contained in the Popup
+	 *
+	 * @param popupNodes
+	 * 		List of nodes in the popup
+	 * @return a list of Labels
+	 */
+	public static List<Label> findLabelsInPopup(final ObservableList<Node> popupNodes) {
+		final List<Label> labels = new ArrayList<>();
+		for (final var popupNode : popupNodes) {
+			if (popupNode instanceof Label) {
+				labels.add((Label) popupNode);
+			}
+			if (popupNode instanceof HBox) {
+				labels.addAll(
+						Objects.requireNonNull(findLabelsInPopup(((HBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof VBox) {
+				labels.addAll(
+						Objects.requireNonNull(findLabelsInPopup(((VBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof GridPane) {
+				labels.addAll(
+						Objects.requireNonNull(findLabelsInPopup(((GridPane) popupNode).getChildren())));
+			}
+		}
+		return labels;
+	}
+
+	/**
 	 * Initialize keys folder with test keys.
 	 */
 	public static void copyCreatePaneKeys() {
@@ -213,7 +243,8 @@ public class TestUtil {
 		}
 
 		final var sourceCreatePaneTestDirectory = Paths.get(
-				"").toAbsolutePath() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator + "Keys";
+				"").toAbsolutePath() + testResourceFolder + File.separator + createPaneFolderSuffix + File.separator +
+				"Keys";
 		logger.info("Test keys directory : {}", sourceCreatePaneTestDirectory);
 	}
 

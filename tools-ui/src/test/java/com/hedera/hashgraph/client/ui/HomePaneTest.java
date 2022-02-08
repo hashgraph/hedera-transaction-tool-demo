@@ -151,9 +151,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		if (new File(DEFAULT_STORAGE + "History").exists()) {
-			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
-		}
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
@@ -167,13 +164,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
 
-		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
-
-		assertEquals(newFiles.size(),
-				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+		initBoxes();
 	}
+
 
 	@Test
 	public void clickOnBogusItem() {
@@ -561,8 +554,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 			for (final var n : gridPane.getChildren()) {
 				if (n instanceof Label) {
 					final var text = ((Label) n).getText();
-					if (text.contains("UTC")) {
-						found = (text.contains(utcDateTime)) && (text.contains(localDateTime));
+					if (text.contains("UTC") && (text.contains(utcDateTime)) && (text.contains(localDateTime))) {
+						found = true;
+						break;
 					}
 				}
 			}
@@ -644,7 +638,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var zips = findByStringExtension(new File(out), "zip");
 		assertEquals(0, zips.size());
-
 	}
 
 	@Test
@@ -817,6 +810,91 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var nicknames = findAll("nineFour (0.0.94-ioaex)");
 		assertEquals(0, nicknames.size());
+	}
+
+	@Test
+	public void transactionSignHistory_Test() throws IOException, HederaClientException {
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
+
+		boolean found = false;
+		int k = 0;
+
+		// Check the time and local time are correct
+		while (k < transactionBoxes.size()) {
+			final var gridPane =
+					((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+			final var timestamp = new Timestamp(1675214610, 0);
+			final var localDateTime = timestamp.asReadableLocalString();
+			final var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+			for (final var n : gridPane.getChildren()) {
+				if (n instanceof Label) {
+					final var text = ((Label) n).getText();
+					if (text.contains("UTC") && (text.contains(utcDateTime)) && (text.contains(localDateTime))) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				break;
+			}
+			k++;
+		}
+
+		assertTrue(found);
+
+		//DECLINE
+		var children = (transactionBoxes.get(k)).getChildren();
+		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
+
+		moveTo(reject);
+		sleep(ONE_SECOND);
+		clickOn(reject);
+
+		// make sure history order is correct
+		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+
+		var declinedFound = false;
+		var keyFound = false;
+		for (var node : nodes) {
+			if (node instanceof Label) {
+				var text = ((Label) node).getText();
+				if (text.contains("Declined on")) {
+					declinedFound = true;
+				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
+					keyFound = true;
+
+					// declined should be first
+					assertTrue(declinedFound);
+				}
+			}
+		}
+
+		assertTrue(declinedFound);
+		assertTrue(keyFound);
+
+	}
+
+	private void initBoxes() {
+		publicKeyBoxes.clear();
+		accountInfoBoxes.clear();
+		batchBoxes.clear();
+		transactionBoxes.clear();
+		softwareBoxes.clear();
+		systemBoxes.clear();
+		freezeBoxes.clear();
+
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
+				systemBoxes, freezeBoxes);
+
+		assertEquals(newFiles.size(),
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size()
+						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
 	}
 
 	private List<File> findByStringExtension(final File dir, final String ext) {

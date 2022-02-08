@@ -21,8 +21,10 @@ package com.hedera.hashgraph.client.core.remote;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import javafx.scene.control.CheckBox;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,8 +34,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -44,6 +48,7 @@ public class BundleFileTest extends TestBase {
 
 	@Before
 	public void setUp() throws Exception {
+		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
 		}
@@ -52,6 +57,27 @@ public class BundleFileTest extends TestBase {
 		}
 		Files.deleteIfExists(Path.of(ACCOUNTS_MAP_FILE));
 		Files.copy(Path.of("src/test/resources/accountMapFile.json"), Path.of(ACCOUNTS_MAP_FILE));
+
+		if (new File(ACCOUNTS_INFO_FOLDER).exists()) {
+			FileUtils.deleteDirectory(new File(ACCOUNTS_INFO_FOLDER));
+		}
+
+		if (new File(ACCOUNTS_INFO_FOLDER).mkdirs()) {
+			logger.info("Accounts info folder created");
+		}
+		FileUtils.copyDirectory(new File("src/test/resources/AccountInfos"), new File(ACCOUNTS_INFO_FOLDER));
+		logger.info("Info files copied");
+		Files.move(Path.of(ACCOUNTS_INFO_FOLDER, "0.0.1.info"), Path.of(ACCOUNTS_INFO_FOLDER, "zero1.info"));
+		Files.move(Path.of(ACCOUNTS_INFO_FOLDER, "0.0.2.info"), Path.of(ACCOUNTS_INFO_FOLDER, "treasury.info"));
+		Files.move(Path.of(ACCOUNTS_INFO_FOLDER, "0.0.3.info"), Path.of(ACCOUNTS_INFO_FOLDER, "node1.info"));
+		Files.move(Path.of(ACCOUNTS_INFO_FOLDER, "0.0.5.info"), Path.of(ACCOUNTS_INFO_FOLDER, "node3.info"));
+		Files.move(Path.of(ACCOUNTS_INFO_FOLDER, "0.0.6.info"), Path.of(ACCOUNTS_INFO_FOLDER, "node4.info"));
+
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 	}
 
 	@Test
@@ -93,9 +119,9 @@ public class BundleFileTest extends TestBase {
 		var children = new BundleFile(details).buildGridPane().getChildren();
 
 		assertFalse(children.isEmpty());
-		assertEquals(5, children.size());
-		assertTrue(children.get(4) instanceof CheckBox);
-		assertTrue(((CheckBox) children.get(4)).isSelected());
+		assertEquals(6, children.size());
+		assertTrue(children.get(5) instanceof CheckBox);
+		assertTrue(((CheckBox) children.get(5)).isSelected());
 
 		file = new File("src/test/resources/Files/bundleFileTests/infoBundle.zip");
 		details = FileDetails.parse(file);
@@ -111,16 +137,16 @@ public class BundleFileTest extends TestBase {
 
 		children = new BundleFile(details).buildGridPane().getChildren();
 		assertFalse(children.isEmpty());
-		assertEquals(2, children.size());
+		assertEquals(3, children.size());
 
 		file = new File("src/test/resources/Files/bundleFileTests/testBundle.zip");
 		details = FileDetails.parse(file);
 
 		children = new BundleFile(details).buildGridPane().getChildren();
 		assertFalse(children.isEmpty());
-		assertEquals(5, children.size());
-		assertTrue(children.get(4) instanceof CheckBox);
-		assertTrue(((CheckBox) children.get(4)).isSelected());
+		assertEquals(6, children.size());
+		assertTrue(children.get(5) instanceof CheckBox);
+		assertTrue(((CheckBox) children.get(5)).isSelected());
 	}
 
 	@Test
@@ -174,8 +200,8 @@ public class BundleFileTest extends TestBase {
 		assertNotEquals(mixedBundle, otherBundle);
 		assertNotEquals(mixedBundle.hashCode(), otherBundle.hashCode());
 
-		assertEquals(-1592848019, mixedBundle.hashCode());
-		assertEquals(75034152, otherBundle.hashCode());
+		assertEquals(1094830123, mixedBundle.hashCode());
+		assertEquals(-1532255002, otherBundle.hashCode());
 	}
 
 	@Test

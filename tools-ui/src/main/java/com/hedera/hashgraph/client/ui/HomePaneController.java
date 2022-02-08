@@ -556,24 +556,32 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var acceptButton = buildBlueButton("ACCEPT");
 		acceptButton.setOnAction(event -> {
 			try {
-				if (rf.getType().equals(FileType.PUBLIC_KEY)) {
-					final var keysFile = new File(KEYS_FOLDER + rf.getName());
-					Files.deleteIfExists(keysFile.toPath());
-					FileUtils.copyFile(new File(rf.getPath()), keysFile);
-				} else if (rf.getType().equals(FileType.ACCOUNT_INFO)) {
-					controller.accountsPaneController.importInfoFiles(
-							Collections.singletonList(new File(rf.getPath())));
-				} else if (rf.getType().equals(FileType.BUNDLE)) {
-					for (final Map.Entry<BundleFile.InfoKey, File> entry :
-							((BundleFile) rf).getAccountInfoMap().entrySet()) {
-						controller.accountsPaneController.importFromFile(entry.getValue(),
-								entry.getKey().getNickname());
-					}
-					for (final Map.Entry<String, File> entry : ((BundleFile) rf).getPublicKeyMap().entrySet()) {
-						final var destination = new File(KEYS_FOLDER, entry.getKey());
-						Files.deleteIfExists(destination.toPath());
-						FileUtils.copyFile(entry.getValue(), destination);
-					}
+				switch (rf.getType()) {
+					case PUBLIC_KEY:
+						final var keysFile = new File(KEYS_FOLDER + rf.getName());
+						Files.deleteIfExists(keysFile.toPath());
+						FileUtils.copyFile(new File(rf.getPath()), keysFile);
+						break;
+					case ACCOUNT_INFO:
+						controller.accountsPaneController.importInfoFiles(
+								Collections.singletonList(new File(rf.getPath())));
+						break;
+					case BUNDLE:
+						for (final Map.Entry<BundleFile.InfoKey, File> entry :
+								((BundleFile) rf).getAccountInfoMap().entrySet()) {
+							controller.accountsPaneController.importFromFile(entry.getValue(),
+									entry.getKey().getNickname());
+						}
+						for (final Map.Entry<BundleFile.PubInfoKey, File> entry :
+								((BundleFile) rf).getPublicKeyMap().entrySet()) {
+							final var oldLocation =
+									new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
+							Files.deleteIfExists(oldLocation.toPath());
+							final var destination =
+									new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
+							FileUtils.copyFile(entry.getValue(), destination);
+						}
+						break;
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
@@ -607,7 +615,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private Button buildUndoButton(final RemoteFile rf) {
-		final var legend = (rf instanceof PublicKeyFile || rf instanceof InfoFile) ? "UNDO" : "ADD SIGNATURE";
+		final var legend =
+				(rf instanceof PublicKeyFile || rf instanceof InfoFile || rf instanceof BundleFile) ?
+						"UNDO" :
+						"ADD SIGNATURE";
 		final var undoButton = buildBlueButton(legend);
 		undoButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		undoButton.setMinWidth(250);

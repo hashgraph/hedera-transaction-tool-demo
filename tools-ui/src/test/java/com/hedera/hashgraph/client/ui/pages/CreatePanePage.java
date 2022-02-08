@@ -22,15 +22,19 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.sdk.FreezeType;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -88,10 +92,15 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TRANSACTION_TYPE_C
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TIME_ZONE_HBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.UPDATE_EDIT_KEY;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
+import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
+@SuppressWarnings({ "UnusedReturnValue", "BusyWait" })
 public class CreatePanePage {
 
 	private final TestBase driver;
@@ -109,7 +118,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage loadTransaction(final String path) {
-		final Node n = driver.find("#loadTransactionTextField");
+		final var n = driver.find("#loadTransactionTextField");
 		assert n instanceof TextField;
 		((TextField) n).setText(path);
 		driver.clickOn(n);
@@ -224,7 +233,24 @@ public class CreatePanePage {
 	public CreatePanePage setUpdateKey(final String account) {
 		driver.ensureVisible(driver.find(UPDATE_EDIT_KEY));
 		driver.clickOn(UPDATE_EDIT_KEY);
-		return clickOnAccountKey(account);
+		return doubleClickOnAccountKey(account);
+	}
+
+	public CreatePanePage doubleClickOnAccountKey(final String account) {
+		final var titledPane3 = getTitledPane(ACCOUNTS);
+		final var inner3 = titledPane3.getContent();
+		assert inner3 instanceof VBox;
+		final var inner4 = ((VBox) inner3).getChildren();
+		assert inner4 != null;
+		assert inner4.size() == 1;
+		assert inner4.get(0) instanceof ListView;
+		final var accountList = (ListView<String>) inner4.get(0);
+		for (final var item : accountList.getItems()) {
+			if (item.contains(account)) {
+				driver.doubleClickOn(item);
+			}
+		}
+		return this;
 	}
 
 	public CreatePanePage clickOnAccountKey(final String account) {
@@ -235,10 +261,10 @@ public class CreatePanePage {
 		assert inner4 != null;
 		assert inner4.size() == 1;
 		assert inner4.get(0) instanceof ListView;
-		final ListView<String> accountList = (ListView<String>) inner4.get(0);
+		final var accountList = (ListView<String>) inner4.get(0);
 		for (final var item : accountList.getItems()) {
 			if (item.contains(account)) {
-				driver.doubleClickOn(item);
+				driver.clickOn(item);
 			}
 		}
 		return this;
@@ -299,6 +325,41 @@ public class CreatePanePage {
 
 		driver.clickOn(inner2.get(paneEnum.value));
 		return inner2.get(paneEnum.value);
+	}
+
+	public TreeView<String> getTree() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		assert inner0 != null;
+
+		final var hBox1 = (HBox) inner0.get(0);
+		final var inner1 = hBox1.getChildren();
+		assert inner1 != null;
+
+		final var titledPane = (TitledPane) inner1.get(2);
+		final var vBox = (VBox) titledPane.getContent();
+		return (TreeView<String>) vBox.getChildren().get(0);
+	}
+
+
+	public ObservableList<Node> getPublicKeyButtons() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
+		return ((VBox) vBox1.getChildren().get(0)).getChildren();
+	}
+
+	public ObservableList<Node> getAccountButtons() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
+		return ((VBox) vBox1.getChildren().get(1)).getChildren();
 	}
 
 	public CreatePanePage createAndExport(final String folder) {
@@ -682,7 +743,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setTransactionFee(final double transactionFee) {
-		final Node n = driver.find(CREATE_TRANSACTION_FEE);
+		final var n = driver.find(CREATE_TRANSACTION_FEE);
 		assert n instanceof TextField;
 		((TextField) n).setText(Double.toString(transactionFee));
 		driver.clickOn(n);
@@ -691,7 +752,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setNanos(final String nanosString) {
-		final Node n = driver.find(CREATE_NANOS);
+		final var n = driver.find(CREATE_NANOS);
 		assert n instanceof TextField;
 		((TextField) n).setText(nanosString);
 		driver.clickOn(n);
@@ -748,6 +809,129 @@ public class CreatePanePage {
 		return this;
 	}
 
+	public CreatePanePage clickOnPublicKey(final String string) {
+		getTitledPane(PUBLIC_KEYS);
+		final var nodes = driver.findAll(string);
+		for (final var node : nodes) {
+			if (node instanceof ListCell) {
+				driver.clickOn(node);
+			}
+		}
+		return this;
+	}
+
+	public CreatePanePage doubleClickOnPublicKey(final String string) {
+		final var publicKeyTitledPane = getTitledPane(PUBLIC_KEYS);
+		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
+		assertTrue(publicKeyTitledPaneContent instanceof VBox);
+		final var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
+		assertEquals(1, innerVBox.size());
+		assertTrue(innerVBox.get(0) instanceof VBox);
+
+		final var lists = ((VBox) innerVBox.get(0)).getChildren();
+		assertEquals(1, lists.size());
+
+		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
+		for (final Object publicKey : publicKeys) {
+			assertTrue(publicKey instanceof String);
+			if (string.equals(publicKey)) {
+				driver.doubleClickOn((String) publicKey);
+				break;
+			}
+		}
+		return this;
+	}
+
+	public CreatePanePage clickOnAddPublicKeyButton() {
+		final var publicKeyButtons = getPublicKeyButtons();
+		driver.clickOn(publicKeyButtons.get(0));
+		return this;
+	}
+
+	public CreatePanePage clickOnDeletePublicKeyButton() {
+		final var publicKeyButtons = getPublicKeyButtons();
+		driver.clickOn(publicKeyButtons.get(1));
+		return this;
+	}
+
+	public CreatePanePage clickOnAddAccountButton() {
+		final var publicKeyButtons = getAccountButtons();
+		driver.clickOn(publicKeyButtons.get(0));
+		return this;
+	}
+
+
+	public int getKeyTreeSize() {
+		expandTree();
+		return getTree().getExpandedItemCount();
+	}
+
+	public void expandTree() {
+		expandTree(getTree().getRoot());
+	}
+
+	private void expandTree(final TreeItem<String> treeItem) {
+		if (!treeItem.isExpanded()) {
+			treeItem.setExpanded(true);
+		}
+		for (final var child : treeItem.getChildren()) {
+			if (child.getChildren().size() > 0) {
+				expandTree(child);
+			}
+		}
+	}
+
+	public CreatePanePage selectKeyInTree(final String key) {
+		expandTree();
+		final var tree = getTree();
+		final var item = findFromRoot(tree.getRoot(), key);
+		final var model = tree.getSelectionModel();
+		if (item != null) {
+			final var row = tree.getRow(item);
+			model.select(row);
+		}
+		return this;
+	}
+
+	private TreeItem<String> findFromRoot(final TreeItem<String> treeItem, final String key) {
+		if (key.equals(treeItem.getValue())) {
+			return treeItem;
+		}
+		if (!treeItem.getChildren().isEmpty()) {
+			for (final TreeItem<String> child : treeItem.getChildren()) {
+				final var childResult = findFromRoot(child, key);
+				if (childResult != null) {
+					return childResult;
+				}
+			}
+		}
+		return null;
+	}
+
+	public CreatePanePage setThreshold(final int threshold) {
+		final var nodes = getPopupNodes();
+		final var fields = findTextFieldsInPopup(nodes);
+		assertEquals(1, fields.size());
+		fields.get(0).setText(Integer.toString(threshold));
+		final var button = findButtonInPopup(nodes, "ACCEPT");
+		if (button != null) {
+			driver.clickOn(button);
+		}
+		return this;
+	}
+
+	public CreatePanePage deleteKeyFromTree(final String name) {
+		expandTree();
+		selectKeyInTree(name);
+		clickOnDeletePublicKeyButton();
+		return this;
+	}
+
+	public void closePopup() {
+		final var popupNodes = getPopupNodes();
+		final var close = findButtonInPopup(popupNodes, "CANCEL");
+		driver.clickOn(close);
+	}
 
 	public enum OperationType {
 		delete, undelete
