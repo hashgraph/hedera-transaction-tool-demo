@@ -37,20 +37,13 @@ import com.hedera.hashgraph.sdk.Hbar;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -755,7 +748,8 @@ public class BatchFile extends RemoteFile {
 		compressingProgressBar.setProgress(-1);
 
 		final var cancelButton = new Button("CANCEL");
-		final var window = ProgressPopup.setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
+		final var window =
+				ProgressPopup.setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
 
 		cancelButton.visibleProperty().bind(transactionsProgressBar.progressProperty().lessThan(1));
 

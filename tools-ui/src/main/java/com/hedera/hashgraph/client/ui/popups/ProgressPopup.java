@@ -30,10 +30,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class ProgressPopup {
+
 	private ProgressPopup() {
 		throw new IllegalStateException("Popup class");
 	}
-
 
 	public static Stage setupProgressPopup(
 			final ProgressBar bar, final Button cancelButton, final String title, final String message,

@@ -29,7 +29,6 @@ import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PasswordBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import org.apache.commons.collections4.map.PassiveExpiringMap;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -133,7 +132,7 @@ public class KeyPairUtility {
 		if (expiringMap.containsKey(path)) {
 			try {
 				keyPair = getKeyPair(path, expiringMap.get(path));
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error("Cannot decrypt pem");
 				expiringMap.remove(path);
 			}
@@ -217,10 +216,6 @@ public class KeyPairUtility {
 			throw new HederaClientException(e);
 		}
 		return (!keyPairs.isEmpty()) ? keyPairs.get(0) : null;
-	}
-
-	public int getStoredKeysCount(){
-		return expiringMap.size();
 	}
 
 }

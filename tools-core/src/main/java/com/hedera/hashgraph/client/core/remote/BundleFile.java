@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.core.remote;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -51,12 +50,11 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Messages.*;
+import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
 
 public class BundleFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(BundleFile.class);
@@ -163,10 +161,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 	public boolean replaceAccountNicknames() {
 		return accountCheckBox.isSelected();
-	}
-
-	public boolean replaceKeyNicknames() {
-		return keyCheckBox.isSelected();
 	}
 
 	@Override
@@ -285,17 +279,15 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		private final String nickname;
 		private final PublicKey publicKey;
 		private final String oldNickname;
-		private final boolean duplicate;
 
 		public PubInfoKey(final File file) {
 			this.nickname = FilenameUtils.getBaseName(file.getName());
 			this.publicKey = EncryptionUtils.publicKeyFromFile(file.getAbsolutePath());
 			this.oldNickname = existingPubKeysMap.getOrDefault(publicKey, "");
-			this.duplicate = this.oldNickname.equals(this.nickname) && existingPubKeysMap.containsKey(this.publicKey);
 		}
 
 		public String getNickname() {
-			return  nickname;
+			return nickname;
 		}
 
 		public String getOldNickname() {
@@ -304,10 +296,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 		public PublicKey getPublicKey() {
 			return publicKey;
-		}
-
-		public boolean isDuplicate() {
-			return duplicate;
 		}
 
 		@Override
