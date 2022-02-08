@@ -439,6 +439,8 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		nodeCount = createPanePage.getKeyTreeSize();
 		assertEquals(14, nodeCount);
+		createPanePage.closePopup();
+
 	}
 
 	@Test
