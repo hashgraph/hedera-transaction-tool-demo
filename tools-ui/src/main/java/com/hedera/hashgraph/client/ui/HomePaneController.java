@@ -618,7 +618,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var legend =
 				(rf instanceof PublicKeyFile || rf instanceof InfoFile || rf instanceof BundleFile) ?
 						"UNDO" :
-						"ADD SIGNATURE";
+						"RE-SIGN";
 		final var undoButton = buildBlueButton(legend);
 		undoButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		undoButton.setMinWidth(250);
