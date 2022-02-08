@@ -69,8 +69,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		this.controller = null;
 	}
 
-	// region load pubKeys
-
 	/**
 	 * search for .pub or .txt files in preferredStorageDirectory recursively, and load their Hex String and Path into
 	 * pubFiles map
@@ -96,9 +94,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private boolean isPubFile(final String path) {
 		return path.endsWith(PUB_EXTENSION);
 	}
-
-	// endregion
-
 
 	private KeyDesignErrorCodes checkJsonKey(final JsonObject jsonObject) {
 		if (jsonObject.has("ed25519")) {
@@ -157,7 +152,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 				new TreeItem<>("Load Error");
 
 	}
-
 
 	public TreeView<String> buildKeyTreeView(final JsonObject keyJson) {
 		final var keyTreeView = new TreeView<String>();
@@ -243,8 +237,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return results;
 	}
 
-	// endregion
-
 	private boolean hasThresholdKey(final JsonObject jsonObject) {
 		return jsonObject != null && jsonObject.has(THRESHOLD_KEY);
 	}
@@ -252,7 +244,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private boolean hasKeyList(final JsonObject jsonObject) {
 		return jsonObject != null && jsonObject.has(KEY_LIST);
 	}
-
 
 	public String jsonKeyToPrettyString(final JsonObject keyJson) {
 		final var cleanKey = replaceAvailableHexfromKey(keyJson);

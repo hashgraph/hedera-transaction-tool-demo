@@ -29,6 +29,7 @@ import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PasswordBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import org.apache.commons.collections4.map.PassiveExpiringMap;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +40,8 @@ import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
@@ -55,10 +58,10 @@ public class KeyPairUtility {
 	public static final String CONTINUE = "CONTINUE";
 
 	private static final long EXPIRATION_TIME = 15L;
-	private final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<char[], Integer> expirationPolicy =
+	private final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
 			new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(EXPIRATION_TIME,
 					TimeUnit.MINUTES);
-	private final PassiveExpiringMap<char[], Integer> expiringMap = new PassiveExpiringMap<>(expirationPolicy);
+	private final PassiveExpiringMap<String, char[]> expiringMap = new PassiveExpiringMap<>(expirationPolicy);
 
 
 	/**
@@ -90,6 +93,7 @@ public class KeyPairUtility {
 
 	@Nullable
 	private KeyPair getKeyPair(final File pemFile, final String message) {
+
 		KeyPair keyPair = useStored(pemFile);
 		if (keyPair != null) {
 			return keyPair;
@@ -99,11 +103,12 @@ public class KeyPairUtility {
 			return null;
 		}
 		while (keyPair == null) {
+			final var path = pemFile.getPath();
 			try {
-				keyPair = getKeyPair(pemFile.getPath(), pwd);
-				expiringMap.put(pwd, 1);
+				keyPair = getKeyPair(path, pwd);
+				expiringMap.put(path, pwd);
 			} catch (final HederaClientException e) {
-				expiringMap.remove(pwd);
+				expiringMap.remove(path);
 				pwd = askForPasswordAgain(pemFile);
 				if (pwd == null || Arrays.equals(new char[0], pwd)) {
 					return null;
@@ -124,10 +129,21 @@ public class KeyPairUtility {
 		KeyPair keyPair = null;
 		int count = 0;
 		logger.info("Trying stored passwords.");
-		for (final char[] chars : expiringMap.keySet()) {
+		final var path = pem.getPath();
+		if (expiringMap.containsKey(path)) {
 			try {
-				keyPair = getKeyPair(pem.getPath(), chars);
+				keyPair = getKeyPair(path, expiringMap.get(path));
+			} catch (HederaClientException e) {
+				logger.error("Cannot decrypt pem");
+				expiringMap.remove(path);
+			}
+		}
+		final Set<char[]> knownPwds = new HashSet<>(expiringMap.values());
+		for (final char[] chars : knownPwds) {
+			try {
+				keyPair = getKeyPair(path, chars);
 				logger.info("Password found");
+				expiringMap.put(path, chars);
 				return keyPair;
 			} catch (final HederaClientException e) {
 				logger.info("Trying password {}", count);
