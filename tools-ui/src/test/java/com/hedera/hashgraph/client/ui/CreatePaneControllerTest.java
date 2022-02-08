@@ -200,7 +200,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-			if (new File(currentRelativePath.toAbsolutePath() + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
+			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
 				logger.info("Output path created");
 			}
 
