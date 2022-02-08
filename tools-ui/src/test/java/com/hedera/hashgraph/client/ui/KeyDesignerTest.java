@@ -55,7 +55,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.CenterButtons;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.copyCreatePaneKeys;
@@ -400,6 +399,46 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		clickOn(TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), "CONTINUE"));
 		createPanePage.closePopup();
+	}
+
+	@Test
+	public void testPlanItem7_8_test() {
+		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
+				.setCreateKey()
+				.clickOnPublicKey("KeyStore-0")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("KeyStore-1")
+				.clickOnAddPublicKeyButton()
+				.clickOnPublicKey("principalTestingKey")
+				.clickOnAddPublicKeyButton();
+
+		var node = find("Threshold key (x of 3)");
+		doubleClickOn(node);
+
+		createPanePage.setThreshold(2);
+		node = find("Threshold key (2 of 3)");
+		assertNotNull(node);
+
+		createPanePage.clickOnAccountKey("ninetyFour")
+				.clickOnAddAccountButton();
+
+		node = find("Threshold key (2 of 3)");
+		assertNull(node);
+		node = find("Threshold key (x of 4)");
+		assertNotNull(node);
+		node = find("Threshold key (2 of 2)");
+		assertNotNull(node);
+		int nodeCount = createPanePage.getKeyTreeSize();
+		assertEquals(13, nodeCount);
+
+		createPanePage.clickOnPublicKey("KeyStore-5")
+				.clickOnAddPublicKeyButton();
+
+		node = find("Threshold key (x of 5)");
+		assertNotNull(node);
+
+		nodeCount = createPanePage.getKeyTreeSize();
+		assertEquals(14, nodeCount);
 	}
 
 	@Test
