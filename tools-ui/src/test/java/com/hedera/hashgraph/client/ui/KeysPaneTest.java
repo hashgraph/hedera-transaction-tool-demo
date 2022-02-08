@@ -81,6 +81,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("ALL")
 public class KeysPaneTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -194,7 +195,8 @@ public class KeysPaneTest extends TestBase {
 		assertNotNull(gridPaneVBox);
 		assertTrue(gridPaneVBox.isVisible());
 
-		final var mnemonicAfterCancel = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterCancel =
+				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 		assertEquals(mnemonic, mnemonicAfterCancel);
 		assertTrue(change.isVisible());
 		clickOn(change);
@@ -209,7 +211,8 @@ public class KeysPaneTest extends TestBase {
 
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword("tempura sushi");
-		final var mnemonicAfterChange = ((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
+		final var mnemonicAfterChange =
+				((Label) (((HBox) gridPaneVBox.getChildren().get(1)).getChildren()).get(0)).getText();
 
 		assertEquals(mnemonic, mnemonicAfterChange);
 
@@ -441,8 +444,6 @@ public class KeysPaneTest extends TestBase {
 		mainWindowPage.clickOnKeysButton();
 		keysPanePage.closePopup("CONTINUE");
 
-		keysPanePage.enterPopupPassword(PASSWORD);
-		keysPanePage.enterPopupPassword(PASSWORD);
 		keysPanePage.enterPopupPassword(PASSWORD);
 
 		assertTrue(
@@ -714,13 +715,13 @@ public class KeysPaneTest extends TestBase {
 	public void tearDown() {
 		try {
 			final var currentRelativePath = Paths.get("");
-			final var s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+			final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 			if ((new File(s)).exists()) {
 				FileUtils.deleteDirectory(new File(s));
 			}
 
 			final var out =
-					currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 							"Documents/OutputFiles/test1.council2@hederacouncil.org";
 			FileUtils.cleanDirectory(new File(out));
 
