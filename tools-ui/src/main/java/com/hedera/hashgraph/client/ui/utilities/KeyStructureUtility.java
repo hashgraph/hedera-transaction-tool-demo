@@ -59,12 +59,12 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	// is loaded when the key structure is shown
 	private final Map<TreeItem<String>, JsonObject> keyJsonItems = new HashMap<>();
 
-	public KeyStructureUtility(Controller controller) {
+	public KeyStructureUtility(final Controller controller) {
 		this.controller = controller;
 		loadPubKeys();
 	}
 
-	public KeyStructureUtility(Map<String, Path> pubFiles) {
+	public KeyStructureUtility(final Map<String, Path> pubFiles) {
 		this.pubFiles = pubFiles;
 		this.controller = null;
 	}
@@ -77,56 +77,56 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	 */
 	public void loadPubKeys() {
 		pubFiles = new HashMap<>();
-		var keysFolder = new File(controller.getPreferredStorageDirectory() + KEYS_STRING);
+		final var keysFolder = new File(controller.getPreferredStorageDirectory() + KEYS_STRING);
 		if (!keysFolder.exists()) {
 			return;
 		}
 		try {
-			var publicKeys = keysFolder.listFiles((dir, name) -> isPubFile(name));
-			for (var publicKey : Objects.requireNonNull(publicKeys)) {
-				var path = publicKey.toPath();
+			final var publicKeys = keysFolder.listFiles((dir, name) -> isPubFile(name));
+			for (final var publicKey : Objects.requireNonNull(publicKeys)) {
+				final var path = publicKey.toPath();
 				pubFiles.put(new String(Files.readAllBytes(path)), path);
 			}
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			logger.error(ex);
 		}
 		logger.debug("Public keys loaded");
 	}
 
-	private boolean isPubFile(String path) {
+	private boolean isPubFile(final String path) {
 		return path.endsWith(PUB_EXTENSION);
 	}
 
 	// endregion
 
 
-	private KeyDesignErrorCodes checkJsonKey(JsonObject jsonObject) {
+	private KeyDesignErrorCodes checkJsonKey(final JsonObject jsonObject) {
 		if (jsonObject.has("ed25519")) {
-			var key = jsonObject.get("ed25519").getAsString();
+			final var key = jsonObject.get("ed25519").getAsString();
 			if ("".equals(key)) {
 				return KeyDesignErrorCodes.BAD_KEY;
 			}
 		} else if (jsonObject.has(THRESHOLD_KEY)) {
-			var thresholdKey = jsonObject.getAsJsonObject(THRESHOLD_KEY);
+			final var thresholdKey = jsonObject.getAsJsonObject(THRESHOLD_KEY);
 			if (!thresholdKey.has(THRESHOLD) || !thresholdKey.has(KEYS)) {
 				return KeyDesignErrorCodes.INCOMPLETE_THRESHOLD_KEY;
 			}
-			var threshold = thresholdKey.get(THRESHOLD).getAsInt();
-			var list = thresholdKey.getAsJsonObject(KEYS).getAsJsonArray(KEYS);
+			final var threshold = thresholdKey.get(THRESHOLD).getAsInt();
+			final var list = thresholdKey.getAsJsonObject(KEYS).getAsJsonArray(KEYS);
 			if (threshold <= 0 || threshold > list.size()) {
 				return KeyDesignErrorCodes.BAD_THRESHOLD;
 			}
 			return checkKeyList(list);
 		} else if (jsonObject.has(KEY_LIST)) {
-			var keyList = jsonObject.getAsJsonObject(KEY_LIST);
-			var list = keyList.getAsJsonArray(KEYS);
+			final var keyList = jsonObject.getAsJsonObject(KEY_LIST);
+			final var list = keyList.getAsJsonArray(KEYS);
 			return checkKeyList(list);
 		}
 		return KeyDesignErrorCodes.OK;
 	}
 
-	private KeyDesignErrorCodes checkKeyList(JsonArray list) {
-		for (var element : list) {
+	private KeyDesignErrorCodes checkKeyList(final JsonArray list) {
+		for (final var element : list) {
 			final var keyDesignErrorCode = checkJsonKey(element.getAsJsonObject());
 			if (!keyDesignErrorCode.equals(KeyDesignErrorCodes.OK)) {
 				return keyDesignErrorCode;
@@ -135,7 +135,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return KeyDesignErrorCodes.OK;
 	}
 
-	private TreeItem<String> showKey(JsonObject keyJson) {
+	private TreeItem<String> showKey(final JsonObject keyJson) {
 		var node = new TreeItem<String>();
 		if (keyJson == null) {
 			return node;
@@ -151,7 +151,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return node;
 	}
 
-	private TreeItem<String> showSimpleKey(JsonObject keyJson) {
+	private TreeItem<String> showSimpleKey(final JsonObject keyJson) {
 		return (keyJson.has("Ed25519")) ?
 				showHexString(keyJson.get("Ed25519").getAsString()) :
 				new TreeItem<>("Load Error");
@@ -159,23 +159,23 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	}
 
 
-	public TreeView<String> buildKeyTreeView(JsonObject keyJson) {
-		var keyTreeView = new TreeView<String>();
-		var root = new TreeItem<String>();
-		var rootJson = new JsonObject();
+	public TreeView<String> buildKeyTreeView(final JsonObject keyJson) {
+		final var keyTreeView = new TreeView<String>();
+		final var root = new TreeItem<String>();
+		final var rootJson = new JsonObject();
 		keyJsonItems.put(root, rootJson);
-		var keyItem = showKey(keyJson);
+		final var keyItem = showKey(keyJson);
 		root.getChildren().add(keyItem);
 		keyTreeView.setRoot(root);
 		keyTreeView.setShowRoot(false);
 		return keyTreeView;
 	}
 
-	public TreeView<String> buildKeyTreeView(Key key) {
+	public TreeView<String> buildKeyTreeView(final Key key) {
 		return buildKeyTreeView(EncryptionUtils.keyToJson(key));
 	}
 
-	private TreeItem<String> showHexString(String hexString) {
+	private TreeItem<String> showHexString(final String hexString) {
 		if (hexString.length() < 15) {
 			return new TreeItem<>("Empty");
 		}
@@ -188,8 +188,8 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		}
 	}
 
-	public String showKeyString(ByteString key) {
-		var hexString = Hex.toHexString((key.toByteArray()));
+	public String showKeyString(final ByteString key) {
+		final var hexString = Hex.toHexString((key.toByteArray()));
 		if (hexString.length() < 15) {
 			return "Empty";
 		}
@@ -206,15 +206,15 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return pubFiles;
 	}
 
-	private TreeItem<String> showThresholdKey(JsonObject thresholdKeyJson) {
-		var keyListJson = thresholdKeyJson.get(KEY_LIST).getAsJsonArray();
-		var node = new TreeItem<>(getThresholdKeyDescription(thresholdKeyJson));
+	private TreeItem<String> showThresholdKey(final JsonObject thresholdKeyJson) {
+		final var keyListJson = thresholdKeyJson.get(KEY_LIST).getAsJsonArray();
+		final var node = new TreeItem<>(getThresholdKeyDescription(thresholdKeyJson));
 		node.getChildren().addAll(getKeyListElements(keyListJson));
 		node.setExpanded(true);
 		return node;
 	}
 
-	private String getThresholdKeyDescription(JsonObject thresholdKeyJson) {
+	private String getThresholdKeyDescription(final JsonObject thresholdKeyJson) {
 		if (thresholdKeyJson.has(THRESHOLD)) {
 			return "ThresholdKey (" + thresholdKeyJson.get(THRESHOLD).getAsString()
 					+ "/" + thresholdKeyJson.get(KEY_LIST).getAsJsonArray().size() + ")";
@@ -222,22 +222,22 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		throw new HederaClientRuntimeException("The threshold cannot be found. Likely it was set to zero");
 	}
 
-	private TreeItem<String> showKeyList(JsonArray keyListJson) {
-		var node = new TreeItem<>(getKeyListDescription(keyListJson));
+	private TreeItem<String> showKeyList(final JsonArray keyListJson) {
+		final var node = new TreeItem<>(getKeyListDescription(keyListJson));
 		node.setExpanded(true);
 		node.getChildren().addAll(getKeyListElements(keyListJson));
 		node.setExpanded(true);
 		return node;
 	}
 
-	private String getKeyListDescription(JsonArray keyListJson) {
+	private String getKeyListDescription(final JsonArray keyListJson) {
 		return "KeyList (" + keyListJson.size() + ")";
 	}
 
-	private TreeItem<String>[] getKeyListElements(JsonArray keyListJson) {
-		var results = new TreeItem[keyListJson.size()];
+	private TreeItem<String>[] getKeyListElements(final JsonArray keyListJson) {
+		final var results = new TreeItem[keyListJson.size()];
 		var i = 0;
-		for (var ele : keyListJson) {
+		for (final var ele : keyListJson) {
 			results[i++] = showKey(ele.getAsJsonObject());
 		}
 		return results;
@@ -245,18 +245,18 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 
 	// endregion
 
-	private boolean hasThresholdKey(JsonObject jsonObject) {
+	private boolean hasThresholdKey(final JsonObject jsonObject) {
 		return jsonObject != null && jsonObject.has(THRESHOLD_KEY);
 	}
 
-	private boolean hasKeyList(JsonObject jsonObject) {
+	private boolean hasKeyList(final JsonObject jsonObject) {
 		return jsonObject != null && jsonObject.has(KEY_LIST);
 	}
 
 
-	public String jsonKeyToPrettyString(JsonObject keyJson) {
-		var cleanKey = replaceAvailableHexfromKey(keyJson);
-		var gson = new GsonBuilder().setPrettyPrinting().create();
+	public String jsonKeyToPrettyString(final JsonObject keyJson) {
+		final var cleanKey = replaceAvailableHexfromKey(keyJson);
+		final var gson = new GsonBuilder().setPrettyPrinting().create();
 		final var jsonString = gson.toJson(cleanKey);
 		return jsonString.replace("\"", "")
 				.replace(ED_25519 + ": ", "")
@@ -264,7 +264,7 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 				.replace(KEY_LIST + ": ", "");
 	}
 
-	public JsonObject replaceAvailableHexfromKey(JsonObject keyJson) {
+	public JsonObject replaceAvailableHexfromKey(final JsonObject keyJson) {
 		var cleanKey = new JsonObject();
 		if (keyJson.has(ED_25519)) {
 			cleanKey = handlePublicKey(keyJson);
@@ -279,28 +279,28 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		return cleanKey;
 	}
 
-	private JsonObject handleThresholdKey(JsonObject thresholdJson) {
-		JsonObject cleanObject = new JsonObject();
+	private JsonObject handleThresholdKey(final JsonObject thresholdJson) {
+		final JsonObject cleanObject = new JsonObject();
 		cleanObject.addProperty(THRESHOLD, thresholdJson.get(THRESHOLD).getAsInt());
-		JsonObject cleanArray = handleKeyList(thresholdJson.get(KEY_LIST).getAsJsonArray());
+		final JsonObject cleanArray = handleKeyList(thresholdJson.get(KEY_LIST).getAsJsonArray());
 		cleanObject.add(KEY_LIST, cleanArray);
 		return cleanObject;
 	}
 
-	private JsonObject handleKeyList(JsonArray jsonArray) {
-		JsonObject object = new JsonObject();
-		JsonArray cleanArray = new JsonArray();
-		for (JsonElement element : jsonArray) {
+	private JsonObject handleKeyList(final JsonArray jsonArray) {
+		final JsonObject object = new JsonObject();
+		final JsonArray cleanArray = new JsonArray();
+		for (final JsonElement element : jsonArray) {
 			cleanArray.add(replaceAvailableHexfromKey(element.getAsJsonObject()));
 		}
 		object.add(KEY_LIST, cleanArray);
 		return object;
 	}
 
-	private JsonObject handlePublicKey(JsonObject keyJson) {
-		JsonObject cleanKey = new JsonObject();
-		var ed = keyJson.get(ED_25519).getAsString();
-		var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
+	private JsonObject handlePublicKey(final JsonObject keyJson) {
+		final JsonObject cleanKey = new JsonObject();
+		final var ed = keyJson.get(ED_25519).getAsString();
+		final var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
 		cleanKey.addProperty(ED_25519, value);
 		return cleanKey;
 	}

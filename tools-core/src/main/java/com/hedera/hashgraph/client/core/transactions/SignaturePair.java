@@ -46,13 +46,13 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 		signature = new byte[64];
 	}
 
-	public SignaturePair(PublicKey publicKey, byte[] signature) {
+	public SignaturePair(final PublicKey publicKey, final byte[] signature) {
 		this.publicKey = publicKey.toBytes();
 		this.signature = signature;
 	}
 
-	public SignaturePair(String location) {
-		var signaturePair = read(location);
+	public SignaturePair(final String location) {
+		final var signaturePair = read(location);
 		assert signaturePair != null;
 		this.publicKey = signaturePair.getPublicKey().toBytes();
 		this.signature = signaturePair.getSignature();
@@ -67,43 +67,43 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 	}
 
 
-	public void write(String filePath) {
+	public void write(final String filePath) {
 		try {
 
-			try (var fileOut = new FileOutputStream(
-					filePath); var objectOut = new ObjectOutputStream(fileOut)) {
+			try (final var fileOut = new FileOutputStream(
+					filePath); final var objectOut = new ObjectOutputStream(fileOut)) {
 				objectOut.writeObject(this);
 				logger.info("The Object  was successfully written to a file");
 			}
-		} catch (Exception ex) {
+		} catch (final Exception ex) {
 			logger.error(ex);
 		}
 	}
 
-	private SignaturePair read(String filePath) {
+	private SignaturePair read(final String filePath) {
 		var signaturePair = new SignaturePair();
 
 		try (
-				InputStream file = new FileInputStream(filePath);
-				InputStream buffer = new BufferedInputStream(file);
-				ObjectInput input = new ObjectInputStream(buffer)
+				final InputStream file = new FileInputStream(filePath);
+				final InputStream buffer = new BufferedInputStream(file);
+				final ObjectInput input = new ObjectInputStream(buffer)
 		) {
 			signaturePair = (SignaturePair) input.readObject();
-		} catch (ClassNotFoundException | IOException ex) {
+		} catch (final ClassNotFoundException | IOException ex) {
 			logger.error("Cannot perform input. Class not found.", ex);
 		}
 		return signaturePair;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof SignaturePair)) {
 			return false;
 		}
 		if (obj == this) {
 			return true;
 		}
-		var o = (SignaturePair) obj;
+		final var o = (SignaturePair) obj;
 		return (Arrays.equals(this.publicKey, o.publicKey)) &&
 				(Arrays.equals(this.signature, o.signature));
 

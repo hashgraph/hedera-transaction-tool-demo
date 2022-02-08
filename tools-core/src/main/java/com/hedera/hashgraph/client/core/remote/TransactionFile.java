@@ -102,33 +102,34 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		super();
 	}
 
-	public TransactionFile(FileDetails fileDetails) {
+	public TransactionFile(final FileDetails fileDetails) {
 		super(fileDetails);
 		if (!isValid() || !FileType.TRANSACTION.equals(getType())) {
 			setValid(false);
 			return;
 		}
 		try {
-			var toolTransaction = new ToolTransaction();
+			final var toolTransaction = new ToolTransaction();
 			transaction = toolTransaction.parseFile(new File(fileDetails.getFullPath()));
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 			setValid(false);
 			return;
 		}
 		transactionType = transaction.getTransactionType();
 
-		var tvs = transaction.getTransactionValidStart();
-		var tvd = transaction.getTransactionValidDuration();
+		final var tvs = transaction.getTransactionValidStart();
+		final var tvd = transaction.getTransactionValidDuration();
 
 		expiration = new Timestamp(tvs.getEpochSecond() + tvd.getSeconds(), tvs.getNano() + tvd.getNano());
+		setShowAdditionalBoxes();
 	}
 
 	public ToolTransaction getTransaction() {
 		return transaction;
 	}
 
-	public void setTreeView(TreeView<String> treeView) {
+	public void setTreeView(final TreeView<String> treeView) {
 		this.treeView = treeView;
 	}
 
@@ -157,7 +158,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (this == o) {
 			return true;
 		}
@@ -174,18 +175,18 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	@Override
 	public boolean isExpired() {
-		var now = new Timestamp();
+		final var now = new Timestamp();
 		return now.getSeconds() > getExpiration().getSeconds();
 	}
 
 	@Override
 	public GridPane buildGridPane() {
-		var detailsGridPane = super.buildGridPane();
+		final var detailsGridPane = super.buildGridPane();
 		handleTransactionCommonFields(detailsGridPane);
-		var count = detailsGridPane.getRowCount() + 1;
+		final var count = detailsGridPane.getRowCount() + 1;
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		switch (transaction.getTransactionType()) {
@@ -216,10 +217,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param detailsGridPane
 	 * 		the pane where the transaction details are entered
 	 */
-	private void handleTransactionCommonFields(GridPane detailsGridPane) {
+	private void handleTransactionCommonFields(final GridPane detailsGridPane) {
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			nicknames = new JsonObject();
 		}
@@ -228,7 +229,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		feePayerLabel.setWrapText(true);
 		detailsGridPane.add(feePayerLabel, 1, 0);
 
-		var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
+		final var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
 		text.setFont(COURIER_FONT);
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 1);
@@ -238,7 +239,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(new Label(transaction.getMemo()), 1, 2);
 		}
 
-		var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
+		final var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
 		detailsGridPane.add(new Label("Node:"), 0, 4);
@@ -253,15 +254,15 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param count
 	 * 		the number of rows in the grid pane
 	 */
-	private void handleCryptoTransferFields(GridPane detailsGridPane, int count) {
+	private void handleCryptoTransferFields(final GridPane detailsGridPane, int count) {
 
-		var accountAmountMap =
+		final var accountAmountMap =
 				((ToolTransferTransaction) transaction).getAccountAmountMap();
-		List<Pair<String, String>> senders = new ArrayList<>();
-		List<Pair<String, String>> receivers = new ArrayList<>();
-		for (Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
-			var amount = entry.getValue();
-			var identifier = entry.getKey();
+		final List<Pair<String, String>> senders = new ArrayList<>();
+		final List<Pair<String, String>> receivers = new ArrayList<>();
+		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+			final var amount = entry.getValue();
+			final var identifier = entry.getKey();
 			if (amount.toTinybars() < 0) {
 				senders.add(Pair.of(CommonMethods.nicknameOrNumber(identifier, nicknames),
 						amount.toString().replace(" ", UNBREAKABLE_SPACE)));
@@ -286,12 +287,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param count
 	 * 		the number of rows in the grid pane
 	 */
-	private void handleCryptoCreateTransactionFields(GridPane detailsGridPane, int count) {
-		var keysLink = new Hyperlink("Click for more details");
-		var sigReqLabel = new Label("Receiver signature required: ");
+	private void handleCryptoCreateTransactionFields(final GridPane detailsGridPane, int count) {
+		final var keysLink = new Hyperlink("Click for more details");
+		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
 
-		var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
+		final var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
 		detailsGridPane.add(new Label("Key: "), 0, count);
 		keysLink.setOnAction(actionEvent -> displayKey(treeView));
 		detailsGridPane.add(keysLink, 1, count++);
@@ -302,7 +303,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				, 1, count++);
 
 		detailsGridPane.add(new Label("Initial balance: "), 0, count);
-		var initialBalance = new Label(createTransaction.getInitialBalance().toString());
+		final var initialBalance = new Label(createTransaction.getInitialBalance().toString());
 		initialBalance.setFont(COURIER_FONT);
 		initialBalance.setStyle(DEBIT);
 		detailsGridPane.add(initialBalance, 1, count++);
@@ -320,12 +321,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param count
 	 * 		the number of rows in the grid pane
 	 */
-	private void handleCryptoUpdateTransactionField(GridPane detailsGridPane, int count) {
-		var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
-		var sigReqLabel = new Label("Receiver signature required: ");
+	private void handleCryptoUpdateTransactionField(final GridPane detailsGridPane, int count) {
+		final var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
+		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
 
-		var keysLink = new Hyperlink("Click for more details");
+		final var keysLink = new Hyperlink("Click for more details");
 		if (updateTransaction.getKey() != null) {
 			detailsGridPane.add(new Label("Key: "), 0, count);
 			keysLink.setOnAction(actionEvent -> displayKey(treeView));
@@ -356,20 +357,20 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param count
 	 * 		the number of rows in the grid pane
 	 */
-	private void handleSystemTransactionField(GridPane detailsGridPane, int count) {
-		var toolSystemTransaction = (ToolSystemTransaction) transaction;
-		var isDelete = toolSystemTransaction.isDelete();
-		var isFile = toolSystemTransaction.isFile();
+	private void handleSystemTransactionField(final GridPane detailsGridPane, int count) {
+		final var toolSystemTransaction = (ToolSystemTransaction) transaction;
+		final var isDelete = toolSystemTransaction.isDelete();
+		final var isFile = toolSystemTransaction.isFile();
 
 		detailsGridPane.add(new Label(isFile ? "File ID: " : "Contract ID: "), 0, count);
 		detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
 				count++);
 
 		if (isDelete) {
-			var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
+			final var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
 			subLabel.setWrapText(true);
 			detailsGridPane.add(subLabel, 0, count);
-			var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
+			final var expirationTimeLabel = getTimeLabel(new Timestamp(toolSystemTransaction.getExpiration()),
 					true);
 			expirationTimeLabel.setWrapText(true);
 			detailsGridPane.add(expirationTimeLabel, 1, count);
@@ -384,12 +385,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * @param count
 	 * 		the number of rows in the grid pane
 	 */
-	private void handleFreezeTransactionFields(GridPane detailsGridPane, int count) {
-		var toolFreezeTransaction = (ToolFreezeTransaction) transaction;
-		var freezeType = toolFreezeTransaction.getFreezeType();
-		Label startTimeLabel;
-		Label fileIDLabel;
-		Text fileHashLabel = new Text();
+	private void handleFreezeTransactionFields(final GridPane detailsGridPane, int count) {
+		final var toolFreezeTransaction = (ToolFreezeTransaction) transaction;
+		final var freezeType = toolFreezeTransaction.getFreezeType();
+		final Label startTimeLabel;
+		final Label fileIDLabel;
+		final Text fileHashLabel = new Text();
 		fileHashLabel.setFont(Font.font("Courier New", 18));
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
@@ -446,18 +447,19 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public String execute(Pair<String, KeyPair> pair, String user, String output) throws HederaClientException {
+	public String execute(final Pair<String, KeyPair> pair, final String user,
+			final String output) throws HederaClientException {
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
 			setHistory(true);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 
-		var keyName = FilenameUtils.getBaseName(pair.getLeft());
-		var tempStorage =
+		final var keyName = FilenameUtils.getBaseName(pair.getLeft());
+		final var tempStorage =
 				System.getProperty("java.io.tmpdir") + LocalDate.now() + "/Transaction/" + keyName;
-		var finalZip = new File(System.getProperty("java.io.tmpdir") + LocalDate.now(),
+		final var finalZip = new File(System.getProperty("java.io.tmpdir") + LocalDate.now(),
 				this.getBaseName() + "-" + keyName + ".zip");
 
 		final var tempTxFile =
@@ -466,7 +468,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				tempStorage + File.separator + this.getBaseName() + "." + SIGNATURE_EXTENSION;
 
 		try {
-			var value = pair.getValue();
+			final var value = pair.getValue();
 			if (value == null || !isValid()) {
 				return "";
 			}
@@ -483,13 +485,13 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			transaction.store(tempTxFile);
 
 			// Sign the transaction;
-			var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
-			var signaturePair = new SignaturePair(privateKey.getPublicKey(), transaction.sign(privateKey));
+			final var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
+			final var signaturePair = new SignaturePair(privateKey.getPublicKey(), transaction.sign(privateKey));
 			signaturePair.write(signatureFile);
 
-			var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
 
-			for (var file : toPack) {
+			for (final var file : toPack) {
 				assert file.exists();
 				assert file.isFile();
 			}
@@ -498,7 +500,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			logger.info("Packing {} to {}.zip", packed, tempStorage);
 			ZipUtil.packEntries(toPack, finalZip);
 
-			for (var file : toPack) {
+			for (final var file : toPack) {
 				Files.deleteIfExists(file.toPath());
 				logger.info("Delete {}", file.getName());
 			}
@@ -509,7 +511,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			Files.deleteIfExists(outputFile.toPath());
 			FileUtils.moveFile(finalZip, outputFile);
 			return outputFile.getAbsolutePath();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 			throw new HederaClientException(e);
 		}
@@ -525,19 +527,20 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	public Set<ByteString> getSigningPublicKeys() {
 		try {
 			return transaction.getSigningKeys(ACCOUNTS_INFO_FOLDER);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 		return super.getSigningPublicKeys();
 	}
 
-	private int setAccountAmounts(GridPane detailsGridPane, int count, List<Pair<String, String>> receivers) {
-		for (var receiver : receivers) {
-			var accountText = new Label(receiver.getLeft());
+	private int setAccountAmounts(final GridPane detailsGridPane, int count,
+			final List<Pair<String, String>> receivers) {
+		for (final var receiver : receivers) {
+			final var accountText = new Label(receiver.getLeft());
 			accountText.setWrapText(true);
 			accountText.setPadding(new Insets(0, 0, 0, 5));
 			detailsGridPane.add(accountText, 0, count);
-			var amountText = new Label(receiver.getRight());
+			final var amountText = new Label(receiver.getRight());
 			amountText.setFont(COURIER_FONT);
 			amountText.setStyle(CREDIT);
 			if (amountText.getText().contains("-")) {
@@ -549,21 +552,21 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return count;
 	}
 
-	private void displayKey(TreeView<String> keyTreeView) {
-		var window = new Stage();
+	private void displayKey(final TreeView<String> keyTreeView) {
+		final var window = new Stage();
 		keyTreeView.setStyle("-fx-font-size: 16");
-		var keysPane = new ScrollPane();
+		final var keysPane = new ScrollPane();
 		keysPane.setFitToWidth(true);
 		keysPane.setFitToHeight(true);
 		keysPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		keysPane.setContent(keyTreeView);
-		var okButton = new Button("CLOSE");
+		final var okButton = new Button("CLOSE");
 		okButton.setStyle(WHITE_BUTTON_STYLE);
 		okButton.setOnAction(event -> window.close());
-		var layout = new VBox();
-		var titleLabel = new Label("New Key");
+		final var layout = new VBox();
+		final var titleLabel = new Label("New Key");
 		titleLabel.setStyle("-fx-font-size: 20");
-		var hBox = new HBox();
+		final var hBox = new HBox();
 		hBox.getChildren().add(okButton);
 		hBox.setAlignment(Pos.BASELINE_RIGHT);
 		layout.getChildren().addAll(titleLabel, keysPane, hBox);
@@ -574,7 +577,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		keyTreeView.prefHeightProperty().bind(layout.heightProperty().subtract(55));
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.sizeToScene();
 		window.setScene(scene);

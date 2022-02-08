@@ -134,7 +134,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 			logger.info("Output directory created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
@@ -147,13 +147,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		if (new File(DEFAULT_STORAGE + "History").exists()) {
-			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
-		}
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
@@ -167,13 +164,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
-
-		assertEquals(newFiles.size(),
-				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+		initBoxes();
 	}
+
 
 	@Test
 	public void clickOnBogusItem() {
@@ -183,7 +176,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void uploadVersion_test() throws IOException, TimeoutException {
-		File outputDirectory = new File(currentRelativePath.toAbsolutePath().toString(),
+		final File outputDirectory = new File(currentRelativePath.toAbsolutePath().toString(),
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
 		if (outputDirectory.mkdirs()) {
 			logger.info("Output directory created");
@@ -199,7 +192,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
-		var out = outputDirectory.listFiles();
+		final var out = outputDirectory.listFiles();
 		assert out != null;
 		assertEquals(1, out.length);
 		final var cleanVersion =
@@ -214,7 +207,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
-		var out2 = outputDirectory.listFiles();
+		final var out2 = outputDirectory.listFiles();
 		assert out2 != null;
 		assertEquals(0, out2.length);
 
@@ -222,14 +215,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void startHomePane_test() {
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 		assertEquals(totalBoxes, newFiles.size());
 	}
 
 	@Test
 	public void verifySoftwareCard_Test() {
-		var storage = DEFAULT_STORAGE + KEYS_STRING;
+		final var storage = DEFAULT_STORAGE + KEYS_STRING;
 		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
 
 
@@ -255,9 +248,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(1, children1.size());
 
 		assertTrue(children1.get(0) instanceof GridPane);
-		var gridPane = (GridPane) children1.get(0);
+		final var gridPane = (GridPane) children1.get(0);
 
-		var children2 = gridPane.getChildren();
+		final var children2 = gridPane.getChildren();
 
 		n0 = children2.get(0);
 		assertTrue(n0 instanceof Label);
@@ -296,11 +289,11 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void findPublicKeysAndAcceptOne_Test() {
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 
-		var storage = DEFAULT_STORAGE + KEYS_STRING;
+		final var storage = DEFAULT_STORAGE + KEYS_STRING;
 		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
 		final var index = 0;
 
@@ -308,16 +301,17 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOn2ButtonBar(index, publicKeyBoxes.get(1));
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		sleep(ONE_SECOND);
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(1, historyFiles.size());
 
-		var acceptedKey = (VBox) historyFiles.get(0);
-		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+		final var acceptedKey = (VBox) historyFiles.get(0);
+		final var legend =
+				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
 
 		assertTrue(legend instanceof Label);
 		assertTrue(((Label) legend).getText().contains("accepted on"));
@@ -330,25 +324,26 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void findPublicKeysAndRejectOne_Test() {
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 		sleep(ONE_SECOND);
-		var storage = DEFAULT_STORAGE + "Keys";
+		final var storage = DEFAULT_STORAGE + "Keys";
 		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
 
 		homePanePage.clickOn2ButtonBar(1, publicKeyBoxes.get(1));
 
 		sleep(ONE_SECOND);
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(1, historyFiles.size()); // see other note
 
-		var acceptedKey = (VBox) historyFiles.get(0);
-		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+		final var acceptedKey = (VBox) historyFiles.get(0);
+		final var legend =
+				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
 
 		assertTrue(legend instanceof Label);
 		assertTrue(((Label) legend).getText().contains("declined on"));
@@ -360,10 +355,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findAccountInfosAndAcceptOne_Test() {
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
-		var storage = DEFAULT_STORAGE + File.separator + "Accounts";
+		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 
@@ -373,15 +368,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		sleep(ONE_SECOND);
 
 		homePanePage.enterStringInPopup("testAccount");
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(1, historyFiles.size()); // see other note
 
 
-		var acceptedKey = (VBox) historyFiles.get(0);
-		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+		final var acceptedKey = (VBox) historyFiles.get(0);
+		final var legend =
+				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
 
 
 		assertTrue(legend instanceof Label);
@@ -393,10 +389,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findAccountInfosAndRejectOne_Test() {
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
-		var storage = DEFAULT_STORAGE + File.separator + "Accounts";
+		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 		sleep(ONE_SECOND);
@@ -405,15 +401,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		sleep(ONE_SECOND);
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find("#historyFilesVBox")).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find("#historyFilesVBox")).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
 		assertEquals(1, historyFiles.size());
 
-		var acceptedKey = (VBox) historyFiles.get(0);
-		var legend = ((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
+		final var acceptedKey = (VBox) historyFiles.get(0);
+		final var legend =
+				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
 
 		assertTrue(legend instanceof Label);
 		assertTrue(((Label) legend).getText().contains("declined on"));
@@ -425,23 +422,23 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void acceptBatchTransaction_Test() throws IOException, HederaClientException {
 		sleep(ONE_SECOND);
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
-		var gridPane = ((GridPane) ((HBox) batchBoxes.get(1).getChildren().get(1)).getChildren().get(0));
-		assertEquals(5, gridPane.getRowCount());
+		final var gridPane = ((GridPane) ((HBox) batchBoxes.get(1).getChildren().get(1)).getChildren().get(0));
+		assertEquals(8, gridPane.getRowCount());
 		assertEquals(2, gridPane.getColumnCount());
 
-		var c2 = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		final var c2 = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		c2.set(2029, Calendar.SEPTEMBER, 17, 19, 30, 0);
-		var sdf = new SimpleDateFormat("HH:mm:ss");
-		var localTime =
+		final var sdf = new SimpleDateFormat("HH:mm:ss");
+		final var localTime =
 				sdf.format(c2.getTime()) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
 
-		for (var n :
+		for (final var n :
 				gridPane.getChildren()) {
 			if (n instanceof Label) {
-				var text = ((Label) n).getText();
+				final var text = ((Label) n).getText();
 				if (text.contains("UTC")) {
 					assertTrue(text.contains("19:30:00"));
 					assertTrue(text.contains(localTime));
@@ -451,8 +448,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		}
 
 		final var children = (batchBoxes.get(1)).getChildren();
-		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
-		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+		final var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		final var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
 		clickOn(addMore);
@@ -461,7 +458,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;
@@ -471,11 +468,11 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage.enterPasswordInPopup(PASSWORD)
 				.waitForWindow();
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		var out =
+		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
@@ -483,20 +480,20 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 			logger.info("Output directory created");
 		}
 
-		var zips = findByStringExtension(new File(out), "zip");
+		final var zips = findByStringExtension(new File(out), "zip");
 		assertEquals(4, zips.size());
 
-		var zip1 = zips.get(0);
+		final var zip1 = zips.get(0);
 		unzip(zip1);
-		var ext = new String[] { "tx", "txt", "sigpair" };
-		var output1 = new File(zip1.getAbsolutePath().replace(".zip", ""));
-		var transactionFiles = FileUtils.listFiles(output1, ext, false);
+		final var ext = new String[] { "tx", "txt", "sigpair" };
+		final var output1 = new File(zip1.getAbsolutePath().replace(".zip", ""));
+		final var transactionFiles = FileUtils.listFiles(output1, ext, false);
 		assertEquals(22, transactionFiles.size());
 
-		var zip2 = zips.get(0);
+		final var zip2 = zips.get(0);
 		unzip(zip2);
-		var output2 = new File(zip1.getAbsolutePath().replace(".zip", ""));
-		var signatureFiles = FileUtils.listFiles(output2, ext, false);
+		final var output2 = new File(zip1.getAbsolutePath().replace(".zip", ""));
+		final var signatureFiles = FileUtils.listFiles(output2, ext, false);
 		assertEquals(22, signatureFiles.size());
 
 	}
@@ -504,33 +501,33 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void declineBatchTransaction_Test() {
 		sleep(ONE_SECOND);
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 		final var children = (batchBoxes.get(1)).getChildren();
 
-		var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
 
 		assert reject != null;
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
 
 		clickOn(reject);
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(1, historyFiles.size()); // see other note
 
-		var out =
+		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 		if (new File(out).mkdirs()) {
 			logger.info("Output directory created");
 		}
 
-		var extensions = new String[] { "zip" };
-		var x = FileUtils.listFiles(new File(out), extensions, false);
+		final var extensions = new String[] { "zip" };
+		final var x = FileUtils.listFiles(new File(out), extensions, false);
 		assertEquals(0, x.size());
 
 	}
@@ -541,23 +538,25 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 		// Check the time and local time are correct
 		int k = 0;
 		boolean found = false;
 		while (k < transactionBoxes.size()) {
-			var gridPane = ((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
-			var timestamp = new Timestamp(1675214610, 0);
-			var localDateTime = timestamp.asReadableLocalString();
-			var utcDateTime = timestamp.asUTCString().replace("_", " ");
+			final var gridPane =
+					((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+			final var timestamp = new Timestamp(1675214610, 0);
+			final var localDateTime = timestamp.asReadableLocalString();
+			final var utcDateTime = timestamp.asUTCString().replace("_", " ");
 
-			for (var n : gridPane.getChildren()) {
+			for (final var n : gridPane.getChildren()) {
 				if (n instanceof Label) {
-					var text = ((Label) n).getText();
-					if (text.contains("UTC")) {
-						found = (text.contains(utcDateTime)) && (text.contains(localDateTime));
+					final var text = ((Label) n).getText();
+					if (text.contains("UTC") && (text.contains(utcDateTime)) && (text.contains(localDateTime))) {
+						found = true;
+						break;
 					}
 				}
 			}
@@ -569,8 +568,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		assertTrue(found);
 		final var children = (transactionBoxes.get(k)).getChildren();
-		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
-		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+		final var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		final var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
 		clickOn(addMore);
@@ -580,7 +579,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;
@@ -590,22 +589,22 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage.enterPasswordInPopup(PASSWORD)
 				.waitForWindow();
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		var listFiles = new File(out).listFiles();
-		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
+		final var listFiles = new File(out).listFiles();
+		final var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
 
 		assert listFiles != null;
 		assert listZips != null;
 
 		assertEquals(1, listZips.length);
 
-		var zip = listFiles[0];
+		final var zip = listFiles[0];
 		unzip(zip);
 
-		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
-		var transactionFiles = output.listFiles();
+		final var output = new File(zip.getAbsolutePath().replace(".zip", ""));
+		final var transactionFiles = output.listFiles();
 		assert transactionFiles != null;
 		assertEquals(2, transactionFiles.length);
 	}
@@ -613,23 +612,23 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	@Test
 	public void declineTransaction_Test() {
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 		final var children = (transactionBoxes.get(1)).getChildren();
-		var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), transactionBoxes.get(1).getChildren().get(2));
 
 		clickOn(reject);
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(1, historyFiles.size()); // see other note
 
-		var out =
+		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 
@@ -637,9 +636,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 			logger.info("Output directory created");
 		}
 
-		var zips = findByStringExtension(new File(out), "zip");
+		final var zips = findByStringExtension(new File(out), "zip");
 		assertEquals(0, zips.size());
-
 	}
 
 	@Test
@@ -650,8 +648,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		VBox prepare = null;
 		VBox freezeUpgrade = null;
 
-		for (VBox freezeBox : freezeBoxes) {
-			var children = freezeBox.getChildren();
+		for (final VBox freezeBox : freezeBoxes) {
+			final var children = freezeBox.getChildren();
 			assertTrue(children.get(0) instanceof Label);
 			switch (((Label) children.get(0)).getText()) {
 				case "Abort Freeze Transaction":
@@ -675,10 +673,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertNotNull(prepare);
 		assertNotNull(freezeUpgrade);
 
-		var abortHBox = (HBox) abort.getChildren().get(1);
-		var freezeHBox = (HBox) freeze.getChildren().get(1);
-		var prepareHBox = (HBox) prepare.getChildren().get(1);
-		var freezeUpgradeHBox = (HBox) freezeUpgrade.getChildren().get(1);
+		final var abortHBox = (HBox) abort.getChildren().get(1);
+		final var freezeHBox = (HBox) freeze.getChildren().get(1);
+		final var prepareHBox = (HBox) prepare.getChildren().get(1);
+		final var freezeUpgradeHBox = (HBox) freezeUpgrade.getChildren().get(1);
 
 		assertEquals(2, abortHBox.getChildren().size());
 		assertEquals(2, freezeHBox.getChildren().size());
@@ -703,25 +701,25 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
 
-		var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		var totalBoxes = newFiles.size();
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
 
 		sleep(10000);
 		final var children = systemBoxes.get(1).getChildren();
 
 		// Check the time and local time are correct
 
-		var gridPane = ((GridPane) ((HBox) children.get(1)).getChildren().get(0));
-		var timestamp = new Timestamp(1659724521, 0);
-		var localDateTime = timestamp.asReadableLocalString();
-		var utcDateTime = timestamp.asUTCString().replace("_", " ");
-		var expirationTimestamp = new Timestamp(1685348108, 0);
-		var expirationLocalDateTime = expirationTimestamp.asReadableLocalString();
-		var expirationUtcDateTime = expirationTimestamp.asUTCString().replace("_", " ");
+		final var gridPane = ((GridPane) ((HBox) children.get(1)).getChildren().get(0));
+		final var timestamp = new Timestamp(1659724521, 0);
+		final var localDateTime = timestamp.asReadableLocalString();
+		final var utcDateTime = timestamp.asUTCString().replace("_", " ");
+		final var expirationTimestamp = new Timestamp(1685348108, 0);
+		final var expirationLocalDateTime = expirationTimestamp.asReadableLocalString();
+		final var expirationUtcDateTime = expirationTimestamp.asUTCString().replace("_", " ");
 
-		for (var n : gridPane.getChildren()) {
+		for (final var n : gridPane.getChildren()) {
 			if (n instanceof Label) {
-				var text = ((Label) n).getText();
+				final var text = ((Label) n).getText();
 				if (text.contains("UTC")) {
 					assertTrue(text.contains(utcDateTime) || text.contains(expirationUtcDateTime));
 					assertTrue(text.contains(localDateTime) || text.contains(expirationLocalDateTime));
@@ -731,8 +729,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		}
 
 
-		var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
-		var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
+		final var sign = TestUtil.findButtonInPopup(children, "SIGN\u2026");
+		final var addMore = TestUtil.findButtonInPopup(children, "ADD MORE");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), children.get(2));
 		clickOn(addMore);
@@ -742,7 +740,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;
@@ -752,42 +750,42 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage.enterPasswordInPopup(PASSWORD)
 				.waitForWindow();
 
-		var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		var listFiles = new File(out).listFiles();
-		var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
+		final var listFiles = new File(out).listFiles();
+		final var listZips = new File(out).listFiles((dir, name) -> name.endsWith(".zip"));
 
 		assert listFiles != null;
 		assert listZips != null;
 
 		assertEquals(1, listZips.length);
 
-		var zip = listZips[0];
+		final var zip = listZips[0];
 		unzip(zip);
-		var ext = new String[] { "sig", "tx" };
-		var output = new File(zip.getAbsolutePath().replace(".zip", ""));
-		var transactionFiles = FileUtils.listFiles(output, ext, false);
+		final var ext = new String[] { "sig", "tx" };
+		final var output = new File(zip.getAbsolutePath().replace(".zip", ""));
+		final var transactionFiles = FileUtils.listFiles(output, ext, false);
 		assertEquals(2, transactionFiles.size());
 
-		var zip2 = findByStringExtension(output, "sig");
+		final var zip2 = findByStringExtension(output, "sig");
 		assertEquals(1, zip2.size());
 	}
 
 	@Test
 	public void nicknameExists_Test() {
-		var nicknames = findAll("0.0.70-bvqyx");
+		final var nicknames = findAll("0.0.70-bvqyx");
 		sleep(ONE_SECOND);
-		var nicknameLabels = new HashSet<Label>();
-		for (var nickname : nicknames) {
+		final var nicknameLabels = new HashSet<Label>();
+		for (final var nickname : nicknames) {
 			if (nickname instanceof Label) {
 				nicknameLabels.add((Label) nickname);
 			}
 		}
-		assertEquals(1, nicknameLabels.size());
+		assertEquals(2, nicknameLabels.size()); // sender and fee payer
 
-		var badNicknames = findAll("badNick");
+		final var badNicknames = findAll("badNick");
 		assertEquals(0, badNicknames.size());
 
 	}
@@ -799,9 +797,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		sleep(ONE_SECOND);
 		clickOn("ninetyFourT");
 
-		var popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var continueButton = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
+		final var continueButton = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
 
 		assertNotNull(continueButton);
 
@@ -810,25 +808,112 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
-		var nicknames = findAll("nineFour (0.0.94-ioaex)");
+		final var nicknames = findAll("nineFour (0.0.94-ioaex)");
 		assertEquals(0, nicknames.size());
 	}
 
-	private List<File> findByStringExtension(File dir, String ext) {
-		var extensions = new String[] { ext };
+	@Test
+	public void transactionSignHistory_Test() throws IOException, HederaClientException {
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
+
+		boolean found = false;
+		int k = 0;
+
+		// Check the time and local time are correct
+		while (k < transactionBoxes.size()) {
+			final var gridPane =
+					((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+			final var timestamp = new Timestamp(1675214610, 0);
+			final var localDateTime = timestamp.asReadableLocalString();
+			final var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+			for (final var n : gridPane.getChildren()) {
+				if (n instanceof Label) {
+					final var text = ((Label) n).getText();
+					if (text.contains("UTC") && (text.contains(utcDateTime)) && (text.contains(localDateTime))) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				break;
+			}
+			k++;
+		}
+
+		assertTrue(found);
+
+		//DECLINE
+		var children = (transactionBoxes.get(k)).getChildren();
+		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
+
+		moveTo(reject);
+		sleep(ONE_SECOND);
+		clickOn(reject);
+
+		// make sure history order is correct
+		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+
+		var declinedFound = false;
+		var keyFound = false;
+		for (var node : nodes) {
+			if (node instanceof Label) {
+				var text = ((Label) node).getText();
+				if (text.contains("Declined on")) {
+					declinedFound = true;
+				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
+					keyFound = true;
+
+					// declined should be first
+					assertTrue(declinedFound);
+				}
+			}
+		}
+
+		assertTrue(declinedFound);
+		assertTrue(keyFound);
+
+	}
+
+	private void initBoxes() {
+		publicKeyBoxes.clear();
+		accountInfoBoxes.clear();
+		batchBoxes.clear();
+		transactionBoxes.clear();
+		softwareBoxes.clear();
+		systemBoxes.clear();
+		freezeBoxes.clear();
+
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
+				systemBoxes, freezeBoxes);
+
+		assertEquals(newFiles.size(),
+				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size()
+						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+	}
+
+	private List<File> findByStringExtension(final File dir, final String ext) {
+		final var extensions = new String[] { ext };
 		return new ArrayList<>(FileUtils.listFiles(dir, extensions, false));
 	}
 
-	private void separateBoxes(ObservableList<Node> newFiles, List<VBox> publicKeyBoxes, List<VBox> accountInfoBoxes,
-			List<VBox> batchBoxes, List<VBox> transactionBoxes, List<VBox> softwareBoxes, List<VBox> systemBoxes,
-			List<VBox> freezeBoxes) {
-		for (var box : newFiles) {
+	private void separateBoxes(final ObservableList<Node> newFiles, final List<VBox> publicKeyBoxes,
+			final List<VBox> accountInfoBoxes,
+			final List<VBox> batchBoxes, final List<VBox> transactionBoxes, final List<VBox> softwareBoxes,
+			final List<VBox> systemBoxes,
+			final List<VBox> freezeBoxes) {
+		for (final var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
-			var lines = ((VBox) box).getChildren();
+			final var lines = ((VBox) box).getChildren();
 			if (lines.size() >= 3) {
 				assertTrue(lines.get(0) instanceof Label);
-				var l = ((Label) lines.get(0)).getText();
+				final var l = ((Label) lines.get(0)).getText();
 				if (l.contains("Batch")) {
 					batchBoxes.add((VBox) box);
 				} else if (l.contains("Transaction") && !(l.contains("ZippedTransactions") || l.contains(
@@ -851,15 +936,15 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		}
 	}
 
-	private static void ensureVisible(ScrollPane scrollPane, Node node) {
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
+	private static void ensureVisible(final ScrollPane scrollPane, final Node node) {
+		final var viewport = scrollPane.getViewportBounds();
+		final var contentHeight =
 				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+		final var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+		final var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
 
 		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
+		final var vValueCurrent = scrollPane.getVvalue();
 
 		if (nodeMaxY < 0) {
 			// located above (remember, top left is (0,0))
@@ -871,18 +956,18 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
 
-	private void unzip(File zip) throws IOException {
-		var fileZip = zip.getAbsolutePath();
-		var destDir = new File(fileZip.replace(".zip", ""));
+	private void unzip(final File zip) throws IOException {
+		final var fileZip = zip.getAbsolutePath();
+		final var destDir = new File(fileZip.replace(".zip", ""));
 		if (destDir.mkdirs()) {
 			logger.info("Destination directory created");
 		}
-		var buffer = new byte[1024];
-		var zis = new ZipInputStream(new FileInputStream(fileZip));
+		final var buffer = new byte[1024];
+		final var zis = new ZipInputStream(new FileInputStream(fileZip));
 		var zipEntry = zis.getNextEntry();
 		while (zipEntry != null) {
-			var newFile = newFile(destDir, zipEntry);
-			var fos = new FileOutputStream(newFile);
+			final var newFile = newFile(destDir, zipEntry);
+			final var fos = new FileOutputStream(newFile);
 			int len;
 			while ((len = zis.read(buffer)) > 0) {
 				fos.write(buffer, 0, len);
@@ -894,11 +979,11 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		zis.close();
 	}
 
-	private File newFile(File destinationDir, ZipEntry zipEntry) throws IOException {
-		var destFile = new File(destinationDir, zipEntry.getName());
+	private File newFile(final File destinationDir, final ZipEntry zipEntry) throws IOException {
+		final var destFile = new File(destinationDir, zipEntry.getName());
 
-		var destDirPath = destinationDir.getCanonicalPath();
-		var destFilePath = destFile.getCanonicalPath();
+		final var destDirPath = destinationDir.getCanonicalPath();
+		final var destFilePath = destFile.getCanonicalPath();
 
 		if (!destFilePath.startsWith(destDirPath + File.separator)) {
 			throw new IOException("Entry is outside of the target dir: " + zipEntry.getName());
@@ -917,13 +1002,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		systemBoxes.clear();
 		freezeBoxes.clear();
 
-		var currentRelativePath = Paths.get("");
-		var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		final var currentRelativePath = Paths.get("");
+		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
 			FileUtils.deleteDirectory(new File(s));
 		}
 
-		var out =
+		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org";
 		if (new File(out).exists()) {
@@ -935,7 +1020,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		}
 	}
 
-	private static boolean accept(File pathname) {
+	private static boolean accept(final File pathname) {
 		return pathname.isFile() && !pathname.getName().contains(".DS");
 	}
 

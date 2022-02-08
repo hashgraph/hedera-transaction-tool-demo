@@ -22,15 +22,19 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.sdk.FreezeType;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -88,28 +92,33 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.SYSTEM_TRANSACTION_TYPE_C
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TIME_ZONE_HBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.UPDATE_EDIT_KEY;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
+import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 
+@SuppressWarnings({ "UnusedReturnValue", "BusyWait" })
 public class CreatePanePage {
 
 	private final TestBase driver;
 
 	private static final Logger logger = LogManager.getLogger(CreatePanePage.class);
 
-	public CreatePanePage(TestBase driver) {
+	public CreatePanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
-	public CreatePanePage selectTransaction(String txType) {
+	public CreatePanePage selectTransaction(final String txType) {
 		driver.clickOn(CREATE_MAIN_CHOICE_BOX);
 		driver.clickOn(txType);
 		return this;
 	}
 
-	public CreatePanePage loadTransaction(String path) {
-		Node n = driver.find("#loadTransactionTextField");
+	public CreatePanePage loadTransaction(final String path) {
+		final var n = driver.find("#loadTransactionTextField");
 		assert n instanceof TextField;
 		((TextField) n).setText(path);
 		driver.clickOn(n);
@@ -118,13 +127,13 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setComment(String text) {
+	public CreatePanePage setComment(final String text) {
 		driver.clickOn(CREATE_COMMENTS_AREA);
 		driver.write(text);
 		return this;
 	}
 
-	public CreatePanePage setDate(String date) {
+	public CreatePanePage setDate(final String date) {
 		driver.doubleClickOn(CREATE_DATE_PICKER);
 		driver.clickOn(CREATE_DATE_PICKER);
 		driver.write(date);
@@ -132,22 +141,22 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setHours(int hours) {
+	public CreatePanePage setHours(final int hours) {
 		driver.doubleClickOn(CREATE_HOURS);
 		driver.write(String.valueOf(hours));
 		driver.type(KeyCode.TAB);
 		return this;
 	}
 
-	public CreatePanePage setMinutes(int minutes) {
+	public CreatePanePage setMinutes(final int minutes) {
 		driver.doubleClickOn(CREATE_MINUTES);
 		driver.write(String.valueOf(minutes));
 		driver.type(KeyCode.TAB);
 		return this;
 	}
 
-	public CreatePanePage setSeconds(int seconds) {
-		var node = driver.find(CREATE_SECONDS);
+	public CreatePanePage setSeconds(final int seconds) {
+		final var node = driver.find(CREATE_SECONDS);
 		assert node instanceof TextField;
 		driver.clickOn(node);
 		((TextField) node).selectAll();
@@ -156,15 +165,15 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setMemo(String memo) {
+	public CreatePanePage setMemo(final String memo) {
 		driver.clickOn(CREATE_MEMO_FIELD);
 		driver.write(memo);
 		return this;
 	}
 
-	public CreatePanePage setFeePayerAccount(long accountID) {
+	public CreatePanePage setFeePayerAccount(final long accountID) {
 		driver.clickOn(CREATE_FEE_PAYER_FIELD);
-		var node = driver.find(CREATE_FEE_PAYER_FIELD);
+		final var node = driver.find(CREATE_FEE_PAYER_FIELD);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.type(KeyCode.BACK_SPACE);
@@ -173,9 +182,9 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFeePayerAccount(String accountID) {
+	public CreatePanePage setFeePayerAccount(final String accountID) {
 		driver.clickOn(CREATE_FEE_PAYER_FIELD);
-		var node = driver.find(CREATE_FEE_PAYER_FIELD);
+		final var node = driver.find(CREATE_FEE_PAYER_FIELD);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.type(KeyCode.BACK_SPACE);
@@ -185,9 +194,9 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setNodeAccount(long accountID) {
+	public CreatePanePage setNodeAccount(final long accountID) {
 		driver.clickOn(CREATE_NODE_FIELD);
-		var node = driver.find(CREATE_NODE_FIELD);
+		final var node = driver.find(CREATE_NODE_FIELD);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.type(KeyCode.BACK_SPACE);
@@ -196,9 +205,9 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setNodeAccount(String accountID) {
+	public CreatePanePage setNodeAccount(final String accountID) {
 		driver.clickOn(CREATE_NODE_FIELD);
-		var node = driver.find(CREATE_NODE_FIELD);
+		final var node = driver.find(CREATE_NODE_FIELD);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.type(KeyCode.BACK_SPACE);
@@ -207,7 +216,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setInitialBalance(long amount) {
+	public CreatePanePage setInitialBalance(final long amount) {
 		driver.ensureVisible(driver.find(CREATE_INITIAL_BALANCE));
 		driver.doubleClickOn(CREATE_INITIAL_BALANCE);
 		driver.write(String.valueOf(amount));
@@ -221,22 +230,22 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setUpdateKey(String account) {
+	public CreatePanePage setUpdateKey(final String account) {
 		driver.ensureVisible(driver.find(UPDATE_EDIT_KEY));
 		driver.clickOn(UPDATE_EDIT_KEY);
-		return clickOnAccountKey(account);
+		return doubleClickOnAccountKey(account);
 	}
 
-	public CreatePanePage clickOnAccountKey(String account) {
-		var titledPane3 = getTitledPane(ACCOUNTS);
-		var inner3 = titledPane3.getContent();
+	public CreatePanePage doubleClickOnAccountKey(final String account) {
+		final var titledPane3 = getTitledPane(ACCOUNTS);
+		final var inner3 = titledPane3.getContent();
 		assert inner3 instanceof VBox;
-		var inner4 = ((VBox) inner3).getChildren();
+		final var inner4 = ((VBox) inner3).getChildren();
 		assert inner4 != null;
 		assert inner4.size() == 1;
 		assert inner4.get(0) instanceof ListView;
-		ListView<String> accountList = (ListView<String>) inner4.get(0);
-		for (var item : accountList.getItems()) {
+		final var accountList = (ListView<String>) inner4.get(0);
+		for (final var item : accountList.getItems()) {
 			if (item.contains(account)) {
 				driver.doubleClickOn(item);
 			}
@@ -244,28 +253,45 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public Button getCenterButton(CenterButtons button) {
-		var popupNodes = getPopupNodes();
+	public CreatePanePage clickOnAccountKey(final String account) {
+		final var titledPane3 = getTitledPane(ACCOUNTS);
+		final var inner3 = titledPane3.getContent();
+		assert inner3 instanceof VBox;
+		final var inner4 = ((VBox) inner3).getChildren();
+		assert inner4 != null;
+		assert inner4.size() == 1;
+		assert inner4.get(0) instanceof ListView;
+		final var accountList = (ListView<String>) inner4.get(0);
+		for (final var item : accountList.getItems()) {
+			if (item.contains(account)) {
+				driver.clickOn(item);
+			}
+		}
+		return this;
+	}
+
+	public Button getCenterButton(final CenterButtons button) {
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
-		var vBox0 = (VBox) popupNodes.get(1);
-		var inner0 = vBox0.getChildren();
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
 		assert inner0 != null;
 		assert inner0.size() == 2;
 		assert inner0.get(0) instanceof HBox;
 
-		var hBox1 = (HBox) inner0.get(0);
-		var inner1 = hBox1.getChildren();
+		final var hBox1 = (HBox) inner0.get(0);
+		final var inner1 = hBox1.getChildren();
 		assert inner1 != null;
 		assert inner1.get(1) instanceof VBox;
 
-		var inner2 = ((VBox) inner1.get(1)).getChildren();
+		final var inner2 = ((VBox) inner1.get(1)).getChildren();
 		assert inner2 != null;
 		Button centerButton = null;
-		for (var node : ((VBox) inner2.get(0)).getChildren()) {
+		for (final var node : ((VBox) inner2.get(0)).getChildren()) {
 			assert node instanceof Button;
-			var text = ((Button) node).getText();
+			final var text = ((Button) node).getText();
 			if (text.isEmpty() && button.equals(CenterButtons.ARROW_BUTTON)) {
 				centerButton = (Button) node;
 			}
@@ -277,41 +303,76 @@ public class CreatePanePage {
 
 	}
 
-	public TitledPane getTitledPane(TitledPaneEnum paneEnum) {
-		var popupNodes = getPopupNodes();
+	public TitledPane getTitledPane(final TitledPaneEnum paneEnum) {
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
-		var vBox0 = (VBox) popupNodes.get(1);
-		var inner0 = vBox0.getChildren();
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
 		assert inner0 != null;
 		assert inner0.size() == 2;
 		assert inner0.get(0) instanceof HBox;
 
-		var hBox1 = (HBox) inner0.get(0);
-		var inner1 = hBox1.getChildren();
+		final var hBox1 = (HBox) inner0.get(0);
+		final var inner1 = hBox1.getChildren();
 		assert inner1 != null;
 		assert inner1.get(0) instanceof Accordion;
 
-		var accordion2 = (Accordion) inner1.get(0);
-		var inner2 = accordion2.getPanes();
+		final var accordion2 = (Accordion) inner1.get(0);
+		final var inner2 = accordion2.getPanes();
 		assert inner2 != null;
 
 		driver.clickOn(inner2.get(paneEnum.value));
 		return inner2.get(paneEnum.value);
 	}
 
-	public CreatePanePage createAndExport(String folder) {
+	public TreeView<String> getTree() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		assert inner0 != null;
+
+		final var hBox1 = (HBox) inner0.get(0);
+		final var inner1 = hBox1.getChildren();
+		assert inner1 != null;
+
+		final var titledPane = (TitledPane) inner1.get(2);
+		final var vBox = (VBox) titledPane.getContent();
+		return (TreeView<String>) vBox.getChildren().get(0);
+	}
+
+
+	public ObservableList<Node> getPublicKeyButtons() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
+		return ((VBox) vBox1.getChildren().get(0)).getChildren();
+	}
+
+	public ObservableList<Node> getAccountButtons() {
+		final var popupNodes = getPopupNodes();
+		assert popupNodes != null;
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
+		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
+		return ((VBox) vBox1.getChildren().get(1)).getChildren();
+	}
+
+	public CreatePanePage createAndExport(final String folder) {
 		logger.info("Exporting transaction to {}", folder);
-		HBox hBox = driver.find(CREATE_CHOICE_BOX);
-		var children = hBox.getChildren();
+		final HBox hBox = driver.find(CREATE_CHOICE_BOX);
+		final var children = hBox.getChildren();
 
 		try {
-			for (var n : children) {
+			for (final var n : children) {
 				if (n instanceof MenuButton) {
 					driver.clickOn(n);
-					var nodes = driver.findAll(folder);
-					for (var node : nodes) {
+					final var nodes = driver.findAll(folder);
+					for (final var node : nodes) {
 						if (node instanceof Label && !(node.getParent() instanceof GridPane)) {
 							logger.info("click!");
 							driver.clickOn(node);
@@ -319,14 +380,14 @@ public class CreatePanePage {
 					}
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 
 		return this;
 	}
 
-	public CreatePanePage addDebit(long accountNum, double amount) {
+	public CreatePanePage addDebit(final long accountNum, final double amount) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
@@ -340,7 +401,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFromAccountTransfer(long accountNum) {
+	public CreatePanePage setFromAccountTransfer(final long accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
@@ -349,7 +410,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFromAccountTransfer(String accountNum) {
+	public CreatePanePage setFromAccountTransfer(final String accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_FROM_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_FROM_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_FROM_ACCOUNT);
@@ -358,7 +419,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setToAccountTransfer(long accountNum) {
+	public CreatePanePage setToAccountTransfer(final long accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
@@ -367,7 +428,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setToAccountTransfer(String accountNum) {
+	public CreatePanePage setToAccountTransfer(final String accountNum) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
@@ -376,7 +437,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage addCredit(long accountNum, double amount) {
+	public CreatePanePage addCredit(final long accountNum, final double amount) {
 		driver.ensureVisible(driver.find(CREATE_TRANSFER_ACCEPT_TO_BUTTON));
 		((TextField) driver.find(CREATE_TRANSFER_TO_ACCOUNT)).clear();
 		driver.clickOn(CREATE_TRANSFER_TO_ACCOUNT);
@@ -390,10 +451,10 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setUpdateAccount(long accountNumber) {
+	public CreatePanePage setUpdateAccount(final long accountNumber) {
 		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
 		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
-		var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
+		final var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.write(Long.toString(accountNumber));
@@ -401,11 +462,11 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setUpdateAccount(String accountNumber) {
+	public CreatePanePage setUpdateAccount(final String accountNumber) {
 		driver.ensureVisible(driver.find(CREATE_UPDATE_ACCOUNT_ID));
 		driver.doubleClickOn(CREATE_UPDATE_ACCOUNT_ID);
 		driver.clickOn(CREATE_UPDATE_ACCOUNT_ID);
-		var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
+		final var node = driver.find(CREATE_UPDATE_ACCOUNT_ID);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.write(accountNumber);
@@ -413,11 +474,11 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setUpdateFileID(String accountNumber) {
+	public CreatePanePage setUpdateFileID(final String accountNumber) {
 		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_FILE_ID));
 		driver.doubleClickOn(CREATE_FILE_UPDATE_FILE_ID);
 		driver.clickOn(CREATE_FILE_UPDATE_FILE_ID);
-		var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
+		final var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.write(accountNumber);
@@ -425,11 +486,11 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setUpdateFileID(long accountNumber) {
+	public CreatePanePage setUpdateFileID(final long accountNumber) {
 		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_FILE_ID));
 		driver.doubleClickOn(CREATE_FILE_UPDATE_FILE_ID);
 		driver.clickOn(CREATE_FILE_UPDATE_FILE_ID);
-		var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
+		final var node = driver.find(CREATE_FILE_UPDATE_FILE_ID);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.write(Long.toString(accountNumber));
@@ -437,8 +498,8 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setOperation(OperationType type) {
-		ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_ACTION_CHOICE_BOX);
+	public CreatePanePage setOperation(final OperationType type) {
+		final ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_ACTION_CHOICE_BOX);
 		driver.clickOn(choiceBox);
 		switch (type) {
 			case delete:
@@ -454,8 +515,8 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setEntity(SystemEntity entity) {
-		ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_TYPE_CHOICE_BOX);
+	public CreatePanePage setEntity(final SystemEntity entity) {
+		final ChoiceBox<String> choiceBox = driver.find(SYSTEM_TRANSACTION_TYPE_CHOICE_BOX);
 		driver.clickOn(choiceBox);
 		switch (entity) {
 
@@ -471,29 +532,30 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setStartDate(LocalDateTime date) {
-		var d = Date.from(date.atZone(ZoneId.systemDefault()).toInstant());
+	public CreatePanePage setStartDate(final LocalDateTime date) {
+		final var d = Date.from(date.atZone(ZoneId.systemDefault()).toInstant());
 		return getCreatePanePage(d, CREATE_DATE_PICKER, CREATE_HOURS, CREATE_MINUTES, CREATE_SECONDS);
 	}
 
-	public CreatePanePage setExpirationDate(LocalDateTime date) {
-		var d = Date.from(date.atZone(ZoneId.systemDefault()).toInstant());
+	public CreatePanePage setExpirationDate(final LocalDateTime date) {
+		final var d = Date.from(date.atZone(ZoneId.systemDefault()).toInstant());
 		return getCreatePanePage(d, SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER, CREATE_SYSTEM_HOURS,
 				CREATE_SYSTEM_MINUTES, CREATE_SYSTEM_SECONDS);
 	}
 
-	public CreatePanePage setFreezeStartDate(LocalDateTime date) {
-		var startTimeDate = Date.from(date.toInstant(OffsetDateTime.now().getOffset()));
+	public CreatePanePage setFreezeStartDate(final LocalDateTime date) {
+		final var startTimeDate = Date.from(date.toInstant(OffsetDateTime.now().getOffset()));
 		return getCreatePanePage(startTimeDate, FREEZE_DATE_PICKER, FREEZE_HOUR_FIELD, FREEZE_MINUTE_FIELD,
 				FREEZE_SECONDS_FIELD);
 	}
 
-	private CreatePanePage getCreatePanePage(Date date, String datePicker, String hours, String minutes,
-			String seconds) {
+	private CreatePanePage getCreatePanePage(final Date date, final String datePicker, final String hours,
+			final String minutes,
+			final String seconds) {
 
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getDefault());
-		var localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+		final var localDateTime = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
 
 		driver.ensureVisible(driver.find(datePicker));
@@ -515,7 +577,7 @@ public class CreatePanePage {
 
 
 		//set Seconds
-		var node = driver.find(seconds);
+		final var node = driver.find(seconds);
 		assert node instanceof TextField;
 		driver.clickOn(node);
 		((TextField) node).selectAll();
@@ -524,10 +586,10 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setEntityID(long id) {
+	public CreatePanePage setEntityID(final long id) {
 		driver.ensureVisible(driver.find(ENTITY_ID_FIELD));
 		driver.clickOn(ENTITY_ID_FIELD);
-		var node = driver.find(ENTITY_ID_FIELD);
+		final var node = driver.find(ENTITY_ID_FIELD);
 		assert node instanceof TextField;
 		((TextField) node).selectAll();
 		driver.type(KeyCode.BACK_SPACE);
@@ -536,7 +598,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setEntityID(String id) {
+	public CreatePanePage setEntityID(final String id) {
 		driver.ensureVisible(driver.find(ENTITY_ID_FIELD));
 		driver.doubleClickOn(ENTITY_ID_FIELD);
 		driver.write(id);
@@ -544,7 +606,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setContents(String contentsPath) {
+	public CreatePanePage setContents(final String contentsPath) {
 		driver.ensureVisible(driver.find(CREATE_FILE_UPDATE_CONTENTS));
 		driver.clickOn(CREATE_FILE_UPDATE_CONTENTS);
 		driver.write(contentsPath);
@@ -552,10 +614,10 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage clickOnPopupButton(String legend) throws InterruptedException {
-		var popupNodes = getPopupNodes();
+	public CreatePanePage clickOnPopupButton(final String legend) throws InterruptedException {
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		var button = findButtonInPopup(popupNodes, legend);
+		final var button = findButtonInPopup(popupNodes, legend);
 		if (button != null) {
 			while (button.isDisable()) {
 				sleep(100);
@@ -568,7 +630,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage clickOnNowButton() {
-		TextField secs = driver.find(CREATE_SECONDS);
+		final TextField secs = driver.find(CREATE_SECONDS);
 		while (true) {
 			final var seconds = Integer.parseInt(secs.getText());
 			if (!(seconds > 58 || seconds < 1)) {
@@ -580,9 +642,9 @@ public class CreatePanePage {
 	}
 
 	public String getStartTimezone() {
-		HBox timeBox = driver.find(TIME_ZONE_HBOX);
-		var children = timeBox.getChildren();
-		for (var child : children) {
+		final HBox timeBox = driver.find(TIME_ZONE_HBOX);
+		final var children = timeBox.getChildren();
+		for (final var child : children) {
 			if (child instanceof AutoCompleteNickname) {
 				return ((AutoCompleteNickname) child).getText();
 			}
@@ -591,9 +653,9 @@ public class CreatePanePage {
 	}
 
 	public String getSystemTimezone() {
-		HBox timeBox = driver.find(SYSTEM_TIMEZONE_HBOX);
-		var children = timeBox.getChildren();
-		for (var child : children) {
+		final HBox timeBox = driver.find(SYSTEM_TIMEZONE_HBOX);
+		final var children = timeBox.getChildren();
+		for (final var child : children) {
 			if (child instanceof AutoCompleteNickname) {
 				return ((AutoCompleteNickname) child).getText();
 			}
@@ -601,11 +663,11 @@ public class CreatePanePage {
 		return "";
 	}
 
-	public CreatePanePage setStartTimezone(String timezone) {
-		HBox timeBox = driver.find(TIME_ZONE_HBOX);
-		var children = timeBox.getChildren();
+	public CreatePanePage setStartTimezone(final String timezone) {
+		final HBox timeBox = driver.find(TIME_ZONE_HBOX);
+		final var children = timeBox.getChildren();
 		driver.ensureVisible(timeBox);
-		for (var child : children) {
+		for (final var child : children) {
 			if (child instanceof AutoCompleteNickname) {
 				((AutoCompleteNickname) child).clear();
 				driver.clickOn(child);
@@ -617,11 +679,11 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setSystemTimezone(String timezone) {
-		HBox timeBox = driver.find(SYSTEM_TIMEZONE_HBOX);
+	public CreatePanePage setSystemTimezone(final String timezone) {
+		final HBox timeBox = driver.find(SYSTEM_TIMEZONE_HBOX);
 		driver.ensureVisible(timeBox);
-		var children = timeBox.getChildren();
-		for (var child : children) {
+		final var children = timeBox.getChildren();
+		for (final var child : children) {
 			if (child instanceof AutoCompleteNickname) {
 				((AutoCompleteNickname) child).clear();
 				driver.clickOn(child);
@@ -634,20 +696,20 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage saveKey() {
-		var popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
-		var vBox0 = (VBox) popupNodes.get(1);
-		var inner0 = vBox0.getChildren();
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
 		assert inner0 != null;
 		assert inner0.size() == 2;
 		assert inner0.get(0) instanceof HBox;
 
-		var hBox1 = (HBox) inner0.get(1);
-		var inner1 = hBox1.getChildren();
+		final var hBox1 = (HBox) inner0.get(1);
+		final var inner1 = hBox1.getChildren();
 		assert inner1 != null;
-		for (var node : inner1) {
+		for (final var node : inner1) {
 			if (node instanceof Button && ((Button) node).getText().equals("SAVE")) {
 				driver.clickOn(node);
 				break;
@@ -657,20 +719,20 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage clickOnKeyDesignerCancel() {
-		var popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
-		var vBox0 = (VBox) popupNodes.get(1);
-		var inner0 = vBox0.getChildren();
+		final var vBox0 = (VBox) popupNodes.get(1);
+		final var inner0 = vBox0.getChildren();
 		assert inner0 != null;
 		assert inner0.size() == 2;
 		assert inner0.get(0) instanceof HBox;
 
-		var hBox1 = (HBox) inner0.get(1);
-		var inner1 = hBox1.getChildren();
+		final var hBox1 = (HBox) inner0.get(1);
+		final var inner1 = hBox1.getChildren();
 		assert inner1 != null;
-		for (var node : inner1) {
+		for (final var node : inner1) {
 			if (node instanceof Button && ((Button) node).getText().equals("CANCEL")) {
 				driver.clickOn(node);
 				break;
@@ -680,8 +742,8 @@ public class CreatePanePage {
 
 	}
 
-	public CreatePanePage setTransactionFee(double transactionFee) {
-		Node n = driver.find(CREATE_TRANSACTION_FEE);
+	public CreatePanePage setTransactionFee(final double transactionFee) {
+		final var n = driver.find(CREATE_TRANSACTION_FEE);
 		assert n instanceof TextField;
 		((TextField) n).setText(Double.toString(transactionFee));
 		driver.clickOn(n);
@@ -689,8 +751,8 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setNanos(String nanosString) {
-		Node n = driver.find(CREATE_NANOS);
+	public CreatePanePage setNanos(final String nanosString) {
+		final var n = driver.find(CREATE_NANOS);
 		assert n instanceof TextField;
 		((TextField) n).setText(nanosString);
 		driver.clickOn(n);
@@ -698,8 +760,8 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFreezeType(FreezeType freezeOnly) {
-		var type = freezeOnly.equals(FreezeType.FREEZE_UPGRADE) ?
+	public CreatePanePage setFreezeType(final FreezeType freezeOnly) {
+		final var type = freezeOnly.equals(FreezeType.FREEZE_UPGRADE) ?
 				"Freeze and upgrade" :
 				freezeOnly.toString()
 						.replace("_", " ")
@@ -710,7 +772,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFreezeFileId(int i) {
+	public CreatePanePage setFreezeFileId(final int i) {
 		driver.ensureVisible(driver.find(FREEZE_FILE_IDTEXT_FIELD));
 		driver.clickOn(FREEZE_FILE_IDTEXT_FIELD);
 		driver.write(String.valueOf(i));
@@ -718,7 +780,7 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setFreezeHash(String hash) {
+	public CreatePanePage setFreezeHash(final String hash) {
 		driver.ensureVisible(driver.find(FREEZE_FILE_HASH_TEXT_FIELD));
 		driver.doubleClickOn(FREEZE_FILE_HASH_TEXT_FIELD);
 		driver.write(hash);
@@ -726,14 +788,14 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage setChunkSize(int chunk) {
+	public CreatePanePage setChunkSize(final int chunk) {
 		driver.ensureVisible(driver.find("#chunkSizeTextField"));
 		driver.doubleClickOn("#chunkSizeTextField");
 		driver.write(String.valueOf(chunk));
 		return this;
 	}
 
-	public CreatePanePage setInterval(int interval) {
+	public CreatePanePage setInterval(final int interval) {
 		driver.ensureVisible(driver.find("#intervalTextField"));
 		driver.doubleClickOn("#intervalTextField");
 		driver.write(String.valueOf(interval));
@@ -747,6 +809,129 @@ public class CreatePanePage {
 		return this;
 	}
 
+	public CreatePanePage clickOnPublicKey(final String string) {
+		getTitledPane(PUBLIC_KEYS);
+		final var nodes = driver.findAll(string);
+		for (final var node : nodes) {
+			if (node instanceof ListCell) {
+				driver.clickOn(node);
+			}
+		}
+		return this;
+	}
+
+	public CreatePanePage doubleClickOnPublicKey(final String string) {
+		final var publicKeyTitledPane = getTitledPane(PUBLIC_KEYS);
+		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
+		assertTrue(publicKeyTitledPaneContent instanceof VBox);
+		final var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
+		assertEquals(1, innerVBox.size());
+		assertTrue(innerVBox.get(0) instanceof VBox);
+
+		final var lists = ((VBox) innerVBox.get(0)).getChildren();
+		assertEquals(1, lists.size());
+
+		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
+		for (final Object publicKey : publicKeys) {
+			assertTrue(publicKey instanceof String);
+			if (string.equals(publicKey)) {
+				driver.doubleClickOn((String) publicKey);
+				break;
+			}
+		}
+		return this;
+	}
+
+	public CreatePanePage clickOnAddPublicKeyButton() {
+		final var publicKeyButtons = getPublicKeyButtons();
+		driver.clickOn(publicKeyButtons.get(0));
+		return this;
+	}
+
+	public CreatePanePage clickOnDeletePublicKeyButton() {
+		final var publicKeyButtons = getPublicKeyButtons();
+		driver.clickOn(publicKeyButtons.get(1));
+		return this;
+	}
+
+	public CreatePanePage clickOnAddAccountButton() {
+		final var publicKeyButtons = getAccountButtons();
+		driver.clickOn(publicKeyButtons.get(0));
+		return this;
+	}
+
+
+	public int getKeyTreeSize() {
+		expandTree();
+		return getTree().getExpandedItemCount();
+	}
+
+	public void expandTree() {
+		expandTree(getTree().getRoot());
+	}
+
+	private void expandTree(final TreeItem<String> treeItem) {
+		if (!treeItem.isExpanded()) {
+			treeItem.setExpanded(true);
+		}
+		for (final var child : treeItem.getChildren()) {
+			if (child.getChildren().size() > 0) {
+				expandTree(child);
+			}
+		}
+	}
+
+	public CreatePanePage selectKeyInTree(final String key) {
+		expandTree();
+		final var tree = getTree();
+		final var item = findFromRoot(tree.getRoot(), key);
+		final var model = tree.getSelectionModel();
+		if (item != null) {
+			final var row = tree.getRow(item);
+			model.select(row);
+		}
+		return this;
+	}
+
+	private TreeItem<String> findFromRoot(final TreeItem<String> treeItem, final String key) {
+		if (key.equals(treeItem.getValue())) {
+			return treeItem;
+		}
+		if (!treeItem.getChildren().isEmpty()) {
+			for (final TreeItem<String> child : treeItem.getChildren()) {
+				final var childResult = findFromRoot(child, key);
+				if (childResult != null) {
+					return childResult;
+				}
+			}
+		}
+		return null;
+	}
+
+	public CreatePanePage setThreshold(final int threshold) {
+		final var nodes = getPopupNodes();
+		final var fields = findTextFieldsInPopup(nodes);
+		assertEquals(1, fields.size());
+		fields.get(0).setText(Integer.toString(threshold));
+		final var button = findButtonInPopup(nodes, "ACCEPT");
+		if (button != null) {
+			driver.clickOn(button);
+		}
+		return this;
+	}
+
+	public CreatePanePage deleteKeyFromTree(final String name) {
+		expandTree();
+		selectKeyInTree(name);
+		clickOnDeletePublicKeyButton();
+		return this;
+	}
+
+	public void closePopup() {
+		final var popupNodes = getPopupNodes();
+		final var close = findButtonInPopup(popupNodes, "CANCEL");
+		driver.clickOn(close);
+	}
 
 	public enum OperationType {
 		delete, undelete
@@ -760,7 +945,7 @@ public class CreatePanePage {
 		ACCOUNTS(1), PUBLIC_KEYS(0);
 		private final int value;
 
-		TitledPaneEnum(int i) {
+		TitledPaneEnum(final int i) {
 			value = i;
 		}
 	}

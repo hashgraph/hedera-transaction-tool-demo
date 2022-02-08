@@ -54,12 +54,12 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	private Boolean receiverSignatureRequired;
 	private static final Logger logger = LogManager.getLogger(ToolCryptoUpdateTransaction.class);
 
-	public ToolCryptoUpdateTransaction(JsonObject input) throws HederaClientException {
+	public ToolCryptoUpdateTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.CRYPTO_UPDATE;
 	}
 
-	public ToolCryptoUpdateTransaction(File inputFile) throws HederaClientException {
+	public ToolCryptoUpdateTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.account = new Identifier(((AccountUpdateTransaction) transaction).getAccountId());
 		this.key = (KeyList) ((AccountUpdateTransaction) transaction).getKey();
@@ -85,7 +85,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 		if (!input.has(ACCOUNT_TO_UPDATE)) {
 			logger.error("The input json does not contain the account ID to update");
@@ -98,19 +98,19 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		}
 
 		try {
-			var accountIdJson = input.getAsJsonObject(ACCOUNT_TO_UPDATE);
+			final var accountIdJson = input.getAsJsonObject(ACCOUNT_TO_UPDATE);
 			account = Identifier.parse(accountIdJson);
-		} catch (HederaClientException | ClassCastException e) {
+		} catch (final HederaClientException | ClassCastException e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, ACCOUNT_TO_UPDATE);
 			answer = false;
 		}
 
 		try {
 			if (input.has(NEW_KEY_FIELD_NAME)) {
-				var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
+				final var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
 				this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, NEW_KEY_FIELD_NAME);
 			answer = false;
 		}
@@ -120,7 +120,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			if (input.has(AUTO_RENEW_PERIOD_FIELD_NAME)) {
 				this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
 			answer = false;
 		}
@@ -129,7 +129,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			if (input.has(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 				this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
 			answer = false;
 		}
@@ -138,10 +138,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public Transaction<?> build() throws HederaClientRuntimeException {
-		var transactionId =
+		final var transactionId =
 				new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
-		var accountUpdateTransaction = new AccountUpdateTransaction().setAccountId(account.asAccount());
+		final var accountUpdateTransaction = new AccountUpdateTransaction().setAccountId(account.asAccount());
 
 		if (key != null) {
 			accountUpdateTransaction.setKey(key);
@@ -164,8 +164,8 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
-		var keysSet = super.getSigningKeys(accountsInfoFolder);
+	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
+		final var keysSet = super.getSigningKeys(accountsInfoFolder);
 		keysSet.addAll(EncryptionUtils.flatPubKeys(
 				Collections.singletonList(((AccountUpdateTransaction) transaction).getKey())));
 		return keysSet;
@@ -173,13 +173,13 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
-		var accountsSet = super.getSigningAccounts();
+		final var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		return super.equals(obj);
 	}
 

@@ -36,7 +36,6 @@ public interface RemoteFile {
 	 * detailing the action.
 	 *
 	 * @return true if the execution has succeeded.
-	 * @throws HederaClientRuntimeException
 	 */
 	boolean execute() throws HederaClientRuntimeException;
 
@@ -45,7 +44,6 @@ public interface RemoteFile {
 	 * are created detailing the action.
 	 *
 	 * @return true if the file has been moved to the history folder successfully.
-	 * @throws HederaClientRuntimeException
 	 */
 	boolean decline() throws HederaClientRuntimeException;
 

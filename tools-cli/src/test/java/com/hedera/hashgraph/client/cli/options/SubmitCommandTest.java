@@ -80,18 +80,18 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws ReceiptStatusException, KeyStoreException, IOException {
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
 		generalPrivateKey = PrivateKey.generate();
-		PublicKey generalPublicKey = generalPrivateKey.getPublicKey();
+		final PublicKey generalPublicKey = generalPrivateKey.getPublicKey();
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 
 		for (int i = 0; i < 2; i++) {
-			TransactionResponse transactionResponse;
+			final TransactionResponse transactionResponse;
 			try {
 				transactionResponse = new AccountCreateTransaction()
 						// The only _required_ property here is `key`
@@ -100,11 +100,11 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 						.execute(client);
 
 				// This will wait for the receipt to become available
-				TransactionReceipt receipt = transactionResponse.getReceipt(client);
-				AccountId newAccountId = receipt.accountId;
+				final TransactionReceipt receipt = transactionResponse.getReceipt(client);
+				final AccountId newAccountId = receipt.accountId;
 				receipts.put(newAccountId, receipt);
 
-			} catch (TimeoutException | PrecheckStatusException e) {
+			} catch (final TimeoutException | PrecheckStatusException e) {
 				logger.error(e.getMessage());
 			}
 
@@ -139,12 +139,12 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		logger.info("Creating transaction");
 
 		final var iterator = receipts.entrySet().iterator();
-		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
-		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		String transactionLocation =
+		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		final String transactionLocation =
 				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
 
-		Hbar initialBalance = new AccountBalanceQuery()
+		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -154,14 +154,14 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				{ "submit", "-t", transactionLocation, "-n", "INTEGRATION", "-o", RECEIPTS };
 		ToolsMain.main(args);
 
-		File[] receipts = new File(RECEIPTS).listFiles(
+		final File[] receipts = new File(RECEIPTS).listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
 		assertTrue(receipts.length > 0);
-		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		final var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
 		assertEquals(Status.SUCCESS, receipt.status);
 
-		Hbar finalBalance = new AccountBalanceQuery()
+		final Hbar finalBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -175,11 +175,11 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		logger.info("Creating transaction");
 
 		final var iterator = receipts.entrySet().iterator();
-		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
-		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		String transactionLocation =
+		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		final String transactionLocation =
 				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
-		Hbar initialBalance = new AccountBalanceQuery()
+		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -190,13 +190,13 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				{ "submit", "-t", TRANSACTIONS + File.separator + wildcardName, "-n", "INTEGRATION", "-o", RECEIPTS };
 		ToolsMain.main(args);
 
-		File[] receipts = new File(RECEIPTS).listFiles(
+		final File[] receipts = new File(RECEIPTS).listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
 		assertTrue(receipts.length > 0);
-		var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
+		final var receipt = TransactionReceipt.fromBytes(readBytes(receipts[0]));
 		assertEquals(Status.SUCCESS, receipt.status);
-		Hbar finalBalance = new AccountBalanceQuery()
+		final Hbar finalBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -208,19 +208,19 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 	@Test
 	void submitMultipleTransactions_test() throws Exception {
 		int count = 10;
-		Random rand = new Random();
+		final Random rand = new Random();
 		final var iterator = receipts.entrySet().iterator();
-		List<String> transactions = new ArrayList<>();
-		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
-		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		Hbar initialBalance = new AccountBalanceQuery()
+		final List<String> transactions = new ArrayList<>();
+		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
 
 		for (int i = 0; i < TEST_SIZE; i++) {
 			final var transactionValidStart = Instant.now().plusSeconds(count);
-			String transactionLocation =
+			final String transactionLocation =
 					createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
 			transactions.add(transactionLocation);
 			count += rand.nextInt(5) + 1;
@@ -229,15 +229,15 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				{ "submit", "-t", TRANSACTIONS, "-n", "INTEGRATION", "-o", RECEIPTS };
 		ToolsMain.main(args);
 
-		File[] receipts = new File(RECEIPTS).listFiles(
+		final File[] receipts = new File(RECEIPTS).listFiles(
 				(dir, name) -> Constants.RECEIPT_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert receipts != null;
 		assertEquals(transactions.size(), receipts.length);
 
-		for (File receipt : receipts) {
+		for (final File receipt : receipts) {
 			assertEquals(Status.SUCCESS, TransactionReceipt.fromBytes(readBytes(receipt)).status);
 		}
-		Hbar finalBalance = new AccountBalanceQuery()
+		final Hbar finalBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -250,7 +250,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final String[] args =
 				{ "submit", "-t", "src/test/resources/transactions/1625538609-0_0_9401-2092093589.txsig", "-n",
 						"TESTNET", "-o", RECEIPTS };
-		Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
+		final Exception e = assertThrows(HederaClientRuntimeException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client Runtime: No valid transactions found.", e.getMessage());
 	}
 
@@ -259,16 +259,18 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		logger.info("Creating transaction");
 
 		final var iterator = receipts.entrySet().iterator();
-		Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
-		Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
-		Hbar initialBalance = new AccountBalanceQuery()
+		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
+		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
+		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
 
 		final var transactionValidStart = Instant.now().plusSeconds(30);
-		String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
-		String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(), transactionValidStart);
+		final String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(),
+				transactionValidStart);
+		final String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(),
+				transactionValidStart);
 
 		logger.info("Submitting transactions");
 
@@ -282,7 +284,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		ToolsMain.main(args1);
 		logger.info("Transactions submitted");
 
-		Hbar finalBalance = new AccountBalanceQuery()
+		final Hbar finalBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
 				.hbars;
@@ -290,13 +292,13 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		assertEquals(1000, finalBalance.toTinybars() - initialBalance.toTinybars());
 	}
 
-	private String createTransfer(int node, AccountId sender, AccountId receiver,
-			Instant transactionValidStart) throws HederaClientException {
+	private String createTransfer(final int node, final AccountId sender, final AccountId receiver,
+			final Instant transactionValidStart) throws HederaClientException {
 
-		var transactionId =
+		final var transactionId =
 				new TransactionId(sender, transactionValidStart);
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
 		transferTransaction.setMaxTransactionFee(Hbar.fromTinybars(1000000000))
 				.setTransactionId(transactionId)

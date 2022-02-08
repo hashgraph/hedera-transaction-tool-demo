@@ -37,15 +37,15 @@ public class AutoCompleteTextField extends TextField {
 	private final ContextMenu entriesPopup;
 	private String styleString;
 
-	public void setStyleString(String styleString) {
+	public void setStyleString(final String styleString) {
 		this.styleString = styleString;
 	}
 
 	/** Construct a new AutoCompleteTextField. */
 	public AutoCompleteTextField() {
 		super();
-		var dictionary = new Dictionary();
-		var noise = new AtomicBoolean(true);
+		final var dictionary = new Dictionary();
+		final var noise = new AtomicBoolean(true);
 		entriesPopup = new ContextMenu();
 		textProperty().addListener((observableValue, s, s2) -> handleTextPropertyListener(dictionary, noise, s2));
 
@@ -62,7 +62,7 @@ public class AutoCompleteTextField extends TextField {
 
 	}
 
-	private void handleKeyReleasedEvent(AtomicBoolean noise, KeyEvent keyEvent) {
+	private void handleKeyReleasedEvent(final AtomicBoolean noise, final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.DOWN) && !noise.get()) {
 			entriesPopup.getSkin().getNode().lookup(".menu-item").requestFocus();
 			noise.set(true);
@@ -72,7 +72,7 @@ public class AutoCompleteTextField extends TextField {
 			return;
 		}
 
-		var text = this.getText().toLowerCase().replace(" ", "");
+		final var text = this.getText().toLowerCase().replace(" ", "");
 
 		if ("".equals(text) || (!text.equals(getFirstItem()) && !isSingleItem())) {
 			return;
@@ -82,11 +82,11 @@ public class AutoCompleteTextField extends TextField {
 		goToNextTextField();
 	}
 
-	private void handleTextPropertyListener(Dictionary dictionary, AtomicBoolean noise, String s2) {
-		var text = s2.toLowerCase().replace(" ", "");
+	private void handleTextPropertyListener(final Dictionary dictionary, final AtomicBoolean noise, final String s2) {
+		final var text = s2.toLowerCase().replace(" ", "");
 		if (getText().length() != 0) {
 			noise.set(false);
-			var searchResult = dictionary.suggestWords(text);
+			final var searchResult = dictionary.suggestWords(text);
 			if (searchResult.isEmpty()) {
 				setStyle(styleString + "-fx-text-fill: red");
 				entriesPopup.hide();
@@ -98,7 +98,7 @@ public class AutoCompleteTextField extends TextField {
 		}
 	}
 
-	private void handleNonEmptySearch(String text, List<String> searchResult) {
+	private void handleNonEmptySearch(final String text, final List<String> searchResult) {
 		setStyle(styleString + "-fx-text-fill: black");
 		populatePopup(searchResult);
 		if (!entriesPopup.isShowing()) {
@@ -117,10 +117,10 @@ public class AutoCompleteTextField extends TextField {
 	 * Simulates a tab press
 	 */
 	private void goToNextTextField() {
-		var grid = getParent();
-		var fields = grid.getChildrenUnmodifiable();
+		final var grid = getParent();
+		final var fields = grid.getChildrenUnmodifiable();
 		var count = 0;
-		for (var field : fields) {
+		for (final var field : fields) {
 			count++;
 			if (field.equals(this)) {
 				break;
@@ -158,15 +158,15 @@ public class AutoCompleteTextField extends TextField {
 	 * @param searchResult
 	 * 		The set of matching strings.
 	 */
-	private void populatePopup(List<String> searchResult) {
-		List<CustomMenuItem> menuItems = new LinkedList<>();
+	private void populatePopup(final List<String> searchResult) {
+		final List<CustomMenuItem> menuItems = new LinkedList<>();
 		// If you'd like more entries, modify this line.
-		var maxEntries = 10;
-		var count = Math.min(searchResult.size(), maxEntries);
+		final var maxEntries = 10;
+		final var count = Math.min(searchResult.size(), maxEntries);
 		for (var i = 0; i < count; i++) {
 			final var result = searchResult.get(i);
-			var entryLabel = new Label(result);
-			var item = new CustomMenuItem(entryLabel, true);
+			final var entryLabel = new Label(result);
+			final var item = new CustomMenuItem(entryLabel, true);
 			item.setOnAction(actionEvent -> {
 				setText(result);
 				entriesPopup.hide();

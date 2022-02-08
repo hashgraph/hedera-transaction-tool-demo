@@ -42,14 +42,14 @@ import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSIO
 public class AccountInfoQuery implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(AccountInfoQuery.class);
 	private String network = "mainnet";
-	private AccountId feePayer;
+	private final AccountId feePayer;
 	private Hbar fee = Hbar.from(1);
 
 	private final List<PrivateKey> signingKeys;
 	private final Client client;
 
-	private AccountInfoQuery(String network, AccountId feePayer, Hbar fee,
-			List<PrivateKey> signingKeys) {
+	private AccountInfoQuery(final String network, final AccountId feePayer, final Hbar fee,
+			final List<PrivateKey> signingKeys) {
 		this.network = network;
 		this.feePayer = feePayer;
 		this.fee = fee;
@@ -67,15 +67,15 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 		try {
 			return CommonMethods.getClient(
 					readJsonArray(CUSTOM_NETWORK_FOLDER + File.separator + network + "." + JSON_EXTENSION));
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 		return null;
 
 	}
 
-	public AccountInfo getInfo(AccountId account) throws PrecheckStatusException, TimeoutException {
-		for (PrivateKey signingKey : signingKeys) {
+	public AccountInfo getInfo(final AccountId account) throws PrecheckStatusException, TimeoutException {
+		for (final PrivateKey signingKey : signingKeys) {
 			client.setOperator(feePayer, signingKey);
 		}
 
@@ -99,22 +99,22 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 			return new Builder();
 		}
 
-		public Builder withNetwork(String network) {
+		public Builder withNetwork(final String network) {
 			this.network = network;
 			return this;
 		}
 
-		public Builder withFeePayer(AccountId feePayer) {
+		public Builder withFeePayer(final AccountId feePayer) {
 			this.feePayer = feePayer;
 			return this;
 		}
 
-		public Builder withFee(Hbar fee) {
+		public Builder withFee(final Hbar fee) {
 			this.fee = fee;
 			return this;
 		}
 
-		public Builder withSigningKeys(List<PrivateKey> signingKeys) {
+		public Builder withSigningKeys(final List<PrivateKey> signingKeys) {
 			this.signingKeys = signingKeys;
 			return this;
 		}

@@ -53,49 +53,49 @@ class UserPropertiesTest {
 
 	@Test
 	void testSetStringProperty() {
-		String testString = "a test string";
+		final String testString = "a test string";
 		properties.setProperty("testString", testString);
 		assertEquals(testString, properties.getProperty("testString", "badString"));
 	}
 
 	@Test
 	void testSetIntProperty() {
-		int testInt = 1234;
+		final int testInt = 1234;
 		properties.setProperty("testInt", testInt);
 		assertEquals(testInt, properties.getIntProperty("testInt", 0));
 	}
 
 	@Test
 	void testSetLongProperty() {
-		long testLong = 1234L;
+		final long testLong = 1234L;
 		properties.setProperty("testLong", testLong);
 		assertEquals(testLong, properties.getLongProperty("testLong", 0));
 	}
 
 
 	@Test
-	void testHBarProperty(){
-		Hbar testAmount = Hbar.fromTinybars(10000);
+	void testHBarProperty() {
+		final Hbar testAmount = Hbar.fromTinybars(10000);
 		properties.setProperty("testCurrency", testAmount);
 		assertEquals(testAmount, properties.getHBarProperty("testCurrency", Hbar.ZERO));
 	}
 
 	@Test
 	void testSetIdentifierProperty() {
-		Identifier testIdentifier = new Identifier(3, 5, 6);
+		final Identifier testIdentifier = new Identifier(3, 5, 6);
 		properties.setProperty("testIdentifier", testIdentifier);
 		assertEquals(testIdentifier, properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 	}
 
 	@Test
 	void testSetMapProperty() {
-		Map<String, String> testMap = new HashMap<>();
+		final Map<String, String> testMap = new HashMap<>();
 		testMap.put("test1", "test string 1");
 		testMap.put("test2", "test string 2");
 		testMap.put("test3", "test string 3");
 		testMap.put("test4", "test string 4");
 		properties.setProperty("testMap", testMap);
-		Map<String, String> recoveredMap = properties.getMapProperty("testMap", new HashMap<>());
+		final Map<String, String> recoveredMap = properties.getMapProperty("testMap", new HashMap<>());
 		assertEquals("test string 1", recoveredMap.get("test1"));
 		assertEquals("test string 2", recoveredMap.get("test2"));
 		assertEquals("test string 3", recoveredMap.get("test3"));
@@ -111,15 +111,15 @@ class UserPropertiesTest {
 
 	@Test
 	void cleanProperties() {
-		String testString = "a test string";
+		final String testString = "a test string";
 		properties.setProperty("testString", testString);
-		int testInt = 1234;
+		final int testInt = 1234;
 		properties.setProperty("testInt", testInt);
-		long testLong = 1234L;
+		final long testLong = 1234L;
 		properties.setProperty("testLong", testLong);
-		Identifier testIdentifier = new Identifier(3, 5, 6);
+		final Identifier testIdentifier = new Identifier(3, 5, 6);
 		properties.setProperty("testIdentifier", testIdentifier);
-		Map<String, String> testMap = new HashMap<>();
+		final Map<String, String> testMap = new HashMap<>();
 		testMap.put("test1", "test string 1");
 		testMap.put("test2", "test string 2");
 		testMap.put("test3", "test string 3");
@@ -129,22 +129,23 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0), properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
+		assertEquals(new Identifier(0, 0, 0),
+				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 	}
 
 	@Test
 	void propertiesToJson() {
-		String testString = "a test string";
+		final String testString = "a test string";
 		properties.setProperty("testString", testString);
-		int testInt = 1234;
+		final int testInt = 1234;
 		properties.setProperty("testInt", testInt);
-		long testLong = 1234L;
+		final long testLong = 1234L;
 		properties.setProperty("testLong", testLong);
-		Identifier testIdentifier = new Identifier(3, 5, 6);
+		final Identifier testIdentifier = new Identifier(3, 5, 6);
 		properties.setProperty("testIdentifier", testIdentifier);
 
-		JsonObject jsonProperties = properties.propertiesToJson();
+		final JsonObject jsonProperties = properties.propertiesToJson();
 		assertEquals("a test string", jsonProperties.get("testString").getAsString());
 		assertEquals(1234, jsonProperties.get("testInt").getAsInt());
 		assertEquals(1234L, jsonProperties.get("testLong").getAsLong());
@@ -154,28 +155,30 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0), properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
+		assertEquals(new Identifier(0, 0, 0),
+				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 
 		properties.jsonToProperties(jsonProperties);
 		assertEquals("a test string", properties.getProperty("testString", "badString"));
 		assertEquals(1234, properties.getIntProperty("testInt", 0));
 		assertEquals(1234L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(3, 5, 6), properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
+		assertEquals(new Identifier(3, 5, 6),
+				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 	}
 
 	@Test
 	void propertiesToMap() {
-		String testString = "a test string";
+		final String testString = "a test string";
 		properties.setProperty("testString", testString);
-		int testInt = 1234;
+		final int testInt = 1234;
 		properties.setProperty("testInt", testInt);
-		long testLong = 1234L;
+		final long testLong = 1234L;
 		properties.setProperty("testLong", testLong);
-		Identifier testIdentifier = new Identifier(3, 5, 6);
+		final Identifier testIdentifier = new Identifier(3, 5, 6);
 		properties.setProperty("testIdentifier", testIdentifier);
 
-		Map<String, String> mapProperties = properties.propertiesToMap();
+		final Map<String, String> mapProperties = properties.propertiesToMap();
 		assertEquals("a test string", mapProperties.get("testString"));
 		assertEquals("1234", mapProperties.get("testInt"));
 		assertEquals("1234", mapProperties.get("testLong"));
@@ -185,14 +188,16 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0), properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
+		assertEquals(new Identifier(0, 0, 0),
+				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 
 		properties.mapToProperties(mapProperties);
 		assertEquals("a test string", properties.getProperty("testString", "badString"));
 		assertEquals(1234, properties.getIntProperty("testInt", 0));
 		assertEquals(1234L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(3, 5, 6), properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
+		assertEquals(new Identifier(3, 5, 6),
+				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 
 	}
 }

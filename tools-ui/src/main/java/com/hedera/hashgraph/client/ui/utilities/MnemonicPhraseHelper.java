@@ -71,8 +71,8 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	private final VBox finishBox;
 	GridPane mnemonicGridPane;
 
-	public MnemonicPhraseHelper(Label mnemonicErrorMessage, String storageDirectory, VBox phraseBox,
-			Button generateKeys, VBox finishBox) {
+	public MnemonicPhraseHelper(final Label mnemonicErrorMessage, final String storageDirectory, final VBox phraseBox,
+			final Button generateKeys, final VBox finishBox) {
 		this.mnemonicErrorMessage = mnemonicErrorMessage;
 		this.storageDirectory = storageDirectory;
 		this.phraseBox = phraseBox;
@@ -82,10 +82,10 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public List<CharSequence> getWordsFromGridPane() {
 		mnemonicGridPane = (GridPane) phraseBox.getChildren().get(0);
-		var nodes = mnemonicGridPane.getChildren();
-		List<CharSequence> words = new ArrayList<>();
-		for (var n : nodes) {
-			var text = (((TextField) n).getText().replace(" ", ""));
+		final var nodes = mnemonicGridPane.getChildren();
+		final List<CharSequence> words = new ArrayList<>();
+		for (final var n : nodes) {
+			final var text = (((TextField) n).getText().replace(" ", ""));
 			if (!"".equals(text)) {
 				words.add(text);
 			}
@@ -98,24 +98,24 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		return mnemonic;
 	}
 
-	public boolean setWordsInGridPane(String[] words) {
+	public boolean setWordsInGridPane(final String[] words) {
 		var flag = true;
 		if (words.length > Constants.MNEMONIC_SIZE) {
 			throw new HederaClientRuntimeException("Incorrect number of words in mnemonic");
 		}
-		var gridPane = (GridPane) phraseBox.getChildren().get(0);
-		var nodes = gridPane.getChildren();
+		final var gridPane = (GridPane) phraseBox.getChildren().get(0);
+		final var nodes = gridPane.getChildren();
 		var counter = 0;
 
 		if (nodes.size() != Constants.MNEMONIC_SIZE) {
 			logger.error("Mnemonic pane does not have the correct number of spots");
 			return false;
 		}
-		for (var node : nodes) {
+		for (final var node : nodes) {
 			assert node instanceof TextField;
-			var word = words[counter];
+			final var word = words[counter];
 
-			var style = "-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
+			final var style = "-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
 					"-fx-border-radius: 10;";
 			if (spellCheck(word)) {
 				node.setStyle(style + "-fx-text-fill: black");
@@ -129,16 +129,16 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		return flag;
 	}
 
-	public void setupMnemonicGridPane(GridPane mnemonicWordsGridPane, Mnemonic mnemonic) {
+	public void setupMnemonicGridPane(final GridPane mnemonicWordsGridPane, final Mnemonic mnemonic) {
 		var i = 0;
-		for (var c : mnemonic.words) {
-			var t = styleTextField(c.toString().toUpperCase());
+		for (final var c : mnemonic.words) {
+			final var t = styleTextField(c.toString().toUpperCase());
 			mnemonicWordsGridPane.add(t, i % 4, i / 4);
 			i++;
 		}
 	}
 
-	public void generatePassphraseEvent(boolean showPopup) {
+	public void generatePassphraseEvent(final boolean showPopup) {
 		var words = getWordsFromGridPane();
 
 		final var properties = new UserAccessibleProperties(storageDirectory + "/Files/user.properties", "");
@@ -158,18 +158,18 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			mnemonic = Mnemonic.fromWords(words);
 			mnemonicErrorMessage.setVisible(false);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
-		} catch (BadMnemonicException e) {
+		} catch (final BadMnemonicException e) {
 			logger.error(e);
 			mnemonicErrorMessage.setVisible(true);
 		}
 
 
 		try {
-			var gridPane = new GridPane();
+			final var gridPane = new GridPane();
 			setupFullMnemonicBoxGridPane(mnemonic, gridPane);
 			phraseBox.getChildren().clear();
 			phraseBox.getChildren().add(gridPane);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e.getMessage());
 			logger.error("Error resetting grid pane");
 		}
@@ -186,8 +186,8 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 					"OK");
 		}
 
-		var nodes = mnemonicGridPane.getChildren();
-		for (var n : nodes) {
+		final var nodes = mnemonicGridPane.getChildren();
+		for (final var n : nodes) {
 			assert n instanceof TextField;
 			n.setStyle(
 					"-fx-background-color: white;-fx-background-radius: 10;-fx-border-radius: 10;-fx-border-color: " +
@@ -206,10 +206,10 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		try {
 			if (password != null) {
 				properties.setHash(password);
-				var token = properties.getHash();
-				var decoder = Base64.getDecoder();
+				final var token = properties.getHash();
+				final var decoder = Base64.getDecoder();
 
-				var tokenBytes = decoder.decode(token);
+				final var tokenBytes = decoder.decode(token);
 				if (tokenBytes.length < SALT_LENGTH + KEY_LENGTH / 8) {
 					logger.error("Token size check failed");
 				}
@@ -217,7 +217,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 				Arrays.fill(password, 'x');
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			mnemonic = null;
 		}
@@ -225,23 +225,23 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		finishBox.setVisible(true);
 	}
 
-	public void storeMnemonic(char[] password, byte[] salt) throws HederaClientException {
-		var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
+	public void storeMnemonic(final char[] password, final byte[] salt) throws HederaClientException {
+		final var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
 		SecurityUtilities.toEncryptedFile(passwordBytes, storageDirectory + File.separator + Constants.MNEMONIC_PATH,
 				mnemonic.toString());
 	}
 
-	private void setupFullMnemonicBoxGridPane(Mnemonic mnemonic, GridPane mnemonicWordsGridPane) {
+	private void setupFullMnemonicBoxGridPane(final Mnemonic mnemonic, final GridPane mnemonicWordsGridPane) {
 		setupMnemonicGridPane(mnemonicWordsGridPane, mnemonic);
 		setupMnemonicBoxConstraints(mnemonicWordsGridPane);
 	}
 
-	public void setupEmptyMnemonicBox(GridPane mnemonicWordsGridPane) {
+	public void setupEmptyMnemonicBox(final GridPane mnemonicWordsGridPane) {
 		for (var i = 0; i < Constants.MNEMONIC_SIZE; i++) {
-			var t = new AutoCompleteTextField() {
+			final var t = new AutoCompleteTextField() {
 				@Override
 				public void paste() {
-					String[] words = getWords();
+					final String[] words = getWords();
 					if (words.length == 1) {
 						setText(words[0]);
 					} else {
@@ -256,12 +256,12 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			t.setStyleString(STYLE);
 
 			t.textProperty().addListener((observableValue, s, t1) -> {
-				var words = getWordsFromGridPane();
+				final var words = getWordsFromGridPane();
 
 				var valid = words.size() == Constants.MNEMONIC_SIZE;
 				try {
 					Mnemonic.fromWords(words);
-				} catch (BadMnemonicException e) {
+				} catch (final BadMnemonicException e) {
 					valid = false;
 				}
 				generateKeys.setVisible(valid);
@@ -278,10 +278,10 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		setupMnemonicBoxConstraints(mnemonicWordsGridPane);
 	}
 
-	public void setupMnemonicBoxConstraints(GridPane mnemonicWordsGridPane) {
-		var rowConstraints = new RowConstraints();
+	public void setupMnemonicBoxConstraints(final GridPane mnemonicWordsGridPane) {
+		final var rowConstraints = new RowConstraints();
 		rowConstraints.setPrefHeight(USE_COMPUTED_SIZE);
-		var columnConstraints = new ColumnConstraints();
+		final var columnConstraints = new ColumnConstraints();
 		columnConstraints.setPrefWidth(USE_COMPUTED_SIZE);
 		mnemonicWordsGridPane.getColumnConstraints().addAll(columnConstraints, columnConstraints, columnConstraints,
 				columnConstraints);
@@ -292,8 +292,8 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 		mnemonicWordsGridPane.setAlignment(Pos.CENTER);
 	}
 
-	private TextField styleTextField(CharSequence c) {
-		var t = new TextField(c.toString().toUpperCase());
+	private TextField styleTextField(final CharSequence c) {
+		final var t = new TextField(c.toString().toUpperCase());
 		t.setMinWidth(150);
 		t.setMaxWidth(150);
 		t.setPrefHeight(USE_COMPUTED_SIZE);
@@ -315,7 +315,7 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 	public void pastePhraseFromClipBoard() {
 		mnemonicErrorMessage.setVisible(false);
-		String[] words = getWords();
+		final String[] words = getWords();
 		if (words.length != Constants.MNEMONIC_SIZE) {
 			logger.error("Incorrect size of recovery phrase");
 			mnemonicErrorMessage.setText("The recovery phase pasted does not have the right number of words.");
@@ -330,15 +330,16 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 	@NotNull
 	private String[] getWords() {
 		String[] words = new String[0];
-		var clipboard = Clipboard.getSystemClipboard();
+		final var clipboard = Clipboard.getSystemClipboard();
 		if (clipboard.hasString()) {
-			var content = clipboard.getString().toLowerCase().replaceAll("[^A-Za-z0-9 ]", "").replaceAll(" +", " ");
+			final var content =
+					clipboard.getString().toLowerCase().replaceAll("[^A-Za-z0-9 ]", "").replaceAll(" +", " ");
 			words = content.split(" ");
 		}
 		return words;
 	}
 
-	private boolean spellCheck(String word) {
+	private boolean spellCheck(final String word) {
 		return dictionary.valid(word);
 	}
 
@@ -356,27 +357,27 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			return new Builder();
 		}
 
-		public Builder withMnemonicErrorMessage(Label mnemonicErrorMessage) {
+		public Builder withMnemonicErrorMessage(final Label mnemonicErrorMessage) {
 			this.mnemonicErrorMessage = mnemonicErrorMessage;
 			return this;
 		}
 
-		public Builder withStorageDirectory(String storageDirectory) {
+		public Builder withStorageDirectory(final String storageDirectory) {
 			this.storageDirectory = storageDirectory;
 			return this;
 		}
 
-		public Builder withPhraseBox(VBox phraseBox) {
+		public Builder withPhraseBox(final VBox phraseBox) {
 			this.phraseBox = phraseBox;
 			return this;
 		}
 
-		public Builder withGenerateKeys(Button generateKeys) {
+		public Builder withGenerateKeys(final Button generateKeys) {
 			this.generateKeys = generateKeys;
 			return this;
 		}
 
-		public Builder withFinishBox(VBox finishBox) {
+		public Builder withFinishBox(final VBox finishBox) {
 			this.finishBox = finishBox;
 			return this;
 		}

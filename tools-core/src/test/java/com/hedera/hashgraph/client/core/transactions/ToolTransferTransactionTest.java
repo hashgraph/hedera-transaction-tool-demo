@@ -75,7 +75,7 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 		final var files = new File("src/test/resources/PublicKeys").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(PUB_EXTENSION));
 		assert files != null;
-		for (File file : files) {
+		for (final File file : files) {
 			final var destFile = new File(DEFAULT_KEYS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -87,7 +87,7 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 		final var accounts = new File("src/test/resources/AccountInfos").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
 		assert accounts != null;
-		for (File file : accounts) {
+		for (final File file : accounts) {
 			final var destFile = new File(DEFAULT_ACCOUNTS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -97,13 +97,13 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 	@Test
 	void build_test() throws HederaClientException {
-		long sender = 2;
-		long receiver = 50;
-		JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
+		final long sender = 2;
+		final long receiver = 50;
+		final JsonObject testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
 
-		ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
+		final ToolTransferTransaction transaction = new ToolTransferTransaction(testJson);
 		assertTrue(transaction.getTransaction() instanceof TransferTransaction);
-		TransferTransaction transfer = (TransferTransaction) transaction.getTransaction();
+		final TransferTransaction transfer = (TransferTransaction) transaction.getTransaction();
 		assertEquals(2, transfer.getHbarTransfers().size());
 
 
@@ -111,14 +111,14 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 	@Test
 	void create_test() throws HederaClientException {
-		JsonObject jsonObject = getJsonInputCA(50);
+		final JsonObject jsonObject = getJsonInputCA(50);
 		final String keyName = "src/test/resources/Keys/genesis.pub";
-		JsonObject singleKeyJson = new JsonObject();
-		String pubKey;
+		final JsonObject singleKeyJson = new JsonObject();
+		final String pubKey;
 		try {
 			pubKey = new String(
 					Files.readAllBytes(Path.of(keyName.replace(Constants.PK_EXTENSION, Constants.PUB_EXTENSION))));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException("Could not load public key from file");
 		}
 		singleKeyJson.addProperty("Ed25519", pubKey);
@@ -126,9 +126,9 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 		jsonObject.add(JsonConstants.NEW_KEY_FIELD_NAME, singleKeyJson);
 		jsonObject.addProperty(JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, false);
-		ToolCryptoCreateTransaction transaction = new ToolCryptoCreateTransaction(jsonObject);
+		final ToolCryptoCreateTransaction transaction = new ToolCryptoCreateTransaction(jsonObject);
 		assertTrue(transaction.getTransaction() instanceof AccountCreateTransaction);
-		AccountCreateTransaction create = (AccountCreateTransaction) transaction.getTransaction();
+		final AccountCreateTransaction create = (AccountCreateTransaction) transaction.getTransaction();
 
 		assertEquals(Hbar.fromTinybars(50), create.getInitialBalance());
 
@@ -136,13 +136,13 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 	@Test
 	void receiverSigRequired_test() throws HederaClientException, IOException {
-		var transactionValidStart = new Timestamp(5).asInstant();
-		var transactionId =
+		final var transactionValidStart = new Timestamp(5).asInstant();
+		final var transactionId =
 				new TransactionId(new Identifier(0, 0, 2).asAccount(), transactionValidStart);
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
-		Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
+		final Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
 		transferTransaction.setMaxTransactionFee(new Hbar(1))
 				.setTransactionId(transactionId)
 				.setNodeAccountIds(Collections.singletonList(new Identifier(0, 0, 3).asAccount()))
@@ -156,16 +156,16 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 		transferTransaction.freeze();
 
-		var transactionBytes = transferTransaction.toBytes();
+		final var transactionBytes = transferTransaction.toBytes();
 		writeBytes("src/test/resources/Files/testTransaction.tx", transactionBytes);
 
 
-		var toolTransaction = new ToolTransaction();
-		var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
+		final var toolTransaction = new ToolTransaction();
+		final var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
 
 		// Accounts 1469 and 1470 have the Receiver Sig Required flag
-		
-		var signers = transaction.getSigningAccounts();
+
+		final var signers = transaction.getSigningAccounts();
 		assertEquals(3, signers.size());
 		assertTrue(signers.contains(new AccountId(0, 0, 2)));
 		assertTrue(signers.contains(new AccountId(0, 0, 1469)));
@@ -176,13 +176,13 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 	@Test
 	void getSigners_test() throws HederaClientException, IOException {
-		var transactionValidStart = new Timestamp(5).asInstant();
-		var transactionId =
+		final var transactionValidStart = new Timestamp(5).asInstant();
+		final var transactionId =
 				new TransactionId(new Identifier(0, 0, 2).asAccount(), transactionValidStart);
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
-		Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
+		final Duration transactionValidDuration = Duration.ZERO.withSeconds(179);
 		transferTransaction.setMaxTransactionFee(new Hbar(1))
 				.setTransactionId(transactionId)
 				.setNodeAccountIds(Collections.singletonList(new Identifier(0, 0, 3).asAccount()))
@@ -196,14 +196,14 @@ class ToolTransferTransactionTest implements GenericFileReadWriteAware {
 
 		transferTransaction.freeze();
 
-		var transactionBytes = transferTransaction.toBytes();
+		final var transactionBytes = transferTransaction.toBytes();
 		writeBytes("src/test/resources/Files/testTransaction.tx", transactionBytes);
 
 
-		var toolTransaction = new ToolTransaction();
-		var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
+		final var toolTransaction = new ToolTransaction();
+		final var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
 
-		var signers = transaction.getSigningAccounts();
+		final var signers = transaction.getSigningAccounts();
 		assertEquals(1, signers.size());
 		assertTrue(signers.contains(new AccountId(0, 0, 2)));
 

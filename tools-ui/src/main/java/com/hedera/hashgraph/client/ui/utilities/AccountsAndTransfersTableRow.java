@@ -27,8 +27,8 @@ import javafx.scene.text.TextFlow;
 public class AccountsAndTransfersTableRow extends TableRow<String> {
 
 	private TextFlow accountType;
-	private SimpleStringProperty description;
-	private SimpleStringProperty paidBy;
+	private final SimpleStringProperty description;
+	private final SimpleStringProperty paidBy;
 	private CheckBox checkbox;
 	private String TransactionId;
 	private Button sign;
@@ -37,7 +37,7 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return sign;
 	}
 
-	public void setSign(Button sign) {
+	public void setSign(final Button sign) {
 		this.sign = sign;
 	}
 
@@ -45,12 +45,13 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return TransactionId;
 	}
 
-	public void setTransactionId(String transactionId) {
+	public void setTransactionId(final String transactionId) {
 		TransactionId = transactionId;
 	}
 
-	AccountsAndTransfersTableRow(CheckBox cb, TextFlow accountType, String description, String paidBy,
-			Button sign) {
+	AccountsAndTransfersTableRow(final CheckBox cb, final TextFlow accountType, final String description,
+			final String paidBy,
+			final Button sign) {
 		this.accountType = accountType;
 		this.description = new SimpleStringProperty(description);
 		this.paidBy = new SimpleStringProperty(paidBy);
@@ -62,7 +63,7 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return accountType;
 	}
 
-	public void setAccountType(TextFlow accountType) {
+	public void setAccountType(final TextFlow accountType) {
 		this.accountType = accountType;
 	}
 
@@ -70,7 +71,7 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return description.get();
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(final String description) {
 		this.description.set(description);
 	}
 
@@ -78,7 +79,7 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return paidBy.get();
 	}
 
-	public void setPaidBy(String paidBy) {
+	public void setPaidBy(final String paidBy) {
 		this.paidBy.set(paidBy);
 	}
 
@@ -86,7 +87,7 @@ public class AccountsAndTransfersTableRow extends TableRow<String> {
 		return checkbox;
 	}
 
-	public void setCheckbox(CheckBox checkbox) {
+	public void setCheckbox(final CheckBox checkbox) {
 		this.checkbox = checkbox;
 	}
 

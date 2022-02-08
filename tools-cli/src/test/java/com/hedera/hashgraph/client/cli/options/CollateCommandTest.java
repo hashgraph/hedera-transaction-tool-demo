@@ -75,7 +75,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CollateCommandTest implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CollateCommandTest.class);
-	private static BooleanSupplier isInCircleCi = () ->
+	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final String RESOURCES_DIRECTORY =
 			((isInCircleCi.getAsBoolean()) ? "/repo/tools-cli/" : "") + "src/test/resources/";
@@ -85,9 +85,9 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 
 	@BeforeEach
 	void setUp() throws IOException {
-		var files = new File(RESOURCES_DIRECTORY + "collation_test").listFiles(
+		final var files = new File(RESOURCES_DIRECTORY + "collation_test").listFiles(
 				(dir, name) -> name.contains("_unzipped"));
-		for (var file : files) {
+		for (final var file : files) {
 			if (file.isDirectory()) {
 				FileUtils.deleteDirectory(file);
 			}
@@ -137,14 +137,14 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	@Test
 	void collate_zips_different_test() {
 		final String[] args = { "collate", "-f", RESOURCES_DIRECTORY + "Collation_different" };
-		var exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
+		final var exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client: Transactions don't match", exception.getMessage());
 	}
 
 	@Test
 	void badRoot_test() {
 		final String[] args = { "collate", "-f", "src/test/resource/" + "collation_test" };
-		Exception exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
+		final Exception exception = assertThrows(HederaClientException.class, () -> ToolsMain.main(args));
 		assertEquals("Hedera Client: Cannot find the transactions root folder", exception.getMessage());
 	}
 
@@ -180,10 +180,10 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	void integration_test() throws Exception {
 		// Create 5 keys
 
-		var keyList = generateKeys(size, threshold);
+		final var keyList = generateKeys(size, threshold);
 
 		// Create account with threshold key
-		var newAccount = createAccount(keyList);
+		final var newAccount = createAccount(keyList);
 
 		// Create and store transfer with account as sender
 		String location = generateAndStoreTransaction(newAccount);
@@ -193,7 +193,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		Collections.shuffle(list, new Random());
 		createSignatures(threshold - 1, size, location, list);
 
-		File[] filesBefore = new File(RESOURCES_DIRECTORY, "Integration").listFiles(
+		final File[] filesBefore = new File(RESOURCES_DIRECTORY, "Integration").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equalsIgnoreCase(Constants.ZIP_EXTENSION));
 		assertNotNull(filesBefore);
 
@@ -204,13 +204,13 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 						RESOURCES_DIRECTORY + File.separator + "infos" };
 		ToolsMain.main(args);
 
-		File[] filesAfter = new File(RESOURCES_DIRECTORY, "Integration").listFiles(
+		final File[] filesAfter = new File(RESOURCES_DIRECTORY, "Integration").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equalsIgnoreCase(Constants.ZIP_EXTENSION));
 		assertNotNull(filesAfter);
 
 		assertEquals(filesBefore.length, filesAfter.length);
 
-		for (File file : filesBefore) {
+		for (final File file : filesBefore) {
 			assertTrue(file.exists());
 		}
 
@@ -228,42 +228,42 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 						"/Integration" };
 		ToolsMain.main(argsSubmit);
 
-		var receipt = TransactionReceipt.fromBytes(readBytes(location.replace(Constants.TRANSACTION_EXTENSION,
+		final var receipt = TransactionReceipt.fromBytes(readBytes(location.replace(Constants.TRANSACTION_EXTENSION,
 				Constants.RECEIPT_EXTENSION)));
 		assertEquals(Status.SUCCESS, receipt.status);
 
 		Files.deleteIfExists(
-				new File(RESOURCES_DIRECTORY, String.format("infos/%s.info", newAccount.toString())).toPath());
+				new File(RESOURCES_DIRECTORY, String.format("infos/%s.info", newAccount)).toPath());
 
 	}
 
-	private void createSignatures(int threshold, int size, String location,
-			List<Integer> list) throws KeyStoreException, HederaClientException, IOException {
-		var keys = new File("src/test/resources/TempKeys/").listFiles(
+	private void createSignatures(final int threshold, final int size, final String location,
+			final List<Integer> list) throws KeyStoreException, HederaClientException, IOException {
+		final var keys = new File("src/test/resources/TempKeys/").listFiles(
 				(dir, name) -> name.contains("testKey") && Constants.PK_EXTENSION.equals(
 						FilenameUtils.getExtension(name)));
 		assert keys != null;
 		assertEquals(size, keys.length);
 
 		for (int i = 0; i < threshold; i++) {
-			var keyStore =
+			final var keyStore =
 					Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), keys[list.get(i)].getPath());
 			final var privateKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
-			var transaction = Transaction.fromBytes(readBytes(location));
-			var signature = transaction.sign(privateKey).getSignatures().get(new AccountId(0, 0, 3)).get(
+			final var transaction = Transaction.fromBytes(readBytes(location));
+			final var signature = transaction.sign(privateKey).getSignatures().get(new AccountId(0, 0, 3)).get(
 					privateKey.getPublicKey());
-			var sigPair = new SignaturePair(privateKey.getPublicKey(), signature);
+			final var sigPair = new SignaturePair(privateKey.getPublicKey(), signature);
 			final var signatureFile = String.format("src/test/resources/Integration/%s.%s",
 					FilenameUtils.getBaseName(location),
 					Constants.SIGNATURE_EXTENSION);
 			sigPair.write(signatureFile);
-			var toPack = new File[] { new File(location), new File(signatureFile) };
+			final var toPack = new File[] { new File(location), new File(signatureFile) };
 
-			for (var file : toPack) {
+			for (final var file : toPack) {
 				assert file.exists();
 				assert file.isFile();
 			}
-			File finalZip = new File(String.format("src/test/resources/Integration/%s-%s.%s",
+			final File finalZip = new File(String.format("src/test/resources/Integration/%s-%s.%s",
 					FilenameUtils.getBaseName(location),
 					FilenameUtils.getBaseName(keys[i].getName()),
 					Constants.ZIP_EXTENSION));
@@ -274,12 +274,12 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		Files.deleteIfExists(new File(location).toPath());
 	}
 
-	private String generateAndStoreTransaction(AccountId newAccount) throws HederaClientException {
-		String location;
-		var transactionId =
+	private String generateAndStoreTransaction(final AccountId newAccount) throws HederaClientException {
+		final String location;
+		final var transactionId =
 				new TransactionId(newAccount, Instant.now().plusSeconds(10));
 
-		var transferTransaction = new TransferTransaction();
+		final var transferTransaction = new TransferTransaction();
 
 		transferTransaction.setMaxTransactionFee(new Hbar(1000000))
 				.setTransactionId(transactionId)
@@ -297,21 +297,21 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		return location;
 	}
 
-	private AccountId createAccount(KeyList keyList) throws KeyStoreException, TimeoutException,
+	private AccountId createAccount(final KeyList keyList) throws KeyStoreException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException, HederaClientException {
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		client.setOperator(new AccountId(0, 0, 2), PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded()));
-		var transactionResponse = new AccountCreateTransaction()
+		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(keyList)
 				.setInitialBalance(new Hbar(10))
 				.execute(client);
 
 		final var newAccount = transactionResponse.getReceipt(client).accountId;
 		assert newAccount != null;
-		var response = new AccountInfoQuery().setAccountId(newAccount).execute(client);
-		writeBytes(String.format("src/test/resources/infos/%s.info", newAccount.toString()), response.toBytes());
+		final var response = new AccountInfoQuery().setAccountId(newAccount).execute(client);
+		writeBytes(String.format("src/test/resources/infos/%s.info", newAccount), response.toBytes());
 		assertEquals(new Hbar(10), response.balance);
 		assertEquals(size, ((KeyList) response.key).size());
 		assertEquals(threshold, ((KeyList) response.key).getThreshold());
@@ -319,21 +319,21 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 	}
 
 	@NotNull
-	private KeyList generateKeys(int size, int threshold) throws IOException {
+	private KeyList generateKeys(final int size, final int threshold) throws IOException {
 		if (new File(RESOURCES_DIRECTORY + "TempKeys/").mkdirs()) {
 			logger.info("Temporary keys folder created");
 		}
-		var mnemonic = Mnemonic.generate24();
-		var keyName = RESOURCES_DIRECTORY + "TempKeys/testKey-";
+		final var mnemonic = Mnemonic.generate24();
+		final var keyName = RESOURCES_DIRECTORY + "TempKeys/testKey-";
 		if (new File(RESOURCES_DIRECTORY + "out").exists()) {
 			FileUtils.deleteDirectory(new File(RESOURCES_DIRECTORY + "out"));
 		}
 
-		var keyList = new KeyList();
+		final var keyList = new KeyList();
 		for (var i = 0; i < size; i++) {
 			SecurityUtilities.generateAndStoreKey(String.format("%s%d.pem", keyName, i), "Hedera CLI Tool", mnemonic, i,
 					Constants.TEST_PASSWORD.toCharArray());
-			var pubKey = EncryptionUtils.publicKeyFromFile(
+			final var pubKey = EncryptionUtils.publicKeyFromFile(
 					String.format("%s/TempKeys/testKey-%d.pub", RESOURCES_DIRECTORY, i));
 			keyList.add(pubKey);
 		}

@@ -43,8 +43,10 @@ import java.util.Arrays;
 public class PasswordBox {
 	private static final Logger logger = LogManager.getLogger(PasswordBox.class);
 	private static final String WARNING_MESSAGE =
-			"This process will change your password. You will need to have your recovery phrase at hand to enter it at " +
-					"the prompt. Please be advised that the Keys that were generated and stored with the old password " +
+			"This process will change your password. You will need to have your recovery phrase at hand to enter it at" +
+					" " +
+					"the prompt. Please be advised that the Keys that were generated and stored with the old password" +
+					" " +
 					"will have to be recovered. Please press the \"Recover Key\" button in the \"Accounts and Keys\" " +
 					"page to change the password on your Keys";
 	public static final String NO_STRING = "CANCEL";
@@ -57,8 +59,8 @@ public class PasswordBox {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static char[] display(String title, String message, String pemFile, boolean isKey) {
-		var window = new Stage();
+	public static char[] display(final String title, final String message, final String pemFile, final boolean isKey) {
+		final var window = new Stage();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setTitle(title);
@@ -66,12 +68,12 @@ public class PasswordBox {
 		window.sizeToScene();
 		window.setMaxWidth(400);
 
-		var label = new Label();
+		final var label = new Label();
 		label.setMaxWidth(360);
 		label.setWrapText(true);
 		label.setText(message);
 
-		TextField answerField = new PasswordField();
+		final TextField answerField = new PasswordField();
 
 		answerField.setOnKeyPressed(event -> {
 			if (event.getCode().equals(KeyCode.ENTER)) {
@@ -80,7 +82,7 @@ public class PasswordBox {
 			}
 		});
 
-		var button = new Button("CONFIRM");
+		final var button = new Button("CONFIRM");
 		button.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
 						"10;" +
@@ -91,7 +93,7 @@ public class PasswordBox {
 			window.close();
 		});
 
-		var cancelButton = new Button(NO_STRING);
+		final var cancelButton = new Button(NO_STRING);
 		cancelButton.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
 						"10; -fx-background-radius: 10;");
@@ -101,35 +103,35 @@ public class PasswordBox {
 			window.close();
 		});
 
-		var hbox = new HBox();
+		final var hbox = new HBox();
 		hbox.getChildren().addAll(button, cancelButton);
 		hbox.setSpacing(20);
 		hbox.setAlignment(Pos.CENTER);
 		hbox.setPadding(new Insets(20, 20, 20, 20));
 
-		var linkBox = new HBox();
+		final var linkBox = new HBox();
 		label.setAlignment(Pos.CENTER_LEFT);
-		var hyperlink = new Hyperlink("Forgot your password?");
+		final var hyperlink = new Hyperlink("Forgot your password?");
 		linkBox.getChildren().add(hyperlink);
 
 		hyperlink.setOnAction(actionEvent -> {
 			try {
 				resetPassword(isKey, pemFile);
 				window.close();
-			} catch (HederaClientException | KeyStoreException e) {
+			} catch (final HederaClientException | KeyStoreException e) {
 				PopupMessage.display("Error in password reset",
 						"The password could not be reset at this time. Please check the application log", "CONTINUE");
 				logger.error(e.getMessage());
 			}
 		});
 
-		var vBox = new VBox();
+		final var vBox = new VBox();
 		vBox.getChildren().addAll(label, answerField, linkBox, hbox);
 		vBox.setSpacing(20);
 		vBox.setAlignment(Pos.CENTER);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
 
-		var scene = new Scene(vBox);
+		final var scene = new Scene(vBox);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);
@@ -140,16 +142,17 @@ public class PasswordBox {
 
 	}
 
-	private static void resetPassword(boolean isKey, String pemFile) throws HederaClientException, KeyStoreException {
-		var resetPassword = PopupMessage.display(RESET_PASSWORD_TITLE, WARNING_MESSAGE, true, RESET, NO_STRING);
+	private static void resetPassword(final boolean isKey,
+			final String pemFile) throws HederaClientException, KeyStoreException {
+		final var resetPassword = PopupMessage.display(RESET_PASSWORD_TITLE, WARNING_MESSAGE, true, RESET, NO_STRING);
 
 		if (Boolean.TRUE.equals(resetPassword)) {
-			var confirm = PopupMessage.display(RESET_PASSWORD_TITLE, "Are you sure?", true, RESET, NO_STRING);
+			final var confirm = PopupMessage.display(RESET_PASSWORD_TITLE, "Are you sure?", true, RESET, NO_STRING);
 			if (Boolean.TRUE.equals(confirm)) {
 				if (!isKey) {
-					var defaultStorage = System.getProperty(
+					final var defaultStorage = System.getProperty(
 							"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-					var newPwd = MnemonicInputPopup.display(defaultStorage);
+					final var newPwd = MnemonicInputPopup.display(defaultStorage);
 					if (newPwd == null || newPwd.length == 0) {
 						return;
 					}

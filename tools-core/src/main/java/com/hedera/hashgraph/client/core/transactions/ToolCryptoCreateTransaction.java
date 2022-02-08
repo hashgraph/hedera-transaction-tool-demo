@@ -53,12 +53,12 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	private boolean receiverSignatureRequired;
 	private static final Logger logger = LogManager.getLogger(ToolCryptoCreateTransaction.class);
 
-	public ToolCryptoCreateTransaction(JsonObject input) throws HederaClientException {
+	public ToolCryptoCreateTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.CRYPTO_CREATE;
 	}
 
-	public ToolCryptoCreateTransaction(File inputFile) throws HederaClientException {
+	public ToolCryptoCreateTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 
 		this.initialBalance = ((AccountCreateTransaction) transaction).getInitialBalance();
@@ -85,7 +85,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 
 		if (!CommonMethods.verifyFieldExist(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
@@ -94,9 +94,9 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		}
 
 		try {
-			var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
+			final var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
 			this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, NEW_KEY_FIELD_NAME);
 			answer = false;
 		}
@@ -104,7 +104,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 		try {
 			this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
 			answer = false;
 		}
@@ -112,14 +112,14 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 		try {
 			this.initialBalance = jsonToHBars(input.get(INITIAL_BALANCE_FIELD_NAME).getAsJsonObject());
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, INITIAL_BALANCE_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
 			this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
 			answer = false;
 		}
@@ -129,10 +129,10 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	@Override
 	public Transaction<?> build() throws HederaClientRuntimeException {
-		var transactionId =
+		final var transactionId =
 				new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
-		var accountCreateTransaction = new AccountCreateTransaction();
+		final var accountCreateTransaction = new AccountCreateTransaction();
 
 		return accountCreateTransaction
 				.setKey(key)
@@ -148,15 +148,15 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<ByteString> getSigningKeys(String accountsInfoFolder) {
-		var keysSet = super.getSigningKeys(accountsInfoFolder);
+	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
+		final var keysSet = super.getSigningKeys(accountsInfoFolder);
 		keysSet.addAll(EncryptionUtils.flatPubKeys(
 				Collections.singletonList(((AccountCreateTransaction) transaction).getKey())));
 		return keysSet;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		return super.equals(obj);
 	}
 

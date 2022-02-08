@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
@@ -61,6 +60,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TX_VALID_DURA
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_DEFAULT_FEE;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.VERSION;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
 
 public class UserAccessibleProperties {
 
@@ -68,14 +68,19 @@ public class UserAccessibleProperties {
 	private final String location;
 	private final String message;
 
-	public UserAccessibleProperties(String location, String message) {
+	public UserAccessibleProperties(final String location, final String message) {
 		this.properties = new UserProperties(location, message);
 		this.location = location;
 		this.message = message;
 	}
 
+	public UserAccessibleProperties(final File file, final String message) {
+		this.properties = new UserProperties(file.getAbsolutePath(), message);
+		this.location = file.getAbsolutePath();
+		this.message = message;
+	}
 
-	public void setKeyLocationProperty(String location) {
+	public void setKeyLocationProperty(final String location) {
 		properties.setProperty(JsonConstants.PREFERRED_KEY_LOCATION, location);
 	}
 
@@ -85,11 +90,11 @@ public class UserAccessibleProperties {
 
 
 	public JsonObject getFeePayerAccountProperty() {
-		var feePayer = properties.getProperty(JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME, null);
+		final var feePayer = properties.getProperty(JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME, null);
 		return Identifier.parse(feePayer).asJSON().getAsJsonObject();
 	}
 
-	public void setPreferredFeePayerAccountProperty(Identifier account) {
+	public void setPreferredFeePayerAccountProperty(final Identifier account) {
 		properties.setProperty(JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME, account);
 	}
 
@@ -97,7 +102,7 @@ public class UserAccessibleProperties {
 		return Long.parseLong(properties.getProperty(JsonConstants.PREFERRED_REALM, "0"));
 	}
 
-	public void setPreferredRealmProperty(long realm) {
+	public void setPreferredRealmProperty(final long realm) {
 		properties.setProperty(JsonConstants.PREFERRED_REALM, realm);
 	}
 
@@ -105,16 +110,16 @@ public class UserAccessibleProperties {
 		return Long.parseLong(properties.getProperty(JsonConstants.PREFERRED_SHARD, "0"));
 	}
 
-	public void setPreferredShardProperty(long realm) {
+	public void setPreferredShardProperty(final long realm) {
 		properties.setProperty(JsonConstants.PREFERRED_SHARD, realm);
 	}
 
 	public JsonObject getNodeAccountProperty() {
-		var node = properties.getProperty(JsonConstants.PREFERRED_NODE_ACCOUNT, null);
+		final var node = properties.getProperty(JsonConstants.PREFERRED_NODE_ACCOUNT, null);
 		return Identifier.parse(node).asJSON().getAsJsonObject();
 	}
 
-	public void setNodeAccountProperty(Identifier node) {
+	public void setNodeAccountProperty(final Identifier node) {
 		properties.setProperty(JsonConstants.PREFERRED_NODE_ACCOUNT, node);
 	}
 
@@ -122,7 +127,7 @@ public class UserAccessibleProperties {
 		return properties.getProperty(NETWORKS, "MAINNET");
 	}
 
-	public void setNetworkProperty(NetworkEnum network) {
+	public void setNetworkProperty(final NetworkEnum network) {
 		properties.setProperty(NETWORKS, network.toString());
 	}
 
@@ -130,27 +135,27 @@ public class UserAccessibleProperties {
 		return properties.getHBarProperty(JsonConstants.PREFERRED_TRANSACTION_FEE, Hbar.fromTinybars(100000000));
 	}
 
-	public void setTransactionFeeProperty(Hbar fee) {
+	public void setTransactionFeeProperty(final Hbar fee) {
 		properties.setProperty(JsonConstants.PREFERRED_TRANSACTION_FEE, fee);
 	}
 
 	public String getPreferredStorageDirectory() {
-		var defaultStorage =
+		final var defaultStorage =
 				System.getProperty("user.home") + File.separator + "Documents" + File.separator + "TransactionTools";
 		return properties.getProperty(PREFERRED_STORAGE_DIRECTORY, defaultStorage);
 	}
 
-	public void setPreferredStorageDirectory(String directory) {
+	public void setPreferredStorageDirectory(final String directory) {
 		properties.setProperty(PREFERRED_STORAGE_DIRECTORY, directory);
 	}
 
 	public String getLastBrowsedDirectory() {
-		var defaultStorage =
+		final var defaultStorage =
 				System.getProperty("user.home") + File.separator + "Documents" + File.separator + "TransactionTools";
 		return properties.getProperty(LAST_TRANSACTIONS_DIRECTORY, defaultStorage);
 	}
 
-	public void setLastBrowsedDirectory(File directory) {
+	public void setLastBrowsedDirectory(final File directory) {
 		if (directory.isDirectory()) {
 			properties.setProperty(LAST_TRANSACTIONS_DIRECTORY, directory.getAbsolutePath());
 		} else {
@@ -162,7 +167,7 @@ public class UserAccessibleProperties {
 		return properties.getLongProperty(DEFAULT_TX_FEE, VAL_NUM_TRANSACTION_DEFAULT_FEE);
 	}
 
-	public void setDefaultTxFee(long defaultTxFee) {
+	public void setDefaultTxFee(final long defaultTxFee) {
 		properties.setProperty(DEFAULT_TX_FEE, defaultTxFee);
 	}
 
@@ -170,11 +175,11 @@ public class UserAccessibleProperties {
 		return properties.getProperty(DEFAULT_NODE_ID, "0.0.3");
 	}
 
-	public void setDefaultNodeID(String defaultNodeID) {
+	public void setDefaultNodeID(final String defaultNodeID) {
 		properties.setProperty(DEFAULT_NODE_ID, defaultNodeID);
 	}
 
-	public void setDefaultNodeID(Identifier defaultNodeID) {
+	public void setDefaultNodeID(final Identifier defaultNodeID) {
 		properties.setProperty(DEFAULT_NODE_ID, defaultNodeID.toReadableString());
 	}
 
@@ -182,7 +187,7 @@ public class UserAccessibleProperties {
 		return properties.getLongProperty(TX_VALID_DURATION, VAL_NUM_TRANSACTION_VALID_DURATION);
 	}
 
-	public void setTxValidDuration(long txValidDuration) {
+	public void setTxValidDuration(final long txValidDuration) {
 		if (txValidDuration >= 0 && txValidDuration <= VAL_NUM_TRANSACTION_VALID_DURATION) {
 			properties.setProperty(TX_VALID_DURATION, txValidDuration);
 		}
@@ -192,7 +197,7 @@ public class UserAccessibleProperties {
 		return SetupPhase.fromInt(properties.getIntProperty(SETUP_PHASE, 0));
 	}
 
-	public void setSetupPhase(SetupPhase phase) {
+	public void setSetupPhase(final SetupPhase phase) {
 		properties.setProperty(SETUP_PHASE, phase.getValue());
 	}
 
@@ -200,7 +205,7 @@ public class UserAccessibleProperties {
 		return properties.getBooleanProperty(GENERATE_RECORD, false);
 	}
 
-	public void setGenerateRecord(boolean generateRecord) {
+	public void setGenerateRecord(final boolean generateRecord) {
 		properties.setProperty(GENERATE_RECORD, generateRecord);
 	}
 
@@ -255,7 +260,7 @@ public class UserAccessibleProperties {
 		return properties.getMapProperty("credentials", new HashMap<>());
 	}
 
-	public void setOneDriveCredentials(Map<String, String> credentialsMap) {
+	public void setOneDriveCredentials(final Map<String, String> credentialsMap) {
 		properties.setProperty("credentials", credentialsMap);
 	}
 
@@ -263,21 +268,21 @@ public class UserAccessibleProperties {
 		return properties.getProperty(HASH, "");
 	}
 
-	public void setHash(char[] password) throws HederaClientException {
+	public void setHash(final char[] password) throws HederaClientException {
 		try {
-			var passwordAuthenticator = new PasswordAuthenticator();
+			final var passwordAuthenticator = new PasswordAuthenticator();
 			setHashString(passwordAuthenticator.hash(password));
 			setSalt(true);
-		} catch (Exception exception) {
+		} catch (final Exception exception) {
 			throw new HederaClientException(exception);
 		}
 	}
 
-	public void setHashString(String hashString) {
+	public void setHashString(final String hashString) {
 		properties.setProperty(HASH, hashString);
 	}
 
-	public void setMnemonicHashCode(int hashCode) {
+	public void setMnemonicHashCode(final int hashCode) {
 		properties.setProperty(MNEMONIC_HASH_CODE, hashCode);
 	}
 
@@ -290,7 +295,7 @@ public class UserAccessibleProperties {
 		setOneDriveCredentials(new HashMap<>());
 	}
 
-	public void addOneDriveCredential(String path, String email) {
+	public void addOneDriveCredential(final String path, final String email) {
 		var map = getOneDriveCredentials();
 		if (map == null) {
 			map = new HashMap<>();
@@ -299,7 +304,7 @@ public class UserAccessibleProperties {
 		setOneDriveCredentials(map);
 	}
 
-	public void removeOneDriveCredential(String path) {
+	public void removeOneDriveCredential(final String path) {
 		var map = getOneDriveCredentials();
 		if (map == null) {
 			map = new HashMap<>();
@@ -308,23 +313,23 @@ public class UserAccessibleProperties {
 		setOneDriveCredentials(map);
 	}
 
-	public boolean credentialsMapCollision(String path, String email) {
+	public boolean credentialsMapCollision(final String path, final String email) {
 		var map = getOneDriveCredentials();
 		if (map == null) {
 			map = new HashMap<>();
 		}
-		var keyBoolean = map.containsKey(path);
-		var valueBoolean = findEmail(email);
+		final var keyBoolean = map.containsKey(path);
+		final var valueBoolean = findEmail(email);
 		return keyBoolean || valueBoolean;
 	}
 
-	public boolean findEmail(String email) {
+	public boolean findEmail(final String email) {
 		var map = getOneDriveCredentials();
 		if (map == null) {
 			map = new HashMap<>();
 		}
 		var valueBoolean = false;
-		for (var entry : map.entrySet()) {
+		for (final var entry : map.entrySet()) {
 			if (entry.getValue().equals(email)) {
 				valueBoolean = true;
 				break;
@@ -333,10 +338,10 @@ public class UserAccessibleProperties {
 		return valueBoolean;
 	}
 
-	public String getEmailFromMap(String path) {
-		var map = getOneDriveCredentials();
+	public String getEmailFromMap(final String path) {
+		final var map = getOneDriveCredentials();
 		var email = "";
-		var path2 = (path.endsWith("/")) ? path.substring(0, Math.max(0, path.length() - 1)) : path.concat("/");
+		final var path2 = (path.endsWith("/")) ? path.substring(0, Math.max(0, path.length() - 1)) : path.concat("/");
 		if (map.containsKey(path)) {
 			email = map.get(path);
 		} else if (map.containsKey(path2)) {
@@ -345,7 +350,7 @@ public class UserAccessibleProperties {
 		return email;
 	}
 
-	public void setVersionString(String version) {
+	public void setVersionString(final String version) {
 		properties.setProperty(VERSION, version);
 	}
 
@@ -353,9 +358,9 @@ public class UserAccessibleProperties {
 		return properties.getProperty(VERSION, "");
 	}
 
-	public boolean isKey(String candidateKey) {
-		var candidatePath = new File(candidateKey).getPath();
-		for (var key : getOneDriveCredentials().keySet()) {
+	public boolean isKey(final String candidateKey) {
+		final var candidatePath = new File(candidateKey).getPath();
+		for (final var key : getOneDriveCredentials().keySet()) {
 			if (candidatePath.equals(new File(key).getPath())) {
 				return true;
 			}
@@ -379,7 +384,7 @@ public class UserAccessibleProperties {
 	 * @param infoMap
 	 * 		a Map of nicknames to account info locations
 	 */
-	public void setAccountInfoMap(Map<String, String> infoMap) {
+	public void setAccountInfoMap(final Map<String, String> infoMap) {
 		properties.setProperty(ACCOUNT_INFO_MAP, infoMap);
 	}
 
@@ -390,7 +395,7 @@ public class UserAccessibleProperties {
 		properties.cleanProperties();
 	}
 
-	public void loadProperties(JsonObject jsonObject) {
+	public void loadProperties(final JsonObject jsonObject) {
 		properties = new UserProperties(location, message);
 		properties.jsonToProperties(jsonObject);
 	}
@@ -403,7 +408,7 @@ public class UserAccessibleProperties {
 		return properties.getBooleanProperty(SALT_PROPERTY, false);
 	}
 
-	public void setSalt(boolean salt) {
+	public void setSalt(final boolean salt) {
 		properties.setProperty(SALT_PROPERTY, salt);
 	}
 
@@ -411,7 +416,7 @@ public class UserAccessibleProperties {
 		return properties.getBooleanProperty(LEGACY, true);
 	}
 
-	public void setLegacy(boolean legacy) {
+	public void setLegacy(final boolean legacy) {
 		properties.setProperty(LEGACY, legacy);
 	}
 
@@ -430,12 +435,12 @@ public class UserAccessibleProperties {
 	 * @param networks
 	 * 		a set of strings
 	 */
-	public void setCustomNetworks(Set<String> networks) {
+	public void setCustomNetworks(final Set<String> networks) {
 		properties.setSetProperty(CUSTOM_NETWORKS, networks);
 	}
 
-	public void setCurrentNetwork(String network, Set<String> defaulNetworks) {
-		var networks = getCustomNetworks();
+	public void setCurrentNetwork(final String network, final Set<String> defaulNetworks) {
+		final var networks = getCustomNetworks();
 		if (!(networks.contains(network) || defaulNetworks.contains(network))) {
 			return;
 		}
@@ -447,32 +452,32 @@ public class UserAccessibleProperties {
 	}
 
 	public Identifier getDefaultFeePayer() {
-		var idString = properties.getProperty(DEFAULT_FEE_PAYER, "");
+		final var idString = properties.getProperty(DEFAULT_FEE_PAYER, "");
 		return idString.equals("") ? Identifier.ZERO : Identifier.parse(idString);
 	}
 
-	public void setDefaultFeePayer(Identifier feePayer) {
+	public void setDefaultFeePayer(final Identifier feePayer) {
 		properties.setProperty(DEFAULT_FEE_PAYER, feePayer.toReadableString());
 	}
 
 	public Set<Identifier> getCustomFeePayers() {
-		var idStrings = properties.getSetProperty(CUSTOM_FEE_PAYERS, new HashSet<>());
+		final var idStrings = properties.getSetProperty(CUSTOM_FEE_PAYERS, new HashSet<>());
 		return idStrings.stream().map(Identifier::parse).collect(Collectors.toSet());
 	}
 
-	public void setCustomFeePayers(Set<Identifier> identifiers) {
-		var payers = identifiers.stream().map(Identifier::toReadableString).collect(Collectors.toSet());
+	public void setCustomFeePayers(final Set<Identifier> identifiers) {
+		final var payers = identifiers.stream().map(Identifier::toReadableString).collect(Collectors.toSet());
 		properties.setSetProperty(CUSTOM_FEE_PAYERS, payers);
 	}
 
-	public void addCustomFeePayer(Identifier identifier) {
-		var customFeePayers = getCustomFeePayers();
+	public void addCustomFeePayer(final Identifier identifier) {
+		final var customFeePayers = getCustomFeePayers();
 		customFeePayers.add(identifier);
 		setCustomFeePayers(Collections.unmodifiableSet(customFeePayers));
 	}
 
-	public void removeCustomFeePayer(Identifier identifier) {
-		var payers = getCustomFeePayers();
+	public void removeCustomFeePayer(final Identifier identifier) {
+		final var payers = getCustomFeePayers();
 		payers.remove(identifier);
 		setCustomFeePayers(Collections.unmodifiableSet(payers));
 	}

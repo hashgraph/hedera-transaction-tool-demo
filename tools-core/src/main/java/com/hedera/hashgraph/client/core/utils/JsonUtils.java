@@ -40,10 +40,11 @@ public class JsonUtils {
 	 * Converts an AccountInfo object to a Json object
 	 *
 	 * @param accountInfo
+	 * 		an account
 	 * @return a Json object
 	 */
-	public static JsonObject accountInfoToJson(AccountInfo accountInfo) {
-		var jsonObject = new JsonObject();
+	public static JsonObject accountInfoToJson(final AccountInfo accountInfo) {
+		final var jsonObject = new JsonObject();
 
 		jsonObject.addProperty("accountId", accountInfo.accountId.toString());
 		jsonObject.addProperty("contractAccountId", accountInfo.contractAccountId);
@@ -64,18 +65,18 @@ public class JsonUtils {
 		return jsonObject;
 	}
 
-	public static JsonObject hBarsToJsonObject(Hbar hbar) {
-		var jsonObject = new JsonObject();
-		var decimal = hbar.getValue();
+	public static JsonObject hBarsToJsonObject(final Hbar hbar) {
+		final var jsonObject = new JsonObject();
+		final var decimal = hbar.getValue();
 		jsonObject.addProperty(H_BARS, decimal.longValue());
 		jsonObject.addProperty(TINY_BARS, (decimal.remainder(BigDecimal.ONE)).multiply(new BigDecimal(100000000L)));
 		return jsonObject;
 	}
 
-	public static Hbar jsonToHBars(JsonObject hBars) {
+	public static Hbar jsonToHBars(final JsonObject hBars) {
 		var bigDecimal = BigDecimal.ZERO;
 		if (hBars.has(TINY_BARS)) {
-			var tiny = hBars.get(TINY_BARS).getAsString().replace(" ", "").replace("_", "");
+			final var tiny = hBars.get(TINY_BARS).getAsString().replace(" ", "").replace("_", "");
 			if (Long.parseLong(tiny) < 0) {
 				throw new HederaClientRuntimeException(POSITIVE_NUMBER_CURRENCY_ERROR_MESSAGE);
 			}
@@ -83,7 +84,7 @@ public class JsonUtils {
 		}
 
 		if (hBars.has(H_BARS)) {
-			var bars = hBars.get(H_BARS).getAsString().replace(" ", "").replace("_", "");
+			final var bars = hBars.get(H_BARS).getAsString().replace(" ", "").replace("_", "");
 			if (Long.parseLong(bars) < 0) {
 				throw new HederaClientRuntimeException(POSITIVE_NUMBER_CURRENCY_ERROR_MESSAGE);
 			}

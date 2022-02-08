@@ -55,17 +55,17 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	private Key key;
 	private final List<FileActions> actions = Arrays.asList(FileActions.ACCEPT, FileActions.DECLINE);
 
-	public InfoFile(FileDetails file) {
+	public InfoFile(final FileDetails file) {
 		super(file);
 		if (file == null) {
 			return;
 		}
 		try {
-			var accountInfo = AccountInfo.fromBytes(readBytes(file.getFullPath()));
+			final var accountInfo = AccountInfo.fromBytes(readBytes(file.getFullPath()));
 			this.key = accountInfo.key;
 			this.accountID = new Identifier(accountInfo.accountId);
 			this.timestamp = new Timestamp(file.getAttributes().creationTime().toMillis() / 1000, 0);
-		} catch (IOException | HederaClientException e) {
+		} catch (final IOException | HederaClientException e) {
 			logger.error(e);
 			this.setValid(false);
 		}
@@ -83,16 +83,16 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		return key;
 	}
 
-	public boolean canSign(Set<PublicKey> keys) {
+	public boolean canSign(final Set<PublicKey> keys) {
 		return canSign(this.key, keys);
 	}
 
-	private boolean canSign(Key key, Set<PublicKey> keys) {
+	private boolean canSign(final Key key, final Set<PublicKey> keys) {
 		if (key instanceof KeyList) {
-			var keyList = (KeyList) key;
-			int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
+			final var keyList = (KeyList) key;
+			final int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
 			var count = 0;
-			for (Key componentKey : keyList) {
+			for (final Key componentKey : keyList) {
 				if (canSign(componentKey, keys)) {
 					count++;
 				}
@@ -121,7 +121,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 			return contentEquals(
 					new File(ACCOUNTS_INFO_FOLDER + this.accountID.toReadableString() + ".info"),
 					new File(getPath()));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 		}
 		return false;
@@ -134,10 +134,10 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 
 	@Override
 	public GridPane buildGridPane() {
-		var details = new GridPane();
+		final var details = new GridPane();
 
 		List<Label> messages = new ArrayList<>();
-		var l = new Label(exists() ? String.format(
+		final var l = new Label(exists() ? String.format(
 				"We have found new information regarding account %s. Would you like to import it to your records?",
 				accountID.toReadableString()) : String.format(
 				"Would you like to import information regarding account %s to your records?",
@@ -148,12 +148,12 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		if (isHistory()) {
 			try {
 				messages = getHistory("account");
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
 		}
 		var count = 0;
-		for (var message : messages) {
+		for (final var message : messages) {
 			details.add(message, 0, count++);
 		}
 		return details;
@@ -165,7 +165,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		return super.equals(o);
 	}
 

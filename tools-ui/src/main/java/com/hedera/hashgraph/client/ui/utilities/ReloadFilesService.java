@@ -25,9 +25,9 @@ import javafx.concurrent.Task;
 
 public class ReloadFilesService extends ScheduledService<Void> {
 
-	private HomePaneController controller;
+	private final HomePaneController controller;
 
-	public ReloadFilesService(HomePaneController homePaneController) {
+	public ReloadFilesService(final HomePaneController homePaneController) {
 		this.controller = homePaneController;
 	}
 

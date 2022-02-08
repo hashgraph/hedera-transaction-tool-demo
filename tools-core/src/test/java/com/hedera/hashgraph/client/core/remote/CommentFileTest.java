@@ -33,8 +33,8 @@ public class CommentFileTest extends TestBase {
 
 	@Test
 	public void buildComment_test() throws Exception {
-		var comment1 = FileDetails.parse(new File("src/test/resources/Files/commentsFile.txt"));
-		var file1 = new CommentFile(comment1);
+		final var comment1 = FileDetails.parse(new File("src/test/resources/Files/commentsFile.txt"));
+		final var file1 = new CommentFile(comment1);
 		assertEquals("test1.council2@hederacouncil.org", file1.getContents().get("Author").getAsString());
 		assertEquals("Contents of the comment", file1.getContents().get("Contents").getAsString());
 		assertEquals("2021-04-19 16:51:20", file1.getContents().get("Timestamp").getAsString());
@@ -47,14 +47,14 @@ public class CommentFileTest extends TestBase {
 		FileUtils.copyFile(new File("src/test/resources/Files/commentsFile.txt"),
 				new File("src/test/resources/Files/commentsFile2.txt"));
 
-		var comment2 = FileDetails.parse(new File("src/test/resources/Files/commentsFile2.txt"));
+		final var comment2 = FileDetails.parse(new File("src/test/resources/Files/commentsFile2.txt"));
 		Files.delete(new File("src/test/resources/Files/commentsFile2.txt").toPath());
-		var file2 = new CommentFile(comment2);
+		final var file2 = new CommentFile(comment2);
 
 		assertEquals(new JsonObject(), file2.getContents());
 
-		var comment3 = FileDetails.parse(new File("src/test/resources/Files/badComment.txt"));
-		var file3 = new CommentFile(comment3);
+		final var comment3 = FileDetails.parse(new File("src/test/resources/Files/badComment.txt"));
+		final var file3 = new CommentFile(comment3);
 
 		assertEquals(new JsonObject(), file3.getContents());
 	}

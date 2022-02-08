@@ -155,7 +155,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	DriveSetupHelper driveSetupHelper;
 
-	void injectMainController(Controller controller) {
+	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
 
@@ -170,7 +170,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			feePayerChoicebox.visibleProperty().bind(customFeePayerTextField.visibleProperty().not());
 			customFeePayerTextField.setOnKeyReleased(event -> {
-				var code = event.getCode();
+				final var code = event.getCode();
 				if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
 					feePayerChoicebox.getParent().requestFocus();
 				}
@@ -211,7 +211,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
-			Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+			final Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
 			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
 			nodeIDTextField.setEditable(true);
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
@@ -275,15 +275,15 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
 	}
 
-	private void addCustomFeePayer(Boolean t1) {
+	private void addCustomFeePayer(final Boolean t1) {
 		if (Boolean.FALSE.equals(t1)) {
-			var tempSet = new HashSet<>(controller.getFeePayers());
+			final var tempSet = new HashSet<>(controller.getFeePayers());
 			tempSet.addAll(controller.getCustomFeePayers());
 
 			if ("".equals(customFeePayerTextField.getText())) {
@@ -291,7 +291,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 
 			try {
-				var id = Identifier.parse(customFeePayerTextField.getText());
+				final var id = Identifier.parse(customFeePayerTextField.getText());
 				controller.setDefaultFeePayer(id);
 				customFeePayerTextField.setVisible(false);
 				customFeePayerTextField.clear();
@@ -300,7 +300,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				}
 				setupFeePayerChoicebox();
 				controller.accountsPaneController.setupFeePayerChoiceBox();
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				logger.error("Cannot parse identifier {}", e.getMessage());
 				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
 				customFeePayerTextField.requestFocus();
@@ -314,7 +314,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	 */
 	public void setupFeePayerChoicebox() {
 		noise = true;
-		var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
+		final var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
 		noise = false;
 
 		if ("".equals(feePayer)) {
@@ -330,7 +330,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	public void setupNetworkBox(ChoiceBox<Object> comboBox) {
+	public void setupNetworkBox(final ChoiceBox<Object> comboBox) {
 		noise = true;
 		controller.networkBoxSetup(comboBox);
 		noise = false;
@@ -529,8 +529,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private void managedPropertyBinding(Node... nodes) {
-		for (var n : nodes) {
+	private void managedPropertyBinding(final Node... nodes) {
+		for (final var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
 	}
@@ -540,7 +540,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		if (txFee.contains(".")) {
 			txFee = txFee.substring(0, txFee.lastIndexOf(".") + 9).replace(".", "");
 		}
-		var fee = Long.parseLong(txFee);
+		final var fee = Long.parseLong(txFee);
 		controller.setDefaultTxFee(fee);
 		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.getDefaultTxFee()));
 	}
@@ -578,7 +578,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkTransactionValidDuration() {
-		var duration = Integer.parseInt(txValidDurationTextField.getText());
+		final var duration = Integer.parseInt(txValidDurationTextField.getText());
 		if (duration < 1 || duration > 180) {
 			tvsErrorLabel.setVisible(true);
 		} else {
@@ -590,7 +590,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkAutoRenewPeriod() {
-		var duration = Integer.parseInt(autoRenewPeriodTextField.getText());
+		final var duration = Integer.parseInt(autoRenewPeriodTextField.getText());
 		if (duration < MINIMUM_AUTO_RENEW_PERIOD || duration > MAXIMUM_AUTO_RENEW_PERIOD) {
 			arpErrorLabel.setVisible(true);
 		} else {
@@ -602,20 +602,20 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkTransactionFee() {
-		var transactionFee = Long.parseLong(Utilities.stripHBarFormat(defaultTransactionFee.getText()));
+		final var transactionFee = Long.parseLong(Utilities.stripHBarFormat(defaultTransactionFee.getText()));
 		controller.setDefaultTxFee(transactionFee);
 		defaultTransactionFee.setText(Utilities.setHBarFormat(transactionFee));
 	}
 
 	private void checkNodeID() {
-		var account = nodeIDTextField.getText();
-		Identifier accountID;
+		final var account = nodeIDTextField.getText();
+		final Identifier accountID;
 		try {
 			accountID = Identifier.parse(account);
 			if (accountID.isValid()) {
 				controller.setDefaultNodeID(accountID.toReadableString());
 				nodeIDTextField.clear();
-				Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
+				final Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
 				final var s = defaultNodeID.toNicknameAndChecksum(controller.getAccountsList());
 				nodeIDTextField.setText(s);
 				settingScrollPane.requestFocus();
@@ -623,33 +623,33 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			} else {
 				accountIDErrorLabel.setVisible(true);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			// empty catch
 		}
 	}
 
 	private String getLocalTime() {
-		var localDateTime = LocalDateTime.of(LocalDate.now(),
+		final var localDateTime = LocalDateTime.of(LocalDate.now(),
 				LocalTime.of(controller.getDefaultHours(), controller.getDefaultMinutes(),
 						controller.getDefaultSeconds()));
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of("UTC")).toInstant());
-		var localDateFormat = new SimpleDateFormat("HH:mm:ss");
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of("UTC")).toInstant());
+		final var localDateFormat = new SimpleDateFormat("HH:mm:ss");
 
-		var tz = TimeZone.getDefault();
+		final var tz = TimeZone.getDefault();
 
 		return localDateFormat.format(transactionValidStart) + " " + tz.getDisplayName();
 	}
 
 	//region SETTINGS
 	public void browseStorageIconPressed() throws IOException {
-		var directory =
+		final var directory =
 				BrowserUtilities.browseDirectories(controller.getPreferredStorageDirectory(), controller.getThisPane());
 		//If the user didn't choose a directory (by clicking 'Cancel')
 		if (directory.isEmpty()) {
 			return;
 		}
-		var previous = new File(controller.getPreferredStorageDirectory());
-		var newDir = new File(directory + "/TransactionTools");
+		final var previous = new File(controller.getPreferredStorageDirectory());
+		final var newDir = new File(directory + "/TransactionTools");
 		controller.setLastBrowsedDirectory(newDir);
 
 		FileUtils.moveDirectory(previous, newDir);
@@ -665,11 +665,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	public void resetApplication() throws BackingStoreException, IOException {
 
-		var continueType = new ButtonType("CONTINUE", ButtonBar.ButtonData.OK_DONE);
-		var cancelType = new ButtonType("CANCEL", ButtonBar.ButtonData.CANCEL_CLOSE);
-		var a = new Alert(AlertType.WARNING, Messages.RESET_ALERT_MESSAGE, cancelType, continueType
+		final var continueType = new ButtonType("CONTINUE", ButtonBar.ButtonData.OK_DONE);
+		final var cancelType = new ButtonType("CANCEL", ButtonBar.ButtonData.CANCEL_CLOSE);
+		final var a = new Alert(AlertType.WARNING, Messages.RESET_ALERT_MESSAGE, cancelType, continueType
 		);
-		var result = a.showAndWait();
+		final var result = a.showAndWait();
 		if (result.isPresent() && result.get() == continueType) {
 			controller.resetApp();
 		}
@@ -696,7 +696,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	public void browseNewFolderAction() {
-		var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
+		final var directory = BrowserUtilities.browseDirectories("", controller.getThisPane());
 		//If the user didn't choose a directory (by clicking 'Cancel')
 		if (directory.isEmpty()) {
 			return;
@@ -718,30 +718,30 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		if (new File(CUSTOM_NETWORK_FOLDER).mkdirs()) {
 			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
 		}
-		JsonObject customNetwork = NewNetworkPopup.display();
+		final JsonObject customNetwork = NewNetworkPopup.display();
 		if (!customNetwork.has("nickname") || !customNetwork.has("file")) {
 			logger.info("Invalid custom network");
 			return;
 		}
 		final var nickname = customNetwork.get("nickname").getAsString();
-		var filename = nickname + "." + Constants.JSON_EXTENSION;
-		var location = customNetwork.get("file").getAsString();
+		final var filename = nickname + "." + Constants.JSON_EXTENSION;
+		final var location = customNetwork.get("file").getAsString();
 		if (!verifyJsonNetwork(location)) {
 			PopupMessage.display("Error", "The json file does not contain a valid network");
 			return;
 		}
 		FileUtils.copyFile(new File(location), new File(CUSTOM_NETWORK_FOLDER, filename));
-		var customNetworks = controller.getCustomNetworks();
+		final var customNetworks = controller.getCustomNetworks();
 		assert customNetworks.contains(nickname);
 		controller.setCurrentNetwork(nickname);
 		setupNetworkBox(networkChoicebox);
 	}
 
-	private boolean verifyJsonNetwork(String location) {
+	private boolean verifyJsonNetwork(final String location) {
 		try {
-			var array = readJsonArray(location);
-			for (JsonElement jsonElement : array) {
-				var node = jsonElement.getAsJsonObject();
+			final var array = readJsonArray(location);
+			for (final JsonElement jsonElement : array) {
+				final var node = jsonElement.getAsJsonObject();
 				if (!node.has("accountID")) {
 					return false;
 				}
@@ -753,12 +753,12 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				}
 				Identifier.parse(node.get("accountID").getAsString());
 				InetAddresses.forString(node.get("ipAddress").getAsString());
-				var port = node.get("port").getAsInt();
+				final var port = node.get("port").getAsInt();
 				if (port < 49152 || port > 65535) {
 					return false;
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e.getMessage());
 			return false;
 		}
@@ -766,7 +766,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	public void deleteCustomNetworkAction() throws IOException {
-		var answer = PopupMessage.display("Delete Network",
+		final var answer = PopupMessage.display("Delete Network",
 				"This will remove the selected network from your app. Are you sure?", true, "CONTINUE", "CANCEL");
 		if (Boolean.TRUE.equals(answer)) {
 			Files.deleteIfExists(

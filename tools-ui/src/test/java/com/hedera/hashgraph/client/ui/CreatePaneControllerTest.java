@@ -219,25 +219,25 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 					new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-			Map<String, String> emailMap = new HashMap<>();
+			final Map<String, String> emailMap = new HashMap<>();
 
 			emailMap.put(
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
-			var mnemonic = Mnemonic.fromWords(testWords);
+			final var mnemonic = Mnemonic.fromWords(testWords);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);
-			var salt = Utilities.getSaltBytes(properties);
-			var passwordBytes = SecurityUtilities.keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
+			final var salt = Utilities.getSaltBytes(properties);
+			final var passwordBytes = SecurityUtilities.keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
 			toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
 					mnemonic.toString());
 
 			TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
-			var objectMapper = new ObjectMapper();
-			var mapAsString = objectMapper.writeValueAsString(emailMap);
+			final var objectMapper = new ObjectMapper();
+			final var mapAsString = objectMapper.writeValueAsString(emailMap);
 			assertNotNull(mapAsString);
 
 			properties.setOneDriveCredentials(emailMap);
@@ -246,8 +246,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 			setupTransactionDirectory(DEFAULT_STORAGE);
 
-			var controller = new Controller();
-			var version = controller.getVersion();
+			final var controller = new Controller();
+			final var version = controller.getVersion();
 			properties.setVersionString(version);
 
 			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
@@ -267,13 +267,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			if (accountsPanePage == null) {
 				accountsPanePage = new AccountsPanePage(get());
 			}
-			var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
+			final var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
 			if (!new File(rootFolder).exists() && new File(rootFolder).mkdirs()) {
 				logger.info("Tools root folder created");
 			} else {
 				logger.info("Tools root directory exists.");
 			}
-			var toolsFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
+			final var toolsFolder =
+					new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
 			if (!new File(toolsFolder).exists() && new File(toolsFolder).mkdirs()) {
 				logger.info("Tools document directory created");
 			} else {
@@ -287,7 +288,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			TestUtil.copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -372,7 +373,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			assertTrue(find(CREATE_SECONDS).isVisible());
 			assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
 			sleep(THREAD_PAUSE_TIME);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
@@ -478,8 +479,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void checkTimeDate_Test() {
-		var date = DateUtils.addDays(new Date(), 2);
-		var sdf = new SimpleDateFormat("MM/dd/yyyy");
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var sdf = new SimpleDateFormat("MM/dd/yyyy");
 
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
@@ -568,14 +569,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.clickOnNowButton();
 
-		var dateUTC = (Label) find("#createUTCTimeLabel");
-		var errorMsg = (Label) find("#invalidDate");
+		final var dateUTC = (Label) find("#createUTCTimeLabel");
+		final var errorMsg = (Label) find("#invalidDate");
 
 		assertTrue(dateUTC.isVisible());
 		assertTrue(dateUTC.getStyle().toLowerCase(Locale.ROOT).contains("red"));
 		assertTrue(errorMsg.isVisible());
 
-		var futureTime = localDateTime.plusYears(1);
+		final var futureTime = localDateTime.plusYears(1);
 		final var formattedDate = getFormattedDate(futureTime);
 		createPanePage.setDate(formattedDate);
 		assertTrue(dateUTC.isVisible());
@@ -590,8 +591,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@NotNull
-	private String getFormattedDate(LocalDateTime localDateTime) {
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+	private String getFormattedDate(final LocalDateTime localDateTime) {
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return datePickerFormat.format(Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()));
 	}
@@ -601,7 +602,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.clickOnNowButton();
-		var localDateTime = LocalDateTime.now();
+		final var localDateTime = LocalDateTime.now();
 		final var localZoneID = ZoneId.of(TimeZone.getDefault().getID());
 
 		assertEquals(localDateTime.getDayOfMonth(),
@@ -617,8 +618,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		final var utcString = getUTCString(localDateTime, localZoneID);
 
 
-		var splitUTC = utcString.split(" ");
-		var splitTime = splitUTC[1].split(":");
+		final var splitUTC = utcString.split(" ");
+		final var splitTime = splitUTC[1].split(":");
 
 		assertTrue(((Label) find(CREATE_LOCAL_TIME_LABEL)).getText().contains(splitUTC[0]));
 		assertTrue(((Label) find(CREATE_LOCAL_TIME_LABEL)).getText().contains(splitUTC[2]));
@@ -626,12 +627,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				MessageFormat.format("{0}:{1}", splitTime[0], splitTime[1])));
 
 		assertEquals(TimeZone.getDefault().getID(), createPanePage.getStartTimezone());
-		var randomTimezone = getRandomTimezone();
+		final var randomTimezone = getRandomTimezone();
 		createPanePage.setStartTimezone(randomTimezone);
 		checkDateString(utcString);
 
 		assertEquals(TimeZone.getDefault().getID(), createPanePage.getSystemTimezone());
-		var randomTimezoneSystem = getRandomTimezone();
+		final var randomTimezoneSystem = getRandomTimezone();
 		createPanePage.setSystemTimezone(randomTimezoneSystem);
 		// 		Commented because of the likelihood of random differences in the seconds par of the label
 		//		assertEquals(utcString, ((Label) find(SYSTEM_LOCAL_TIME_LABEL)).getText());
@@ -644,18 +645,18 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccount_Test() throws HederaClientException {
-		var date = DateUtils.addDays(new Date(), 2);
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		Label dateLabel = find(CREATE_LOCAL_TIME_LABEL);
+		final Label dateLabel = find(CREATE_LOCAL_TIME_LABEL);
 
-		var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-		var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+		final var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		final var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
 				LocalTime.of(2, 30, 45));
 
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setComment("this is a comment that will go with the transaction")
@@ -679,7 +680,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setTransactionFee(1.2345678911)
 				.setInitialBalance(1000)
 				.setCreateKey()
-				.clickOnAccountKey("treasury")
+				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
@@ -687,10 +688,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.createAndExport(resources);
 
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -699,7 +700,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolCryptoCreateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("1009")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoCreateTransaction(f);
@@ -745,24 +746,24 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createTransfer_Test() throws HederaClientException {
-		var date = DateUtils.addDays(new Date(), 2);
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
-		Label dateLabel = find(CREATE_LOCAL_TIME_LABEL);
+		final Label dateLabel = find(CREATE_LOCAL_TIME_LABEL);
 
-		var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-		var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+		final var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		final var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
 				LocalTime.of(3, 45, 15));
 
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setComment("this is a comment that will go with the transfer")
 				.setDate(datePickerFormat.format(date));
 
-		var utcDate = find(CREATE_LOCAL_TIME_LABEL);
+		final var utcDate = find(CREATE_LOCAL_TIME_LABEL);
 		assertTrue(utcDate.isVisible());
 		//	assertTrue(dateLabel.getText().contains(sdf.format(date)));
 		logger.info("TRANSFER: Local date label =>>> {}", dateLabel.getText());
@@ -796,10 +797,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -808,7 +809,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolTransferTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("10019")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolTransferTransaction(f);
@@ -828,7 +829,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				Objects.requireNonNull(toolTransaction.getTransactionId().validStart).getEpochSecond());
 		assertEquals("A transfer", toolTransaction.getMemo());
 
-		var transferMap = toolTransaction.getAccountAmountMap();
+		final var transferMap = toolTransaction.getAccountAmountMap();
 
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
 		assertEquals(100000000, toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
@@ -862,29 +863,29 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createUpdateAccount_Test() throws HederaClientException {
-		var date = DateUtils.addDays(new Date(), 2);
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 		find(CREATE_LOCAL_TIME_LABEL);
 
 
-		var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-		var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+		final var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		final var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
 				LocalTime.of(2, 30, 45));
 
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
 				.setComment("this is a comment that will go with the update transaction")
 				.setUpdateAccount(73);
 
-		var oldKey = find(CREATE_UPDATE_ORIGINAL_KEY);
+		final var oldKey = find(CREATE_UPDATE_ORIGINAL_KEY);
 		assertTrue(oldKey.isVisible());
 		assertTrue(oldKey instanceof ScrollPane);
-		var tree = ((ScrollPane) oldKey).getContent();
+		final var tree = ((ScrollPane) oldKey).getContent();
 
 		assertTrue(tree instanceof TreeView);
 		assertEquals(6, TestUtil.countTreeNodes(((TreeView<String>) tree).getRoot()));
@@ -900,10 +901,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.saveKey();
 
 
-		var newKey = find(CREATE_UPDATE_NEW_KEY);
+		final var newKey = find(CREATE_UPDATE_NEW_KEY);
 		assertTrue(newKey.isVisible());
 		assertTrue(newKey instanceof ScrollPane);
-		var newTree = ((ScrollPane) newKey).getContent();
+		final var newTree = ((ScrollPane) newKey).getContent();
 		assertTrue(newTree instanceof TreeView);
 
 		assertEquals(18, TestUtil.countTreeNodes(((TreeView<String>) newTree).getRoot()));
@@ -912,10 +913,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -924,7 +925,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolCryptoUpdateTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("1019")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolCryptoUpdateTransaction(f);
@@ -1051,17 +1052,17 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createLargeBinaryUpdate_test() throws HederaClientException, IOException {
-		var date = DateUtils.addDays(new Date(), 2);
-		var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
+		final var date = DateUtils.addDays(new Date(), 2);
+		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		var sdf = new SimpleDateFormat("yyyy-MM-dd");
+		final var sdf = new SimpleDateFormat("yyyy-MM-dd");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-		var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-		var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
+		final var dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+		final var localDateTime = LocalDateTime.of(LocalDate.parse(datePickerFormat.format(date), dtf),
 				LocalTime.of(3, 45, 15));
 
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+		final var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
 				.setComment("this is a comment that will go with the file update")
@@ -1082,10 +1083,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.LARGE_BINARY_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 
@@ -1095,7 +1096,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		File zipFile = null;
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("large")) {
 				if (f.getName().endsWith(Constants.LARGE_BINARY_EXTENSION)) {
 					zipFile = f;
@@ -1109,9 +1110,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assert zipFile != null;
 		unZip(zipFile.getAbsolutePath(), "src/test/resources/unzipped");
 
-		var unzippedFiles = new File("src/test/resources/unzipped").listFiles(
+		final var unzippedFiles = new File("src/test/resources/unzipped").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.CONTENT_EXTENSION) || name.endsWith(Constants.JSON_EXTENSION);
 				});
 
@@ -1119,7 +1120,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals(2, unzippedFiles.length);
 		File jsonFile = null;
 		File contentFile = null;
-		for (var unzippedFile : unzippedFiles) {
+		for (final var unzippedFile : unzippedFiles) {
 			if (JSON_EXTENSION.equals(FilenameUtils.getExtension(unzippedFile.getName()))) {
 				jsonFile = unzippedFile;
 			}
@@ -1168,14 +1169,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void createSystemDeleteFile_Test() throws HederaClientException, InterruptedException {
 
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
-		var expiration = LocalDateTime.now().plusMinutes(5);
-		var expirationDate = Date.from(expiration.toInstant(OffsetDateTime.now().getOffset()));
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
+		final var expiration = LocalDateTime.now().plusMinutes(5);
+		final var expirationDate = Date.from(expiration.toInstant(OffsetDateTime.now().getOffset()));
 
-		Label entityID = find(SYSTEM_ENTITY_ID_LABEL);
+		final Label entityID = find(SYSTEM_ENTITY_ID_LABEL);
 
-		VBox expirationBox = find(CREATE_SYSTEM_EXPIRATION_VBOX);
+		final VBox expirationBox = find(CREATE_SYSTEM_EXPIRATION_VBOX);
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString());
 
@@ -1214,10 +1215,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1226,7 +1227,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var comment = new JsonObject();
 
 
-		for (var f : transactions) {
+		for (final var f : transactions) {
 			if (f.getName().contains("3232")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
 					toolTransaction = new ToolSystemTransaction(f);
@@ -1263,10 +1264,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void createSystemDeleteContract_Test() throws HederaClientException, InterruptedException {
 
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
-		var expiration = LocalDateTime.now().plusMinutes(5);
-		var expirationDate = Date.from(expiration.toInstant(OffsetDateTime.now().getOffset()));
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
+		final var expiration = LocalDateTime.now().plusMinutes(5);
+		final var expirationDate = Date.from(expiration.toInstant(OffsetDateTime.now().getOffset()));
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setComment("this is a comment that will go with the system transaction - Contract Delete")
@@ -1284,10 +1285,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1295,7 +1296,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		ToolSystemTransaction toolTransaction = null;
 		var comment = new JsonObject();
 
-		for (var f :
+		for (final var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
@@ -1357,7 +1358,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		var transactions = outputDirectory.listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1372,7 +1373,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		transactions = outputDirectory.listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1384,8 +1385,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void createSystemUnDeleteFile_Test() throws HederaClientException, InterruptedException {
 
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setComment("this is a comment that will go with the system transaction - File UnDelete")
@@ -1402,10 +1403,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1414,7 +1415,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var comment = new JsonObject();
 
 
-		for (var f :
+		for (final var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
@@ -1452,8 +1453,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void createSystemUnDeleteContract_Test() throws HederaClientException, InterruptedException {
 
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setComment("this is a comment that will go with the system transaction - Contract UnDelete")
@@ -1470,10 +1471,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.clickOnPopupButton("CONTINUE");
 
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				pathname -> {
-					var name = pathname.getName();
+					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
 				});
 		assert transactions != null;
@@ -1482,7 +1483,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		var comment = new JsonObject();
 
 
-		for (var f :
+		for (final var f :
 				transactions) {
 			if (f.getName().contains("3232")) {
 				if (f.getName().endsWith(Constants.TRANSACTION_EXTENSION)) {
@@ -1537,7 +1538,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
 
 		createPanePage.setCreateKey()
-				.clickOnAccountKey("treasury")
+				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 		assertFalse(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
@@ -1958,8 +1959,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void freezeOnly_test() throws InterruptedException, HederaClientException, InvalidProtocolBufferException {
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var startTime = LocalDateTime.now().plusMinutes(5);
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
 				.setFreezeType(FreezeType.FREEZE_ONLY)
@@ -1975,15 +1976,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
 		assertEquals(1, transactions.length);
-		var transaction = Transaction.fromBytes(readBytes(transactions[0]));
+		final var transaction = Transaction.fromBytes(readBytes(transactions[0]));
 		assertTrue(transaction instanceof FreezeTransaction);
-		var freeezeTransaction = (FreezeTransaction) transaction;
+		final var freeezeTransaction = (FreezeTransaction) transaction;
 		assertEquals(FreezeType.FREEZE_ONLY, freeezeTransaction.getFreezeType());
 
 		assertEquals(new Date(startTime.atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000),
@@ -1999,7 +2000,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void freezeAbort_test() throws InterruptedException, HederaClientException, InvalidProtocolBufferException {
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
 				.setFreezeType(FreezeType.FREEZE_ABORT)
@@ -2014,15 +2015,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
 		assertEquals(1, transactions.length);
-		var transaction = Transaction.fromBytes(readBytes(transactions[0]));
+		final var transaction = Transaction.fromBytes(readBytes(transactions[0]));
 		assertTrue(transaction instanceof FreezeTransaction);
-		var freeezeTransaction = (FreezeTransaction) transaction;
+		final var freeezeTransaction = (FreezeTransaction) transaction;
 		assertEquals(FreezeType.FREEZE_ABORT, freeezeTransaction.getFreezeType());
 
 		assertNotNull(freeezeTransaction.getTransactionId());
@@ -2036,8 +2037,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void freezeUpgrade_test() throws InterruptedException, HederaClientException,
 			InvalidProtocolBufferException {
-		var localDateTime = LocalDateTime.now().plusMinutes(1);
-		var startTime = LocalDateTime.now().plusMinutes(5);
+		final var localDateTime = LocalDateTime.now().plusMinutes(1);
+		final var startTime = LocalDateTime.now().plusMinutes(5);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
 				.setFreezeType(FreezeType.FREEZE_UPGRADE)
@@ -2061,15 +2062,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
 		assertEquals(1, transactions.length);
-		var transaction = Transaction.fromBytes(readBytes(transactions[0]));
+		final var transaction = Transaction.fromBytes(readBytes(transactions[0]));
 		assertTrue(transaction instanceof FreezeTransaction);
-		var freeezeTransaction = (FreezeTransaction) transaction;
+		final var freeezeTransaction = (FreezeTransaction) transaction;
 		assertEquals(FreezeType.FREEZE_UPGRADE, freeezeTransaction.getFreezeType());
 
 		assertEquals(new Date(startTime.atZone(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000),
@@ -2088,7 +2089,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void prepareUpgrade_test() throws HederaClientException, InvalidProtocolBufferException {
-		var localDateTime = LocalDateTime.now().plusHours(1);
+		final var localDateTime = LocalDateTime.now().plusHours(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
 				.setFreezeType(FreezeType.PREPARE_UPGRADE)
@@ -2107,15 +2108,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage
 				.createAndExport(resources);
 
-		var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 
 		assert transactions != null;
 		assertEquals(1, transactions.length);
-		var transaction = Transaction.fromBytes(readBytes(transactions[0]));
+		final var transaction = Transaction.fromBytes(readBytes(transactions[0]));
 		assertTrue(transaction instanceof FreezeTransaction);
-		var freeezeTransaction = (FreezeTransaction) transaction;
+		final var freeezeTransaction = (FreezeTransaction) transaction;
 		assertEquals(FreezeType.PREPARE_UPGRADE, freeezeTransaction.getFreezeType());
 
 		assertNotNull(freeezeTransaction.getTransactionId());
@@ -2134,17 +2135,17 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		try {
 			properties.resetProperties();
 			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			var transactions = new File(
-					CLOUD_OUTPUT_DIRECTORY).listFiles(
+			final var transactions = new File(
+					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 					pathname -> {
-						var name = pathname.getName();
+						final var name = pathname.getName();
 						return name.endsWith(Constants.TXT_EXTENSION) ||
 								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
 								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
 					});
 
 			assert transactions != null;
-			for (var f : transactions) {
+			for (final var f : transactions) {
 				if (f.delete()) {
 					logger.debug(String.format("%s has been deleted", f.getName()));
 				}
@@ -2152,24 +2153,24 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			if (new File(DEFAULT_STORAGE).exists()) {
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNotNull(e);
 		}
 	}
 
-	private String getUTCString(LocalDateTime localDateTime, ZoneId zoneID) {
-		var date = Date.from(localDateTime.atZone(zoneID).toInstant());
+	private String getUTCString(final LocalDateTime localDateTime, final ZoneId zoneID) {
+		final var date = Date.from(localDateTime.atZone(zoneID).toInstant());
 		localDateTime.atZone(zoneID);
-		var dateTimeFormatter =
+		final var dateTimeFormatter =
 				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
 		return dateTimeFormatter.format(date.toInstant().plusSeconds(0)) +
 				" Coordinated Universal Time";
 	}
 
 	private String getRandomTimezone() {
-		var zones = TimeZone.getAvailableIDs();
-		var count = (int) (Math.random() * zones.length);
+		final var zones = TimeZone.getAvailableIDs();
+		final var count = (int) (Math.random() * zones.length);
 		return zones[count];
 	}
 
@@ -2179,9 +2180,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	 * @param utcString
 	 * 		string that contains the string that holds "truth"
 	 */
-	private void checkDateString(String utcString) {
-		var split1 = utcString.split("[ :]");
-		var split2 = ((Label) find(JavaFXIDs.CREATE_LOCAL_TIME_LABEL)).getText().split("[ :]");
+	private void checkDateString(final String utcString) {
+		final var split1 = utcString.split("[ :]");
+		final var split2 = ((Label) find(JavaFXIDs.CREATE_LOCAL_TIME_LABEL)).getText().split("[ :]");
 		assertEquals(split1[0], split2[0]);
 		assertEquals(split1[1], split2[1]);
 		assertEquals(split1[2], split2[2]);
@@ -2195,14 +2196,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		return this;
 	}
 
-	private void checkBadChecksum(String s) {
-		var popupNodes = TestUtil.getPopupNodes();
+	private void checkBadChecksum(final String s) {
+		final var popupNodes = TestUtil.getPopupNodes();
 		Assert.assertNotNull(popupNodes);
 		assertEquals(1, popupNodes.size());
 
-		var children = ((VBox) popupNodes.get(0)).getChildren();
+		final var children = ((VBox) popupNodes.get(0)).getChildren();
 		assertTrue(children.get(0) instanceof Label);
-		var label = (Label) children.get(0);
+		final var label = (Label) children.get(0);
 		assertTrue(label.getText().contains(s));
 		clickOn(children.get(1));
 	}

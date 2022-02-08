@@ -81,51 +81,51 @@ public class GetAccountInfoCommand implements ToolCommand {
 			throw new HederaClientException(String.format("The file %s doesn't exist", key));
 		}
 
-		var password =
+		final var password =
 				readPasswordFromStdIn(String.format("Enter the password for key %s", FilenameUtils.getBaseName(key)));
-		Ed25519KeyStore keyStore;
+		final Ed25519KeyStore keyStore;
 		try {
 			keyStore = Ed25519KeyStore.read(password, key);
-		} catch (KeyStoreException e) {
+		} catch (final KeyStoreException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
-		var privateKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var privateKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
-		try (var client = CommonMethods.getClient(submissionClient)) {
+		try (final var client = CommonMethods.getClient(submissionClient)) {
 			client.setOperator(Identifier.parse(feePayer).asAccount(), privateKey);
-			for (var account : accounts) {
+			for (final var account : accounts) {
 				if ("".equals(account)) {
 					// account for empty strings
 					continue;
 				}
-				var id = Identifier.parse(account).asAccount();
-				AccountInfo accountInfo = getAccountInfo(client, id);
+				final var id = Identifier.parse(account).asAccount();
+				final AccountInfo accountInfo = getAccountInfo(client, id);
 				writeJsonObject(String.format("%s/%s.json", directory, id), JsonUtils.accountInfoToJson(accountInfo));
 				writeBytes(String.format("%s/%s.info", directory, id), accountInfo.toBytes());
 
 				logger.info("Account information for account {} has been written to file {}/{}.info", id, directory,
 						id);
 			}
-		} catch (TimeoutException e) {
+		} catch (final TimeoutException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
 		}
 	}
 
-	private AccountInfo getAccountInfo(Client client, AccountId id) {
-		AccountInfo accountInfo;
+	private AccountInfo getAccountInfo(final Client client, final AccountId id) {
+		final AccountInfo accountInfo;
 		try {
 			accountInfo = new AccountInfoQuery()
 					.setAccountId(id)
 					.execute(client);
-		} catch (TimeoutException e) {
+		} catch (final TimeoutException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientRuntimeException(e.getMessage());
-		} catch (PrecheckStatusException e) {
+		} catch (final PrecheckStatusException e) {
 			logger.error("The transaction did not pass pre-check");
 			throw new HederaClientRuntimeException(e.getMessage());
-		} catch (StatusRuntimeException e) {
+		} catch (final StatusRuntimeException e) {
 			logger.error("Could not connect to the network");
 			throw new HederaClientRuntimeException(e);
 		}

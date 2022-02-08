@@ -58,53 +58,53 @@ public class NewPasswordPopup {
 		return display(TITLE_LABEL, WARNING_LABEL);
 	}
 
-	public static char[] display(String title, String message) {
-		Stage window = getStage();
+	public static char[] display(final String title, final String message) {
+		final Stage window = getStage();
 
 		// Setup labels
-		var titleLabel = new Label(title);
+		final var titleLabel = new Label(title);
 		titleLabel.setStyle("-fx-font-size: 20");
 
-		Label warningLabel = getLabel(message);
-		var firstTitle = new Label("Password");
+		final Label warningLabel = getLabel(message);
+		final var firstTitle = new Label("Password");
 
-		var secondTitle = new Label("Confirm password");
+		final var secondTitle = new Label("Confirm password");
 
 		// Error Labels
-		Label error1 = getLabel(PASSWORD_LENGTH_LABEL);
+		final Label error1 = getLabel(PASSWORD_LENGTH_LABEL);
 		error1.setStyle("-fx-text-fill: red");
 		error1.setWrapText(true);
 		error1.setVisible(false);
 
-		Label error2 = getLabel(MATCH_LABEL);
+		final Label error2 = getLabel(MATCH_LABEL);
 		error2.setStyle("-fx-text-fill: red");
 		error2.setWrapText(true);
 		error2.setVisible(false);
 
 		// Setup enter password box and contents
-		var passwordField1 = new PasswordField();
+		final var passwordField1 = new PasswordField();
 		HBox.setHgrow(passwordField1, Priority.ALWAYS);
-		var check1 = getCheck();
-		var bundlePassword = bundlePasswordAndCheck(passwordField1, check1);
-		var passwordBox = new VBox();
+		final var check1 = getCheck();
+		final var bundlePassword = bundlePasswordAndCheck(passwordField1, check1);
+		final var passwordBox = new VBox();
 		passwordBox.getChildren().addAll(firstTitle, bundlePassword, error1);
 		passwordBox.setSpacing(3);
 
 		// Setup confirm password box and contents
-		var passwordField2 = new PasswordField();
+		final var passwordField2 = new PasswordField();
 		HBox.setHgrow(passwordField2, Priority.ALWAYS);
 		passwordField2.setDisable(true);
-		var check2 = getCheck();
-		var bundleConfirmation = bundlePasswordAndCheck(passwordField2, check2);
-		var confirmBox = new VBox();
+		final var check2 = getCheck();
+		final var bundleConfirmation = bundlePasswordAndCheck(passwordField2, check2);
+		final var confirmBox = new VBox();
 		confirmBox.getChildren().addAll(secondTitle, bundleConfirmation, error2);
 		confirmBox.setSpacing(3);
 
 
 		// Setup buttons
-		var continueButton = setupButton("CONTINUE");
-		var cancelButton = setupButton("CANCEL");
-		HBox buttonBar = getButtonBar(continueButton, cancelButton);
+		final var continueButton = setupButton("CONTINUE");
+		final var cancelButton = setupButton("CANCEL");
+		final HBox buttonBar = getButtonBar(continueButton, cancelButton);
 		continueButton.visibleProperty().bind(check2.visibleProperty());
 		continueButton.managedProperty().bind(continueButton.visibleProperty());
 
@@ -120,7 +120,7 @@ public class NewPasswordPopup {
 		// endregion
 
 
-		var scene = new Scene(getMainBox(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar));
+		final var scene = new Scene(getMainBox(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar));
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();
@@ -128,17 +128,18 @@ public class NewPasswordPopup {
 	}
 
 	@NotNull
-	private static Label getLabel(String legend) {
-		var label = new Label(legend);
+	private static Label getLabel(final String legend) {
+		final var label = new Label(legend);
 		label.setMaxWidth(360);
 		label.setWrapText(true);
 		return label;
 	}
 
 	@NotNull
-	private static VBox getMainBox(Label titleLabel, Label warningLabel, VBox passwordBox, VBox confirmBox,
-			HBox buttonBar) {
-		var vBox = new VBox();
+	private static VBox getMainBox(final Label titleLabel, final Label warningLabel, final VBox passwordBox,
+			final VBox confirmBox,
+			final HBox buttonBar) {
+		final var vBox = new VBox();
 
 		vBox.getChildren().addAll(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar);
 		vBox.setSpacing(10);
@@ -149,7 +150,7 @@ public class NewPasswordPopup {
 
 	@NotNull
 	private static Stage getStage() {
-		var window = new Stage();
+		final var window = new Stage();
 
 		window.initModality(Modality.APPLICATION_MODAL);
 		window.setTitle("New Password");
@@ -160,8 +161,8 @@ public class NewPasswordPopup {
 	}
 
 	@NotNull
-	private static HBox getButtonBar(Button continueButton, Button cancelButton) {
-		var buttonBar = new HBox();
+	private static HBox getButtonBar(final Button continueButton, final Button cancelButton) {
+		final var buttonBar = new HBox();
 		buttonBar.getChildren().addAll(cancelButton, continueButton);
 		HBox.setHgrow(buttonBar, Priority.ALWAYS);
 		buttonBar.setSpacing(20);
@@ -171,34 +172,35 @@ public class NewPasswordPopup {
 
 	@NotNull
 	private static Label getCheck() {
-		var check2 = new Label("✓");
+		final var check2 = new Label("✓");
 		check2.setStyle("-fx-text-fill: green");
 		check2.setVisible(false);
 		return check2;
 	}
 
 	@NotNull
-	private static HBox bundlePasswordAndCheck(PasswordField passwordField1, Label check1) {
-		var box1 = new HBox();
+	private static HBox bundlePasswordAndCheck(final PasswordField passwordField1, final Label check1) {
+		final var box1 = new HBox();
 		box1.setSpacing(10);
 		box1.getChildren().addAll(passwordField1, check1);
 		return box1;
 	}
 
 	@NotNull
-	private static Button setupButton(String legend) {
-		var continueButton = new Button(legend);
+	private static Button setupButton(final String legend) {
+		final var continueButton = new Button(legend);
 		continueButton.setMinWidth(150);
 		continueButton.setStyle(WHITE_BUTTON_STYLE);
 		return continueButton;
 	}
 
-	private static void cancelActionEvent(Stage window) {
+	private static void cancelActionEvent(final Stage window) {
 		answer = new char[0];
 		window.close();
 	}
 
-	private static void continueActionEvent(Stage window, PasswordField passwordField1, PasswordField passwordField2) {
+	private static void continueActionEvent(final Stage window, final PasswordField passwordField1,
+			final PasswordField passwordField2) {
 		answer = passwordField1.getText().toCharArray();
 		if (Arrays.equals(answer, passwordField2.getText().toCharArray())) {
 			window.close();
@@ -207,8 +209,9 @@ public class NewPasswordPopup {
 		}
 	}
 
-	private static void keyReleasedEvent(Stage window, PasswordField passwordField1, PasswordField passwordField2,
-			Label check1, Label check2, Label error, KeyEvent event) {
+	private static void keyReleasedEvent(final Stage window, final PasswordField passwordField1,
+			final PasswordField passwordField2,
+			final Label check1, final Label check2, final Label error, final KeyEvent event) {
 		check2.setVisible(check1.isVisible() && passwordField1.getText().equals(passwordField2.getText()));
 		error.setVisible(!check2.isVisible());
 		if (event.getCode().equals(KeyCode.ENTER) &&
@@ -217,9 +220,10 @@ public class NewPasswordPopup {
 		}
 	}
 
-	private static void keyPressedEvent(PasswordField passwordField1, PasswordField passwordField2, Label check1,
-			Label error1, Label check2, Label error2, KeyEvent event) {
-		var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
+	private static void keyPressedEvent(
+			final PasswordField passwordField1, final PasswordField passwordField2, final Label check1,
+			final Label error1, final Label check2, final Label error2, final KeyEvent event) {
+		final var policy = new PasswordPolicy(BreachDatabase.top100K(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH);
 		final var status = policy.check(passwordField1.getText());
 		check1.setVisible(status.equals(Status.OK));
 		if (check1.isVisible()) {
@@ -244,7 +248,7 @@ public class NewPasswordPopup {
 
 	}
 
-	private static String getLegend(Status status) {
+	private static String getLegend(final Status status) {
 		var legend = "";
 		switch (status) {
 			case OK:

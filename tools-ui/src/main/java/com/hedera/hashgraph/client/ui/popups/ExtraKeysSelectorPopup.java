@@ -62,40 +62,41 @@ public class ExtraKeysSelectorPopup {
 	 * 		keys that are already identified as necessary
 	 * @return a list of keys that will be added to the set of signing keys
 	 */
-	public static List<File> display(Set<File> signingKeys) {
-		var window = new Stage();
-		var layout = new VBox();
+	public static List<File> display(final Set<File> signingKeys) {
+		final var window = new Stage();
+		final var layout = new VBox();
 
-		var cancelBoolean = new AtomicBoolean(true);
+		final var cancelBoolean = new AtomicBoolean(true);
 
-		Set<File> selectedSet = new HashSet<>();
+		final Set<File> selectedSet = new HashSet<>();
 
-		var knownKeys = new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
+		final var knownKeys =
+				new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
 		assert knownKeys != null;
 		Arrays.sort(knownKeys);
-		var columns = (int) max(3, sqrt(knownKeys.length));
+		final var columns = (int) max(3, sqrt(knownKeys.length));
 		logger.info("Grid panes will have {} columns", columns);
 
 
-		var nonSignersVBox = new VBox();
+		final var nonSignersVBox = new VBox();
 		nonSignersVBox.setStyle("-fx-border-color: #0b9dfd; -fx-background-color: white");
 		nonSignersVBox.setSpacing(5);
 		nonSignersVBox.setPadding(new Insets(10));
 		nonSignersVBox.managedProperty().bind(nonSignersVBox.visibleProperty());
 
-		var nonSignersGridPane = new GridPane();
+		final var nonSignersGridPane = new GridPane();
 		nonSignersGridPane.setHgap(10);
 		nonSignersGridPane.setVgap(10);
 
 
-		var extraSignersGridPane = new GridPane();
+		final var extraSignersGridPane = new GridPane();
 		extraSignersGridPane.setHgap(10);
 		extraSignersGridPane.setVgap(10);
 
 
 		var nonSignNumber = 0;
-		for (var knownKey : knownKeys) {
-			var checkBox = getCheckBox(selectedSet, knownKey);
+		for (final var knownKey : knownKeys) {
+			final var checkBox = getCheckBox(selectedSet, knownKey);
 			if (!signingKeys.contains(knownKey)) {
 				checkBox.setSelected(false);
 				nonSignersGridPane.add(checkBox, nonSignNumber % columns, nonSignNumber / columns);
@@ -107,7 +108,7 @@ public class ExtraKeysSelectorPopup {
 
 		nonSignersVBox.setVisible(nonSignNumber > 0);
 
-		var acceptButton = new Button("ACCEPT");
+		final var acceptButton = new Button("ACCEPT");
 		acceptButton.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10; " +
 						"-fx-background-radius: 10;");
@@ -117,7 +118,7 @@ public class ExtraKeysSelectorPopup {
 			window.close();
 		});
 
-		var cancelButton = new Button("CANCEL");
+		final var cancelButton = new Button("CANCEL");
 		cancelButton.setStyle(
 				"-fx-background-color: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-text-fill: " +
 						"white");
@@ -128,7 +129,7 @@ public class ExtraKeysSelectorPopup {
 		});
 
 
-		var buttonBox = new HBox();
+		final var buttonBox = new HBox();
 		buttonBox.setAlignment(Pos.CENTER);
 		buttonBox.setSpacing(10);
 		buttonBox.getChildren().addAll(acceptButton, cancelButton);
@@ -157,7 +158,7 @@ public class ExtraKeysSelectorPopup {
 			layout.getChildren().addAll(label, buttonBox);
 		}
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);
@@ -167,14 +168,14 @@ public class ExtraKeysSelectorPopup {
 		return (cancelBoolean.get()) ? new ArrayList<>() : new ArrayList<>(selectedSet);
 	}
 
-	private static CheckBox getCheckBox(Set<File> selectedSet, File knownKey) {
+	private static CheckBox getCheckBox(final Set<File> selectedSet, final File knownKey) {
 		final var baseName = FilenameUtils.getBaseName(knownKey.getName());
-		var checkBox = new CheckBox(baseName);
+		final var checkBox = new CheckBox(baseName);
 		HomePaneController.checkBoxListener(selectedSet, knownKey, baseName, checkBox, logger);
 		return checkBox;
 	}
 
-	private static boolean isPEM(File pathname) {
+	private static boolean isPEM(final File pathname) {
 		return pathname.getAbsolutePath().endsWith(PK_EXTENSION);
 	}
 

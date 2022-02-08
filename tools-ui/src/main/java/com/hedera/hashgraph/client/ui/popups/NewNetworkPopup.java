@@ -56,7 +56,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 
 	public static JsonObject display() {
 		customNetwork = new JsonObject();
-		var window = new Stage();
+		final var window = new Stage();
 		window.setTitle("Add Custom Network");
 		window.sizeToScene();
 		window.setMaxWidth(600);
@@ -103,7 +103,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		mainBox.setPadding(new Insets(10));
 		mainBox.setSpacing(10);
 
-		var gridPane = new GridPane();
+		final var gridPane = new GridPane();
 		gridPane.add(new Label("Nickname"), 0, 0);
 		gridPane.add(nicknameTextField, 1, 0);
 		gridPane.add(new Label("Location"), 0, 1);
@@ -116,14 +116,14 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 
 		mainBox.getChildren().add(errorLabel);
 
-		var continueBox = new HBox();
+		final var continueBox = new HBox();
 		continueBox.getChildren().addAll(cancelButton, continueButton);
 		continueBox.setSpacing(20);
 		continueBox.setAlignment(Pos.CENTER);
 
 		mainBox.getChildren().add(continueBox);
 
-		var scene = new Scene(mainBox);
+		final var scene = new Scene(mainBox);
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);
 		window.showAndWait();
@@ -131,9 +131,10 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return customNetwork;
 	}
 
-	private static void browseAction(Label errorLabel, TextField locationTextField, Label locationLabel, VBox mainBox) {
+	private static void browseAction(final Label errorLabel, final TextField locationTextField,
+			final Label locationLabel, final VBox mainBox) {
 		errorLabel.setVisible(false);
-		var file = browse(mainBox);
+		final var file = browse(mainBox);
 		if (file == null) {
 			return;
 		}
@@ -142,7 +143,8 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		locationTextField.setVisible(false);
 	}
 
-	private static boolean checkFields(Label errorLabel, TextField nicknameTextField, Label locationLabel) {
+	private static boolean checkFields(final Label errorLabel, final TextField nicknameTextField,
+			final Label locationLabel) {
 		if (locationLabel.getText().isEmpty() || (nicknameTextField.getText().isEmpty() || locationLabel.getText().isEmpty())) {
 			errorLabel.setText("Both a nickname and a file must be specified.");
 			errorLabel.setVisible(true);
@@ -159,10 +161,11 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return false;
 	}
 
-	private static void handleLocation(Label errorLabel, TextField locationTextField, Label locationLabel,
-			KeyEvent keyEvent) {
+	private static void handleLocation(final Label errorLabel, final TextField locationTextField,
+			final Label locationLabel,
+			final KeyEvent keyEvent) {
 		errorLabel.setVisible(false);
-		var code = keyEvent.getCode();
+		final var code = keyEvent.getCode();
 		if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
 			final var text = locationTextField.getText();
 			if (!new File(text).exists()) {
@@ -177,7 +180,8 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		}
 	}
 
-	private static void handleNickname(Label errorLabel, TextField locationTextField, KeyEvent keyEvent) {
+	private static void handleNickname(final Label errorLabel, final TextField locationTextField,
+			final KeyEvent keyEvent) {
 		errorLabel.setVisible(false);
 		final var code = keyEvent.getCode();
 		if (code.equals(KeyCode.ENTER) || code.equals(KeyCode.TAB)) {
@@ -185,8 +189,8 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		}
 	}
 
-	private static void removeFocusAction(Label errorLabel, TextField nicknameTextField) {
-		var fileName = nicknameTextField.getText() + ".json";
+	private static void removeFocusAction(final Label errorLabel, final TextField nicknameTextField) {
+		final var fileName = nicknameTextField.getText() + ".json";
 		if (new File(Constants.CUSTOM_NETWORK_FOLDER, fileName).exists()) {
 			errorLabel.setText("The network nickname already exists.");
 			errorLabel.setVisible(true);
@@ -195,7 +199,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 	}
 
 	private static Label formatLabel() {
-		var label = new Label();
+		final var label = new Label();
 		label.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-border-radius: 10; " +
 				"-fx-background-radius: 10;");
 
@@ -209,15 +213,15 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return label;
 	}
 
-	private static Button formatButton(String legend) {
-		var button = new Button(legend);
+	private static Button formatButton(final String legend) {
+		final var button = new Button(legend);
 		button.setMinWidth(150);
 		button.setStyle(WHITE_BUTTON_STYLE);
 		return button;
 	}
 
 	private static TextField formatTextField() {
-		var textField = new TextField();
+		final var textField = new TextField();
 		textField.setStyle("-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-border-radius: 10; " +
 				"-fx-background-radius: 10;");
 		textField.managedProperty().bind(textField.visibleProperty());
@@ -228,8 +232,8 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		return textField;
 	}
 
-	private static File browse(VBox mainBox) {
-		var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), mainBox,
+	private static File browse(final VBox mainBox) {
+		final var file = BrowserUtilities.browseFiles(properties.getLastBrowsedDirectory(), mainBox,
 				"Json", Constants.JSON_EXTENSION);
 		properties.setLastBrowsedDirectory(file);
 		return file;

@@ -32,7 +32,8 @@ public class FileDetails {
 	private final String path;
 	private final String extension;
 
-	private FileDetails(BasicFileAttributes attributes, String name, String path, String extension) {
+	private FileDetails(final BasicFileAttributes attributes, final String name, final String path,
+			final String extension) {
 		this.attributes = attributes;
 		this.name = name;
 		this.path = path;
@@ -70,13 +71,12 @@ public class FileDetails {
 	 * @param file
 	 * 		the file
 	 * @return a File details object
-	 * @throws IOException
 	 */
-	public static FileDetails parse(File file) throws IOException {
-		var attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-		var n = file.getName();
-		var p = file.getParent();
-		var e = FilenameUtils.getExtension(n);
+	public static FileDetails parse(final File file) throws IOException {
+		final var attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+		final var n = file.getName();
+		final var p = file.getParent();
+		final var e = FilenameUtils.getExtension(n);
 		return new FileDetails(attr, n, p, e);
 	}
 }

@@ -58,7 +58,7 @@ public class UserProperties {
 	 * @param storage location where the properties will be stored
 	 * @param description short description of the property file
 	 */
-	public UserProperties(String storage, @Nullable String description) {
+	public UserProperties(final String storage, @Nullable final String description) {
 		this.storage = storage;
 		this.description = description;
 		loadProperties();
@@ -71,9 +71,9 @@ public class UserProperties {
 		if (!new File(storage).exists()) {
 			storeProperties();
 		}
-		try (InputStream inputStream = new FileInputStream(storage)) {
+		try (final InputStream inputStream = new FileInputStream(storage)) {
 			prop.load(inputStream);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -85,9 +85,9 @@ public class UserProperties {
 		if (new File(new File(storage).getParent()).mkdirs()) {
 			logger.info("Folder structure created");
 		}
-		try (OutputStream outputStream = new FileOutputStream(storage)) {
+		try (final OutputStream outputStream = new FileOutputStream(storage)) {
 			prop.store(outputStream, description);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -97,7 +97,7 @@ public class UserProperties {
 	 * @param key String
 	 * @param value String
 	 */
-	public void setProperty(String key, String value) {
+	public void setProperty(final String key, final String value) {
 		loadProperties();
 		prop.setProperty(key, value);
 		storeProperties();
@@ -105,11 +105,11 @@ public class UserProperties {
 	}
 
 	/***
-	 * Set a int property and store to the local file
+	 * Set an int property and store to the local file
 	 * @param key String
 	 * @param value int
 	 */
-	public void setProperty(String key, int value) {
+	public void setProperty(final String key, final int value) {
 		loadProperties();
 		prop.setProperty(key, Integer.toString(value));
 		storeProperties();
@@ -120,7 +120,7 @@ public class UserProperties {
 	 * @param key String
 	 * @param value long
 	 */
-	public void setProperty(String key, long value) {
+	public void setProperty(final String key, final long value) {
 		loadProperties();
 		prop.setProperty(key, Long.toString(value));
 		storeProperties();
@@ -130,9 +130,11 @@ public class UserProperties {
 	 * Set an account Identifier property and store to the local file
 	 *
 	 * @param key
+	 * 		string used as a key
 	 * @param account
+	 * 		the account
 	 */
-	public void setProperty(String key, Identifier account) {
+	public void setProperty(final String key, final Identifier account) {
 		loadProperties();
 		prop.setProperty(key, account.toReadableString());
 		storeProperties();
@@ -146,8 +148,8 @@ public class UserProperties {
 	 * @param map
 	 * 		Map<String, String>
 	 */
-	public void setProperty(String key, Map<String, String> map) {
-		var serializedMap = serializeMap(map);
+	public void setProperty(final String key, final Map<String, String> map) {
+		final var serializedMap = serializeMap(map);
 		setProperty(key, serializedMap);
 	}
 
@@ -159,8 +161,8 @@ public class UserProperties {
 	 * @param jsonObject
 	 * 		a json object to be stored
 	 */
-	public void setProperty(String key, JsonObject jsonObject) {
-		var json = jsonObject.toString();
+	public void setProperty(final String key, final JsonObject jsonObject) {
+		final var json = jsonObject.toString();
 		setProperty(key, json);
 	}
 
@@ -171,9 +173,9 @@ public class UserProperties {
 	 * @param key
 	 * 		String
 	 * @param hBars
-	 * 		an hbar amount to be stored
+	 * 		a hbar amount to be stored
 	 */
-	public void setProperty(String key, Hbar hBars) {
+	public void setProperty(final String key, final Hbar hBars) {
 		setProperty(key, hBars.toString());
 	}
 
@@ -185,7 +187,7 @@ public class UserProperties {
 	 * @param flag
 	 * 		boolean
 	 */
-	public void setProperty(String key, boolean flag) {
+	public void setProperty(final String key, final boolean flag) {
 		setProperty(key, String.valueOf(flag));
 	}
 
@@ -195,13 +197,13 @@ public class UserProperties {
 	 * @param defaultValue String default value returned if the key is not found
 	 * @return String
 	 */
-	public String getProperty(String key, String defaultValue) {
+	public String getProperty(final String key, final String defaultValue) {
 		loadProperties();
 		return prop.getProperty(key, defaultValue);
 	}
 
 	/**
-	 * Load the properties map and return the property value as an Hbar
+	 * Load the properties map and return the property value as a Hbar
 	 *
 	 * @param key
 	 * 		String
@@ -209,11 +211,11 @@ public class UserProperties {
 	 * 		hbar default value to be returned if the key is not found
 	 * @return Hbar
 	 */
-	public Hbar getHBarProperty(String key, Hbar defaultValue) {
-		var hBarProperty = getProperty(key, defaultValue.toString()).replaceAll("[^\\d.]", "");
+	public Hbar getHBarProperty(final String key, final Hbar defaultValue) {
+		final var hBarProperty = getProperty(key, defaultValue.toString()).replaceAll("[^\\d.]", "");
 		try {
 			return Hbar.fromString(hBarProperty);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -225,11 +227,11 @@ public class UserProperties {
 	 * @param defaultInt integer default value returned if the key is not found
 	 * @return int
 	 */
-	public int getIntProperty(String key, int defaultInt) {
-		var intProp = getProperty(key, String.valueOf(defaultInt));
+	public int getIntProperty(final String key, final int defaultInt) {
+		final var intProp = getProperty(key, String.valueOf(defaultInt));
 		try {
 			return Integer.parseInt(intProp);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -240,11 +242,11 @@ public class UserProperties {
 	 * @param defaultLong long default value returned if the key is not found
 	 * @return long
 	 */
-	public long getLongProperty(String key, long defaultLong) {
-		var longProp = getProperty(key, String.valueOf(defaultLong));
+	public long getLongProperty(final String key, final long defaultLong) {
+		final var longProp = getProperty(key, String.valueOf(defaultLong));
 		try {
 			return Long.parseLong(longProp);
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -258,11 +260,11 @@ public class UserProperties {
 	 * 		An identifier value that is returned if the key is not found
 	 * @return an Identifier
 	 */
-	public Identifier getIdentifierProperty(String key, Identifier defaultIdentifier) {
-		var identifierProperty = getProperty(key, defaultIdentifier.toReadableString());
+	public Identifier getIdentifierProperty(final String key, final Identifier defaultIdentifier) {
+		final var identifierProperty = getProperty(key, defaultIdentifier.toReadableString());
 		try {
 			return Identifier.parse(identifierProperty);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -276,12 +278,12 @@ public class UserProperties {
 	 * 		A json object that is returned if the key is not found
 	 * @return a JsonObject
 	 */
-	public JsonObject getJsonProperty(String key, JsonObject defaultJson) {
-		var jsonProperty = getProperty(key, defaultJson.toString());
+	public JsonObject getJsonProperty(final String key, final JsonObject defaultJson) {
+		final var jsonProperty = getProperty(key, defaultJson.toString());
 		try {
-			var g = new Gson();
+			final var g = new Gson();
 			return g.fromJson(jsonProperty, JsonObject.class);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientRuntimeException(e);
 		}
 	}
@@ -290,12 +292,13 @@ public class UserProperties {
 	 * Load the properties map and return the property value as a map
 	 *
 	 * @param key
+	 * 		the key used for the property
 	 * @param defaultMap
 	 * 		Map<String, String>
 	 * @return Map<String, String>
 	 */
-	public Map<String, String> getMapProperty(String key, Map<String, String> defaultMap) {
-		var serializedMap = getProperty(key, "");
+	public Map<String, String> getMapProperty(final String key, final Map<String, String> defaultMap) {
+		final var serializedMap = getProperty(key, "");
 		if ("".equalsIgnoreCase(serializedMap)) {
 			return defaultMap;
 		} else {
@@ -303,19 +306,19 @@ public class UserProperties {
 		}
 	}
 
-	public Set<String> getSetProperty(String key, Set<String> defaultSet) {
-		var serializedSet = getProperty(key, "");
+	public Set<String> getSetProperty(final String key, final Set<String> defaultSet) {
+		final var serializedSet = getProperty(key, "");
 		if ("".equalsIgnoreCase(serializedSet)) {
 			return defaultSet;
 		}
 		return deserializeSet(serializedSet);
 	}
 
-	public void setSetProperty(String key, Set<String> set){
+	public void setSetProperty(final String key, final Set<String> set) {
 		setProperty(key, serializeSet(set));
 	}
 
-	public boolean removeProperty(String key){
+	public boolean removeProperty(final String key) {
 		if (prop.contains(key)) {
 			prop.remove(key);
 			storeProperties();
@@ -333,8 +336,8 @@ public class UserProperties {
 	 * 		boolean
 	 * @return boolean
 	 */
-	public boolean getBooleanProperty(String key, boolean defaultBoolean) {
-		var b = getProperty(key, String.valueOf(defaultBoolean));
+	public boolean getBooleanProperty(final String key, final boolean defaultBoolean) {
+		final var b = getProperty(key, String.valueOf(defaultBoolean));
 		return Boolean.parseBoolean(b);
 	}
 
@@ -349,13 +352,13 @@ public class UserProperties {
 	/**
 	 * Converts the properties into a Json object that can be exported
 	 *
-	 * @return
+	 * @return the properties in json format
 	 */
 	public JsonObject propertiesToJson() {
 		loadProperties();
-		var jsonObject = new JsonObject();
-		var keys = prop.keySet();
-		for (var key :
+		final var jsonObject = new JsonObject();
+		final var keys = prop.keySet();
+		for (final var key :
 				keys) {
 			jsonObject.addProperty((String) key, prop.getProperty((String) key));
 		}
@@ -369,8 +372,8 @@ public class UserProperties {
 	 */
 	public Map<String, String> propertiesToMap() {
 		loadProperties();
-		Map<String, String> propertiesMap = new HashMap<>();
-		for (var key :
+		final Map<String, String> propertiesMap = new HashMap<>();
+		for (final var key :
 				prop.keySet()) {
 			propertiesMap.put((String) key, prop.getProperty((String) key));
 		}
@@ -383,9 +386,9 @@ public class UserProperties {
 	 * @param map
 	 * 		Map<String, String>
 	 */
-	public void mapToProperties(Map<String, String> map) {
+	public void mapToProperties(final Map<String, String> map) {
 		cleanProperties();
-		for (var entry : map.entrySet()) {
+		for (final var entry : map.entrySet()) {
 			prop.setProperty(entry.getKey(), entry.getValue());
 		}
 	}
@@ -396,9 +399,9 @@ public class UserProperties {
 	 * @param jsonObject
 	 * 		JsonObject
 	 */
-	public void jsonToProperties(JsonObject jsonObject) {
-		var serialized = jsonObject.toString();
-		var deserialized = deserializeMap(serialized);
+	public void jsonToProperties(final JsonObject jsonObject) {
+		final var serialized = jsonObject.toString();
+		final var deserialized = deserializeMap(serialized);
 		mapToProperties(deserialized);
 		storeProperties();
 	}
@@ -410,24 +413,24 @@ public class UserProperties {
 	 * 		Map<String, String>
 	 * @return String
 	 */
-	private String serializeMap(Map<String, String> map) {
+	private String serializeMap(final Map<String, String> map) {
 		var mapAsString = "";
-		var objectMapper = new ObjectMapper();
+		final var objectMapper = new ObjectMapper();
 		try {
 			mapAsString = objectMapper.writeValueAsString(map);
-		} catch (JsonProcessingException e) {
+		} catch (final JsonProcessingException e) {
 			throw new HederaClientRuntimeException(e);
 		}
 		return mapAsString;
 	}
 
-	private Map<String, String> deserializeMap(String serializedMap) {
-		var objectMapper = new ObjectMapper();
+	private Map<String, String> deserializeMap(final String serializedMap) {
+		final var objectMapper = new ObjectMapper();
 		Map<String, String> map = new HashMap<>();
 		try {
 			map = objectMapper.readValue(serializedMap, new TypeReference<>() {
 			});
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			setProperty("credentials", map);
 			logger.error(e);
 			logger.error("Credentials cannot be read from the map.");
@@ -435,11 +438,11 @@ public class UserProperties {
 		return map;
 	}
 
-	private String serializeSet(Set<String> set) {
+	private String serializeSet(final Set<String> set) {
 		return String.join(" ", set);
 	}
 
-	private Set<String> deserializeSet(String serializedSet) {
+	private Set<String> deserializeSet(final String serializedSet) {
 		return new HashSet<>(List.of(serializedSet.split(" ")));
 	}
 

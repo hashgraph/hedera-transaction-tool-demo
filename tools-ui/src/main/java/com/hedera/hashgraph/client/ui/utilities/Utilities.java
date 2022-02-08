@@ -80,13 +80,13 @@ public class Utilities {
 	 * 		a numeric string
 	 * @return true if the string is not a long
 	 */
-	public static boolean isNotLong(String strNum) {
+	public static boolean isNotLong(final String strNum) {
 		if (strNum == null) {
 			return false;
 		}
 		try {
 			Long.parseLong(strNum);
-		} catch (NumberFormatException | NullPointerException nfe) {
+		} catch (final NumberFormatException | NullPointerException nfe) {
 			return true;
 		}
 		return false;
@@ -100,10 +100,10 @@ public class Utilities {
 	 * @return a formatted string
 	 */
 	public static String instantToLocalTimeDate(final Instant instant) {
-		var ldt = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
-		var transactionValidStart = Date.from(ldt.atZone(ZoneId.of("UTC")).toInstant());
-		var localDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		var tz = TimeZone.getDefault();
+		final var ldt = LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
+		final var transactionValidStart = Date.from(ldt.atZone(ZoneId.of("UTC")).toInstant());
+		final var localDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		final var tz = TimeZone.getDefault();
 		return localDateFormat.format(transactionValidStart) + " " + tz.getDisplayName(true, TimeZone.SHORT);
 	}
 
@@ -119,12 +119,12 @@ public class Utilities {
 	}
 
 	public static String setHBarFormat(final long amount) {
-		var symbols = new DecimalFormatSymbols();
+		final var symbols = new DecimalFormatSymbols();
 		symbols.setGroupingSeparator(' ');
-		var formatInt = new DecimalFormat("###,###,###,###,###,###", symbols);
-		var formatFrac = new DecimalFormat("00,000,000", symbols);
-		var amountHBars = (amount - amount % 100000000) / 100000000d;
-		var amountTinyBars = (double) (amount % 100000000);
+		final var formatInt = new DecimalFormat("###,###,###,###,###,###", symbols);
+		final var formatFrac = new DecimalFormat("00,000,000", symbols);
+		final var amountHBars = (amount - amount % 100000000) / 100000000d;
+		final var amountTinyBars = (double) (amount % 100000000);
 
 		if (amount % 100000000 == 0) {
 			return formatInt.format(amountHBars).trim() + " " + HBAR_STRING;
@@ -134,7 +134,7 @@ public class Utilities {
 	}
 
 	public static String setCurrencyFormat(final long amount) {
-		var currency = setHBarFormat(amount);
+		final var currency = setHBarFormat(amount);
 		return currency.replace(" " + HBAR_STRING, "");
 	}
 
@@ -143,8 +143,8 @@ public class Utilities {
 			return "0";
 		}
 
-		var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
-		var amount = Long.parseLong(tiny.replace(HBAR_STRING, "")
+		final var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
+		final var amount = Long.parseLong(tiny.replace(HBAR_STRING, "")
 				.replace(".", "")
 				.replace(" ", ""));
 		return String.valueOf(amount);
@@ -157,13 +157,13 @@ public class Utilities {
 	 * 		a currency string
 	 * @return the number of Hbars represented by the string
 	 */
-	public static Hbar string2Hbar(String hBars) {
+	public static Hbar string2Hbar(final String hBars) {
 		if ("".equals(hBars) || hBars == null) {
 			return new Hbar(0);
 		}
-		var split = hBars.replace(" ", "").replace(HBAR_STRING, "").split("\\.");
-		var bars = Double.parseDouble(split[0]);
-		var tiny =
+		final var split = hBars.replace(" ", "").replace(HBAR_STRING, "").split("\\.");
+		final var bars = Double.parseDouble(split[0]);
+		final var tiny =
 				split.length == 2 ? Double.parseDouble("0." + split[1].substring(0, Math.min(8, split[1].length())))
 						: 0;
 		return Hbar.from(BigDecimal.valueOf(bars).add(BigDecimal.valueOf(tiny)));
@@ -179,9 +179,9 @@ public class Utilities {
 	 * @param tooltipText
 	 * 		the text that will be displayed
 	 */
-	public static void showTooltip(Pane owner, Control control, String tooltipText) {
-		var customTooltip = new Tooltip();
-		var p = control.localToScene(15.0, 15.0);
+	public static void showTooltip(final Pane owner, final Control control, final String tooltipText) {
+		final var customTooltip = new Tooltip();
+		final var p = control.localToScene(15.0, 15.0);
 		customTooltip.setText(tooltipText);
 		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
 		customTooltip.setMaxWidth(300);
@@ -198,7 +198,7 @@ public class Utilities {
 					+ control.getScene().getY() + control.getScene().getWindow().getY());
 		}
 
-		var pt = new PauseTransition(new javafx.util.Duration(5000));
+		final var pt = new PauseTransition(new javafx.util.Duration(5000));
 		pt.setOnFinished(e -> customTooltip.hide());
 		pt.play();
 	}
@@ -214,11 +214,11 @@ public class Utilities {
 	 * 		otherwise
 	 * 		it shows the complete hex.
 	 */
-	public static List<String> getKeysFromInfo(AccountInfo info, Controller controller) {
-		var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
-		List<String> knownKeys = new ArrayList<>();
-		for (var key : flatKey) {
-			var keyName = controller.showKeyString(key);
+	public static List<String> getKeysFromInfo(final AccountInfo info, final Controller controller) {
+		final var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
+		final List<String> knownKeys = new ArrayList<>();
+		for (final var key : flatKey) {
+			final var keyName = controller.showKeyString(key);
 			if (keyName.endsWith(PUB_EXTENSION)) {
 				knownKeys.add(keyName);
 			}
@@ -233,12 +233,12 @@ public class Utilities {
 	 * 		the properties file
 	 * @return the salt
 	 */
-	public static byte[] getSaltBytes(UserAccessibleProperties properties) {
+	public static byte[] getSaltBytes(final UserAccessibleProperties properties) {
 		if (properties.hasSalt()) {
-			var token = properties.getHash();
-			var decoder = Base64.getDecoder();
+			final var token = properties.getHash();
+			final var decoder = Base64.getDecoder();
 
-			var tokenBytes = decoder.decode(token);
+			final var tokenBytes = decoder.decode(token);
 			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
 				logger.error("Token size check failed");
 			}
@@ -255,18 +255,18 @@ public class Utilities {
 	 * 		a string containing a range of accounts, or a comma separated list of accounts, or a combination
 	 * @return a list of accounts
 	 */
-	public static List<AccountId> parseAccountNumbers(String text) {
-		List<AccountId> ids = new ArrayList<>();
-		List<String> ranges = new ArrayList<>();
-		List<String> singles = new ArrayList<>();
+	public static List<AccountId> parseAccountNumbers(final String text) {
+		final List<AccountId> ids = new ArrayList<>();
+		final List<String> ranges = new ArrayList<>();
+		final List<String> singles = new ArrayList<>();
 
 		if (text == null || "".equals(text)) {
 			return ids;
 		}
 
-		var split = text.replace("\\s", "").split("[\\s,]+");
+		final var split = text.replace("\\s", "").split("[\\s,]+");
 
-		for (String s : split) {
+		for (final String s : split) {
 			if (s.contains("-")) {
 				ranges.add(s);
 				continue;
@@ -275,17 +275,17 @@ public class Utilities {
 		}
 
 
-		for (String single : singles) {
+		for (final String single : singles) {
 			if (!isIdentifier(single)) {
 				logger.error("String {} cannot be parsed.", single);
 				return new ArrayList<>();
 			}
-			AccountId accountId = Identifier.parse(single).asAccount();
+			final AccountId accountId = Identifier.parse(single).asAccount();
 			ids.add(accountId);
 		}
 
-		for (var s : ranges) {
-			var range = s.split("-");
+		for (final var s : ranges) {
+			final var range = s.split("-");
 			if (range.length != 2) {
 				logger.error("String {} cannot be parsed into a range", s);
 				return new ArrayList<>();
@@ -296,8 +296,8 @@ public class Utilities {
 				return new ArrayList<>();
 			}
 
-			Identifier start = Identifier.parse(range[0]);
-			Identifier end = Identifier.parse(range[1]);
+			final Identifier start = Identifier.parse(range[0]);
+			final Identifier end = Identifier.parse(range[1]);
 
 
 			if (end.getShardNum() != start.getShardNum() || end.getRealmNum() != start.getRealmNum()) {
@@ -323,15 +323,15 @@ public class Utilities {
 	 * 		the second json object
 	 * @return a set containing the keys that are different from one to the second
 	 */
-	public static List<String> difference(JsonObject j1, JsonObject j2) {
-		Gson g = new Gson();
-		Type mapType = new TypeToken<Map<String, Object>>() {
+	public static List<String> difference(final JsonObject j1, final JsonObject j2) {
+		final Gson g = new Gson();
+		final Type mapType = new TypeToken<Map<String, Object>>() {
 		}.getType();
-		Map<String, Object> first = g.fromJson(j1, mapType);
-		Map<String, Object> second = g.fromJson(j2, mapType);
-		var diff = Maps.difference(first, second);
+		final Map<String, Object> first = g.fromJson(j1, mapType);
+		final Map<String, Object> second = g.fromJson(j2, mapType);
+		final var diff = Maps.difference(first, second);
 
-		Set<String> keys = new HashSet<>();
+		final Set<String> keys = new HashSet<>();
 		if (!diff.entriesDiffering().isEmpty()) {
 			keys.addAll(diff.entriesDiffering().keySet());
 		}
@@ -341,16 +341,16 @@ public class Utilities {
 		if (!diff.entriesOnlyOnRight().isEmpty()) {
 			keys.addAll(diff.entriesOnlyOnRight().keySet());
 		}
-		List<String> sorted = new ArrayList<>(keys);
+		final List<String> sorted = new ArrayList<>(keys);
 		Collections.sort(sorted);
 		return sorted;
 	}
 
-	private static boolean isIdentifier(String s) {
+	private static boolean isIdentifier(final String s) {
 		try {
 			Identifier.parse(s);
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 	}
