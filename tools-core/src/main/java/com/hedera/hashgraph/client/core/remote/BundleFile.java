@@ -340,7 +340,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		private final String nickname;
 		private final Identifier id;
 		private final String oldNickname;
-		private final boolean duplicate;
 
 		public InfoKey(final File file) throws HederaClientException, InvalidProtocolBufferException {
 			final var info = AccountInfo.fromBytes(readBytes(file));
@@ -353,9 +352,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 			this.oldNickname =
 					existingInfosMap.getOrDefault(info.accountId, "");
 
-			this.duplicate = oldNickname.equals(nickname) && Arrays.equals(info.toBytes(),
-					readBytes(new File(ACCOUNTS_INFO_FOLDER, file.getName())));
-
 		}
 
 		public String getNickname() {
@@ -364,10 +360,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 		public Identifier getId() {
 			return id;
-		}
-
-		public boolean isDuplicate() {
-			return duplicate;
 		}
 
 		@Override
