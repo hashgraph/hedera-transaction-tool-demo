@@ -19,7 +19,6 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -30,10 +29,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 // I want to deprecate all other popup classes and replace it with this one.
 public class GenericPopup {
 
+	private static final Logger logger = LogManager.getLogger(GenericPopup.class);
 	private static String answer = "";
 
 	private GenericPopup() {
@@ -42,9 +44,10 @@ public class GenericPopup {
 
 	public static String display(
 			final String title, final String acceptMessage, final String cancelMessage, final boolean showTextField,
-			final boolean isInteger, final String... message) throws HederaClientException {
+			final boolean isInteger, final String... message) {
 		if ("".equals(acceptMessage) && "".equals(cancelMessage)) {
-			throw new HederaClientException("At least one button must have a legend");
+			logger.error("At least one button must have a legend");
+			return answer;
 		}
 
 		final var window = new Stage();
