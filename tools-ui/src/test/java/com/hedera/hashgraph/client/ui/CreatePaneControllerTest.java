@@ -899,9 +899,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setNodeAccount(42)
 				.setUpdateKey("treasury");
 
-		sleep(10000);
-		createPanePage
-				.saveKey();
+		createPanePage.saveKey();
 
 
 		final var newKey = find(CREATE_UPDATE_NEW_KEY);
