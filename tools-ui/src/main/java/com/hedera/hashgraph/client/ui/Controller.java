@@ -177,7 +177,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	// Utility
 	private KeyStructureUtility keyStructureUtility;
-	public final KeyPairUtility keyPairUtility = new KeyPairUtility();
+	public KeyPairUtility keyPairUtility;
 
 	void setDisableButtons(final boolean disableButtons) {
 		this.disableButtons = disableButtons;
@@ -185,10 +185,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
+		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		keyPairUtility = (properties.getSetupPhase().equals(TEST_PHASE)) ? new KeyPairUtility(
+				Constants.TEST_EXPIRATION_TIME) : new KeyPairUtility();
+		keyStructureUtility = new KeyStructureUtility(this);
 
 		resetButtonBackgrounds();
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		keyStructureUtility = new KeyStructureUtility(this);
 
 		final var lastVersion = properties.getVersionString();
 		final var thisVersion = getVersion();

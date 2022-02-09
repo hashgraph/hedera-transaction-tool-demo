@@ -56,17 +56,53 @@ public class KeyPairUtility {
 			"The key is not associated with the current recovery phrase. The password cannot be changed";
 	public static final String CONTINUE = "CONTINUE";
 
-	private static final long EXPIRATION_TIME = 15L;
-	private final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
-			new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(EXPIRATION_TIME,
-					TimeUnit.MINUTES);
-	private final PassiveExpiringMap<String, char[]> expiringMap = new PassiveExpiringMap<>(expirationPolicy);
 
+	private final PassiveExpiringMap<String, char[]> expiringMap;
+	private final long expirationTime;
 
 	/**
-	 * Constructor
+	 * Default Constructor
 	 */
 	public KeyPairUtility() {
+		this.expirationTime = 300L;
+		final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
+				new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(expirationTime,
+						TimeUnit.SECONDS);
+		expiringMap = new PassiveExpiringMap<>(expirationPolicy);
+	}
+
+	/**
+	 * Constructor: Used for testing purposes
+	 *
+	 * @param expirationTime
+	 * 		the time it takes for passwords to expire.
+	 */
+	public KeyPairUtility(final long expirationTime) {
+		this.expirationTime = expirationTime;
+		final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
+				new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(expirationTime,
+						TimeUnit.SECONDS);
+		expiringMap = new PassiveExpiringMap<>(expirationPolicy);
+	}
+
+	/**
+	 * Checks if a key name is in the map.
+	 *
+	 * @param name
+	 * 		the name of the key
+	 * @return true if the key is still in the map
+	 */
+	public boolean isInMap(final String name) {
+		return expiringMap.containsKey(name);
+	}
+
+	/**
+	 * Returns the number of keys that can be decrypted.
+	 *
+	 * @return the size of the map
+	 */
+	public int mapSize() {
+		return expiringMap.size();
 	}
 
 	public Pair<String, KeyPair> getAccountKeyPair(final File pemFile) {
@@ -78,6 +114,15 @@ public class KeyPairUtility {
 		return Pair.of(pemFile.getName(), keyPair);
 	}
 
+	/**
+	 * Decripts a key pair file
+	 *
+	 * @param pemFile
+	 * 		the file that stores a pem file
+	 * @param message
+	 * 		the message that will be used to request the password from the user
+	 * @return a decrypted keypair
+	 */
 	public KeyPair getKeyPairFromPEM(final File pemFile, final String message) {
 		KeyPair keyPair = null;
 		try {
@@ -89,6 +134,52 @@ public class KeyPairUtility {
 		return keyPair;
 	}
 
+	/**
+	 * Given a pemFile, resets the password and returns it
+	 *
+	 * @param pemFile
+	 * 		the file where the pem file is stored;
+	 * @return the new password
+	 */
+	public static char[] resetPassword(final String pemFile) throws HederaClientException, KeyStoreException {
+		final var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+
+		// Check Hashcode
+		final var storedHashCode = properties.getMnemonicHashCode();
+		final var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
+		if (hashCode == null) {
+			logger.error("Hashcode is null");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
+			return new char[0];
+		}
+		if (hashCode != storedHashCode) {
+			logger.info("The key is not associated with the current mnemonic");
+			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
+			return new char[0];
+		}
+
+		// get password bytes
+		final var token = properties.getHash();
+		final var decoder = Base64.getDecoder();
+		final var index = Ed25519KeyStore.getIndex(pemFile);
+		final var tokenBytes = decoder.decode(token);
+		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
+			logger.error("Token size check failed");
+			return new char[0];
+		}
+		final var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+
+		// load mnemonic
+		final var mnemonicPwd =
+				PasswordBox.display("Password", "Please enter your recovery phrase password.", "", false);
+		final var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
+				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
+
+		// Store key with new password
+		final var newPassword = NewPasswordPopup.display();
+		SecurityUtilities.generateAndStoreKey(pemFile, "Transaction Tool UI", mnemonic, index, newPassword);
+		return newPassword;
+	}
 
 	@Nullable
 	private KeyPair getKeyPair(final File pemFile, final String message) {
@@ -151,54 +242,6 @@ public class KeyPairUtility {
 		}
 		logger.info("Password not found. Asking the user");
 		return keyPair;
-	}
-
-
-	/**
-	 * Given a pemFile, resets the password and returns it
-	 *
-	 * @param pemFile
-	 * 		the file where the pem file is stored;
-	 * @return the new password
-	 */
-	public static char[] resetPassword(final String pemFile) throws HederaClientException, KeyStoreException {
-		final var properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-
-		// Check Hashcode
-		final var storedHashCode = properties.getMnemonicHashCode();
-		final var hashCode = Ed25519KeyStore.getMnemonicHashCode(pemFile);
-		if (hashCode == null) {
-			logger.error("Hashcode is null");
-			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
-			return new char[0];
-		}
-		if (hashCode != storedHashCode) {
-			logger.info("The key is not associated with the current mnemonic");
-			PopupMessage.display(ERROR_RECOVERING_PASSWORD_TITLE, ERROR_RECOVERING_PASSWORD_MESSAGE, CONTINUE);
-			return new char[0];
-		}
-
-		// get password bytes
-		final var token = properties.getHash();
-		final var decoder = Base64.getDecoder();
-		final var index = Ed25519KeyStore.getIndex(pemFile);
-		final var tokenBytes = decoder.decode(token);
-		if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
-			logger.error("Token size check failed");
-			return new char[0];
-		}
-		final var salt = Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
-
-		// load mnemonic
-		final var mnemonicPwd =
-				PasswordBox.display("Password", "Please enter your recovery phrase password.", "", false);
-		final var mnemonic = SecurityUtilities.fromEncryptedFile(mnemonicPwd, salt,
-				properties.getPreferredStorageDirectory() + File.separator + MNEMONIC_PATH);
-
-		// Store key with new password
-		final var newPassword = NewPasswordPopup.display();
-		SecurityUtilities.generateAndStoreKey(pemFile, "Transaction Tool UI", mnemonic, index, newPassword);
-		return newPassword;
 	}
 
 	@Nullable
