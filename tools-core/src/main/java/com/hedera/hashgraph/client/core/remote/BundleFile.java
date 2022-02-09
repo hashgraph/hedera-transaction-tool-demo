@@ -118,7 +118,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 				case PUB_EXTENSION:
 					final var pubInfoKey = new PubInfoKey(file);
 					publicKeyMap.put(pubInfoKey, file);
-
 					break;
 				default:
 					logger.error("Unexpected value: {}", name);

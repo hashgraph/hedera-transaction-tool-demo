@@ -582,6 +582,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 							FileUtils.copyFile(entry.getValue(), destination);
 						}
 						break;
+					default:
+						logger.info("No action taken: {}",rf.getType());
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");

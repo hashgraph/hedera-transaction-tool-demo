@@ -22,7 +22,6 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.sdk.FreezeType;
-import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
@@ -233,7 +232,15 @@ public class CreatePanePage {
 	public CreatePanePage setUpdateKey(final String account) {
 		driver.ensureVisible(driver.find(UPDATE_EDIT_KEY));
 		driver.clickOn(UPDATE_EDIT_KEY);
+		clearTree();
 		return doubleClickOnAccountKey(account);
+	}
+
+	private void clearTree() {
+		var node = driver.find("Threshold key (2 of 4)");
+		driver.clickOn(node);
+		clickOnDeletePublicKeyButton();
+
 	}
 
 	public CreatePanePage doubleClickOnAccountKey(final String account) {
@@ -344,22 +351,28 @@ public class CreatePanePage {
 	}
 
 
-	public ObservableList<Node> getPublicKeyButtons() {
+	public Button getDeleteButton() {
 		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		final var vBox0 = (VBox) popupNodes.get(1);
 		final var inner0 = vBox0.getChildren();
 		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
-		return ((VBox) vBox1.getChildren().get(0)).getChildren();
+		return (Button) vBox1.getChildren().get(1);
 	}
 
-	public ObservableList<Node> getAccountButtons() {
+	public Button getVisibleAddButton() {
 		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		final var vBox0 = (VBox) popupNodes.get(1);
 		final var inner0 = vBox0.getChildren();
 		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
-		return ((VBox) vBox1.getChildren().get(1)).getChildren();
+		final var buttons = ((VBox) vBox1.getChildren().get(0)).getChildren();
+		for (final Node button : buttons) {
+			if (button instanceof Button && button.isVisible()) {
+				return (Button) button;
+			}
+		}
+		return null;
 	}
 
 	public CreatePanePage createAndExport(final String folder) {
@@ -843,20 +856,22 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage clickOnAddPublicKeyButton() {
-		final var publicKeyButtons = getPublicKeyButtons();
-		driver.clickOn(publicKeyButtons.get(0));
+		final var publicKeyButtons = getVisibleAddButton();
+		driver.clickOn(publicKeyButtons);
 		return this;
 	}
 
 	public CreatePanePage clickOnDeletePublicKeyButton() {
-		final var publicKeyButtons = getPublicKeyButtons();
-		driver.clickOn(publicKeyButtons.get(1));
+		final var deleteButton = getDeleteButton();
+		driver.clickOn(deleteButton);
 		return this;
 	}
 
 	public CreatePanePage clickOnAddAccountButton() {
-		final var publicKeyButtons = getAccountButtons();
-		driver.clickOn(publicKeyButtons.get(0));
+		final var addButton = getVisibleAddButton();
+		if (addButton != null) {
+			driver.clickOn(addButton);
+		}
 		return this;
 	}
 
