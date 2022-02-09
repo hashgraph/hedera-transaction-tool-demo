@@ -408,11 +408,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(find("pole").isVisible());
 
 		clickOn((Node) find("point"));
-		write("\n");
+		type(KeyCode.ENTER);
 
-//		assertTrue(empty.get(1).isFocused());
+		assertTrue(empty.get(1).isFocused());
 
-		write("poet\n");
+		write("poet");
+		type(KeyCode.ENTER);
 		assertTrue(empty.get(2).isFocused());
 
 	}
