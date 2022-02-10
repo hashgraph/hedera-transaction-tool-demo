@@ -367,7 +367,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	}
 
-	@Test
+	//@Test
 	public void checkPredictiveTextInPassphrase_text() {
 		logger.info("Load stored mnemonic for testing");
 
