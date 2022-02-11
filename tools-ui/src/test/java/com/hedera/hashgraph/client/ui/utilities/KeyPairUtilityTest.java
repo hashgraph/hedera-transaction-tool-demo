@@ -202,7 +202,7 @@ public class KeyPairUtilityTest extends TestBase {
 		assertNull(getPopupNodes());
 
 		final var startTimer = Instant.now();
-		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME+1))) {
+		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME + 1))) {
 			// wait for timer to expire
 		}
 
@@ -223,7 +223,7 @@ public class KeyPairUtilityTest extends TestBase {
 
 
 		assertNotNull(getPopupNodes());
-		homePanePage.enterPasswordInPopup("123654789");
+		homePanePage.enterPasswordInPopup(TEST_PASSWORD);
 
 	}
 }
