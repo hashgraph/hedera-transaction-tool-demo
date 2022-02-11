@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.popups.NewPasswordPopup;
 import com.hedera.hashgraph.client.ui.popups.PasswordBox;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
+import org.apache.commons.collections4.map.PassiveExpiringMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,6 +39,9 @@ import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
@@ -53,10 +57,52 @@ public class KeyPairUtility {
 	public static final String CONTINUE = "CONTINUE";
 
 
+	private final PassiveExpiringMap<String, char[]> expiringMap;
+	private final long expirationTime;
+
 	/**
-	 * Constructor
+	 * Default Constructor
 	 */
 	public KeyPairUtility() {
+		this.expirationTime = 300L;
+		final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
+				new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(expirationTime,
+						TimeUnit.SECONDS);
+		expiringMap = new PassiveExpiringMap<>(expirationPolicy);
+	}
+
+	/**
+	 * Constructor: Used for testing purposes
+	 *
+	 * @param expirationTime
+	 * 		the time it takes for passwords to expire.
+	 */
+	public KeyPairUtility(final long expirationTime) {
+		this.expirationTime = expirationTime;
+		final PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<String, char[]> expirationPolicy =
+				new PassiveExpiringMap.ConstantTimeToLiveExpirationPolicy<>(expirationTime,
+						TimeUnit.SECONDS);
+		expiringMap = new PassiveExpiringMap<>(expirationPolicy);
+	}
+
+	/**
+	 * Checks if a key name is in the map.
+	 *
+	 * @param name
+	 * 		the name of the key
+	 * @return true if the key is still in the map
+	 */
+	public boolean isInMap(final String name) {
+		return expiringMap.containsKey(name);
+	}
+
+	/**
+	 * Returns the number of keys that can be decrypted.
+	 *
+	 * @return the size of the map
+	 */
+	public int mapSize() {
+		return expiringMap.size();
 	}
 
 	public Pair<String, KeyPair> getAccountKeyPair(final File pemFile) {
@@ -68,6 +114,15 @@ public class KeyPairUtility {
 		return Pair.of(pemFile.getName(), keyPair);
 	}
 
+	/**
+	 * Decripts a key pair file
+	 *
+	 * @param pemFile
+	 * 		the file that stores a pem file
+	 * @param message
+	 * 		the message that will be used to request the password from the user
+	 * @return a decrypted keypair
+	 */
 	public KeyPair getKeyPairFromPEM(final File pemFile, final String message) {
 		KeyPair keyPair = null;
 		try {
@@ -75,28 +130,6 @@ public class KeyPairUtility {
 		} catch (final Exception e) {
 			PopupMessage.display("Error loading key", String.format("Unable to load private key: %s", e.getMessage()));
 			logger.error(e.getMessage());
-		}
-		return keyPair;
-	}
-
-
-	@Nullable
-	private KeyPair getKeyPair(final File pemFile, final String message) {
-		KeyPair keyPair = null;
-		var pwd = display("Enter password", message, pemFile.getAbsolutePath(), true);
-		if (pwd == null || pwd.length == 0) {
-			return null;
-		}
-		while (keyPair == null) {
-			try {
-				keyPair = getKeyPair(pemFile.getPath(), pwd);
-				Arrays.fill(pwd, 'x');
-			} catch (final HederaClientException e) {
-				pwd = askForPasswordAgain(pemFile);
-				if (pwd == null || Arrays.equals(new char[0], pwd)) {
-					return null;
-				}
-			}
 		}
 		return keyPair;
 	}
@@ -149,6 +182,69 @@ public class KeyPairUtility {
 	}
 
 	@Nullable
+	private KeyPair getKeyPair(final File pemFile, final String message) {
+
+		KeyPair keyPair = useStored(pemFile);
+		if (keyPair != null) {
+			return keyPair;
+		}
+		var pwd = display("Enter password", message, pemFile.getAbsolutePath(), true);
+		if (pwd == null || pwd.length == 0) {
+			return null;
+		}
+		while (keyPair == null) {
+			final var path = pemFile.getPath();
+			try {
+				keyPair = getKeyPair(path, pwd);
+				expiringMap.put(path, pwd);
+			} catch (final HederaClientException e) {
+				expiringMap.remove(path);
+				pwd = askForPasswordAgain(pemFile);
+				if (pwd == null || Arrays.equals(new char[0], pwd)) {
+					return null;
+				}
+			}
+		}
+		return keyPair;
+	}
+
+	/**
+	 * Check if any of the keys of the expiring map can be used to decrypt the KeyPair
+	 *
+	 * @param pem
+	 * 		the file that contains an encrypted key pair
+	 * @return a decrypted key pair if the map contains the right key. Null otherwise
+	 */
+	private KeyPair useStored(final File pem) {
+		KeyPair keyPair = null;
+		int count = 0;
+		logger.info("Trying stored passwords.");
+		final var path = pem.getPath();
+		if (expiringMap.containsKey(path)) {
+			try {
+				keyPair = getKeyPair(path, expiringMap.get(path));
+			} catch (final HederaClientException e) {
+				logger.error("Cannot decrypt pem");
+				expiringMap.remove(path);
+			}
+		}
+		final Set<char[]> knownPwds = new HashSet<>(expiringMap.values());
+		for (final char[] chars : knownPwds) {
+			try {
+				keyPair = getKeyPair(path, chars);
+				logger.info("Password found");
+				expiringMap.put(path, chars);
+				return keyPair;
+			} catch (final HederaClientException e) {
+				logger.info("Trying password {}", count);
+				count++;
+			}
+		}
+		logger.info("Password not found. Asking the user");
+		return keyPair;
+	}
+
+	@Nullable
 	private char[] askForPasswordAgain(final File pemFile) {
 		return display("Error", "The password entered does not match " + pemFile.getName() + ". Please try again.",
 				pemFile.getAbsolutePath(),
@@ -164,6 +260,5 @@ public class KeyPairUtility {
 		}
 		return (!keyPairs.isEmpty()) ? keyPairs.get(0) : null;
 	}
-
 
 }
