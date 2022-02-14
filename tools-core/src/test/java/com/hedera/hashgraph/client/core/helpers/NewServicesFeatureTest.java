@@ -84,14 +84,14 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException, ReceiptStatusException {
 		final var keyStore =
-				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/simiTestNet.pem");
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
-		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
+		final var client = CommonMethods.getClient(NetworkEnum.HOME);
 		logger.info(client.getNetwork());
 
-		client.setOperator(new AccountId(0, 0, 9401), genesisKey);
+		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKeyList.json"));
 		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
