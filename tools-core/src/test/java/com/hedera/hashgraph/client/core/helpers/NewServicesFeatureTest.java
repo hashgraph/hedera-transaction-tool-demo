@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -88,7 +89,7 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
-		final var client = CommonMethods.getClient(NetworkEnum.HOME);
+		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		logger.info(client.getNetwork());
 
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);

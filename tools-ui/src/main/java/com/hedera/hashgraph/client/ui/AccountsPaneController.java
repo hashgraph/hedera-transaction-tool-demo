@@ -124,6 +124,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.BALANCES_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
@@ -219,6 +220,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeAccountPane() {
+		fixAccountNames();
 		hiddenPathAccount.clear();
 		try {
 			getAccountsFromFileSystem(accountInfos, idNickNames);
@@ -243,6 +245,28 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		setupNetworkBox(networkChoiceBoxA);
 		setupFeePayerChoiceBox();
 		setupInfoRequestFields();
+	}
+
+	private void fixAccountNames() {
+		final var accounts = new File(DEFAULT_ACCOUNTS).listFiles(
+				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
+		final JsonObject nicknames;
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (HederaClientException e) {
+			logger.error("Cannot read nicknames file");
+			return;
+		}
+		for (final File account : accounts) {
+			final var baseName = FilenameUtils.getBaseName(account.getName());
+			final var parsedAddress = AddressChecksums.parseAddress(baseName);
+			if (parsedAddress.getStatus().equals(AddressChecksums.parseStatus.GOOD_NO_CHECKSUM)) {
+				final var nickname = (nicknames.has(baseName))? nicknames.get(baseName).getAsString(): baseName;
+				storeAccount(nickname, account.getAbsolutePath());
+				logger.info("poop");
+			}
+		}
+
 	}
 
 	private void setupInfoRequestFields() {

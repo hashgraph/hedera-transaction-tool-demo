@@ -40,7 +40,7 @@ public enum NetworkEnum {
 		}
 	}
 
-	public static NetworkEnum from(LedgerId ledgerId) {
+	public static NetworkEnum from(final LedgerId ledgerId) {
 		if (ledgerId==null) return UNKNOWN;
 		switch (ledgerId.toString()){
 			case "30783031":
