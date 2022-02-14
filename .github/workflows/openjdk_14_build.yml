@@ -30,7 +30,7 @@ jobs:
       - name: Compile
         run: mvn -DskipTests clean compile
       - name: Unit Test
-        run: mvn -Dsonar.branch.name=${GITHUB_REF_NAME} test verify sonar:sonar -am -pl tools-core
+        run: mvn -Dsonar.branch.name=${GITHUB_REF_NAME} test verify sonar:sonar
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
