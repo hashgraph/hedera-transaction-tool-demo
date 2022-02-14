@@ -43,6 +43,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -91,22 +92,38 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 		logger.info(client.getNetwork());
 
 		client.setOperator(new AccountId(0, 0, 9401), genesisKey);
-//		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKeyList.json"));
-//		final var transactionResponse = new AccountCreateTransaction()
-//				.setKey(key)
-//				.setInitialBalance(new Hbar(1000))
-//				.setAccountMemo("Test payer account")
-//				.execute(client);
-//
-//		final var receipt = transactionResponse.getReceipt(client);
-//		final var payerId = Objects.requireNonNull(receipt.accountId);
-//		logger.info("Payer Id: {}", payerId.toString());
-
-		final var accountInfo = new AccountInfoQuery()
-				.setAccountId(new AccountId(0, 0, 9401))
+		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKeyList.json"));
+		final var transactionResponse = new AccountCreateTransaction()
+				.setKey(key)
+				.setInitialBalance(new Hbar(0))
+				.setAccountMemo("Test payer account")
 				.execute(client);
 
-		logger.info(Hex.toHexString(accountInfo.ledgerId.toBytes()));
-		logger.info(Hex.toHexString(client.getLedgerId().toBytes()));
+		final var receipt = transactionResponse.getReceipt(client);
+		final var payerId = Objects.requireNonNull(receipt.accountId);
+		logger.info("Payer Id: {}", payerId.toString());
+
+		final var accountInfo = new AccountInfoQuery()
+				.setAccountId(payerId)
+				.execute(client);
+
+		logger.info("account ledger: \"{}\"", Hex.toHexString(accountInfo.ledgerId.toBytes()));
+		logger.info("account ledger (decoded): \"{}\"",
+				new String(accountInfo.ledgerId.toBytes(), StandardCharsets.UTF_8));
+
+		final var ledgerId = client.getLedgerId();
+		if (ledgerId != null) {
+			logger.info("client ledger: \"{}\"", Hex.toHexString(ledgerId.toBytes()));
+		}
+	}
+
+	@Test
+	void checkOldInfo_test() throws HederaClientException, InvalidProtocolBufferException {
+		final var oldInfo = AccountInfo.fromBytes(readBytes("src/test/resources/infos/0.0.2.info"));
+
+		if (oldInfo.ledgerId != null) {
+			logger.info(Hex.toHexString(oldInfo.ledgerId.toBytes()));
+		}
+
 	}
 }

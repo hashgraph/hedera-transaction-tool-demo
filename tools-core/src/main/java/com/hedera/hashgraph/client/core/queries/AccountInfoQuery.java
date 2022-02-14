@@ -46,7 +46,7 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 	private Hbar fee = Hbar.from(1);
 
 	private final List<PrivateKey> signingKeys;
-	private final Client client;
+	private Client client;
 
 	private AccountInfoQuery(final String network, final AccountId feePayer, final Hbar fee,
 			final List<PrivateKey> signingKeys) {
@@ -54,6 +54,11 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 		this.feePayer = feePayer;
 		this.fee = fee;
 		this.signingKeys = signingKeys;
+		this.client = getClient();
+	}
+
+	public void setNetwork(final String network) {
+		this.network = network;
 		this.client = getClient();
 	}
 

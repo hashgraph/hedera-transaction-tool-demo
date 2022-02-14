@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.core.enums;
 
+import com.hedera.hashgraph.sdk.LedgerId;
+
 import java.util.stream.Stream;
 
 public enum NetworkEnum {
@@ -34,6 +36,16 @@ public enum NetworkEnum {
 		if (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(
 				s -> s.equalsIgnoreCase(name))) {
 			this.name = name;
+		}
+	}
+
+	public static NetworkEnum from(LedgerId ledgerId) {
+		if (ledgerId==null) return UNKNOWN;
+		switch (ledgerId.toString()){
+			case "30783031":
+				return NetworkEnum.TESTNET;
+			default:
+				return NetworkEnum.UNKNOWN;
 		}
 	}
 
