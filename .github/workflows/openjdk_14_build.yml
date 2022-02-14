@@ -1,0 +1,140 @@
+name: openjdk_14_build
+on: [push]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    container: gcr.io/swirlds-registry/cci-openjdk-ghr:14.0.2
+    env:
+      MAVEN_OPTS: -Xmx5200m
+      LC_ALL: C.UTF-8
+      DEBIAN_FRONTEND: noninteractive
+      SLACK_ACCESS_TOKEN: ${{ secrets.SLACK_ACCESS_TOKEN }}
+      SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_SLACK_CHANNEL: ${{ secrets.SONAR_SLACK_CHANNEL }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    timeout-minutes: 60
+    steps:
+      - run: apt-get -y install software-properties-common
+      - run: add-apt-repository ppa:git-core/ppa
+      - run: apt-get -y install git
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - run: mvn --version
+      - name: Maven Dependency Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: v3-${{ runner.os }}-mvn-dependencies-${{ hashFiles('pom.xml') }}
+      - name: Compile
+        run: mvn -DskipTests clean compile
+      - name: Unit Test
+        run: mvn -Dsonar.branch.name=${GITHUB_REF_NAME} test verify sonar:sonar -am -pl tools-core
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "*/target/surefire-reports/*.xml"
+      - name: Sonar Check Quality Gate
+        shell: bash
+        id: sonar_gate
+        run: |
+          set -x;
+
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "Skipping SonarCloud Quality Gate Enforcement - Branch is Temporarily Excluded (main)........";
+            exit 0;
+          fi;
+
+          REPO_PATH="${PWD}";
+          if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi;
+
+          SONAR_QG_SCRIPT="${REPO_PATH}/.github/scripts/sonar_check_quality_gate.pl";
+          if [[ ! -f "${SONAR_QG_SCRIPT}" ]]; then exit 38; fi;
+
+          SONAR_REPORT_FILE="${REPO_PATH}/target/sonar/report-task.txt";
+          if [[ ! -f "${SONAR_REPORT_FILE}" ]]; then exit 40; fi;
+
+          export SONAR_TASK_ID="$(cat "${SONAR_REPORT_FILE}" | perl -0777 -e 'while (my $line = <>) { if ($line =~ /ceTaskId=([A-Za-z0-9_-]+)/ig) { print "$1"; } }')";
+          if [[ -z "${SONAR_TASK_ID}" ]]; then exit 41; fi;
+          
+          perl ${SONAR_QG_SCRIPT};
+          
+          echo "::set-output name=sonar_dashboard_link::$(cat /tmp/sonar_dashboard_link.txt)"
+
+      - name: Post to a Slack channel (Disabled)
+        if: "false"
+        uses: slackapi/slack-github-action@v1.16.0
+        with:
+          channel-id: ${{ secrets.SONAR_SLACK_CHANNEL }}
+          payload: |
+            {
+                  "color": "#c92808",
+                  "blocks": [
+                      {
+                          "type": "section",
+                          "text": {
+                              "type": "mrkdwn",
+                              "text": "*SonarCloud Scan Failure*"
+                          },
+                          "fields": [
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "*_Commit Author:_*"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "*_Branch:_*"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "${{github.actor}}"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "${{github.ref_name}}"
+                              }
+                          ]
+                      },
+                      {
+                          "type": "section",
+                          "fields": [
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "*_Github Actions Build Number:_*"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "*_SonarCloud Analysis:_*"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "<${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|${{github.run_number}}>"
+                              },
+                              {
+                                  "type": "mrkdwn",
+                                  "text": "<${{ steps.sonar_gate.outputs.sonar_dashboard_link }}|${{github.ref_name}}>"
+                              }
+                          ]
+                      },
+                      {
+                          "type": "section",
+                          "text": {
+                              "type": "mrkdwn",
+                              "text": "*_Git Commit:_*\n${{github.sha}}"
+                          }
+                      },
+                      {
+                          "type": "context",
+                          "elements": [
+                              {
+                                  "type": "mrkdwn",
+                                  "text": ":rotating_light: Please correct the issues identified by SonarCloud before merging!"
+                              }
+                          ]
+                      }
+                  ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_ACCESS_TOKEN }}
