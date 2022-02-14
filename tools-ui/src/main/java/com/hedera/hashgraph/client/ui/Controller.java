@@ -141,6 +141,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public TextArea systemMessagesTextField;
 	public ButtonBar menuButtonBar;
 
+
 	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 
 	private UserAccessibleProperties properties;
@@ -176,7 +177,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	// Utility
 	private KeyStructureUtility keyStructureUtility;
-	public final KeyPairUtility keyPairUtility = new KeyPairUtility();
+	public KeyPairUtility keyPairUtility;
 
 	void setDisableButtons(final boolean disableButtons) {
 		this.disableButtons = disableButtons;
@@ -184,9 +185,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
-		resetButtonBackgrounds();
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+		keyPairUtility = (properties.getSetupPhase().equals(TEST_PHASE)) ? new KeyPairUtility(
+				Constants.TEST_EXPIRATION_TIME) : new KeyPairUtility();
 		keyStructureUtility = new KeyStructureUtility(this);
+
+		resetButtonBackgrounds();
 
 		final var lastVersion = properties.getVersionString();
 		final var thisVersion = getVersion();
@@ -918,4 +922,5 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		return feePayer;
 	}
+
 }

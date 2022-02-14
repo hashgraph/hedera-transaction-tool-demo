@@ -286,7 +286,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		}
 
 		public String getNickname() {
-			return  nickname;
+			return nickname;
 		}
 
 		public String getOldNickname() {

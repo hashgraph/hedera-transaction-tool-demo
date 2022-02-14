@@ -221,8 +221,6 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		ensureVisible(sign);
 		clickOn(sign);
 
-		enterPasswordInPopup();
-
 		while (true) {
 			if (TestUtil.getPopupNodes() == null) {
 				break;
@@ -241,7 +239,6 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		sign = find("SIGN\u2026");
 		ensureVisible(sign);
 		clickOn(sign);
-		enterPasswordInPopup();
 
 		while (true) {
 			if (TestUtil.getPopupNodes() == null) {
