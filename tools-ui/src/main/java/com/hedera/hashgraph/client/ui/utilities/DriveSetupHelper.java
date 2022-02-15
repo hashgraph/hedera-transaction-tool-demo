@@ -562,8 +562,15 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			logger.error("Incomplete pair. Skipping {}", jsonObject);
 			return;
 		}
-		final var home = isInCircleCi.getAsBoolean() ? "/repo/" :
-				(isInGithubActions.getAsBoolean() ? CURRENT_RELATIVE_PATH : USER_HOME);
+
+		var home = USER_HOME;
+
+		if (isInCircleCi.getAsBoolean()) {
+			home = "/repo/";
+		} else if (isInGithubActions.getAsBoolean()) {
+			home = CURRENT_RELATIVE_PATH;
+		}
+
 		final var drive = home + driveString;
 
 		if (validatePathEmailPair(drive, email)) {
