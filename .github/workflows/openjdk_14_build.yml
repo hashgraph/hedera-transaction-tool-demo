@@ -8,7 +8,6 @@ jobs:
       MAVEN_OPTS: -Xmx5200m
       LC_ALL: C.UTF-8
       DEBIAN_FRONTEND: noninteractive
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     timeout-minutes: 60
     steps:
       - run: apt-get -y install software-properties-common
@@ -28,6 +27,9 @@ jobs:
       - name: Compile
         run: mvn -DskipTests clean compile
       - name: Unit Tests And Sonar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn test verify sonar:sonar -Dsonar.branch.name=${GITHUB_REF_NAME} -Dsonar.login=$SONAR_TOKEN -Dsonar.qualitygate.wait=true
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
