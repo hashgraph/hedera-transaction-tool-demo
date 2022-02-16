@@ -1085,7 +1085,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			HBox.setHgrow(keysVBox, Priority.ALWAYS);
 			VBox.setVgrow(keysVBox, Priority.ALWAYS);
 
-
+			refreshButton.setDisable(UNKNOWN_NETWORK_STRING.equals(lineInformation.getLedgerId()));
 			refreshButton.setOnAction(actionEvent -> {
 				parameter.toggleExpanded();
 				updateBalances(Collections.singletonList(lineInformation));
@@ -1765,7 +1765,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public void updateSelectedBalances() {
 		final List<AccountLineInformation> list = new ArrayList<>();
 		for (final var lineInformation : accountLineInformation) {
-			if (lineInformation.isSelected()) {
+			if (lineInformation.isSelected() && !UNKNOWN_NETWORK_STRING.equals(lineInformation.getLedgerId())) {
 				list.add(lineInformation);
 				lineInformation.setSelected(false);
 			}
