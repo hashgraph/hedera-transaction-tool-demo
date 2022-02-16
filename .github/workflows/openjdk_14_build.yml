@@ -39,7 +39,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn test verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.branch.name=${GITHUB_REF_NAME} -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
+        run: mvn test verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
