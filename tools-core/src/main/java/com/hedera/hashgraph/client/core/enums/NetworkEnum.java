@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.enums;
 
 import com.hedera.hashgraph.sdk.LedgerId;
 
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public enum NetworkEnum {
@@ -27,7 +28,6 @@ public enum NetworkEnum {
 	PREVIEWNET("PREVIEWNET"),
 	TESTNET("TESTNET"),
 	INTEGRATION("INTEGRATION"),
-	HOME("HOME"),
 	CUSTOM("CUSTOM"),
 	UNKNOWN("");
 
@@ -41,13 +41,28 @@ public enum NetworkEnum {
 	}
 
 	public static NetworkEnum from(final LedgerId ledgerId) {
-		if (ledgerId==null) return UNKNOWN;
-		switch (ledgerId.toString()){
+		if (ledgerId == null) {
+			return UNKNOWN;
+		}
+		switch (ledgerId.toString()) {
 			case "30783031":
 				return NetworkEnum.TESTNET;
 			default:
 				return NetworkEnum.UNKNOWN;
 		}
+	}
+
+	public static LedgerId asLedger(final String name) {
+		LedgerId ledgerId = LedgerId.MAINNET;
+
+		switch (NetworkEnum.valueOf(name.toUpperCase(Locale.ROOT))) {
+			case PREVIEWNET:
+				ledgerId = LedgerId.PREVIEWNET;
+				break;
+			case TESTNET:
+				ledgerId = LedgerId.TESTNET;
+		}
+		return ledgerId;
 	}
 
 	public String getName() {
