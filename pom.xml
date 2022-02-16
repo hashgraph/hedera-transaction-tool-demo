@@ -55,8 +55,8 @@
 		<maven-surefire-plugin-version>3.0.0-M1</maven-surefire-plugin-version>
 
 		<!-- Code Analysis Plugins -->
-		<plugin.sonar.version>3.7.0.1746</plugin.sonar.version>
-		<plugin.jacoco.version>0.8.6</plugin.jacoco.version>
+		<plugin.sonar.version>3.9.1.2184</plugin.sonar.version>
+		<plugin.jacoco.version>0.8.7</plugin.jacoco.version>
 		<!-- SonarCloud Properties -->
 		<sonar.jacoco.path>target/site/jacoco-aggregate/jacoco.xml</sonar.jacoco.path>
 		<sonar.jacoco.alt.path>target/site/jacoco/jacoco.xml</sonar.jacoco.alt.path>
