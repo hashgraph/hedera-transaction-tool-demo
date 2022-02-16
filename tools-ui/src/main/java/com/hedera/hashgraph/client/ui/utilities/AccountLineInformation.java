@@ -43,18 +43,18 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private StringProperty balance;
 	private String signer;
 	private long date;
-	private NetworkEnum ledgerId;
+	private String ledgerId;
 
 	private final BooleanProperty selected = new SimpleBooleanProperty();
 
 	public AccountLineInformation(final String nickname, final Identifier account, final Hbar balance, final long date,
-			final boolean signer, final LedgerId ledgerId) {
+			final boolean signer, final String ledgerId) {
 		this.nickname = nickname;
 		this.account = account;
 		this.balance = new SimpleStringProperty(balance.toString());
 		this.date = date;
 		this.signer = signer ? "Yes" : "No";
-		this.ledgerId = NetworkEnum.from(ledgerId);
+		this.ledgerId = ledgerId;
 		this.selected.setValue(false);
 	}
 
@@ -79,7 +79,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	}
 
 	public String getLedgerId() {
-		return ledgerId.toString();
+		return ledgerId;
 	}
 
 	public void setBalance(final Hbar balance) {
@@ -107,7 +107,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return "AccountLineInformation{" +
 				"nickname='" + nickname + '\'' +
 				", account='" + account.toReadableString() + '\'' +
-				", ledger='" + ledgerId.toString().toUpperCase(Locale.ROOT) + '\'' +
+				", ledger='" + ledgerId.toUpperCase(Locale.ROOT) + '\'' +
 				", balance='" + balance.getValue() + '\'' +
 				", date='" + date + '\'' +
 				", signer=" + signer +
@@ -156,4 +156,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return this.getAccount().compareTo(o.getAccount());
 	}
 
+	public void setLedgerID(String ledgerID) {
+		this.ledgerId=ledgerID;
+	}
 }

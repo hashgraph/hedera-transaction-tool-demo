@@ -142,7 +142,7 @@ public interface GenericFileReadWriteAware {
 		// Read file into object
 		try (final var file = new FileReader(filePath)) {
 			return JsonParser.parseReader(file).getAsJsonArray();
-		} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
+		} catch (final IllegalStateException | JsonIOException | JsonSyntaxException | IOException cause) {
 			throw new HederaClientException(String.format("Unable to read Json array from file: %s", filePath), cause);
 		}
 	}

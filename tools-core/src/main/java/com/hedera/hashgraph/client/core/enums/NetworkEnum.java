@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.enums;
 
 import com.hedera.hashgraph.sdk.LedgerId;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.stream.Stream;
 
@@ -44,11 +45,15 @@ public enum NetworkEnum {
 		if (ledgerId == null) {
 			return UNKNOWN;
 		}
-		switch (ledgerId.toString()) {
-			case "30783031":
-				return NetworkEnum.TESTNET;
+		switch (new String(ledgerId.toBytes(), StandardCharsets.UTF_8)) {
+			case "0x00":
+				return MAINNET;
+			case "0x01":
+				return TESTNET;
+			case "0x02":
+				return PREVIEWNET;
 			default:
-				return NetworkEnum.UNKNOWN;
+				return UNKNOWN;
 		}
 	}
 
