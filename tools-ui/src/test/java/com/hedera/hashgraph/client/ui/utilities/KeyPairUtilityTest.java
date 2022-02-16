@@ -144,7 +144,7 @@ public class KeyPairUtilityTest extends TestBase {
 
 		homePanePage.enterPasswordInPopup("123654789");
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("SIGN\u2026");
@@ -156,7 +156,7 @@ public class KeyPairUtilityTest extends TestBase {
 			// wait for timer to expire
 		}
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 		popup = getPopupNodes();
@@ -173,7 +173,7 @@ public class KeyPairUtilityTest extends TestBase {
 
 		homePanePage.enterPasswordInPopup("123654789");
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
@@ -190,7 +190,7 @@ public class KeyPairUtilityTest extends TestBase {
 		homePanePage.enterPasswordInPopup(TEST_PASSWORD);
 
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("ADD MORE");
@@ -206,14 +206,14 @@ public class KeyPairUtilityTest extends TestBase {
 			// wait for timer to expire
 		}
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 
 		assertNotNull(getPopupNodes());
 		homePanePage.enterPasswordInPopup("123654789");
 
-		clickOn("ADD SIGNATURE");
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("ADD MORE");
 

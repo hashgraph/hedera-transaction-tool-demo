@@ -208,10 +208,10 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		Node addSignature;
 
 		do {
-			addSignature = find("ADD SIGNATURE");
+			addSignature = find("ADD MORE SIGNATURES");
 		} while (addSignature == null);
 
-		addSignature = find("ADD SIGNATURE");
+		addSignature = find("ADD MORE SIGNATURES");
 		ensureVisible(addSignature);
 		clickOn(addSignature);
 		for (int i = 0; i < 8; i++) {
@@ -228,7 +228,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		}
 
 		do {
-			addSignature = find("ADD SIGNATURE");
+			addSignature = find("ADD MORE SIGNATURES");
 		} while (addSignature == null);
 
 		ensureVisible(addSignature);
@@ -247,7 +247,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		}
 
 		do {
-			addSignature = find("ADD SIGNATURE");
+			addSignature = find("ADD MORE SIGNATURES");
 		} while (addSignature == null);
 
 		ensureVisible(addSignature);
