@@ -1,5 +1,9 @@
 name: openjdk_14_build
-on: [push]
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+    tags: [ v* ]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
