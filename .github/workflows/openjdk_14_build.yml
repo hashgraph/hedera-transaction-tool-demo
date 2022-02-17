@@ -27,13 +27,17 @@ jobs:
       - name: Compile
         run: ./mvnw --batch-mode --no-transfer-progress --show-version clean compile
       - name: Unit Tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
+        if: env.GITHUB_TOKEN == '' && env.SONAR_TOKEN == ''
         run: ./mvnw --batch-mode --no-transfer-progress --show-version test
-      - name: Sonar
+      - name: Sonar and Unit Tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
         if: env.GITHUB_TOKEN != '' && env.SONAR_TOKEN != ''
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version compile org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
