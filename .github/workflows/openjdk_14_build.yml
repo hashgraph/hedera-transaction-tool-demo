@@ -7,39 +7,33 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    container: gcr.io/swirlds-registry/cci-openjdk-ghr:14.0.2
-    env:
-      MAVEN_OPTS: -Xmx5200m
-      LC_ALL: C.UTF-8
-      DEBIAN_FRONTEND: noninteractive
     timeout-minutes: 60
     steps:
-      - run: apt-get -y install software-properties-common
-      - run: add-apt-repository ppa:git-core/ppa
-      - run: apt-get -y install git
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - run: mvn --version
+      - name: Install JDK
+        uses: actions/setup-java@v2
+        with:
+          cache: 'maven'
+          distribution: 'temurin'
+          java-version: 14
       - name: Cache SonarCloud packages
         uses: actions/cache@v1
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
-      - name: Cache Maven packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
       - name: Compile
-        run: mvn -DskipTests clean compile
-      - name: Unit Tests And Sonar
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version -DskipTests clean compile
+      - name: Unit Tests
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version test
+      - name: Sonar
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn test verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
+        if: env.GITHUB_TOKEN != '' && env.SONAR_TOKEN != ''
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
@@ -47,7 +41,7 @@ jobs:
           files: "*/target/surefire-reports/*.xml"
       - name: Post to a Slack channel
         uses: slackapi/slack-github-action@v1.16.0
-        if: always()
+        if: always() && env.SLACK_BOT_TOKEN != ''
         with:
           channel-id: ${{ secrets.SONAR_SLACK_CHANNEL }}
           payload: |
@@ -114,4 +108,4 @@ jobs:
               ]
             }
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_ACCESS_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_ACCESS_TOKEN || '' }}
