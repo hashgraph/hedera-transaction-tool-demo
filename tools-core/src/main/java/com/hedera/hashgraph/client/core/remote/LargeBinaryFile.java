@@ -102,7 +102,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public LargeBinaryFile(final FileDetails fileDetails) throws HederaClientException {
 		super(fileDetails);
 
-		final var destination = String.format("%s%s", TEMP_DIRECTORY, fileDetails.getBaseName());
+		final var destination = new File(TEMP_DIRECTORY, fileDetails.getBaseName()).getAbsolutePath();
 		if (new File(destination).exists()) {
 			try {
 				FileUtils.deleteDirectory(new File(destination));
