@@ -8,6 +8,8 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress
     steps:
       - uses: actions/checkout@v2
         with:
@@ -25,19 +27,19 @@ jobs:
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Compile
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version clean compile
+        run: ./mvnw clean compile
       - name: Unit Tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
         if: env.GITHUB_TOKEN == '' && env.SONAR_TOKEN == ''
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version test
+        run: ./mvnw test
       - name: Sonar and Unit Tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
         if: env.GITHUB_TOKEN != '' && env.SONAR_TOKEN != ''
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
+        run: ./mvnw verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
