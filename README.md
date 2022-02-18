@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Build](https://circleci.com/gh/hashgraph/hedera-transaction-tool-demo.svg?style=shield)](https://app.circleci.com/pipelines/github/hashgraph/hedera-transaction-tool-demo)
+[![Build](https://github.com/hashgraph/hedera-transaction-tool-demo/actions/workflows/openjdk_14_build.yml/badge.svg)](https://github.com/hashgraph/hedera-transaction-tool-demo/actions/workflows/openjdk_14_build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=com.hedera.hashgraph%3Ahedera-transaction-tool&metric=alert_status&token=028c36aa276e50cba3e8f765a6e709ae2336443b)](https://sonarcloud.io/dashboard?id=com.hedera.hashgraph%3Ahedera-transaction-tool)
 
 # Hedera Transaction Tool Demo

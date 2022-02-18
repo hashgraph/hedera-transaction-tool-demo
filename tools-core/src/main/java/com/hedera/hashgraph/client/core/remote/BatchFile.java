@@ -721,7 +721,7 @@ public class BatchFile extends RemoteFile {
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 			final String output) throws HederaClientException {
 		final var tempStorage =
-				TEMP_FOLDER_LOCATION + LocalDate.now() + File.separator + RandomStringUtils.randomAlphanumeric(
+				new File(TEMP_FOLDER_LOCATION, LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		final DoubleProperty progress = new SimpleDoubleProperty(1);

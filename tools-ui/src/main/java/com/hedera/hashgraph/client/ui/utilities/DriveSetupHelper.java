@@ -45,6 +45,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +69,10 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
+	private static final BooleanSupplier isInGithubActions = () ->
+			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 	private static final String USER_HOME = System.getProperty("user.home") + File.separator;
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	public static final String INPUT_FILES = "InputFiles";
 	public static final String OUTPUT_FILES = "OutputFiles";
 	public static final String EMAIL_STRING = "email";
@@ -558,7 +562,15 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			logger.error("Incomplete pair. Skipping {}", jsonObject);
 			return;
 		}
-		final var home = isInCircleCi.getAsBoolean() ? "/repo/" : USER_HOME;
+
+		var home = USER_HOME;
+
+		if (isInCircleCi.getAsBoolean()) {
+			home = "/repo/";
+		} else if (isInGithubActions.getAsBoolean()) {
+			home = CURRENT_RELATIVE_PATH;
+		}
+
 		final var drive = home + driveString;
 
 		if (validatePathEmailPair(drive, email)) {
