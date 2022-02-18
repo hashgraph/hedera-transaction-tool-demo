@@ -103,7 +103,6 @@ import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -156,7 +155,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(AccountsPaneController.class);
 	public static final String PATH_NAME_EXTENSION = "%s%s.%s";
-	public static final String PATH_NAME_NETWORK_EXTENSION = "%s%s-%s.%s";
 	public static final String ACCOUNTS = "Accounts";
 	public static final String FORMAT_NAME_EXTENSION = "%s.%s";
 	public static final String ARCHIVE = "Archive";
@@ -1180,16 +1178,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					final var oldName = new Identifier(info.accountId,
 							accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
 					final var newName = new Identifier(info.accountId, selectedNetwork).toReadableAccountAndNetwork();
-					final var oldFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(new FilenameFilter() {
-						@Override
-						public boolean accept(File dir, String name) {
-							return name.contains(oldName);
-						}
-					});
-					for (var oldFile : oldFiles) {
+					final var oldFiles =
+							new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.contains(oldName));
+					for (final var oldFile : oldFiles) {
 						try {
 							Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
-						} catch (IOException e) {
+						} catch (final IOException e) {
 							logger.error("Cannot rename file: {}", e.getMessage());
 						}
 					}
@@ -1217,7 +1211,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		return networkBox;
 	}
 
-	private void updateNicknamesFile(AccountLineInformation accountLineInformation, String oldName, String newName) {
+	private void updateNicknamesFile(
+			final AccountLineInformation accountLineInformation, final String oldName, final String newName) {
 		try {
 			final var nicknames =
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) :
@@ -1227,7 +1222,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				nicknames.addProperty(newName, accountLineInformation.getNickname());
 				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			e.printStackTrace();
 		}
 	}
@@ -1804,48 +1799,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-
-	private void storeAccount(final String nickname, final AccountInfo info, final String network) {
-		try {
-			logger.info("Importing account");
-
-			final var accountId = new Identifier(info.accountId, network).toReadableString();
-
-			// Update the list of nicknames.
-			final var nicknames =
-					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-
-			if (nicknames.has(accountId)) {
-				nicknames.remove(accountId);
-			}
-			final var newFileName = accountId + "-" + network;
-			nicknames.addProperty(newFileName, nickname);
-			writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
-
-			// Store the info file in its new location
-			final var newInfoName =
-					format(PATH_NAME_NETWORK_EXTENSION, ACCOUNTS_INFO_FOLDER, accountId, network, INFO_EXTENSION);
-			final var oldInfoName = format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, accountId, INFO_EXTENSION);
-			logger.info("Storing account details to: {}", newInfoName);
-			Files.deleteIfExists(new File(oldInfoName).toPath());
-			Files.deleteIfExists(new File(newInfoName).toPath());
-			writeBytes(newInfoName, info.toBytes());
-			final var oldBalance = balances.get(accountId);
-			balances.remove(accountId);
-			balances.add(newFileName, oldBalance);
-			updateBalanceFromInfo(newInfoName);
-
-			final var oldJsonName = oldInfoName.replace(INFO_EXTENSION, JSON_EXTENSION);
-			final var newJsonName = newInfoName.replace(INFO_EXTENSION, JSON_EXTENSION);
-			Files.deleteIfExists(new File(oldJsonName).toPath());
-			Files.deleteIfExists(new File(newJsonName).toPath());
-			final var jsonObject = info2Json(info);
-			jsonObject.addProperty("NETWORK", network);
-			writeJsonObject(newJsonName, jsonObject);
-		} catch (final IOException | HederaClientException ex) {
-			logger.error("Unable to store AccountInfo.", ex);
-		}
-	}
 
 	public void updateSelectedBalances() {
 		final List<AccountLineInformation> list = new ArrayList<>();

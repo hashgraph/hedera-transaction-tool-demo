@@ -58,6 +58,9 @@ public enum NetworkEnum {
 	}
 
 	public static LedgerId asLedger(final String name) {
+		if (name.equals("")) {
+			return LedgerId.MAINNET;
+		}
 		switch (NetworkEnum.valueOf(name.toUpperCase(Locale.ROOT))) {
 			case MAINNET:
 				return LedgerId.MAINNET;
@@ -71,7 +74,7 @@ public enum NetworkEnum {
 				return LedgerId.fromString("05");
 			case UNKNOWN:
 			default:
-				return LedgerId.fromString("");
+				return LedgerId.fromString("ff");
 		}
 	}
 

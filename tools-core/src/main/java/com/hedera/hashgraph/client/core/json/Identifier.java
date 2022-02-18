@@ -30,7 +30,6 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.ContractId;
 import com.hedera.hashgraph.sdk.FileId;
-import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.ContractID;
 import com.hedera.hashgraph.sdk.proto.FileID;
@@ -216,7 +215,7 @@ public class Identifier implements Comparable<Identifier> {
 			return new Identifier(0, 0, Long.parseLong(idC), network);
 		}
 
-		final var address = AddressChecksums.parseAddress(idC);
+		final var address = AddressChecksums.parseAddress(NetworkEnum.asLedger(network).toBytes(), idC);
 		if (address.getStatus() == AddressChecksums.parseStatus.BAD_FORMAT) {
 			throw new HederaClientRuntimeException(
 					String.format("Bad account format: Address \"%s\" cannot be parsed", id));
@@ -247,7 +246,7 @@ public class Identifier implements Comparable<Identifier> {
 
 	public String toReadableAccountAndNetwork() {
 		return this.toReadableString() +
-				(!"".equals(network ) ? "-" + network.toUpperCase(Locale.ROOT) : "");
+				(!"".equals(network) ? "-" + network.toUpperCase(Locale.ROOT) : "");
 	}
 
 	public static final Identifier ZERO = new Identifier(0, 0, 0, "MAINNET");

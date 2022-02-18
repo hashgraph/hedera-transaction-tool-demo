@@ -895,8 +895,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 		final List<String> accounts =
-				getFeePayers().stream().filter(payer -> payer.getNetwork().equals(getCurrentNetwork())).map(
-						payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(Collectors.toList());
+				new ArrayList<>();
+		for (final Identifier payer : getFeePayers()) {
+			if (payer.getNetwork().equals(getCurrentNetwork())) {
+				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
+				accounts.add(toNicknameAndChecksum);
+			}
+		}
+		accounts.sort(null);
 
 		final List<String> customFeePayers = new ArrayList<>();
 		getCustomFeePayers().forEach(customFeePayer -> {
@@ -931,7 +937,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				textfield.requestFocus();
 			} else {
 				feePayer = sortedAllPayers.get(0);
-				setDefaultFeePayer(Identifier.parse(feePayer));
+				setDefaultFeePayer(Identifier.parse(feePayer, getCurrentNetwork()));
 			}
 		}
 
