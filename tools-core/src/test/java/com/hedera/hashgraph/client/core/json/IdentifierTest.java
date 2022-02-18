@@ -201,7 +201,7 @@ class IdentifierTest {
 		assertEquals(2L, identifierFromAccountID.getAccountNum());
 
 		final var fileId = new FileId(4, 5, 6);
-		final var identifierFromFileId = new Identifier(fileId);
+		final var identifierFromFileId = new Identifier(fileId, "");
 		assertEquals(4L, identifierFromFileId.getShardNum());
 		assertEquals(5L, identifierFromFileId.getRealmNum());
 		assertEquals(6L, identifierFromFileId.getAccountNum());
@@ -209,13 +209,13 @@ class IdentifierTest {
 		assertEquals(fileId, identifierFromFileId.asFile());
 
 		final var fileID = FileID.newBuilder().setShardNum(0).setRealmNum(1).setFileNum(2).build();
-		final var identifierFromFileID = new Identifier(fileID);
+		final var identifierFromFileID = new Identifier(fileID, "MAINNET");
 		assertEquals(0L, identifierFromFileID.getShardNum());
 		assertEquals(1L, identifierFromFileID.getRealmNum());
 		assertEquals(2L, identifierFromFileID.getAccountNum());
 
 		final var contractId = new ContractId(4, 5, 6);
-		final var identifierFromContractId = new Identifier(contractId);
+		final var identifierFromContractId = new Identifier(contractId, "MAINNET");
 		assertEquals(4L, identifierFromContractId.getShardNum());
 		assertEquals(5L, identifierFromContractId.getRealmNum());
 		assertEquals(6L, identifierFromContractId.getAccountNum());
@@ -223,7 +223,7 @@ class IdentifierTest {
 		assertEquals(contractId, identifierFromContractId.asContract());
 
 		final var contractID = ContractID.newBuilder().setShardNum(0).setRealmNum(1).setContractNum(2).build();
-		final var identifierFromContractID = new Identifier(contractID);
+		final var identifierFromContractID = new Identifier(contractID, "MAINNET");
 		assertEquals(0L, identifierFromContractID.getShardNum());
 		assertEquals(1L, identifierFromContractID.getRealmNum());
 		assertEquals(2L, identifierFromContractID.getAccountNum());

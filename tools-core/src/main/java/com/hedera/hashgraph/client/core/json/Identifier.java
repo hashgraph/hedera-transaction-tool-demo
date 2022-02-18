@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.security.AddressChecksums;
@@ -29,6 +30,7 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.ContractId;
 import com.hedera.hashgraph.sdk.FileId;
+import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.ContractID;
 import com.hedera.hashgraph.sdk.proto.FileID;
@@ -36,6 +38,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -49,6 +52,7 @@ public class Identifier implements Comparable<Identifier> {
 	public static final String REALM_NUM = "realmNum";
 	public static final String SHARD_NUM = "shardNum";
 	public static final String ACCOUNT_NUM = "accountNum";
+	public static final String NETWORK = "network";
 	@JsonProperty(defaultValue = "0")
 	private long realmNum;
 
@@ -59,17 +63,27 @@ public class Identifier implements Comparable<Identifier> {
 	@JsonAlias({ "fileNum", "contractNum" })
 	private long accountNum;
 
+	private String network;
+
 	public Identifier() {
 	}
 
-	public Identifier(final long shardNum, final long realmNum, final long accountNum) {
+	public Identifier(final long realmNum, final long shardNum, final long accountNum) {
 		this.realmNum = realmNum;
 		this.shardNum = shardNum;
 		this.accountNum = accountNum;
+		this.network = "";
+	}
+
+	public Identifier(final long realmNum, final long shardNum, final long accountNum, final String network) {
+		this.realmNum = realmNum;
+		this.shardNum = shardNum;
+		this.accountNum = accountNum;
+		this.network = network;
 	}
 
 	public Identifier(final AccountID accountID) {
-		this(accountID.getShardNum(), accountID.getRealmNum(), accountID.getAccountNum());
+		this(accountID.getShardNum(), accountID.getRealmNum(), accountID.getAccountNum(), "");
 	}
 
 	public Identifier(final AccountId accountId) {
@@ -77,23 +91,34 @@ public class Identifier implements Comparable<Identifier> {
 			this.shardNum = accountId.shard;
 			this.realmNum = accountId.realm;
 			this.accountNum = accountId.num;
+			this.network = "";
 		}
 	}
 
-	public Identifier(final FileID fileID) {
-		this(fileID.getShardNum(), fileID.getRealmNum(), fileID.getFileNum());
+	public Identifier(final AccountId accountId, final String network) {
+		if (accountId != null) {
+			this.shardNum = accountId.shard;
+			this.realmNum = accountId.realm;
+			this.accountNum = accountId.num;
+			this.network = network;
+		}
 	}
 
-	public Identifier(final FileId fileId) {
-		this(fileId.shard, fileId.realm, fileId.num);
+
+	public Identifier(final FileID fileID, final String network) {
+		this(fileID.getShardNum(), fileID.getRealmNum(), fileID.getFileNum(), network);
 	}
 
-	public Identifier(final ContractID contractID) {
-		this(contractID.getShardNum(), contractID.getRealmNum(), contractID.getContractNum());
+	public Identifier(final FileId fileId, final String network) {
+		this(fileId.shard, fileId.realm, fileId.num, network);
 	}
 
-	public Identifier(final ContractId contractId) {
-		this(contractId.shard, contractId.realm, contractId.num);
+	public Identifier(final ContractID contractID, final String network) {
+		this(contractID.getShardNum(), contractID.getRealmNum(), contractID.getContractNum(), network);
+	}
+
+	public Identifier(final ContractId contractId, final String network) {
+		this(contractId.shard, contractId.realm, contractId.num, network);
 	}
 
 	public static Identifier parse(final JsonObject jsonObject) throws HederaClientException {
@@ -104,11 +129,13 @@ public class Identifier implements Comparable<Identifier> {
 		if (num == -1) {
 			throw new HederaClientException("Invalid json object");
 		}
+		final var network = jsonObject.has(NETWORK) ? jsonObject.get(NETWORK).getAsString() : "MAINNET";
 
-		return Identifier.parse(String.format("%d.%d.%d",
+		return new Identifier(
 				jsonObject.get(REALM_NUM).getAsLong(),
 				jsonObject.get(SHARD_NUM).getAsLong(),
-				num));
+				num,
+				network);
 	}
 
 	private static long handleNumber(final JsonObject jsonObject) throws HederaClientException {
@@ -162,7 +189,7 @@ public class Identifier implements Comparable<Identifier> {
 	 * 		are numbers and xxxx is the entity checksum
 	 * @return an Identifier
 	 */
-	public static Identifier parse(final String id) {
+	public static Identifier parse(final String id, final String network) {
 		if (id == null || id.isEmpty()) {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
@@ -186,7 +213,7 @@ public class Identifier implements Comparable<Identifier> {
 		}
 
 		if (isNumeric(idC)) {
-			return new Identifier(0, 0, Long.parseLong(idC));
+			return new Identifier(0, 0, Long.parseLong(idC), network);
 		}
 
 		final var address = AddressChecksums.parseAddress(idC);
@@ -199,10 +226,31 @@ public class Identifier implements Comparable<Identifier> {
 					String.format("Bad account checksum: Provided \"%s\", should be \"%s\"", address.getChecksum(),
 							address.getCorrectChecksum()));
 		}
-		return new Identifier(address.getNum1(), address.getNum2(), address.getNum3());
+		return new Identifier(address.getNum1(), address.getNum2(), address.getNum3(), network);
 	}
 
-	public static final Identifier ZERO = new Identifier(0, 0, 0);
+	/**
+	 * Parses a String into an Identifier.
+	 *
+	 * @param id
+	 * 		a String object that should represent an identifier. The following patterns are allowed:
+	 * 		- "N" where N is a number
+	 * 		- "N1.N2.N3" where N1, N2 and N3 are numbers
+	 * 		- "N1.N2.N3-xxxxx" where N1, N2 and N3 are numbers and "xxxxx" is the checksum of the entity
+	 * 		- "nickname (N1.N2.N3-xxxxx)" where nickname is a string name assigned to the account, where N1, N2 and N3
+	 * 		are numbers and xxxx is the entity checksum
+	 * @return an Identifier
+	 */
+	public static Identifier parse(final String id) {
+		return parse(id, "");
+	}
+
+	public String toReadableAccountAndNetwork() {
+		return this.toReadableString() +
+				(!"".equals(network ) ? "-" + network.toUpperCase(Locale.ROOT) : "");
+	}
+
+	public static final Identifier ZERO = new Identifier(0, 0, 0, "MAINNET");
 
 
 	public long getRealmNum() {
@@ -229,6 +277,14 @@ public class Identifier implements Comparable<Identifier> {
 		this.accountNum = accountNum;
 	}
 
+	public String getNetwork() {
+		return network;
+	}
+
+	public void setNetwork(final String network) {
+		this.network = network;
+	}
+
 	public boolean isValid() {
 		return realmNum >= 0 && shardNum >= 0 && accountNum > 0;
 	}
@@ -249,17 +305,16 @@ public class Identifier implements Comparable<Identifier> {
 		return String.format("%d.%d.%d", shardNum, realmNum, accountNum);
 	}
 
-	public String toReadableAccountAndChecksum(){
-		final var name = this.toReadableString();
-		return String.format("%s-%s", name, AddressChecksums.checksum(name));
-	}
-
-	public String toNicknameAndChecksum(JsonObject accounts) {
+	public String toNicknameAndChecksum(final JsonObject accounts) {
 		return CommonMethods.nicknameOrNumber(this, accounts);
 	}
 
 	public String toReadableStringAndChecksum() {
-		return String.format("%s-%s", this.toReadableString(), AddressChecksums.checksum(this.toReadableString()));
+		if ("".equals(this.network) || "UNKNOWN".equals(this.network)) {
+			return toReadableString();
+		}
+		return String.format("%s-%s", this.toReadableString(),
+				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetwork()).toBytes(), this.toReadableString()));
 	}
 
 	@Override

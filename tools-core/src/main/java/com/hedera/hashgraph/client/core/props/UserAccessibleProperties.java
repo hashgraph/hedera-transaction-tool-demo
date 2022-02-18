@@ -39,7 +39,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HOURS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_MINUTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_NODE_ID;
@@ -452,13 +451,27 @@ public class UserAccessibleProperties {
 	}
 
 	public Identifier getDefaultFeePayer() {
-		final var idString = properties.getProperty(DEFAULT_FEE_PAYER, "");
-		return idString.equals("") ? Identifier.ZERO : Identifier.parse(idString);
+		final var idString = getDefaultFeePayers();
+		final var currentNetwork = getCurrentNetwork();
+		final var defaultPayer = idString.getOrDefault(currentNetwork, "");
+		return "".equals(defaultPayer) ? Identifier.ZERO : Identifier.parse(defaultPayer, currentNetwork);
 	}
 
 	public void setDefaultFeePayer(final Identifier feePayer) {
-		properties.setProperty(DEFAULT_FEE_PAYER, feePayer.toReadableString());
+		final var payers = getDefaultFeePayers();
+		payers.put(feePayer.getNetwork(), feePayer.toReadableString());
+		setDefaultFeePayers(payers);
 	}
+
+
+	public Map<String, String> getDefaultFeePayers() {
+		return properties.getMapProperty("defaultFeePayers", new HashMap<>());
+	}
+
+	public void setDefaultFeePayers(final Map<String, String> map) {
+		properties.setProperty("defaultFeePayers", map);
+	}
+
 
 	public Set<Identifier> getCustomFeePayers() {
 		final var idStrings = properties.getSetProperty(CUSTOM_FEE_PAYERS, new HashSet<>());
@@ -480,6 +493,12 @@ public class UserAccessibleProperties {
 		final var payers = getCustomFeePayers();
 		payers.remove(identifier);
 		setCustomFeePayers(Collections.unmodifiableSet(payers));
+	}
+
+	public void removeDefaultFeePayer(String network) {
+		final var payers = getDefaultFeePayers();
+		payers.remove(network);
+		setDefaultFeePayers(payers);
 	}
 
 

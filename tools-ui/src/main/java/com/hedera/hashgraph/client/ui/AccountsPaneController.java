@@ -103,6 +103,7 @@ import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -119,6 +120,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -224,6 +226,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeAccountPane() {
+		fixAccountNames();
 		hiddenPathAccount.clear();
 		try {
 			getAccountsFromFileSystem(accountInfos, idNickNames);
@@ -250,6 +253,37 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		setupInfoRequestFields();
 	}
 
+	private void fixAccountNames() {
+		final var files = new File(ACCOUNTS_INFO_FOLDER).listFiles(
+				(dir, name) -> !name.contains("-") &&
+						(INFO_EXTENSION.equals(FilenameUtils.getExtension(name))));
+		final JsonObject nicknames;
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+
+			for (final var file : files) {
+				if (!nicknames.has(FilenameUtils.getBaseName(file.getName()))) {
+					continue;
+				}
+				final var name = FilenameUtils.getBaseName(file.getName());
+				final var id = Identifier.parse(name, UNKNOWN_NETWORK_STRING);
+				final var oldPath = file.getAbsolutePath();
+				final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
+				Files.move(Path.of(oldPath), Path.of(newPath));
+				Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
+						Path.of(newPath.replace(INFO_EXTENSION, JSON_EXTENSION)));
+				if (nicknames.has(name)) {
+					final var n = nicknames.get(name);
+					nicknames.remove(name);
+					nicknames.add(id.toReadableAccountAndNetwork(), n);
+				}
+			}
+			writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
+		} catch (final HederaClientException | IOException e) {
+			logger.error(e);
+		}
+	}
+
 	private void setupInfoRequestFields() {
 		feePayerTextFieldA.managedProperty().bind(feePayerTextFieldA.visibleProperty());
 		addCustomPayerButton.managedProperty().bind(addCustomPayerButton.visibleProperty());
@@ -273,12 +307,17 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final var feePayer =
 					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
 							(String) feePayerCombobox);
+			feePayer.setNetwork(networkChoiceBoxA.getValue().toString());
 
 			if (feePayer == null) {
 				return;
 			}
 
-			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText());
+			final var network = networkChoiceBoxA.getValue();
+			if (!(network instanceof String)) {
+				return;
+			}
+			final var accounts = parseAccountNumbers(accountsToUpdateTextField.getText(), (String) network);
 			if (accounts.isEmpty()) {
 				PopupMessage.display(NO_ACCOUNTS_SELECTED_TITLE,
 						"The \"Accounts\" field is either empty or no valid accounts could be parsed.");
@@ -312,7 +351,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private Set<File> getKeyFiles(
 			final Identifier feePayer) throws HederaClientException, InvalidProtocolBufferException {
-		final var accountInfo = new File(ACCOUNTS_INFO_FOLDER, feePayer.toReadableString() + "." + INFO_EXTENSION);
+		final var filename = feePayer.toReadableString() + "-" + feePayer.getNetwork() + "." + INFO_EXTENSION;
+		final var accountInfo = new File(ACCOUNTS_INFO_FOLDER, filename);
 		final Set<File> returnSet = new HashSet<>();
 		if (accountInfo.exists()) {
 			final var fullKey = AccountInfo.fromBytes(readBytes(accountInfo.getAbsolutePath())).key;
@@ -345,8 +385,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final List<File> newFiles = new ArrayList<>();
 			for (final var account : accounts) {
 				logger.info("Requesting information for account {}", account);
-				query.setNetwork(getAccountNetwork(new Identifier(account)));
-				final var info = query.getInfo(account);
+				final var identifier = new Identifier(account, feePayer.getNetwork());
+				query.setNetwork(getAccountNetwork(feePayer));
+				final var info = query.getInfo(identifier);
 				final var filePath =
 						tmpdir.getAbsolutePath() + File.separator + account + "." + INFO_EXTENSION;
 				writeBytes(filePath, info.toBytes());
@@ -374,7 +415,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private String getAccountNetwork(final Identifier account) {
-		final String network = accountLineInformation.stream()
+		final var network = accountLineInformation.stream()
 				.filter(lineInformation -> account.equals(lineInformation.getAccount()))
 				.findFirst()
 				.map(AccountLineInformation::getLedgerId)
@@ -384,7 +425,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	@NotNull
 	private String precheckErrorString(final PrecheckStatusException e) {
-		final String message = e.getMessage();
+		final var message = e.getMessage();
 		var error = message.substring(message.indexOf("`") + 1);
 		error = "Request " + error.substring(error.indexOf("`") + 1);
 		return error;
@@ -518,19 +559,18 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			// For legacy accounts
 			if (!balances.has(entry.getKey())) {
 				final var location = entry.getValue();
-				final var accountID = entry.getKey();
-				updateBalanceFromInfo(location, accountID);
+				updateBalanceFromInfo(location);
 			}
 
 			final var balance =
 					Hbar.fromTinybars(balances.get(entry.getKey()).getAsJsonObject().get(BALANCE_PROPERTY).getAsLong());
 			final var date = balances.get(entry.getKey()).getAsJsonObject().get(DATE_PROPERTY).getAsLong();
 			final var info = AccountInfo.fromBytes(readBytes(entry.getValue()));
+			final var ledgerString = getLedgerString(FilenameUtils.getBaseName(entry.getValue()), info.ledgerId);
+			final var account = new Identifier(info.accountId, ledgerString);
 			final var line =
 					new AccountLineInformation(nicknames.get(entry.getKey()).getAsString(),
-							new Identifier(info.accountId),
-							balance, date, isSigner(info),
-							getLedgerString(FilenameUtils.getBaseName(entry.getValue()), info.ledgerId));
+							account, balance, date, isSigner(info), ledgerString);
 			accountLineInformation.add(line);
 		}
 		Collections.sort(accountLineInformation);
@@ -541,10 +581,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 *
 	 * @param location
 	 * 		the file location of the account info
-	 * @param accountID
-	 * 		the account id as a string
 	 */
-	private void updateBalanceFromInfo(final String location, final String accountID) throws HederaClientException {
+	private void updateBalanceFromInfo(final String location) throws HederaClientException {
 		final AccountInfo info;
 		final BasicFileAttributes attributes;
 
@@ -555,10 +593,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			throw new HederaClientException(e);
 		}
 
-		final var ledgerString = getLedgerString(FilenameUtils.getBaseName(location), info.ledgerId);
-		final var accountName =
-				Identifier.parse(accountID).toReadableString() + (UNKNOWN_NETWORK_STRING.equals(
-						ledgerString) ? "" : "-" + ledgerString);
+
+		final var ledgerString =
+				getLedgerString(FilenameUtils.getBaseName(location), info.ledgerId).toUpperCase(Locale.ROOT);
+
+		final var accountName = new Identifier(info.accountId, ledgerString).toReadableAccountAndNetwork();
 		updateBalance(accountName, info.balance, attributes.creationTime().toMillis());
 	}
 
@@ -729,8 +768,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				if (empty) {
 					setText("");
 				} else {
-					final var checksum = AddressChecksums.checksum(accountID.toReadableString());
-					setText(format("%s-%s", accountID.toReadableString(), checksum));
+
+					setText(accountID.toReadableStringAndChecksum());
 				}
 			}
 		});
@@ -959,7 +998,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		logger.info("Account {} has been deleted", accountIDString);
 
 		//Archiving history
-		final File[] historyList =
+		final var historyList =
 				new File(ACCOUNTS_INFO_FOLDER, ARCHIVE).listFiles((dir, name) -> name.startsWith(accountIDString + "_"
 				));
 
@@ -980,7 +1019,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void removeDefaultFeePayer() {
-		controller.setDefaultFeePayer(Identifier.ZERO);
+		final var network = networkChoiceBoxA.getValue();
+		if (!(network instanceof String)) {
+			return;
+		}
+		controller.removeDefaultFeePayer((String) network);
 		controller.settingsPaneController.initializeSettingsPane();
 		setupFeePayerChoiceBox();
 		controller.settingsPaneController.setupFeePayerChoicebox();
@@ -1049,9 +1092,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					});
 
 
-			final var key = lineInformation.getAccount().toReadableString() +
-					(!UNKNOWN_NETWORK_STRING.equals(
-							lineInformation.getLedgerId()) ? "-" + lineInformation.getLedgerId() : "");
+			final var key = lineInformation.getAccount().toReadableAccountAndNetwork();
 			final var filePath = accountInfos.get(key);
 			final var info = AccountInfo.fromBytes(readBytes(filePath));
 
@@ -1076,7 +1117,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final var dateLabel =
 					setupBoxLabel(
 							format("Balance (as of %s)", instantToLocalTimeDate(new Date(date).toInstant())));
-			final HBox networkBox = getNetworkBox(info, lineInformation);
+			final var networkBox = getNetworkBox(info, lineInformation);
 
 			final var balanceTextField = setupBoxTextField(hbars.toString());
 
@@ -1099,7 +1140,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			gridPane.add(buttons, 2, 0);
 
 
-			final Hyperlink link = new Hyperlink("History");
+			final var link = new Hyperlink("History");
 			link.setOnAction(actionEvent -> AccountHistoryPopup.display(info.accountId, controller));
 
 			gridPane.add(link, 3, 0);
@@ -1121,7 +1162,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	@NotNull
 	private HBox getNetworkBox(final AccountInfo info, final AccountLineInformation accountLineInformation) {
-		final HBox networkBox = new HBox();
+		final var networkBox = new HBox();
 		final var doesNotHaveLedger = UNKNOWN_NETWORK_STRING.equals(accountLineInformation.getLedgerId());
 		final var networkChoiceBox = new ChoiceBox<>();
 
@@ -1136,8 +1177,33 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			if (!noise) {
 				if (t1 instanceof String) {
 					final var selectedNetwork = (String) t1;
-					storeAccount(accountLineInformation.getNickname(), info, selectedNetwork);
+					final var oldName = new Identifier(info.accountId,
+							accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
+					final var newName = new Identifier(info.accountId, selectedNetwork).toReadableAccountAndNetwork();
+					final var oldFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(new FilenameFilter() {
+						@Override
+						public boolean accept(File dir, String name) {
+							return name.contains(oldName);
+						}
+					});
+					for (var oldFile : oldFiles) {
+						try {
+							Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
+						} catch (IOException e) {
+							logger.error("Cannot rename file: {}", e.getMessage());
+						}
+					}
+
+					updateNicknamesFile(accountLineInformation, oldName, newName);
+
+					final var oldBalance = balances.get(oldName);
+					balances.remove(oldName);
+					balances.add(newName, oldBalance);
+
 					accountLineInformation.setLedgerID(selectedNetwork);
+					if (isSigner(info)) {
+						setupFeePayers();
+					}
 					initializeAccountPane();
 				}
 				if (t1 instanceof Separator) {
@@ -1149,6 +1215,21 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var networkTextField = setupBoxTextField(accountLineInformation.getLedgerId());
 		networkBox.getChildren().add(doesNotHaveLedger ? networkChoiceBox : networkTextField);
 		return networkBox;
+	}
+
+	private void updateNicknamesFile(AccountLineInformation accountLineInformation, String oldName, String newName) {
+		try {
+			final var nicknames =
+					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) :
+							new JsonObject();
+			if (nicknames.has(oldName)) {
+				nicknames.remove(oldName);
+				nicknames.addProperty(newName, accountLineInformation.getNickname());
+				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
+			}
+		} catch (HederaClientException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@NotNull
@@ -1213,7 +1294,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 			balance = new Hbar(-3);
 		}
-		final Hbar finalBalance = balance;
+		final var finalBalance = balance;
 		accountLineInformation.stream().filter(
 				lineInformation -> lineInformation.getAccount().equals(identifier)).forEach(
 				lineInformation -> lineInformation.setBalance(finalBalance));
@@ -1593,16 +1674,18 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		a file containing an account info
 	 */
 	private void replaceInfo(final File file) throws HederaClientException {
-		final var identifier = getAccountIDFromInfoFile(file).toReadableString();
+		final var identifier = getAccountIDFromInfoFile(file);
 		final var infoPath =
-				new File(format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, identifier, INFO_EXTENSION)).toPath();
+				new File(format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, identifier.toReadableAccountAndNetwork(),
+						INFO_EXTENSION)).toPath();
 		final var jsonPath =
-				new File(format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, identifier, JSON_EXTENSION)).toPath();
+				new File(format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, identifier.toReadableAccountAndNetwork(),
+						JSON_EXTENSION)).toPath();
 		try {
 			archiveOldInfoFile(infoPath);
 			archiveOldInfoFile(jsonPath);
-			storeAccount(idNickNames.get(identifier), file.getAbsolutePath());
-			updateBalanceFromInfo(infoPath.toString(), identifier);
+			storeAccount(idNickNames.get(identifier.toReadableAccountAndNetwork()), file.getAbsolutePath());
+			updateBalanceFromInfo(infoPath.toString());
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
@@ -1644,7 +1727,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		try {
 			final var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
-			return new Identifier(info.accountId);
+			return new Identifier(info.accountId, info.ledgerId.toString());
 		} catch (final InvalidProtocolBufferException e) {
 			controller.logAndDisplayError(e);
 			throw new HederaClientException(e);
@@ -1662,7 +1745,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private boolean inAccountMaps(final Identifier account) {
 		final var file = new File(
 				format("%s/Accounts/%s.%s", controller.getPreferredStorageDirectory(),
-						account.toReadableString(), INFO_EXTENSION));
+						account.toReadableAccountAndNetwork(), INFO_EXTENSION));
 		return file.exists() && !file.isDirectory();
 	}
 
@@ -1679,7 +1762,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var account = new JsonObject();
 		account.addProperty("accountID", newAccountID);
 		account.addProperty("nickname", nickname);
-		updateBalanceFromInfo(file.toString(), newAccountID);
+		updateBalanceFromInfo(file.toString());
 		idNickNames.put(newAccountID, nickname);
 		accountInfos.put(nickname,
 				format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, newAccountID, INFO_EXTENSION));
@@ -1696,7 +1779,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.info("Importing account");
 
 			final var info = AccountInfo.fromBytes(readBytes(infoFile));
-			final var accountId = new Identifier(info.accountId).toReadableString();
+			final var network = NetworkEnum.from(info.ledgerId).toString();
+			final var accountId = new Identifier(info.accountId, network).toReadableAccountAndNetwork();
 
 			// Update the list of nicknames.
 			final var nicknames =
@@ -1720,11 +1804,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 	}
 
+
 	private void storeAccount(final String nickname, final AccountInfo info, final String network) {
 		try {
 			logger.info("Importing account");
 
-			final var accountId = new Identifier(info.accountId).toReadableString();
+			final var accountId = new Identifier(info.accountId, network).toReadableString();
 
 			// Update the list of nicknames.
 			final var nicknames =
@@ -1748,7 +1833,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final var oldBalance = balances.get(accountId);
 			balances.remove(accountId);
 			balances.add(newFileName, oldBalance);
-			updateBalanceFromInfo(newInfoName, accountId);
+			updateBalanceFromInfo(newInfoName);
 
 			final var oldJsonName = oldInfoName.replace(INFO_EXTENSION, JSON_EXTENSION);
 			final var newJsonName = newInfoName.replace(INFO_EXTENSION, JSON_EXTENSION);
@@ -1842,7 +1927,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		progressBar.progressProperty().bind(task.progressProperty());
 		new Thread(task).start();
 
-		final Stage finalWindow = window;
+		final var finalWindow = window;
 		task.setOnSucceeded(workerStateEvent -> {
 			try {
 				updateAccountLineInformation();
@@ -1892,7 +1977,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	public void setupFeePayerChoiceBox() {
 		noise = true;
-		final String feePayer = controller.setupChoiceBoxFeePayer(feePayerChoiceBoxA, feePayerTextFieldA);
+		final var feePayer = controller.setupChoiceBoxFeePayer(feePayerChoiceBoxA, feePayerTextFieldA);
 		noise = false;
 
 		if ("".equals(feePayer)) {
@@ -1900,9 +1985,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		feePayerChoiceBoxA.getSelectionModel().select(feePayer);
 		feePayerChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
-			if (t1 instanceof String) {
+			final var net = networkChoiceBoxA.getValue();
+			if (t1 instanceof String && net instanceof String) {
 				final var text = (String) t1;
-				controller.setDefaultFeePayer(Identifier.parse(text));
+				controller.setDefaultFeePayer(Identifier.parse(text, (String) net));
 			}
 		});
 	}
@@ -1912,6 +1998,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		controller.networkBoxSetup(choiceBox);
 		noise = false;
 		choiceBox.getSelectionModel().select(controller.getCurrentNetwork());
+		choiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (t1 instanceof String) {
+				final var payers = controller.getDefaultFeePayers();
+				final var s = (String) t1;
+				if (payers.containsKey(s)) {
+					feePayerChoiceBoxA.getSelectionModel().select(payers.get(s));
+				}
+			}
+		});
 	}
 
 	public void addFeePayerAction() {
@@ -1945,6 +2040,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				feePayerTextFieldA.setVisible(true);
 			}
 		}
+
 	}
 
 }

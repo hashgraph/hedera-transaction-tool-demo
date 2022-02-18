@@ -325,7 +325,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			if (t1 instanceof String) {
 				final var text = (String) t1;
 				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text)));
-				controller.setDefaultFeePayer(Identifier.parse(text));
+				controller.setDefaultFeePayer(Identifier.parse(text, controller.getCurrentNetwork()));
 			}
 		});
 	}
@@ -342,6 +342,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					controller.setCurrentNetwork(selectedNetwork);
 					deleteCustomNetworkButton.setDisable(
 							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
+					controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
 				}
 				if (t1 instanceof Separator) {
 					comboBox.getSelectionModel().select(o);

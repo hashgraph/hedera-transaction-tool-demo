@@ -58,16 +58,21 @@ public enum NetworkEnum {
 	}
 
 	public static LedgerId asLedger(final String name) {
-		LedgerId ledgerId = LedgerId.MAINNET;
-
 		switch (NetworkEnum.valueOf(name.toUpperCase(Locale.ROOT))) {
+			case MAINNET:
+				return LedgerId.MAINNET;
 			case PREVIEWNET:
-				ledgerId = LedgerId.PREVIEWNET;
-				break;
+				return LedgerId.PREVIEWNET;
 			case TESTNET:
-				ledgerId = LedgerId.TESTNET;
+				return LedgerId.TESTNET;
+			case INTEGRATION:
+				return LedgerId.fromString("04");
+			case CUSTOM:
+				return LedgerId.fromString("05");
+			case UNKNOWN:
+			default:
+				return LedgerId.fromString("");
 		}
-		return ledgerId;
 	}
 
 	public String getName() {

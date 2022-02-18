@@ -851,8 +851,25 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getDefaultFeePayer();
 	}
 
+	/**
+	 * Returns the stored fee payers per known network
+	 *
+	 * @return a map where the keys are networks and the values are account nicknames.
+	 */
+	public Map<String, String> getDefaultFeePayers() {
+		return properties.getDefaultFeePayers();
+	}
+
+	public void setDefaultFeePayers(Map<String, String> map) {
+		properties.setDefaultFeePayers(map);
+	}
+
 	public void setDefaultFeePayer(final Identifier feePayer) {
 		properties.setDefaultFeePayer(feePayer);
+	}
+
+	public void removeDefaultFeePayer(final String network) {
+		properties.removeDefaultFeePayer(network);
 	}
 
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
@@ -877,9 +894,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
 
 
-		final List<String> accounts = getFeePayers().stream().map(
-				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
-				Collectors.toList());
+		final List<String> accounts =
+				getFeePayers().stream().filter(payer -> payer.getNetwork().equals(getCurrentNetwork())).map(
+						payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(Collectors.toList());
 
 		final List<String> customFeePayers = new ArrayList<>();
 		getCustomFeePayers().forEach(customFeePayer -> {
@@ -917,6 +934,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDefaultFeePayer(Identifier.parse(feePayer));
 			}
 		}
+
+		choiceBox.getSelectionModel().select(feePayer);
 
 		textfield.setVisible(Identifier.ZERO.equals(getDefaultFeePayer()));
 
