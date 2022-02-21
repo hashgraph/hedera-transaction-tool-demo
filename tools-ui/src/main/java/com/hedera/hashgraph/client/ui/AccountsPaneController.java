@@ -1722,12 +1722,17 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		try {
 			final var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
-			return new Identifier(info.accountId, info.ledgerId.toString());
+			return new Identifier(info.accountId, getNetworkFromInfo(info));
 		} catch (final InvalidProtocolBufferException e) {
 			controller.logAndDisplayError(e);
 			throw new HederaClientException(e);
 		}
 
+	}
+
+	private String getNetworkFromInfo(AccountInfo info) {
+		final var network = NetworkEnum.asLedger(info.ledgerId.toString()).toString();
+		return network;
 	}
 
 	/**
