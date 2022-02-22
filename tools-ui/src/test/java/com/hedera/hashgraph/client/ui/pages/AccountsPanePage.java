@@ -25,10 +25,12 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
-import javafx.scene.control.PasswordField;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -42,16 +44,14 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CURRENT_ACCOUNT_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.HIDDEN_ACCOUNT_INFO_TEXTFIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_CREATE_KEYS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_GENERATE_KEYS;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASSWORD_BOX;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.RETYPE_PASSWORD_BOX;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.*;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings({ "rawtypes", "UnusedReturnValue" })
 public class AccountsPanePage {
 
 	private final TestBase driver;
@@ -60,61 +60,24 @@ public class AccountsPanePage {
 		this.driver = driver;
 	}
 
-	public AccountsPanePage pressGenerateKeyButton() {
-		final ScrollPane pane = driver.find(CURRENT_ACCOUNT_PANE);
-		pane.setVvalue(1.0);
-		driver.clickOn(KEYS_GENERATE_KEYS);
-		return this;
-	}
-
-	public AccountsPanePage enterNickName(final String nickname) {
-		((TextField) driver.find(NICKNAME)).clear();
-		driver.clickOn(NICKNAME).write(nickname);
-		return this;
-	}
-
-	public AccountsPanePage enterPassword(final String password) {
-		((PasswordField) driver.find(PASSWORD_BOX)).clear();
-		driver.clickOn(PASSWORD_BOX).write(password);
-		return this;
-	}
-
-	public AccountsPanePage enterRepeatPassword(final String password) {
-		((PasswordField) driver.find(RETYPE_PASSWORD_BOX)).clear();
-		driver.clickOn(RETYPE_PASSWORD_BOX).write(password);
-		return this;
-	}
-
-	public AccountsPanePage pressCreateKeysButton() {
-		driver.clickOn(KEYS_CREATE_KEYS);
-		return this;
-	}
-
 	public Node find(final String s) {
 		return driver.find(s);
 	}
 
-	public AccountsPanePage closePopup(final String query) {
-		final ObservableList<Node> nodes = getPopupNodes();
-		assert nodes != null;
-		driver.clickOn(query.toUpperCase());
-		return this;
-	}
-
 	public AccountsPanePage enterAccountNickName(final String nickName) {
-		final ObservableList<Node> nodes = getPopupNodes();
+		final var nodes = getPopupNodes();
 		assert nodes != null;
-		final TextField textField = (TextField) nodes.get(1);
+		final var textField = (TextField) nodes.get(1);
 		textField.setText(nickName);
 		return this;
 	}
 
 	public AccountsPanePage closeNicknamePopup() {
-		final ObservableList<Node> nodes = getPopupNodes();
+		final var nodes = getPopupNodes();
 		assert nodes != null;
-		final HBox hBox = (HBox) nodes.get(2);
-		final HBox hBox1 = ((HBox) hBox.getChildren().get(1));
-		final Button button = (Button) hBox1.getChildren().get(1);
+		final var hBox = (HBox) nodes.get(2);
+		final var hBox1 = ((HBox) hBox.getChildren().get(1));
+		final var button = (Button) hBox1.getChildren().get(1);
 		driver.clickOn(button);
 		return this;
 	}
@@ -128,10 +91,10 @@ public class AccountsPanePage {
 	public List<AccountLineInformation> getAccounts() {
 		final List<AccountLineInformation> accounts = new ArrayList<>();
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
-		final Node table = scrollPane.getContent();
+		final var table = scrollPane.getContent();
 		if (table instanceof TableView) {
 			final var items = ((TableView) table).getItems();
-			for (final Object item : items) {
+			for (final var item : items) {
 				assertTrue(item instanceof AccountLineInformation);
 				accounts.add((AccountLineInformation) item);
 			}
@@ -141,13 +104,13 @@ public class AccountsPanePage {
 
 	public AccountsPanePage expandRow(final String nickname) {
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
-		final Node table = scrollPane.getContent();
+		final var table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		AccountLineInformation info = null;
-		final TableView accountTable = (TableView) table;
-		int row = 0;
-		for (final Object item : accountTable.getItems()) {
+		final var accountTable = (TableView) table;
+		var row = 0;
+		for (final var item : accountTable.getItems()) {
 			assertTrue(item instanceof AccountLineInformation);
 			if (((AccountLineInformation) item).getNickname().equals(nickname)) {
 				info = (AccountLineInformation) item;
@@ -158,7 +121,7 @@ public class AccountsPanePage {
 		}
 
 		assertTrue(accountTable.getColumns().get(0) instanceof TableRowExpanderColumn);
-		final TableRowExpanderColumn<AccountLineInformation> expanderColumn =
+		final var expanderColumn =
 				(TableRowExpanderColumn<AccountLineInformation>) accountTable.getColumns().get(0);
 		if (info != null && !expanderColumn.getExpandedProperty(info).get()) {
 			expanderColumn.toggleExpanded(row);
@@ -169,7 +132,7 @@ public class AccountsPanePage {
 
 	public AccountsPanePage enterPasswordInPopup(final String text) throws HederaClientException {
 		final var popupNodes = getPopupNodes();
-		final var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(popupNodes));
+		final var passwords = findPasswordInPopup(Objects.requireNonNull(popupNodes));
 		if (passwords == null) {
 			throw new HederaClientException("Unexpected popup");
 		}
@@ -229,9 +192,9 @@ public class AccountsPanePage {
 		sleep(1000);
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final var table = (TableView<AccountLineInformation>) scrollPane.getContent();
 		AccountLineInformation info = null;
-		for (final AccountLineInformation item : table.getItems()) {
+		for (final var item : table.getItems()) {
 			if (nickname.equals(item.getNickname())) {
 				info = item;
 			}
@@ -246,7 +209,7 @@ public class AccountsPanePage {
 		sleep(1000);
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
-		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
+		final var table = (TableView<AccountLineInformation>) scrollPane.getContent();
 
 		final var columns = table.getColumns();
 		final var graphic = columns.get(3).getGraphic();
@@ -258,32 +221,10 @@ public class AccountsPanePage {
 
 		final TextField path = driver.find(HIDDEN_ACCOUNT_INFO_TEXTFIELD);
 		path.setText(location);
-		final Node x = find(IMPORT_ACCOUNT_BUTTON);
+		final var x = find(IMPORT_ACCOUNT_BUTTON);
 		driver.clickOn(x);
 		//		driver.clickOn(path).press(KeyCode.ENTER).release(KeyCode.ENTER);
 
-		return this;
-	}
-
-	public AccountsPanePage dontReplaceAccount() {
-		final ObservableList<Node> popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		final HBox buttons = (HBox) popupNodes.get(1);
-
-		final Button decline = (Button) buttons.getChildren().get(0);
-
-		driver.clickOn(decline);
-		return this;
-	}
-
-	public AccountsPanePage replaceAccount() {
-		final ObservableList<Node> popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		final HBox buttons = (HBox) popupNodes.get(1);
-
-		final Button replace = (Button) buttons.getChildren().get(1);
-
-		driver.clickOn(replace);
 		return this;
 	}
 
@@ -305,7 +246,7 @@ public class AccountsPanePage {
 	}
 
 	public TableView getTableFromPopup(final ObservableList<Node> nodes) {
-		for (final Node node : nodes) {
+		for (final var node : nodes) {
 			if (node instanceof TableView) {
 				return (TableView) node;
 			}
@@ -320,4 +261,29 @@ public class AccountsPanePage {
 	}
 
 
+	public AccountsPanePage setNetwork(final String network) {
+		final List<ChoiceBox> choiceBoxes = getChoiceBoxesFromExpander(this.driver);
+		assertEquals(1, choiceBoxes.size());
+		final var choice = choiceBoxes.get(0);
+		driver.clickOn(choice);
+		int count = 0;
+		for (final Object item : choice.getItems()) {
+			if (item instanceof Separator) {
+				continue;
+			}
+			count++;
+			if (item.toString().equalsIgnoreCase(network)) {
+				break;
+			}
+			driver.type(KeyCode.DOWN);
+		}
+		if (count < choice.getItems().size()) {
+			driver.type(KeyCode.ENTER);
+		}
+		return this;
+	}
+
+	public List<ChoiceBox> findChoiceBoxes(){
+		return getChoiceBoxesFromExpander(this.driver);
+	}
 }

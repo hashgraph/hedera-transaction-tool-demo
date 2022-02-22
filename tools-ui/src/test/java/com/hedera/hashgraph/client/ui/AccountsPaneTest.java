@@ -23,9 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
@@ -34,7 +32,6 @@ import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -59,7 +56,6 @@ import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,7 +63,6 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -75,11 +70,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 import java.util.prefs.BackingStoreException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertNull;
@@ -88,7 +84,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("ALL")
+@SuppressWarnings("rawtypes")
 @RunWith(JUnitParamsRunner.class)
 public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAware {
 
@@ -101,8 +97,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	private UserAccessibleProperties properties;
 	private AccountsPanePage accountsPanePage;
-	private MainWindowPage mainWindowPage;
-	private String currentRelativePath = Paths.get("").toAbsolutePath().toString();
+	private final String currentRelativePath = Paths.get("").toAbsolutePath().toString();
 
 
 	@Before
@@ -117,7 +112,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			logger.info("TransactionTools folder created");
 		}
 		setupTransactionDirectory(DEFAULT_STORAGE);
-		//FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 
 		if (new File(
 				currentRelativePath + "/src/test/resources/Transactions - Documents/OutputFiles/test1" +
@@ -125,7 +119,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 			logger.info("Output path created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(currentRelativePath + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
@@ -135,8 +129,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		properties.setHash("123456789".toCharArray());
 		properties.setOneDriveCredentials(emailMap);
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
@@ -162,18 +156,22 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
 		properties.setCustomNetworks(Collections.singleton("integration"));
 
-		Set<String> defaultNetworks = new HashSet<>();
+		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
 
 		properties.setCurrentNetwork("integration", defaultNetworks);
 
+		final Map<String, String> payers = new HashMap<>();
+		payers.put("integration", "0.0.2");
+		properties.setDefaultFeePayers(payers);
+
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
 		accountsPanePage = new AccountsPanePage(this);
-		mainWindowPage = new MainWindowPage(this);
+		final MainWindowPage mainWindowPage = new MainWindowPage(this);
 
 		mainWindowPage.clickOnAccountsButton();
 
@@ -186,13 +184,13 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Test
 	public void importOneAccount_Test() throws IOException, HederaClientException {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
-		Node x = find(IMPORT_ACCOUNT_BUTTON);
+//		Node x = find(IMPORT_ACCOUNT_BUTTON);
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
 
-		ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = getPopupNodes();
 
 		assertEquals("Please enter a nickname for account 0.0.2",
 				((Label) Objects.requireNonNull(popupNodes).get(0)).getText());//HERE BAD
@@ -201,26 +199,26 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.closeNicknamePopup();
 
 
-		JsonObject accountJson = readJsonObject(DEFAULT_STORAGE + "/Accounts/0.0.2.json");
+		final JsonObject accountJson = readJsonObject(DEFAULT_STORAGE + "/Accounts/0.0.2-UNKNOWN.json");
 		assertNotNull(accountJson);
 
 		final File accountMapFile = new File(DEFAULT_STORAGE + "Files/.System/accountMapFile.json");
 		assertTrue(accountMapFile.exists());
-		JsonObject accountMap = readJsonObject(accountMapFile);
+		final JsonObject accountMap = readJsonObject(accountMapFile);
 
-		assertTrue(accountMap.has("0.0.2"));
-		assertEquals(ZERO_TWO, accountMap.get("0.0.2").getAsString());
+		assertTrue(accountMap.has("0.0.2-UNKNOWN"));
+		assertEquals(ZERO_TWO, accountMap.get("0.0.2-UNKNOWN").getAsString());
 
-		AccountInfo accountInfo =
+		final AccountInfo accountInfo =
 				AccountInfo.fromBytes(readBytes(new File(accountsInfoLocation + "/0.0.2.info").getAbsolutePath()));
 
 		accountsPanePage.expandRow(ZERO_TWO);
 
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		TableView tableView = (TableView) scrollPane.getContent();
-		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
+		final ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		final TableView tableView = (TableView) scrollPane.getContent();
+		final TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
 		sleep(100);
-		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+		final VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
 
 		assertTrue(vBox.isVisible());
 
@@ -230,7 +228,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(findTextInBox(accountInfo.balance.toString(), vBox));
 		assertTrue(findTextInBox(String.valueOf(accountInfo.isReceiverSignatureRequired), vBox));
 
-		TreeView keysTree = findTreeInBox(vBox);
+		final TreeView keysTree = findTreeInBox(vBox);
 
 		assertEquals(14, getChildren(keysTree.getRoot()).size());
 
@@ -238,11 +236,29 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void deleteAccountAcceptDecline() throws Exception {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+	public void setNetwork_test() {
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
-		Node x = find(IMPORT_ACCOUNT_BUTTON);
+
+		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info")
+				.enterAccountNickName(ZERO_TWO)
+				.closeNicknamePopup();
+		assertTrue(new File(ACCOUNTS_INFO_FOLDER, "0.0.2-UNKNOWN.info").exists());
+		assertTrue(new File(ACCOUNTS_INFO_FOLDER, "0.0.2-UNKNOWN.json").exists());
+		accountsPanePage.setNetwork("integration");
+
+		assertEquals(0, accountsPanePage.findChoiceBoxes().size());
+		assertTrue(new File(ACCOUNTS_INFO_FOLDER, "0.0.2-INTEGRATION.info").exists());
+		assertTrue(new File(ACCOUNTS_INFO_FOLDER, "0.0.2-INTEGRATION.json").exists());
+
+	}
+
+	@Test
+	public void deleteAccountAcceptDecline() {
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
+				"/src/test/resources/AccountsInfo";
+
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
 
 		ObservableList<Node> popupNodes = getPopupNodes();
@@ -257,20 +273,20 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		// do not delete
 		popupNodes = getPopupNodes();
-		Button cancelButton = TestUtil.findButtonInPopup(popupNodes, "CANCEL");
+		final Button cancelButton = TestUtil.findButtonInPopup(popupNodes, "CANCEL");
 
 		assertNotNull(cancelButton);
 
 		clickOn(cancelButton);
 
-		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
-		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2-UNKNOWN.info").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/0.0.2-UNKNOWN.json").exists());
 
 		// delete
 		clickOn(ZERO_TWO + "T");
 
 		popupNodes = getPopupNodes();
-		Button continueButton = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
+		final Button continueButton = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
 
 		assertNotNull(continueButton);
 
@@ -281,30 +297,24 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void importOneAccountWithExpiration_Test() throws IOException, HederaClientException {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+	public void importOneAccountWithExpiration_Test() {
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.1005.info")
 				.enterAccountNickName("thousand-five") //HERE BAD
 				.closeNicknamePopup();
 
-		AccountInfo accountInfo =
-				AccountInfo.fromBytes(readBytes(new File(accountsInfoLocation + "/0.0.1005.info").getAbsolutePath()));
-
-		final Timestamp expirationTime = new Timestamp(accountInfo.expirationTime);
-		long millis = expirationTime.getSeconds() * 1000 + expirationTime.getNanos() / 1000000;
-		Date date = new Date(millis);
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
 
 		accountsPanePage.expandRow("thousand-five");
 
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		TableView tableView = (TableView) scrollPane.getContent();
-		TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
+		final ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		final TableView tableView = (TableView) scrollPane.getContent();
+		final TableRowExpanderColumn tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
 		sleep(100);
-		VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+		final VBox vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
 
 		assertTrue(vBox.isVisible());
 		accountsPanePage.deleteAccount("thousand-five");
@@ -313,7 +323,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Test
 	public void loadTwoAccountsDeleteOne_Test() {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
 		loadAccountInfo(ZERO_TWO, accountsInfoLocation + "/0.0.2.info");
@@ -336,20 +346,20 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	@Test
 	public void loadSameAccount_Test() throws HederaClientException {
 
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
 		loadAccountInfo(ZERO_TWO, accountsInfoLocation + "/old/0.0.2.info");
-		assertTrue(checkBalance(ZERO_TWO, "48 875 333 086.87 385 755"));
+		assertTrue(checkBalance("48 875 333 086.87 385 755"));
 
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2.info");
-		assertTrue(checkBalance(ZERO_TWO, "46 479 878 904.04 547 520"));
+		assertTrue(checkBalance("46 479 878 904.04 547 520"));
 
 	}
 
 	@Test
 	public void loadTwoAccountsSameNickname_Test() {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 
 		loadAccountInfo(ZERO_TWO, accountsInfoLocation + "/0.0.2.info");
@@ -359,7 +369,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.enterAccountNickName("seventy")
 				.closeNicknamePopup();
 
-		List<String> items = getNicknames();
+		final List<String> items = getNicknames();
 		assertEquals(2, items.size());
 		assertTrue(items.contains(ZERO_TWO));
 		assertTrue(items.contains("seventy"));
@@ -368,7 +378,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertTrue(accountID("seventy").contains("0.0.70"));
 
 		accountsPanePage.deleteAccount(ZERO_TWO);
-		List<String> items2 = getNicknames();
+		final List<String> items2 = getNicknames();
 		assertEquals(1, items2.size());
 		accountsPanePage.deleteAccount("seventy");
 
@@ -376,30 +386,31 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Test
 	public void checkAccountHistoryPopup_test() throws InterruptedException, HederaClientException {
-		String accountsInfoLocation = (Paths.get("")).toAbsolutePath().toString() +
+		final String accountsInfoLocation = (Paths.get("")).toAbsolutePath() +
 				"/src/test/resources/AccountsInfo";
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2_integration.info")
 				.enterAccountNickName(ZERO_TWO)
 				.closeNicknamePopup()
+				.setNetwork("integration")
 				.selectRow(ZERO_TWO)
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
 
-		File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(new FilenameFilter() {
-			@Override
-			public boolean accept(File dir, String name) {
-				return name.startsWith("0.0.2");
-			}
-		});
+		final File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(
+				(dir, name) -> name.startsWith("0.0.2"));
 
 		assertNotNull(archive);
 		assertEquals(2, archive.length);
 
-		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		final var table = accountsPanePage
+				.clickOnSeeHistory()
+				.getTableFromPopup(getPopupNodes());
+
 		assertEquals(1, table.getItems().size());
-		var line = (AccountHistoryPopup.TableLine) table.getItems().get(0);
+
+		final var line = (AccountHistoryPopup.TableLine) table.getItems().get(0);
 		doubleClickOn(line.getDate());
-		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
+		final var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(9, tableFromPopup.getItems().size());
 
 		accountsPanePage.pressPopupButton("CLOSE")
@@ -409,14 +420,18 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	@Test
 	public void noFeePayerSelected_test() {
 		clickOn("Add accounts");
+
+		sleep(100000);
+
 		clickOn("#accountsToUpdateTextField");
 		write("12345");
 		clickOn("#selectAccountsButton");
-		var nodes1 = getPopupNodes();
+
+		final var nodes1 = getPopupNodes();
 		assertNotNull(nodes1);
 		assertEquals(1, nodes1.size());
 		assertTrue(nodes1.get(0) instanceof VBox);
-		var children = ((VBox) nodes1.get(0)).getChildren();
+		final var children = ((VBox) nodes1.get(0)).getChildren();
 		assertTrue(children.get(0) instanceof Label);
 		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
 		clickOn("CONTINUE");
@@ -425,14 +440,14 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	@After
 	public void tearDown() throws IOException, BackingStoreException {
 		try {
-			Path currentRelativePath = Paths.get("");
-			String s = currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/testDirectory";
+			final Path currentRelativePath = Paths.get("");
+			final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 			if ((new File(s)).exists()) {
 				FileUtils.deleteDirectory(new File(s));
 			}
 
-			String out =
-					currentRelativePath.toAbsolutePath().toString() + "/src/test/resources/Transactions - " +
+			final String out =
+					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 							"Documents/OutputFiles/test1.council2@hederacouncil.org";
 			FileUtils.cleanDirectory(new File(out));
 
@@ -442,55 +457,21 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 			}
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNull(e);
 		}
 	}
 
 	// region AUXILIARY METHODS
-	private AccountsPanePage loadAccountInfo(String name, String location) {
+	private AccountsPanePage loadAccountInfo(final String name, final String location) {
 		logger.info("Loading account {} from {}", name, location);
 		return accountsPanePage.loadInfoFromHiddenTextField(location)
 				.enterAccountNickName(name)
 				.closeNicknamePopup();
 	}
 
-	private Mnemonic getMnemonicFromFile(final char[] password, String path) {
-		File mnemonicFile = new File(path);
-		Mnemonic mnemonic = null;
-		try {
-			if (mnemonicFile.exists()) {
-				mnemonic = SecurityUtilities.fromEncryptedFile(password,
-						getSalt(properties.getHash(), properties.isLegacy()), path);
-			}
-		} catch (HederaClientException e) {
-			logger.error(e);
-			assertNull(e);
-		}
-		return mnemonic;
-
-	}
-
-	private AccountsPanePage createKey(String name, String password) {
-		return accountsPanePage.scrollPane(1)
-				.pressGenerateKeyButton()
-				.enterNickName(name)
-				.enterPassword(password)
-				.enterRepeatPassword(password)
-				.pressCreateKeysButton()
-				.closePopup("CONTINUE");
-
-	}
-
-	private ScrollPane getScrollPane(String nodeName, int i) {
-		Node node = find(nodeName);
-		VBox vBox = (VBox) node.getParent();
-
-		return (ScrollPane) vBox.getChildren().get(i);
-	}
-
-	private boolean findTextInBox(String text, Node box) {
+	private boolean findTextInBox(final String text, final Node box) {
 		ObservableList<Node> nodes = null;
 		if (box instanceof VBox) {
 			nodes = ((VBox) box).getChildren();
@@ -501,7 +482,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		} else {
 			return false;
 		}
-		for (Node node : nodes) {
+		for (final Node node : nodes) {
 			if ((node instanceof HBox || node instanceof VBox || node instanceof GridPane) && findTextInBox(text,
 					node)) {
 				return true;
@@ -513,14 +494,13 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				return true;
 			}
 			if (node instanceof ScrollPane) {
-				ScrollPane scrollPane = (ScrollPane) node;
 				logger.info("here");
 			}
 		}
 		return false;
 	}
 
-	private TreeView findTreeInBox(Node box) {
+	private TreeView findTreeInBox(final Node box) {
 		ObservableList<Node> nodes = null;
 		if (box instanceof VBox) {
 			nodes = ((VBox) box).getChildren();
@@ -529,7 +509,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		} else {
 			return null;
 		}
-		for (Node node : nodes) {
+		for (final Node node : nodes) {
 			if (node instanceof HBox || node instanceof VBox) {
 				final TreeView treeInHBox = findTreeInBox(node);
 				if (treeInHBox != null) {
@@ -543,15 +523,14 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return null;
 	}
 
-	private boolean checkBalance(String nickname, String balance) throws HederaClientException {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+	private boolean checkBalance(final String balance) throws HederaClientException {
+		final ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		final TableView accountTable = (TableView) table;
 
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
+		for (final Object item : accountTable.getItems()) {
 			assertTrue(item instanceof AccountLineInformation);
 			if (((AccountLineInformation) item).getBalance().equals(Hbar.fromString(balance.replace(" ", "")))) {
 				return true;
@@ -560,15 +539,14 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		return false;
 	}
 
-	private String accountID(String s) {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+	private String accountID(final String s) {
+		final ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		final TableView accountTable = (TableView) table;
 
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
+		for (final Object item : accountTable.getItems()) {
 			assertTrue(item instanceof AccountLineInformation);
 			if (((AccountLineInformation) item).getNickname().contains(s)) {
 				return ((AccountLineInformation) item).getAccount().toReadableString();
@@ -578,14 +556,14 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	private List<String> getNicknames() {
-		ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
-		Node table = scrollPane.getContent();
+		final ScrollPane scrollPane = find(ACCOUNTS_SCROLL_PANE);
+		final Node table = scrollPane.getContent();
 		assertTrue(table instanceof TableView);
 
 		final TableView accountTable = (TableView) table;
 
-		List<String> items = new ArrayList<>();
-		for (Object item : accountTable.getItems()) {
+		final List<String> items = new ArrayList<>();
+		for (final Object item : accountTable.getItems()) {
 			assertTrue(item instanceof AccountLineInformation);
 			items.add(((AccountLineInformation) item).getNickname());
 

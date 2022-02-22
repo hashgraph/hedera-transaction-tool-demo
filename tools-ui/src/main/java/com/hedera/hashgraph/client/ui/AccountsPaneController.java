@@ -387,7 +387,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				query.setNetwork(getAccountNetwork(feePayer));
 				final var info = query.getInfo(identifier);
 				final var filePath =
-						tmpdir.getAbsolutePath() + File.separator + account + "." + INFO_EXTENSION;
+						tmpdir.getAbsolutePath() + File.separator + identifier.toReadableAccountAndNetwork() + "." + INFO_EXTENSION;
 				writeBytes(filePath, info.toBytes());
 				logger.info("Account info for {} stored to {}", account, filePath);
 				newFiles.add(new File(filePath));
@@ -583,6 +583,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void updateBalanceFromInfo(final String location) throws HederaClientException {
 		final AccountInfo info;
 		final BasicFileAttributes attributes;
+		if (!new File(location).exists()){
+			logger.info("File does not exist");
+			return;
+		}
 
 		try {
 			info = AccountInfo.fromBytes(readBytes(location));
@@ -1139,7 +1143,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 			final var link = new Hyperlink("History");
-			link.setOnAction(actionEvent -> AccountHistoryPopup.display(info.accountId, controller));
+
+			link.setOnAction(actionEvent -> AccountHistoryPopup.display(new Identifier(info.accountId,	parameter.getValue().getLedgerId()), controller));
 
 			gridPane.add(link, 3, 0);
 
@@ -1720,6 +1725,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (!file.getName().endsWith(INFO_EXTENSION)) {
 			throw new HederaClientException(format("%s is not an info file", file.getAbsolutePath()));
 		}
+		final var names = FilenameUtils.getBaseName(file.getName()).split("-");
+
+		if (names.length == 2) {
+			return Identifier.parse(names[0], names[1]);
+		}
+
 		try {
 			final var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
 			return new Identifier(info.accountId, getNetworkFromInfo(info));
@@ -1730,9 +1741,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private String getNetworkFromInfo(AccountInfo info) {
-		final var network = NetworkEnum.asLedger(info.ledgerId.toString()).toString();
-		return network;
+	private String getNetworkFromInfo(final AccountInfo info) {
+		if ("".equals(info.ledgerId.toString())) {
+			return UNKNOWN_NETWORK_STRING;
+		}
+		return NetworkEnum.asLedger(info.ledgerId.toString()).toString();
 	}
 
 	/**
@@ -1779,8 +1792,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.info("Importing account");
 
 			final var info = AccountInfo.fromBytes(readBytes(infoFile));
-			final var network = NetworkEnum.from(info.ledgerId).toString();
-			final var accountId = new Identifier(info.accountId, network).toReadableAccountAndNetwork();
+			final var accountId = getAccountIDFromInfoFile(new File(infoFile)).toReadableAccountAndNetwork();
 
 			// Update the list of nicknames.
 			final var nicknames =
