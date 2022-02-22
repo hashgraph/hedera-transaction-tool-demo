@@ -500,6 +500,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				final var signingBar = new ButtonBar();
 				signingBar.setButtonMinWidth(150);
 				signingBar.getButtons().addAll(buildSignButton(rf), buildDeclineButton(rf));
+
+				if (rf.hasHistory()) {
+					signingBar.getButtons().add(buildCancelButton(rf));
+				}
+
 				final var addMoreKeysBar = new ButtonBar();
 				addMoreKeysBar.setButtonMinWidth(150);
 				addMoreKeysBar.getButtons().addAll(buildAddMoreButton(rf, extraSignersGridPane),
@@ -616,6 +621,21 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			initializeHomePane();
 		});
 		return declineButton;
+	}
+
+	private Button buildCancelButton(final RemoteFile rf) {
+		final var cancelButton = buildWhiteButton("CANCEL");
+		cancelButton.setOnAction(event -> {
+			try {
+				rf.moveToHistory();
+				historyChanged = true;
+			} catch (final HederaClientException e) {
+				logger.error(e);
+				controller.displaySystemMessage(e.getMessage());
+			}
+			initializeHomePane();
+		});
+		return cancelButton;
 	}
 
 	private Button buildUndoButton(final RemoteFile rf) {

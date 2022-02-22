@@ -879,6 +879,73 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	}
 
+	@Test
+	public void transactionCancel_Test() throws IOException, HederaClientException {
+		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var totalBoxes = newFiles.size();
+
+		boolean found = false;
+		int k = 0;
+
+		// Check the time and local time are correct
+		while (k < transactionBoxes.size()) {
+			final var gridPane =
+					((GridPane) ((HBox) transactionBoxes.get(k).getChildren().get(1)).getChildren().get(0));
+			final var timestamp = new Timestamp(1675214610, 0);
+			final var localDateTime = timestamp.asReadableLocalString();
+			final var utcDateTime = timestamp.asUTCString().replace("_", " ");
+
+			for (final var n : gridPane.getChildren()) {
+				if (n instanceof Label) {
+					final var text = ((Label) n).getText();
+					if (text.contains("UTC") && (text.contains(utcDateTime)) && (text.contains(localDateTime))) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				break;
+			}
+			k++;
+		}
+
+		assertTrue(found);
+
+		//DECLINE
+		var children = (transactionBoxes.get(k)).getChildren();
+		final var cancel = TestUtil.findButtonInPopup(children, "CANCEL");
+
+		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), cancel);
+
+		moveTo(cancel);
+		sleep(ONE_SECOND);
+		clickOn(cancel);
+
+		// make sure history order is correct
+		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+
+		var declinedCount = 0;
+		var keyCount = 0;
+		for (var node : nodes) {
+			if (node instanceof Label) {
+				var text = ((Label) node).getText();
+				if (text.contains("Declined on")) {
+					++declinedCount;
+				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
+					keyCount++;
+
+					// declined should be first
+					assertTrue(keyCount > 0);
+				}
+			}
+		}
+
+		assertEquals(declinedCount, 1);
+		assertEquals(keyCount, 1);
+
+	}
+
 	private void initBoxes() {
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
