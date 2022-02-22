@@ -365,7 +365,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * Moves the current remote file to history
 	 *
 	 * @param action
-	 * 		if the file was signed, or declined - null to simply move to history
+	 * 		if the file was signed, or declined
 	 * @param userComment
 	 * 		Any comments the user might have left
 	 * @param keyName
