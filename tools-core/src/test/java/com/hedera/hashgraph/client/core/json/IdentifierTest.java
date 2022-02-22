@@ -191,6 +191,7 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromAccountId.getShardNum());
 		assertEquals(1L, identifierFromAccountId.getRealmNum());
 		assertEquals(2L, identifierFromAccountId.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 
 		assertEquals(accountId, identifierFromAccountId.asAccount());
 
@@ -199,12 +200,14 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromAccountID.getShardNum());
 		assertEquals(1L, identifierFromAccountID.getRealmNum());
 		assertEquals(2L, identifierFromAccountID.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 
 		final var fileId = new FileId(4, 5, 6);
 		final var identifierFromFileId = new Identifier(fileId, "");
 		assertEquals(4L, identifierFromFileId.getShardNum());
 		assertEquals(5L, identifierFromFileId.getRealmNum());
 		assertEquals(6L, identifierFromFileId.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 
 		assertEquals(fileId, identifierFromFileId.asFile());
 
@@ -213,12 +216,14 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromFileID.getShardNum());
 		assertEquals(1L, identifierFromFileID.getRealmNum());
 		assertEquals(2L, identifierFromFileID.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 
 		final var contractId = new ContractId(4, 5, 6);
 		final var identifierFromContractId = new Identifier(contractId, "MAINNET");
 		assertEquals(4L, identifierFromContractId.getShardNum());
 		assertEquals(5L, identifierFromContractId.getRealmNum());
 		assertEquals(6L, identifierFromContractId.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 
 		assertEquals(contractId, identifierFromContractId.asContract());
 
@@ -227,7 +232,39 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromContractID.getShardNum());
 		assertEquals(1L, identifierFromContractID.getRealmNum());
 		assertEquals(2L, identifierFromContractID.getAccountNum());
+		assertEquals("", identifierFromAccountId.getNetwork());
 	}
+
+	@Test
+	void constructorsWNetwork_Test() {
+		final var accountId = new AccountId(0, 1, 2);
+		final var identifierFromAccountId = new Identifier(accountId, "Mainnet");
+		assertEquals(0L, identifierFromAccountId.getShardNum());
+		assertEquals(1L, identifierFromAccountId.getRealmNum());
+		assertEquals(2L, identifierFromAccountId.getAccountNum());
+		assertEquals("MAINNET", identifierFromAccountId.getNetwork());
+
+		assertEquals(accountId, identifierFromAccountId.asAccount());
+
+		final var fileId = new FileId(4, 5, 6);
+		final var identifierFromFileId = new Identifier(fileId, "testnet");
+		assertEquals(4L, identifierFromFileId.getShardNum());
+		assertEquals(5L, identifierFromFileId.getRealmNum());
+		assertEquals(6L, identifierFromFileId.getAccountNum());
+		assertEquals("TESTNET", identifierFromFileId.getNetwork());
+
+		assertEquals(fileId, identifierFromFileId.asFile());
+
+		final var contractId = new ContractId(4, 5, 6);
+		final var identifierFromContractId = new Identifier(contractId, "previewnet");
+		assertEquals(4L, identifierFromContractId.getShardNum());
+		assertEquals(5L, identifierFromContractId.getRealmNum());
+		assertEquals(6L, identifierFromContractId.getAccountNum());
+		assertEquals("PREVIEWNET", identifierFromContractId.getNetwork());
+
+		assertEquals(contractId, identifierFromContractId.asContract());
+	}
+
 
 	@Test
 	void isValid_Test() {
@@ -266,14 +303,20 @@ class IdentifierTest {
 		assertEquals(id1, id1);
 		assertNotEquals(id1, id3);
 
-		assertFalse(id1.equals("1.2.3"));
-		assertFalse(id1.equals(null));
+		assertNotEquals("1.2.3", id1);
+		assertNotEquals(null, id1);
 	}
 
 	@Test
 	void hash_test() {
 		final var id2 = new Identifier(1, 2, 3);
 		assertEquals(30817, id2.hashCode());
+		final var id3 = new Identifier(1, 2, 3, "testnet");
+		assertEquals(-704428020, id3.hashCode());
+		final var id4 = new Identifier(1, 2, 3, "mainnet");
+		assertEquals(1549050245, id4.hashCode());
+		final var id5 = new Identifier(1, 2, 3, "previewnet");
+		assertEquals(443495734, id5.hashCode());
 	}
 
 	@Test
@@ -295,8 +338,22 @@ class IdentifierTest {
 	}
 
 	@Test
+	void toAccountAndNetwork_test() {
+		final var id2 = new Identifier(1, 2, 3);
+		assertEquals("1.2.3", id2.toReadableAccountAndNetwork());
+		final var id3 = new Identifier(1, 2, 3, "testnet");
+		assertEquals("1.2.3-TESTNET", id3.toReadableAccountAndNetwork());
+		final var id4 = new Identifier(1, 2, 3, "mainnet");
+		assertEquals("1.2.3-MAINNET", id4.toReadableAccountAndNetwork());
+		final var id5 = new Identifier(1, 2, 3, "previewnet");
+		assertEquals("1.2.3-PREVIEWNET", id5.toReadableAccountAndNetwork());
+
+	}
+
+	@Test
 	void compare_test() {
 		final var id0 = new Identifier(1, 2, 369);
+		//noinspection EqualsWithItself
 		assertEquals(0, id0.compareTo(id0));
 		assertEquals(0, id0.compareTo(new Identifier(1, 2, 369)));
 		assertEquals(-1, id0.compareTo(new Identifier(2, 2, 369)));
@@ -305,6 +362,15 @@ class IdentifierTest {
 		assertEquals(1, id0.compareTo(new Identifier(0, 2, 369)));
 		assertEquals(1, id0.compareTo(new Identifier(1, 1, 369)));
 		assertEquals(1, id0.compareTo(new Identifier(1, 2, 360)));
+
+		assertEquals(0, id0.compareTo(new Identifier(1, 2, 369, "mainnet")));
+		assertEquals(-1, id0.compareTo(new Identifier(1, 2, 369, "testnet")));
+		assertEquals(-1, id0.compareTo(new Identifier(1, 2, 369, "previewnet")));
+		assertEquals(-1, id0.compareTo(new Identifier(1, 2, 369, "somenet")));
+
+		assertEquals(1, new Identifier(1, 2, 369, "testnet").compareTo(id0));
+		assertEquals(1, new Identifier(1, 2, 369, "previewnet").compareTo(id0));
+		assertEquals(1, new Identifier(1, 2, 369, "somenet").compareTo(id0));
 
 	}
 }

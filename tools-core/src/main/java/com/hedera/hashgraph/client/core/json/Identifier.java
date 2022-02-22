@@ -67,18 +67,18 @@ public class Identifier implements Comparable<Identifier> {
 	public Identifier() {
 	}
 
-	public Identifier(final long realmNum, final long shardNum, final long accountNum) {
-		this.realmNum = realmNum;
+	public Identifier(final long shardNum, final long realmNum, final long accountNum) {
 		this.shardNum = shardNum;
+		this.realmNum = realmNum;
 		this.accountNum = accountNum;
 		this.network = "";
 	}
 
-	public Identifier(final long realmNum, final long shardNum, final long accountNum, final String network) {
+	public Identifier(final long shardNum, final long realmNum, final long accountNum, final String network) {
 		this.realmNum = realmNum;
 		this.shardNum = shardNum;
 		this.accountNum = accountNum;
-		this.network = network;
+		this.network = network.toUpperCase(Locale.ROOT);
 	}
 
 	public Identifier(final AccountID accountID) {
@@ -99,7 +99,7 @@ public class Identifier implements Comparable<Identifier> {
 			this.shardNum = accountId.shard;
 			this.realmNum = accountId.realm;
 			this.accountNum = accountId.num;
-			this.network = network;
+			this.network = network.toUpperCase(Locale.ROOT);
 		}
 	}
 
@@ -309,8 +309,12 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	public String toReadableStringAndChecksum() {
-		if ("".equals(this.network) || "UNKNOWN".equals(this.network)) {
+		if ("UNKNOWN".equals(this.network)) {
 			return toReadableString();
+		}
+		if ("".equals(this.network)) {
+			return (new Identifier(this.shardNum, this.realmNum, this.accountNum,
+					"MAINNET")).toReadableStringAndChecksum();
 		}
 		return String.format("%s-%s", this.toReadableString(),
 				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetwork()).toBytes(), this.toReadableString()));
@@ -327,21 +331,25 @@ public class Identifier implements Comparable<Identifier> {
 		final var identifier = (Identifier) o;
 		return realmNum == identifier.realmNum &&
 				shardNum == identifier.shardNum &&
-				accountNum == identifier.accountNum;
+				accountNum == identifier.accountNum &&
+				network.equals(identifier.getNetwork());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(shardNum, realmNum, accountNum);
+		return Objects.hash(shardNum, realmNum, accountNum) + network.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
+		final var stringBuilder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
 				.append(REALM_NUM, realmNum)
 				.append(SHARD_NUM, shardNum)
-				.append(ACCOUNT_NUM, accountNum)
-				.toString();
+				.append(ACCOUNT_NUM, accountNum);
+		if (!"".equals(network)) {
+			stringBuilder.append(NETWORK, network);
+		}
+		return stringBuilder.toString();
 	}
 
 	public JsonElement asJSON() {
@@ -349,6 +357,9 @@ public class Identifier implements Comparable<Identifier> {
 		id.addProperty(REALM_NUM, realmNum);
 		id.addProperty(SHARD_NUM, shardNum);
 		id.addProperty(ACCOUNT_NUM, accountNum);
+		if (!"".equals(this.network)) {
+			id.addProperty(NETWORK, network);
+		}
 		return id;
 	}
 
@@ -360,6 +371,11 @@ public class Identifier implements Comparable<Identifier> {
 
 		if (this.equals(o)) {
 			return 0;
+		}
+
+		if (!Objects.equals(this.network, o.getNetwork())) {
+			return (int) Math.signum(Byte.compare(NetworkEnum.asLedger(this.network).toBytes()[0],
+					NetworkEnum.asLedger(o.getNetwork()).toBytes()[0]));
 		}
 
 		if (this.realmNum != o.getRealmNum()) {

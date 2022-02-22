@@ -331,8 +331,9 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		public InfoKey(final File file) throws HederaClientException, InvalidProtocolBufferException {
 			final var info = AccountInfo.fromBytes(readBytes(file));
 			final var accountMemo = info.accountMemo;
+			final var network = info.ledgerId.toString();
 
-			this.id = new Identifier(info.accountId);
+			this.id = new Identifier(info.accountId, "".equals(network) ? "mainnet" : network);
 			this.nickname = accountMemo != null && !"".equals(accountMemo) ?
 					accountMemo :
 					FilenameUtils.getBaseName(file.getName());
