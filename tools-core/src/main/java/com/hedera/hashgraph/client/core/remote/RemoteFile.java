@@ -399,6 +399,29 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	}
 
 	/**
+	 * Moves the current remote file to history without any action.
+	 */
+	public void moveToHistory() throws HederaClientException {
+		final var historyFile = new File(DEFAULT_HISTORY + File.separator + name);
+		if (!historyFile.exists()) {
+			try {
+				FileUtils.copyFile(new File(getPath()), historyFile);
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+		}
+
+		if (hasComments()) {
+			commentsFile.moveToHistory();
+		}
+
+		new MetadataFile(getName());
+
+		this.parentPath = DEFAULT_HISTORY;
+		this.setHistory(true);
+	}
+
+	/**
 	 * Bring back the file from the history to active. Used if more signatures are required
 	 */
 	public void moveFromHistory() throws HederaClientException {
@@ -572,6 +595,18 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			if (metadataAction.getActions().equals(Actions.ACCEPT)) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return true if the file has previously been interacted with.
+	 */
+	public boolean hasHistory() {
+		try {
+			return getSigningHistory().size() >	0;
+		} catch (final HederaClientException e) {
+			logger.error(e);
 		}
 		return false;
 	}
