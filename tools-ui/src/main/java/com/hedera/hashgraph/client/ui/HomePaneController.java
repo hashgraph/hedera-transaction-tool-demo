@@ -445,7 +445,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
-		rf.setTreeView(controller.buildKeyTreeView(key));
+		if (key != null) {
+			rf.setTreeView(controller.buildKeyTreeView(key));
+		}
 	}
 
 	private VBox getButtonsBox(final RemoteFile rf) {
