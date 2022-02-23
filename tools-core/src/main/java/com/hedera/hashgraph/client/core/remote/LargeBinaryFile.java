@@ -59,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -155,27 +156,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		final Identifier fileIdentifier = getFileIdentifier(details);
-		if (fileIdentifier == null) {
-			return;
-		}
-
 		final Identifier nodeIdentifier = getNodeIdentifier(details);
-		if (nodeIdentifier == null) {
-			return;
-		}
-
 		final Identifier payerIdentifier = getPayerIdentifier(details);
-		if (payerIdentifier == null) {
-			return;
-		}
-
 		final JsonObject tvStamp = getTransactionValidStamp(details);
-		if (tvStamp == null) {
+
+		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp)) {
 			return;
 		}
-
 		final Timestamp timestamp = getTimestamp(tvStamp);
-		if (timestamp == null) {
+		if (timestamp.equals(new Timestamp(0, 0))) {
 			return;
 		}
 
@@ -196,6 +185,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
+	}
+
+	private boolean checkNotNulls(final Object... ids) {
+		return Arrays.stream(ids).anyMatch(Objects::isNull);
 	}
 
 	/**
@@ -299,19 +292,19 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * 		the json read from the zip provided by the user
 	 * @return the transaction valid start if it exists and is correct, Null otherwise.
 	 */
-	@Nullable
 	private Timestamp getTimestamp(final JsonObject tvStamp) {
-		final Timestamp timestamp;
+		Timestamp timestamp = new Timestamp(0, 0);
+
 		try {
-			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
+			if (tvStamp.has("seconds") && tvStamp.has("nanos")) {
+				timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
+			}
 		} catch (final Exception exception) {
 			handleError(exception.getMessage());
-			return null;
 		}
 
 		if (!timestamp.isValid()) {
 			handleError("Invalid first transaction start");
-			return null;
 		}
 		return timestamp;
 	}

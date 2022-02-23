@@ -177,7 +177,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	// Utility
 	private KeyStructureUtility keyStructureUtility;
-	public KeyPairUtility keyPairUtility;
+	private KeyPairUtility keyPairUtility;
+
+	public KeyPairUtility getKeyPairUtility() {
+		return keyPairUtility;
+	}
 
 	void setDisableButtons(final boolean disableButtons) {
 		this.disableButtons = disableButtons;
