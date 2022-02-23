@@ -59,6 +59,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -154,28 +155,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
+
 		final Identifier fileIdentifier = getFileIdentifier(details);
-		if (fileIdentifier == null) {
-			return;
-		}
-
 		final Identifier nodeIdentifier = getNodeIdentifier(details);
-		if (nodeIdentifier == null) {
-			return;
-		}
-
 		final Identifier payerIdentifier = getPayerIdentifier(details);
-		if (payerIdentifier == null) {
-			return;
-		}
-
 		final JsonObject tvStamp = getTransactionValidStamp(details);
-		if (tvStamp == null) {
-			return;
-		}
-
 		final Timestamp timestamp = getTimestamp(tvStamp);
-		if (timestamp == null) {
+
+		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp, timestamp)) {
 			return;
 		}
 
@@ -196,6 +183,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
+	}
+
+	private boolean checkNotNulls(final Object... ids) {
+		return Arrays.stream(ids).anyMatch(Objects::isNull);
 	}
 
 	/**
