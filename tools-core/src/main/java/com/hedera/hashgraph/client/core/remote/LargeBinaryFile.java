@@ -164,7 +164,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 		final Timestamp timestamp = getTimestamp(tvStamp);
-		if (timestamp.equals(new Timestamp())) {
+		if (timestamp.equals(new Timestamp(0,0))) {
 			return;
 		}
 
@@ -299,12 +299,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
 		} catch (final Exception exception) {
 			handleError(exception.getMessage());
-			return new Timestamp();
+			return new Timestamp(0,0);
 		}
 
 		if (!timestamp.isValid()) {
 			handleError("Invalid first transaction start");
-			return new Timestamp();
+			return new Timestamp(0,0);
 		}
 		return timestamp;
 	}
