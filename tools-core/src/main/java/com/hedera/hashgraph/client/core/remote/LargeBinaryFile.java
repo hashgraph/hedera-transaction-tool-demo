@@ -164,7 +164,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 		final Timestamp timestamp = getTimestamp(tvStamp);
-		if (timestamp.equals(new Timestamp(0,0))) {
+		if (timestamp.equals(new Timestamp(0, 0))) {
 			return;
 		}
 
@@ -293,17 +293,18 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the transaction valid start if it exists and is correct, Null otherwise.
 	 */
 	private Timestamp getTimestamp(final JsonObject tvStamp) {
-		final Timestamp timestamp;
+		Timestamp timestamp = new Timestamp(0, 0);
+
 		try {
-			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
+			if (tvStamp.has("seconds") && tvStamp.has("nanos")) {
+				timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
+			}
 		} catch (final Exception exception) {
 			handleError(exception.getMessage());
-			return new Timestamp(0,0);
 		}
 
 		if (!timestamp.isValid()) {
 			handleError("Invalid first transaction start");
-			return new Timestamp(0,0);
 		}
 		return timestamp;
 	}
