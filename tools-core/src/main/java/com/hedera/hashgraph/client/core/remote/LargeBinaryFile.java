@@ -292,7 +292,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * 		the json read from the zip provided by the user
 	 * @return the transaction valid start if it exists and is correct, Null otherwise.
 	 */
-	@Nullable
 	private Timestamp getTimestamp(final JsonObject tvStamp) {
 		final Timestamp timestamp;
 		try {
