@@ -159,9 +159,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final Identifier nodeIdentifier = getNodeIdentifier(details);
 		final Identifier payerIdentifier = getPayerIdentifier(details);
 		final JsonObject tvStamp = getTransactionValidStamp(details);
-		final Timestamp timestamp = getTimestamp(tvStamp);
 
-		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp, timestamp)) {
+		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp)) {
+			return;
+		}
+		final Timestamp timestamp = getTimestamp(tvStamp);
+		if (timestamp.equals(new Timestamp())) {
 			return;
 		}
 
@@ -296,12 +299,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());
 		} catch (final Exception exception) {
 			handleError(exception.getMessage());
-			return null;
+			return new Timestamp();
 		}
 
 		if (!timestamp.isValid()) {
 			handleError("Invalid first transaction start");
-			return null;
+			return new Timestamp();
 		}
 		return timestamp;
 	}
