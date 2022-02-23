@@ -41,7 +41,7 @@ import static java.lang.Thread.sleep;
 
 public class TransactionCallableWorker implements Callable<String>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
- 
+
 	private final Transaction<?> tx;
 	private final int delay;
 	private final String location;

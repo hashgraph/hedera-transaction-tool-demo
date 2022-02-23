@@ -155,7 +155,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-
 		final Identifier fileIdentifier = getFileIdentifier(details);
 		final Identifier nodeIdentifier = getNodeIdentifier(details);
 		final Identifier payerIdentifier = getPayerIdentifier(details);
