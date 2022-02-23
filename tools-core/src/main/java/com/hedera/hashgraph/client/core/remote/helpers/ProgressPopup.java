@@ -31,6 +31,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class ProgressPopup {
+	private ProgressPopup() {
+		throw new IllegalStateException("Popup class");
+	}
+
 	public static Stage setupProgressPopup(final ProgressBar bar, final ProgressBar bar2, final Button cancelButton) {
 		final var layout = new VBox();
 		layout.setAlignment(Pos.CENTER);

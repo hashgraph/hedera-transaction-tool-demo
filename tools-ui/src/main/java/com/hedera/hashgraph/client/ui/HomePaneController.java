@@ -1039,7 +1039,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private Pair<String, KeyPair> getAccountKeyPair(final File pemFile) throws HederaClientException {
-		final var pair = controller.keyPairUtility.getAccountKeyPair(pemFile);
+		final var pair = controller.getKeyPairUtility().getAccountKeyPair(pemFile);
 		if (pair == null) {
 			controller.displaySystemMessage(String.format("File %s not decrypted", pemFile.getName()));
 			throw new HederaClientException(String.format("File %s not decrypted", pemFile.getName()));
