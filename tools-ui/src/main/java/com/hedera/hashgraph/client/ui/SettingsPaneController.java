@@ -322,7 +322,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		feePayerChoicebox.getSelectionModel().select(feePayer);
 		feePayerChoicebox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
-			if (t1 instanceof String) {
+			if (t1 instanceof String && !"".equals(t1)) {
 				final var text = (String) t1;
 				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text, controller.getCurrentNetwork())));
 				controller.setDefaultFeePayer(Identifier.parse(text, controller.getCurrentNetwork()));

@@ -757,8 +757,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getGenerateRecord();
 	}
 
+	public Set<Identifier> getCustomFeePayers(final String network) {
+		return properties.getCustomFeePayers(network);
+	}
+
 	public Set<Identifier> getCustomFeePayers() {
-		return properties.getCustomFeePayers();
+		return properties.getCustomFeePayers(getCurrentNetwork());
 	}
 
 	public void addCustomFeePayer(final Identifier identifier) {
@@ -854,6 +858,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Identifier getDefaultFeePayer() {
 		return properties.getDefaultFeePayer();
 	}
+	public Identifier getDefaultFeePayer(final String network) {
+		return properties.getDefaultFeePayer(network);
+	}
 
 	/**
 	 * Returns the stored fee payers per known network
@@ -864,7 +871,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getDefaultFeePayers();
 	}
 
-	public void setDefaultFeePayers(Map<String, String> map) {
+	public void setDefaultFeePayers(final Map<String, String> map) {
 		properties.setDefaultFeePayers(map);
 	}
 
@@ -887,7 +894,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	String setupChoiceBoxFeePayer(final ChoiceBox<Object> choiceBox, final TextField textfield) {
-		final var defaultFeePayer = getDefaultFeePayer();
+		return setupChoiceBoxFeePayer(choiceBox, textfield, getCurrentNetwork());
+	}
+
+	String setupChoiceBoxFeePayer(final ChoiceBox<Object> choiceBox, final TextField textfield,
+			final String currentNetwork) {
+		final var defaultFeePayer = getDefaultFeePayer(currentNetwork);
+		choiceBox.getItems().clear();
 
 		// In case the default was deleted
 		if (!Identifier.ZERO.equals(defaultFeePayer) && !getCustomFeePayers().contains(defaultFeePayer)) {
@@ -897,11 +910,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		var feePayer = Identifier.ZERO.equals(defaultFeePayer) ? "" :
 				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
 
+		final List<String> accounts = new ArrayList<>();
 
-		final List<String> accounts =
-				new ArrayList<>();
 		for (final Identifier payer : getFeePayers()) {
-			if (payer.getNetwork().equals(getCurrentNetwork())) {
+			if (payer.getNetwork().equals(currentNetwork)) {
 				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
 				accounts.add(toNicknameAndChecksum);
 			}
@@ -909,7 +921,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		accounts.sort(null);
 
 		final List<String> customFeePayers = new ArrayList<>();
-		getCustomFeePayers().forEach(customFeePayer -> {
+		getCustomFeePayers(currentNetwork).forEach(customFeePayer -> {
 			final String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
 			if (accounts.contains(s)) {
 				removeCustomFeePayer(customFeePayer);
@@ -941,13 +953,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				textfield.requestFocus();
 			} else {
 				feePayer = sortedAllPayers.get(0);
-				setDefaultFeePayer(Identifier.parse(feePayer, getCurrentNetwork()));
+				setDefaultFeePayer(Identifier.parse(feePayer, currentNetwork));
 			}
 		}
 
 		choiceBox.getSelectionModel().select(feePayer);
 
-		textfield.setVisible(Identifier.ZERO.equals(getDefaultFeePayer()));
+		textfield.setVisible(Identifier.ZERO.equals(defaultFeePayer));
 
 		return feePayer;
 	}

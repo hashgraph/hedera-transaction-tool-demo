@@ -305,11 +305,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final var feePayer =
 					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
 							(String) feePayerCombobox);
-			feePayer.setNetwork(networkChoiceBoxA.getValue().toString());
-
 			if (feePayer == null) {
 				return;
 			}
+			feePayer.setNetwork(networkChoiceBoxA.getValue().toString());
 
 			final var network = networkChoiceBoxA.getValue();
 			if (!(network instanceof String)) {
@@ -583,7 +582,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void updateBalanceFromInfo(final String location) throws HederaClientException {
 		final AccountInfo info;
 		final BasicFileAttributes attributes;
-		if (!new File(location).exists()){
+		if (!new File(location).exists()) {
 			logger.info("File does not exist");
 			return;
 		}
@@ -1144,7 +1143,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			final var link = new Hyperlink("History");
 
-			link.setOnAction(actionEvent -> AccountHistoryPopup.display(new Identifier(info.accountId,	parameter.getValue().getLedgerId()), controller));
+			link.setOnAction(actionEvent -> AccountHistoryPopup.display(
+					new Identifier(info.accountId, parameter.getValue().getLedgerId()), controller));
 
 			gridPane.add(link, 3, 0);
 
@@ -1956,7 +1956,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		feePayerChoiceBoxA.getSelectionModel().select(feePayer);
 		feePayerChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			final var net = networkChoiceBoxA.getValue();
-			if (t1 instanceof String && net instanceof String) {
+			if (t1 instanceof String && net instanceof String && !"".equals(t1) && !"".equals(net)) {
 				final var text = (String) t1;
 				controller.setDefaultFeePayer(Identifier.parse(text, (String) net));
 			}
@@ -1971,8 +1971,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		choiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (t1 instanceof String) {
 				final var payers = controller.getDefaultFeePayers();
-				final var s = (String) t1;
+				final var s = ((String) t1).toUpperCase(Locale.ROOT);
+				feePayerTextFieldA.setVisible(true);
 				if (payers.containsKey(s)) {
+					controller.setupChoiceBoxFeePayer(feePayerChoiceBoxA, feePayerTextFieldA, s);
 					feePayerChoiceBoxA.getSelectionModel().select(payers.get(s));
 				}
 			}

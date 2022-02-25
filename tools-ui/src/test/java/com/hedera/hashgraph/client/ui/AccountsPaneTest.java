@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.AccountsPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.SettingsPanePage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
@@ -70,7 +71,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.TimeoutException;
 import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -164,7 +164,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		properties.setCurrentNetwork("integration", defaultNetworks);
 
 		final Map<String, String> payers = new HashMap<>();
-		payers.put("integration", "0.0.2");
+		payers.put("integration", "0.0.2-xrbis");
 		properties.setDefaultFeePayers(payers);
 
 		FxToolkit.registerPrimaryStage();
@@ -419,10 +419,13 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Test
 	public void noFeePayerSelected_test() {
+		final MainWindowPage mainWindowPage = new MainWindowPage(this);
+		mainWindowPage.clickOnSettingsButton();
+		final var settingsPanePage = new SettingsPanePage(this);
+		settingsPanePage.openNetworksCombobox("TESTNET");
+		mainWindowPage.clickOnAccountsButton();
+
 		clickOn("Add accounts");
-
-		sleep(100000);
-
 		clickOn("#accountsToUpdateTextField");
 		write("12345");
 		clickOn("#selectAccountsButton");
