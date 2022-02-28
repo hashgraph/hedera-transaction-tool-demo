@@ -156,8 +156,7 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage selectRow(final String nickname) throws InterruptedException {
-		sleep(1000);
+	public AccountsPanePage selectRow(final String nickname) {
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
 		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
@@ -262,6 +261,13 @@ public class AccountsPanePage {
 		final TextField textField = findTextFieldInPopup(popupNodes);
 		driver.doubleClickOn(textField);
 		driver.write(name);
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public AccountsPanePage setFeePayer(String account) {
+		driver.clickOn("#feePayerTextFieldA");
+		driver.write(account);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}

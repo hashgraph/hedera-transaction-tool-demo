@@ -254,7 +254,9 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	public void requestUnknownAccountsInfo_test() throws HederaClientException {
 
 		final var accounts = accountsPanePage.getAccounts().size();
-		accountsPanePage.openAccordion()
+
+		accountsPanePage
+				.openAccordion()
 				.enterAccounts("30-40")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
@@ -373,19 +375,23 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		Files.copy(Path.of("src/test/resources/customNetwork.json"),
 				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
-		properties.setCustomNetworks(Collections.singleton("integration"));
+		properties.setCustomNetworks(Collections.singleton("INTEGRATION"));
 
 		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
 
-		properties.setCurrentNetwork("integration", defaultNetworks);
-
+		properties.setCurrentNetwork("INTEGRATION", defaultNetworks);
+//		final var feePayer = new Identifier(0, 0, 2, "INTEGRATION");
+//		properties.setDefaultFeePayer(feePayer);
+//
+//		logger.info("Default fee payer set to: {}", properties.getDefaultFeePayer());
+//
 		final var treasuryInfo = new AccountInfoQuery()
 				.setAccountId(new AccountId(2))
 				.execute(client);
-		writeBytes(String.format("%s/0.0.2.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
+		writeBytes(String.format("%s/0.0.2-INTEGRATION.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);

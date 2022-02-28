@@ -301,10 +301,15 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private void selectAccountsButtonAction() {
 		try {
-			final var feePayerCombobox = feePayerChoiceBoxA.getSelectionModel().getSelectedItem();
-			final var feePayer =
-					feePayerCombobox == null || "".equals(feePayerCombobox) ? getFeePayer() : Identifier.parse(
-							(String) feePayerCombobox);
+			final var feePayerSelection = feePayerChoiceBoxA.getSelectionModel().getSelectedItem();
+			if (!(feePayerSelection instanceof String)) {
+				return;
+			}
+			final var feePayerString = (String) feePayerSelection;
+			final var feePayer = feePayerString == null || "".equals(feePayerString) ?
+					getFeePayer() :
+					Identifier.parse(feePayerString, controller.getCurrentNetwork().toUpperCase(Locale.ROOT));
+
 			if (feePayer == null) {
 				return;
 			}
@@ -1742,6 +1747,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private String getNetworkFromInfo(final AccountInfo info) {
+		if (info.ledgerId.toString().equals("03")) {
+			return "INTEGRATION";
+		}
 		if ("".equals(info.ledgerId.toString())) {
 			return UNKNOWN_NETWORK_STRING;
 		}
@@ -1771,7 +1779,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		the nickname assigned to the file
 	 */
 	void importFromFile(final File file, final String nickname) throws HederaClientException {
-		final var newAccountID = getAccountIDFromInfoFile(file).toReadableString();
+		final var newAccountID = getAccountIDFromInfoFile(file).toReadableAccountAndNetwork();
 		final var account = new JsonObject();
 		account.addProperty("accountID", newAccountID);
 		account.addProperty("nickname", nickname);

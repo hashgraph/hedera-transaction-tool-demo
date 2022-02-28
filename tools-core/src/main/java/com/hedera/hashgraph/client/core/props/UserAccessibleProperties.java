@@ -464,7 +464,7 @@ public class UserAccessibleProperties {
 
 	public Identifier getDefaultFeePayer(final String currentNetwork) {
 		final var idString = getDefaultFeePayers();
-		final var defaultPayer = idString.getOrDefault(currentNetwork, "");
+		final var defaultPayer = idString.getOrDefault(currentNetwork.toUpperCase(Locale.ROOT), "");
 		return "".equals(defaultPayer) ? Identifier.ZERO : Identifier.parse(defaultPayer, currentNetwork);
 	}
 

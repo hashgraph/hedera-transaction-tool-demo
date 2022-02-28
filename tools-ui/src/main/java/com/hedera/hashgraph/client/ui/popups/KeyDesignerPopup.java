@@ -353,8 +353,11 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			for (final var entry : accountInfoMap.entrySet()) {
-				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(entry.getKey()), nicknameMap);
-				if (nicknameMap.has(entry.getKey())) {
+				final var key = entry.getKey();
+				final var subst = key.contains("-") ? key.substring(0, key.lastIndexOf("-")) : key;
+				final var subst2 = key.contains("-") ? key.substring(key.lastIndexOf("-") + 1) : "UNKNOWN";
+				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(subst, subst2), nicknameMap);
+				if (nicknameMap.has(key)) {
 					accountsAddresses.put(nn, AccountInfo.fromBytes(readBytes(entry.getValue())).key);
 				}
 			}
@@ -490,7 +493,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	 * 		the node to be added
 	 */
 	private void addNodeToTree(final TreeItem<String> source) {
-		if (treeView.getRoot().getChildren().isEmpty() && !source.getChildren().isEmpty()){
+		if (treeView.getRoot().getChildren().isEmpty() && !source.getChildren().isEmpty()) {
 			treeView.setRoot(source);
 			return;
 		}

@@ -131,7 +131,11 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var entries = nicknames.entrySet();
 			for (final var entry : entries) {
-				existingInfosMap.put(Identifier.parse(entry.getKey()).asAccount(), entry.getValue().getAsString());
+				final var key = entry.getKey();
+				final var value = entry.getValue();
+				final var substring = (key.lastIndexOf("-") > 0) ? key.substring(0, key.lastIndexOf("-")) : key;
+				existingInfosMap.put(Identifier.parse(substring).asAccount(),
+						value.getAsString());
 			}
 		} catch (final HederaClientException e) {
 			logger.error("Exception {} on line {}", e.getMessage(), e.getStackTrace()[0].getLineNumber());
