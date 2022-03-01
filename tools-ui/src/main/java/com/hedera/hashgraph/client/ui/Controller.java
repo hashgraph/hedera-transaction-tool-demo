@@ -131,8 +131,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Pane settingsPane;
 	public StackPane initialStartupPane;
 	public StackPane keysPane;
+	public StackPane historyPane;
 
 	public Button homeButton;
+	public Button historyButton;
 	public Button createButton;
 	public Button accountsButton;
 	public Button keysButton;
@@ -401,6 +403,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			case "keysButton":
 				keysPaneController.initializeKeysPane();
 				changeTab(keysPane);
+				break;
+			case "historyButton":
+				changeTab(historyPane);
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + button.getId());
