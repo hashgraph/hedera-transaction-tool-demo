@@ -153,18 +153,18 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		}
 
 		Files.copy(Path.of("src/test/resources/customNetwork.json"),
-				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
-		properties.setCustomNetworks(Collections.singleton("integration"));
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/INTEGRATION.json"));
+		properties.setCustomNetworks(Collections.singleton("INTEGRATION"));
 
 		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
 
-		properties.setCurrentNetwork("integration", defaultNetworks);
+		properties.setCurrentNetwork("INTEGRATION", defaultNetworks);
 
 		final Map<String, String> payers = new HashMap<>();
-		payers.put("integration", "0.0.2-xrbis");
+		payers.put("INTEGRATION", "0.0.2-xrbis");
 		properties.setDefaultFeePayers(payers);
 
 		FxToolkit.registerPrimaryStage();
@@ -391,7 +391,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		accountsPanePage.loadInfoFromHiddenTextField(accountsInfoLocation + "/0.0.2_integration.info")
 				.enterAccountNickName(ZERO_TWO)
 				.closeNicknamePopup()
-				.setNetwork("integration")
+				.setNetwork("INTEGRATION")
 				.selectRow(ZERO_TWO)
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
