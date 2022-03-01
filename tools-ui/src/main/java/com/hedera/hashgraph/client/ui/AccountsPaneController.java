@@ -861,6 +861,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							refresh(accountLineInformation1);
 							table.getItems().remove(getIndex());
 							setupFeePayers();
+							final var key = accountLineInformation1.getAccount().toReadableAccountAndNetwork();
+							idNickNames.remove(key);
+							controller.removeAccount(key);
+							feePayers.remove(accountLineInformation1.getAccount());
 							setupFeePayerChoiceBox();
 							controller.homePaneController.setForceUpdate(true);
 							controller.settingsPaneController.setupFeePayerChoicebox();
@@ -957,7 +961,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 */
 	public void refresh(final AccountLineInformation accountLineInformation) {
 		final var accountID = accountLineInformation.getAccount();
-		final var accountIDString = accountID.toReadableString();
+		final var accountIDString = accountID.toReadableAccountAndNetwork();
 		if (controller.getDefaultFeePayer().equals(accountID)) {
 			removeDefaultFeePayer();
 		}
@@ -1207,6 +1211,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					accountLineInformation.setLedgerID(selectedNetwork);
 					if (isSigner(info)) {
 						setupFeePayers();
+						setupFeePayerChoiceBox();
 					}
 					initializeAccountPane();
 				}

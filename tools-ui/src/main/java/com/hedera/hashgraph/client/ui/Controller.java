@@ -79,6 +79,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -190,7 +191,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		keyPairUtility = (properties.getSetupPhase().equals(TEST_PHASE)) ? new KeyPairUtility(
+		keyPairUtility = properties.getSetupPhase().equals(TEST_PHASE) ? new KeyPairUtility(
 				Constants.TEST_EXPIRATION_TIME) : new KeyPairUtility();
 		keyStructureUtility = new KeyStructureUtility(this);
 
@@ -802,11 +803,23 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public JsonObject getAccountsList() {
 		JsonObject object = new JsonObject();
 		try {
-			object = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			object = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 		return object;
+	}
+
+	public void removeAccount(final String account) {
+		final var jsonObject = getAccountsList();
+		if (jsonObject.has(account)) {
+			jsonObject.remove(account);
+		}
+		try {
+			writeJsonObject(ACCOUNTS_MAP_FILE, jsonObject);
+		} catch (HederaClientException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	public void setLastBrowsedDirectory(final File file) {
@@ -858,6 +871,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Identifier getDefaultFeePayer() {
 		return properties.getDefaultFeePayer();
 	}
+
 	public Identifier getDefaultFeePayer(final String network) {
 		return properties.getDefaultFeePayer(network);
 	}
@@ -903,17 +917,17 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		choiceBox.getItems().clear();
 
 		// In case the default was deleted
-		if (!Identifier.ZERO.equals(defaultFeePayer) && !getCustomFeePayers().contains(defaultFeePayer)) {
+		if ((defaultFeePayer.getAccountNum()!=0) && !getCustomFeePayers().contains(defaultFeePayer)) {
 			addCustomFeePayer(defaultFeePayer);
 		}
 
-		var feePayer = Identifier.ZERO.equals(defaultFeePayer) ? "" :
+		var feePayer = defaultFeePayer.getAccountNum() == 0 ? "" :
 				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
 
 		final List<String> accounts = new ArrayList<>();
 
 		for (final Identifier payer : getFeePayers()) {
-			if (payer.getNetwork().equals(currentNetwork)) {
+			if (payer.getNetwork().equals(currentNetwork.toUpperCase(Locale.ROOT))) {
 				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
 				accounts.add(toNicknameAndChecksum);
 			}

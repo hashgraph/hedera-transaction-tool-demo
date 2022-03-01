@@ -474,6 +474,9 @@ public class UserAccessibleProperties {
 		setDefaultFeePayers(payers);
 	}
 
+	public void clearDefaultFeePayers(){
+		setDefaultFeePayers(new HashMap<>());
+	}
 
 	public Map<String, String> getDefaultFeePayers() {
 		return properties.getMapProperty("defaultFeePayers", new HashMap<>());
@@ -484,11 +487,11 @@ public class UserAccessibleProperties {
 	}
 
 	public Set<Identifier> getCustomFeePayers(final String network) {
-		final var idHash = properties.getMapProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
-		final var networks = idHash.getOrDefault(network.toUpperCase(Locale.ROOT), "");
-		return "".equals(networks) ?
+		final var idMap = properties.getMapProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
+		final var accounts = idMap.getOrDefault(network.toUpperCase(Locale.ROOT), "");
+		return "".equals(accounts) ?
 				new HashSet<>() :
-				Arrays.stream(networks.split(","))
+				Arrays.stream(accounts.split(","))
 						.map(s -> Identifier.parse(s, network))
 						.collect(Collectors.toSet());
 	}
@@ -522,6 +525,9 @@ public class UserAccessibleProperties {
 	public void removeCustomFeePayer(final Identifier identifier) {
 		final var payers = getCustomFeePayers(identifier.getNetwork());
 		payers.remove(identifier);
+		if (payers.isEmpty()){
+			clearCustomFeePayers();
+		}
 		setCustomFeePayers(unmodifiableSet(payers));
 	}
 
@@ -529,6 +535,10 @@ public class UserAccessibleProperties {
 		final var payers = getDefaultFeePayers();
 		payers.remove(network);
 		setDefaultFeePayers(payers);
+	}
+
+	public void clearCustomFeePayers() {
+		properties.setProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
 	}
 
 

@@ -291,9 +291,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertNotNull(continueButton);
 
 		clickOn(continueButton);
-		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.info").exists());
-		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2.json").exists());
-		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/DELETED/0.0.2.zip").exists());
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2-UNKNOWN.info").exists());
+		assertFalse(new File(DEFAULT_STORAGE + "/Accounts/0.0.2-UNKNOWN.json").exists());
+		assertTrue(new File(DEFAULT_STORAGE + "/Accounts/Archive/DELETED/0.0.2-UNKNOWN.zip").exists());
 	}
 
 	@Test

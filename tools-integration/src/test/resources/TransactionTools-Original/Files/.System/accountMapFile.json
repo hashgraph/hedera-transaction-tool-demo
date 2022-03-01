@@ -1,7 +1,7 @@
 {
-  "0.0.2": "treasury",
-  "0.0.73": "seventyThree",
-  "0.0.76": "seventySix",
-  "0.0.94": "ninetyFour",
-  "0.0.55942": "testNineFour"
+  "0.0.2-INTEGRATION": "treasury",
+  "0.0.73-INTEGRATION": "seventyThree",
+  "0.0.76-INTEGRATION": "seventySix",
+  "0.0.94-INTEGRATION": "ninetyFour",
+  "0.0.55942-INTEGRATION": "testNineFour"
 }

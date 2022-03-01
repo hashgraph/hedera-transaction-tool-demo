@@ -144,14 +144,13 @@ public class AccountsPanePage {
 		return this;
 	}
 
-	public AccountsPanePage requestSelectedBalances() throws InterruptedException {
-		sleep(1000);
+	public AccountsPanePage requestSelectedBalances() {
 		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
 		assertTrue(scrollPane.getContent() instanceof TableView);
 		final TableView<AccountLineInformation> table = (TableView<AccountLineInformation>) scrollPane.getContent();
 
 		final var columns = table.getColumns();
-		final var graphic = columns.get(5).getGraphic();
+		final var graphic = columns.get(6).getGraphic();
 		driver.clickOn(((HBox) graphic).getChildren().get(1));
 		return this;
 	}
@@ -260,6 +259,7 @@ public class AccountsPanePage {
 		final var popupNodes = Objects.requireNonNull(getPopupNodes());
 		final TextField textField = findTextFieldInPopup(popupNodes);
 		driver.doubleClickOn(textField);
+		driver.clickOn(textField);
 		driver.write(name);
 		driver.type(KeyCode.ENTER);
 		return this;
