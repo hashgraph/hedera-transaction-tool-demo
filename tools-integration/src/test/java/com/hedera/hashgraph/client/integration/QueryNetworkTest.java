@@ -399,7 +399,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		}
 
 		Files.copy(Path.of("src/test/resources/customNetwork.json"),
-				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/INTEGRATION.json"));
 		properties.setCustomNetworks(Collections.singleton("INTEGRATION"));
 
 		final Set<String> defaultNetworks = new HashSet<>();
