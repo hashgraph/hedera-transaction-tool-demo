@@ -795,7 +795,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 					String.format("The key threshold should be an integer between 1 and %s, please try again.", size);
 			final var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
 					message);
-			if (thresholdString == null) {
+			if (thresholdString == null || "".equals(thresholdString)) {
 				return;
 			}
 			try {
