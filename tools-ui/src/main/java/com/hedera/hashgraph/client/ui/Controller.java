@@ -927,7 +927,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		final List<String> accounts = new ArrayList<>();
 
 		for (final Identifier payer : getFeePayers()) {
-			if (payer.getNetwork().equals(currentNetwork.toUpperCase(Locale.ROOT))) {
+			if (payer.getNetworkName().equals(currentNetwork.toUpperCase(Locale.ROOT))) {
 				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
 				accounts.add(toNicknameAndChecksum);
 			}

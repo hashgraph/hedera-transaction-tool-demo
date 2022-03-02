@@ -52,6 +52,7 @@ public class Identifier implements Comparable<Identifier> {
 	public static final String SHARD_NUM = "shardNum";
 	public static final String ACCOUNT_NUM = "accountNum";
 	public static final String NETWORK = "network";
+	public static final String MAINNET_NAME_STRING = "MAINNET";
 	@JsonProperty(defaultValue = "0")
 	private long realmNum;
 
@@ -62,7 +63,7 @@ public class Identifier implements Comparable<Identifier> {
 	@JsonAlias({ "fileNum", "contractNum" })
 	private long accountNum;
 
-	private String network;
+	private String networkName;
 
 	public Identifier() {
 	}
@@ -71,14 +72,14 @@ public class Identifier implements Comparable<Identifier> {
 		this.shardNum = shardNum;
 		this.realmNum = realmNum;
 		this.accountNum = accountNum;
-		this.network = "";
+		this.networkName = "";
 	}
 
-	public Identifier(final long shardNum, final long realmNum, final long accountNum, final String network) {
+	public Identifier(final long shardNum, final long realmNum, final long accountNum, final String networkName) {
 		this.realmNum = realmNum;
 		this.shardNum = shardNum;
 		this.accountNum = accountNum;
-		this.network = network.toUpperCase(Locale.ROOT);
+		this.networkName = networkName.toUpperCase(Locale.ROOT);
 	}
 
 	public Identifier(final AccountID accountID) {
@@ -90,16 +91,16 @@ public class Identifier implements Comparable<Identifier> {
 			this.shardNum = accountId.shard;
 			this.realmNum = accountId.realm;
 			this.accountNum = accountId.num;
-			this.network = "";
+			this.networkName = "";
 		}
 	}
 
-	public Identifier(final AccountId accountId, final String network) {
+	public Identifier(final AccountId accountId, final String networkName) {
 		if (accountId != null) {
 			this.shardNum = accountId.shard;
 			this.realmNum = accountId.realm;
 			this.accountNum = accountId.num;
-			this.network = network.toUpperCase(Locale.ROOT);
+			this.networkName = networkName.toUpperCase(Locale.ROOT);
 		}
 	}
 
@@ -112,8 +113,8 @@ public class Identifier implements Comparable<Identifier> {
 		this(fileId.shard, fileId.realm, fileId.num, network);
 	}
 
-	public Identifier(final ContractID contractID, final String network) {
-		this(contractID.getShardNum(), contractID.getRealmNum(), contractID.getContractNum(), network);
+	public Identifier(final ContractID contractID, final String networkName) {
+		this(contractID.getShardNum(), contractID.getRealmNum(), contractID.getContractNum(), networkName);
 	}
 
 	public Identifier(final ContractId contractId, final String network) {
@@ -128,7 +129,7 @@ public class Identifier implements Comparable<Identifier> {
 		if (num == -1) {
 			throw new HederaClientException("Invalid json object");
 		}
-		final var network = jsonObject.has(NETWORK) ? jsonObject.get(NETWORK).getAsString() : "MAINNET";
+		final var network = jsonObject.has(NETWORK) ? jsonObject.get(NETWORK).getAsString() : MAINNET_NAME_STRING;
 
 		return new Identifier(
 				jsonObject.get(REALM_NUM).getAsLong(),
@@ -246,10 +247,10 @@ public class Identifier implements Comparable<Identifier> {
 
 	public String toReadableAccountAndNetwork() {
 		return this.toReadableString() +
-				(!"".equals(network) ? "-" + network.toUpperCase(Locale.ROOT) : "");
+				(!"".equals(networkName) ? "-" + networkName.toUpperCase(Locale.ROOT) : "");
 	}
 
-	public static final Identifier ZERO = new Identifier(0, 0, 0, "MAINNET");
+	public static final Identifier ZERO = new Identifier(0, 0, 0, MAINNET_NAME_STRING);
 
 
 	public long getRealmNum() {
@@ -276,12 +277,12 @@ public class Identifier implements Comparable<Identifier> {
 		this.accountNum = accountNum;
 	}
 
-	public String getNetwork() {
-		return network;
+	public String getNetworkName() {
+		return networkName;
 	}
 
-	public void setNetwork(final String network) {
-		this.network = network;
+	public void setNetworkName(final String networkName) {
+		this.networkName = networkName;
 	}
 
 	public boolean isValid() {
@@ -309,15 +310,15 @@ public class Identifier implements Comparable<Identifier> {
 	}
 
 	public String toReadableStringAndChecksum() {
-		if ("UNKNOWN".equals(this.network)) {
+		if ("UNKNOWN".equals(this.networkName)) {
 			return toReadableString();
 		}
-		if ("".equals(this.network)) {
+		if ("".equals(this.networkName)) {
 			return (new Identifier(this.shardNum, this.realmNum, this.accountNum,
-					"MAINNET")).toReadableStringAndChecksum();
+					MAINNET_NAME_STRING)).toReadableStringAndChecksum();
 		}
 		return String.format("%s-%s", this.toReadableString(),
-				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetwork()).toBytes(), this.toReadableString()));
+				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetworkName()).toBytes(), this.toReadableString()));
 	}
 
 	@Override
@@ -332,12 +333,12 @@ public class Identifier implements Comparable<Identifier> {
 		return realmNum == identifier.realmNum &&
 				shardNum == identifier.shardNum &&
 				accountNum == identifier.accountNum &&
-				network.equals(identifier.getNetwork());
+				networkName.equals(identifier.getNetworkName());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(shardNum, realmNum, accountNum) + network.hashCode();
+		return Objects.hash(shardNum, realmNum, accountNum) + networkName.hashCode();
 	}
 
 	@Override
@@ -346,8 +347,8 @@ public class Identifier implements Comparable<Identifier> {
 				.append(REALM_NUM, realmNum)
 				.append(SHARD_NUM, shardNum)
 				.append(ACCOUNT_NUM, accountNum);
-		if (!"".equals(network)) {
-			stringBuilder.append(NETWORK, network);
+		if (!"".equals(networkName)) {
+			stringBuilder.append(NETWORK, networkName);
 		}
 		return stringBuilder.toString();
 	}
@@ -357,8 +358,8 @@ public class Identifier implements Comparable<Identifier> {
 		id.addProperty(REALM_NUM, realmNum);
 		id.addProperty(SHARD_NUM, shardNum);
 		id.addProperty(ACCOUNT_NUM, accountNum);
-		if (!"".equals(this.network)) {
-			id.addProperty(NETWORK, network);
+		if (!"".equals(this.networkName)) {
+			id.addProperty(NETWORK, networkName);
 		}
 		return id;
 	}
@@ -373,9 +374,9 @@ public class Identifier implements Comparable<Identifier> {
 			return 0;
 		}
 
-		if (!Objects.equals(this.network, o.getNetwork())) {
-			return (int) Math.signum(Byte.compare(NetworkEnum.asLedger(this.network).toBytes()[0],
-					NetworkEnum.asLedger(o.getNetwork()).toBytes()[0]));
+		if (!Objects.equals(this.networkName, o.getNetworkName())) {
+			return (int) Math.signum(Byte.compare(NetworkEnum.asLedger(this.networkName).toBytes()[0],
+					NetworkEnum.asLedger(o.getNetworkName()).toBytes()[0]));
 		}
 
 		if (this.realmNum != o.getRealmNum()) {

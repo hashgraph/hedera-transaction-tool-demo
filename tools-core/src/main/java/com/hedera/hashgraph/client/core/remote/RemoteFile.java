@@ -540,7 +540,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
 				accountString -> new File(ACCOUNTS_INFO_FOLDER).listFiles(
-						(dir, name) -> name.contains(accountString + ".") || name.contains(accountString + "-"))).filter(
+						(dir, filename) -> filename.contains(accountString + ".") || filename.contains(accountString + "-"))).filter(
 				Objects::nonNull).flatMap(Arrays::stream).filter(File::exists).forEach(accountFile -> {
 			try {
 				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));

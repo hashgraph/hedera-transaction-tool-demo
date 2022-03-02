@@ -470,7 +470,7 @@ public class UserAccessibleProperties {
 
 	public void setDefaultFeePayer(final Identifier feePayer) {
 		final var payers = getDefaultFeePayers();
-		payers.put(feePayer.getNetwork(), feePayer.toReadableStringAndChecksum());
+		payers.put(feePayer.getNetworkName(), feePayer.toReadableStringAndChecksum());
 		setDefaultFeePayers(payers);
 	}
 
@@ -500,8 +500,8 @@ public class UserAccessibleProperties {
 		if (ids.isEmpty()) {
 			return;
 		}
-		final var network = ids.iterator().next().getNetwork().toUpperCase(Locale.ROOT);
-		if (ids.stream().anyMatch(id -> !id.getNetwork().equalsIgnoreCase(network))) {
+		final var network = ids.iterator().next().getNetworkName().toUpperCase(Locale.ROOT);
+		if (ids.stream().anyMatch(id -> !id.getNetworkName().equalsIgnoreCase(network))) {
 			return;
 		}
 
@@ -517,13 +517,13 @@ public class UserAccessibleProperties {
 	}
 
 	public void addCustomFeePayer(final Identifier identifier) {
-		final var customFeePayers = getCustomFeePayers(identifier.getNetwork());
+		final var customFeePayers = getCustomFeePayers(identifier.getNetworkName());
 		customFeePayers.add(identifier);
 		setCustomFeePayers(unmodifiableSet(customFeePayers));
 	}
 
 	public void removeCustomFeePayer(final Identifier identifier) {
-		final var payers = getCustomFeePayers(identifier.getNetwork());
+		final var payers = getCustomFeePayers(identifier.getNetworkName());
 		payers.remove(identifier);
 		if (payers.isEmpty()){
 			clearCustomFeePayers();

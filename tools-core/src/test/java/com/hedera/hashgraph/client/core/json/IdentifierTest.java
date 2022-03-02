@@ -191,7 +191,7 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromAccountId.getShardNum());
 		assertEquals(1L, identifierFromAccountId.getRealmNum());
 		assertEquals(2L, identifierFromAccountId.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 
 		assertEquals(accountId, identifierFromAccountId.asAccount());
 
@@ -200,14 +200,14 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromAccountID.getShardNum());
 		assertEquals(1L, identifierFromAccountID.getRealmNum());
 		assertEquals(2L, identifierFromAccountID.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 
 		final var fileId = new FileId(4, 5, 6);
 		final var identifierFromFileId = new Identifier(fileId, "");
 		assertEquals(4L, identifierFromFileId.getShardNum());
 		assertEquals(5L, identifierFromFileId.getRealmNum());
 		assertEquals(6L, identifierFromFileId.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 
 		assertEquals(fileId, identifierFromFileId.asFile());
 
@@ -216,14 +216,14 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromFileID.getShardNum());
 		assertEquals(1L, identifierFromFileID.getRealmNum());
 		assertEquals(2L, identifierFromFileID.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 
 		final var contractId = new ContractId(4, 5, 6);
 		final var identifierFromContractId = new Identifier(contractId, "MAINNET");
 		assertEquals(4L, identifierFromContractId.getShardNum());
 		assertEquals(5L, identifierFromContractId.getRealmNum());
 		assertEquals(6L, identifierFromContractId.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 
 		assertEquals(contractId, identifierFromContractId.asContract());
 
@@ -232,7 +232,7 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromContractID.getShardNum());
 		assertEquals(1L, identifierFromContractID.getRealmNum());
 		assertEquals(2L, identifierFromContractID.getAccountNum());
-		assertEquals("", identifierFromAccountId.getNetwork());
+		assertEquals("", identifierFromAccountId.getNetworkName());
 	}
 
 	@Test
@@ -242,7 +242,7 @@ class IdentifierTest {
 		assertEquals(0L, identifierFromAccountId.getShardNum());
 		assertEquals(1L, identifierFromAccountId.getRealmNum());
 		assertEquals(2L, identifierFromAccountId.getAccountNum());
-		assertEquals("MAINNET", identifierFromAccountId.getNetwork());
+		assertEquals("MAINNET", identifierFromAccountId.getNetworkName());
 
 		assertEquals(accountId, identifierFromAccountId.asAccount());
 
@@ -251,7 +251,7 @@ class IdentifierTest {
 		assertEquals(4L, identifierFromFileId.getShardNum());
 		assertEquals(5L, identifierFromFileId.getRealmNum());
 		assertEquals(6L, identifierFromFileId.getAccountNum());
-		assertEquals("TESTNET", identifierFromFileId.getNetwork());
+		assertEquals("TESTNET", identifierFromFileId.getNetworkName());
 
 		assertEquals(fileId, identifierFromFileId.asFile());
 
@@ -260,7 +260,7 @@ class IdentifierTest {
 		assertEquals(4L, identifierFromContractId.getShardNum());
 		assertEquals(5L, identifierFromContractId.getRealmNum());
 		assertEquals(6L, identifierFromContractId.getAccountNum());
-		assertEquals("PREVIEWNET", identifierFromContractId.getNetwork());
+		assertEquals("PREVIEWNET", identifierFromContractId.getNetworkName());
 
 		assertEquals(contractId, identifierFromContractId.asContract());
 	}

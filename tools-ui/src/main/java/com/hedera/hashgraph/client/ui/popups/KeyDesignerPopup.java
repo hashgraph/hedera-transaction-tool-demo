@@ -353,11 +353,11 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			for (final var entry : accountInfoMap.entrySet()) {
-				final var key = entry.getKey();
-				final var subst = key.contains("-") ? key.substring(0, key.lastIndexOf("-")) : key;
-				final var subst2 = key.contains("-") ? key.substring(key.lastIndexOf("-") + 1) : "UNKNOWN";
+				final var entryKey = entry.getKey();
+				final var subst = entryKey.contains("-") ? entryKey.substring(0, entryKey.lastIndexOf("-")) : entryKey;
+				final var subst2 = entryKey.contains("-") ? entryKey.substring(entryKey.lastIndexOf("-") + 1) : "UNKNOWN";
 				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(subst, subst2), nicknameMap);
-				if (nicknameMap.has(key)) {
+				if (nicknameMap.has(entryKey)) {
 					accountsAddresses.put(nn, AccountInfo.fromBytes(readBytes(entry.getValue())).key);
 				}
 			}

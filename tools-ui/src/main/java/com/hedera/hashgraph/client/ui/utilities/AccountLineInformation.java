@@ -19,11 +19,9 @@
 package com.hedera.hashgraph.client.ui.utilities;
 
 
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.LedgerId;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -38,14 +36,13 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.fromString;
 
 public class AccountLineInformation implements Comparable<AccountLineInformation> {
 	private static final Logger logger = LogManager.getLogger(AccountLineInformation.class);
+	private final BooleanProperty selected = new SimpleBooleanProperty();
 	private String nickname;
 	private Identifier account;
 	private StringProperty balance;
 	private String signer;
 	private long date;
 	private String ledgerId;
-
-	private final BooleanProperty selected = new SimpleBooleanProperty();
 
 	public AccountLineInformation(final String nickname, final Identifier account, final Hbar balance, final long date,
 			final boolean signer, final String ledgerId) {
@@ -78,12 +75,12 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return fromString(balance.getValue());
 	}
 
-	public String getLedgerId() {
-		return ledgerId;
-	}
-
 	public void setBalance(final Hbar balance) {
 		this.balance = new SimpleStringProperty(balance.toString());
+	}
+
+	public String getLedgerId() {
+		return ledgerId;
 	}
 
 	public String isSigner() {
@@ -137,12 +134,12 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return selected.get();
 	}
 
-	public BooleanProperty selectedProperty() {
-		return selected;
-	}
-
 	public void setSelected(final boolean selected) {
 		this.selected.set(selected);
+	}
+
+	public BooleanProperty selectedProperty() {
+		return selected;
 	}
 
 	@Override
@@ -156,7 +153,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return this.getAccount().compareTo(o.getAccount());
 	}
 
-	public void setLedgerID(String ledgerID) {
-		this.ledgerId=ledgerID;
+	public void setLedgerID(final String ledgerID) {
+		this.ledgerId = ledgerID;
 	}
 }

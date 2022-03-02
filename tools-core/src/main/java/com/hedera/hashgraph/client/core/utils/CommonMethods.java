@@ -349,7 +349,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var nickname = (accounts.has(nameAndNet)) ? accounts.get(nameAndNet).getAsString() : "";
 
 
-		final var ledger = NetworkEnum.asLedger(accountNumber.getNetwork());
+		final var ledger = NetworkEnum.asLedger(accountNumber.getNetworkName());
 
 
 		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(ledger.toBytes(), name));

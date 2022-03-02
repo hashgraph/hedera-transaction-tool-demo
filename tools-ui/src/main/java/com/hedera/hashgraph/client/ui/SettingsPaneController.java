@@ -806,7 +806,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		var zero = Identifier.ZERO;
-		zero.setNetwork(controller.getCurrentNetwork());
+		zero.setNetworkName(controller.getCurrentNetwork());
 		controller.setDefaultFeePayer(zero);
 		controller.accountsPaneController.initializeAccountPane();
 		addFeePayerAction();

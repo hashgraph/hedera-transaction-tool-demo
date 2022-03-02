@@ -176,6 +176,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String NO_ACCOUNTS_SELECTED_TITLE = "No accounts selected";
 	public static final String ERROR_TITLE = "Error";
 	public static final String UNKNOWN_NETWORK_STRING = "UNKNOWN";
+	public static final String COLUMN_STYLE_STRING = "-fx-alignment: TOP-CENTER; -fx-padding: 10";
 
 
 	@FXML
@@ -306,14 +307,14 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				return;
 			}
 			final var feePayerString = (String) feePayerSelection;
-			final var feePayer = feePayerString == null || "".equals(feePayerString) ?
+			final var feePayer = "".equals(feePayerString) ?
 					getFeePayer() :
 					Identifier.parse(feePayerString, controller.getCurrentNetwork().toUpperCase(Locale.ROOT));
 
 			if (feePayer == null) {
 				return;
 			}
-			feePayer.setNetwork(networkChoiceBoxA.getValue().toString());
+			feePayer.setNetworkName(networkChoiceBoxA.getValue().toString());
 
 			final var network = networkChoiceBoxA.getValue();
 			if (!(network instanceof String)) {
@@ -353,7 +354,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private Set<File> getKeyFiles(
 			final Identifier feePayer) throws HederaClientException, InvalidProtocolBufferException {
-		final var filename = feePayer.toReadableString() + "-" + feePayer.getNetwork() + "." + INFO_EXTENSION;
+		final var filename = feePayer.toReadableString() + "-" + feePayer.getNetworkName() + "." + INFO_EXTENSION;
 		final var accountInfo = new File(ACCOUNTS_INFO_FOLDER, filename);
 		final Set<File> returnSet = new HashSet<>();
 		if (accountInfo.exists()) {
@@ -387,7 +388,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final List<File> newFiles = new ArrayList<>();
 			for (final var account : accounts) {
 				logger.info("Requesting information for account {}", account);
-				final var identifier = new Identifier(account, feePayer.getNetwork());
+				final var identifier = new Identifier(account, feePayer.getNetworkName());
 				query.setNetwork(getAccountNetwork(feePayer));
 				final var info = query.getInfo(identifier);
 				final var filePath =
@@ -742,7 +743,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					return new SimpleStringProperty(date.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
 				});
 		dateColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(3));
-		dateColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		dateColumn.setStyle(COLUMN_STYLE_STRING);
 		return dateColumn;
 	}
 
@@ -797,9 +798,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var networkColumn = new TableColumn<AccountLineInformation, String>("Network");
 		networkColumn.setCellValueFactory(new PropertyValueFactory<>("ledgerId"));
 		networkColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(2));
-		networkColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		networkColumn.setStyle(COLUMN_STYLE_STRING);
 
 		networkColumn.setCellFactory(
+
 				new Callback<>() {
 					@Override
 					public TableCell<AccountLineInformation, String> call(
@@ -883,7 +885,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	@NotNull
 	private TableRowExpanderColumn<AccountLineInformation> getExpanderColumn() {
 		final var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
-		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		expanderColumn.setStyle(COLUMN_STYLE_STRING);
 		return expanderColumn;
 	}
 
