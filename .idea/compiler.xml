@@ -25,5 +25,10 @@
         <module name="wrapper" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name=".mvn (1)" target="1.5" />
+      <module name=".mvn (2)" target="1.5" />
+      <module name="wrapper" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
 </project>
