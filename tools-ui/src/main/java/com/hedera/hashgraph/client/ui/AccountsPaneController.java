@@ -1238,7 +1238,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
 			}
 		} catch (final HederaClientException e) {
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 	}
 
