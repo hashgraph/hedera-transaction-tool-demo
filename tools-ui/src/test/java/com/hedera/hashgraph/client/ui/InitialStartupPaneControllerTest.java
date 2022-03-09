@@ -84,6 +84,8 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 	public static BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
+	private static final BooleanSupplier isInGithubActions = () ->
+			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 
 	public static final String PASSWORD = "tempura hopscotch";
 	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
@@ -408,11 +410,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertTrue(find("pole").isVisible());
 
 		clickOn((Node) find("point"));
-		write("\n");
+		type(KeyCode.ENTER);
 
 		assertTrue(empty.get(1).isFocused());
 
-		write("poet\n");
+		write("poet");
+		type(KeyCode.ENTER);
 		assertTrue(empty.get(2).isFocused());
 
 	}
@@ -615,7 +618,8 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		final var one = new File(DIR_TEST_ONE_DRIVE);
 		logger.info(one.getAbsolutePath());
-		final var home = (isInCircleCi.getAsBoolean()) ? "/repo" : USER_HOME;
+		final var home = (isInCircleCi.getAsBoolean()) ? "/repo" :
+				(isInGithubActions.getAsBoolean() ? CURRENT_RELATIVE_PATH : USER_HOME);
 		final var user = new File(home);
 		logger.info(user.getAbsolutePath());
 		assertTrue(one.getAbsolutePath().contains(user.getAbsolutePath()));

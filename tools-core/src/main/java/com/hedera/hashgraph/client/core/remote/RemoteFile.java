@@ -97,24 +97,19 @@ import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
 public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFile.class);
-
-
+	private final TextArea commentArea = new TextArea();
+	private final Set<File> signerSet = new HashSet<>();
+	private final Set<File> extraSigners = new HashSet<>();
 	private FileType type;
-
 	private String name;
 	private String parentPath;
 	private long date = 0;
-
 	private boolean history = false;
 	private boolean valid = false;
 	private boolean hasComments = false;
 	private boolean showAdditionalBoxes = false;
-
 	private RemoteFile commentsFile;
 	private long signDateInSecs = 0;
-	private final TextArea commentArea = new TextArea();
-	private final Set<File> signerSet = new HashSet<>();
-	private final Set<File> extraSigners = new HashSet<>();
 
 	// region CONSTRUCTORS
 	public RemoteFile() {
@@ -210,6 +205,31 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	}
 	// endregion
 
+	private static FileType parseType(final String extension) throws HederaClientException {
+		switch (extension) {
+			case TXT_EXTENSION:
+				return COMMENT;
+			case TRANSACTION_EXTENSION:
+				return TRANSACTION;
+			case INFO_EXTENSION:
+				return ACCOUNT_INFO;
+			case PUB_EXTENSION:
+				return PUBLIC_KEY;
+			case SOFTWARE_UPDATE_EXTENSION:
+				return SOFTWARE_UPDATE;
+			case BATCH_TRANSACTION_EXTENSION:
+				return BATCH;
+			case LARGE_BINARY_EXTENSION:
+				return LARGE_BINARY;
+			case METADATA_EXTENSION:
+				return METADATA;
+			case BUNDLE_EXTENSION:
+				return BUNDLE;
+			default:
+				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
+		}
+	}
+
 	// region GETTERS AND SETTERS
 	public FileType getType() {
 		return type;
@@ -227,12 +247,12 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		return name;
 	}
 
-	public String getBaseName() {
-		return FilenameUtils.getBaseName(name);
-	}
-
 	public void setName(final String name) {
 		this.name = name;
+	}
+
+	public String getBaseName() {
+		return FilenameUtils.getBaseName(name);
 	}
 
 	public String getPath() {
@@ -339,11 +359,11 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		this.hasComments = b;
 	}
 
+	// endregion
+
 	public List<FileActions> getActions() {
 		return new ArrayList<>();
 	}
-
-	// endregion
 
 	/**
 	 * Executes the required action on the file.
@@ -396,6 +416,29 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		this.setHistory(true);
 		setSignDateInSecs(timestamp.asDuration().getSeconds());
 
+	}
+
+	/**
+	 * Moves the current remote file to history without any action.
+	 */
+	public void moveToHistory() throws HederaClientException {
+		final var historyFile = new File(DEFAULT_HISTORY + File.separator + name);
+		if (!historyFile.exists()) {
+			try {
+				FileUtils.copyFile(new File(getPath()), historyFile);
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+		}
+
+		if (hasComments()) {
+			commentsFile.moveToHistory();
+		}
+
+		new MetadataFile(getName());
+
+		this.parentPath = DEFAULT_HISTORY;
+		this.setHistory(true);
 	}
 
 	/**
@@ -546,12 +589,16 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 *
 	 * @return a list of the previous actions on the file
 	 */
-	public List<MetadataAction> getSigningHistory() throws HederaClientException {
+	public List<MetadataAction> getSigningHistory() {
 		List<MetadataAction> signingHistory = new ArrayList<>();
 		final var metadata = new File(DEFAULT_HISTORY, FilenameUtils.getBaseName(getName()) + "." + METADATA_EXTENSION);
 		if (metadata.exists()) {
-			signingHistory = new MetadataFile(
-					FilenameUtils.getBaseName(getName()) + "." + METADATA_EXTENSION).getMetadataActions();
+			try {
+				signingHistory = new MetadataFile(
+						FilenameUtils.getBaseName(getName()) + "." + METADATA_EXTENSION).getMetadataActions();
+			} catch (final HederaClientException e) {
+				logger.error(e.getMessage());
+			}
 		}
 		return signingHistory;
 	}
@@ -563,17 +610,15 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 */
 	public boolean accepted() {
 		List<MetadataAction> signingHistory = new ArrayList<>();
-		try {
-			signingHistory = getSigningHistory();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
-		for (final var metadataAction : signingHistory) {
-			if (metadataAction.getActions().equals(Actions.ACCEPT)) {
-				return true;
-			}
-		}
-		return false;
+		signingHistory = getSigningHistory();
+		return signingHistory.stream().anyMatch(metadataAction -> metadataAction.getActions().equals(Actions.ACCEPT));
+	}
+
+	/**
+	 * @return true if the file has previously been interacted with.
+	 */
+	public boolean hasHistory() {
+		return !getSigningHistory().isEmpty();
 	}
 
 	private VBox buildFileVBox(final boolean isHistory) {
@@ -723,7 +768,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 	}
 
-	private void addHistory(final GridPane detailsGridPane) throws HederaClientException {
+	private void addHistory(final GridPane detailsGridPane) {
 		var rowCount = detailsGridPane.getRowCount();
 		final var signingHistory = getSigningHistory();
 		if (signingHistory.isEmpty()) {
@@ -749,31 +794,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				detailsGridPane.add(new Label("Declined on: "), 0, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			}
-		}
-	}
-
-	private static FileType parseType(final String extension) throws HederaClientException {
-		switch (extension) {
-			case TXT_EXTENSION:
-				return COMMENT;
-			case TRANSACTION_EXTENSION:
-				return TRANSACTION;
-			case INFO_EXTENSION:
-				return ACCOUNT_INFO;
-			case PUB_EXTENSION:
-				return PUBLIC_KEY;
-			case SOFTWARE_UPDATE_EXTENSION:
-				return SOFTWARE_UPDATE;
-			case BATCH_TRANSACTION_EXTENSION:
-				return BATCH;
-			case LARGE_BINARY_EXTENSION:
-				return LARGE_BINARY;
-			case METADATA_EXTENSION:
-				return METADATA;
-			case BUNDLE_EXTENSION:
-				return BUNDLE;
-			default:
-				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
 		}
 	}
 

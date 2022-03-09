@@ -102,3 +102,5 @@ Release/
 .idea/inspectionProfiles/Project_Default.xml
 tools-integration/src/test/resources/TempReceipts
 tools-integration/src/test/resources/TempTransactions
+
+.mvn/**/*.jar

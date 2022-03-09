@@ -173,4 +173,9 @@ public class Constants {
 	public static final String NUMBER_REGEX = "^[0-9]+$";
 
 	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
+
+
+	public static final long TEST_EXPIRATION_TIME = 10L;
+
+
 }

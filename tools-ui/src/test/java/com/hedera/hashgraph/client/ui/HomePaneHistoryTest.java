@@ -41,7 +41,6 @@ import org.testfx.api.FxToolkit;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +48,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertEquals;
@@ -59,12 +61,8 @@ import static org.junit.Assert.assertTrue;
 @Ignore
 public class HomePaneHistoryTest extends TestBase implements GenericFileReadWriteAware {
 
-	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
-	private static final String DEFAULT_STORAGE = System.getProperty(
-			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private final List<VBox> publicKeyBoxes = new ArrayList<>();
 	private final List<VBox> accountInfoBoxes = new ArrayList<>();
 	private final List<VBox> batchBoxes = new ArrayList<>();
@@ -77,6 +75,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 
 	@Before
 	public void setUp() throws Exception {
+		final var currentRelativePath = Paths.get("");
 
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
@@ -89,8 +88,8 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
-
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		final var properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {
@@ -113,10 +112,17 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		}
 
 		final Map<String, String> emailMap = new HashMap<>();
-		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents - " +
-						"empty/",
-				"test1.council2@hederacouncil.org");
+		final var empty = currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents - " +
+				"empty/";
+
+		if (new File(empty, "InputFiles").mkdirs()) {
+			logger.info("Empty input files folder created");
+		}
+		if (new File(empty, "OutputFiles/test1.council2@hederacouncil.org").mkdirs()) {
+			logger.info("Empty output files folder created");
+		}
+
+		emailMap.put(empty, "test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
 
@@ -124,7 +130,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
-				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
+				new File(DEFAULT_STORAGE, MNEMONIC_PATH));
 
 
 		if (new File(DEFAULT_STORAGE + "History").exists()) {
@@ -156,7 +162,11 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
 				systemBoxes, fileUpdateBoxes);
 
-		assertEquals(newFiles.size(),
+		final var filtered =
+				newFiles.stream().filter(newFile -> newFile instanceof VBox).map(newFile -> (VBox) newFile).collect(
+						Collectors.toList());
+
+		assertEquals(filtered.size(),
 				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + fileUpdateBoxes.size());
 
 
@@ -192,7 +202,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 	@Test
 	public void historyTest() {
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		assertEquals(0, newFiles.size());
+		assertEquals(1, newFiles.size());
 
 		var historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
 		assertTrue(historyFiles.get(1) instanceof HBox);
@@ -277,7 +287,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 		separateBoxes(files, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
 				systemBoxes, fileUpdateBoxes);
 
-		assertEquals(3,
+		assertEquals(2,
 				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size() + softwareBoxes.size() + systemBoxes.size() + fileUpdateBoxes.size());
 
 		top = ((HBox) find("#chooseLength")).getChildren();
@@ -293,7 +303,7 @@ public class HomePaneHistoryTest extends TestBase implements GenericFileReadWrit
 	@Test
 	public void filterTest() {
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		assertEquals(0, newFiles.size());
+		assertEquals(1, newFiles.size());
 
 		var historyFiles = ((VBox) find("#historyFilesViewVBox")).getChildren();
 		assertTrue(historyFiles.get(1) instanceof HBox);

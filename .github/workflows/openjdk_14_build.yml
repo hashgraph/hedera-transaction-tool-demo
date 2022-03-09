@@ -1,0 +1,117 @@
+name: openjdk_14_build
+on:
+  pull_request:
+  push:
+    branches: [ main, develop ]
+    tags: [ v* ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install JDK
+        uses: actions/setup-java@v2
+        with:
+          cache: 'maven'
+          distribution: 'temurin'
+          java-version: 17
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Compile
+        run: ./mvnw $MAVEN_CLI_OPTS clean compile
+      - name: Unit Tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
+        if: env.GITHUB_TOKEN == '' && env.SONAR_TOKEN == ''
+        run: ./mvnw $MAVEN_CLI_OPTS test
+      - name: Sonar and Unit Tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
+        if: env.GITHUB_TOKEN != '' && env.SONAR_TOKEN != ''
+        run: ./mvnw $MAVEN_CLI_OPTS verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.pullrequest.github.repository=hashgraph/hedera-transaction-tool-demo -Dsonar.pullrequest.provider=github -Dsonar.qualitygate.wait=true -Dsonar.projectKey=com.hedera.hashgraph:hedera-transaction-tool
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "*/target/surefire-reports/*.xml"
+      - name: Post to a Slack channel
+        uses: slackapi/slack-github-action@v1.16.0
+        if: always() && env.SLACK_BOT_TOKEN != ''
+        with:
+          channel-id: ${{ secrets.SONAR_SLACK_CHANNEL }}
+          payload: |
+            {
+              "attachments": [
+                {
+                    "color": "${{ (job.status == 'success' && '#35c908') || ((job.status == 'cancelled' && '##c98c08') || '#c92808') }}",
+                    "blocks": [
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": "*Transaction Tool Build ${{ job.status }}*"
+                            },
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*_Commit Author:_*"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*_Branch:_*"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "${{github.actor}}"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "${{github.ref_name}}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*_Github Actions Build Number:_*"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "*_SonarCloud Analysis:_*"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "<${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}}|${{github.run_number}}>"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": "<https://sonarcloud.io/summary/new_code?branch=${{github.ref_name}}&id=com.hedera.hashgraph%3Ahedera-transaction-tool|${{github.ref_name}}>"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "text": {
+                                "type": "mrkdwn",
+                                "text": "*_Git Commit:_*\n${{github.sha}}"
+                            }
+                        }
+                    ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_ACCESS_TOKEN || '' }}

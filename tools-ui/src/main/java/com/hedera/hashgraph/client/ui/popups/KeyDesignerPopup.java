@@ -132,8 +132,6 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	private VBox design = new VBox();
 	private final VBox publicKeysBox = new VBox();
 	private final VBox accountsBox = new VBox();
-	private final VBox buttonsAccounts = new VBox();
-	private final VBox buttonsKeys = new VBox();
 	private Key key;
 	private JsonObject jsonKey = new JsonObject();
 	private TreeView<String> treeView;
@@ -270,14 +268,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		accountsTitledPane.setContentDisplay(ContentDisplay.RIGHT);
 		accountsTitledPane.setAnimated(false);
 
-
 		final var keysTitledPane = new TitledPane("Public keys", publicKeysBox);
 		keysTitledPane.setGraphic(getImageViewWithTooltip(ToolTipMessages.PUBLIC_KEYS_BOX_DESIGNER_TOOLTIP_TEXT));
 		keysTitledPane.setContentDisplay(ContentDisplay.RIGHT);
 		keysTitledPane.setAnimated(false);
-
-		buttonsKeys.visibleProperty().bind(keysTitledPane.expandedProperty());
-		buttonsAccounts.visibleProperty().bind(accountsTitledPane.expandedProperty());
 
 		final var accordion = new Accordion();
 		accordion.getPanes().addAll(keysTitledPane, accountsTitledPane);
@@ -379,11 +373,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		accountKeyList.setOnMouseClicked(event -> {
 			if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2 &&
 					event.getTarget() instanceof LabeledText) {
-				final var accountNickname = ((LabeledText) event.getTarget()).getText();
-				key = accountsAddresses.get(accountNickname);
-				refreshTree();
+				final var accountKey =
+						keyToTreeView(accountsAddresses.get(accountKeyList.getSelectionModel().getSelectedItem()));
+				addNodeToTree(accountKey);
 			}
-
 		});
 
 		accountKeyList.setStyle(FX_BORDER_COLOR_BLACK);
@@ -405,7 +398,6 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		publicKeysBox.setMinHeight(450);
 		HBox.setHgrow(publicKeysBox, Priority.ALWAYS);
 		appPubKeyList = getPublicKeyListView(publicKeys.keySet());
-
 		extraPubKeyList = getPublicKeyListView(extraKeys.keySet());
 		extraPubKeyList.minHeightProperty().bind(Bindings.size(extraPubKeyList.getItems()).multiply(34).add(15));
 		extraPubKeyList.maxHeightProperty().bind(Bindings.size(extraPubKeyList.getItems()).multiply(34.5).add(15));
@@ -443,23 +435,12 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 				logger.info("No source selected");
 				return;
 			}
-			final var source =
+			final var source = new TreeItem<>(
 					appPubKeyList.getSelectionModel().getSelectedItem() != null ?
 							appPubKeyList.getSelectionModel().getSelectedItem() :
-							extraPubKeyList.getSelectionModel().getSelectedItem();
+							extraPubKeyList.getSelectionModel().getSelectedItem());
 
-			final var destination =
-					treeView.getSelectionModel().getSelectedItem() != null ?
-							treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
-			logger.info("Copying {} to {}", source, destination.getValue());
-			final var value = destination.getValue();
-			if (!value.contains(" key")) {
-				destination.setValue(THRESHOLD_KEY_X_OF_X);
-				destination.getChildren().add(new TreeItem<>(value));
-			}
-			destination.getChildren().add(new TreeItem<>(source));
-			destination.setExpanded(true);
-			setSizes(treeView.getRoot());
+			addNodeToTree(source);
 		});
 
 		final var remove = new Button("\u2718");
@@ -467,12 +448,6 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		remove.setStyle(REMOVE_BUTTON_STYLE);
 		remove.setMinWidth(50);
 
-		buttonsKeys.getChildren().addAll(add, remove);
-		buttonsKeys.setAlignment(Pos.CENTER);
-		buttonsKeys.setSpacing(10);
-
-		buttonsKeys.managedProperty().bind(buttonsKeys.visibleProperty());
-		buttons.getChildren().add(buttonsKeys);
 
 		final var addAccount = new Button();
 		final var arrowView2 = new ImageView(arrowImage);
@@ -482,16 +457,57 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		addAccount.setMinWidth(50);
 		addAccount.setStyle("-fx-background-color: transparent; -fx-border-color: darkgray; -fx-border-radius: 5");
 		addAccount.setOnAction(event -> {
-			final var accountNickname = accountKeyList.getSelectionModel().getSelectedItem();
-			key = accountsAddresses.get(accountNickname);
-			refreshTree();
+			if (accountKeyList.getSelectionModel().getSelectedItem() == null) {
+				logger.info("No source selected");
+				return;
+			}
+			final var accountKey =
+					keyToTreeView(accountsAddresses.get(accountKeyList.getSelectionModel().getSelectedItem()));
+			addNodeToTree(accountKey);
 		});
-		buttonsAccounts.managedProperty().bind(buttonsAccounts.visibleProperty());
-		buttonsAccounts.setAlignment(Pos.CENTER);
-		buttonsAccounts.getChildren().add(addAccount);
+
+		addAccount.managedProperty().bind(addAccount.visibleProperty());
+		add.managedProperty().bind(add.visibleProperty());
+		addAccount.visibleProperty().bind(accountsBox.visibleProperty());
+		add.visibleProperty().bind(addAccount.visibleProperty().not());
+
+		final var addBox = new VBox();
+		addBox.getChildren().addAll(add, addAccount);
+
+		buttons.setSpacing(10);
+		buttons.managedProperty().bind(buttons.visibleProperty());
+		addBox.visibleProperty().bind(accountsBox.visibleProperty().or(publicKeysBox.visibleProperty()));
+		buttons.getChildren().addAll(addBox, remove);
 
 		buttons.setAlignment(Pos.CENTER);
-		buttons.getChildren().add(buttonsAccounts);
+
+	}
+
+	/**
+	 * Adds a node to the key tree, in the selected position.
+	 *
+	 * @param source
+	 * 		the node to be added
+	 */
+	private void addNodeToTree(final TreeItem<String> source) {
+		if (treeView.getRoot().getChildren().isEmpty() && !source.getChildren().isEmpty()){
+			treeView.setRoot(source);
+			return;
+		}
+
+		final var destination =
+				treeView.getSelectionModel().getSelectedItem() != null ?
+						treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
+		final var value = destination.getValue();
+
+
+		if (!value.contains(" key")) {
+			destination.setValue(THRESHOLD_KEY_X_OF_X);
+			destination.getChildren().add(new TreeItem<>(value));
+		}
+		destination.getChildren().add(source);
+		destination.setExpanded(true);
+		setSizes(treeView.getRoot());
 	}
 
 	/**
@@ -766,20 +782,31 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		}
 
 		final var item = treeCell.getTreeItem();
-		try {
+
+		var threshold = 0;
+		int count = 0;
+		final var size = item.getChildren().size();
+		while (threshold < 1 || threshold > size) {
+			final var message = (count == 0) ?
+					"Enter the threshold" :
+					String.format("The key threshold should be an integer between 1 and %s, please try again.", size);
 			final var thresholdString = GenericPopup.display(THRESHOLD_STRING, "ACCEPT", "CANCEL", true, true,
-					"Enter the threshold");
-			if (thresholdString == null) {
+					message);
+			if (thresholdString == null || "".equals(thresholdString)) {
 				return;
 			}
-			final var threshold = Integer.parseInt(thresholdString);
-			final var formattedItem = String.format("%s(%d of %d)",
-					item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
-					item.getChildren().size());
-			item.setValue(formattedItem);
-		} catch (final HederaClientException e) {
-			logger.error(e);
+			try {
+				threshold = Integer.parseInt(thresholdString);
+			} catch (final NumberFormatException e) {
+				logger.error("Cannot parse threshold {}", thresholdString);
+			}
+			count++;
 		}
+		final var formattedItem = String.format("%s(%d of %d)",
+				item.getValue().substring(0, item.getValue().lastIndexOf("(")), threshold,
+				size);
+		item.setValue(formattedItem);
+
 	}
 
 	private void treeCellDragDroppedEvent(final TreeCell<String> treeCell, final DragEvent event) {

@@ -117,6 +117,12 @@ public class HomePanePage {
 		return this;
 	}
 
+	public HomePanePage clickOnPopupButton(final String button){
+		final var node = TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), button);
+		driver.clickOn(node);
+		return this;
+	}
+
 	private static void ensureVisible(final ScrollPane scrollPane, final Node node) {
 		final var viewport = scrollPane.getViewportBounds();
 		final var contentHeight =

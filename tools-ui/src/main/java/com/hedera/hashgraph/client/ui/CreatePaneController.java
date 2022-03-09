@@ -2239,7 +2239,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
 				transaction.hashCode());
 
-		final var tempStorage = TEMP_DIRECTORY + "tempStorage";
+		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		if (new File(tempStorage).mkdirs()) {
 			logger.info("Temporary folder created");
 		}
@@ -2520,7 +2520,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void loadLargeFileUpdateToForm(final File transactionFile) throws HederaClientException {
-		final var tempStorage = TEMP_DIRECTORY + "tempStorage";
+		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		selectTransactionType.setValue("File Contents Update");
 		unZip(transactionFile.getAbsolutePath(), tempStorage);
 		final var files = new File(tempStorage).listFiles(

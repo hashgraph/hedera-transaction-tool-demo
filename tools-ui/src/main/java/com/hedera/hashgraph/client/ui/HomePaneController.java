@@ -445,7 +445,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
-		rf.setTreeView(controller.buildKeyTreeView(key));
+		if (key != null) {
+			rf.setTreeView(controller.buildKeyTreeView(key));
+		}
 	}
 
 	private VBox getButtonsBox(final RemoteFile rf) {
@@ -498,6 +500,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				final var signingBar = new ButtonBar();
 				signingBar.setButtonMinWidth(150);
 				signingBar.getButtons().addAll(buildSignButton(rf), buildDeclineButton(rf));
+
+				if (rf.hasHistory()) {
+					signingBar.getButtons().add(buildCancelButton(rf));
+				}
+
 				final var addMoreKeysBar = new ButtonBar();
 				addMoreKeysBar.setButtonMinWidth(150);
 				addMoreKeysBar.getButtons().addAll(buildAddMoreButton(rf, extraSignersGridPane),
@@ -582,6 +589,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 							FileUtils.copyFile(entry.getValue(), destination);
 						}
 						break;
+					default:
+						logger.info("No action taken: {}",rf.getType());
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
@@ -614,11 +623,26 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return declineButton;
 	}
 
+	private Button buildCancelButton(final RemoteFile rf) {
+		final var cancelButton = buildWhiteButton("CANCEL");
+		cancelButton.setOnAction(event -> {
+			try {
+				rf.moveToHistory();
+				historyChanged = true;
+			} catch (final HederaClientException e) {
+				logger.error(e);
+				controller.displaySystemMessage(e.getMessage());
+			}
+			initializeHomePane();
+		});
+		return cancelButton;
+	}
+
 	private Button buildUndoButton(final RemoteFile rf) {
 		final var legend =
 				(rf instanceof PublicKeyFile || rf instanceof InfoFile || rf instanceof BundleFile) ?
 						"UNDO" :
-						"ADD SIGNATURE";
+						"ADD MORE SIGNATURES";
 		final var undoButton = buildBlueButton(legend);
 		undoButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		undoButton.setMinWidth(250);
@@ -1015,7 +1039,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private Pair<String, KeyPair> getAccountKeyPair(final File pemFile) throws HederaClientException {
-		final var pair = controller.keyPairUtility.getAccountKeyPair(pemFile);
+		final var pair = controller.getKeyPairUtility().getAccountKeyPair(pemFile);
 		if (pair == null) {
 			controller.displaySystemMessage(String.format("File %s not decrypted", pemFile.getName()));
 			throw new HederaClientException(String.format("File %s not decrypted", pemFile.getName()));

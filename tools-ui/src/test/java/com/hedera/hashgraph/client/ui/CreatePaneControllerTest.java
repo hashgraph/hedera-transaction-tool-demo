@@ -200,7 +200,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-			if (new File(currentRelativePath.toAbsolutePath() + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
+			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
 				logger.info("Output path created");
 			}
 
@@ -897,8 +897,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setMemo("A memo")
 				.setFeePayerAccount(1019)
 				.setNodeAccount(42)
-				.setUpdateKey("treasury")
-				.saveKey();
+				.setUpdateKey("treasury");
+
+		createPanePage.saveKey();
 
 
 		final var newKey = find(CREATE_UPDATE_NEW_KEY);
@@ -996,7 +997,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
-
 
 
 		final var transactions = new File(
@@ -1540,6 +1540,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		createPanePage.setCreateKey()
 				.doubleClickOnAccountKey("treasury")
 				.saveKey();
+
 		assertFalse(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
 		assertTrue(find(CREATE_INVALID_FEE_PAYER).isVisible());
