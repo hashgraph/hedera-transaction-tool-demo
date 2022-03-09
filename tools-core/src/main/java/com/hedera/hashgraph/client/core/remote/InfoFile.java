@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.remote;
 
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileActions;
@@ -26,6 +27,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
@@ -172,5 +174,14 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson= super.toJson();
+		toJson.add("accountID", accountID.asJSON());
+		toJson.add("timestamp", timestamp.asJSON());
+		toJson.add("key", EncryptionUtils.keyToJson(key));
+		return toJson;
 	}
 }

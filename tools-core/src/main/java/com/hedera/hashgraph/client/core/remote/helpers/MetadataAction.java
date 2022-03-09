@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
@@ -147,5 +148,9 @@ public class MetadataAction implements Comparable<MetadataAction> {
 		}
 
 		return this.keyName.compareTo(o.getKeyName());
+	}
+
+	public String toReadableString() {
+		return StringUtils.capitalize(actions.toString()) + " on " + timeStamp.asReadableLocalString();
 	}
 }

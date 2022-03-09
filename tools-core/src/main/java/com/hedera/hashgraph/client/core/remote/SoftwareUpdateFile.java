@@ -393,4 +393,13 @@ public class SoftwareUpdateFile extends RemoteFile {
 	public int hashCode() {
 		return super.hashCode() + timestamp.hashCode() + version.hashCode() + digest.hashCode();
 	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("timestamp", timestamp.asJSON());
+		toJson.addProperty("version", version);
+		toJson.addProperty("digest", digest);
+		return toJson;
+	}
 }

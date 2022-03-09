@@ -19,6 +19,7 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -161,5 +162,12 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 	@Override
 	public int hashCode() {
 		return super.hashCode() + actions.hashCode() + timestamp.hashCode();
+	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("timestamp", timestamp.asJSON());
+		return toJson;
 	}
 }

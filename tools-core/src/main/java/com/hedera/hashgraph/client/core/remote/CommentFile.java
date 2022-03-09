@@ -57,7 +57,6 @@ public class CommentFile extends RemoteFile {
 		}
 	}
 
-
 	public JsonObject getContents() {
 		var contents = new JsonObject();
 		if (new File(getPath()).exists()) {
@@ -69,7 +68,6 @@ public class CommentFile extends RemoteFile {
 		}
 		return contents;
 	}
-
 
 	public Timestamp getTimestamp() {
 		return timestamp;
@@ -91,5 +89,13 @@ public class CommentFile extends RemoteFile {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("timeStamp", timestamp.asJSON());
+		toJson.addProperty("linkedFile", linkedFile);
+		return toJson;
 	}
 }

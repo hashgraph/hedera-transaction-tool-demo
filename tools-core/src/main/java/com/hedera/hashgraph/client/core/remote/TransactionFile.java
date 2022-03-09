@@ -533,6 +533,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return super.getSigningPublicKeys();
 	}
 
+
+
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,
 			final List<Pair<String, String>> receivers) {
 		for (final var receiver : receivers) {
@@ -584,5 +586,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		window.showAndWait();
 	}
 
-
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("transaction", transaction.asJson());
+		return toJson;
+	}
 }

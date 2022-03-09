@@ -1278,6 +1278,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	}
 
+	public List<RemoteFile> getHistory() {
+		return historyFiles.getFiles();
+	}
+
 	class SortByFileBaseName implements Comparator<File> {
 
 		@Override

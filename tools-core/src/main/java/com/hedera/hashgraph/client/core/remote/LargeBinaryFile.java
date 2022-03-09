@@ -568,4 +568,21 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public int hashCode() {
 		return super.hashCode();
 	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.addProperty("filename", filename);
+		toJson.add("fileID", fileID.asJSON());
+		toJson.addProperty("chunkSize", chunkSize);
+		toJson.add("feePayerAccountId", feePayerAccountId.asJSON());
+		toJson.addProperty("transactionValidDuration", transactionValidDuration.getSeconds());
+		toJson.add("transactionValidStart", transactionValidStart.asJSON());
+		toJson.addProperty("validIncrement", validIncrement);
+		toJson.add("nodeID", nodeID.asJSON());
+		toJson.addProperty("transactionFee", transactionFee);
+		toJson.addProperty("memo", memo);
+		toJson.addProperty("content", content.getAbsolutePath());
+		return toJson;
+	}
 }

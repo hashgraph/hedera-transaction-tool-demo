@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
@@ -175,6 +176,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public CreatePaneController createPaneController;
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
+	@FXML
+	public HistoryPaneController historyPaneController;
 
 
 	// Utility
@@ -252,6 +255,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		createPaneController.injectMainController(this);
 		keysPaneController.injectMainController(this);
 		accountsPaneController.injectMainController(this);
+		historyPaneController.injectMainController(this);
+
 
 		startupPhaseInitialization();
 
@@ -345,6 +350,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+				historyPaneController.initializeHistoryPane();
 				break;
 			case TEST_PHASE:
 				properties =
@@ -932,4 +938,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return feePayer;
 	}
 
+	public List<RemoteFile> getHistory() {
+		return homePaneController.getHistory();
+	}
 }

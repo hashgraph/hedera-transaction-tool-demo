@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -721,7 +722,8 @@ public class BatchFile extends RemoteFile {
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 			final String output) throws HederaClientException {
 		final var tempStorage =
-				new File(TEMP_FOLDER_LOCATION, LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
+				new File(TEMP_FOLDER_LOCATION,
+						LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		final DoubleProperty progress = new SimpleDoubleProperty(1);
@@ -822,5 +824,22 @@ public class BatchFile extends RemoteFile {
 		return super.hashCode();
 	}
 
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		final var nodes = new JsonArray();
+		nodeAccountID.stream().map(Identifier::asJSON).forEach(nodes::add);
+		final var lines = new JsonArray();
+		transfers.stream().map(BatchLine::asJSON).forEachOrdered(lines::add);
 
+		toJson.add("senderAccountID", senderAccountID.asJSON());
+		toJson.add("feePayerAccountID", feePayerAccountID.asJSON());
+		toJson.add("nodeAccountID", nodes);
+		toJson.addProperty("hoursUTC", hoursUTC);
+		toJson.addProperty("minutesUTC", minutesUTC);
+		toJson.add("transfers", lines);
+		toJson.addProperty("memo", memo);
+
+		return toJson;
+	}
 }
