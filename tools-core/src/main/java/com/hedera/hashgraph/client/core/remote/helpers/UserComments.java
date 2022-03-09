@@ -70,22 +70,22 @@ public class UserComments {
 		return timestamp;
 	}
 
-	public void toFile(String location) {
+	public void toFile(final String location) {
 
-		try (var writer = new BufferedWriter(new FileWriter(location))) {
+		try (final var writer = new BufferedWriter(new FileWriter(location))) {
 			writer.write(this.toString());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 		}
 	}
 
-	public UserComments parse(File filename) throws FileNotFoundException {
+	public UserComments parse(final File filename) throws FileNotFoundException {
 
 		// Read file into object
 		final var file = new FileReader(filename);
-		var comments = (JsonObject) JsonParser.parseReader(file);
+		final var comments = (JsonObject) JsonParser.parseReader(file);
 
-		var userCommentsBuilder = new Builder();
+		final var userCommentsBuilder = new Builder();
 		userCommentsBuilder.withAuthor(
 				(comments.has(AUTHOR_STRING)) ? comments.get(AUTHOR_STRING).getAsString() : "");
 		userCommentsBuilder.withComment(
@@ -104,30 +104,30 @@ public class UserComments {
 			// Default constructor
 		}
 
-		public Builder withAuthor(String author) {
+		public Builder withAuthor(final String author) {
 			this.author = Objects.requireNonNullElse(author, "");
 			return this;
 		}
 
-		public Builder withComment(String comment) {
+		public Builder withComment(final String comment) {
 			this.comment = Objects.requireNonNullElse(comment, "");
 			return this;
 		}
 
-		public Builder withTimestamp(String timestamp) {
+		public Builder withTimestamp(final String timestamp) {
 			this.timestamp = Objects.requireNonNullElse(timestamp, "");
 			return this;
 		}
 
 
 		public UserComments build() {
-			var userComments = new UserComments();
+			final var userComments = new UserComments();
 			userComments.comment = this.comment;
 			userComments.author = this.author;
 
 			if ("".equals(this.timestamp)) {
-				DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				var date = new Date();
+				final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				final var date = new Date();
 				this.timestamp = dateFormat.format(date);
 			}
 			userComments.timestamp = this.timestamp;

@@ -43,6 +43,7 @@ import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.AccountAmountStrings;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
+import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.FreezeType;
@@ -59,11 +60,11 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -94,7 +95,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
-import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
@@ -106,7 +106,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -122,6 +121,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -177,6 +177,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private static final String MENU_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
+
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
@@ -358,19 +359,22 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public ChoiceBox<String> freezeTypeChoiceBox;
 
 	public Hyperlink contentsLink;
+
 	protected static final int MEMO_LENGTH = 99;
 	private boolean fromFile = false;
 	private boolean noise = false;
 
+	private TimeFieldSet startFieldsSet;
+	private TimeFieldSet systemFieldsSet;
+	private TimeFieldSet freezeFieldsSet;
 
 	// endregion
 
-	void injectMainController(Controller controller) {
+	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
 
 	void initializeCreatePane() {
-
 		setupOutputDirectoriesList();
 
 		loadAccountNicknames();
@@ -379,8 +383,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		makeBoxesInvisible();
 
 		setupCommonFieldsEvents();
-
-		setupSelectTransaction();
 
 		setupManagedProperty(commentsVBox, commonFieldsVBox, createAccountVBox, updateAccountVBox, transferCurrencyVBox,
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
@@ -408,15 +410,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupFreezeFields();
 
 		setupTooltips();
+
+		setupSelectTransaction();
+
 	}
 
 	private void setupSelectTransaction() {
+		noise = true;
 		selectTransactionType.getItems().clear();
 		selectTransactionType.setItems(CreateTransactionType.names());
 		selectTransactionType.setValue(SELECT_STRING);
+		noise = false;
 	}
 
 	private void makeBoxesInvisible() {
+		commentsVBox.setVisible(false);
 		commonFieldsVBox.setVisible(false);
 		createAccountVBox.setVisible(false);
 		updateAccountVBox.setVisible(false);
@@ -432,21 +440,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupTransferFields() {
 		transferTableEvents(transferFromAccountIDTextField, transferFromAmountTextField, fromTransferTable,
 				acceptFromAccountButton, errorInvalidFromAccount);
-		fromTransferTable.prefWidthProperty().bind(fromHBox.widthProperty());
-		fromTransferTable.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
-
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
 				acceptToAccountButton, errorInvalidToAccount);
-		toTransferTable.prefWidthProperty().bind(toHBox.widthProperty());
-		toTransferTable.prefHeightProperty().bind(toTransferTable.heightProperty().multiply(.4));
+
 		transferFromAmountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(transferFromAmountTextField, newValue, "\\d*",
+				(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
 						"[^\\d.]"));
 		transferToAmountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(transferToAmountTextField, newValue, "\\d*",
+				(observable, oldValue, newValue) -> fixNumericTextField(transferToAmountTextField, newValue, "\\d*",
 						"[^\\d.]"));
 
-		BooleanProperty transferBoolean = new SimpleBooleanProperty();
+		final BooleanProperty transferBoolean = new SimpleBooleanProperty();
 		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
 
 		invalidTransferList.visibleProperty().bind(transferBoolean);
@@ -456,7 +460,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupNewKeyObject();
 		formatHBarTextField(createInitialBalance);
 		loadAccountNicknames();
-		var autoCompleteNickname = new AutoCompleteNickname(accountNickNames);
+		final var autoCompleteNickname = new AutoCompleteNickname(accountNickNames);
 		autoCompleteNickname.setVisible(false);
 		autoCompleteNickname.managedProperty().bind(autoCompleteNickname.visibleProperty());
 		copyFromAccountHBox.getChildren().clear();
@@ -470,7 +474,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			autoCompleteNickname.setVisible(false);
 
 			var key = newKeyJSON;
-			var keyDesignerPopup = !newKeyJSON.equals(new JsonObject()) ?
+			final var keyDesignerPopup = !newKeyJSON.equals(new JsonObject()) ?
 					new KeyDesignerPopup(getStringPublicKeyMap(), EncryptionUtils.jsonToKey(newKeyJSON)) :
 					new KeyDesignerPopup(getStringPublicKeyMap());
 			key = keyDesignerPopup.display();
@@ -484,8 +488,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private Map<String, PublicKey> getStringPublicKeyMap() {
-		Map<String, PublicKey> publicKeys = new HashMap<>();
-		var keys =
+		final Map<String, PublicKey> publicKeys = new HashMap<>();
+		final var keys =
 				new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
 		assert keys != null;
 		Arrays.stream(keys).forEach(keyFile -> publicKeys.put(FilenameUtils.getBaseName(keyFile.getName()),
@@ -497,12 +501,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupKeyPane(new TreeView<>(), updateNewKey);
 
 		updateAutoRenew.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(updateAutoRenew, newValue, "\\d*", REGEX));
+				(observable, oldValue, newValue) -> fixNumericTextField(updateAutoRenew, newValue, "\\d*", REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
 		loadAccountNicknames();
-		var updateFromNickName = new AutoCompleteNickname(accountNickNames);
+		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
 		updateFromNickName.managedProperty().bind(updateFromNickName.visibleProperty());
 		updateCopyFromAccountHBox.getChildren().clear();
@@ -522,13 +526,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 			newValueLabel.setVisible(true);
 			updateNewKey.setVisible(true);
-			var keyDesignerPopup =
+			final var keyDesignerPopup =
 					new KeyDesignerPopup(getStringPublicKeyMap(), EncryptionUtils.jsonToKey(newKeyJSON));
 			var key = keyDesignerPopup.display();
 			if (key == null || key.equals(new JsonObject())) {
 				key = originalKey;
 			}
-			var keyTree = controller.buildKeyTreeView(key);
+			final var keyTree = controller.buildKeyTreeView(key);
 			keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
 			keyTree.setMinWidth(800);
 			updateNewKey.setContent(keyTree);
@@ -562,30 +566,31 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
 			try {
 				org.apache.commons.io.FileUtils.copyFile(contents, destFile);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e);
 				return;
 			}
-			var r = Runtime.getRuntime();
-			var command = String.format("open -e %s", destFile.getAbsolutePath());
+			final var r = Runtime.getRuntime();
+			final var command = String.format("open -e %s", destFile.getAbsolutePath());
 			try {
 				r.exec(command);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e);
 			}
 		});
 
-		setupIntNumberField(chunkSizeTextField, 4095);
+		setupIntNumberField(chunkSizeTextField, 1025);
 		setupIntNumberField(intervalTextField, Integer.MAX_VALUE);
 
 	}
 
 	private void setupSystemFields() {
-		setupTimeZoneChooser(timeZoneSystem, timeZoneSystemHBox, datePickerSystem, hourFieldSystem,
-				minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS), systemCreateLocalTimeLabel,
-				invalidExpirationDate);
+		systemFieldsSet = new TimeFieldSet(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
+				new TextField(), timeZoneSystemHBox, systemCreateLocalTimeLabel, invalidExpirationDate);
+		systemFieldsSet.configureDateTime(startFieldsSet.getLocalDateTime());
+
 		systemSlidersHBox.visibleProperty().bind(systemDeleteUndeleteVBox.visibleProperty());
 		systemTypeChoiceBox.getItems().clear();
 		systemTypeChoiceBox.getItems().addAll("File", "Smart Contract");
@@ -610,27 +615,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		datePicker.valueProperty().addListener(
-				(observableValue, localDate, t1) -> {
-					systemExpirationVBox.setDisable(t1 == null);
-					freezeStartVBox.setDisable(t1 == null);
-					if (datePicker.getValue() != null) {
-						var localTime =
-								LocalTime.of(Integer.parseInt(hourField.getText()),
-										Integer.parseInt(minuteField.getText()),
-										Integer.parseInt(secondsField.getText()));
-
-						var start = LocalDateTime.of(datePicker.getValue(), localTime);
-						configureDateTime(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-								new TextField(NINE_ZEROS), systemCreateLocalTimeLabel, start, timeZoneSystem,
-								invalidExpirationDate);
-						configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-								freezeNanosField, freezeUTCTimeLabel, start, freezeTimeZone, freezeTimeErrorLabel);
-					} else {
-						resetSystemTime();
-						resetFreezeTime();
-					}
-				});
 
 		systemActionChoiceBox.getItems().clear();
 		systemActionChoiceBox.getItems().addAll("Remove Content", "Restore Content");
@@ -639,11 +623,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
 
 		formatAccountTextField(entityID, invalidEntity, entityID.getParent());
+		systemExpirationVBox.disableProperty().bind(Bindings.isNull(datePicker.valueProperty()));
 	}
 
 	private void setupFreezeFields() {
-		setupTimeZoneChooser(freezeTimeZone, freezeTimeZoneHBox, freezeDatePicker, freezeHourField,
-				freezeMinuteField, freezeSecondsField, freezeNanosField, freezeUTCTimeLabel, invalidExpirationDate);
+		freezeFieldsSet = new TimeFieldSet(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
+				freezeNanosField, freezeTimeZoneHBox, freezeUTCTimeLabel, freezeTimeErrorLabel);
+		freezeFieldsSet.configureDateTime(startFieldsSet.getLocalDateTime());
+
 		freezeChoiceVBox.setVisible(false);
 		freezeFileVBox.setVisible(false);
 		freezeStartVBox.setVisible(false);
@@ -651,8 +638,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		formatAccountTextField(freezeFileIDTextField, invalidFreezeFile, freezeFileHashTextField);
 
 		noise = true;
-		var freezeValues = Arrays.asList(FreezeType.values());
-		List<String> freezeValuesAsStrings =
+		final var freezeValues = Arrays.asList(FreezeType.values());
+		final List<String> freezeValuesAsStrings =
 				freezeValues.stream().map(
 						freezeValue -> {
 							var name = StringUtils.capitalize(
@@ -687,7 +674,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (FREEZE_AND_UPGRADE.equals(t1)) {
 				t1 = "freeze upgrade";
 			}
-			FreezeType type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
+			final FreezeType type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
 			switch (type) {
 				case FREEZE_ONLY:
 					// Freezes the network at the specified time. The start_time field must be provided and must
@@ -751,54 +738,28 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadAccountNicknames() {
 		try {
-			var nicknames =
+			final var nicknames =
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
-			var accountInfos = controller.accountsPaneController.getIdNickNames();
-			for (var s : accountInfos.keySet()) {
+			final var accountInfos = controller.accountsPaneController.getIdNickNames();
+			for (final var s : accountInfos.keySet()) {
 				if (nicknames.has(s)) {
 					accountNickNames.add(nicknames.get(s).getAsString());
 				}
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			controller.logAndDisplayError(e);
 		}
 	}
 
-	private void setupTimeZoneChooser(TimeZone zone, HBox hBox, DatePicker date, TextField hour,
-			TextField minute, TextField seconds, TextField nanos, Label label, Label errorLabel) {
-		var chooser = new AutoCompleteNickname(ZoneId.getAvailableZoneIds());
-		chooser.setDefault(zone.getID());
-		hBox.getChildren().clear(); // need to clear the hox before entering the new Field.
-		hBox.getChildren().add(chooser);
-		chooser.textProperty().addListener((observableValue, aBoolean, t1) -> {
-			var timeZones = ZoneId.getAvailableZoneIds();
-			if (!timeZones.contains(chooser.getText())) {
-				return;
-			}
-			if (date.getValue() != null) {
-				var instant = getDate(date, hour, minute, seconds, ZoneId.of(zone.getID())).asInstant();
-				var ldt = LocalDateTime.ofInstant(instant, ZoneId.of(chooser.getText()));
-				date.setValue(ldt.toLocalDate());
-				hour.setText(String.valueOf(ldt.getHour()));
-				minute.setText(String.format("%02d", ldt.getMinute()));
-				seconds.setText(String.format("%02d", ldt.getSecond()));
-				nanos.setText(String.format("%09d", ldt.getNano()));
-				label.setText("");
-			}
-			zone.setID(chooser.getText());
-			logger.info("Timezone changed to: {}", zone.getID());
-			setLocalDateString(date, hour, minute, seconds, nanos, zone, label, errorLabel);
-		});
-	}
-
-	private void getKeyFromNickname(AutoCompleteNickname autoCompleteNickname, KeyCode keyCode, ScrollPane scrollPane) {
+	private void getKeyFromNickname(
+			final AutoCompleteNickname autoCompleteNickname, final KeyCode keyCode, final ScrollPane scrollPane) {
 		if (keyCode.equals(KeyCode.ENTER)) {
-			var nick = autoCompleteNickname.getFirstItem();
+			final var nick = autoCompleteNickname.getFirstItem();
 			autoCompleteNickname.setText(nick);
-			var nicknames = controller.accountsPaneController.getIdNickNames();
+			final var nicknames = controller.accountsPaneController.getIdNickNames();
 			var id = "";
-			for (var entry : nicknames.entrySet()) {
+			for (final var entry : nicknames.entrySet()) {
 				if (nick.equals(entry.getValue())) {
 					id = entry.getKey();
 				}
@@ -807,17 +768,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (!controller.accountsPaneController.getAccountInfos().containsKey(id)) {
 				return;
 			}
-			var address = controller.accountsPaneController.getAccountInfos().get(id);
+			final var address = controller.accountsPaneController.getAccountInfos().get(id);
 			logger.info("Chosen account: {}", nick);
 			try {
-				var info =
+				final var info =
 						AccountInfo.fromBytes(readBytes(address));
-				var key = info.key;
+				final var key = info.key;
 				if (key != null) {
 					setKeyFromFile(key, scrollPane);
 					scrollPane.requestFocus();
 				}
-			} catch (InvalidProtocolBufferException | HederaClientException e) {
+			} catch (final InvalidProtocolBufferException | HederaClientException e) {
 				logger.error(e);
 			}
 			autoCompleteNickname.clear();
@@ -825,8 +786,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setKeyTreeInBox(JsonObject key, ScrollPane keyScrollPane) {
-		var keyTree = controller.buildKeyTreeView(key);
+	private void setKeyTreeInBox(final JsonObject key, final ScrollPane keyScrollPane) {
+		final var keyTree = controller.buildKeyTreeView(key);
 		keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
 		keyScrollPane.setContent(keyTree);
 		keyTree.setMinWidth(800);
@@ -834,8 +795,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		newKeyJSON = key;
 	}
 
-	private void setKeyFromFile(Key newKey, ScrollPane createScrollPane) {
-		JsonObject keyJson = EncryptionUtils.keyToJson(newKey);
+	private void setKeyFromFile(final Key newKey, final ScrollPane createScrollPane) {
+		final JsonObject keyJson = EncryptionUtils.keyToJson(newKey);
 
 		setKeyTreeInBox(keyJson, createScrollPane);
 		createScrollPane.setVisible(true);
@@ -844,17 +805,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupOutputDirectoriesList() {
 		try {
 			if (controller.getOneDriveCredentials() != null) {
-				var inputs = controller.getOneDriveCredentials().keySet();
+				final var inputs = controller.getOneDriveCredentials().keySet();
 				outputDirectories = new ArrayList<>();
-				for (var s :
+				for (final var s :
 						inputs) {
-					var fs = FileAdapterFactory.getAdapter(s);
+					final var fs = FileAdapterFactory.getAdapter(s);
 					if (fs != null && fs.exists()) {
 						outputDirectories.add(fs);
 					}
 				}
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			controller.displaySystemMessage(e);
 		}
@@ -867,13 +828,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return null;
 		}
 
-		var input = buildJsonInput();
+		final var input = buildJsonInput();
 
 		try {
-			var tx = new ToolCryptoCreateTransaction(input);
+			final var tx = new ToolCryptoCreateTransaction(input);
 			displayAndLogInformation("Create Account " + TRANSACTION_CREATED_MESSAGE);
 			return getUserCommentsTransactionPair(tx);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			return null;
 		}
@@ -885,8 +846,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
 	}
 
-	private void clearErrorMessages(Label... errorMessages) {
-		for (var errorMessage : errorMessages) {
+	private void clearErrorMessages(final Label... errorMessages) {
+		for (final var errorMessage : errorMessages) {
 			errorMessage.setVisible(false);
 		}
 	}
@@ -915,11 +876,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return null;
 		}
 		try {
-			var input = buildJsonInput();
-			var tx = new ToolCryptoUpdateTransaction(input);
+			final var input = buildJsonInput();
+			final var tx = new ToolCryptoUpdateTransaction(input);
 			displayAndLogInformation("Update Account " + TRANSACTION_CREATED_MESSAGE);
 			return getUserCommentsTransactionPair(tx);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			return null;
 		}
@@ -933,10 +894,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if ("".equals(updateAccountID.getText())) {
 				invalidUpdateAccountToUpdate.setVisible(true);
 			} else {
-				var account = Identifier.parse(updateAccountID.getText());
+				final var account = Identifier.parse(updateAccountID.getText());
 				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			invalidUpdateAccountToUpdate.setVisible(true);
 			displayAndLogInformation("Fee payer cannot be parsed");
 			flag = false;
@@ -967,17 +928,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void findAccountInfoAndPreloadFields() {
-		var accountsInfoMap = controller.getAccountInfoMap();
+		final var accountsInfoMap = controller.getAccountInfoMap();
 		try {
-			var account = Identifier.parse(updateAccountID.getText());
+			final var account = Identifier.parse(updateAccountID.getText());
 			if (accountsInfoMap.containsKey(account)) {
-				var accountInfo = accountsInfoMap.get(account);
+				final var accountInfo = accountsInfoMap.get(account);
 				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
 				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
 				controller.loadPubKeys();
-				var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
+				final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
 				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
-				var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+				final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 				setupKeyPane(oldKeyTreeView, updateOriginalKey);
 
 				if (!fromFile) {
@@ -992,7 +953,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						invalidNode, invalidUpdateAccountToUpdate);
 
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.info("Not an account ID");
 			invalidUpdateAccountToUpdate.setVisible(true);
 		}
@@ -1007,25 +968,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!checkAndFlagTransferFields()) {
 			return null;
 		}
-		var input = buildJsonInput();
-		var tx = new ToolTransferTransaction(input);
+		final var input = buildJsonInput();
+		final var tx = new ToolTransferTransaction(input);
 		displayAndLogInformation("Transfer " + TRANSACTION_CREATED_MESSAGE);
 		return getUserCommentsTransactionPair(tx);
 	}
 
 	private void updateTotalAmount() {
-		var credits = toTransferTable.getItems();
-		var debits = fromTransferTable.getItems();
+		final var credits = toTransferTable.getItems();
+		final var debits = fromTransferTable.getItems();
 
 		long total = 0;
-		for (AccountAmountStrings a : credits) {
+		for (final AccountAmountStrings a : credits) {
 			total += a.getAmountAsLong();
 		}
-		for (AccountAmountStrings a : debits) {
+		for (final AccountAmountStrings a : debits) {
 			total -= a.getAmountAsLong();
 		}
 
-		var sign = total < 0 ? "-" : "";
+		final var sign = total < 0 ? "-" : "";
 
 		final var totalString = Utilities.setHBarFormat(Math.abs(total));
 		if (total > 0) {
@@ -1078,8 +1039,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		initializeTable(toTransferTable);
 	}
 
-	private void initializeTable(TableView<AccountAmountStrings> table) {
-		ObservableList<AccountAmountStrings> data = FXCollections.observableArrayList();
+	private void initializeTable(final TableView<AccountAmountStrings> table) {
+		final ObservableList<AccountAmountStrings> data = FXCollections.observableArrayList();
 		table.setFixedCellSize(FIXED_CELL_SIZE);
 		table.setStyle("-fx-font-size: " + FIXED_CELL_SIZE / 2);
 
@@ -1087,24 +1048,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-		var accountColumn = new TableColumn<AccountAmountStrings, String>("Account ID");
+		final var accountColumn = new TableColumn<AccountAmountStrings, String>("Account ID");
 		accountColumn.setCellValueFactory(new PropertyValueFactory<>("accountID"));
 
-		var amountColumn = new TableColumn<AccountAmountStrings, String>("Amount");
+		final var amountColumn = new TableColumn<AccountAmountStrings, String>("Amount");
 		amountColumn.setCellValueFactory(new PropertyValueFactory<>("amount"));
 
 		table.setItems(data);
 		table.getColumns().clear();
 		table.getColumns().addAll(accountColumn, amountColumn);
 
-		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
-		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.60));
+		accountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.6));
+		amountColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
 
 		accountColumn.setResizable(false);
 		amountColumn.setResizable(false);
 
-		var contextMenu = new ContextMenu();
-		var menuItem = new MenuItem("delete");
+		final var contextMenu = new ContextMenu();
+		final var menuItem = new MenuItem("delete");
 
 		contextMenu.getItems().addAll(menuItem);
 
@@ -1116,7 +1077,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		menuItem.setOnAction(event -> {
 			if (!table.getItems().isEmpty()) {
-				var selectedItem = table.getSelectionModel().getSelectedItem();
+				final var selectedItem = table.getSelectionModel().getSelectedItem();
 				table.getItems().remove(selectedItem);
 				updateTotalAmount();
 			}
@@ -1133,8 +1094,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		table.managedProperty().bind(table.visibleProperty());
 	}
 
-	private void addAccountAmountToTable(TextField account, TextField amount,
-			TableView<AccountAmountStrings> thisTable) {
+	private void addAccountAmountToTable(final TextField account, final TextField amount,
+			final TableView<AccountAmountStrings> thisTable) {
 		if ("".equals(account.getText())) {
 			PopupMessage.display("Empty account", "Missing account ID");
 			return;
@@ -1149,10 +1110,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		amount.setStyle(null);
 		amount.setStyle(START_STYLE);
 
-		var newTransaction =
-				new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+		final AccountAmountStrings newTransaction;
+		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		final var status = parseAddress(newTransaction.getAccountID()).getStatus();
+		final var status = parseAddress(newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
@@ -1169,14 +1130,19 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		thisTable.getItems().add(newTransaction);
 
+		transferCurrencyVBox.setAlignment(Pos.CENTER);
 		updateTotalAmount();
 		account.clear();
 		amount.clear();
 		account.requestFocus();
 	}
 
-	private void transferTableEvents(TextField accountIDTextField, TextField amountTextField,
-			TableView<AccountAmountStrings> table, Button acceptButton, Label errorLabel) {
+	private void transferTableEvents(final TextField accountIDTextField, final TextField amountTextField,
+			final TableView<AccountAmountStrings> table, final Button acceptButton, final Label errorLabel) {
+
+		table.prefWidthProperty().bind(transferCurrencyVBox.widthProperty().multiply(2).divide(3));
+		table.prefHeightProperty().bind(fromTransferTable.heightProperty().multiply(.4));
+
 
 		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
 
@@ -1211,27 +1177,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	// region SYSTEM
 	public void cleanAllSystemFields() {
 		cleanCommonFields();
-		hourFieldSystem.setText("01");
-		minuteFieldSystem.setText("00");
-		secondsField.setText("00");
-		datePickerSystem.setValue(null);
+		systemFieldsSet.reset(controller.getDefaultHours(), controller.getDefaultMinutes(),
+				controller.getDefaultSeconds());
 		entityID.clear();
-	}
-
-	private void resetSystemTime() {
-		datePickerSystem.setValue(null);
-		hourFieldSystem.setText("01");
-		minuteFieldSystem.setText("00");
-		secondsFieldSystem.setText("00");
-		logger.info("Expiration time cleared");
-	}
-
-	private void resetFreezeTime() {
-		freezeDatePicker.setValue(null);
-		freezeHourField.setText("01");
-		freezeMinuteField.setText("00");
-		freezeSecondsField.setText("00");
-		logger.info("Freeze time cleared");
 	}
 
 	private boolean checkSystemFields() {
@@ -1241,14 +1189,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			var account = Identifier.parse(entityID.getText()).toReadableString();
+			final var account = Identifier.parse(entityID.getText()).toReadableString();
 			logger.info(ACCOUNT_PARSED, account);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 
 		if (systemActionChoiceBox.getSelectionModel().getSelectedItem().contains("Remove")) {
-			var validExpiration =
+			final var validExpiration =
 					isDateValid(hourFieldSystem, minuteFieldSystem, secondsFieldSystem, new TextField(NINE_ZEROS),
 							datePickerSystem, ZoneId.of(timeZoneSystem.getID()), timeZoneSystemHBox);
 			invalidExpirationDate.setVisible(!validExpiration);
@@ -1266,7 +1214,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return false;
 		}
 
-		var freezeType = FREEZE_AND_UPGRADE.equals(choice) ?
+		final var freezeType = FREEZE_AND_UPGRADE.equals(choice) ?
 				FreezeType.FREEZE_UPGRADE :
 				FreezeType.valueOf(choice.toUpperCase(Locale.ROOT).replace(" ", "_"));
 
@@ -1282,9 +1230,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				break;
 			case PREPARE_UPGRADE:
 				try {
-					var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
+					final var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
 					logger.info(ACCOUNT_PARSED, file);
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					validFile = false;
 				}
 				validHash = isValidHash();
@@ -1296,9 +1244,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 								datePicker, ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
 				freezeTimeErrorLabel.setVisible(!validStart);
 				try {
-					var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
+					final var file = Identifier.parse(freezeFileIDTextField.getText()).toReadableString();
 					logger.info(ACCOUNT_PARSED, file);
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					validFile = false;
 				}
 				validHash = isValidHash();
@@ -1321,7 +1269,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		validHash = !"".equals(freezeFileHashTextField.getText());
 		try {
 			Hex.decode(freezeFileHashTextField.getText());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error("Hash is invalid");
 			validHash = false;
 		}
@@ -1330,12 +1278,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private boolean checkAndFlagSystemFields() {
-		var flag = checkAndFlagCommonFields();
+		final var flag = checkAndFlagCommonFields();
 		return flag && checkSystemFields();
 	}
 
 	private boolean checkAndFlagFreezeFields() {
-		var flag = checkAndFlagCommonFields();
+		final var flag = checkAndFlagCommonFields();
 		final var freezeFlag = checkFreezeFields();
 		return flag && freezeFlag;
 	}
@@ -1345,13 +1293,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return null;
 		}
 
-		var input = buildJsonInput();
+		final var input = buildJsonInput();
 
 		try {
-			var tx = new ToolSystemTransaction(input);
+			final var tx = new ToolSystemTransaction(input);
 			displayAndLogInformation("System transaction created");
 			return getUserCommentsTransactionPair(tx);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 			logger.error(e);
 			return null;
@@ -1364,13 +1312,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return null;
 		}
 
-		var input = buildJsonInput();
+		final var input = buildJsonInput();
 
 		try {
-			var tx = new ToolFreezeTransaction(input);
+			final var tx = new ToolFreezeTransaction(input);
 			displayAndLogInformation("Freeze transaction created");
 			return getUserCommentsTransactionPair(tx);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 			logger.error(e);
 			return null;
@@ -1426,9 +1374,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check file id field
 		try {
-			var account = Identifier.parse(updateFileID.getText());
+			final var account = Identifier.parse(updateFileID.getText());
 			updateFileID.setText(account.toReadableString());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			displayAndLogInformation(e);
 			invalidUpdateFileToUpdate.setVisible(true);
 			flag = false;
@@ -1436,12 +1384,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// check chunk size field
 		try {
-			var chunk = Integer.parseInt(chunkSizeTextField.getText());
+			final var chunk = Integer.parseInt(chunkSizeTextField.getText());
 			if (chunk <= 0 || chunk > 4095) {
 				invalidChunkSizeLabel.setVisible(true);
 				flag = false;
 			}
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			displayAndLogInformation(e);
 			invalidChunkSizeLabel.setVisible(true);
 			flag = false;
@@ -1449,12 +1397,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check interval field
 		try {
-			var interval = Integer.parseInt(intervalTextField.getText());
+			final var interval = Integer.parseInt(intervalTextField.getText());
 			if (interval <= 0) {
 				invalidIntervalLabel.setVisible(true);
 				flag = false;
 			}
-		} catch (NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			displayAndLogInformation(e);
 			invalidIntervalLabel.setVisible(true);
 			flag = false;
@@ -1466,7 +1414,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				contentsFilePathError.setVisible(true);
 				flag = false;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			displayAndLogInformation(e);
 			contentsFilePathError.setVisible(true);
 			flag = false;
@@ -1489,21 +1437,20 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * @param remoteLocation
 	 * 		the location to store the zip
 	 */
-	private void prepareZipAndComment(FileService remoteLocation) throws HederaClientException {
+	private void prepareZipAndComment(final FileService remoteLocation) throws HederaClientException {
 		if (!checkForm()) {
 			return;
 		}
 
 		// setup json file
-		var outputObject = new JsonObject();
+		final var outputObject = new JsonObject();
 		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
 		outputObject.add(FILE_ID_PROPERTIES, Identifier.parse(updateFileID.getText()).asJSON());
 		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, Identifier.parse(feePayerAccountField.getText()).asJSON());
 		outputObject.add(NODE_ID_PROPERTIES, Identifier.parse(nodeAccountField.getText()).asJSON());
 		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
 
-		final var date = getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
-		date.plusNanos(Integer.parseInt(nanosField.getText()));
+		final var date = startFieldsSet.getDate();
 		outputObject.add(FIRS_TRANSACTION_VALID_START_PROPERTY, date.asJSON());
 		outputObject.addProperty(VALID_INCREMENT_PROPERTY, Integer.parseInt(intervalTextField.getText()));
 		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
@@ -1515,21 +1462,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		try {
 			Files.deleteIfExists(Path.of(jsonName));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 
 		writeJsonObject(jsonName, outputObject);
-		var jsonFile = new File(jsonName);
+		final var jsonFile = new File(jsonName);
 		assert jsonFile.exists();
 
-		var toPack = new File[] { jsonFile, contents };
+		final var toPack = new File[] { jsonFile, contents };
 
-		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, ZIP_EXTENSION));
+		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION));
 
 		ZipUtil.packEntries(toPack, destZipFile);
-		var userComments = new UserComments.Builder()
+		final var userComments = new UserComments.Builder()
 				.withAuthor(controller.getUserName())
 				.withComment(createCommentsTextArea.getText())
 				.build();
@@ -1537,16 +1484,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		userComments.toFile(destTxtFile.getAbsolutePath());
 		displayAndLogInformation("File update contents transaction created");
 
-		List<File> files = new ArrayList<>();
+		final List<File> files = new ArrayList<>();
 		files.add(destZipFile);
 		files.add(destTxtFile);
 		moveToOutput(files, remoteLocation);
 
-		for (var file : files) {
+		for (final var file : files) {
 			try {
 				Files.deleteIfExists(file.toPath());
 				logger.info("{} has been deleted", file.getAbsolutePath());
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error("{} cannot be deleted", file.getAbsolutePath());
 			}
 		}
@@ -1554,7 +1501,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		try {
 			Files.deleteIfExists(Path.of(jsonName));
 			logger.info("Json file deleted");
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error("Json file could not be deleted");
 		}
 
@@ -1584,6 +1531,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * Action to be taken when the user chooses a transaction to create
 	 */
 	public void chooseTransactionTypeChangedAction() {
+		if (noise) {
+			return;
+		}
 		transactionType = CreateTransactionType.get(selectTransactionType.getValue());
 
 		makeBoxesInvisible();
@@ -1643,35 +1593,41 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * @return a json object with the all the information collected in the form
 	 */
 	private JsonObject buildJsonInput() {
-		var input = new JsonObject();
-		var transactionValidStart =
-				getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID())).plusNanos(
-						Integer.parseInt(nanosField.getText()));
+		final var input = new JsonObject();
+		final var transactionValidStart = startFieldsSet.getDate();
 
 		// Common elements
 		addCommonElements(input, transactionValidStart);
-
-		// Crypto create account fields
-		addCryptoCreateElements(input);
-
-		// Crypto update account fields
-		addCryptoUpdateElements(input);
-
-		// Transfer fields
-		addCryptoTransferElements(input);
-
-		// System delete/un-delete fields
-		addSystemElements(input);
-
-		// Freeze fields
-		if (addFreezeNetworkFields(input)) {
-			return null;
+		switch (transactionType) {
+			case CREATE:
+				// Crypto create account fields
+				addCryptoCreateElements(input);
+				break;
+			case UPDATE:
+				// Crypto update account fields
+				addCryptoUpdateElements(input);
+				break;
+			case TRANSFER:
+				// Transfer fields
+				addCryptoTransferElements(input);
+				break;
+			case SYSTEM:
+				// System delete/un-delete fields
+				addSystemElements(input);
+				break;
+			case FREEZE:
+				// Freeze fields
+				if (addFreezeNetworkFields(input)) {
+					return null;
+				}
+				break;
+			default:
+				break;
 		}
 		return input;
-
 	}
 
-	private boolean addFreezeNetworkFields(JsonObject input) {
+	private boolean addFreezeNetworkFields(final JsonObject input) {
 		final var freezeChoiceValue = FREEZE_AND_UPGRADE.equals(freezeTypeChoiceBox.getValue()) ?
 				"freeze upgrade" :
 				freezeTypeChoiceBox.getValue();
@@ -1686,9 +1642,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					logger.error("Unrecognized freeze type");
 					return true;
 				case FREEZE_ONLY:
-					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
-							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-									ZoneId.of(freezeTimeZone.getID())).asRFCString());
+					input.addProperty(FREEZE_START_TIME_FIELD_NAME, freezeFieldsSet.getDate().asRFCString());
 					break;
 				case PREPARE_UPGRADE:
 					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
@@ -1698,9 +1652,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				case TELEMETRY_UPGRADE:
 					input.add(FREEZE_FILE_ID_FIELD_NAME, Identifier.parse(freezeFileIDTextField.getText()).asJSON());
 					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
-					input.addProperty(FREEZE_START_TIME_FIELD_NAME,
-							getDate(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField,
-									ZoneId.of(freezeTimeZone.getID())).asRFCString());
+					input.addProperty(FREEZE_START_TIME_FIELD_NAME, freezeFieldsSet.getDate().asRFCString());
 					break;
 				case FREEZE_ABORT:
 					break;
@@ -1712,7 +1664,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return false;
 	}
 
-	private void addSystemElements(JsonObject input) {
+	private void addSystemElements(final JsonObject input) {
 		// Entity ID
 		if (!"".equals(entityID.getText())) {
 			input.add(ENTITY_TO_DEL_UNDEL, Identifier.parse(entityID.getText()).asJSON());
@@ -1726,23 +1678,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Expiration time
 		if (datePickerSystem != null) {
-			input.addProperty(EXPIRATION_DATE_TIME,
-					getDate(datePickerSystem, hourFieldSystem, minuteFieldSystem, secondsFieldSystem,
-							ZoneId.of(timeZoneSystem.getID())).asRFCString());
+			input.addProperty(EXPIRATION_DATE_TIME, systemFieldsSet.getDate().asRFCString());
 		}
 	}
 
-	private void addCryptoTransferElements(JsonObject input) {
+	private void addCryptoTransferElements(final JsonObject input) {
 		//Get transfers from tables
 		if (!fromTransferTable.getItems().isEmpty() && !toTransferTable.getItems().isEmpty()) {
-			List<AccountAmountStrings> transfers = new ArrayList<>();
-			for (var a : fromTransferTable.getItems()) {
+			final List<AccountAmountStrings> transfers = new ArrayList<>();
+			for (final var a : fromTransferTable.getItems()) {
 				transfers.add(a.negate());
 			}
 			transfers.addAll(toTransferTable.getItems());
-			var jsonArray = new JsonArray();
-			for (var a : transfers) {
-				var accountAmountPair = new JsonObject();
+			final var jsonArray = new JsonArray();
+			for (final var a : transfers) {
+				final var accountAmountPair = new JsonObject();
 				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
 				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
 				jsonArray.add(accountAmountPair);
@@ -1751,25 +1701,38 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void addCryptoUpdateElements(JsonObject input) {
+	private void addCryptoUpdateElements(final JsonObject input) {
 		// Account ID
 		if (!"".equals(updateAccountID.getText())) {
 			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText()).asJSON());
 		}
+		final var account = Identifier.parse(updateAccountID.getText());
+		final var info = controller.getAccountInfoMap().getOrDefault(account, null);
+
+		// Key
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey)) {
+			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
+		}
 
 		// Auto renew
-		if (!"".equals(updateAutoRenew.getText())) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(updateAutoRenew.getText()));
+		final var originalARP = info != null ? info.autoRenewPeriod.getSeconds() : 0;
+		final var newARP = Long.parseLong(updateAutoRenew.getText());
+		if (originalARP != newARP) {
+			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
 		}
 
 		// Receiver Sig Required
-		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, updateReceiverSignatureRequired.isSelected());
+		final var originalSigRequired = info != null && info.isReceiverSignatureRequired;
+		final var newSigRequired = updateReceiverSignatureRequired.isSelected();
+		if (originalSigRequired != newSigRequired) {
+			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
+		}
 	}
 
-	private void addCryptoCreateElements(JsonObject input) {
+	private void addCryptoCreateElements(final JsonObject input) {
 		// Balance
 		if (!"".equals(createInitialBalance.getText())) {
-			var balanceJson = new JsonObject();
+			final var balanceJson = new JsonObject();
 			balanceJson.addProperty(H_BARS, 0);
 			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
 			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
@@ -1788,7 +1751,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
 	}
 
-	private void addCommonElements(JsonObject input, Timestamp transactionValidStart) {
+	private void addCommonElements(final JsonObject input, final Timestamp transactionValidStart) {
 		// Transaction valid start
 		input.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
 
@@ -1798,12 +1761,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		// Fee payer
-		var feePayerID = Identifier.parse(feePayerAccountField.getText());
+		final var feePayerID = Identifier.parse(feePayerAccountField.getText());
 		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerID.asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
-		var feeJson = new JsonObject();
-		var fee = Utilities.string2Hbar(transactionFee.getText());
+		final var feeJson = new JsonObject();
+		final var fee = Utilities.string2Hbar(transactionFee.getText());
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, fee.to(HbarUnit.TINYBAR));
 		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
@@ -1825,9 +1788,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * 		the created transaction
 	 * @return a pair with user comments and the transaction
 	 */
-	private Pair<UserComments, ToolTransaction> getUserCommentsTransactionPair(ToolTransaction tx) {
+	private Pair<UserComments, ToolTransaction> getUserCommentsTransactionPair(final ToolTransaction tx) {
 
-		var creatorComments = new UserComments.Builder().withAuthor(controller.getUserName()).withComment(
+		final var creatorComments = new UserComments.Builder().withAuthor(controller.getUserName()).withComment(
 				createCommentsTextArea.getText()).build();
 
 		logger.info(creatorComments);
@@ -1849,6 +1812,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				break;
 			case FILE_UPDATE:
 				cleanAllFileUpdateContentsFields();
+				break;
+			case FREEZE:
+				cleanAllFreezeFields();
 				break;
 			default:
 				logger.error("Unknown transaction");
@@ -1891,7 +1857,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private boolean checkAndFlagCommonFields() {
-		var accounts = controller.getAccountsList();
+		final var accounts = controller.getAccountsList();
 		// check the date first
 		var flag =
 				isDateValid(hourField, minuteField, secondsField, freezeNanosField, datePicker,
@@ -1903,10 +1869,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check and flag the fee payer
 		try {
-			var feePayer = Identifier.parse(feePayerAccountField.getText());
+			final var feePayer = Identifier.parse(feePayerAccountField.getText());
 			feePayerAccountField.setText(feePayer.toNicknameAndChecksum(accounts));
 			invalidFeePayer.setVisible(false);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			invalidFeePayer.setVisible(true);
 			displayAndLogInformation("Fee payer cannot be parsed");
 			flag = false;
@@ -1914,10 +1880,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check and flag the node
 		try {
-			var node = Identifier.parse(nodeAccountField.getText());
+			final var node = Identifier.parse(nodeAccountField.getText());
 			nodeAccountField.setText(node.toNicknameAndChecksum(accounts));
 			invalidNode.setVisible(false);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			invalidNode.setVisible(true);
 			displayAndLogInformation("Node ID cannot be parsed");
 			flag = false;
@@ -1925,25 +1891,25 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		return flag;
 	}
 
-	private void displayAndLogInformation(String message) {
+	private void displayAndLogInformation(final String message) {
 		controller.displaySystemMessage("Error: " + message);
 		logger.info(message);
 	}
 
-	private void displayAndLogInformation(Exception exception) {
+	private void displayAndLogInformation(final Exception exception) {
 		controller.displaySystemMessage("Error: " + exception.toString());
 		logger.error(exception);
 	}
 
 	private void setupNewKeyObject() {
-		var kk = new JsonObject();
+		final var kk = new JsonObject();
 		kk.add("keys", new JsonArray());
 		newKeyJSON = new JsonObject();
 		newKeyJSON.add("keyList", kk);
 	}
 
-	private MenuButton createTransactionMenuButton(CreateTransactionType type) {
-		var menuButton = new MenuButton();
+	private MenuButton createTransactionMenuButton(final CreateTransactionType type) {
+		final var menuButton = new MenuButton();
 		setupOutputDirectoriesList();
 		menuButton.setStyle(MENU_BUTTON_STYLE);
 		menuButton.setText("CREATE AND EXPORT");
@@ -1952,10 +1918,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		menuButton.getItems().clear();
 		// setup button text
-		for (var s : outputDirectories) {
-			var menuItem = new MenuItem(s.getPath().replace(System.getProperty("user.home") + File.separator, ""));
+		for (final var s : outputDirectories) {
+			final var menuItem = new MenuItem(s.getPath().replace(System.getProperty("user.home") + File.separator,
+					""));
 			logger.info("Adding menu-item: \"{}\"", menuItem.getText());
-			var email = controller.getEmailFromMap(s.getPath());
+			final var email = controller.getEmailFromMap(s.getPath());
 			controller.setUserName(email);
 
 			menuItem.setOnAction(actionEvent -> {
@@ -1967,7 +1934,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			menuButton.getItems().add(menuItem);
 		}
 
-		var menuItem = new MenuItem("browse for directory");
+		final var menuItem = new MenuItem("browse for directory");
 		menuItem.setOnAction(actionEvent -> {
 			if (doNotStoreExpiringTransaction()) {
 				return;
@@ -1987,7 +1954,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * @param fileService
 	 * 		the file service that will be used to store the transaction
 	 */
-	private void storeToOutput(CreateTransactionType type, FileService fileService) {
+	private void storeToOutput(final CreateTransactionType type, final FileService fileService) {
 		fromFile = false;
 		if (fileService == null) {
 			return;
@@ -1999,13 +1966,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				return;
 			}
 
-			var pair = getUserCommentsTransactionPair(type);
+			final var pair = getUserCommentsTransactionPair(type);
 			if (pair == null) {
 				return;
 			}
 
 			storeTransactionAndComment(pair, fileService);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 		}
 
@@ -2017,13 +1984,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 * @param type
 	 * 		the transaction type
 	 */
-	private void storeOutputToBrowsedOutput(CreateTransactionType type) {
-		var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
+	private void storeOutputToBrowsedOutput(final CreateTransactionType type) {
+		final var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
 		controller.setLastBrowsedDirectory(new File(s));
 		FileService fileService = null;
 		try {
 			fileService = FileAdapterFactory.getAdapter(s);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 		}
 		storeToOutput(type, fileService);
@@ -2036,7 +2003,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 */
 	private File loadTransaction() {
 		logger.info("browsing transactions");
-		var file = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane,
+		final var file = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane,
 				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION, ZIP_EXTENSION);
 		if (file == null) {
 			return null;
@@ -2050,9 +2017,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (datePicker.getValue() == null) {
 			return false;
 		}
-		var date = getDate(datePicker, hourField, minuteField, secondsField, ZoneId.of(timeZone.getID()));
-		var now = new Date();
-		var secs = date.getSeconds() - now.getTime() / 1000;
+		final var date = startFieldsSet.getDate();
+		final var now = new Date();
+		final var secs = date.getSeconds() - now.getTime() / 1000;
 		if (secs < 120) {
 			answer = PopupMessage.display("Warning", String.format(REMAINING_TIME_MESSAGE, secs), true, "CONTINUE",
 					"CANCEL");
@@ -2061,7 +2028,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private Pair<UserComments, ToolTransaction> getUserCommentsTransactionPair(
-			CreateTransactionType type) throws HederaClientException {
+			final CreateTransactionType type) throws HederaClientException {
 		Pair<UserComments, ToolTransaction> pair = null;
 		switch (type) {
 			case TRANSFER:
@@ -2093,12 +2060,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		nodeAccountField.setText(controller.getDefaultNodeID());
 
-		configureDateTime(datePicker, hourField, minuteField, secondsField, nanosField, createUTCTimeLabel,
-				LocalDateTime.now(), timeZone, invalidDate);
-		setupTimeZoneChooser(timeZone, timeZoneHBox, datePicker, hourField, minuteField, secondsField, nanosField,
+		startFieldsSet = new TimeFieldSet(datePicker, hourField, minuteField, secondsField, nanosField, timeZoneHBox,
 				createUTCTimeLabel, invalidDate);
-		configureDateTime(freezeDatePicker, freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
-				freezeUTCTimeLabel, LocalDateTime.now(), freezeTimeZone, freezeTimeErrorLabel);
+		startFieldsSet.configureDateTime(LocalDateTime.now());
 
 		// endregion
 		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
@@ -2116,11 +2080,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setNowValidStart.setOnAction(
 				actionEvent -> {
-					setNowTime(Instant.now());
-
-					// Also set the expiration date for System Modify at the same time
-					setTimeInForm(Instant.now(), timeZoneSystem, hourFieldSystem, minuteFieldSystem,
-							secondsFieldSystem, datePickerSystem);
+					startFieldsSet.setDate(Instant.now());
+					systemFieldsSet.setDate(Instant.now());
 				});
 
 		createCharsLeft.setText(String.format("Characters left: %d", LIMIT));
@@ -2128,159 +2089,35 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		resetFormButton.visibleProperty().bind(commentsVBox.visibleProperty());
 	}
 
-	private void setTextSizeLimit(TextArea field, int endIndex, Number oldValue, Number newValue) {
+	private void setTextSizeLimit(final TextArea field, final int endIndex, final Number oldValue,
+			final Number newValue) {
 		if (newValue.intValue() > oldValue.intValue() && field.getText().length() >= endIndex) {
 			field.setText(memoField.getText().substring(0, endIndex));
 		}
 	}
 
-	private void configureDateTime(DatePicker date, TextField hour, TextField minute, TextField seconds,
-			TextField nanos, Label localTime, LocalDateTime today, TimeZone zone, Label errorLabel) {
-		hour.textProperty().addListener((observable, oldValue, newValue) -> {
-			fixTimeTextField(hour, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
-		});
-
-		minute.textProperty().addListener((observable, oldValue, newValue) -> {
-			fixTimeTextField(minute, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
-		});
-
-		seconds.textProperty().addListener((observable, oldValue, newValue) -> {
-			fixTimeTextField(seconds, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
-		});
-
-		nanos.textProperty().addListener((observable, oldValue, newValue) -> {
-			fixTimeTextField(nanos, newValue, "\\d*", REGEX);
-			refreshLocalTime(date, hour, minute, seconds, nanos, localTime, zone, errorLabel);
-		});
-
-		setupNumberField(hour, 23);
-		setupNumberField(minute, 59);
-		setupNumberField(seconds, 59);
-		setupNumberField(nanos, 999999999);
-
-		date.setDayCellFactory(picker -> getDateCell(hour, minute, seconds, today));
-
-		date.valueProperty().addListener(
-				(observable, oldDate, newDate) -> refreshLocalTime(date, hour, minute, seconds, nanos, localTime,
-						zone, errorLabel));
-
-		// region FOCUS EVENTS
-		removeFocusOnEnter(hour);
-
-		removeFocusOnEnter(minute);
-
-		removeFocusOnEnter(seconds);
-
-		removeFocusOnEnter(nanos);
-
-		hour.focusedProperty().addListener(
-				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
-						localTime, zone, errorLabel, newPropertyValue, "Hours", hour.getText()));
-		minute.focusedProperty().addListener(
-				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
-						localTime, zone, errorLabel, newPropertyValue, "Minutes", minute.getText()));
-		seconds.focusedProperty().addListener(
-				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
-						localTime, zone, errorLabel, newPropertyValue, "Seconds", seconds.getText()));
-		nanos.focusedProperty().addListener(
-				(arg0, oldPropertyValue, newPropertyValue) -> setChangeListener(date, hour, minute, seconds, nanos,
-						localTime, zone, errorLabel, newPropertyValue, "Nanos", nanos.getText()));
-		date.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Date changed to: {}", date.getValue());
-				setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-			}
-		});
-		date.setOnKeyReleased(event -> {
-			if (event.getCode().equals(KeyCode.ENTER)) {
-				date.getParent().requestFocus();
-			}
-		});
-	}
-
-	private void setChangeListener(DatePicker date, TextField hour, TextField minute, TextField seconds,
-			TextField nanos, Label localTime, TimeZone zone, Label errorLabel, Boolean newPropertyValue, String field,
-			String text) {
-		if (date.getValue() != null && Boolean.FALSE.equals(newPropertyValue)) {
-			logger.info("{} text field changed to: {}", field, text);
-			setLocalDateString(date, hour, minute, seconds, nanos, zone, localTime, errorLabel);
-		}
-	}
-
-	private void removeFocusOnEnter(TextField hour) {
-		hour.setOnKeyPressed(event -> {
-			if (KeyCode.ENTER.equals(event.getCode())) {
-				hour.getParent().requestFocus();
-			}
-		});
-	}
-
-	@NotNull
-	private DateCell getDateCell(TextField hour, TextField minute, TextField seconds, LocalDateTime today) {
-		return new DateCell() {
-			@Override
-			public void updateItem(LocalDate date, boolean empty) {
-				super.updateItem(date, empty);
-				var localTime =
-						LocalTime.of(Integer.parseInt(hour.getText()), Integer.parseInt(minute.getText()),
-								Integer.parseInt(seconds.getText()));
-				var dateTime = LocalDateTime.of(date, localTime);
-
-				setDisable(empty || dateTime.compareTo(today) <= 0);
-			}
-		};
-	}
-
-	private void fixTimeTextField(TextField hour, String newValue, String s, String regex) {
+	private void fixNumericTextField(final TextField hour, final String newValue, final String s, final String regex) {
 		if (!newValue.matches(s)) {
 			hour.setText(newValue.replaceAll(regex, ""));
 		}
 	}
 
-	private void refreshLocalTime(DatePicker date, TextField hour, TextField minute, TextField seconds, TextField nanos,
-			Label localTime, TimeZone timeZone, Label errorLabel) {
-		final var hourText = hour.getText();
-		final var minuteText = minute.getText();
-		final var secondsText = seconds.getText();
-		final var nanosText = nanos.getText();
-
-		if ("".equals(hourText) || "".equals(minuteText) || "".equals(secondsText) || "".equals(
-				nanosText) || Integer.parseInt(hourText) > 23 || Integer.parseInt(minuteText) > 59 || Integer.parseInt(
-				secondsText) > 59 || Integer.parseInt(nanosText) > 100000000) {
-			return;
-		}
-
-		final var dateValue = date.getValue();
-		if (dateValue != null) {
-			logger.info("Date changed to: {}", dateValue);
-			setLocalDateString(date, hour, minute, seconds, nanos, timeZone, localTime, errorLabel);
-			localTime.setVisible(true);
-		} else {
-			logger.info("Date cleared");
-			localTime.setVisible(false);
-			localTime.setText("");
-		}
-	}
-
-	private boolean isDateValid(TextField hourField, TextField minuteField, TextField secondsField,
-			TextField nanosField, DatePicker datePicker, ZoneId zoneId, HBox timeZoneHBox) {
+	private boolean isDateValid(final TextField hourField, final TextField minuteField, final TextField secondsField,
+			final TextField nanosField, final DatePicker datePicker, final ZoneId zoneId, final HBox timeZoneHBox) {
 		var flag = true;
 		try {
-			var zone = timeZoneHBox.getChildren().get(0);
+			final var zone = timeZoneHBox.getChildren().get(0);
 			assert zone instanceof AutoCompleteNickname;
-			var zoneString = ((AutoCompleteNickname) zone).getText();
+			final var zoneString = ((AutoCompleteNickname) zone).getText();
 			if (!ZoneId.getAvailableZoneIds().contains(zoneString)) {
 				displayAndLogInformation("Invalid time zone");
 				flag = false;
 			}
 
-			var hour = Integer.parseInt(hourField.getText());
-			var minute = Integer.parseInt(minuteField.getText());
-			var second = Integer.parseInt(secondsField.getText());
-			var nanos = Long.parseLong(nanosField.getText());
+			final var hour = Integer.parseInt(hourField.getText());
+			final var minute = Integer.parseInt(minuteField.getText());
+			final var second = Integer.parseInt(secondsField.getText());
+			final var nanos = Long.parseLong(nanosField.getText());
 
 			if (hour < 0 || hour > 23) {
 				displayAndLogInformation("Invalid hours field");
@@ -2300,24 +2137,24 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				flag = false;
 			}
 
-			var localDateTime =
+			final var localDateTime =
 					LocalDateTime.of(datePicker.getValue() != null ? datePicker.getValue() :
 							LocalDate.now(), LocalTime.of(hour, minute, second));
 
-			var transactionValidStart = Date.from(localDateTime.atZone(zoneId).toInstant().plusNanos(nanos));
+			final var transactionValidStart = Date.from(localDateTime.atZone(zoneId).toInstant().plusNanos(nanos));
 
 			if (transactionValidStart.before(new Date())) {
 				displayAndLogInformation("Transaction valid start in the past");
 				flag = false;
 			}
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			flag = false;
 		}
 		return flag;
 	}
 
-	private void formatAccountTextField(TextField textField, Label errorLabel, Node nextNode) {
+	private void formatAccountTextField(final TextField textField, final Label errorLabel, final Node nextNode) {
 		textField.setOnKeyReleased((KeyEvent event) -> {
 			textField.setStyle(TEXTFIELD_DEFAULT);
 			errorLabel.setVisible(false);
@@ -2332,7 +2169,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private void accountTFRemoveFocus(TextField textField, Label errorLabel) {
+	private void accountTFRemoveFocus(final TextField textField, final Label errorLabel) {
 		var account = textField.getText();
 		if ("".equals(account)) {
 			return;
@@ -2345,7 +2182,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			account = "0.0." + account;
 		}
 
-		var parsedAddress = parseAddress(account);
+		final var parsedAddress = parseAddress(account);
 		switch (parsedAddress.getStatus()) {
 			case BAD_FORMAT:
 				textField.setStyle(TEXTFIELD_ERROR);
@@ -2370,7 +2207,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case GOOD_NO_CHECKSUM:
 			case GOOD_WITH_CHECKSUM:
 				textField.setStyle(TEXTFIELD_DEFAULT);
-				var id = Identifier.parse(account);
+				final var id = Identifier.parse(account);
 				textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
 				errorLabel.setVisible(false);
 		}
@@ -2378,7 +2215,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private void formatHBarTextField(TextField textField) {
+	private void formatHBarTextField(final TextField textField) {
 		textField.setOnKeyReleased((KeyEvent event) -> {
 			if (event.getCode() == KeyCode.ENTER) {
 				setHBarFormat(textField);
@@ -2392,17 +2229,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private void storeTransactionAndComment(Pair<UserComments, ToolTransaction> pair,
-			FileService remoteLocation) throws HederaClientException {
-		var transaction = pair.getValue();
-		var userComments = pair.getKey();
+	private void storeTransactionAndComment(final Pair<UserComments, ToolTransaction> pair,
+			final FileService remoteLocation) throws HederaClientException {
+		final var transaction = pair.getValue();
+		final var userComments = pair.getKey();
 
-		var accountId = transaction.getFeePayerID();
+		final var accountId = transaction.getFeePayerID();
 		final var seconds = transaction.getTransactionValidStart().getEpochSecond();
-		var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
+		final var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
 				transaction.hashCode());
 
-		var tempStorage = TEMP_DIRECTORY + "tempStorage";
+		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		if (new File(tempStorage).mkdirs()) {
 			logger.info("Temporary folder created");
 		}
@@ -2416,14 +2253,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		try {
 			transaction.store(txFile.getAbsolutePath());
 			userComments.toFile(txFile.getAbsolutePath().replace(".tx", ".txt"));
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 			controller.displaySystemMessage(e);
 		}
 
-		var txtFile = new File(txFile.getAbsolutePath().replace(".tx", ".txt"));
+		final var txtFile = new File(txFile.getAbsolutePath().replace(".tx", ".txt"));
 
-		List<File> files = new ArrayList<>();
+		final List<File> files = new ArrayList<>();
 		files.add(txFile);
 		files.add(txtFile);
 
@@ -2444,7 +2281,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			FileUtils.deleteDirectory(new File(tempStorage));
 			assert !new File(tempStorage).exists();
 
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientException("Error while deleting temporary files");
 		}
 
@@ -2454,18 +2291,18 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		selectTransactionType.setValue(SELECT_STRING);
 	}
 
-	private void moveToOutput(List<File> files, FileService remoteLocation) {
-		var remote = remoteLocation.getPath() + File.separator;
-		for (var f : files) {
+	private void moveToOutput(final List<File> files, final FileService remoteLocation) {
+		final var remote = remoteLocation.getPath() + File.separator;
+		for (final var f : files) {
 			try {
 				var outputFolder = File.separator;
 				if (controller.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {
-					var user = controller.getEmailFromMap(remoteLocation.getPath());
+					final var user = controller.getEmailFromMap(remoteLocation.getPath());
 					outputFolder = "".equals(user) ? File.separator : "/OutputFiles/" + user + File.separator;
 					logger.info("Exporting file: {}", f.getAbsolutePath());
 				}
 				FileUtils.moveFile(f, new File(remote + outputFolder + f.getName()));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e.getMessage());
 				PopupMessage.display("Unable to upload",
@@ -2476,7 +2313,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void setupKeyPane(TreeView<String> jsonObjectKey, ScrollPane scrollPane) {
+	private void setupKeyPane(final TreeView<String> jsonObjectKey, final ScrollPane scrollPane) {
 		jsonObjectKey.prefHeightProperty().bind(scrollPane.heightProperty());
 		jsonObjectKey.prefWidthProperty().bind(scrollPane.widthProperty());
 		jsonObjectKey.setStyle("-fx-border-color: white");
@@ -2504,11 +2341,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanCommonFields() {
-		hourField.setText(String.format("%02d", controller.getDefaultHours()));
-		minuteField.setText(String.format("%02d", controller.getDefaultMinutes()));
-		secondsField.setText(String.format("%02d", controller.getDefaultSeconds()));
-		nanosField.setText(NINE_ZEROS);
-		datePicker.setValue(null);
+		startFieldsSet.reset(controller.getDefaultHours(), controller.getDefaultMinutes(),
+				controller.getDefaultSeconds());
 		feePayerAccountField.clear();
 		final var defaultNodeID =
 				Identifier.parse(controller.getDefaultNodeID()).toNicknameAndChecksum(controller.getAccountsList());
@@ -2519,77 +2353,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		createUTCTimeLabel.setText("");
 	}
 
-	private void setNowTime(Instant now) {
-		this.nanosField.setText(String.format("%09d", now.atZone(ZoneId.of(timeZone.getID())).getNano()));
-		setTimeInForm(now, timeZone, hourField, minuteField, secondsField, datePicker);
-		setLocalDateString(datePicker, hourField, minuteField, secondsField, nanosField, timeZone, createUTCTimeLabel,
-				invalidDate);
+	private void setNowTime(final Instant now) {
+		startFieldsSet.setDate(now);
 	}
 
-	private void setTimeInForm(Instant start, TimeZone timeZone, TextField hourField,
-			TextField minuteField, TextField secondsField, DatePicker datePicker) {
-		final var zonedDateTimeFreezeStart = start.atZone(ZoneId.of(timeZone.getID()));
-		hourField.setText(String.format("%02d", zonedDateTimeFreezeStart.getHour()));
-		minuteField.setText(String.format("%02d", zonedDateTimeFreezeStart.getMinute()));
-		secondsField.setText(String.format("%02d", zonedDateTimeFreezeStart.getSecond()));
-		datePicker.setValue(zonedDateTimeFreezeStart.toLocalDate());
-	}
-
-	private void setLocalDateString(DatePicker datePicker, TextField hourField, TextField minuteField,
-			TextField secondsField, TextField nanos, TimeZone timeZone, Label label, Label invalidDate) {
-
-		if (datePicker.getValue() == null) {
-			label.setVisible(false);
-			return;
-		}
-
-		var localDateTime = LocalDateTime.of(datePicker.getValue(),
-				LocalTime.of(Integer.parseInt(hourField.getText()), Integer.parseInt(minuteField.getText()),
-						Integer.parseInt(secondsField.getText())));
-		var transactionValidStart = Date.from(localDateTime.atZone(ZoneId.of(timeZone.getID())).toInstant());
-		final var tvsInstant = transactionValidStart.toInstant().plusNanos(Long.parseLong(nanos.getText()));
-		final var nowInstant = Instant.now();
-
-		final var beforeNow = tvsInstant.isBefore(nowInstant);
-		label.setStyle("-fx-text-fill: " + (beforeNow ? "red" : "black"));
-		invalidDate.setVisible(beforeNow);
-
-		var dateTimeFormatter =
-				DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"));
-
-		label.setText(dateTimeFormatter.format(tvsInstant) + " Coordinated Universal Time");
-		label.setVisible(true);
-	}
-
-	private Timestamp getDate(DatePicker dates, TextField hours, TextField minutes, TextField seconds, ZoneId zoneId) {
-		var hour = Integer.parseInt(hours.getText());
-		var minute = Integer.parseInt(minutes.getText());
-		var second = Integer.parseInt(seconds.getText());
-		var localDateTime = LocalDateTime.of(dates.getValue() != null ? dates.getValue() :
-				LocalDate.now(), LocalTime.of(hour, minute, second));
-
-		return new Timestamp(localDateTime.atZone(zoneId).toInstant());
-	}
-
-	private void setupNumberField(TextField timeField, int limit) {
-		timeField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(timeField, newValue, "\\d*", REGEX));
-		timeField.setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-				checkTimeField(timeField, limit);
-			}
-		});
-		timeField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Time field changed to: {}", timeField.getText());
-				checkTimeField(timeField, limit);
-			}
-		});
-	}
-
-	private void setupHbarNumberField(TextField currencyField) {
+	private void setupHbarNumberField(final TextField currencyField) {
 		currencyField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(currencyField, newValue, "[^\\d.\\s]",
+				(observable, oldValue, newValue) -> fixNumericTextField(currencyField, newValue, "[^\\d.\\s]",
 						"[^\\d.\\s]"));
 		currencyField.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -2603,49 +2373,40 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private void setupIntNumberField(TextField intField, int limit) {
+	private void setupIntNumberField(final TextField intField, final int limit) {
 		intField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixTimeTextField(intField, newValue, "\\d*", REGEX));
+				(observable, oldValue, newValue) -> fixNumericTextField(intField, newValue, "\\d*", REGEX));
 		intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				try {
 					intField.setText(String.valueOf(Math.min(Integer.parseInt(intField.getText()), limit)));
-				} catch (NumberFormatException e) {
+				} catch (final NumberFormatException e) {
 					logger.error("Cannot parse field");
 				}
 			}
 		});
 	}
 
-	private void checkTimeField(TextField timeField, int limit) {
-		try {
-			var k = Math.min(Integer.parseInt(timeField.getText()), limit);
-			var format = (limit < 100) ? "%02d" : "%09d";
-			timeField.setText(String.format(format, k));
-		} catch (NumberFormatException e) {
-			logger.error("Cannot parse field");
-		}
-	}
-
-	private void setupManagedProperty(Node... nodes) {
-		for (var n : nodes) {
+	private void setupManagedProperty(final Node... nodes) {
+		for (final var n : nodes) {
 			n.managedProperty().bind(n.visibleProperty());
 		}
 	}
 
-	private void setupTextFieldResizeProperty(TextField... textFields) {
-		for (TextField tf : textFields) {
+	private void setupTextFieldResizeProperty(final TextField... textFields) {
+		for (final TextField tf : textFields) {
+			tf.setMinWidth(300);
 			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
 		}
 
 	}
 
-	private void resizeTextField(TextField tf, String currText) {
+	private void resizeTextField(final TextField tf, final String currText) {
 		// Do this in a Platform.runLater because of Textfield has no padding at first time and so on
 		Platform.runLater(() -> {
-			Text text = new Text(currText);
+			final Text text = new Text(currText);
 			text.setFont(tf.getFont()); // Set the same font, so the size is the same
-			double width = text.getLayoutBounds().getWidth() // This big is the Text in the TextField
+			final double width = text.getLayoutBounds().getWidth() // This big is the Text in the TextField
 					+ tf.getPadding().getLeft() + tf.getPadding().getRight() // Add the padding of the TextField
 					+ 4d; // Add some spacing
 			tf.setPrefWidth(width); // Set the width
@@ -2653,7 +2414,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	private void processKey(JsonObject key, ScrollPane keyPane) {
+	private void processKey(final JsonObject key, final ScrollPane keyPane) {
 		final var emptyKey = new JsonObject();
 		if (!key.equals(emptyKey)) {
 			newKeyJSON = key;
@@ -2666,10 +2427,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private static void setHBarFormat(TextField currencyTextField) {
-		long hBarsLong = Utilities.string2Hbar(currencyTextField.getText()).toTinybars();
+	private static void setHBarFormat(final TextField currencyTextField) {
+		final long hBarsLong = Utilities.string2Hbar(currencyTextField.getText()).toTinybars();
 		logger.debug("Currency text field changed to: {}", currencyTextField.getText());
-		var hBarsString = Utilities.setHBarFormat(hBarsLong);
+		final var hBarsString = Utilities.setHBarFormat(hBarsLong);
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
 	}
 
@@ -2701,10 +2462,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (transactionFile == null) {
 			return;
 		}
-		if (ZIP_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
+		if (LARGE_BINARY_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
 			try {
 				loadLargeFileUpdateToForm(transactionFile);
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				PopupMessage.display("Error loading file", "Cannot load information from zip file");
 			}
 			return;
@@ -2712,10 +2473,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(transactionFile.getName()))) {
 			return;
 		}
-		ToolTransaction transaction;
+		final ToolTransaction transaction;
 		try {
 			transaction = new ToolTransaction().parseFile(transactionFile);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 			PopupMessage.display("Invalid transaction", "The file selected cannot be loaded.");
 			return;
@@ -2750,7 +2511,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		checkForm();
 	}
 
-	private void loadCommonTransactionFields(ToolTransaction transaction) {
+	private void loadCommonTransactionFields(final ToolTransaction transaction) {
 		setNowTime(transaction.getTransactionValidStart());
 		transactionFee.setText(Utilities.setCurrencyFormat(transaction.getTransactionFee().toTinybars()));
 		nodeAccountField.setText(transaction.getNodeID().toNicknameAndChecksum(controller.getAccountsList()));
@@ -2758,11 +2519,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		memoField.setText(transaction.getMemo());
 	}
 
-	private void loadLargeFileUpdateToForm(File transactionFile) throws HederaClientException {
-		var tempStorage = TEMP_DIRECTORY + "tempStorage";
+	private void loadLargeFileUpdateToForm(final File transactionFile) throws HederaClientException {
+		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		selectTransactionType.setValue("File Contents Update");
 		unZip(transactionFile.getAbsolutePath(), tempStorage);
-		var files = new File(tempStorage).listFiles(
+		final var files = new File(tempStorage).listFiles(
 				(dir, name) -> JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		if (files == null) {
 			throw new HederaClientException("Error reading files");
@@ -2770,10 +2531,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (files.length != 1) {
 			throw new HederaClientException("Incorrect number of json files");
 		}
-		var details = readJsonObject(files[0].getPath());
+		final var details = readJsonObject(files[0].getPath());
 		try {
 			FileUtils.deleteDirectory(new File(tempStorage));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException("Cannot delete directory", e.getCause());
 		}
 
@@ -2809,20 +2570,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void loadCryptoTransferToForm(ToolTransferTransaction transaction) {
+	private void loadCryptoTransferToForm(final ToolTransferTransaction transaction) {
 		cleanAllTransferFields();
-		var transfers = transaction.getAccountAmountMap();
-		for (Map.Entry<Identifier, Hbar> entry : transfers.entrySet()) {
-			var newTransaction =
+		final var transfers = transaction.getAccountAmountMap();
+		for (final Map.Entry<Identifier, Hbar> entry : transfers.entrySet()) {
+			final AccountAmountStrings newTransaction;
+			newTransaction =
 					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
 							String.valueOf(Math.abs(entry.getValue().toTinybars())));
-			var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
+			final var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}
 		transferCurrencyVBox.setVisible(true);
 	}
 
-	private void loadCryptoCreateToForm(ToolCryptoCreateTransaction transaction) {
+	private void loadCryptoCreateToForm(final ToolCryptoCreateTransaction transaction) {
 		cleanAllCreateFields();
 		createInitialBalance.setText(Utilities.setCurrencyFormat(transaction.getInitialBalance().toTinybars()));
 		createAutoRenew.setText(String.valueOf(transaction.getAutoRenewDuration().getSeconds()));
@@ -2831,7 +2593,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		processKey(EncryptionUtils.keyToJson(transaction.getKey()), createNewKey);
 	}
 
-	private void loadCryptoUpdateToForm(ToolCryptoUpdateTransaction transaction) {
+	private void loadCryptoUpdateToForm(final ToolCryptoUpdateTransaction transaction) {
 		cleanAllUpdateFields();
 		updateAccountID.setText(transaction.getAccount().toNicknameAndChecksum(controller.getAccountsList()));
 		findAccountInfoAndPreloadFields();
@@ -2850,11 +2612,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void loadSystemTransactionToForm(ToolSystemTransaction transaction) {
+	private void loadSystemTransactionToForm(final ToolSystemTransaction transaction) {
 		cleanAllSystemFields();
 		if (transaction.isDelete()) {
-			setTimeInForm(transaction.getExpiration(), timeZoneSystem, hourFieldSystem, minuteFieldSystem,
-					secondsFieldSystem, datePickerSystem);
+			systemFieldsSet.setDate(transaction.getExpiration());
 		}
 		entityID.setText(transaction.getEntity().toNicknameAndChecksum(controller.getAccountsList()));
 		if (Boolean.TRUE.equals(transaction.isDelete())) {
@@ -2872,7 +2633,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void loadFreezeTransactionToForm(ToolFreezeTransaction transaction) {
+	private void loadFreezeTransactionToForm(final ToolFreezeTransaction transaction) {
 		cleanAllFreezeFields();
 		final var freezeType = transaction.getFreezeType();
 		if (freezeType.equals(FreezeType.FREEZE_UPGRADE)) {
@@ -2892,8 +2653,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				// reference a future time. Any values specified for the update_file and file_hash fields will
 				// be ignored. This transaction does not perform any network changes or upgrades and requires
 				// manual intervention to restart the network.
-				setTimeInForm(transaction.getStartTime().asInstant(), freezeTimeZone, freezeHourField,
-						freezeMinuteField, freezeSecondsField, freezeDatePicker);
+				freezeFieldsSet.setDate(transaction.getStartTime().asInstant());
 				break;
 			case PREPARE_UPGRADE:
 				// A non-freezing operation that initiates network wide preparation in advance of a scheduled
@@ -2909,8 +2669,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case TELEMETRY_UPGRADE:
 				// Freezes the network at the specified time and performs the previously prepared automatic
 				// upgrade across the entire network.
-				setTimeInForm(transaction.getStartTime().asInstant(), freezeTimeZone, freezeHourField,
-						freezeMinuteField, freezeSecondsField, freezeDatePicker);
+				freezeFieldsSet.setDate(transaction.getStartTime().asInstant());
 				freezeFileIDTextField.setText(
 						transaction.getFileID().toNicknameAndChecksum(controller.getAccountsList()));
 				freezeFileHashTextField.setText(transaction.getFileHash());
@@ -2926,12 +2685,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public void cleanForm() {
 		fromFile = false;
-		var type = selectTransactionType.getValue();
+		final var type = selectTransactionType.getValue();
 		initializeCreatePane();
 		selectTransactionType.setValue(type);
 	}
 
-	public void loadFormFromTransactionTest(KeyEvent keyEvent) {
+	public void loadFormFromTransactionTest(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 			loadFormFromTransaction();
 		} else {

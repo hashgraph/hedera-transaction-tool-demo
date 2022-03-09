@@ -80,12 +80,12 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 
 	@Test
 	void writeBytes_readBytes_test() throws HederaClientException {
-		byte[] contents = new byte[20];
+		final byte[] contents = new byte[20];
 		new Random().nextBytes(contents);
 
-		ByteString contentsBS = ByteString.copyFrom(contents);
+		final ByteString contentsBS = ByteString.copyFrom(contents);
 		writeBytes(RESOURCES_DIRECTORY + "aDirectory/testByteString.txt", contentsBS.toByteArray());
-		ByteString recoveredContents =
+		final ByteString recoveredContents =
 				ByteString.copyFrom(readBytes(RESOURCES_DIRECTORY + "aDirectory/testByteString.txt"));
 		assertEquals(contentsBS, recoveredContents);
 
@@ -94,10 +94,10 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 
 		new File(RESOURCES_DIRECTORY + "aDirectory/testByteString.txt").deleteOnExit();
 
-		Exception exception1 = assertThrows(NullPointerException.class, () -> readBytes((File) null));
+		final Exception exception1 = assertThrows(NullPointerException.class, () -> readBytes((File) null));
 		assertNull(exception1.getMessage());
 		final var bogusFile = new File(RESOURCES_DIRECTORY + "aDirectory/bogus.txt");
-		Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> readBytes(bogusFile));
+		final Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> readBytes(bogusFile));
 		assertEquals(
 				"Hedera Client Runtime: Unable to get input stream from empty source: " +
 						"src/test/resourcesaDirectory/bogus.txt.",
@@ -108,46 +108,46 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 
 	@Test
 	void writeJsonObject_readJsonObject_test() throws HederaClientException {
-		JsonObject testJson = new JsonObject();
+		final JsonObject testJson = new JsonObject();
 		testJson.addProperty("property1", 0);
 		testJson.addProperty("property2", true);
 		testJson.addProperty("property3", "a string");
 		testJson.addProperty("property4", 'c');
 
 		writeJsonObject(RESOURCES_DIRECTORY + "testJson.json", testJson);
-		JsonObject recoveredJsonFromString = readJsonObject(RESOURCES_DIRECTORY + "testJson.json");
+		final JsonObject recoveredJsonFromString = readJsonObject(RESOURCES_DIRECTORY + "testJson.json");
 
 		assertNotNull(recoveredJsonFromString);
 		assertEquals(testJson, recoveredJsonFromString);
 
 		final var bogusFile = new File(RESOURCES_DIRECTORY + "bogus.json");
-		Exception exception2 = assertThrows(HederaClientRuntimeException.class,
+		final Exception exception2 = assertThrows(HederaClientRuntimeException.class,
 				() -> readJsonObject(bogusFile));
 		assertEquals(
 				"Hedera Client Runtime: Unable to get input stream from empty source: " + RESOURCES_DIRECTORY +
 						"bogus.json.", exception2.getMessage());
 
-		JsonObject recoveredJsonFromFile = readJsonObject(new File(RESOURCES_DIRECTORY + "testJson.json"));
+		final JsonObject recoveredJsonFromFile = readJsonObject(new File(RESOURCES_DIRECTORY + "testJson.json"));
 		assertNotNull(recoveredJsonFromFile);
 		assertEquals(testJson, recoveredJsonFromFile);
 
-		JsonArray testJsonArray = new JsonArray();
+		final JsonArray testJsonArray = new JsonArray();
 		testJsonArray.add("string 0");
 		testJsonArray.add("string 1");
 		testJsonArray.add("string 2");
 		testJsonArray.add("string 3");
 
 		writeJsonObject(RESOURCES_DIRECTORY + "testJsonArray.json", testJsonArray);
-		JsonArray recoveredArray = readJsonArray(RESOURCES_DIRECTORY + "testJsonArray.json");
+		final JsonArray recoveredArray = readJsonArray(RESOURCES_DIRECTORY + "testJsonArray.json");
 
 		assertNotNull(recoveredArray);
 		assertEquals(testJsonArray, recoveredArray);
 
-		Exception exception3 = assertThrows(HederaClientRuntimeException.class, () -> readJsonArray(null));
+		final Exception exception3 = assertThrows(HederaClientRuntimeException.class, () -> readJsonArray(null));
 		assertEquals("Hedera Client Runtime: Unable to get input stream from empty source: null.",
 				exception3.getMessage());
 
-		Exception exception4 = assertThrows(HederaClientRuntimeException.class,
+		final Exception exception4 = assertThrows(HederaClientRuntimeException.class,
 				() -> readJsonArray(RESOURCES_DIRECTORY + "bogus.json"));
 		assertEquals(
 				"Hedera Client Runtime: Unable to get input stream from empty source: " + RESOURCES_DIRECTORY +
@@ -160,83 +160,88 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 	@Test
 	void nonExistentFile() {
 
-		String expected = "Hedera Client Runtime: Unable to get input stream from empty source: bogusFile.txt.";
+		final String expected = "Hedera Client Runtime: Unable to get input stream from empty source: bogusFile.txt.";
 
-		Exception exception1 = assertThrows(HederaClientRuntimeException.class, () -> readBytes("bogusFile.txt"));
+		final Exception exception1 = assertThrows(HederaClientRuntimeException.class, () -> readBytes("bogusFile.txt"));
 		assertEquals(expected, exception1.getMessage());
 
-		Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> readJsonObject("bogusFile.txt"));
+		final Exception exception2 =
+				assertThrows(HederaClientRuntimeException.class, () -> readJsonObject("bogusFile.txt"));
 		assertEquals(expected, exception2.getMessage());
 
-		Exception exception3 = assertThrows(HederaClientRuntimeException.class, () -> readJsonArray("bogusFile.txt"));
+		final Exception exception3 =
+				assertThrows(HederaClientRuntimeException.class, () -> readJsonArray("bogusFile.txt"));
 		assertEquals(expected, exception3.getMessage());
 	}
 
 	@Test
 	void exceptionTests() {
 
-		String expected1 = "Hedera Client Runtime: Unable to write input stream to empty destination.";
+		final String expected1 = "Hedera Client Runtime: Unable to write input stream to empty destination.";
 
-		byte[] contents = new byte[20];
+		final byte[] contents = new byte[20];
 		new Random().nextBytes(contents);
 
-		Exception exception1 = assertThrows(HederaClientRuntimeException.class, () -> writeBytes(null, contents));
+		final Exception exception1 = assertThrows(HederaClientRuntimeException.class, () -> writeBytes(null, contents));
 		assertEquals(expected1, exception1.getMessage());
 
-		JsonObject testJson = new JsonObject();
+		final JsonObject testJson = new JsonObject();
 		testJson.addProperty("property1", 0);
 		testJson.addProperty("property2", true);
 		testJson.addProperty("property3", "a string");
 		testJson.addProperty("property4", 'c');
 
-		Exception exception2 = assertThrows(HederaClientRuntimeException.class, () -> writeJsonObject(null, testJson));
+		final Exception exception2 =
+				assertThrows(HederaClientRuntimeException.class, () -> writeJsonObject(null, testJson));
 		assertEquals(expected1, exception2.getMessage());
 
-		String expected3 = "Hedera Client Runtime: Unable to write empty content object.";
-		Exception exception3 = assertThrows(HederaClientRuntimeException.class,
+		final String expected3 = "Hedera Client Runtime: Unable to write empty content object.";
+		final Exception exception3 = assertThrows(HederaClientRuntimeException.class,
 				() -> writeBytes(RESOURCES_DIRECTORY + "emptyBytes.txt", null));
 		assertEquals(expected3, exception3.getMessage());
 
-		String expected4 = "Hedera Client Runtime: Unable to write empty json object: null";
-		Exception exception4 = assertThrows(HederaClientRuntimeException.class,
+		final String expected4 = "Hedera Client Runtime: Unable to write empty json object: null";
+		final Exception exception4 = assertThrows(HederaClientRuntimeException.class,
 				() -> writeJsonObject(RESOURCES_DIRECTORY + "emptyJson.json", null));
 		assertEquals(expected4, exception4.getMessage());
 
-		String expected5 = "Hedera Client Runtime: Unable to write object of class class java.lang.Integer";
-		Exception exception5 = assertThrows(HederaClientRuntimeException.class,
+		final String expected5 = "Hedera Client Runtime: Unable to write object of class class java.lang.Integer";
+		final Exception exception5 = assertThrows(HederaClientRuntimeException.class,
 				() -> writeJsonObject(RESOURCES_DIRECTORY + "emptyJson.json", 123654));
 		assertEquals(expected5, exception5.getMessage());
 
-		String expected6 = String.format("Hedera Client: Unable to store bytes to location: %s", RESOURCES_DIRECTORY);
-		Exception exception6 =
+		final String expected6 =
+				String.format("Hedera Client: Unable to store bytes to location: %s", RESOURCES_DIRECTORY);
+		final Exception exception6 =
 				assertThrows(HederaClientException.class, () -> writeBytes(RESOURCES_DIRECTORY, contents));
 		assertEquals(expected6, exception6.getMessage());
 
-		String expected7 = String.format("Hedera Client: Unable to write Json object to file: %s", RESOURCES_DIRECTORY);
-		Exception exception7 =
+		final String expected7 =
+				String.format("Hedera Client: Unable to write Json object to file: %s", RESOURCES_DIRECTORY);
+		final Exception exception7 =
 				assertThrows(HederaClientException.class, () -> writeJsonObject(RESOURCES_DIRECTORY, testJson));
 		assertEquals(expected7, exception7.getMessage());
 
-		String expected8 = String.format("Hedera Client: Unable to read a file: %s.", RESOURCES_DIRECTORY);
-		Exception exception8 = assertThrows(HederaClientException.class, () -> readBytes(RESOURCES_DIRECTORY));
+		final String expected8 = String.format("Hedera Client: Unable to read a file: %s.", RESOURCES_DIRECTORY);
+		final Exception exception8 = assertThrows(HederaClientException.class, () -> readBytes(RESOURCES_DIRECTORY));
 		assertEquals(expected8, exception8.getMessage());
 	}
 
 	@Test
 	void nonParsableJson_test() throws IOException {
-		FileWriter writer = new FileWriter(RESOURCES_DIRECTORY + "filename.txt");
+		final FileWriter writer = new FileWriter(RESOURCES_DIRECTORY + "filename.txt");
 		writer.write("\"key\": \"value\"}");
 		writer.close();
 
-		String expected1 = String.format("Hedera Client: Unable to read Json object from file: %s",
+		final String expected1 = String.format("Hedera Client: Unable to read Json object from file: %s",
 				RESOURCES_DIRECTORY + "filename.txt");
-		Exception exception1 =
+		final Exception exception1 =
 				assertThrows(HederaClientException.class, () -> readJsonObject(RESOURCES_DIRECTORY + "filename.txt"));
 		assertEquals(expected1, exception1.getMessage());
 
-		String expected2 = String.format("Hedera Client: Unable to read Json array from file: %s",
+		final String expected2 = String.format("Hedera Client: Unable to read Json array from file: %s",
 				RESOURCES_DIRECTORY + "filename.txt");
-		Exception exception2 =
+		final Exception exception2 =
 				assertThrows(HederaClientException.class, () -> readJsonArray(RESOURCES_DIRECTORY + "filename.txt"));
 		assertEquals(expected2, exception2.getMessage());
 
@@ -247,7 +252,7 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 	@Test
 	void zipFolder_test() {
 		final String source = "src/test/resources/Files/TransactionFileTests";
-		File zip = zipFolder(source);
+		final File zip = zipFolder(source);
 		assertTrue(zip.exists());
 		zip.deleteOnExit();
 	}
@@ -256,7 +261,7 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 	void zipDir_test() throws IOException {
 		final Path source = Path.of("src/test/resources/Files");
 		zipDir(source);
-		File zip = new File("src/test/resources/Files.zip");
+		final File zip = new File("src/test/resources/Files.zip");
 		assertTrue(zip.exists());
 		zip.deleteOnExit();
 	}
@@ -275,8 +280,8 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 
 	@Test
 	void writeCSV_test() throws HederaClientException {
-		Map<String, List<String>> testMap = new HashMap<>();
-		List<String> strings = new ArrayList<>();
+		final Map<String, List<String>> testMap = new HashMap<>();
+		final List<String> strings = new ArrayList<>();
 		strings.add("alpha");
 		testMap.put("acct1", new ArrayList<>(strings));
 		strings.add("beta");
@@ -291,13 +296,13 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 		writeCSV(csvFile.getPath(), testMap);
 		assertTrue(csvFile.exists());
 
-		var records = readCSV(csvFile.getAbsolutePath());
+		final var records = readCSV(csvFile.getAbsolutePath());
 		assertEquals(5, records.size());
-		for (List<String> record : records) {
-			List<String> list = new LinkedList<>(record);
-			String key = record.get(0);
+		for (final List<String> record : records) {
+			final List<String> list = new LinkedList<>(record);
+			final String key = record.get(0);
 			list.remove(key);
-			var value = new HashSet<>(list);
+			final var value = new HashSet<>(list);
 			assertTrue(testMap.containsKey(key));
 			assertEquals(new HashSet<>(testMap.get(key)), value);
 		}
@@ -311,22 +316,22 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 		if (tempFiles.mkdirs()) {
 			logger.info("Temp folder created");
 		}
-		File[] files = new File("src/test/resources/AccountInfos").listFiles();
+		final File[] files = new File("src/test/resources/AccountInfos").listFiles();
 		assert files != null;
-		for (File file : files) {
+		for (final File file : files) {
 			FileUtils.copyFile(file, new File("src/test/resources/temp", file.getName()));
 		}
 
-		File[] toPack = tempFiles.listFiles();
+		final File[] toPack = tempFiles.listFiles();
 
-		var packed = zipFiles(toPack, "src/test/resources/temp.zip");
+		final var packed = zipFiles(toPack, "src/test/resources/temp.zip");
 		assertTrue(packed.exists());
 		unZip("src/test/resources/temp.zip", "src/test/resources/newTemp");
 		final var newTemp = new File("src/test/resources/newTemp").listFiles();
 		assert newTemp != null;
 		assertEquals(files.length, Objects.requireNonNull(newTemp).length);
 
-		var packed2 = zipFiles(newTemp, "src/test/resources/temp.zip");
+		final var packed2 = zipFiles(newTemp, "src/test/resources/temp.zip");
 		assertTrue(packed2.exists());
 		assertEquals("temp.zip", packed2.getName());
 		assertTrue(new File("src/test/resources/temp.zip").exists());

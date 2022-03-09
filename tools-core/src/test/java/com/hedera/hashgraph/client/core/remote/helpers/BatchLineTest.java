@@ -33,22 +33,20 @@ class BatchLineTest {
 
 	@Test
 	void parse_test() throws HederaClientException {
-		var line = "0.0.15299,16666700000000,1/8/28";
-		var hours = 6;
-		var minutes = 35;
+		final var line = "0.0.15299,16666700000000,1/8/28";
+		final var hours = 6;
+		final var minutes = 35;
 
-		var parsed = BatchLine.parse(line, hours, minutes);
+		final var parsed = BatchLine.parse(line, hours, minutes);
 		assertEquals("{\"receiverAccountID\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":15299}," +
-						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"," +
-						"\"memo" +
-						"\":\"\"}",
+						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"}",
 				parsed.toString());
 
 		assertEquals(new Timestamp(1830926100, 0), parsed.getDate());
 		assertEquals(new Identifier(0, 0, 15299), parsed.getReceiverAccountID());
 		assertEquals(16666700000000L, parsed.getAmount());
 
-		assertEquals(1074973882, parsed.hashCode());
+		assertEquals(1281602566, parsed.hashCode());
 
 		Exception exception = assertThrows(HederaClientException.class, () -> BatchLine.parse(line, 30, minutes));
 		assertEquals("Hedera Client: Out of range exception: hour", exception.getMessage());
@@ -56,7 +54,7 @@ class BatchLineTest {
 		exception = assertThrows(HederaClientException.class, () -> BatchLine.parse(line, hours, 74));
 		assertEquals("Hedera Client: Out of range exception: minute", exception.getMessage());
 
-		var bad_date = "0.0.15299,16666700000000,1/DD/28";
+		final var bad_date = "0.0.15299,16666700000000,1/DD/28";
 		exception = assertThrows(HederaClientException.class, () -> BatchLine.parse(bad_date, hours, minutes));
 		assertEquals("Hedera Client: Cannot parse date", exception.getMessage());
 
@@ -64,18 +62,15 @@ class BatchLineTest {
 		assertEquals(new Timestamp(1830826100, 1000), parsed.getDate());
 		assertNotEquals(1281602566, parsed.hashCode());
 
-		parsed.setMemo("memo line");
-		assertEquals("memo line", parsed.getMemo());
-
 	}
 
 	@Test
 	void compareBatchLines_test() throws HederaClientException {
-		var line0 = "0.0.15299,16666700000000,1/8/28";
-		var hours0 = 6;
-		var minutes0 = 35;
+		final var line0 = "0.0.15299,16666700000000,1/8/28";
+		final var hours0 = 6;
+		final var minutes0 = 35;
 
-		var parsed0 = BatchLine.parse(line0, hours0, minutes0);
+		final var parsed0 = BatchLine.parse(line0, hours0, minutes0);
 
 
 		assertEquals(parsed0, BatchLine.parse(line0, hours0, minutes0));
@@ -84,9 +79,9 @@ class BatchLineTest {
 		assertNotEquals("test", parsed0);
 
 
-		var line1 = "0.0.15299,16666700000000,2/8/28";
-		var line2 = "0.0.5299,16666700000000,1/8/28";
-		var line3 = "0.0.15299,26666700000000,1/8/28";
+		final var line1 = "0.0.15299,16666700000000,2/8/28";
+		final var line2 = "0.0.5299,16666700000000,1/8/28";
+		final var line3 = "0.0.15299,26666700000000,1/8/28";
 
 		assertEquals(0, parsed0.compareTo(BatchLine.parse(line0, hours0, minutes0)));
 		assertTrue(parsed0.compareTo(BatchLine.parse(line0, hours0, 30)) > 0);
@@ -99,27 +94,24 @@ class BatchLineTest {
 
 	@Test
 	void newParse_test() throws HederaClientException {
-		var line = "0.0.15299,16666700000000,1/8/28, \"memo line\"";
-		var hours = 6;
-		var minutes = 35;
+		final var line = "0.0.15299,16666700000000,1/8/28, \"memo line\"";
+		final var hours = 6;
+		final var minutes = 35;
 
-		var parsed = BatchLine.parse(line, hours, minutes);
+		final var parsed = BatchLine.parse(line, hours, minutes);
 		assertEquals("{\"receiverAccountID\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":15299}," +
-						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"," +
-						"\"memo" +
-						"\":\"memo line\"}",
+						"\"amount\":16666700000000,\"dateTime\":\"{\\\"seconds\\\":1830926100,\\\"nanos\\\":0}\"}",
 				parsed.toString());
 
 		assertEquals(new Timestamp(1830926100, 0), parsed.getDate());
 		assertEquals(new Identifier(0, 0, 15299), parsed.getReceiverAccountID());
 		assertEquals(16666700000000L, parsed.getAmount());
-		assertEquals("memo line", parsed.getMemo());
 
-		var line0 = "0.0.15299,16666700000000,1/8/28, another memo ";
-		var hours0 = 6;
-		var minutes0 = 35;
+		final var line0 = "0.0.15299,16666700000000,1/8/28, another memo ";
+		final var hours0 = 6;
+		final var minutes0 = 35;
 
-		var line1 = "0.0.15299,16666700000000,1/8/28, yet another memo ";
+		final var line1 = "0.0.15299,16666700000000,1/8/29, yet another memo ";
 		final var parsed0 = BatchLine.parse(line0, hours0, minutes0);
 		final var parsed1 = BatchLine.parse(line1, hours0, minutes0);
 		assertNotEquals(parsed0, parsed1);

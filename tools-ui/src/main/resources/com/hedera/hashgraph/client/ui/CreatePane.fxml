@@ -395,9 +395,9 @@
 					<padding>
 						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
 					</padding>
-					<VBox maxHeight="1.7976931348623157E308" maxWidth="-Infinity" spacing="20.0">
-						<VBox fx:id="fromAccountsVBox" maxHeight="1.7976931348623157E308" maxWidth="-Infinity"
-							  spacing="10.0">
+					<VBox alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" maxWidth="-Infinity" spacing="20.0">
+						<VBox fx:id="fromAccountsVBox" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308"
+							  maxWidth="-Infinity" spacing="10.0">
 							<Label text="From account(s)"/>
 							<TableView fx:id="fromTransferTable" focusTraversable="false" maxHeight="-Infinity"
 									   maxWidth="-Infinity"/>
@@ -417,7 +417,8 @@
 								   text="Cannot parse the account ID" visible="false"/>
 
 						</VBox>
-						<VBox fx:id="toAccountsVBox" maxHeight="1.7976931348623157E308" spacing="10.0">
+						<VBox fx:id="toAccountsVBox" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308"
+							  spacing="10.0">
 							<Label text="To account(s)"/>
 							<TableView fx:id="toTransferTable" focusTraversable="false" maxHeight="-Infinity"
 									   maxWidth="-Infinity"/>

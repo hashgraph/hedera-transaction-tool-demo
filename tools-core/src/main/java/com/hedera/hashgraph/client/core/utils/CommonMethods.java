@@ -57,11 +57,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
@@ -82,11 +86,11 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		a json object tha contains the NETWORK  and TRANSACTION_FEE properties
 	 * @return a client object
 	 */
-	public static Client setupClient(JsonObject input) throws HederaClientException {
+	public static Client setupClient(final JsonObject input) throws HederaClientException {
 		if (!input.has(NETWORK_FIELD_NAME) || !input.has(TRANSACTION_FEE_FIELD_NAME)) {
 			throw new HederaClientException("Missing critical fields in the JSON input to set up the client");
 		}
-		var client = getClient(NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString()));
+		final var client = getClient(NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString()));
 		client.setDefaultMaxQueryPayment(JsonUtils.jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME)));
 		return client;
 	}
@@ -98,8 +102,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		one of MAINNET, PREVIEWNET, TESTNET, or INTEGRATION
 	 * @return a client with nodes set to the requested network
 	 */
-	public static Client getClient(NetworkEnum networkEnum) {
-		Client client;
+	public static Client getClient(final NetworkEnum networkEnum) {
+		final Client client;
 		switch (networkEnum) {
 			case MAINNET:
 				client = Client.forMainnet();
@@ -111,10 +115,10 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				client = Client.forTestnet();
 				break;
 			case INTEGRATION:
-				Map<String, AccountId> network = new HashMap<>();
-				var jsonArray = getIntegrationIPs(INTEGRATION_NODES_JSON);
-				for (var jsonElement : jsonArray) {
-					var node = jsonElement.getAsJsonObject();
+				final Map<String, AccountId> network = new HashMap<>();
+				final var jsonArray = getIntegrationIPs(INTEGRATION_NODES_JSON);
+				for (final var jsonElement : jsonArray) {
+					final var node = jsonElement.getAsJsonObject();
 					network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
 				}
 				client = Client.forNetwork(network);
@@ -138,15 +142,15 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		can either be a file path or a network enum
 	 * @return a client
 	 */
-	public static Client getClient(String networkString) {
+	public static Client getClient(final String networkString) {
 		if (!new File(networkString).exists()) {
 			return getClient(NetworkEnum.valueOf(networkString.toUpperCase(Locale.ROOT)));
 		}
 		logger.info("Loading nodes from {}", networkString);
-		Map<String, AccountId> network = new HashMap<>();
-		var jsonArray = getIntegrationIPs(networkString);
-		for (var jsonElement : jsonArray) {
-			var node = jsonElement.getAsJsonObject();
+		final Map<String, AccountId> network = new HashMap<>();
+		final var jsonArray = getIntegrationIPs(networkString);
+		for (final var jsonElement : jsonArray) {
+			final var node = jsonElement.getAsJsonObject();
 			network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
 		}
 		return Client.forNetwork(network);
@@ -162,11 +166,11 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if the file cannot be opened
 	 */
-	public static Mnemonic setupRecoveryPhrase(String file) throws HederaClientException {
+	public static Mnemonic setupRecoveryPhrase(final String file) throws HederaClientException {
 
 		final var mnemonicFile = new File(file);
 		logger.info("Setting up recovery phrase using file {}", mnemonicFile.getAbsolutePath());
-		Mnemonic mnemonic;
+		final Mnemonic mnemonic;
 
 		if (!mnemonicFile.exists()) {
 			final var message = String.format("Cannot open file %s", file);
@@ -180,7 +184,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			mnemonic = Mnemonic.generate24();
 
 			// store the mnemonic
-			var password =
+			final var password =
 					PasswordInput.readPasswordAndConfirm("Please enter a password for the new recovery phrase: ",
 							"Please confirm the password: ");
 			if (password != null) {
@@ -197,7 +201,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			}
 		} else {
 			// load mnemonic
-			var mnemonicPassword = PasswordInput.readPasswordFromStdIn("Enter the recovery phrase's password: ");
+			final var mnemonicPassword = PasswordInput.readPasswordFromStdIn("Enter the recovery phrase's password: ");
 			if (mnemonicPassword != null) {
 				mnemonic =
 						SecurityUtilities.fromEncryptedFile(SecurityUtilities.keyFromPasswordLegacy(mnemonicPassword),
@@ -225,8 +229,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if there are problems generating the key or if there are issues with key retrieval.
 	 */
-	public static JsonObject createSingleKeyAsJson(Mnemonic mnemonic, char[] password, int index,
-			String location) throws HederaClientException {
+	public static JsonObject createSingleKeyAsJson(final Mnemonic mnemonic, final char[] password, final int index,
+			final String location) throws HederaClientException {
 		logger.info("Creating new key");
 		if (mnemonic == null) {
 			throw new HederaClientException(ErrorMessages.MNEMONIC_CANNOT_BE_NULL_ERROR_MESSAGE);
@@ -236,7 +240,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			throw new HederaClientException(ErrorMessages.PASSWORD_CANNOT_BE_EMPTY_ERROR_MESSAGE);
 		}
 
-		var keyName = buildKeyName("KeyStore", location);
+		final var keyName = buildKeyName("KeyStore", location);
 		if (SecurityUtilities.generateAndStoreKey(keyName, "Hedera CLI Tool", mnemonic, index,
 				password)) {
 			logger.info("Key {} has been generated with index {}", keyName, index);
@@ -244,12 +248,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			logger.error("Could not generate key. Please check error log for details");
 			throw new HederaClientException("Key not generated");
 		}
-		var singleKeyJson = new JsonObject();
-		String pubKey;
+		final var singleKeyJson = new JsonObject();
+		final String pubKey;
 		try {
 			pubKey = new String(
 					Files.readAllBytes(Path.of(keyName.replace(PK_EXTENSION, PUB_EXTENSION))));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error(e);
 			throw new HederaClientException("Could not load public key from file");
 		}
@@ -272,7 +276,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			logger.info("Output directory {} created", outputPath);
 		}
 		while (true) {
-			var name = String.format("%s/%s-%d.%s", outputPath, keyName, number, PK_EXTENSION);
+			final var name = String.format("%s/%s-%d.%s", outputPath, keyName, number, PK_EXTENSION);
 			if (!new File(name).exists()) {
 				return name;
 			}
@@ -290,16 +294,16 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		list of required fields
 	 * @return true if the file has all the required files, false if any fields are missing
 	 */
-	public static List<String> checkJsonInput(JsonObject input, List<String> requiredFields) {
-		List<String> missingFields = new ArrayList<>();
+	public static List<String> checkJsonInput(final JsonObject input, final List<String> requiredFields) {
+		final List<String> missingFields = new ArrayList<>();
 
-		for (var requiredField : requiredFields) {
+		for (final var requiredField : requiredFields) {
 			if (!input.has(requiredField)) {
 				missingFields.add(requiredField);
 			}
 		}
 		if (!missingFields.isEmpty()) {
-			for (var s : missingFields) {
+			for (final var s : missingFields) {
 				logger.info("Missing required field {}", s);
 			}
 		}
@@ -315,9 +319,9 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		a list of fields
 	 * @return true if all the fields exist
 	 */
-	public static boolean verifyFieldExist(JsonObject input, String... fields) {
+	public static boolean verifyFieldExist(final JsonObject input, final String... fields) {
 		var count = 0;
-		for (var field : fields) {
+		for (final var field : fields) {
 			if (!input.has(field)) {
 				count++;
 				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
@@ -326,9 +330,9 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return (count == 0);
 	}
 
-	public static boolean verifyOneOfExists(JsonObject input, String... fields) {
+	public static boolean verifyOneOfExists(final JsonObject input, final String... fields) {
 		var count = 0;
-		for (var field : fields) {
+		for (final var field : fields) {
 			if (input.has(field)) {
 				count++;
 				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
@@ -345,7 +349,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		an account ID
 	 * @return a String that represents the account ID
 	 */
-	public static String nicknameOrNumber(Identifier accountNumber, JsonObject accounts) {
+	public static String nicknameOrNumber(final Identifier accountNumber, final JsonObject accounts) {
 		final var name = accountNumber.toReadableString();
 		final var nickname = (accounts.has(name)) ? accounts.get(name).getAsString() : "";
 		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(name));
@@ -366,22 +370,24 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		true if date is included
 	 * @return a label
 	 */
-	public static Label getTimeLabel(Timestamp timestamp, boolean full) {
-		var utcTimeDate = timestamp.asUTCString().replace("_", " ");
-		var localTimeDate = timestamp.asReadableLocalString();
-		var gmt = localTimeDate.contains(utcTimeDate);
-		var fullTimeString =
+	public static Label getTimeLabel(final Timestamp timestamp, final boolean full) {
+		final var utcTimeDate = timestamp.asUTCString().replace("_", " ");
+		final var localTimeDate = timestamp.asReadableLocalString();
+		final var gmt = localTimeDate.contains(utcTimeDate);
+		final var fullTimeString =
 				(gmt) ? String.format("%s (UTC)", localTimeDate) : String.format("%s%n(%s UTC)", localTimeDate,
 						utcTimeDate);
 
 
-		var hoursUTC = timestamp.asCalendarUTC().get(Calendar.HOUR_OF_DAY);
-		var minutesUTC = timestamp.asCalendarUTC().get(Calendar.MINUTE);
-		var secondsUTC = timestamp.asCalendarUTC().get(Calendar.SECOND);
+		final var hoursUTC = timestamp.asCalendarUTC().get(Calendar.HOUR_OF_DAY);
+		final var minutesUTC = timestamp.asCalendarUTC().get(Calendar.MINUTE);
+		final var secondsUTC = timestamp.asCalendarUTC().get(Calendar.SECOND);
 
-		var hourTimeString = (gmt) ? String.format("%s (UTC)", localTimeDate.substring(localTimeDate.indexOf(" "))) :
-				String.format("%s (%02d:%02d:%02d UTC)", localTimeDate.substring(localTimeDate.indexOf(" ")), hoursUTC,
-						minutesUTC, secondsUTC);
+		final var hourTimeString =
+				(gmt) ? String.format("%s (UTC)", localTimeDate.substring(localTimeDate.indexOf(" "))) :
+						String.format("%s (%02d:%02d:%02d UTC)", localTimeDate.substring(localTimeDate.indexOf(" ")),
+								hoursUTC,
+								minutesUTC, secondsUTC);
 
 		return new Label((full) ? fullTimeString : hourTimeString);
 	}
@@ -395,10 +401,10 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		another String
 	 * @return the longest sequence common to both inputs
 	 */
-	public static String getLCSubStr(String firstString, String secondString) {
-		var m = firstString.length();
-		var n = secondString.length();
-		var suffix = new int[m + 1][n + 1];
+	public static String getLCSubStr(final String firstString, final String secondString) {
+		final var m = firstString.length();
+		final var n = secondString.length();
+		final var suffix = new int[m + 1][n + 1];
 		var len = 0;
 		int row = 0;
 		int col = 0;
@@ -425,7 +431,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return "";
 		}
 
-		StringBuilder resultStr = new StringBuilder();
+		final StringBuilder resultStr = new StringBuilder();
 		while (suffix[row][col] != 0) {
 			resultStr.insert(0, firstString.charAt(row - 1));
 			--len;
@@ -441,11 +447,11 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 *
 	 * @return a json array that contains the IPs of the integration network
 	 */
-	private static JsonArray getIntegrationIPs(String nodes) {
+	private static JsonArray getIntegrationIPs(final String nodes) {
 		// Read file into object
-		try (var file = new FileReader(nodes)) {
+		try (final var file = new FileReader(nodes)) {
 			return JsonParser.parseReader(file).getAsJsonArray();
-		} catch (JsonIOException | JsonSyntaxException | IOException cause) {
+		} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
 			logger.error(cause);
 		}
 		return new JsonArray();
@@ -459,7 +465,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		a list of strings
 	 * @return the longest string with which all the input starts (can be empty)
 	 */
-	public static String longestCommonPrefix(List<String> strings) {
+	public static String longestCommonPrefix(final List<String> strings) {
 		if (strings.isEmpty()) {
 			return "";
 		}
@@ -468,7 +474,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		}
 
 		Collections.sort(strings);
-		var prefix = new StringBuilder();
+		final var prefix = new StringBuilder();
 		for (var i = 0; i < strings.get(0).length(); i++) {
 			if (strings.get(0).charAt(i) == strings.get(strings.size() - 1).charAt(i)) {
 				prefix.append(strings.get(0).charAt(i));
@@ -488,12 +494,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		the number of words per line
 	 * @return a string
 	 */
-	public static String splitStringDigest(String digest, int size) {
-		var splits = digest.split("[ ]");
-		var builder = new StringBuilder();
+	public static String splitStringDigest(final String digest, final int size) {
+		final var splits = digest.split("[ ]");
+		final var builder = new StringBuilder();
 		var separator = "";
 		var count = 0;
-		for (var split : splits) {
+		for (final var split : splits) {
 			count++;
 			builder.append(separator);
 			builder.append(split);
@@ -503,8 +509,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return builder.toString();
 	}
 
-	public static void checkFiles(String... filePath) throws HederaClientException {
-		for (String path : filePath) {
+	public static void checkFiles(final String... filePath) throws HederaClientException {
+		for (final String path : filePath) {
 			if (!new File(path).exists()) {
 				throw new HederaClientException(String.format("File %s does not exist",
 						path));
@@ -512,8 +518,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		}
 	}
 
-	public static boolean badPassword(char[] password) {
-		var passwordPolicy =
+	public static boolean badPassword(final char[] password) {
+		final var passwordPolicy =
 				new PasswordPolicy(BreachDatabase.anyOf(BreachDatabase.top100K(), BreachDatabase.haveIBeenPwned()),
 						MIN_PASSWORD_LENGTH,
 						MAX_PASSWORD_LENGTH);
@@ -544,17 +550,17 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if the string cannot be parsed
 	 */
-	public static Hbar fromString(String hBarString) throws HederaClientException {
-		var trimmed = (hBarString.contains(" ")) ? hBarString.split(" ")[0] : hBarString;
+	public static Hbar fromString(final String hBarString) throws HederaClientException {
+		final var trimmed = (hBarString.contains(" ")) ? hBarString.split(" ")[0] : hBarString;
 		if (hBarString.contains("t")) {
 			return Hbar.fromTinybars(Long.parseLong(trimmed));
 		}
-		var split = trimmed.split("\\.");
+		final var split = trimmed.split("\\.");
 		if (split.length == 1) {
 			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000);
 		}
 		if (split.length == 2) {
-			StringBuilder tiny = new StringBuilder(split[1]);
+			final StringBuilder tiny = new StringBuilder(split[1]);
 			while (tiny.length() < 8) {
 				tiny.append("0");
 			}
@@ -564,12 +570,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	}
 
 	@NotNull
-	public static Client getClient(JsonArray customNetwork) {
-		Map<String, AccountId> networkMap = new HashMap<>();
-		for (var jsonElement : customNetwork) {
-			var node = jsonElement.getAsJsonObject();
-			var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
-			var ip = node.get("ipAddress").getAsString() + ":" + node.get("port").getAsInt();
+	public static Client getClient(final JsonArray customNetwork) {
+		final Map<String, AccountId> networkMap = new HashMap<>();
+		for (final var jsonElement : customNetwork) {
+			final var node = jsonElement.getAsJsonObject();
+			final var accountID = Identifier.parse(node.get("accountID").getAsString()).asAccount();
+			final var ip = node.get("ipAddress").getAsString() + ":" + node.get("port").getAsInt();
 			networkMap.put(ip, accountID);
 		}
 		return Client.forNetwork(networkMap);
@@ -583,9 +589,9 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @return a partitioned string
 	 */
 	@NotNull
-	public static String splitString(String digest) {
+	public static String splitString(final String digest) {
 		var count = 0;
-		var splitDigest = new StringBuilder();
+		final var splitDigest = new StringBuilder();
 		for (final var token : fixedLength(4).split(digest)) {
 			if (count != 0) {
 				splitDigest.append(" ");
@@ -596,5 +602,33 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		return splitDigest.toString();
 	}
 
+	/**
+	 * Given a string that may or may not represent an account id with nickname and checksum, return just the account id
+	 * and the checksum
+	 *
+	 * @param value
+	 * 		any String
+	 * @return an account and checksum string if the pattern is found. An empty string otherwise
+	 */
+	public static String removeNickname(final String value) {
+		final var patternFull = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
+		final var matcherFull = patternFull.matcher(value);
+		if (matcherFull.find()) {
+			return matcherFull.group(0);
+		}
+		final var patternAccount = Pattern.compile(FULL_ACCOUNT_REGEX);
+		final var matcherAccount = patternAccount.matcher(value);
+		if (matcherAccount.find()) {
+			final var identifier = Identifier.parse(matcherAccount.group(0));
+			return identifier.toReadableStringAndChecksum();
+		}
+		final var patternDecimal = Pattern.compile(NUMBER_REGEX);
+		final var matcherDecimal = patternDecimal.matcher(value);
+		if (matcherDecimal.find()) {
+			final var identifier = Identifier.parse(matcherDecimal.group(0));
+			return identifier.toReadableStringAndChecksum();
+		}
+		return "";
+	}
 }
 

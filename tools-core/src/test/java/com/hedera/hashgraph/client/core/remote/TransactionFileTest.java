@@ -29,7 +29,6 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
-import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransferTransaction;
@@ -49,7 +48,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyStoreException;
-import java.util.Objects;
 import java.util.zip.ZipInputStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
@@ -86,7 +84,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var files = new File("src/test/resources/PublicKeys").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(PUB_EXTENSION));
 		assert files != null;
-		for (var file : files) {
+		for (final var file : files) {
 			final var destFile = new File(DEFAULT_KEYS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -98,7 +96,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var accounts = new File("src/test/resources/AccountInfos").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(INFO_EXTENSION));
 		assert accounts != null;
-		for (var file : accounts) {
+		for (final var file : accounts) {
 			final var destFile = new File(DEFAULT_ACCOUNTS, file.getName());
 			if (!destFile.exists()) {
 				FileUtils.copyFile(file, destFile);
@@ -110,7 +108,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 
 	@After
 	public void tearDown() throws Exception {
-		var output = new File("src/test/resources/Files/output");
+		final var output = new File("src/test/resources/Files/output");
 		if (output.exists()) {
 			FileUtils.deleteDirectory(output);
 		}
@@ -122,7 +120,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void constructor_test() throws IOException {
-		var emptyFile = new TransactionFile();
+		final var emptyFile = new TransactionFile();
 		assertFalse(emptyFile.isValid());
 
 		var file = new File("src/test/resources/Files/TransactionFileTests/expired.tx");
@@ -146,7 +144,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertTrue(transactionFile.getActions().contains(FileActions.BROWSE));
 
 		file = new File(
-				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/hundredThousandBytes.zip");
+				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/hundredThousandBytes.lfu");
 		info = FileDetails.parse(file);
 		transactionFile = new TransactionFile(info);
 		assertFalse(transactionFile.isValid());
@@ -162,10 +160,10 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 
 	@Test
 	public void getters_test() throws IOException {
-		var file = new File(
+		final var file = new File(
 				"src/test/resources/Files/TransactionFileTests/createAccount.tx");
-		var info = FileDetails.parse(file);
-		var transactionFile = new TransactionFile(info);
+		final var info = FileDetails.parse(file);
+		final var transactionFile = new TransactionFile(info);
 
 		assertEquals("", transactionFile.getMemo());
 		assertEquals(TransactionType.CRYPTO_CREATE, transactionFile.getTransactionType());
@@ -173,7 +171,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		assertEquals(100000000, transactionFile.getTransactionFee());
 		assertEquals(new Timestamp(1775282400, 0), transactionFile.getTransactionValidStart());
 
-		var transaction = transactionFile.getTransaction();
+		final var transaction = transactionFile.getTransaction();
 		assertTrue(transaction instanceof ToolCryptoCreateTransaction);
 
 		assertEquals(16, transactionFile.getSigningPublicKeys().size());
@@ -184,10 +182,10 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	public void buildGridPaneCreate_test() throws IOException {
 		final var file = new File(
 				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/1743832800-0_0_94-58824159.tx");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var createTransaction = new TransactionFile(info);
-		var gridPane = createTransaction.buildGridPane();
+		final var createTransaction = new TransactionFile(info);
+		final var gridPane = createTransaction.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
 		assertEquals(16, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
@@ -206,7 +204,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		label = (Label) gridPane.getChildren().get(13);
 		assertEquals("0 tℏ", label.getText());
 
-		var signers = createTransaction.getSigningPublicKeys();
+		final var signers = createTransaction.getSigningPublicKeys();
 		assertNotNull(signers);
 		assertEquals(16, signers.size());
 	}
@@ -214,10 +212,10 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	@Test
 	public void buildGridPaneTransfer_test() throws IOException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var transfer = new TransactionFile(info);
-		var gridPane = transfer.buildGridPane();
+		final var transfer = new TransactionFile(info);
+		final var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
 		assertEquals(14, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
@@ -242,18 +240,18 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		label = (Label) gridPane.getChildren().get(13);
 		assertEquals("100 ℏ", label.getText());
 
-		var signers = transfer.getSigningPublicKeys();
+		final var signers = transfer.getSigningPublicKeys();
 		assertNotNull(signers);
-		assertEquals(4, signers.size());
+		assertEquals(18, signers.size());
 	}
 
 	@Test
 	public void buildGridPaneFileUpdate_test() throws IOException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/systemDelete.tx");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var transfer = new TransactionFile(info);
-		var gridPane = transfer.buildGridPane();
+		final var transfer = new TransactionFile(info);
+		final var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
 		assertEquals(12, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
@@ -273,7 +271,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		label = (Label) gridPane.getChildren().get(11);
 		assertTrue(label.getText().contains("2028-05-06 06:00:00 UTC"));
 
-		var signers = transfer.getSigningPublicKeys();
+		final var signers = transfer.getSigningPublicKeys();
 		assertNotNull(signers);
 		assertEquals(28, signers.size());
 	}
@@ -281,52 +279,54 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	@Test
 	public void execute_test() throws IOException, HederaClientException, KeyStoreException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
-		var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(file);
 
-		var transfer = new TransactionFile(info);
-		var password = Constants.TEST_PASSWORD.toCharArray();
-		var keyStore0 = new Ed25519KeyStore.Builder().withPassword(password).build();
+		final var transfer = new TransactionFile(info);
+		final var password = Constants.TEST_PASSWORD.toCharArray();
+		final var keyStore0 = new Ed25519KeyStore.Builder().withPassword(password).build();
 		keyStore0.insertNewKeyPair();
 
-		var pair = Pair.of("testPem", keyStore0.get(0));
+		final var pair = Pair.of("testPem", keyStore0.get(0));
 		final var execute = transfer.execute(pair, "test_user", "src/test/resources/Files/output");
 		final var outputZip = new File(execute);
 		assertTrue(outputZip.exists());
 
 		unzip(outputZip);
-		var unzipped = new File(outputZip.getParent(), FilenameUtils.getBaseName(outputZip.getName()));
+		final var unzipped = new File(outputZip.getParent(), FilenameUtils.getBaseName(outputZip.getName()));
 		assertTrue(unzipped.exists());
 
-		var files = unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
+		final var files =
+				unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
 		assert files != null;
 		assertEquals(1, files.length);
 		final var bytes = readBytes(files[0]);
-		var updateTx = Transaction.fromBytes(bytes);
+		final var updateTx = Transaction.fromBytes(bytes);
 		assertTrue(updateTx instanceof TransferTransaction);
-		var sigs = updateTx.getSignatures();
+		final var sigs = updateTx.getSignatures();
 		assertEquals(0, sigs.entrySet().size());
 
-		var sigFiles = unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(SIGNATURE_EXTENSION));
+		final var sigFiles =
+				unzipped.listFiles((dir, name) -> FilenameUtils.getExtension(name).equals(SIGNATURE_EXTENSION));
 		assert sigFiles != null;
 		assertEquals(1, sigFiles.length);
-		var signaturePair = new SignaturePair(sigFiles[0].getAbsolutePath());
-		var pubKey = signaturePair.getPublicKey();
-		var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
+		final var signaturePair = new SignaturePair(sigFiles[0].getAbsolutePath());
+		final var pubKey = signaturePair.getPublicKey();
+		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
 		assertEquals(pubKey, privateKey.getPublicKey());
 	}
 
-	private void unzip(File zip) throws IOException {
-		var fileZip = zip.getAbsolutePath();
-		var destDir = new File(fileZip.replace(".zip", ""));
+	private void unzip(final File zip) throws IOException {
+		final var fileZip = zip.getAbsolutePath();
+		final var destDir = new File(fileZip.replace(".zip", ""));
 		if (destDir.mkdirs()) {
 			logger.info("Destination directory created");
 		}
-		var buffer = new byte[1024];
-		var zis = new ZipInputStream(new FileInputStream(fileZip));
+		final var buffer = new byte[1024];
+		final var zis = new ZipInputStream(new FileInputStream(fileZip));
 		var zipEntry = zis.getNextEntry();
 		while (zipEntry != null) {
-			var newFile = new File(destDir, zipEntry.getName());
-			var fos = new FileOutputStream(newFile);
+			final var newFile = new File(destDir, zipEntry.getName());
+			final var fos = new FileOutputStream(newFile);
 			int len;
 			while ((len = zis.read(buffer)) > 0) {
 				fos.write(buffer, 0, len);

@@ -58,12 +58,12 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	private Identifier fileID;
 	private byte[] fileHash;
 
-	public ToolFreezeTransaction(JsonObject input) throws HederaClientException {
+	public ToolFreezeTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.FREEZE;
 	}
 
-	public ToolFreezeTransaction(File inputFile) throws HederaClientException {
+	public ToolFreezeTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.startTime = ((FreezeTransaction) transaction).getStartTime();
 		this.freezeType = ((FreezeTransaction) transaction).getFreezeType();
@@ -77,6 +77,9 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	}
 
 	public Timestamp getStartTime() {
+		if (startTime == null) {
+			return null;
+		}
 		return new Timestamp(startTime);
 	}
 
@@ -89,11 +92,11 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	}
 
 	public String getFileHash() {
-		return Hex.toHexString(fileHash);
+		return (fileHash == null) ? null : Hex.toHexString(fileHash);
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 		if (!CommonMethods.verifyFieldExist(input, FREEZE_TYPE_FIELD_NAME)) {
 			return false;
@@ -113,7 +116,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 			try {
 				fileID = Identifier.parse(input.getAsJsonObject(JsonConstants.FREEZE_FILE_ID_FIELD_NAME));
 				fileHash = Hex.decode(input.get(JsonConstants.FREEZE_FILE_HASH_FIELD_NAME).getAsString());
-			} catch (HederaClientException e) {
+			} catch (final HederaClientException e) {
 				logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, JsonConstants.FREEZE_FILE_ID_FIELD_NAME);
 				answer = false;
 			}
@@ -122,7 +125,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		if (input.has(FREEZE_START_TIME_FIELD_NAME)) {
 			try {
 				startTime = new Timestamp(input.get(FREEZE_START_TIME_FIELD_NAME)).asInstant();
-			} catch (ParseException e) {
+			} catch (final ParseException e) {
 				logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, FREEZE_START_TIME_FIELD_NAME);
 				answer = false;
 			}
@@ -133,8 +136,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 
 	@Override
 	public Transaction<? extends Transaction<?>> build() throws HederaClientRuntimeException {
-		var transactionId = new TransactionId(feePayerID.asAccount(), transactionValidStart);
-		FreezeTransaction transaction = new FreezeTransaction();
+		final var transactionId = new TransactionId(feePayerID.asAccount(), transactionValidStart);
+		final FreezeTransaction transaction = new FreezeTransaction();
 		switch (freezeType) {
 			case FREEZE_ONLY:
 				checkStartTime();
@@ -194,7 +197,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 
 	@Override
 	public JsonObject asJson() {
-		var output = super.asJson();
+		final var output = super.asJson();
 		output.addProperty(FREEZE_TYPE_FIELD_NAME, freezeType.toString());
 		output.add(FREEZE_START_TIME_FIELD_NAME, new Timestamp(startTime).asJSON());
 		output.add(JsonConstants.FREEZE_FILE_ID_FIELD_NAME, fileID.asJSON());
@@ -203,8 +206,41 @@ public class ToolFreezeTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		return super.equals(obj);
+	public boolean equals(final Object obj) {
+		if (!(obj instanceof ToolFreezeTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolFreezeTransaction) obj;
+		final var freezeTypeBoolean = this.getFreezeType().equals(other.getFreezeType());
+		final var fileHashBoolean =
+				this.getFileHash() != null && other.getFileHash() != null && this.getFileHash().equals(
+						other.getFileHash());
+		final var fileIDBoolean =
+				this.getFileID() != null && other.getFileID() != null && this.getFileID().equals(other.getFileID());
+		final var startTimeBoolean =
+				this.getStartTime() != null && other.getStartTime() != null && this.getStartTime().equals(
+						other.getStartTime());
+
+		boolean freezeBoolean = freezeTypeBoolean;
+		switch (freezeType) {
+			case UNKNOWN_FREEZE_TYPE:
+				return false;
+			case FREEZE_ONLY:
+				freezeBoolean = freezeBoolean && startTimeBoolean;
+				break;
+			case PREPARE_UPGRADE:
+				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean;
+				break;
+			case FREEZE_UPGRADE:
+			case TELEMETRY_UPGRADE:
+				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean && startTimeBoolean;
+				break;
+			case FREEZE_ABORT:
+				break;
+		}
+
+		return super.equals(obj) && freezeBoolean;
 	}
 
 	@Override
@@ -212,7 +248,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		return super.hashCode();
 	}
 
-	private FreezeType parseType(String asString) {
+	private FreezeType parseType(final String asString) {
 		switch (asString) {
 			case "FREEZE_ONLY":
 				return FreezeType.FREEZE_ONLY;

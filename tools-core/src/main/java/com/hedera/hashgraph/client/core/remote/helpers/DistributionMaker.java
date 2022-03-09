@@ -69,34 +69,43 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	public static final String TRANSACTIONS_SUFFIX = "_transactions";
 	public static final String SIGNATURES_SUFFIX = "_signatures";
 	private final AccountId sender;
+	private final AccountId feePayer;
 	private final AccountId node;
 	private final Timestamp transactionValidDuration;
 	private final long transactionFee;
 	private final String storageLocation;
 	private final String output;
+	private final String memo;
 
 	/**
 	 * Constructor
 	 *
 	 * @param sender
-	 * 		account that will be the fee payer and sender
+	 * 		account that will be the sender
+	 * @param feePayer
+	 * 		account that will be the fee payer
 	 * @param node
 	 * 		node account where transactions will be sent
 	 * @param transactionValidDuration
 	 * 		duration of the transaction
 	 * @param transactionFee
 	 * 		maximum transaction fee
+	 * @param memo
+	 * 		the transactions memo
 	 * @param storageLocation
 	 * 		location where the created transactions will be temporarily stored
 	 * @param output
 	 * 		the location where the zip files will be exported
 	 */
-	public DistributionMaker(AccountId sender, AccountId node, Timestamp transactionValidDuration, long transactionFee,
-			String storageLocation, String output) {
+	public DistributionMaker(final AccountId sender, final AccountId feePayer, final AccountId node,
+			final Timestamp transactionValidDuration, final long transactionFee, final String memo,
+			final String storageLocation, final String output) {
 		this.sender = sender;
+		this.feePayer = feePayer;
 		this.node = node;
 		this.transactionValidDuration = transactionValidDuration;
 		this.transactionFee = transactionFee;
+		this.memo = memo;
 		this.storageLocation = storageLocation;
 		if (new File(output).mkdirs()) {
 			logger.info("Output folder {} created", output);
@@ -112,10 +121,10 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	 * @param keyPair
 	 * 		the key that will sign the transaction
 	 */
-	public void buildBundle(BatchLine distributionData, KeyPair keyPair) throws HederaClientException {
-		var tx = buildTransfer(distributionData);
-		var stx = buildSignature(tx, keyPair);
-		var signaturePair =
+	public void buildBundle(final BatchLine distributionData, final KeyPair keyPair) throws HederaClientException {
+		final var tx = buildTransfer(distributionData);
+		final var stx = buildSignature(tx, keyPair);
+		final var signaturePair =
 				new SignaturePair(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()).getPublicKey(), stx);
 		final var transactionsStorage = String.format("%s_transactions", storageLocation);
 		if (new File(transactionsStorage).mkdirs()) {
@@ -126,7 +135,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			logger.info("Folder {} created", signaturesStorage);
 		}
 
-		var name = getFullTransactionName(distributionData, tx.getTransactionId().toString());
+		final var name = getFullTransactionName(distributionData, tx.getTransactionId().toString());
 		final var transactionFilePath =
 				String.format("%s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION);
 		writeBytes(transactionFilePath, tx.toBytes());
@@ -138,27 +147,26 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 
 	/**
 	 * Summarizes the transactions and zips the transactions and signatures separately
-	 *
 	 */
 	public void pack() throws HederaClientException {
 		try {
 			summarizeTransactions();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 		zipMessages(TRANSACTIONS_SUFFIX, TRANSACTION_EXTENSION);
 		zipMessages(SIGNATURES_SUFFIX, SIGNATURE_EXTENSION);
 	}
 
-	private ToolTransaction buildTransfer(BatchLine distributionData) throws HederaClientException {
-		var input = new JsonObject();
+	private ToolTransaction buildTransfer(final BatchLine distributionData) throws HederaClientException {
+		final var input = new JsonObject();
 		input.add(TRANSACTION_VALID_START_FIELD_NAME, distributionData.getDate().asJSON());
 
 		// Fee payer
-		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, new Identifier(sender).asJSON());
+		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, new Identifier(feePayer).asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
-		var feeJson = new JsonObject();
+		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
 		feeJson.addProperty(TINY_BARS, transactionFee);
 		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
@@ -170,15 +178,15 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		input.add(NODE_ID_FIELD_NAME, new Identifier(node).asJSON());
 
 		// Memo
-		input.addProperty(MEMO_FIELD_NAME, distributionData.getMemo());
+		input.addProperty(MEMO_FIELD_NAME, memo);
 
 		// Transfer
-		var jsonArray = new JsonArray();
-		var senderPair = new JsonObject();
+		final var jsonArray = new JsonArray();
+		final var senderPair = new JsonObject();
 		senderPair.add(ACCOUNT, new Identifier(sender).asJSON());
 		senderPair.addProperty(AMOUNT, -distributionData.getAmount());
 		jsonArray.add(senderPair);
-		var receiverPair = new JsonObject();
+		final var receiverPair = new JsonObject();
 		receiverPair.add(ACCOUNT, distributionData.getReceiverAccountID().asJSON());
 		receiverPair.addProperty(AMOUNT, distributionData.getAmount());
 		jsonArray.add(receiverPair);
@@ -191,42 +199,43 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	}
 
 	private void summarizeTransactions() throws HederaClientException, IOException {
-		var transactions =
+		final var transactions =
 				new File(storageLocation + TRANSACTIONS_SUFFIX).listFiles(
 						(dir, name) -> name.endsWith(TRANSACTION_EXTENSION));
 		assert transactions != null;
-		var files = Arrays.asList(transactions);
+		final var files = Arrays.asList(transactions);
 		Collections.sort(files);
 
-		var summary = new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) + "_summary.csv");
+		final var summary =
+				new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) + "_summary.csv");
 
 		Files.deleteIfExists(summary.toPath());
-		PrintWriter printWriter;
+		final PrintWriter printWriter;
 		try {
 			printWriter = new PrintWriter(summary);
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			throw new HederaClientException(e);
 		}
-		try (var writer = new CSVWriter(printWriter)) {
-			var header = new String[] { "Filename", "Transaction Json" };
+		try (final var writer = new CSVWriter(printWriter)) {
+			final var header = new String[] { "Filename", "Transaction Json" };
 			writer.writeNext(header);
-			for (var file : files) {
-				List<String> dataList = new ArrayList<>();
-				var transaction = new ToolTransferTransaction(file);
+			for (final var file : files) {
+				final List<String> dataList = new ArrayList<>();
+				final var transaction = new ToolTransferTransaction(file);
 				dataList.add(file.getName());
 				dataList.add(transaction.asJson().toString().replace(",", ";"));
 				var data = new String[2];
 				data = dataList.toArray(data);
 				writer.writeNext(data);
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 	}
 
-	private void zipMessages(String messages, String ext) throws HederaClientException {
+	private void zipMessages(final String messages, final String ext) throws HederaClientException {
 		try {
-			var txToPack = new File(storageLocation + messages).listFiles((dir, name) -> name.endsWith(ext));
+			final var txToPack = new File(storageLocation + messages).listFiles((dir, name) -> name.endsWith(ext));
 			assert txToPack != null;
 
 			final var zipFile = new File(storageLocation + messages.concat(".zip"));
@@ -241,22 +250,22 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			}
 
 			// Delete unzipped transactions
-			for (File file : txToPack) {
+			for (final File file : txToPack) {
 				Files.deleteIfExists(file.toPath());
 			}
 
 			Files.deleteIfExists(Path.of(storageLocation, messages));
 			FileUtils.moveFile(zipFile, new File(output, zipFile.getName()));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 	}
 
-	private byte[] buildSignature(ToolTransaction tx, KeyPair keyPair) {
+	private byte[] buildSignature(final ToolTransaction tx, final KeyPair keyPair) {
 		return tx.sign(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()));
 	}
 
-	private String getFullTransactionName(BatchLine distributionData, String id) {
+	private String getFullTransactionName(final BatchLine distributionData, final String id) {
 		return (id + "-" + distributionData.getReceiverAccountID().toReadableString()).replace(".", "_");
 	}
 

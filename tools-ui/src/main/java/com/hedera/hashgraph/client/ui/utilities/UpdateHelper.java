@@ -55,21 +55,21 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	private boolean updated;
 	private boolean valid;
 
-	public UpdateHelper(String... paths) {
-		var folder = new StringBuilder();
+	public UpdateHelper(final String... paths) {
+		final var folder = new StringBuilder();
 		var separator = "";
 
 		if (paths == null) {
 			return;
 		}
 
-		for (var s : paths) {
+		for (final var s : paths) {
 			folder.append(separator);
 			folder.append(s);
 			separator = File.separator;
 		}
 
-		var toolDirectory = new File(folder.toString());
+		final var toolDirectory = new File(folder.toString());
 		if (!toolDirectory.exists() || !toolDirectory.isDirectory()) {
 			this.toolFolder = null;
 			this.valid = false;
@@ -93,7 +93,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	/**
 	 * Translates the old style directory (v2.x) to the new one (v0.x). Creates the nicknames json file, stores files
 	 * for each account containing info and json and zips the old folders into an Archive.zip
-	 *
 	 */
 	public void handleAccounts() throws HederaClientException, IOException {
 		// if the folder is not valid, nothing to do. return
@@ -109,14 +108,14 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 			logger.info("System files folder created");
 		}
 
-		var accountsJson = new JsonObject();
+		final var accountsJson = new JsonObject();
 
 		final var accountsDirectory = new File(toolFolder, "Accounts");
-		var directories = accountsDirectory.listFiles(File::isDirectory);
+		final var directories = accountsDirectory.listFiles(File::isDirectory);
 
 		if (directories != null) {
-			for (var directory : directories) {
-				var object = handleDirectory(directory);
+			for (final var directory : directories) {
+				final var object = handleDirectory(directory);
 				if (object != null) {
 					accountsJson.addProperty(directory.getName(), object.get(directory.getName()).getAsString());
 				}
@@ -131,24 +130,23 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void zipAllOldFolders(File accountsDirectory, File[] directories) throws IOException {
-		for (var directory : directories) {
+	private void zipAllOldFolders(final File accountsDirectory, final File[] directories) throws IOException {
+		for (final var directory : directories) {
 			zipDir(directory.toPath());
 			deleteDirectory(directory);
 		}
-		var toPack =
+		final var toPack =
 				accountsDirectory.listFiles((dir, name) -> ZIP_EXTENSION.equals(getExtension(name)));
 
 		assert toPack != null;
 		ZipUtil.packEntries(toPack, new File(accountsDirectory.getAbsolutePath(), "Archive.zip"));
-		for (var file : toPack) {
+		for (final var file : toPack) {
 			Files.delete(file.toPath());
 		}
 	}
 
 	/**
 	 * Moves the recovery phrase to the new location in Files/.System
-	 *
 	 */
 	public void handleKeys() throws IOException {
 		// if the folder is not valid, nothing to do. return
@@ -164,7 +162,7 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 			logger.info("System files folder created");
 		}
 
-		var mnemonicFiles = new File(toolFolder + "/Keys").listFiles(
+		final var mnemonicFiles = new File(toolFolder + "/Keys").listFiles(
 				(dir, name) -> AES_EXTENSION.equals(getExtension(name)));
 
 		if (mnemonicFiles == null || mnemonicFiles.length != 1) {
@@ -179,7 +177,6 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	/**
 	 * Removes all transaction files that cannot be read from the History and moves them to a zipped archive in the
 	 * Files folder.
-	 *
 	 */
 	public void handleHistory() throws HederaClientException, IOException {
 		// if the folder is not valid, nothing to do. return
@@ -194,7 +191,7 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 		if (historyFolder.mkdirs()) {
 			logger.info("History folder created");
 		}
-		var transactions = historyFolder.listFiles(
+		final var transactions = historyFolder.listFiles(
 				(dir, name) -> TRANSACTION_EXTENSION.equals(getExtension(name)));
 
 		if (transactions == null) {
@@ -202,19 +199,19 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 		}
 
 
-		for (var transaction : transactions) {
+		for (final var transaction : transactions) {
 			try {
-				var toolTransaction = new ToolTransaction(transaction);
+				final var toolTransaction = new ToolTransaction(transaction);
 				final var transactionId = toolTransaction.getTransactionId();
 				logger.info("Transaction {} loaded", transactionId);
-			} catch (Exception e) {
+			} catch (final Exception e) {
 				if (e.getMessage().contains("parsed transaction body has no data")) {
 					moveFileAndAssociates(transaction);
 				}
 			}
 		}
 
-		var archive = new File(toolFolder, "Files/History_Archive");
+		final var archive = new File(toolFolder, "Files/History_Archive");
 		if (archive.mkdirs()) {
 			logger.info("Archive folder created");
 		}
@@ -241,9 +238,8 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 
 	/**
 	 * Given a file in the history folder, move it to the archive, as well as any other files associated with it.
-	 *
 	 */
-	private void moveFileAndAssociates(File transaction) throws IOException {
+	private void moveFileAndAssociates(final File transaction) throws IOException {
 		final var historyFolder = new File(toolFolder, "History");
 		final var archive = new File(toolFolder, "Files/History_Archive");
 		if (archive.mkdirs()) {
@@ -252,14 +248,14 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 
 		moveFile(transaction, new File(archive.getAbsolutePath(), transaction.getName()));
 
-		var otherFiles = historyFolder.listFiles(
+		final var otherFiles = historyFolder.listFiles(
 				(dir, name) -> Objects.equals(getBaseName(transaction.getName()), getBaseName(name)));
 
 		if (otherFiles == null) {
 			return;
 		}
 
-		for (var otherFile : otherFiles) {
+		for (final var otherFile : otherFiles) {
 			moveFile(otherFile, new File(archive.getAbsolutePath(), otherFile.getName()));
 		}
 	}
@@ -272,16 +268,16 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	 * 		the account directory
 	 * @return a json object that contains the account number and nickname.
 	 */
-	private JsonObject handleDirectory(File directory) throws HederaClientException, IOException {
-		var object = new JsonObject();
+	private JsonObject handleDirectory(final File directory) throws HederaClientException, IOException {
+		final var object = new JsonObject();
 		if (directory.getName().contains("KeysOnly")) {
 			return null;
 		}
 		// Deal with the info files and nicknames
-		var dir = directory.getAbsolutePath();
-		var account = readJsonObject(new File(dir, "AccountInfo/account.json"));
-		var accountInfo = AccountInfo.fromBytes(readBytes(new File(dir, "AccountInfo/accountInfo.info")));
-		var accountId = new Identifier(accountInfo.accountId).toReadableString();
+		final var dir = directory.getAbsolutePath();
+		final var account = readJsonObject(new File(dir, "AccountInfo/account.json"));
+		final var accountInfo = AccountInfo.fromBytes(readBytes(new File(dir, "AccountInfo/accountInfo.info")));
+		final var accountId = new Identifier(accountInfo.accountId).toReadableString();
 		if (!account.get("accountID").getAsString().equals(accountId)) {
 			logger.error("Unrecognized account in folder {}", dir);
 			return null;
@@ -289,7 +285,7 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 
 		object.addProperty(accountId, account.get("nickname").getAsString());
 
-		var infoJson = EncryptionUtils.info2Json(accountInfo);
+		final var infoJson = EncryptionUtils.info2Json(accountInfo);
 		final var fileName = toolFolder + File.separator + "Accounts" + File.separator + accountId + ".";
 
 		writeBytes(fileName + INFO_EXTENSION, accountInfo.toBytes());
@@ -297,20 +293,20 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 
 
 		// If there are any keys associated with the accounts (V1.0 of the tool compatibility)
-		var keys = new File(directory.getAbsolutePath() + "/AccountKeys/Keys").listFiles(
+		final var keys = new File(directory.getAbsolutePath() + "/AccountKeys/Keys").listFiles(
 				(dir1, name) -> !name.startsWith("."));
-		var stores = new File(directory.getAbsolutePath() + "/AccountKeys/KeyStores").listFiles(
+		final var stores = new File(directory.getAbsolutePath() + "/AccountKeys/KeyStores").listFiles(
 				(dir1, name) -> !name.startsWith("."));
 
 		if (keys != null) {
 			// attempt to move the key to the keys folder
-			for (var key : keys) {
+			for (final var key : keys) {
 				copyFile(key, new File(getIncrementedName(toolFolder + "/Keys/" + key.getName())));
 			}
 		}
 
 		if (stores != null) {
-			for (var key : stores) {
+			for (final var key : stores) {
 				copyFile(key, new File(getIncrementedName(toolFolder + "/Keys/" + key.getName())));
 			}
 		}
@@ -318,18 +314,19 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Given a file path, it checks if a file of the same name exists. If it does, it returns a new path with a subscript
+	 * Given a file path, it checks if a file of the same name exists. If it does, it returns a new path with a
+	 * subscript
 	 *
 	 * @param path
 	 * 		the path to a file
 	 * @return the path to a file with no repeats
 	 */
-	private String getIncrementedName(String path) {
+	private String getIncrementedName(final String path) {
 		var counter = 0;
 		var candidate = path;
-		var parent = new File(path).getParent();
-		var name = getBaseName(path);
-		var extension = getExtension(path);
+		final var parent = new File(path).getParent();
+		final var name = getBaseName(path);
+		final var extension = getExtension(path);
 
 		while (Files.exists(Paths.get(candidate))) {
 			candidate = String.format("%s/%s_%d.%s", parent, name, ++counter, extension);

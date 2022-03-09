@@ -96,15 +96,15 @@ public class NewPasswordPopupTest extends TestBase {
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		properties.setMnemonicHashCode(-915976044);
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 
-		ObjectMapper objectMapper = new ObjectMapper();
-		String mapAsString = objectMapper.writeValueAsString(emailMap);
+		final ObjectMapper objectMapper = new ObjectMapper();
+		final String mapAsString = objectMapper.writeValueAsString(emailMap);
 		logger.info(mapAsString);
 
 		properties.setOneDriveCredentials(emailMap);
@@ -114,8 +114,8 @@ public class NewPasswordPopupTest extends TestBase {
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		setupTransactionDirectory(DEFAULT_STORAGE);
@@ -137,20 +137,20 @@ public class NewPasswordPopupTest extends TestBase {
 		}
 
 		keysPanePage = new KeysPanePage(this);
-		MainWindowPage mainWindowPage = new MainWindowPage(this);
+		final MainWindowPage mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnKeysButton();
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		try {
-			Path currentRelativePath = Paths.get("");
-			String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+			final Path currentRelativePath = Paths.get("");
+			final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 			if ((new File(s)).exists()) {
 				FileUtils.deleteDirectory(new File(s));
 			}
 
-			String out =
+			final String out =
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 							"Documents/OutputFiles/test1.council2@hederacouncil.org";
 			FileUtils.cleanDirectory(new File(out));
@@ -162,7 +162,7 @@ public class NewPasswordPopupTest extends TestBase {
 			}
 			FxToolkit.hideStage();
 			FxToolkit.cleanupStages();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			assertNull(e);
 		}
@@ -171,7 +171,7 @@ public class NewPasswordPopupTest extends TestBase {
 	@Test
 	public void checkPopupNodes_test() {
 		doubleClickOn("principalTestingKey");
-		var labels = keysPanePage.getPopupLabels();
+		final var labels = keysPanePage.getPopupLabels();
 		assertEquals(5, labels.size());
 		assertEquals("Key Name", labels.get(0).getText());
 		assertEquals("Public Key", labels.get(2).getText());
@@ -179,7 +179,7 @@ public class NewPasswordPopupTest extends TestBase {
 		assertEquals("Index: 1", labels.get(4).getText());
 		assertTrue(labels.get(1).getText().contains("principalTestingKey.pub"));
 
-		var buttons = keysPanePage.getPopupButtons();
+		final var buttons = keysPanePage.getPopupButtons();
 		assertEquals(5, buttons.size());
 		assertEquals("CHANGE", buttons.get(0).getText());
 		assertEquals("SHOW", buttons.get(1).getText());
@@ -193,19 +193,19 @@ public class NewPasswordPopupTest extends TestBase {
 	@Test
 	public void changePasswordCancel_test() {
 		doubleClickOn("principalTestingKey");
-		var buttons = keysPanePage.getPopupButtons();
+		final var buttons = keysPanePage.getPopupButtons();
 		clickOn(buttons.get(3));
 
-		var buttons0 = keysPanePage.getPopupButtons();
+		final var buttons0 = keysPanePage.getPopupButtons();
 		assertEquals(2, buttons0.size());
 
 		clickOn(buttons0.get(0));
-		var enterPassword = keysPanePage.getPopupLabels();
+		final var enterPassword = keysPanePage.getPopupLabels();
 		assertEquals("Please enter the password for key principalTestingKey", enterPassword.get(0).getText());
 
 		keysPanePage.enterPopupPassword(PASSWORD);
 
-		var passwordFields = keysPanePage.getPopupPasswordFields();
+		final var passwordFields = keysPanePage.getPopupPasswordFields();
 		assertEquals(2, passwordFields.size());
 		keysPanePage.typePassword("tempura", passwordFields.get(0));
 		assertTrue(passwordFields.get(1).isDisable());
@@ -216,7 +216,7 @@ public class NewPasswordPopupTest extends TestBase {
 
 		keysPanePage.typePassword("sushi tempura", passwordFields.get(1));
 
-		var newPopupButtons = keysPanePage.getPopupButtons();
+		final var newPopupButtons = keysPanePage.getPopupButtons();
 		assertFalse(newPopupButtons.get(1).isVisible());
 
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
@@ -224,7 +224,7 @@ public class NewPasswordPopupTest extends TestBase {
 
 		clickOn(newPopupButtons.get(0));
 
-		var labels = keysPanePage.getPopupLabels();
+		final var labels = keysPanePage.getPopupLabels();
 		assertEquals("The password for principalTestingKey has not been changed", labels.get(0).getText());
 		keysPanePage.closePopup("CONTINUE");
 		clickOn(buttons.get(1));
@@ -236,49 +236,50 @@ public class NewPasswordPopupTest extends TestBase {
 	@Test
 	public void changePasswordAccept_test() {
 		doubleClickOn("principalTestingKey");
-		var buttons = keysPanePage.getPopupButtons();
+		final var buttons = keysPanePage.getPopupButtons();
 		clickOn(buttons.get(3));
-		var buttons0 = keysPanePage.getPopupButtons();
+		final var buttons0 = keysPanePage.getPopupButtons();
 		clickOn(buttons0.get(0));
 		keysPanePage.enterPopupPassword(PASSWORD);
-		var passwordFields = keysPanePage.getPopupPasswordFields();
+		final var passwordFields = keysPanePage.getPopupPasswordFields();
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
 		assertFalse(passwordFields.get(1).isDisable());
-		var newPopupButtons = keysPanePage.getPopupButtons();
+		final var newPopupButtons = keysPanePage.getPopupButtons();
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		clickOn(newPopupButtons.get(1));
-		var labels = keysPanePage.getPopupLabels();
+		final var labels = keysPanePage.getPopupLabels();
 		assertEquals("The password for principalTestingKey has been changed", labels.get(0).getText());
 		keysPanePage.closePopup("CONTINUE");
 		clickOn(buttons.get(1));
 		keysPanePage.enterPopupPassword("tempura sushi");
 		assertTrue(buttons.get(2).isVisible());
 
-		File pemFile = new File(KEYS_FOLDER, "principalTestingKey.pem");
+		final File pemFile = new File(KEYS_FOLDER, "principalTestingKey.pem");
 		assertTrue(pemFile.exists());
 		Ed25519KeyStore keyStore = null;
-		Exception e = assertThrows(KeyStoreException.class, () -> Ed25519KeyStore.read(PASSWORD.toCharArray(),
+		final Exception e = assertThrows(KeyStoreException.class, () -> Ed25519KeyStore.read(PASSWORD.toCharArray(),
 				pemFile));
 		assertTrue(e.getMessage().contains("PKCSException"));
 		try {
 			keyStore = Ed25519KeyStore.read("tempura sushi".toCharArray(), pemFile);
-		} catch (KeyStoreException exception) {
+		} catch (final KeyStoreException exception) {
 			exception.printStackTrace();
 		}
 		assertNotNull(keyStore);
 		clickOn(buttons.get(4));
 	}
+
 	@Test
-	public void forgotMnemonicPasswordCancel_test() throws InterruptedException {
+	public void forgotMnemonicPasswordCancel_test() {
 		logger.info("forgotMnemonicPasswordCancel_test");
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword(PASSWORD);
-		VBox gridPaneVBox = find("#recoveryVBox");
+		final VBox gridPaneVBox = find("#recoveryVBox");
 		Assert.assertNotNull(gridPaneVBox);
 		Assert.assertTrue(gridPaneVBox.isVisible());
-		var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
+		final var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
 		Assert.assertTrue(boxChildren.get(0) instanceof Label);
-		var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
+		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
 
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase()
@@ -289,11 +290,11 @@ public class NewPasswordPopupTest extends TestBase {
 				.pressPopupButton("RECOVER")
 				.pressPopupButton("CANCEL");
 
-		var wordsPane = TestUtil.findGridpanesInPopup();
+		final var wordsPane = TestUtil.findGridpanesInPopup();
 		Assert.assertEquals(1, wordsPane.size());
 
-		var children = wordsPane.get(0).getChildren();
-		for (Node child : children) {
+		final var children = wordsPane.get(0).getChildren();
+		for (final Node child : children) {
 			Assert.assertTrue(child instanceof AutoCompleteTextField);
 			Assert.assertTrue(storedMnemonic.toLowerCase(Locale.ROOT).contains(
 					((AutoCompleteTextField) child).getText().toLowerCase(Locale.ROOT)));

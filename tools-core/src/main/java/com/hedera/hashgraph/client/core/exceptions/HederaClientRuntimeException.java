@@ -23,20 +23,20 @@ public class HederaClientRuntimeException extends RuntimeException {
 		super();
 	}
 
-	public HederaClientRuntimeException(String message) {
+	public HederaClientRuntimeException(final String message) {
 		super("Hedera Client Runtime: " + message);
 	}
 
-	public HederaClientRuntimeException(String message, Throwable cause) {
+	public HederaClientRuntimeException(final String message, final Throwable cause) {
 		super("Hedera Client Runtime: " + message, cause);
 	}
 
-	public HederaClientRuntimeException(Throwable cause) {
+	public HederaClientRuntimeException(final Throwable cause) {
 		super(cause);
 	}
 
-	protected HederaClientRuntimeException(String message, Throwable cause, boolean enableSuppression,
-			boolean writableStackTrace) {
+	protected HederaClientRuntimeException(final String message, final Throwable cause, final boolean enableSuppression,
+			final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

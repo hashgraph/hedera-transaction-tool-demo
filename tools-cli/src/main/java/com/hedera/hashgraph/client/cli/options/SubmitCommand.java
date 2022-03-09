@@ -19,12 +19,12 @@
 package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.cli.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -81,11 +81,11 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	public void execute() throws HederaClientException, InterruptedException {
 
 		// Setup client
-		var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
-		Client client = CommonMethods.getClient(network);
+		final var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
+		final Client client = CommonMethods.getClient(network);
 
 		// Load transactions
-		var files = getTransactionPaths();
+		final var files = getTransactionPaths();
 		if (files.isEmpty()) {
 			throw new HederaClientException("No valid transactions found");
 		}
@@ -95,22 +95,22 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		// Setup threads
-		var transactionsFutureTasks = new FutureTask[files.size()];
-		var executorServiceTransactions = Executors.newFixedThreadPool(Constants.NUMBER_OF_THREADS);
+		final var transactionsFutureTasks = new FutureTask[files.size()];
+		final var executorServiceTransactions = Executors.newFixedThreadPool(Constants.NUMBER_OF_THREADS);
 
 
 		// Load transactions into the priority queue
-		var transactions = setupPriorityQueue(files);
+		final var transactions = setupPriorityQueue(files);
 
 		// Submit the transactions
 		var count = 0;
 		while (!transactions.isEmpty()) {
 			sleepUntilNeeded(transactions.peek(), readyTime);
-			var tx = transactions.poll();
+			final var tx = transactions.poll();
 			assert tx != null;
 			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
 					tx.getTransactionId()));
-			TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
+			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
 			transactionsFutureTasks[count] = new FutureTask<>(worker);
 			executorServiceTransactions.submit(transactionsFutureTasks[count]);
 			count++;
@@ -122,12 +122,12 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			throw new HederaClientRuntimeException("No valid transactions found.");
 		}
 
-		List<String> transactionResponses = new ArrayList<>();
-		for (var future : transactionsFutureTasks) {
+		final List<String> transactionResponses = new ArrayList<>();
+		for (final var future : transactionsFutureTasks) {
 			String response;
 			try {
 				response = (String) future.get();
-			} catch (ExecutionException e) {
+			} catch (final ExecutionException e) {
 				logger.error(e.getMessage());
 				response = "";
 			}
@@ -144,11 +144,11 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	}
 
-	private void sleepUntilNeeded(Transaction<?> transaction, int readyTime) throws InterruptedException {
+	private void sleepUntilNeeded(final Transaction<?> transaction, final int readyTime) throws InterruptedException {
 		assert transaction != null;
-		var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
+		final var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
 		assert startTime != null;
-		var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
+		final var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
 			sleep(1000 * (difference - readyTime));
@@ -156,23 +156,23 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(
-			Set<String> files) throws HederaClientException {
-		var transactions = new PriorityQueue<Transaction<?>>(files.size(), (o1, o2) -> {
-			var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
-			var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
+			final Set<String> files) throws HederaClientException {
+		final var transactions = new PriorityQueue<Transaction<?>>(files.size(), (o1, o2) -> {
+			final var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
+			final var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
 			assert vs1 != null;
 			assert vs2 != null;
 			return vs1.compareTo(vs2);
 		});
 
-		for (var file : files) {
-			var txBytes = readBytes(file);
-			Transaction<? extends Transaction<?>> tx;
+		for (final var file : files) {
+			final var txBytes = readBytes(file);
+			final Transaction<? extends Transaction<?>> tx;
 
 			try {
 				tx = Transaction.fromBytes(txBytes);
 				assert tx.getTransactionValidDuration() != null;
-			} catch (InvalidProtocolBufferException e) {
+			} catch (final InvalidProtocolBufferException e) {
 				logger.error(e.getMessage());
 				throw new HederaClientException(e);
 			}
@@ -198,9 +198,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	private Set<String> getTransactionPaths() {
-		Set<String> files = new HashSet<>();
-		Set<File> directories = new HashSet<>();
-		for (var fileInput : transactionFiles) {
+		final Set<String> files = new HashSet<>();
+		final Set<File> directories = new HashSet<>();
+		for (final var fileInput : transactionFiles) {
 			// wildcards first
 			if (fileInput.contains("*")) {
 				handleWildCards(files, directories, fileInput);
@@ -219,9 +219,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		return files;
 	}
 
-	private void handleDirectories(Set<String> files, Set<File> directories) {
-		for (var directory : directories) {
-			var transactions = directory.listFiles(this::isTransaction);
+	private void handleDirectories(final Set<String> files, final Set<File> directories) {
+		for (final var directory : directories) {
+			final var transactions = directory.listFiles(this::isTransaction);
 			if (transactions == null) {
 				continue;
 			}
@@ -229,10 +229,10 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 	}
 
-	private void handleWildCards(Set<String> files, Set<File> directories, String fileInput) {
+	private void handleWildCards(final Set<String> files, final Set<File> directories, final String fileInput) {
 		final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
-		var currentDirectory = new File(dir);
-		var fileList = currentDirectory.list(
+		final var currentDirectory = new File(dir);
+		final var fileList = currentDirectory.list(
 				new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
 		assert fileList != null;
 		Arrays.stream(fileList).map(fileName -> new File(dir, fileName)).filter(file -> !file.isHidden()).forEach(
@@ -247,7 +247,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 				});
 	}
 
-	private boolean isTransaction(File file) {
+	private boolean isTransaction(final File file) {
 		return SIGNED_TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(file.getName()));
 	}
 
@@ -257,7 +257,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		EXPIRED_START,
 		ID_OK;
 
-		public static TransactionIDFitness getFitness(Transaction<?> tx) {
+		public static TransactionIDFitness getFitness(final Transaction<?> tx) {
 			if (tx.getTransactionId() == null) {
 				return NULL_ID;
 			}

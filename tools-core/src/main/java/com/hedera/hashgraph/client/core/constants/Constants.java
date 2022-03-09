@@ -25,6 +25,8 @@ import java.io.File;
 
 public class Constants {
 
+
+
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -47,11 +49,12 @@ public class Constants {
 	public static final String JSON_EXTENSION = "json";
 	public static final String BATCH_TRANSACTION_EXTENSION = "csv";
 	public static final String SOFTWARE_UPDATE_EXTENSION = "pkg";
-	public static final String LARGE_BINARY_EXTENSION = "zip";
+	public static final String LARGE_BINARY_EXTENSION = "lfu";
 	public static final String COMMENT_EXTENSION = "txt";
 	public static final String CONFIGURATION_EXTENSION = "cfg";
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
+	public static final String BUNDLE_EXTENSION = "zip";
 	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
@@ -84,7 +87,7 @@ public class Constants {
 
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
-	public static final int DRIVE_LIMIT = 5;
+	public static final int DRIVE_LIMIT = 32;
 	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
 	public static final int NUMBER_OF_SINGLE_BOXES = 5;
@@ -122,7 +125,7 @@ public class Constants {
 	public static final String INTEGRATION_NODES_JSON = "src/main/resources/IntegrationNodes.json";
 	public static final String PUBLIC_KEY_LOCATION = "Files/.System/gpgPublicKey.asc";
 	public static final String TEMP_FOLDER_LOCATION = System.getProperty("java.io.tmpdir");
-	
+
 	// endregion
 
 	// region STYLE
@@ -164,6 +167,15 @@ public class Constants {
 	public static final int KEY_LENGTH = 256;
 	// endregion
 
+	// regex
+	public static final String FULL_ACCOUNT_CHECKSUM_REGEX = "\\d+.\\d+.\\d+-[a-z]{5}";
+	public static final String FULL_ACCOUNT_REGEX = "^\\d+.\\d+.\\d+$";
+	public static final String NUMBER_REGEX = "^[0-9]+$";
 
 	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
+
+
+	public static final long TEST_EXPIRATION_TIME = 10L;
+
+
 }

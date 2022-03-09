@@ -41,7 +41,8 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private long date;
 	private final BooleanProperty selected = new SimpleBooleanProperty();
 
-	public AccountLineInformation(String nickname, Identifier account, Hbar balance, long date, boolean signer) {
+	public AccountLineInformation(final String nickname, final Identifier account, final Hbar balance, final long date,
+			final boolean signer) {
 		this.nickname = nickname;
 		this.account = account;
 		this.balance = new SimpleStringProperty(balance.toString());
@@ -54,7 +55,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return nickname;
 	}
 
-	public void setNickname(String nickname) {
+	public void setNickname(final String nickname) {
 		this.nickname = nickname;
 	}
 
@@ -62,7 +63,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return account;
 	}
 
-	public void setAccount(Identifier account) {
+	public void setAccount(final Identifier account) {
 		this.account = account;
 	}
 
@@ -70,7 +71,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return fromString(balance.getValue());
 	}
 
-	public void setBalance(Hbar balance) {
+	public void setBalance(final Hbar balance) {
 		this.balance = new SimpleStringProperty(balance.toString());
 	}
 
@@ -78,7 +79,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return signer;
 	}
 
-	public void setSigner(boolean signer) {
+	public void setSigner(final boolean signer) {
 		this.signer = signer ? "Yes" : "No";
 	}
 
@@ -86,7 +87,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return date;
 	}
 
-	public void setDate(long date) {
+	public void setDate(final long date) {
 		this.date = date;
 	}
 
@@ -102,18 +103,18 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (!(obj instanceof AccountLineInformation)) {
 			return false;
 		}
-		var line = (AccountLineInformation) obj;
+		final var line = (AccountLineInformation) obj;
 		try {
 			return this.nickname.equals(line.getNickname()) &&
 					this.account.equals(line.getAccount()) &&
 					fromString(this.balance.getValue()).equals(line.getBalance()) &&
 					this.date == line.getDate()
 					&& this.signer.equals(line.signer);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 			return false;
 		}
@@ -127,7 +128,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return selected;
 	}
 
-	public void setSelected(boolean selected) {
+	public void setSelected(final boolean selected) {
 		this.selected.set(selected);
 	}
 
@@ -138,7 +139,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	}
 
 	@Override
-	public int compareTo(@NotNull AccountLineInformation o) {
+	public int compareTo(@NotNull final AccountLineInformation o) {
 		return this.getAccount().compareTo(o.getAccount());
 	}
 

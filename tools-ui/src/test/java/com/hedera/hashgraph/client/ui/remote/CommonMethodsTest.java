@@ -61,7 +61,7 @@ public class CommonMethodsTest extends TestBase {
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
 
-		UserAccessibleProperties properties =
+		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 		final Path currentRelativePath = Paths.get("");
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
@@ -84,7 +84,7 @@ public class CommonMethodsTest extends TestBase {
 			logger.info("Output directory created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
@@ -97,8 +97,8 @@ public class CommonMethodsTest extends TestBase {
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		Controller controller = new Controller();
-		var version = controller.getVersion();
+		final Controller controller = new Controller();
+		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
 		if (new File(DEFAULT_STORAGE + "History").exists()) {
@@ -123,7 +123,7 @@ public class CommonMethodsTest extends TestBase {
 	@Test
 	public void getTimeLabel_test() throws TimeoutException {
 		logger.info("Starting TimeLabel test");
-		var properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		final var properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
 		FxToolkit.registerPrimaryStage();
@@ -131,9 +131,9 @@ public class CommonMethodsTest extends TestBase {
 
 		logger.info("UI initialized");
 
-		var label = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), false);
+		final var label = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), false);
 		assertTrue(label.getText().contains("11:53:06 UTC"));
-		var label2 = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), true);
+		final var label2 = CommonMethods.getTimeLabel(new Timestamp(206711586, 0), true);
 		assertTrue(label2.getText().contains("1976-07-20 11:53:06 UTC"));
 
 		logger.info("TimeLabel test finished");

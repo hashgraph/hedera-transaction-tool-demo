@@ -30,15 +30,16 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class ProgressPopup {
+
 	private ProgressPopup() {
 		throw new IllegalStateException("Popup class");
 	}
 
-
-	public static Stage setupProgressPopup(ProgressBar bar, Button cancelButton, String title, String message,
-			long size) {
-		var window = new Stage();
-		var layout = new VBox();
+	public static Stage setupProgressPopup(
+			final ProgressBar bar, final Button cancelButton, final String title, final String message,
+			final long size) {
+		final var window = new Stage();
+		final var layout = new VBox();
 		layout.setAlignment(Pos.CENTER);
 		layout.setSpacing(10);
 		layout.setPadding(new Insets(20, 20, 20, 20));
@@ -70,7 +71,7 @@ public class ProgressPopup {
 
 		layout.getChildren().addAll(titleLabel, messageLabel, bar, text, cancelButton);
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 
 		scene.getStylesheets().add("tools.css");
 		window.setScene(scene);

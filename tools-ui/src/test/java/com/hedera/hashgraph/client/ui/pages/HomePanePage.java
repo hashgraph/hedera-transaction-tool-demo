@@ -39,27 +39,28 @@ import java.util.Objects;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static java.lang.Thread.sleep;
 
+@SuppressWarnings("UnusedReturnValue")
 public class HomePanePage {
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
 	private final TestBase driver;
 
-	public HomePanePage(TestBase driver) {
+	public HomePanePage(final TestBase driver) {
 		this.driver = driver;
 	}
 
-	public HomePanePage enterPasswordInPopup(String password) {
-		var popupNodes = TestUtil.getPopupNodes();
+	public HomePanePage enterPasswordInPopup(final String password) {
+		final var popupNodes = TestUtil.getPopupNodes();
 		assert popupNodes != null;
-		for (var n :
+		for (final var n :
 				popupNodes) {
 			if (n instanceof PasswordField) {
 				((PasswordField) n).setText(password);
 			}
 		}
-		for (var n :
+		for (final var n :
 				TestUtil.getPopupNodes()) {
 			if (n instanceof HBox) {
-				for (var b :
+				for (final var b :
 						((HBox) n).getChildren()) {
 					if (b instanceof Button && ((Button) b).getText().equalsIgnoreCase("confirm")) {
 						driver.clickOn(b);
@@ -71,18 +72,18 @@ public class HomePanePage {
 		return this;
 	}
 
-	public HomePanePage enterStringInPopup(String text) {
-		var textField = (TextField) Objects.requireNonNull(TestUtil.getPopupNodes()).get(1);
+	public HomePanePage enterStringInPopup(final String text) {
+		final var textField = (TextField) Objects.requireNonNull(TestUtil.getPopupNodes()).get(1);
 		textField.setText(text);
 		driver.clickOn(textField).press(KeyCode.ENTER).release(KeyCode.ENTER);
 		return this;
 	}
 
-	public HomePanePage filter(String query) {
-		VBox filterBox = driver.find("#filterVBox");
-		var pane = (GridPane) ((VBox) filterBox.getChildren().get(1)).getChildren().get(0);
-		var checkboxes = pane.getChildren();
-		for (var checkbox : checkboxes) {
+	public HomePanePage filter(final String query) {
+		final VBox filterBox = driver.find("#filterVBox");
+		final var pane = (GridPane) ((VBox) filterBox.getChildren().get(1)).getChildren().get(0);
+		final var checkboxes = pane.getChildren();
+		for (final var checkbox : checkboxes) {
 			assert checkbox instanceof CheckBox;
 			if (((CheckBox) checkbox).getText().toLowerCase().contains(query.toLowerCase())) {
 				driver.clickOn(checkbox);
@@ -92,10 +93,10 @@ public class HomePanePage {
 		return this;
 	}
 
-	public HomePanePage clickOnKeyCheckBox(String keyName) throws HederaClientException {
-		var testingKey = driver.findAll(keyName);
+	public HomePanePage clickOnKeyCheckBox(final String keyName) throws HederaClientException {
+		final var testingKey = driver.findAll(keyName);
 
-		for (var node : testingKey) {
+		for (final var node : testingKey) {
 			if (node instanceof CheckBox) {
 				driver.clickOn(node);
 				logger.info("Clicked on key {}", keyName);
@@ -109,38 +110,41 @@ public class HomePanePage {
 		while (!"".equals(TestUtil.getModalWindowTitle())) {
 			try {
 				sleep(500);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				logger.error(e);
 			}
 		}
 		return this;
 	}
 
-	private static void ensureVisible(ScrollPane scrollPane, Node node) {
-		var viewport = scrollPane.getViewportBounds();
-		var contentHeight =
+	public HomePanePage clickOnPopupButton(final String button){
+		final var node = TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), button);
+		driver.clickOn(node);
+		return this;
+	}
+
+	private static void ensureVisible(final ScrollPane scrollPane, final Node node) {
+		final var viewport = scrollPane.getViewportBounds();
+		final var contentHeight =
 				scrollPane.getContent().localToScene(scrollPane.getContent().getBoundsInLocal()).getHeight();
-		var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
-		var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
+		final var nodeMinY = node.localToScene(node.getBoundsInLocal()).getMinY();
+		final var nodeMaxY = node.localToScene(node.getBoundsInLocal()).getMaxY();
 
 		double vValueDelta = 0;
-		var vValueCurrent = scrollPane.getVvalue();
+		final var vValueCurrent = scrollPane.getVvalue();
 
 		if (nodeMaxY < 0) {
-			// currently located above (remember, top left is (0,0))
 			vValueDelta = (nodeMinY - viewport.getHeight()) / contentHeight;
 		} else if (nodeMinY > viewport.getHeight()) {
-			// currently located below
 			vValueDelta = (nodeMinY) / contentHeight;
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
 
-
-	public HomePanePage clickOn2ButtonBar(int index, VBox vBox) {
-		var v1 = (VBox) vBox.getChildren().get(2);
-		var buttonBar = (ButtonBar) v1.getChildren().get(0);
-		var button = (Button) buttonBar.getButtons().get(index);
+	public HomePanePage clickOn2ButtonBar(final int index, final VBox vBox) {
+		final var v1 = (VBox) vBox.getChildren().get(2);
+		final var buttonBar = (ButtonBar) v1.getChildren().get(0);
+		final var button = (Button) buttonBar.getButtons().get(index);
 		ensureVisible(driver.find(MAIN_TRANSACTIONS_SCROLLPANE), button);
 		driver.clickOn(button);
 		return this;

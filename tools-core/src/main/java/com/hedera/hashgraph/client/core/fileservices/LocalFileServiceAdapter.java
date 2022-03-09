@@ -43,33 +43,33 @@ public class LocalFileServiceAdapter implements FileService {
 		return path;
 	}
 
-	public LocalFileServiceAdapter(String path) {
+	public LocalFileServiceAdapter(final String path) {
 		this.path = path;
 	}
 
 	@Override
-	public File download(String name, String localDestination) throws HederaClientException {
-		var remote = new File(path, name);
+	public File download(final String name, final String localDestination) throws HederaClientException {
+		final var remote = new File(path, name);
 		if (!remote.exists()) {
 			throw new HederaClientException("File does not exist");
 		}
 		if (remote.isDirectory()) {
 			throw new HederaClientException("File is a directory");
 		}
-		var local = new File(localDestination);
+		final var local = new File(localDestination);
 		try {
 			Files.deleteIfExists(local.toPath());
 			FileUtils.copyFile(remote, local);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 		return local;
 	}
 
 	@Override
-	public void upload(String fileName, String remoteDestination) throws HederaClientException {
+	public void upload(final String fileName, final String remoteDestination) throws HederaClientException {
 		logger.info("Exporting to output");
-		var remote = new File(path, remoteDestination);
+		final var remote = new File(path, remoteDestination);
 		final var file = new File(fileName);
 
 		if (!file.exists()) {
@@ -86,10 +86,10 @@ public class LocalFileServiceAdapter implements FileService {
 		try {
 			logger.info("Exporting {} to {}", file.getAbsolutePath(), remote);
 			FileUtils.copyFile(file, new File(remote.getAbsolutePath(), file.getName()));
-			var remotes = remote.listFiles();
+			final var remotes = remote.listFiles();
 			assert remotes != null;
 			logger.info("{} files in folder {}", remotes.length, remote.getAbsolutePath());
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 	}
@@ -100,8 +100,8 @@ public class LocalFileServiceAdapter implements FileService {
 	}
 
 	@Override
-	public List<FileDetails> listFiles(String dir) throws HederaClientException {
-		List<FileDetails> directory = new ArrayList<>();
+	public List<FileDetails> listFiles(final String dir) throws HederaClientException {
+		final List<FileDetails> directory = new ArrayList<>();
 		final var folder = new File(path + File.separator + dir);
 		if (!folder.exists()) {
 			throw new HederaClientException(String.format("Directory %s does not exist", dir));
@@ -109,13 +109,13 @@ public class LocalFileServiceAdapter implements FileService {
 		if (!folder.isDirectory()) {
 			throw new HederaClientException("Path must point to a folder");
 		}
-		var files = folder.listFiles(pathname -> !pathname.isHidden());
+		final var files = folder.listFiles(pathname -> !pathname.isHidden());
 
 		assert files != null;
-		for (var f : files) {
+		for (final var f : files) {
 			try {
 				directory.add(FileDetails.parse(f));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error(e);
 			}
 		}
@@ -124,20 +124,20 @@ public class LocalFileServiceAdapter implements FileService {
 
 	@Override
 	public List<String> listFilePaths() throws HederaClientException {
-		var files = listFiles("");
-		List<String> paths = new ArrayList<>();
-		for (var file : files) {
+		final var files = listFiles("");
+		final List<String> paths = new ArrayList<>();
+		for (final var file : files) {
 			paths.add(file.getFullPath());
 		}
 		return paths;
 	}
 
 	@Override
-	public FileDetails find(String name) throws HederaClientException {
+	public FileDetails find(final String name) throws HederaClientException {
 
-		var files = listFiles(FilenameUtils.getPath(name));
+		final var files = listFiles(FilenameUtils.getPath(name));
 		FileDetails details = null;
-		for (var d : files) {
+		for (final var d : files) {
 			if (FilenameUtils.getName(name).equals(d.getName())) {
 				details = d;
 			}
@@ -146,18 +146,18 @@ public class LocalFileServiceAdapter implements FileService {
 	}
 
 	@Override
-	public boolean exists(String name) {
+	public boolean exists(final String name) {
 		return new File(path, name).exists();
 	}
 
 	@Override
-	public void rename(String oldName, String newName) throws HederaClientException {
+	public void rename(final String oldName, final String newName) throws HederaClientException {
 		try {
-			var oldFile = new File(path, oldName);
+			final var oldFile = new File(path, oldName);
 			if (oldFile.exists() && oldFile.renameTo(new File(path, newName))) {
 				logger.info("Renamed file {} to {}", oldName, newName);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new HederaClientException(e);
 		}
 	}
@@ -169,20 +169,20 @@ public class LocalFileServiceAdapter implements FileService {
 
 	@Override
 	public String getName() {
-		var pathName = Paths.get(path);
+		final var pathName = Paths.get(path);
 		return pathName.getParent().getFileName().toString();
 	}
 
 	@Override
 	public long lastModified() throws HederaClientException {
-		var remote = new File(path).listFiles();
+		final var remote = new File(path).listFiles();
 		long lastMod = 0;
 		assert remote != null;
-		for (File file : remote) {
-			BasicFileAttributes attr;
+		for (final File file : remote) {
+			final BasicFileAttributes attr;
 			try {
 				attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				throw new HederaClientException(e);
 			}
 			final var last = attr.lastModifiedTime().toMillis();
@@ -190,6 +190,6 @@ public class LocalFileServiceAdapter implements FileService {
 				lastMod = last;
 			}
 		}
-		return lastMod/1000;
+		return lastMod / 1000;
 	}
 }

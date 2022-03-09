@@ -43,7 +43,7 @@ public enum CreateTransactionType {
 
 	private final String typeString;
 
-	CreateTransactionType(String type) {
+	CreateTransactionType(final String type) {
 		this.typeString = type;
 	}
 
@@ -58,13 +58,13 @@ public enum CreateTransactionType {
 
 	//Populate the lookup table on loading time
 	static {
-		for (var env : CreateTransactionType.values()) {
+		for (final var env : CreateTransactionType.values()) {
 			lookup.put(env.getTypeString(), env);
 		}
 	}
 
 	//This method can be used for reverse lookup purpose
-	public static CreateTransactionType get(String type) {
+	public static CreateTransactionType get(final String type) {
 		if (type != null && lookup.containsKey(type)) {
 			return lookup.get(type);
 		}
@@ -72,10 +72,10 @@ public enum CreateTransactionType {
 	}
 
 	public static ObservableList<String> names() {
-		List<String> names = new ArrayList<>();
+		final List<String> names = new ArrayList<>();
 
-		var keySet = lookup.keySet();
-		for (var key : keySet) {
+		final var keySet = lookup.keySet();
+		for (final var key : keySet) {
 			if (key.toUpperCase().equals(key) || "".equals(key)) {
 				continue;
 			}

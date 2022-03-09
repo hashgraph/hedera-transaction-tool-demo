@@ -39,15 +39,16 @@ public class PopupMessage {
 
 	static Boolean confirmation = null;
 
-	public static Boolean display(String title, String message) {
+	public static Boolean display(final String title, final String message) {
 		return display(title, message, false, "Yes", "No");
 	}
 
-	public static Boolean display(String title, String message, String buttonName) {
+	public static Boolean display(final String title, final String message, final String buttonName) {
 		return display(title, message, false, "Yes", "No", buttonName);
 	}
 
-	public static Boolean display(String title, String message, boolean confirm, String yesString, String noString) {
+	public static Boolean display(final String title, final String message, final boolean confirm,
+			final String yesString, final String noString) {
 		return display(title, message, confirm, yesString, noString, BUTTON_CONTINUE);
 	}
 
@@ -55,16 +56,17 @@ public class PopupMessage {
 		throw new IllegalStateException("Utility class");
 	}
 
-	private static Boolean display(String title, String message, boolean confirm, String yesString, String noString,
-			String buttonName) {
-		var window = new Stage();
+	private static Boolean display(final String title, final String message, final boolean confirm,
+			final String yesString, final String noString,
+			final String buttonName) {
+		final var window = new Stage();
 
 		window.setTitle(title);
 		window.sizeToScene();
 		window.setMaxWidth(500);
 		window.initModality(Modality.APPLICATION_MODAL);
 
-		var label = new Label();
+		final var label = new Label();
 		label.setWrapText(true);
 		label.setText(message);
 		label.setWrapText(true);
@@ -73,7 +75,8 @@ public class PopupMessage {
 		label.setMaxWidth(450);
 		label.setStyle("-fx-font-size: 16");
 
-		var button = (buttonName == null || buttonName.isEmpty() || buttonName.equalsIgnoreCase(BUTTON_CONTINUE)) ?
+		final var button =
+				(buttonName == null || buttonName.isEmpty() || buttonName.equalsIgnoreCase(BUTTON_CONTINUE)) ?
 				new Button(BUTTON_CONTINUE) :
 				new Button(buttonName.toUpperCase());
 		button.setStyle(
@@ -83,27 +86,27 @@ public class PopupMessage {
 		button.setPrefWidth(PREF_BUTTON_WIDTH);
 		button.setOnAction(event -> window.close());
 
-		var centerButton = new HBox();
-		var spacer1 = new Region();
+		final var centerButton = new HBox();
+		final var spacer1 = new Region();
 		spacer1.setMinWidth(20);
 		spacer1.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		spacer1.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		HBox.setHgrow(spacer1, Priority.ALWAYS);
 
-		var spacer2 = new Region();
+		final var spacer2 = new Region();
 		spacer2.setPrefWidth(Region.USE_COMPUTED_SIZE);
 		spacer2.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		spacer2.setMinWidth(20);
 		HBox.setHgrow(spacer2, Priority.ALWAYS);
 
-		var yesButton = new Button(yesString);
+		final var yesButton = new Button(yesString);
 		yesButton.setStyle(
 				"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
 						"10;" +
 						" -fx-background-radius: 10;");
 		yesButton.setPrefWidth(150);
 
-		var noButton = new Button(noString);
+		final var noButton = new Button(noString);
 		noButton.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
 						"10;" +
@@ -119,7 +122,7 @@ public class PopupMessage {
 			window.close();
 		});
 
-		var buttonBar = new HBox();
+		final var buttonBar = new HBox();
 
 		buttonBar.getChildren().addAll(yesButton, noButton);
 		buttonBar.setSpacing(10);
@@ -132,13 +135,13 @@ public class PopupMessage {
 			centerButton.getChildren().addAll(spacer1, button, spacer2);
 		}
 
-		var vBox = new VBox();
+		final var vBox = new VBox();
 
 		vBox.getChildren().addAll(label, centerButton);
 		vBox.setSpacing(20);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
 
-		var layout = new HBox();
+		final var layout = new HBox();
 
 		vBox.setOnKeyPressed(event -> {
 			if (event.getCode() == KeyCode.ENTER) {
@@ -150,7 +153,7 @@ public class PopupMessage {
 
 		layout.setStyle("-fx-font-size: 14");
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);

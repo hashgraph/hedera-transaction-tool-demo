@@ -48,7 +48,7 @@ public class ThreeButtonPopup {
 	protected static final String INFO_EXTENSION = "info";
 	private static ResponseEnum responseEnum = ResponseEnum.UNKNOWN;
 
-	public static ResponseEnum display(File file, boolean multipleFiles) {
+	public static ResponseEnum display(final File file, final boolean multipleFiles) {
 		return display(file, MESSAGE, true, multipleFiles);
 	}
 
@@ -56,12 +56,13 @@ public class ThreeButtonPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static ResponseEnum display(File file, String message, boolean allowKeep, boolean multipleFiles) {
+	public static ResponseEnum display(final File file, final String message, final boolean allowKeep,
+			final boolean multipleFiles) {
 
-		var window = new Stage();
+		final var window = new Stage();
 
 		final var extension = FilenameUtils.getExtension(file.getName());
-		String itemName;
+		final String itemName;
 
 		switch (extension) {
 			case PUB_EXTENSION:
@@ -79,26 +80,26 @@ public class ThreeButtonPopup {
 		window.sizeToScene();
 		window.setMaxWidth(500);
 		window.initModality(Modality.APPLICATION_MODAL);
-		var layout = new VBox();
+		final var layout = new VBox();
 		layout.setSpacing(20);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 		layout.setAlignment(Pos.CENTER);
 		layout.setStyle("-fx-font-size: 14");
 
-		var checkBox = new CheckBox("Apply to all");
+		final var checkBox = new CheckBox("Apply to all");
 
-		var buttonBox = new HBox();
-		var keepBoth = new Button("Keep both");
+		final var buttonBox = new HBox();
+		final var keepBoth = new Button("Keep both");
 		keepBoth.setOnAction(actionEvent -> {
 			responseEnum = checkBox.isSelected() ? ResponseEnum.KEEP_BOTH_ALWAYS : ResponseEnum.KEEP_BOTH_ONCE;
 			window.close();
 		});
-		var ignore = new Button("Ignore");
+		final var ignore = new Button("Ignore");
 		ignore.setOnAction(actionEvent -> {
 			responseEnum = checkBox.isSelected() ? ResponseEnum.IGNORE_ALWAYS : ResponseEnum.IGNORE_ONCE;
 			window.close();
 		});
-		var replace = new Button("Replace");
+		final var replace = new Button("Replace");
 		replace.setOnAction(actionEvent -> {
 			responseEnum = checkBox.isSelected() ? ResponseEnum.REPLACE_ALWAYS : ResponseEnum.REPLACE_ONCE;
 			window.close();
@@ -116,12 +117,12 @@ public class ThreeButtonPopup {
 		buttonBox.getChildren().add(ignore);
 		buttonBox.getChildren().add(replace);
 
-		var choiceBox = new HBox();
+		final var choiceBox = new HBox();
 		choiceBox.setSpacing(20);
 		choiceBox.getChildren().addAll(checkBox, buttonBox);
 		choiceBox.setAlignment(Pos.CENTER);
 
-		var explanation = new Label(String.format(message, FilenameUtils.getBaseName(file.getName())));
+		final var explanation = new Label(String.format(message, FilenameUtils.getBaseName(file.getName())));
 		explanation.setWrapText(true);
 
 		if (multipleFiles) {
@@ -130,7 +131,7 @@ public class ThreeButtonPopup {
 			layout.getChildren().addAll(explanation, buttonBox);
 		}
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);
@@ -140,8 +141,8 @@ public class ThreeButtonPopup {
 		return responseEnum;
 	}
 
-	private static void setButtonStyle(Button... buttons) {
-		for (var button : buttons) {
+	private static void setButtonStyle(final Button... buttons) {
+		for (final var button : buttons) {
 			button.setStyle(
 					"-fx-background-color: white; -fx-border-color: #0b9dfd;  -fx-border-radius: 10; " +
 							"-fx-background-radius: 10;");

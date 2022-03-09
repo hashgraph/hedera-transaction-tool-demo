@@ -42,8 +42,6 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.input.KeyCode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -138,7 +136,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		if (new File(DEFAULT_STORAGE).exists()) {
 			try {
 				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				logger.error("Unable to delete {}: {}", DEFAULT_STORAGE, e.getMessage());
 			}
 		}
@@ -158,12 +156,12 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	@Test
 	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException {
 		final var nickname = testAccountId.toString();
-		var oldBalance = accountsPanePage.getBalance(nickname);
+		final var oldBalance = accountsPanePage.getBalance(nickname);
 
 		accountsPanePage.expandRow(nickname)
 				.requestNewBalance(nickname);
 
-		var newBalance = accountsPanePage.getBalance(nickname);
+		final var newBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance, newBalance);
 
 		TestUtil.transfer(new AccountId(2L), testAccountId, Hbar.fromTinybars(123));
@@ -172,7 +170,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		mainWindowPage.clickOnSettingsButton().clickOnAccountsButton();
 
-		var finalBalance = accountsPanePage.getBalance(nickname);
+		final var finalBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance.toTinybars() + 123L, finalBalance.toTinybars());
 	}
 
@@ -180,7 +178,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	public void requestCheckedBalances_test() throws InterruptedException, HederaClientException {
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
-		JsonArray initialBalances = readJsonArray(balancesFiles.getAbsolutePath());
+		final JsonArray initialBalances = readJsonArray(balancesFiles.getAbsolutePath());
 
 		// Request all balances
 		accountsPanePage.selectRow("treasury")
@@ -193,7 +191,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
-		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
+		final JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
 
 		assertEquals(initialBalances.size() + 2, balances.size());
 	}
@@ -222,10 +220,10 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
-		JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
+		final JsonArray balances = readJsonArray(balancesFiles.getAbsolutePath());
 		int counter = 0;
-		for (JsonElement balance : balances) {
-			String account = balance.getAsJsonObject().get("account").getAsString();
+		for (final JsonElement balance : balances) {
+			final String account = balance.getAsJsonObject().get("account").getAsString();
 			if (new Identifier(testAccountId).toReadableString().equals(account)) {
 				counter++;
 			}
@@ -241,13 +239,13 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.selectRow(testAccountId.toString())
 				.requestSelectedBalances();
 
-		var oldBalance = accountsPanePage.getBalance("treasury");
+		final var oldBalance = accountsPanePage.getBalance("treasury");
 
 		accountsPanePage.selectRow("treasury")
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
 
-		var newBalance = accountsPanePage.getBalance("treasury");
+		final var newBalance = accountsPanePage.getBalance("treasury");
 		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
 
 	}
@@ -255,14 +253,14 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	@Test
 	public void requestUnknownAccountsInfo_test() throws HederaClientException {
 
-		var accounts = accountsPanePage.getAccounts().size();
+		final var accounts = accountsPanePage.getAccounts().size();
 		accountsPanePage.openAccordion()
 				.enterAccounts("30-40")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.acceptAllNickNames();
 
-		var newAccounts = accountsPanePage.getAccounts().size();
+		final var newAccounts = accountsPanePage.getAccounts().size();
 		assertEquals(accounts + 11, newAccounts);
 
 		accountsPanePage.openAccordion()
@@ -271,7 +269,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.acceptAllNickNames();
 
-		var newAccounts2 = accountsPanePage.getAccounts().size();
+		final var newAccounts2 = accountsPanePage.getAccounts().size();
 
 		assertEquals(accounts + 19, newAccounts2);
 
@@ -280,25 +278,25 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	private void createAccounts() throws KeyStoreException, HederaClientException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException {
 		// create payer account
-		var keyStore =
+		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
-		var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
 
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
-		var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
-		var transactionResponse = new AccountCreateTransaction()
+		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
+		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
 				.setInitialBalance(new Hbar(1))
 				.setAccountMemo("Test payer account")
 				.execute(client);
 
-		var receipt = transactionResponse.getReceipt(client);
+		final var receipt = transactionResponse.getReceipt(client);
 		testAccountId = Objects.requireNonNull(receipt.accountId);
 		logger.info("Payer Id: {}", testAccountId.toString());
 
-		var accountInfo = new AccountInfoQuery()
+		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(testAccountId)
 				.execute(client);
 
@@ -343,7 +341,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			logger.info("Output directory created");
 		}
 
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
@@ -360,9 +358,9 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + "History"));
 		}
 
-		var keys = new File("src/test/resources/KeyFiles").listFiles();
+		final var keys = new File("src/test/resources/KeyFiles").listFiles();
 		assert keys != null;
-		for (File key : keys) {
+		for (final File key : keys) {
 			FileUtils.copyFile(key, new File(KEYS_FOLDER, key.getName()));
 		}
 
@@ -377,14 +375,14 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
 		properties.setCustomNetworks(Collections.singleton("integration"));
 
-		Set<String> defaultNetworks = new HashSet<>();
+		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
 
 		properties.setCurrentNetwork("integration", defaultNetworks);
 
-		var treasuryInfo = new AccountInfoQuery()
+		final var treasuryInfo = new AccountInfoQuery()
 				.setAccountId(new AccountId(2))
 				.execute(client);
 		writeBytes(String.format("%s/0.0.2.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
@@ -394,10 +392,10 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		clickOn("ACCEPT");
 
-		var nodes = TestUtil.getPopupNodes();
+		final var nodes = TestUtil.getPopupNodes();
 
 		assert nodes != null;
-		var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
+		final var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
 		clickOn(button);
 
 		mainWindowPage = new MainWindowPage(this);
@@ -443,7 +441,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.clickOnPopupButton("ACCEPT")
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.enterTextInPopup("treasury");
-
 
 
 		mainWindowPage.clickOnSettingsButton();

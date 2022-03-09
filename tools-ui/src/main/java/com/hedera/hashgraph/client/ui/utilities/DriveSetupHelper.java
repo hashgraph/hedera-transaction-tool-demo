@@ -45,6 +45,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +69,10 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
+	private static final BooleanSupplier isInGithubActions = () ->
+			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 	private static final String USER_HOME = System.getProperty("user.home") + File.separator;
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	public static final String INPUT_FILES = "InputFiles";
 	public static final String OUTPUT_FILES = "OutputFiles";
 	public static final String EMAIL_STRING = "email";
@@ -108,8 +112,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Check that the input drive is valid (exists and has the appropriate folder structure)
 	 */
 	public void validateOneDrivePathAction() {
-		var text = pathTextField.getText();
-		var oneDrive = new File(text);
+		final var text = pathTextField.getText();
+		final var oneDrive = new File(text);
 		if (!oneDrive.exists()) {
 			setDrivesErrorLabel("The chosen drive does not exist.");
 			pathGreenCheck.setVisible(false);
@@ -140,11 +144,11 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Check the output drive is valid (exists and the user has "write-permission")
 	 */
 	public void validateEmailAction() {
-		var drivePath = pathTextField.getText();
-		var email = emailTextField.getText();
-		var outDrive = new File(drivePath, OUTPUT_FILES);
+		final var drivePath = pathTextField.getText();
+		final var email = emailTextField.getText();
+		final var outDrive = new File(drivePath, OUTPUT_FILES);
 
-		var out = new File(outDrive, email);
+		final var out = new File(outDrive, email);
 
 		if ((!out.exists() || !out.isDirectory()) && cannotAdd(outDrive, out)) {
 			return;
@@ -159,12 +163,12 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			if (storageBox != null) {
 				storageBox.setVisible(true);
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e);
 		}
 	}
 
-	private boolean cannotAdd(File outDrive, File out) {
+	private boolean cannotAdd(final File outDrive, final File out) {
 		final var display = display("Output drive",
 				"The output folder does not exist. Do you want to create it?", true, CREATE_STRING, CANCEL_STRING);
 		if (outDrive.canWrite() && Boolean.TRUE.equals(display)) {
@@ -182,14 +186,14 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * Refresh the folders vBox.
 	 */
 	public void refreshTransactionsFolderVBox() {
-		var emailMap = tempProperties.getOneDriveCredentials();
+		final var emailMap = tempProperties.getOneDriveCredentials();
 		if (emailMap.isEmpty()) {
 			addToEmailMapButton.setVisible(true);
 			return;
 		}
 		transactionFoldersVBox.getChildren().clear();
-		for (Map.Entry<String, String> entry : emailMap.entrySet()) {
-			var hBox = buildFolderEmailBox(entry.getKey(), entry.getValue());
+		for (final Map.Entry<String, String> entry : emailMap.entrySet()) {
+			final var hBox = buildFolderEmailBox(entry.getKey(), entry.getValue());
 			transactionFoldersVBox.getChildren().add(hBox);
 		}
 	}
@@ -233,14 +237,14 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		The name of the output folder (email address)
 	 * @return a formatted grid pane
 	 */
-	private HBox buildFolderEmailBox(String inputPath, String outputFolder) {
-		var hBox = new HBox();
+	private HBox buildFolderEmailBox(final String inputPath, final String outputFolder) {
+		final var hBox = new HBox();
 		hBox.setSpacing(20);
 		hBox.setAlignment(Pos.BOTTOM_LEFT);
 
-		var gridPane = buildGridPane(inputPath, outputFolder);
-		var delete = setupButton(deleteImage);
-		var edit = setupButton(editImage);
+		final var gridPane = buildGridPane(inputPath, outputFolder);
+		final var delete = setupButton(deleteImage);
+		final var edit = setupButton(editImage);
 
 		// Events
 		delete.setOnAction(actionEvent -> deleteDriveAction(inputPath));
@@ -265,29 +269,29 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		The name of the output folder (email address)
 	 * @return a formatted grid pane
 	 */
-	private GridPane buildGridPane(String inputPath, String outputFolder) {
-		var gridPane = new GridPane();
+	private GridPane buildGridPane(final String inputPath, final String outputFolder) {
+		final var gridPane = new GridPane();
 
 		gridPane.add(new Label("Input Paths: "), 0, 0);
 		gridPane.add(new Label("Output Folder: "), 0, 1);
 
-		var keyLabel = new Label(inputPath);
+		final var keyLabel = new Label(inputPath);
 		keyLabel.setWrapText(true);
 		gridPane.add(keyLabel, 1, 0);
-		var valueLabel = new Label(outputFolder);
+		final var valueLabel = new Label(outputFolder);
 		valueLabel.setWrapText(true);
 		gridPane.add(valueLabel, 1, 1);
 
-		var rowConstraints = new RowConstraints();
+		final var rowConstraints = new RowConstraints();
 		rowConstraints.setPrefHeight(USE_COMPUTED_SIZE);
 
 
 		gridPane.setStyle("-fx-border-color: darkgrey; -fx-background-radius: 10; -fx-border-radius: 10");
 		gridPane.setPadding(new Insets(10));
 		if (storageBox == null) {
-			var columnConstraints1 = new ColumnConstraints();
+			final var columnConstraints1 = new ColumnConstraints();
 			columnConstraints1.prefWidthProperty().bind(gridPane.widthProperty().divide(4));
-			var columnConstraints = new ColumnConstraints();
+			final var columnConstraints = new ColumnConstraints();
 			columnConstraints.prefWidthProperty().bind(gridPane.widthProperty().multiply(3).divide(4));
 			gridPane.getRowConstraints().addAll(rowConstraints, rowConstraints);
 			gridPane.getColumnConstraints().addAll(columnConstraints1, columnConstraints);
@@ -307,7 +311,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param outputFolder
 	 * 		The name of the output folder (email address)
 	 */
-	private void editDriveAction(String inputPath, String outputFolder) {
+	private void editDriveAction(final String inputPath, final String outputFolder) {
 		drivesErrorLabel.setVisible(false);
 		credentials.remove(inputPath);
 		refreshTransactionsFolderVBox();
@@ -329,8 +333,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param inputPath
 	 * 		The path to the input folder
 	 */
-	private void deleteDriveAction(String inputPath) {
-		boolean deleteDrive =
+	private void deleteDriveAction(final String inputPath) {
+		final boolean deleteDrive =
 				display("Warning", REMOVE_DRIVE_MESSAGE, true, "CONTINUE", CANCEL_STRING);
 		if (deleteDrive) {
 			tempProperties.removeOneDriveCredential(inputPath);
@@ -347,12 +351,12 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the icon that will be displayed in the button
 	 * @return a formatted button
 	 */
-	private Button setupButton(Image icon) {
-		var imageView = new ImageView(icon);
+	private Button setupButton(final Image icon) {
+		final var imageView = new ImageView(icon);
 		imageView.setFitHeight(20);
 		imageView.setFitWidth(20);
 
-		var button = new Button();
+		final var button = new Button();
 		button.setGraphic(imageView);
 		button.setStyle(
 				"-fx-border-radius: 5; -fx-background-radius: 5; -fx-background-color: white; -fx-border-color: " +
@@ -377,7 +381,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param errorMessage
 	 * 		the message
 	 */
-	private void setDrivesErrorLabel(String errorMessage) {
+	private void setDrivesErrorLabel(final String errorMessage) {
 		drivesErrorLabel.setVisible(true);
 		drivesErrorLabel.setText(errorMessage);
 	}
@@ -390,7 +394,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the selected location
 	 * @return true if the inner structure is missing
 	 */
-	private boolean missingInnerDrives(String text) {
+	private boolean missingInnerDrives(final String text) {
 		if (new File(text, INPUT_FILES).exists() && new File(text, OUTPUT_FILES).exists()) {
 			return false;
 		}
@@ -419,8 +423,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the string
 	 * @return true if the string represents a valid email
 	 */
-	private boolean isEmail(String emailStr) {
-		var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr);
+	private boolean isEmail(final String emailStr) {
+		final var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(emailStr);
 		return matcher.find();
 	}
 
@@ -431,10 +435,10 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		the path to the drive
 	 * @return true if the folder structure is complete
 	 */
-	private boolean validatePath(String path) {
+	private boolean validatePath(final String path) {
 		if (new File(path).exists() && new File(path).isDirectory()) {
-			var input = new File(path, INPUT_FILES);
-			var output = new File(path, OUTPUT_FILES);
+			final var input = new File(path, INPUT_FILES);
+			final var output = new File(path, OUTPUT_FILES);
 			return input.exists() && input.isDirectory() && output.exists() && output.isDirectory();
 		}
 		return false;
@@ -449,10 +453,10 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * 		user's email
 	 * @return true if the pair is valid
 	 */
-	private boolean validatePathEmailPair(String path, String email) {
+	private boolean validatePathEmailPair(final String path, final String email) {
 
 		logger.info("Validating path {}, email {}", path, email);
-		var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(email);
+		final var matcher = VALID_EMAIL_ADDRESS_REGEX.matcher(email);
 		final var drive = new File(path);
 		if (!matcher.find()) {
 			logger.info("{} is not a valid email address", email);
@@ -460,8 +464,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		}
 
 
-		var input = new File(String.format("%s/%s/", path, INPUT_FILES));
-		var output = new File(String.format("%s/%s/%s/", path, OUTPUT_FILES, email));
+		final var input = new File(String.format("%s/%s/", path, INPUT_FILES));
+		final var output = new File(String.format("%s/%s/%s/", path, OUTPUT_FILES, email));
 
 		if (input.exists() && output.exists()) {
 			logger.info("Input {} and output {} exist", input.getAbsolutePath(), output.getAbsolutePath());
@@ -501,7 +505,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param userProperties
 	 * 		the properties
 	 */
-	private void checkDefaultDrives(UserAccessibleProperties userProperties) {
+	private void checkDefaultDrives(final UserAccessibleProperties userProperties) {
 		final var initialMapFile = new File(INITIAL_MAP_LOCATION);
 		logger.info(initialMapFile.getAbsolutePath());
 
@@ -509,11 +513,11 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			return;
 		}
 
-		JsonArray map;
+		final JsonArray map;
 		try {
-			var initialMap = readJsonObject(initialMapFile);
+			final var initialMap = readJsonObject(initialMapFile);
 			map = initialMap.has("map") ? initialMap.getAsJsonArray("map") : new JsonArray();
-		} catch (HederaClientException exception) {
+		} catch (final HederaClientException exception) {
 			logger.error(exception.getMessage());
 			return;
 		}
@@ -527,8 +531,8 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 		}
 
 		// check the initial map is correct
-		for (var jsonElement : map) {
-			var j = jsonElement.getAsJsonObject();
+		for (final var jsonElement : map) {
+			final var j = jsonElement.getAsJsonObject();
 			if (j.has(DRIVE_STRING) && j.has(EMAIL_STRING)) {
 				validateAndStoreJsonElement(userProperties, j);
 			}
@@ -550,15 +554,24 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param jsonObject
 	 * 		the pair
 	 */
-	private void validateAndStoreJsonElement(UserAccessibleProperties userProperties, JsonObject jsonObject) {
+	private void validateAndStoreJsonElement(final UserAccessibleProperties userProperties,
+			final JsonObject jsonObject) {
 		final var driveString = jsonObject.get(DRIVE_STRING).getAsString();
 		final var email = jsonObject.get(EMAIL_STRING).getAsString();
 		if ("".equals(driveString) || "".equals(email)) {
 			logger.error("Incomplete pair. Skipping {}", jsonObject);
 			return;
 		}
-		var home = isInCircleCi.getAsBoolean() ? "/repo/" : USER_HOME;
-		var drive = home + driveString;
+
+		var home = USER_HOME;
+
+		if (isInCircleCi.getAsBoolean()) {
+			home = "/repo/";
+		} else if (isInGithubActions.getAsBoolean()) {
+			home = CURRENT_RELATIVE_PATH;
+		}
+
+		final var drive = home + driveString;
 
 		if (validatePathEmailPair(drive, email)) {
 			logger.info("Adding drive/email pair ({}, {})", drive, email);
@@ -613,7 +626,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	 * @param keyEvent
 	 * 		the event
 	 */
-	private void keyReleasedEvent(KeyEvent keyEvent) {
+	private void keyReleasedEvent(final KeyEvent keyEvent) {
 		emailGreenCheck.setVisible(isEmail(emailTextField.getText()));
 		if (keyEvent.getCode().equals(KeyCode.ENTER) || keyEvent.getCode().equals(KeyCode.TAB)) {
 			if (validatePath(pathTextField.getText()) && isEmail(emailTextField.getText())) {
@@ -653,99 +666,99 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			return new Builder();
 		}
 
-		public Builder withController(Controller controller) {
+		public Builder withController(final Controller controller) {
 			this.controller = controller;
 			return this;
 		}
 
 
-		public Builder withPathGreenCheck(ImageView pathGreenCheck) {
+		public Builder withPathGreenCheck(final ImageView pathGreenCheck) {
 			this.pathGreenCheck = pathGreenCheck;
 			return this;
 		}
 
-		public Builder withEmailGreenCheck(ImageView emailGreenCheck) {
+		public Builder withEmailGreenCheck(final ImageView emailGreenCheck) {
 			this.emailGreenCheck = emailGreenCheck;
 			return this;
 		}
 
-		public Builder withPathTextField(TextField pathTextField) {
+		public Builder withPathTextField(final TextField pathTextField) {
 			this.pathTextField = pathTextField;
 			return this;
 		}
 
-		public Builder withEmailTextField(TextField emailTextField) {
+		public Builder withEmailTextField(final TextField emailTextField) {
 			this.emailTextField = emailTextField;
 			return this;
 		}
 
-		public Builder withDrivesErrorLabel(Label drivesErrorLabel) {
+		public Builder withDrivesErrorLabel(final Label drivesErrorLabel) {
 			this.drivesErrorLabel = drivesErrorLabel;
 			return this;
 		}
 
-		public Builder withAddToEmailMapButton(Button addToEmailMapButton) {
+		public Builder withAddToEmailMapButton(final Button addToEmailMapButton) {
 			this.addToEmailMapButton = addToEmailMapButton;
 			return this;
 		}
 
-		public Builder withCancelAddToEmailMapButton(Button cancelAddToEmailMapButton) {
+		public Builder withCancelAddToEmailMapButton(final Button cancelAddToEmailMapButton) {
 			this.cancelAddToEmailMapButton = cancelAddToEmailMapButton;
 			return this;
 		}
 
-		public Builder withConfirmAddFolderButton(Button confirmAddFolderButton) {
+		public Builder withConfirmAddFolderButton(final Button confirmAddFolderButton) {
 			this.confirmAddFolderButton = confirmAddFolderButton;
 			return this;
 		}
 
-		public Builder withBrowseNewFolderButton(Button browseNewFolderButton) {
+		public Builder withBrowseNewFolderButton(final Button browseNewFolderButton) {
 			this.browseNewFolderButton = browseNewFolderButton;
 			return this;
 		}
 
-		public Builder withAddFolderPathHBox(HBox addFolderPathHBox) {
+		public Builder withAddFolderPathHBox(final HBox addFolderPathHBox) {
 			this.addFolderPathHBox = addFolderPathHBox;
 			return this;
 		}
 
-		public Builder withStorageBox(VBox storageBox) {
+		public Builder withStorageBox(final VBox storageBox) {
 			this.storageBox = storageBox;
 			return this;
 		}
 
-		public Builder withTransactionFoldersVBox(VBox transactionFoldersVBox) {
+		public Builder withTransactionFoldersVBox(final VBox transactionFoldersVBox) {
 			this.transactionFoldersVBox = transactionFoldersVBox;
 			return this;
 		}
 
-		public Builder withAddPathGridPane(GridPane addPathGridPane) {
+		public Builder withAddPathGridPane(final GridPane addPathGridPane) {
 			this.addPathGridPane = addPathGridPane;
 			return this;
 		}
 
-		public Builder withTempProperties(UserAccessibleProperties tempProperties) {
+		public Builder withTempProperties(final UserAccessibleProperties tempProperties) {
 			this.tempProperties = tempProperties;
 			return this;
 		}
 
-		public Builder withDriveLimit(int driveLimit) {
+		public Builder withDriveLimit(final int driveLimit) {
 			this.driveLimit = driveLimit;
 			return this;
 		}
 
-		public Builder withEditImage(Image editImage) {
+		public Builder withEditImage(final Image editImage) {
 			this.editImage = editImage;
 			return this;
 		}
 
-		public Builder withDeleteImage(Image deleteImage) {
+		public Builder withDeleteImage(final Image deleteImage) {
 			this.deleteImage = deleteImage;
 			return this;
 		}
 
 		public DriveSetupHelper build() {
-			DriveSetupHelper helper = new DriveSetupHelper();
+			final DriveSetupHelper helper = new DriveSetupHelper();
 			helper.pathGreenCheck = pathGreenCheck;
 			helper.emailGreenCheck = emailGreenCheck;
 			helper.pathTextField = pathTextField;

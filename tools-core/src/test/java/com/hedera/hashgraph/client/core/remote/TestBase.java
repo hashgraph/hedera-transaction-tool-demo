@@ -17,6 +17,7 @@
  */
 
 package com.hedera.hashgraph.client.core.remote;
+
 import javafx.scene.Node;
 import javafx.stage.Stage;
 import org.junit.AfterClass;
@@ -46,7 +47,7 @@ public class TestBase extends ApplicationTest {
 	}
 
 	@Override
-	public void start(Stage stage) {
+	public void start(final Stage stage) {
 		stage.show();
 	}
 
@@ -55,7 +56,7 @@ public class TestBase extends ApplicationTest {
 
 		try {
 			return (T) lookup(query).queryAll().iterator().next();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return null;
 		}
 	}
@@ -63,9 +64,9 @@ public class TestBase extends ApplicationTest {
 
 	public boolean exists(final String query) {
 		try {
-			Node x = lookup(query).queryAll().iterator().next();
+			final Node x = lookup(query).queryAll().iterator().next();
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			return false;
 		}
 	}

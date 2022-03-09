@@ -30,7 +30,7 @@ import static java.lang.Boolean.parseBoolean;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ToolsMainTest {
-	private static BooleanSupplier isInCircleCi = () ->
+	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final String RESOURCES_DIRECTORY =
 			((isInCircleCi.getAsBoolean()) ? "/repo/tools-cli/" : "") + "src/test/resources/";

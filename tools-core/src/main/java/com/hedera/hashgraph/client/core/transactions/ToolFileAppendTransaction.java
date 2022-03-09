@@ -41,13 +41,13 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 	private byte[] bytes;
 	private static final Logger logger = LogManager.getLogger(ToolFileAppendTransaction.class);
 
-	public ToolFileAppendTransaction(JsonObject input) throws HederaClientException {
+	public ToolFileAppendTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.FILE_APPEND;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		return super.equals(obj);
 	}
 
@@ -57,7 +57,7 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public boolean checkInput(JsonObject input) {
+	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 		if (!CommonMethods.verifyFieldExist(input, FILE_ID_FIELD_NAME, CONTENTS_FIELD_NAME)) {
 			return false;
@@ -65,14 +65,14 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 
 		try {
 			file = Identifier.parse(input.get(FILE_ID_FIELD_NAME).getAsJsonObject());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, FILE_ID_FIELD_NAME);
 			answer = false;
 		}
 
 		try {
 			bytes = readBytes(input.get(CONTENTS_FIELD_NAME).getAsString());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, CONTENTS_FIELD_NAME);
 			answer = false;
 		}
@@ -87,10 +87,10 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 
 	@Override
 	public Transaction<?> build() throws HederaClientRuntimeException {
-		var transactionId =
+		final var transactionId =
 				new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
-		var fileAppendTransaction = new FileAppendTransaction();
+		final var fileAppendTransaction = new FileAppendTransaction();
 		return fileAppendTransaction.setFileId(file.asFile())
 				.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 				.setContents(bytes)

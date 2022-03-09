@@ -43,17 +43,17 @@ class LocalFileServiceAdapterTest {
 
 	@Test
 	void listFiles() throws HederaClientException {
-		var fileArray = new File(TEST_PATH).listFiles();
+		final var fileArray = new File(TEST_PATH).listFiles();
 		assert fileArray != null;
 
-		var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
+		final var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
 
-		var fileDetailsList = localFileServiceAdapter.listFiles();
+		final var fileDetailsList = localFileServiceAdapter.listFiles();
 		assertEquals(fileArray.length, fileDetailsList.size());
 
-		var fileList = localFileServiceAdapter.listFilePaths();
+		final var fileList = localFileServiceAdapter.listFilePaths();
 		assertEquals(fileArray.length, fileList.size());
-		for (String file : fileList) {
+		for (final String file : fileList) {
 			assertTrue(new File(file).exists());
 		}
 	}
@@ -61,35 +61,35 @@ class LocalFileServiceAdapterTest {
 	@Test
 	void listFiles_badFile() {
 		assertThrows(HederaClientException.class, () -> {
-			var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH + "genesis.pem");
-			var x = localFileServiceAdapter.listFiles();
+			final var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH + "genesis.pem");
+			final var x = localFileServiceAdapter.listFiles();
 		});
 	}
 
 	@Test
 	void upload_download_test() throws HederaClientException {
-		var localFileServiceAdapter2 = new LocalFileServiceAdapter(TEST_PATH_RESOURCES);
-		File testFile = new File(TEST_PATH_RESOURCES, "recovery.aes");
+		final var localFileServiceAdapter2 = new LocalFileServiceAdapter(TEST_PATH_RESOURCES);
+		final File testFile = new File(TEST_PATH_RESOURCES, "recovery.aes");
 		localFileServiceAdapter2.upload(testFile.getAbsolutePath(), "Keys");
 
-		var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
+		final var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
 		assertTrue(localFileServiceAdapter.exists("recovery.aes"));
 
-		File tempFile = localFileServiceAdapter.download("genesis.pub", sharedTempDir.toString());
+		final File tempFile = localFileServiceAdapter.download("genesis.pub", sharedTempDir.toString());
 		assertTrue(tempFile.exists());
 
 		localFileServiceAdapter.rename("recovery.aes", "other.aes");
-		FileDetails other = localFileServiceAdapter.find("other.aes");
+		final FileDetails other = localFileServiceAdapter.find("other.aes");
 		assertTrue(new File(other.getFullPath()).exists());
 
 	}
 
 	@Test
 	void exists_test() {
-		var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
+		final var localFileServiceAdapter = new LocalFileServiceAdapter(TEST_PATH);
 		assertTrue(localFileServiceAdapter.exists());
 
-		var localFileServiceAdapter_bad = new LocalFileServiceAdapter(TEST_PATH + "bad");
+		final var localFileServiceAdapter_bad = new LocalFileServiceAdapter(TEST_PATH + "bad");
 		assertFalse(localFileServiceAdapter_bad.exists());
 	}
 

@@ -18,12 +18,9 @@
 
 package com.hedera.hashgraph.client.core.transactions;
 
-import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.PublicKey;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -43,15 +40,15 @@ class SignaturePairTest {
 
 	@Test
 	void write() throws KeyStoreException, HederaClientException {
-		JsonObject testJson = getJsonInputCT(50, 2, 50, new Timestamp(2000).asInstant());
-		ToolTransferTransaction toolTransaction = new ToolTransferTransaction(testJson);
-		PrivateKey privateKey = EncryptionUtils.getPrivateKeyFromPEM(RESOURCES_DIRECTORY + "Keys/genesis.pem");
-		PublicKey publicKey = privateKey.getPublicKey();
+		final var testJson = getJsonInputCT(50, 2, 50, new Timestamp(2000).asInstant());
+		final var toolTransaction = new ToolTransferTransaction(testJson);
+		final var privateKey = EncryptionUtils.getPrivateKeyFromPEM(RESOURCES_DIRECTORY + "Keys/genesis.pem");
+		final var publicKey = privateKey.getPublicKey();
 
-		SignaturePair signaturePair = new SignaturePair(publicKey, toolTransaction.sign(privateKey));
+		final var signaturePair = new SignaturePair(publicKey, toolTransaction.sign(privateKey));
 		signaturePair.write(RESOURCES_DIRECTORY + "tempFile.sigpair");
 
-		SignaturePair newPair = new SignaturePair(RESOURCES_DIRECTORY + "tempFile.sigpair");
+		final var newPair = new SignaturePair(RESOURCES_DIRECTORY + "tempFile.sigpair");
 		assertEquals(signaturePair.getPublicKey(), newPair.getPublicKey());
 		assertEquals(signaturePair.getSignature(), signaturePair.getSignature());
 

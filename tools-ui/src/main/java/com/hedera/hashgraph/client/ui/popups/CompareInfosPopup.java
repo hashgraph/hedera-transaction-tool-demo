@@ -61,7 +61,7 @@ public class CompareInfosPopup {
 	private static final List<TableLine> lines = new ArrayList<>();
 	private static final JsonObject accounts = readJsonObject();
 
-	public static void setController(Controller controller) {
+	public static void setController(final Controller controller) {
 		CompareInfosPopup.controller = controller;
 	}
 
@@ -69,13 +69,14 @@ public class CompareInfosPopup {
 		throw new IllegalStateException("Popup class");
 	}
 
-	public static void display(JsonObject current, JsonObject old, Controller controller) throws HederaClientException {
-		var window = new Stage();
+	public static void display(final JsonObject current, final JsonObject old,
+			final Controller controller) throws HederaClientException {
+		final var window = new Stage();
 		lines.clear();
 		setController(controller);
-		var diff = Utilities.difference(old, current);
+		final var diff = Utilities.difference(old, current);
 
-		var id = Identifier.parse(current.get(ACCOUNT_ID).getAsJsonObject()).toNicknameAndChecksum(accounts);
+		final var id = Identifier.parse(current.get(ACCOUNT_ID).getAsJsonObject()).toNicknameAndChecksum(accounts);
 
 		if (!current.get(ACCOUNT_ID).getAsJsonObject().equals(old.get(ACCOUNT_ID).getAsJsonObject())) {
 			throw new HederaClientException("Account ids don't match.");
@@ -87,25 +88,25 @@ public class CompareInfosPopup {
 
 		parse(current, old);
 
-		var continueButton = new Button("CLOSE");
+		final var continueButton = new Button("CLOSE");
 		continueButton.setStyle(WHITE_BUTTON_STYLE);
 		continueButton.setPrefWidth(200);
 		continueButton.setOnAction(event -> window.close());
-		var layout = new VBox();
+		final var layout = new VBox();
 
-		TableView<TableLine> tableView = new TableView<>();
-		TableColumn<TableLine, String> keyColumn = new TableColumn<>("Info Field");
+		final TableView<TableLine> tableView = new TableView<>();
+		final TableColumn<TableLine, String> keyColumn = new TableColumn<>("Info Field");
 		keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
 		keyColumn.prefWidthProperty().bind(tableView.widthProperty().divide(40).multiply(7));
 		keyColumn.setSortable(false);
 
-		TableColumn<TableLine, String> currentColumn = new TableColumn<>("Current");
+		final TableColumn<TableLine, String> currentColumn = new TableColumn<>("Current");
 		currentColumn.setCellValueFactory(new PropertyValueFactory<>("current"));
 		currentColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		currentColumn.setCellFactory(tv -> getCell());
 		currentColumn.setSortable(false);
 
-		TableColumn<TableLine, String> oldColumn = new TableColumn<>("Old");
+		final TableColumn<TableLine, String> oldColumn = new TableColumn<>("Old");
 		oldColumn.setCellValueFactory(new PropertyValueFactory<>("old"));
 		oldColumn.prefWidthProperty().bind(tableView.widthProperty().divide(80).multiply(33));
 		oldColumn.setCellFactory(tv -> getCell());
@@ -124,7 +125,7 @@ public class CompareInfosPopup {
 		layout.setStyle("-fx-font-size: 14");
 		layout.setMinWidth(1600);
 
-		var scene = new Scene(layout);
+		final var scene = new Scene(layout);
 		scene.getStylesheets().add("tools.css");
 
 		window.setScene(scene);
@@ -133,10 +134,10 @@ public class CompareInfosPopup {
 	}
 
 	@NotNull
-	private static TableRow<TableLine> getTableRow(List<String> diff) {
+	private static TableRow<TableLine> getTableRow(final List<String> diff) {
 		return new TableRow<>() {
 			@Override
-			protected void updateItem(TableLine tableLine, boolean b) {
+			protected void updateItem(final TableLine tableLine, final boolean b) {
 				super.updateItem(tableLine, b);
 				if (tableLine == null || b) {
 					setStyle("");
@@ -151,11 +152,11 @@ public class CompareInfosPopup {
 	private static TableCell<TableLine, String> getCell() {
 		return new TableCell<>() {
 			@Override
-			protected void updateItem(String s, boolean b) {
+			protected void updateItem(final String s, final boolean b) {
 				super.updateItem(s, b);
 				if (s != null && !b) {
-					VBox vBox = new VBox();
-					String[] textList = s.split(",");
+					final VBox vBox = new VBox();
+					final String[] textList = s.split(",");
 					Arrays.stream(textList)
 							.filter(s1 -> !"".equals(s1.replaceAll("\\s", "")))
 							.forEach(s1 -> vBox.getChildren().add(new Label(s1)));
@@ -168,11 +169,11 @@ public class CompareInfosPopup {
 	}
 
 
-	private static void parse(JsonObject current, JsonObject old) throws HederaClientException {
-		Set<String> combined = Stream.concat(current.keySet().stream(), old.keySet().stream())
+	private static void parse(final JsonObject current, final JsonObject old) throws HederaClientException {
+		final Set<String> combined = Stream.concat(current.keySet().stream(), old.keySet().stream())
 				.collect(Collectors.toSet());
 		combined.add("memo");
-		for (String s : combined) {
+		for (final String s : combined) {
 			String oldBox = getString(old, s);
 			String currentBox = getString(current, s);
 			// memo should always be present
@@ -191,8 +192,8 @@ public class CompareInfosPopup {
 		}
 	}
 
-	private static String getString(JsonObject jsonObject, String key) throws HederaClientException {
-		String currentBox = "";
+	private static String getString(final JsonObject jsonObject, final String key) throws HederaClientException {
+		final String currentBox = "";
 		if (!jsonObject.has(key)) {
 			return currentBox;
 		}
@@ -224,7 +225,7 @@ public class CompareInfosPopup {
 		final FileReader file;
 		try {
 			file = new FileReader(ACCOUNTS_MAP_FILE);
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			return new JsonObject();
 		}
 		return JsonParser.parseReader(file).getAsJsonObject();
@@ -236,7 +237,7 @@ public class CompareInfosPopup {
 		private String old;
 		private final String field;
 
-		public TableLine(String key, String current, String old) {
+		public TableLine(final String key, final String current, final String old) {
 			this.field = key;
 			this.key = AccountInfoFields.valueOf(key.toUpperCase(Locale.ROOT)).getName();
 			this.current = current;
@@ -251,7 +252,7 @@ public class CompareInfosPopup {
 			return key;
 		}
 
-		public void setKey(String key) {
+		public void setKey(final String key) {
 			this.key = key;
 		}
 
@@ -259,7 +260,7 @@ public class CompareInfosPopup {
 			return current;
 		}
 
-		public void setCurrent(String current) {
+		public void setCurrent(final String current) {
 			this.current = current;
 		}
 
@@ -267,7 +268,7 @@ public class CompareInfosPopup {
 			return old;
 		}
 
-		public void setOld(String old) {
+		public void setOld(final String old) {
 			this.old = old;
 		}
 	}

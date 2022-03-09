@@ -17,6 +17,7 @@
  */
 
 package com.hedera.hashgraph.client.core.props;
+
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
@@ -68,7 +69,7 @@ class UserAccessiblePropertiesTest {
 
 	@Test
 	void setPreferredStorageDirectory_Test() {
-		String dir =
+		final String dir =
 				System.getProperty("user.home") + File.separator + "Documents" + File.separator + "TransactionTools";
 
 		properties.setPreferredStorageDirectory(
@@ -155,9 +156,9 @@ class UserAccessiblePropertiesTest {
 
 	@Test
 	void setHash_Test() throws HederaClientException {
-		char[] pass = "testPassword".toCharArray();
+		final char[] pass = "testPassword".toCharArray();
 		properties.setHash(pass);
-		PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
+		final PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
 		Assertions.assertTrue(passwordAuthenticator.authenticate(pass, properties.getHash()));
 	}
 
@@ -174,7 +175,7 @@ class UserAccessiblePropertiesTest {
 		properties.setDefaultMinutes(47);
 		properties.setDefaultSeconds(37);
 
-		JsonObject propertiesJson = properties.readProperties();
+		final JsonObject propertiesJson = properties.readProperties();
 
 		Assertions.assertTrue(propertiesJson.has(PREFERRED_STORAGE_DIRECTORY));
 		assertEquals(
@@ -358,7 +359,7 @@ class UserAccessiblePropertiesTest {
 
 	@Test
 	void emailMap_test() {
-		Map<String, String> emailMap = new HashMap<>();
+		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put("/src/test/resources/Transactions - Documents/", "test1.council2@hederacouncil.org");
 		emailMap.put("/src/test/resources/Transactions/", "test1.council1@hederacouncil.org");
 

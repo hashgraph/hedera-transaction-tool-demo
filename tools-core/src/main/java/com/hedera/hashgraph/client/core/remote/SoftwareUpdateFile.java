@@ -64,9 +64,9 @@ public class SoftwareUpdateFile extends RemoteFile {
 	private long oldStamp = 0;
 	private long newStamp = 0;
 
-	public SoftwareUpdateFile(FileDetails file) {
+	public SoftwareUpdateFile(final FileDetails file) {
 		super(file);
-		var split = FilenameUtils.getBaseName(file.getName()).split("-");
+		final var split = FilenameUtils.getBaseName(file.getName()).split("-");
 		assert split.length > 1;
 		this.timestamp = new Timestamp(file.getAttributes().creationTime().toInstant());
 		this.version = fixVersion(split[1]);
@@ -78,16 +78,16 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	public SoftwareUpdateFile() {
 		super();
-		this.version = "1.0.0";
+		this.version = "0.0.1";
 		this.setType(FileType.SOFTWARE_UPDATE);
 		this.digest = "";
 	}
 
-	public void setVersion(String version) {
+	public void setVersion(final String version) {
 		this.version = fixVersion(version);
 	}
 
-	public void setOldVersion(String oldVersion) {
+	public void setOldVersion(final String oldVersion) {
 		this.oldVersion = fixVersion(oldVersion);
 	}
 
@@ -95,11 +95,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return timestamp;
 	}
 
-	public void setOldStamp(long oldStamp) {
+	public void setOldStamp(final long oldStamp) {
 		this.oldStamp = oldStamp;
 	}
 
-	public void setNewStamp(long newStamp) {
+	public void setNewStamp(final long newStamp) {
 		this.newStamp = newStamp;
 	}
 
@@ -121,8 +121,8 @@ public class SoftwareUpdateFile extends RemoteFile {
 		if (oldVersion.equals(version)) {
 			return newStamp <= oldStamp;
 		} else {
-			var oldV = oldVersion.split("\\.");
-			var newV = version.split("\\.");
+			final var oldV = oldVersion.split("\\.");
+			final var newV = version.split("\\.");
 			if (!oldV[0].equals(newV[0])) {
 				return isOlder(oldV[0], newV[0]);
 			}
@@ -135,11 +135,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	@Override
 	public GridPane buildGridPane() {
-		var detailsGridPane = new GridPane();
-		List<Label> messages = new ArrayList<>();
+		final var detailsGridPane = new GridPane();
+		final List<Label> messages = new ArrayList<>();
 		var count = 0;
 
-		var subTitleText =
+		final var subTitleText =
 				(isHistory()) ? "The application was updated to " : "This will upgrade your application to";
 
 		var formattedText = String.format("%s Version %s", subTitleText, getVersion());
@@ -148,27 +148,27 @@ public class SoftwareUpdateFile extends RemoteFile {
 			formattedText = handleHistory(formattedText);
 
 		}
-		var subTitleLabel = new Label(formattedText);
+		final var subTitleLabel = new Label(formattedText);
 		subTitleLabel.setWrapText(true);
 		messages.add(subTitleLabel);
 
 		//comment files will have the notes highlights
-		JsonObject notesJson = handleNotes(messages);
+		final JsonObject notesJson = handleNotes(messages);
 
-		for (var message : messages) {
+		for (final var message : messages) {
 			detailsGridPane.add(message, 0, count++);
 		}
 
 		if (notesJson.has("link")) {
-			HBox hbox = handleHyperLink(notesJson);
+			final HBox hbox = handleHyperLink(notesJson);
 			detailsGridPane.add(hbox, 0, count++);
 		}
 
-		var shaDigest = new Text(digest);
+		final var shaDigest = new Text(digest);
 		shaDigest.setFont(Font.font("Courier New", 18));
 
 
-		var shaDigestHBox = new HBox();
+		final var shaDigestHBox = new HBox();
 		shaDigestHBox.setAlignment(Pos.TOP_LEFT);
 		final var shaLabel = new Label("File Hash:  ");
 
@@ -189,10 +189,10 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 * @return The string that will be displayed to the user
 	 */
 	private String handleHistory(String formattedText) {
-		String onDate;
+		final String onDate;
 		try {
-			var metadataFile = new MetadataFile(getName());
-			var action = getLastAction(metadataFile.getMetadataActions());
+			final var metadataFile = new MetadataFile(getName());
+			final var action = getLastAction(metadataFile.getMetadataActions());
 
 			onDate = String.format(" on %s", action.getTimeStamp().asReadableLocalString());
 			formattedText += onDate;
@@ -200,7 +200,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 			if (digest.length() == 0) {
 				fixDigest(metadataFile, action);
 			}
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		return formattedText;
@@ -214,10 +214,10 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 * 		the update notes
 	 * @return a hyperlink to be included in the grid pane
 	 */
-	private HBox handleHyperLink(JsonObject notesJson) {
-		var hyperlink = new Hyperlink(notesJson.get("link").getAsString());
-		var title = new Label("Find more details at:");
-		var hbox = new HBox();
+	private HBox handleHyperLink(final JsonObject notesJson) {
+		final var hyperlink = new Hyperlink(notesJson.get("link").getAsString());
+		final var title = new Label("Find more details at:");
+		final var hbox = new HBox();
 		hbox.setSpacing(20);
 		hbox.setAlignment(Pos.CENTER_LEFT);
 		hbox.getChildren().addAll(title, hyperlink);
@@ -227,7 +227,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 				if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
 					Desktop.getDesktop().browse(new URI(hyperlink.getText()));
 				}
-			} catch (IOException | URISyntaxException e) {
+			} catch (final IOException | URISyntaxException e) {
 				logger.error("Cannot open web browser");
 				logger.error(e);
 			}
@@ -242,17 +242,17 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 * 		the notes
 	 * @return an object with notes
 	 */
-	private JsonObject handleNotes(List<Label> messages) {
-		var notesJson =
+	private JsonObject handleNotes(final List<Label> messages) {
+		final var notesJson =
 				(hasComments()) ? ((CommentFile) getCommentsFile()).getContents() : new JsonObject();
 
 		if (notesJson.has("notes")) {
 			messages.add(new Label("Highlights:"));
-			var notesArray = notesJson.getAsJsonArray("notes");
-			for (var je : notesArray) {
-				var jsonObject = je.getAsJsonObject();
-				var titleString = (jsonObject.has("title")) ? jsonObject.get("title").getAsString() : "";
-				var contentsString = (jsonObject.has("contents")) ? jsonObject.get("contents").getAsString() : "";
+			final var notesArray = notesJson.getAsJsonArray("notes");
+			for (final var je : notesArray) {
+				final var jsonObject = je.getAsJsonObject();
+				final var titleString = (jsonObject.has("title")) ? jsonObject.get("title").getAsString() : "";
+				final var contentsString = (jsonObject.has("contents")) ? jsonObject.get("contents").getAsString() : "";
 				messages.add(
 						new Label(String.format("\t\u2022\t%s:\t%s", titleString, contentsString)));
 			}
@@ -267,11 +267,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 * 		a list of metadata actions
 	 * @return an action
 	 */
-	private MetadataAction getLastAction(List<MetadataAction> metadataActions) {
+	private MetadataAction getLastAction(final List<MetadataAction> metadataActions) {
 		var action = metadataActions.get(0);
 		var stamp = metadataActions.get(0).getTimeStamp();
 
-		for (var metadataAction : metadataActions) {
+		for (final var metadataAction : metadataActions) {
 
 			if (metadataAction.getTimeStamp().asCalendar().after(stamp.asCalendar())) {
 				stamp = metadataAction.getTimeStamp();
@@ -289,7 +289,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 	 * @param action
 	 * 		the action to be updated
 	 */
-	private void fixDigest(MetadataFile metadataFile, MetadataAction action) {
+	private void fixDigest(final MetadataFile metadataFile, final MetadataAction action) {
 		this.digest = calculateDigest();
 		action.setUserComments(digest);
 		action.setTimeStamp(action.getTimeStamp().plusNanos(1));
@@ -297,10 +297,10 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	@Override
-	public int compareTo(@NotNull RemoteFile otherFile) {
+	public int compareTo(@NotNull final RemoteFile otherFile) {
 		if (otherFile instanceof SoftwareUpdateFile) {
-			var oldV = ((SoftwareUpdateFile) otherFile).getVersion().split("\\.");
-			var newV = version.split("\\.");
+			final var oldV = ((SoftwareUpdateFile) otherFile).getVersion().split("\\.");
+			final var newV = version.split("\\.");
 			if (!oldV[0].equals(newV[0])) {
 				return compareToAsIntegers(oldV[0], newV[0]);
 			}
@@ -313,28 +313,28 @@ public class SoftwareUpdateFile extends RemoteFile {
 		}
 	}
 
-	private int compareToAsIntegers(String s, String s1) {
-		Integer n = Integer.parseInt(s1);
-		Integer o = Integer.parseInt(s);
+	private int compareToAsIntegers(final String s, final String s1) {
+		final Integer n = Integer.parseInt(s1);
+		final Integer o = Integer.parseInt(s);
 		return n.compareTo(o);
 	}
 
 	private String calculateDigest() {
-		var digestString = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
+		final var digestString = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
 		if ("".equals(digestString)) {
 			return "";
 		}
 		return CommonMethods.splitStringDigest(digestString, 12);
 	}
 
-	private boolean isOlder(String oldV, String newV) {
-		var oldInt = Integer.parseInt(oldV);
-		var newInt = Integer.parseInt(newV);
+	private boolean isOlder(final String oldV, final String newV) {
+		final var oldInt = Integer.parseInt(oldV);
+		final var newInt = Integer.parseInt(newV);
 		return newInt < oldInt;
 	}
 
-	private String fixVersion(String version) {
-		var versionArray = version.split("\\.");
+	private String fixVersion(final String version) {
+		final var versionArray = version.split("\\.");
 		final var fixedVersion = new String[] { "0", "0", "0" };
 
 		for (var i = 0; i < Math.min(3, versionArray.length); i++) {
@@ -346,20 +346,20 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return String.format("%s.%s.%s", fixedVersion[0], fixedVersion[1], fixedVersion[2]);
 	}
 
-	private boolean isNumeric(String strNum) {
+	private boolean isNumeric(final String strNum) {
 		if (strNum == null || "".equals(strNum)) {
 			return false;
 		}
 		try {
 			Integer.parseInt(strNum);
-		} catch (NumberFormatException nfe) {
+		} catch (final NumberFormatException nfe) {
 			return false;
 		}
 		return true;
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 		if (!(o instanceof SoftwareUpdateFile)) {
 			return false;
 		}
@@ -368,7 +368,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 			return false;
 		}
 
-		var other = (SoftwareUpdateFile) o;
+		final var other = (SoftwareUpdateFile) o;
 		if (!this.timestamp.equals(other.timestamp)) {
 			return false;
 		}
@@ -381,7 +381,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		if (this.actions.size() != other.actions.size()) {
 			return false;
 		}
-		for (FileActions action : actions) {
+		for (final FileActions action : actions) {
 			if (!other.actions.contains(action)) {
 				return false;
 			}

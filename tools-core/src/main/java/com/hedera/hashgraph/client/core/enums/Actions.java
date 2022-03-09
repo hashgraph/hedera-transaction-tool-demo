@@ -24,7 +24,7 @@ public enum Actions {
 
 	private final String action;
 
-	Actions(String action) {
+	Actions(final String action) {
 		this.action = action;
 	}
 

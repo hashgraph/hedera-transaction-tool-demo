@@ -43,7 +43,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeView;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -81,7 +80,6 @@ import java.util.prefs.BackingStoreException;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertNull;
@@ -399,7 +397,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 		var table = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(1, table.getItems().size());
-		var line = (AccountHistoryPopup.TableLine)table.getItems().get(0);
+		var line = (AccountHistoryPopup.TableLine) table.getItems().get(0);
 		doubleClickOn(line.getDate());
 		var tableFromPopup = accountsPanePage.clickOnSeeHistory().getTableFromPopup(getPopupNodes());
 		assertEquals(9, tableFromPopup.getItems().size());
@@ -418,7 +416,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		assertNotNull(nodes1);
 		assertEquals(1, nodes1.size());
 		assertTrue(nodes1.get(0) instanceof VBox);
-		var children = ((VBox)nodes1.get(0)).getChildren();
+		var children = ((VBox) nodes1.get(0)).getChildren();
 		assertTrue(children.get(0) instanceof Label);
 		assertEquals(ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE, ((Label) children.get(0)).getText());
 		clickOn("CONTINUE");
