@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
+import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.MetadataAction;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import org.apache.commons.io.FilenameUtils;
@@ -31,7 +32,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +91,10 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.expired = object.get(EXPIRED_PARAMETER).getAsBoolean();
 	}
 
+	public HistoryData(String path) throws IOException, HederaClientException {
+		this(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(path))));
+	}
+
 	public FileType getType() {
 		try {
 			return FileType.getType(FilenameUtils.getExtension(fileName));
@@ -105,12 +113,12 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	public String getLastComment() {
-		return (comments.has("comment")) ? comments.get("comment").getAsString() : "";
+		return comments.has("comment") ? comments.get("comment").getAsString() : "";
 	}
 
 	public String getPreparedBy() {
 
-		final var author = (comments.has("author")) ? comments.get("author").getAsString() : "";
+		final var author = comments.has("author") ? comments.get("author").getAsString() : "";
 		if ("".equals(author)) {
 			return author;
 		}
@@ -169,7 +177,7 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	public Long lastAction() {
-		return (Collections.max(actions)).getTimeStamp().getSeconds();
+		return Collections.max(actions).getTimeStamp().getSeconds();
 	}
 
 	public JsonObject asJson() {
@@ -212,6 +220,7 @@ public class HistoryData implements Comparable<HistoryData> {
 
 	@Override
 	public int compareTo(@NotNull final HistoryData o) {
+
 		return Long.compare(lastAction(), o.lastAction());
 	}
 }

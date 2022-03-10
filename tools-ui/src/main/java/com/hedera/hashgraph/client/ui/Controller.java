@@ -250,12 +250,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			service.start();
 		}
 		initialStartupPaneController.injectMainController(this);
+		historyPaneController.injectMainController(this);
 		homePaneController.injectMainController(this);
 		settingsPaneController.injectMainController(this);
 		createPaneController.injectMainController(this);
 		keysPaneController.injectMainController(this);
 		accountsPaneController.injectMainController(this);
-		historyPaneController.injectMainController(this);
 
 
 		startupPhaseInitialization();
@@ -938,7 +938,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return feePayer;
 	}
 
-	public List<RemoteFile> getHistory() {
-		return homePaneController.getHistory();
-	}
+//	public List<RemoteFile> getHistory() {
+//		return homePaneController.getHistory();
+//	}
 }

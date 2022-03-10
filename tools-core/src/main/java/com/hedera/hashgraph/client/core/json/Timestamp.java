@@ -206,6 +206,9 @@ public class Timestamp {
 
 	@Override
 	public int hashCode() {
+		if (this == null) {
+			return 0;
+		}
 		return Objects.hash(seconds, nanos);
 	}
 

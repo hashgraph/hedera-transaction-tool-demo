@@ -23,7 +23,6 @@ import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
-import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
@@ -53,7 +52,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -77,7 +75,6 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +133,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private int lastCount = 0;
 	private boolean historyChanged = false;
 	private boolean forceUpdate = false;
-	private RemoteFilesMap historyFiles = new RemoteFilesMap();
+	//private RemoteFilesMap historyFiles = new RemoteFilesMap();
 	private final RemoteFilesMap remoteFilesMap = new RemoteFilesMap();
 	private String output = "";
 	private String user = "";
@@ -166,12 +163,12 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 			setForceUpdate(true);
 			remoteFilesMap.clearMap();
-			loadHistory();
+			//loadHistory();
 			loadRemoteFilesMap();
 
 			lastCount = countFiles;
 
-			loadHistoryBox(historyFiles);
+			//loadHistoryBox(historyFiles);
 			loadNewFilesBox(remoteFilesMap);
 			newFilesViewVBox.setVisible(true);
 			newFilesViewVBox.setDisable(false);
@@ -192,7 +189,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			historyFilesViewVBox.setVisible(true);
 			historyFilesViewVBox.setDisable(false);
 
-			if (historyFiles.size() + remoteFilesMap.size() > 0) {
+			if (remoteFilesMap.size() > 0) {
 				defaultViewVBox.setVisible(false);
 			}
 
@@ -227,15 +224,15 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void loadHistoryBox(final RemoteFilesMap historyFiles) throws HederaClientException {
-		final var filesMap = filterHistory(historyFiles);
-		allHistoryBoxes = filesMap.size();
-
-		loadHistoryVBox(filesMap);
-		buildFilterBox();
-		buildPagingHBox();
-		buildAdvanceHBox();
-	}
+//	private void loadHistoryBox(final RemoteFilesMap historyFiles) throws HederaClientException {
+//		final var filesMap = filterHistory(historyFiles);
+//		allHistoryBoxes = filesMap.size();
+//
+//		loadHistoryVBox(filesMap);
+//		buildFilterBox();
+//		buildPagingHBox();
+//		buildAdvanceHBox();
+//	}
 
 	/**
 	 * Load the history files into the history box
@@ -297,36 +294,43 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	 * Remove the files from the map that are also in the history
 	 */
 	private void removeHistoryFiles() {
-		remoteFilesMap.getFiles().stream().filter(rf -> historyFiles.exists(rf.getName())).forEach(rf -> {
-			if (rf instanceof InfoFile || rf instanceof PublicKeyFile) {
-				final var newDate = rf.getDate();
-				final var historyDate = historyFiles.get(rf.getName()).getDate();
-				if (newDate <= historyDate) {
-					remoteFilesMap.remove(rf.getName());
-				}
-				return;
+		for (RemoteFile rf : remoteFilesMap.getFiles()) {
+			logger.info(rf.getName());
+			if (controller.historyPaneController.getHistoryMap().containsKey(rf.hashCode())) {
+				logger.info("poop");
 			}
-			remoteFilesMap.remove(rf.getName());
-		});
-	}
 
-	/**
-	 * Load the history files
-	 */
-	private void loadHistory() {
-		final var version = controller.getVersion();
-
-		if (new File(DEFAULT_HISTORY).mkdirs()) {
-			logger.info("History folder created");
-		}
-		// Load history files
-		historyFiles.clearMap();
-		historyFiles =
-				new RemoteFilesMap(version).fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY));
-		for (final var rf : historyFiles.getFiles()) {
-			rf.setHistory(true);
+//			if (historyFiles.exists(rf.getName())) {
+//				if (rf instanceof InfoFile || rf instanceof PublicKeyFile) {
+//					final var newDate = rf.getDate();
+//					final var historyDate = historyFiles.get(rf.getName()).getDate();
+//					if (newDate <= historyDate) {
+//						remoteFilesMap.remove(rf.getName());
+//					}
+//					continue;
+//				}
+//				remoteFilesMap.remove(rf.getName());
+//			}
 		}
 	}
+
+//	/**
+//	 * Load the history files
+//	 */
+//	private void loadHistory() {
+//		final var version = controller.getVersion();
+//
+//		if (new File(DEFAULT_HISTORY).mkdirs()) {
+//			logger.info("History folder created");
+//		}
+//		// Load history files
+//		historyFiles.clearMap();
+//		historyFiles =
+//				new RemoteFilesMap(version).fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY));
+//		for (final var rf : historyFiles.getFiles()) {
+//			rf.setHistory(true);
+//		}
+//	}
 
 	private RemoteFilesMap filterHistory(final RemoteFilesMap historyFiles) {
 		if (filterOut.isEmpty()) {
@@ -590,10 +594,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						}
 						break;
 					default:
-						logger.info("No action taken: {}",rf.getType());
+						logger.info("No action taken: {}", rf.getType());
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
+				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
 				historyChanged = true;
 				controller.loadPubKeys();
 				controller.accountsPaneController.initializeAccountPane();
@@ -1173,60 +1178,59 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return button;
 	}
 
-	private void buildFilterBox() {
-		final var size = filterOut.size();
-		final var filterTitle = (size > 0) ? String.format("filters (%d)", size) : "filters";
-		final var title = new Label(filterTitle);
-		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
-		title.setPadding(new Insets(5));
+//	private void buildFilterBox() {
+//		final var size = filterOut.size();
+//		final var filterTitle = (size > 0) ? String.format("filters (%d)", size) : "filters";
+//		final var title = new Label(filterTitle);
+//		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
+//		title.setPadding(new Insets(5));
+//
+//		final var image = new Image("icons" + File.separator + "helpIcon.png");
+//		final var imageView = new ImageView(image);
+//		imageView.setPreserveRatio(true);
+//		imageView.setFitHeight(15);
+//		final var toolTipButton = getToolTipButton(imageView);
+//
+//		final var titleBox = new HBox();
+//		titleBox.getChildren().addAll(title, toolTipButton);
+//
+//		final var vBox = new VBox();
+//		vBox.setPadding(new Insets(5));
+//		vBox.setVisible(true);
+//
+//		vBox.managedProperty().bind(vBox.visibleProperty());
+//		final var gridPane = getCheckboxesGridPane();
+//		vBox.getChildren().add(gridPane);
+//
+//		filterVBox.getChildren().clear();
+//		filterVBox.getChildren().addAll(titleBox, vBox);
+//		filterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
+//	}
 
-		final var image = new Image("icons" + File.separator + "helpIcon.png");
-		final var imageView = new ImageView(image);
-		imageView.setPreserveRatio(true);
-		imageView.setFitHeight(15);
-		final var toolTipButton = getToolTipButton(imageView);
-
-		final var titleBox = new HBox();
-		titleBox.getChildren().addAll(title, toolTipButton);
-
-		final var vBox = new VBox();
-		vBox.setPadding(new Insets(5));
-		vBox.setVisible(true);
-
-		vBox.managedProperty().bind(vBox.visibleProperty());
-		final var gridPane = getCheckboxesGridPane();
-		vBox.getChildren().add(gridPane);
-
-		filterVBox.getChildren().clear();
-		filterVBox.getChildren().addAll(titleBox, vBox);
-		filterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
-	}
-
-	@NotNull
-	private GridPane getCheckboxesGridPane() {
-		final var gridPane = new GridPane();
-		gridPane.setHgap(5);
-		gridPane.setVgap(5);
-		var counter = 0;
-		for (final var type : EnumSet.allOf(FileType.class)) {
-			final var typeCounter = historyFiles.countType(type);
-			final var typeString = type.toKind().toLowerCase();
-			if (!"".equals(typeString)) {
-				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
-				if (filterOut.contains(type)) {
-					checkBox.setSelected(true);
-				}
-				checkBox.selectedProperty().addListener(
-						(observableValue, oldValue, newValue) -> checkBoxListenerAction(type, newValue));
-				gridPane.add(checkBox, counter % 3, counter / 3);
-				counter++;
-			}
-		}
-		gridPane.setVgap(10);
-		gridPane.setHgap(10);
-		return gridPane;
-	}
-
+	//	@NotNull
+//	private GridPane getCheckboxesGridPane() {
+//		final var gridPane = new GridPane();
+//		gridPane.setHgap(5);
+//		gridPane.setVgap(5);
+//		var counter = 0;
+//		for (final var type : EnumSet.allOf(FileType.class)) {
+//			final var typeCounter = historyFiles.countType(type);
+//			final var typeString = type.toKind().toLowerCase();
+//			if (!"".equals(typeString)) {
+//				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
+//				if (filterOut.contains(type)) {
+//					checkBox.setSelected(true);
+//				}
+//				checkBox.selectedProperty().addListener(
+//						(observableValue, oldValue, newValue) -> checkBoxListenerAction(type, newValue));
+//				gridPane.add(checkBox, counter % 3, counter / 3);
+//				counter++;
+//			}
+//		}
+//		gridPane.setVgap(10);
+//		gridPane.setHgap(10);
+//		return gridPane;
+//	}
 	@NotNull
 	private Button getToolTipButton(final ImageView imageView) {
 		final var toolTipButton = new Button();
@@ -1240,23 +1244,23 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return toolTipButton;
 	}
 
-	private void checkBoxListenerAction(final FileType type, final Boolean newValue) {
-		if (Boolean.TRUE.equals(newValue)) {
-			filterOut.add(type);
-		} else {
-			filterOut.remove(type);
-		}
-		try {
-			final var filesMap = filterHistory(historyFiles);
-			allHistoryBoxes = filesMap.size();
-			page = 0; // When a filter changes the page should reset to the first one.
-			loadHistoryVBox(filesMap);
-			buildPagingHBox();
-			buildAdvanceHBox();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
-	}
+//	private void checkBoxListenerAction(final FileType type, final Boolean newValue) {
+//		if (Boolean.TRUE.equals(newValue)) {
+//			filterOut.add(type);
+//		} else {
+//			filterOut.remove(type);
+//		}
+//		try {
+//			final var filesMap = filterHistory(historyFiles);
+//			allHistoryBoxes = filesMap.size();
+//			page = 0; // When a filter changes the page should reset to the first one.
+//			loadHistoryVBox(filesMap);
+//			buildPagingHBox();
+//			buildAdvanceHBox();
+//		} catch (final HederaClientException e) {
+//			logger.error(e);
+//		}
+//	}
 
 	private Button buildPageButton(final int p) {
 		final var button = new Button(String.valueOf(p));
@@ -1278,9 +1282,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	}
 
-	public List<RemoteFile> getHistory() {
-		return historyFiles.getFiles();
-	}
+//	public List<RemoteFile> getHistory() {
+//		return historyFiles.getFiles();
+//	}
 
 	class SortByFileBaseName implements Comparator<File> {
 

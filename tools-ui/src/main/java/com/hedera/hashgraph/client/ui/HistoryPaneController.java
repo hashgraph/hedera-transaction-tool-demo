@@ -66,9 +66,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
@@ -99,18 +99,15 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeHistoryPane() {
-		try {
-			setupMapListener();
-			loadMap();
-			setupFilterBox();
-			contentScrollPane.setContent(setupTable());
-			contentScrollPane.setFitToWidth(true);
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
+		filterOut.addAll(EnumSet.allOf(FileType.class));
+		setupMapListener();
+		loadMap();
+		setupFilterBox();
+		contentScrollPane.setContent(setupTable());
+		contentScrollPane.setFitToWidth(true);
 	}
 
-	private void setupFilterBox() throws HederaClientException {
+	private void setupFilterBox() {
 		filterVBox.managedProperty().bind(filterVBox.visibleProperty());
 		filterVBox.setVisible(false);
 		final var size = filterOut.size();
@@ -142,7 +139,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	@NotNull
-	private GridPane getCheckboxesGridPane() throws HederaClientException {
+	private GridPane getCheckboxesGridPane() {
 		final var gridPane = new GridPane();
 		gridPane.setHgap(5);
 		gridPane.setVgap(5);
@@ -154,18 +151,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			final var typeString = type.toKind().toLowerCase();
 			if (!"".equals(typeString)) {
 				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
-				checkBox.setSelected(true);
-				filterOut.add(type);
-
-//				checkBox.selectedProperty().addListener(
-//						(observableValue, oldValue, newValue) -> {
-//							filteredList.setPredicate(new Predicate<HistoryData>() {
-//								@Override
-//								public boolean test(HistoryData historyData) {
-//									return newValue && historyData.getType().equals(type);
-//								}
-//							});
-//						});
+//				checkBox.setSelected(true);
+//				filterOut.add(type);
+				checkBox.setSelected(filterOut.contains(type));
 				checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 					if (Boolean.FALSE.equals(t1)) {
 						filterOut.remove(type);
@@ -173,8 +161,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 						filterOut.add(type);
 					}
 				});
-
-
 				gridPane.add(checkBox, counter % 3, counter / 3);
 				counter++;
 			}
@@ -185,11 +171,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return gridPane;
 	}
 
-	private void checkBoxListenerAction(final FileType type, final Boolean newValue) {
-
-	}
-
-	private int countType(final FileType type) throws HederaClientException {
+	private int countType(final FileType type) {
 		var count = 0;
 		for (final var value : historyMap.values()) {
 			if (type.equals(value.getType())) {
@@ -235,6 +217,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
 		lastAction.prefWidthProperty().bind(table.widthProperty().divide(5));
 		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		lastAction.setSortType(TableColumn.SortType.DESCENDING);
 
 		final var prepared = new TableColumn<HistoryData, String>("Prepared by:");
 		prepared.setCellValueFactory(new PropertyValueFactory<>("preparedBy"));
@@ -250,6 +233,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		table.getColumns().add(commentColumn);
 		table.getColumns().add(lastAction);
 		table.getColumns().add(reSignColumn);
+		table.getSortOrder().add(lastAction);
 
 		filterOut.addListener((ListChangeListener<FileType>) change -> {
 			while (change.next()) {
@@ -266,9 +250,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
+		tableList.clear();
 		tableList.addAll(historyMap.values());
-		SortedList<HistoryData> sortedList = new SortedList<>(filteredList);
+		final SortedList<HistoryData> sortedList = new SortedList<>(filteredList).sorted();
+
+		sortedList.comparatorProperty().bind(table.comparatorProperty());
 		table.setItems(sortedList);
+		table.sort();
+		setupFilterBox();
 
 		return table;
 
@@ -316,6 +305,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		historyMap.addListener((MapChangeListener<Integer, HistoryData>) change -> {
 			if (!noise) {
 				storeMap();
+				setupTable();
 			}
 		});
 	}
@@ -369,6 +359,15 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		noise = false;
 	}
 
+	public void addToHistory(final String path) {
+		try {
+			final var addition = new HistoryData(path);
+			historyMap.put(addition.getCode(), addition);
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
 	@NotNull
 	private ArrayList<RemoteFile> getRemoteFiles() {
 		final var filenames = new File(Constants.DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
@@ -400,12 +399,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	// region GETTERS
 	public Map<Integer, HistoryData> getHistoryMap() {
+		if (historyMap.isEmpty()) {
+			loadMap();
+		}
 		return historyMap;
 	}
 
-	public boolean inMap(final int code) {
-		return historyMap.containsKey(code);
-	}
 	// endregion
 
 	private TableColumn<HistoryData, String> getReSignColumn(final TableView<HistoryData> table) {
