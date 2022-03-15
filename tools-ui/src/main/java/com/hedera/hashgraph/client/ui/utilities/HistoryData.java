@@ -21,64 +21,86 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
+import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.MetadataAction;
-import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
+import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
+import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
+import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 
 public class HistoryData implements Comparable<HistoryData> {
 	private static final Logger logger = LogManager.getLogger(HistoryData.class);
 
 	private static final String FILENAME_PROPERTY = "filename";
 	private static final String REMOTE_FILE_PARAMETER = "remoteFile";
-	private static final String COMMENTS_PARAMETER = "comments";
 	private static final String ACTIONS_PARAMETER = "actions";
 	private static final String CODE_PARAMETER = "code";
 	private static final String HISTORY_BOOLEAN_PARAMETER = "historyBoolean";
 	private static final String TITLE_PROPERTY = "title";
 	private static final String EXPIRED_PARAMETER = "isExpired";
+	private static final String FEE_PAYER_PROPERTY = "feePayer";
+	private static final String EXPIRATION_DATE = "expirationDate";
 
 	private String title;
 	private String fileName;
 	private final String remoteFilePath;
 	private int code;
-	private final JsonObject comments;
 	private final List<MetadataAction> actions = new ArrayList<>();
 	private final MetadataAction lastAction;
+	private final Identifier feePayer;
+	private final Timestamp expirationDate;
+
 	private boolean history = false;
 	private boolean expired = false;
 
-	public HistoryData(final RemoteFile remoteFile) throws FileNotFoundException {
+	public HistoryData(final RemoteFile remoteFile) {
 		this.title = remoteFile.getTitle();
 		this.fileName = remoteFile.getName();
 		this.code = remoteFile.hashCode();
 		this.remoteFilePath = remoteFile.getPath();
-		this.comments = new UserComments().parse(remoteFile.getCommentsFile()).asJsonObject();
 		this.actions.addAll(remoteFile.getSigningHistory());
-		this.lastAction = Collections.max(actions);
+		this.feePayer = remoteFile.getType().equals(TRANSACTION) ?
+				((TransactionFile) remoteFile).getFeePayerAccountId() :
+				remoteFile.getType().equals(BATCH) ?
+						((BatchFile) remoteFile).getFeePayerAccountID() :
+						Identifier.ZERO;
+		this.expirationDate = remoteFile.getType().equals(TRANSACTION) ?
+				((TransactionFile) remoteFile).getExpiration() :
+				remoteFile.getType().equals(BATCH) ?
+						((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
+						new Timestamp();
+		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
 
-	public HistoryData(final JsonObject object) throws JsonProcessingException {
+	public HistoryData(final JsonObject object) throws JsonProcessingException, HederaClientException {
 		this.title = object.get(TITLE_PROPERTY).getAsString();
 		this.fileName = object.get(FILENAME_PROPERTY).getAsString();
 		this.code = object.get(CODE_PARAMETER).getAsInt();
 		this.remoteFilePath = object.get(REMOTE_FILE_PARAMETER).getAsString();
-		this.comments = object.get(COMMENTS_PARAMETER).getAsJsonObject();
 		for (final var element : object.getAsJsonArray(ACTIONS_PARAMETER)) {
 			try {
 				actions.add(new MetadataAction(element.getAsString()));
@@ -86,12 +108,14 @@ public class HistoryData implements Comparable<HistoryData> {
 				logger.error("Cannot parse action");
 			}
 		}
-		this.lastAction = Collections.max(actions);
+		this.feePayer = Identifier.parse(object.get(FEE_PAYER_PROPERTY).getAsJsonObject());
+		this.expirationDate = new Timestamp(object.get(EXPIRATION_DATE).getAsJsonObject());
+		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.history = object.get(HISTORY_BOOLEAN_PARAMETER).getAsBoolean();
 		this.expired = object.get(EXPIRED_PARAMETER).getAsBoolean();
 	}
 
-	public HistoryData(String path) throws IOException, HederaClientException {
+	public HistoryData(final String path) throws IOException, HederaClientException {
 		this(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(path))));
 	}
 
@@ -99,7 +123,7 @@ public class HistoryData implements Comparable<HistoryData> {
 		try {
 			return FileType.getType(FilenameUtils.getExtension(fileName));
 		} catch (final HederaClientException e) {
-			return FileType.UNKNOWN;
+			return UNKNOWN;
 		}
 	}
 
@@ -108,32 +132,22 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.history = true;
 	}
 
+	public Actions getActions() {
+		return lastAction.getActions();
+	}
+
 	public String getLastAction() {
-		return lastAction.toReadableString();
-	}
+		final var actionString = Actions.ACCEPT == lastAction.getActions() ?
+				TRANSACTION.equals(getType()) || BATCH.equals(getType()) ?
+						"Signed" :
+						"Accepted" :
+				"Declined";
+		final var stamp = lastAction.getTimeStamp().asDate();
+		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy hh:mm:ss aa" : "dd/MM/yyyy HH:mm:ss";
+		final var sdf = new SimpleDateFormat(format);
 
-	public String getLastComment() {
-		return comments.has("comment") ? comments.get("comment").getAsString() : "";
-	}
-
-	public String getPreparedBy() {
-
-		final var author = comments.has("author") ? comments.get("author").getAsString() : "";
-		if ("".equals(author)) {
-			return author;
-		}
-
-		final var split = author.split("@");
-
-		if (split.length == 1) {
-			return author;
-		}
-
-		if (split.length == 2) {
-			return String.format("%s (%s)", split[0], split[1]);
-		}
-
-		return author;
+		return String.format("%s on %s", actionString,
+				sdf.format(stamp) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT));
 	}
 
 	public String getFileName() {
@@ -180,19 +194,32 @@ public class HistoryData implements Comparable<HistoryData> {
 		return Collections.max(actions).getTimeStamp().getSeconds();
 	}
 
+	public String getFeePayer() {
+		return feePayer.toReadableAccountAndChecksum();
+	}
+
+	public String getExpirationDate() {
+		final var stamp = expirationDate.asDate();
+		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy\nhh:mm:ss aa" : "dd/MM/yyyy\nHH:mm:ss";
+		final var sdf = new SimpleDateFormat(format);
+		return sdf.format(stamp) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+	}
+
 	public JsonObject asJson() {
 		final var asJson = new JsonObject();
-		final JsonArray array = new JsonArray();
+		final var array = new JsonArray();
 		actions.stream().map(MetadataAction::toString).forEach(array::add);
 
 		asJson.addProperty(TITLE_PROPERTY, this.title);
 		asJson.addProperty(FILENAME_PROPERTY, this.fileName);
 		asJson.addProperty(CODE_PARAMETER, this.code);
 		asJson.addProperty(REMOTE_FILE_PARAMETER, this.remoteFilePath);
-		asJson.add(COMMENTS_PARAMETER, this.comments);
 		asJson.add(ACTIONS_PARAMETER, array);
+		asJson.add(FEE_PAYER_PROPERTY, feePayer.asJSON());
+		asJson.add(EXPIRATION_DATE, expirationDate.asJSON());
 		asJson.addProperty(HISTORY_BOOLEAN_PARAMETER, history);
 		asJson.addProperty(EXPIRED_PARAMETER, expired);
+
 		return asJson;
 	}
 
@@ -222,5 +249,13 @@ public class HistoryData implements Comparable<HistoryData> {
 	public int compareTo(@NotNull final HistoryData o) {
 
 		return Long.compare(lastAction(), o.lastAction());
+	}
+
+	public LocalDate getExpirationLocalDate() {
+		return expirationDate.asInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+	}
+
+	public LocalDate getActionLocalDate() {
+		return lastAction.getTimeStamp().asInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 	}
 }

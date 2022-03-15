@@ -22,13 +22,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
@@ -42,20 +46,26 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
+import javafx.util.StringConverter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,14 +75,20 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
@@ -80,7 +96,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final String HISTORY_MAP = Constants.SYSTEM_FOLDER + File.separator + "historyMap.json";
 	public static final String RESET_ICON = "icons/icons8-reset-48.png";
 	public static final String FILTER_ICON = "icons/filter.png";
-	private final ObservableList<FileType> filterOut = FXCollections.observableArrayList();
+	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
+	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
 	private final ObservableList<HistoryData> tableList = FXCollections.observableArrayList();
 	private final FilteredList<HistoryData> filteredList = new FilteredList<>(tableList, p -> true);
 
@@ -88,7 +105,31 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	public StackPane historyPane;
 	public ScrollPane contentScrollPane;
-	public VBox filterVBox;
+
+	public Button feePayerIDTooltip;
+	public TextField feePayerTextField;
+
+	public CheckBox acceptedCheckBox;
+	public CheckBox declinedCheckBox;
+
+	public VBox typeFilterVBox;
+	public VBox feePayerFilterVBox;
+	public VBox actedDateFilterVBox;
+	public VBox expirationDateFilterVBox;
+
+	public DatePicker expirationStartDatePicker;
+	public DatePicker expirationEndDatePicker;
+	public DatePicker actionsStartDatePicker;
+	public DatePicker actionsEndDatePicker;
+
+	private final ObservableList<Predicate<HistoryData>> filters = FXCollections.observableArrayList();
+	private Predicate<HistoryData> feePayerPredicate;
+	private Predicate<HistoryData> typePredicate;
+	private Predicate<HistoryData> actionDatePredicate;
+	private Predicate<HistoryData> actionTypePredicate;
+	private Predicate<HistoryData> expirationDatePredicate;
+
+	private final String dateFormat = Locale.getDefault().equals(Locale.US) ? "MM/dd/yyyy" : "dd/MM/yyyy";
 
 	@FXML
 	private Controller controller;
@@ -99,18 +140,79 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeHistoryPane() {
-		filterOut.addAll(EnumSet.allOf(FileType.class));
+		typeFilter.addAll(EnumSet.allOf(FileType.class));
+		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+
 		setupMapListener();
-		loadMap();
-		setupFilterBox();
+		setupPredicates();
+		if (historyMap.isEmpty()) {
+			loadMap();
+		}
+		setupTypeFilterBox();
+		setupFeePayerFilterBox();
+		setupExpirationDateBox();
+		setupActionDateBox();
 		contentScrollPane.setContent(setupTable());
 		contentScrollPane.setFitToWidth(true);
+
+		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
+				actionsEndDatePicker);
 	}
 
-	private void setupFilterBox() {
-		filterVBox.managedProperty().bind(filterVBox.visibleProperty());
-		filterVBox.setVisible(false);
-		final var size = filterOut.size();
+	private void formatDatePicker(final DatePicker... pickers) {
+		if (pickers == null) {
+			return;
+		}
+		for (final var picker : pickers) {
+			picker.setPromptText(dateFormat.toLowerCase(Locale.ROOT));
+			picker.setConverter(new StringConverter<>() {
+				final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(dateFormat);
+
+				@Override
+				public String toString(final LocalDate localDate) {
+					if (localDate != null) {
+						return dateFormatter.format(localDate);
+					}
+					return "";
+				}
+
+				@Override
+				public LocalDate fromString(final String s) {
+					if (s != null && !s.isEmpty()) {
+						return LocalDate.parse(s, dateFormatter);
+					}
+					return null;
+				}
+			});
+		}
+	}
+
+	private void setupPredicates() {
+		feePayerPredicate = historyData -> {
+			final var accounts = parseAccountNumbers(feePayerTextField.getText());
+			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
+		};
+	}
+
+	private void setupExpirationDateBox() {
+		expirationDateFilterVBox.managedProperty().bind(expirationDateFilterVBox.visibleProperty());
+		expirationDateFilterVBox.setVisible(false);
+	}
+
+	private void setupActionDateBox() {
+		actedDateFilterVBox.managedProperty().bind(actedDateFilterVBox.visibleProperty());
+		actedDateFilterVBox.setVisible(false);
+	}
+
+	private void setupFeePayerFilterBox() {
+		feePayerFilterVBox.managedProperty().bind(feePayerFilterVBox.visibleProperty());
+		feePayerFilterVBox.setVisible(false);
+	}
+
+	private void setupTypeFilterBox() {
+		typeFilterVBox.managedProperty().bind(typeFilterVBox.visibleProperty());
+		typeFilterVBox.setVisible(false);
+		final var size = typeFilter.size();
 		final var filterTitle = size > 0 ? String.format("filters (%d)", size) : "filters";
 		final var title = new Label(filterTitle);
 		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
@@ -133,9 +235,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var gridPane = getCheckboxesGridPane();
 		vBox.getChildren().add(gridPane);
 
-		filterVBox.getChildren().clear();
-		filterVBox.getChildren().addAll(titleBox, vBox);
-		filterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
+		typeFilterVBox.getChildren().clear();
+		typeFilterVBox.getChildren().addAll(titleBox, vBox);
+		typeFilterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
 	}
 
 	@NotNull
@@ -143,28 +245,61 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var gridPane = new GridPane();
 		gridPane.setHgap(5);
 		gridPane.setVgap(5);
-		var counter = 0;
 		noise = true;
-		for (final var type : EnumSet.allOf(FileType.class)) {
 
+		final var selectAll = new CheckBox("Select all");
+		selectAll.setSelected(true);
+
+		final var selectNone = new CheckBox("Select none");
+		selectNone.setSelected(false);
+
+		final List<CheckBox> checkBoxes = new ArrayList<>();
+
+		for (final var type : EnumSet.allOf(FileType.class)) {
 			final var typeCounter = countType(type);
 			final var typeString = type.toKind().toLowerCase();
 			if (!"".equals(typeString)) {
 				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
-//				checkBox.setSelected(true);
-//				filterOut.add(type);
-				checkBox.setSelected(filterOut.contains(type));
+				checkBox.setSelected(typeFilter.contains(type));
 				checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 					if (Boolean.FALSE.equals(t1)) {
-						filterOut.remove(type);
+						typeFilter.remove(type);
+						selectAll.setSelected(false);
 					} else {
-						filterOut.add(type);
+						typeFilter.add(type);
+						selectNone.setSelected(false);
 					}
 				});
-				gridPane.add(checkBox, counter % 3, counter / 3);
-				counter++;
+				checkBoxes.add(checkBox);
 			}
 		}
+
+		selectNone.setSelected(checkBoxes.stream().anyMatch(CheckBox::isSelected));
+		selectAll.setSelected(checkBoxes.stream().noneMatch(CheckBox::isSelected));
+
+		selectAll.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				checkBoxes.forEach(checkBox -> checkBox.setSelected(true));
+				selectNone.setSelected(false);
+			}
+		});
+
+		selectNone.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				checkBoxes.forEach(checkBox -> checkBox.setSelected(false));
+				selectAll.setSelected(false);
+			}
+		});
+
+		var counter = 0;
+		for (final var checkBox : checkBoxes) {
+			gridPane.add(checkBox, counter % 3, counter / 3);
+			counter++;
+		}
+
+		gridPane.add(selectAll, 0, counter / 3 + 1);
+		gridPane.add(selectNone, 1, counter / 3 + 1);
+
 		gridPane.setVgap(10);
 		gridPane.setHgap(10);
 		noise = false;
@@ -196,75 +331,211 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	private TableView<HistoryData> setupTable() {
 		final var table = new TableView<HistoryData>();
-		final var refresh = formatButton(FILTER_ICON);
-		refresh.setOnAction(actionEvent -> showFilters());
-		final var title = new HBox();
-		title.getChildren().add(new Label("Title"));
-		title.getChildren().add(refresh);
-		title.setSpacing(5);
-		title.setAlignment(Pos.CENTER_RIGHT);
-		final var titleColumn = new TableColumn<HistoryData, String>("");
-		titleColumn.setGraphic(title);
-		titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-		titleColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
+		final var typeColumn = getTypeColumn(table);
+		final var feePayerColumn = getFeePayerColumn(table);
+		final var lastAction = getLastActionColumn(table);
 
-		final var commentColumn = new TableColumn<HistoryData, String>("Comment");
-		commentColumn.setCellValueFactory(new PropertyValueFactory<>("lastComment"));
-		commentColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
-		commentColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
-
-		final var lastAction = new TableColumn<HistoryData, String>("Latest Action");
-		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
-		lastAction.prefWidthProperty().bind(table.widthProperty().divide(5));
-		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		lastAction.setSortType(TableColumn.SortType.DESCENDING);
-
-		final var prepared = new TableColumn<HistoryData, String>("Prepared by:");
-		prepared.setCellValueFactory(new PropertyValueFactory<>("preparedBy"));
-		prepared.prefWidthProperty().bind(table.widthProperty().divide(5));
-		prepared.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		final var expirationDateColumn = getExpirationColumn(table);
 
 		final var expanderColumn = getExpanderColumn();
 		final var reSignColumn = getReSignColumn(table);
 
 		table.getColumns().add(expanderColumn);
-		table.getColumns().add(titleColumn);
-		table.getColumns().add(prepared);
-		table.getColumns().add(commentColumn);
+		table.getColumns().add(typeColumn);
+		table.getColumns().add(expirationDateColumn);
+		table.getColumns().add(feePayerColumn);
 		table.getColumns().add(lastAction);
 		table.getColumns().add(reSignColumn);
 		table.getSortOrder().add(lastAction);
 
-		filterOut.addListener((ListChangeListener<FileType>) change -> {
+		typeFilter.addListener((ListChangeListener<FileType>) change -> {
 			while (change.next()) {
 				if (!noise && (change.wasAdded() || change.wasRemoved())) {
-					filteredList.setPredicate(statesModel -> {
-						if (!noise) {
-							if (change.wasAdded() || change.wasRemoved()) {
-								return filterOut.contains(statesModel.getType());
-							}
+					typePredicate = statesModel -> {
+						if (!noise && (change.wasAdded() || change.wasRemoved())) {
+							return typeFilter.contains(statesModel.getType());
 						}
 						return false;
-					});
+					};
+					filters.add(typePredicate);
 				}
 			}
 		});
 
+		actionsFilter.addListener((ListChangeListener<Actions>) change -> {
+			while (change.next()) {
+				if (!noise && (change.wasAdded() || change.wasRemoved())) {
+					actionTypePredicate = historyData -> {
+						if (!noise && (change.wasAdded() || change.wasRemoved())) {
+							return actionsFilter.contains(historyData.getActions());
+						}
+						return false;
+					};
+					filters.add(actionTypePredicate);
+				}
+			}
+		});
+
+		acceptedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				actionsFilter.add(Actions.ACCEPT);
+			} else {
+				actionsFilter.remove(Actions.ACCEPT);
+			}
+		});
+
+		declinedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				actionsFilter.add(Actions.DECLINE);
+			} else {
+				actionsFilter.remove(Actions.DECLINE);
+			}
+		});
+
+		feePayerTextField.setOnKeyReleased(event -> {
+			if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
+				return;
+			}
+			feePayerFilterAccept();
+		});
+
+		filteredList.predicateProperty().bind(
+				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
+
 		tableList.clear();
 		tableList.addAll(historyMap.values());
-		final SortedList<HistoryData> sortedList = new SortedList<>(filteredList).sorted();
+		final var sortedList = new SortedList<>(filteredList);
 
 		sortedList.comparatorProperty().bind(table.comparatorProperty());
 		table.setItems(sortedList);
 		table.sort();
-		setupFilterBox();
-
+		setupTypeFilterBox();
 		return table;
-
 	}
 
-	private void showFilters() {
-		filterVBox.setVisible(!filterVBox.isVisible());
+	@NotNull
+	private TableColumn<HistoryData, String> getExpirationColumn(TableView<HistoryData> table) {
+		final var expirationDateColumn = new TableColumn<HistoryData, String>("");
+		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+		expirationDateColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
+		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		final var lastActionBox = new HBox();
+		lastActionBox.getChildren().add(new Label("Expiration Date:"));
+		final var lastActionRegion = getRegion();
+		lastActionBox.getChildren().add(lastActionRegion);
+		final var lastActionButton = formatButton(FILTER_ICON);
+		lastActionButton.setOnAction(actionEvent -> {
+			expirationDateFilterVBox.setVisible(!expirationDateFilterVBox.isVisible());
+			if (expirationDateFilterVBox.isVisible()) {
+				typeFilterVBox.setVisible(false);
+				feePayerFilterVBox.setVisible(false);
+				actedDateFilterVBox.setVisible(false);
+			}
+		});
+		lastActionBox.getChildren().add(lastActionButton);
+		lastActionBox.setAlignment(Pos.CENTER_RIGHT);
+		expirationDateColumn.setGraphic(lastActionBox);
+		return expirationDateColumn;
+	}
+
+	@NotNull
+	private TableColumn<HistoryData, String> getLastActionColumn(final TableView<HistoryData> table) {
+		final var lastAction = new TableColumn<HistoryData, String>("");
+		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
+		lastAction.prefWidthProperty().bind(table.widthProperty().divide(5));
+		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		lastAction.setSortType(TableColumn.SortType.DESCENDING);
+		final var lastActionBox = new HBox();
+		lastActionBox.getChildren().add(new Label("Last acted on:"));
+		final var lastActionRegion = getRegion();
+		lastActionBox.getChildren().add(lastActionRegion);
+		final var lastActionButton = formatButton(FILTER_ICON);
+		lastActionButton.setOnAction(actionEvent -> {
+			actedDateFilterVBox.setVisible(!actedDateFilterVBox.isVisible());
+			if (actedDateFilterVBox.isVisible()) {
+				typeFilterVBox.setVisible(false);
+				feePayerFilterVBox.setVisible(false);
+				expirationDateFilterVBox.setVisible(false);
+			}
+		});
+		lastActionBox.getChildren().add(lastActionButton);
+		lastActionBox.setAlignment(Pos.CENTER_RIGHT);
+		lastAction.setGraphic(lastActionBox);
+
+		return lastAction;
+	}
+
+	@NotNull
+	private TableColumn<HistoryData, String> getFeePayerColumn(final TableView<HistoryData> table) {
+		final var feePayerColumn = new TableColumn<HistoryData, String>("");
+		feePayerColumn.setCellValueFactory(new PropertyValueFactory<>("feePayer"));
+		feePayerColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
+		feePayerColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		feePayerColumn.setCellValueFactory(this::setupFeePayerCell);
+		final var feePayerHBox = new HBox();
+		feePayerHBox.getChildren().add(new Label("Fee Payer Account"));
+		final var feePayerRegion = getRegion();
+		feePayerHBox.getChildren().add(feePayerRegion);
+		final var feePayerButton = formatButton(FILTER_ICON);
+		feePayerButton.setOnAction(actionEvent -> {
+			feePayerFilterVBox.setVisible(!feePayerFilterVBox.isVisible());
+			if (feePayerFilterVBox.isVisible()) {
+				typeFilterVBox.setVisible(false);
+				actedDateFilterVBox.setVisible(false);
+				expirationDateFilterVBox.setVisible(false);
+			}
+		});
+		feePayerHBox.getChildren().add(feePayerButton);
+		feePayerHBox.setSpacing(5);
+		feePayerHBox.setAlignment(Pos.CENTER_RIGHT);
+		feePayerColumn.setGraphic(feePayerHBox);
+		return feePayerColumn;
+	}
+
+	@NotNull
+	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
+		final var id = Identifier.parse(cellData.getValue().getFeePayer());
+		if (id.equals(Identifier.ZERO)) {
+			return new SimpleStringProperty("");
+		}
+		return new SimpleStringProperty(id.toNicknameAndChecksum(controller.getAccountsList()));
+	}
+
+	@NotNull
+	private TableColumn<HistoryData, String> getTypeColumn(final TableView<HistoryData> table) {
+		final var typeButton = formatButton(FILTER_ICON);
+		typeButton.setOnAction(actionEvent -> {
+			typeFilterVBox.setVisible(!typeFilterVBox.isVisible());
+			if (typeFilterVBox.isVisible()) {
+				feePayerFilterVBox.setVisible(false);
+				actedDateFilterVBox.setVisible(false);
+				expirationDateFilterVBox.setVisible(false);
+			}
+		});
+
+		final var typeBox = new HBox();
+		typeBox.getChildren().add(new Label("Type"));
+		final var typeRegion = getRegion();
+		typeBox.getChildren().add(typeRegion);
+		typeBox.getChildren().add(typeButton);
+		typeBox.setSpacing(5);
+		typeBox.setAlignment(Pos.CENTER_RIGHT);
+
+		final var typeColumn = new TableColumn<HistoryData, String>("");
+		typeColumn.setGraphic(typeBox);
+		typeColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+		typeColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
+
+		return typeColumn;
+	}
+
+	@NotNull
+	private Region getRegion() {
+		final var typeRegion = new Region();
+		typeRegion.setPrefHeight(Region.USE_COMPUTED_SIZE);
+		typeRegion.setPrefWidth(Region.USE_COMPUTED_SIZE);
+		HBox.setHgrow(typeRegion, Priority.ALWAYS);
+		return typeRegion;
 	}
 
 	@NotNull
@@ -335,6 +606,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			}
 			final var array = readJsonArray(mapFile.getAbsolutePath());
 			for (final var element : array) {
+				logger.info("Loading element: {}", element.getAsJsonObject().get("filename").getAsString());
 				final var historyData = new HistoryData(element.getAsJsonObject());
 				historyMap.put(historyData.getCode(), historyData);
 			}
@@ -464,4 +736,63 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return button;
 	}
 
+	public void resetFeeFilter() {
+		filters.remove(feePayerPredicate);
+	}
+
+	public void feePayerFilterAccept() {
+		filters.add(feePayerPredicate);
+	}
+
+	private boolean checkDate(final String text) {
+		final var regex = (Locale.getDefault().equals(Locale.US)) ?
+				"^([0-2][0-9]||3[0-1])/(0[0-9]||1[0-2])/([0-9][0-9])?[0-9][0-9]$" :
+				"^(0[0-9]||1[0-2])/([0-2][0-9]||3[0-1])/([0-9][0-9])?[0-9][0-9]$";
+		//Creating a pattern object
+		final var pattern = Pattern.compile(regex);
+		//Matching the compiled pattern in the String
+		final var matcher = pattern.matcher(text);
+		return matcher.matches();
+	}
+
+	public void actionFilterAccept() {
+		logger.info("Filtering action dates");
+		final var start = actionsStartDatePicker.getValue();
+		final var end = actionsEndDatePicker.getValue();
+		actionDatePredicate = historyData -> {
+			final var date = historyData.getActionLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+		filters.add(actionDatePredicate);
+	}
+
+	public void actionFilterReset() {
+		filters.remove(actionDatePredicate);
+	}
+
+	public void expirationFilterAccept() {
+		logger.info("Filtering action dates");
+		final var start = expirationStartDatePicker.getValue();
+		final var end = expirationEndDatePicker.getValue();
+
+		if (start == null || end == null) {
+			return;
+		}
+
+		expirationDatePredicate = historyData -> {
+			final var date = historyData.getExpirationLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+		filters.add(expirationDatePredicate);
+	}
+
+	public void expirationFilterReset() {
+		expirationEndDatePicker.getEditor().clear();
+		expirationStartDatePicker.getEditor().clear();
+		filters.remove(expirationDatePredicate);
+	}
 }

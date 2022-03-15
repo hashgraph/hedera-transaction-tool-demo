@@ -68,6 +68,13 @@ public class MetadataAction implements Comparable<MetadataAction> {
 		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
 	}
 
+	public MetadataAction() {
+		this.timeStamp = new Timestamp();
+		this.actions = Actions.DECLINE;
+		this.userComments = "";
+		this.keyName = "";
+	}
+
 	public Timestamp getTimeStamp() {
 		return timeStamp;
 	}
