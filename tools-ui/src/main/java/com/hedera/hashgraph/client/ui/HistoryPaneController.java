@@ -769,6 +769,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	public void actionFilterReset() {
+		declinedCheckBox.setSelected(true);
+		acceptedCheckBox.setSelected(true);
 		filters.remove(actionDatePredicate);
 	}
 

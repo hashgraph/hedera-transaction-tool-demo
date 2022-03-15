@@ -38,7 +38,6 @@ import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.KeyList;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -52,7 +51,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -65,7 +63,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,13 +84,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_OF_SINGLE_BOXES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_ACTIVE;
-import static com.hedera.hashgraph.client.core.constants.Constants.STYLE_INACTIVE;
-import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 
@@ -108,7 +101,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 
 	private final Map<String, File> privateKeyMap = new HashMap<>();
-	private final List<FileType> filterOut = new ArrayList<>();
 
 	private Map<String, String> publicKeyMap;
 
@@ -116,18 +108,12 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	public VBox defaultViewVBox;
 	public VBox newFilesViewVBox;
-	public VBox historyFilesViewVBox;
-	public VBox historyFilesVBox = new VBox();
-	public VBox filterVBox;
 	public ScrollPane homeFilesScrollPane;
 
 	@FXML
 	private Controller controller;
 	// endregion
 
-	private int page = 0;
-	private int boxesPerPage = 10;
-	private int allHistoryBoxes = 0;
 	private long lastModified = 0;
 	private int lastCount = 0;
 	private boolean historyChanged = false;
@@ -150,7 +136,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		loadPKMap();
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
-		historyFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
 		try {
@@ -185,8 +170,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				defaultViewVBox.setDisable(false);
 				defaultViewVBox.setVisible(true);
 			}
-			historyFilesViewVBox.setVisible(true);
-			historyFilesViewVBox.setDisable(false);
 
 			if (remoteFilesMap.size() > 0) {
 				defaultViewVBox.setVisible(false);
@@ -221,29 +204,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (!newFiles.isEmpty()) {
 			newFilesViewVBox.getChildren().addAll(newFiles);
 		}
-	}
-
-//	private void loadHistoryBox(final RemoteFilesMap historyFiles) throws HederaClientException {
-//		final var filesMap = filterHistory(historyFiles);
-//		allHistoryBoxes = filesMap.size();
-//
-//		loadHistoryVBox(filesMap);
-//		buildFilterBox();
-//		buildPagingHBox();
-//		buildAdvanceHBox();
-//	}
-
-	/**
-	 * Load the history files into the history box
-	 *
-	 * @param remoteFilesMap
-	 * 		the history files map
-	 */
-	private void loadHistoryVBox(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
-		final var historyNodes = displayFiles(remoteFilesMap, true);
-		historyFilesVBox.getChildren().clear();
-		historyFilesVBox.getChildren().addAll(historyNodes);
-		historyFilesVBox.setSpacing(VBOX_SPACING);
 	}
 
 	/**
@@ -298,53 +258,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (controller.historyPaneController.getHistoryMap().containsKey(rf.hashCode())) {
 				remoteFilesMap.remove(rf.getName());
 			}
-
-//			if (historyFiles.exists(rf.getName())) {
-//				if (rf instanceof InfoFile || rf instanceof PublicKeyFile) {
-//					final var newDate = rf.getDate();
-//					final var historyDate = historyFiles.get(rf.getName()).getDate();
-//					if (newDate <= historyDate) {
-//						remoteFilesMap.remove(rf.getName());
-//					}
-//					continue;
-//				}
-//				remoteFilesMap.remove(rf.getName());
-//			}
 		}
 	}
 
-//	/**
-//	 * Load the history files
-//	 */
-//	private void loadHistory() {
-//		final var version = controller.getVersion();
-//
-//		if (new File(DEFAULT_HISTORY).mkdirs()) {
-//			logger.info("History folder created");
-//		}
-//		// Load history files
-//		historyFiles.clearMap();
-//		historyFiles =
-//				new RemoteFilesMap(version).fromFile(new LocalFileServiceAdapter(DEFAULT_HISTORY));
-//		for (final var rf : historyFiles.getFiles()) {
-//			rf.setHistory(true);
-//		}
-//	}
-
-	private RemoteFilesMap filterHistory(final RemoteFilesMap historyFiles) {
-		if (filterOut.isEmpty()) {
-			return historyFiles;
-		}
-		final var filesMap = new RemoteFilesMap();
-		for (final var remoteFile : historyFiles.getFiles()) {
-			for (final var fileType : filterOut) {
-				if (remoteFile.getType().equals(fileType)) {
-					filesMap.add(remoteFile);
-				}
-			}
-		}
-		return filesMap;
-	}
 
 	private void loadPubKeys() {
 		publicKeyMap = new HashMap<>();
@@ -393,15 +309,14 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 		final var boxes = getFileBoxes(files);
 
-		allHistoryBoxes = boxes.size();
-
 		if (!history) {
 			return boxes;
 		}
 		var i = 0;
+		final int boxesPerPage = 10;
 		while (i < boxesPerPage) {
-			if (page * boxesPerPage + i < boxes.size()) {
-				showBoxes.add(boxes.get(page * boxesPerPage + i));
+			if (i < boxes.size()) {
+				showBoxes.add(boxes.get(i));
 			} else {
 				break;
 			}
@@ -1055,236 +970,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 		return pair;
 	}
-
-	private void buildAdvanceHBox() {
-		pagesHBox.getChildren().clear();
-		pagesHBox.setAlignment(Pos.CENTER_LEFT);
-		pagesHBox.setSpacing(5);
-		final var backwards = NUMBER_OF_SINGLE_BOXES / 2;
-		final var forwards = NUMBER_OF_SINGLE_BOXES - backwards;
-		pagesHBox.setPadding(new Insets(2));
-
-		final var pages = (allHistoryBoxes + boxesPerPage - 1) / boxesPerPage;
-
-		final var prev = buildMoveByOneButton("Prev", Math.max(0, page - 1));
-		final var next = buildMoveByOneButton("Next", Math.min(pages, page + 1));
-
-		if (pages < NUMBER_OF_SINGLE_BOXES) {
-			handleLessThanPages(pages);
-			return;
-		}
-
-		var start = Math.max(0, page - backwards);
-		var end = Math.min(pages, page + forwards);
-		if (end - start < NUMBER_OF_SINGLE_BOXES) {
-			if (start == 0) {
-				end = NUMBER_OF_SINGLE_BOXES;
-			} else if (end == NUMBER_OF_SINGLE_BOXES) {
-				start = 0;
-			}
-		}
-
-		if (page > 0) {
-			pagesHBox.getChildren().add(prev);
-		}
-
-		if (start < backwards) {
-			start = 0;
-			end = NUMBER_OF_SINGLE_BOXES;
-		} else {
-			pagesHBox.getChildren().add(buildPageButton(1));
-			pagesHBox.getChildren().add(new Label("..."));
-		}
-		if (end > pages - backwards) {
-			end = pages;
-			start = pages - NUMBER_OF_SINGLE_BOXES;
-		}
-
-		setButtonInBox(pages, next, start, end);
-	}
-
-	private void setButtonInBox(final int pages, final Button next, final int start, final int end) {
-		for (var i = start + 1; i <= end; i++) {
-			if (page == i - 1) {
-				pagesHBox.getChildren().add(buildDummyButton(i));
-			} else {
-				pagesHBox.getChildren().add(buildPageButton(i));
-			}
-		}
-		if (end < pages - 1) {
-			pagesHBox.getChildren().add(new Label("..."));
-			pagesHBox.getChildren().add(buildPageButton(pages));
-		}
-
-		if (page < pages - 1) {
-			pagesHBox.getChildren().add(next);
-		}
-	}
-
-	private void handleLessThanPages(final int pages) {
-		var i = 0;
-		while (i < pages) {
-			final var b = (page == i) ? buildDummyButton(i + 1) : buildPageButton(i + 1);
-			pagesHBox.getChildren().add(b);
-			i++;
-		}
-	}
-
-	private Button buildMoveByOneButton(final String title, final int limit) {
-		final var prev = new Button(title);
-		prev.setOnAction(actionEvent -> {
-			page = limit;
-			forceUpdate = true;
-			initializeHomePane();
-
-		});
-		prev.setStyle(STYLE_ACTIVE);
-		prev.setPrefWidth(70);
-		return prev;
-	}
-
-	private void buildPagingHBox() {
-		// Page length boxes (fixed)
-
-		final var one = getNumberOfBoxesButton(1);
-		final var five = getNumberOfBoxesButton(5);
-		final var ten = getNumberOfBoxesButton(10);
-		final var twenty = getNumberOfBoxesButton(20);
-
-		chooseLength.getChildren().clear();
-		chooseLength.setAlignment(Pos.CENTER_LEFT);
-		chooseLength.setSpacing(5);
-		chooseLength.getChildren().addAll(one, five, ten, twenty);
-		chooseLength.getChildren().add(new Label("per page"));
-		chooseLength.setAlignment(Pos.CENTER_RIGHT);
-		chooseLength.setSpacing(5);
-		chooseLength.setPadding(new Insets(2));
-	}
-
-	private Button getNumberOfBoxesButton(final int newBoxesPerPage) {
-		final var button = new Button(String.valueOf(newBoxesPerPage));
-		final var style = newBoxesPerPage == boxesPerPage ?
-				STYLE_INACTIVE :
-				STYLE_ACTIVE;
-		button.setStyle(style);
-		button.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		button.setOnAction(actionEvent -> {
-			final var first = page * boxesPerPage;
-			page = first / newBoxesPerPage;
-			boxesPerPage = newBoxesPerPage;
-			forceUpdate = true;
-			initializeHomePane();
-		});
-		return button;
-	}
-
-//	private void buildFilterBox() {
-//		final var size = filterOut.size();
-//		final var filterTitle = (size > 0) ? String.format("filters (%d)", size) : "filters";
-//		final var title = new Label(filterTitle);
-//		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
-//		title.setPadding(new Insets(5));
-//
-//		final var image = new Image("icons" + File.separator + "helpIcon.png");
-//		final var imageView = new ImageView(image);
-//		imageView.setPreserveRatio(true);
-//		imageView.setFitHeight(15);
-//		final var toolTipButton = getToolTipButton(imageView);
-//
-//		final var titleBox = new HBox();
-//		titleBox.getChildren().addAll(title, toolTipButton);
-//
-//		final var vBox = new VBox();
-//		vBox.setPadding(new Insets(5));
-//		vBox.setVisible(true);
-//
-//		vBox.managedProperty().bind(vBox.visibleProperty());
-//		final var gridPane = getCheckboxesGridPane();
-//		vBox.getChildren().add(gridPane);
-//
-//		filterVBox.getChildren().clear();
-//		filterVBox.getChildren().addAll(titleBox, vBox);
-//		filterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
-//	}
-
-	//	@NotNull
-//	private GridPane getCheckboxesGridPane() {
-//		final var gridPane = new GridPane();
-//		gridPane.setHgap(5);
-//		gridPane.setVgap(5);
-//		var counter = 0;
-//		for (final var type : EnumSet.allOf(FileType.class)) {
-//			final var typeCounter = historyFiles.countType(type);
-//			final var typeString = type.toKind().toLowerCase();
-//			if (!"".equals(typeString)) {
-//				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
-//				if (filterOut.contains(type)) {
-//					checkBox.setSelected(true);
-//				}
-//				checkBox.selectedProperty().addListener(
-//						(observableValue, oldValue, newValue) -> checkBoxListenerAction(type, newValue));
-//				gridPane.add(checkBox, counter % 3, counter / 3);
-//				counter++;
-//			}
-//		}
-//		gridPane.setVgap(10);
-//		gridPane.setHgap(10);
-//		return gridPane;
-//	}
-	@NotNull
-	private Button getToolTipButton(final ImageView imageView) {
-		final var toolTipButton = new Button();
-		toolTipButton.setGraphic(imageView);
-		toolTipButton.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		toolTipButton.setPadding(new Insets(0, 0, 10, 0));
-		toolTipButton.setMinWidth(25);
-
-		toolTipButton.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, FILTER_TOOLTIP_TEXT));
-		return toolTipButton;
-	}
-
-//	private void checkBoxListenerAction(final FileType type, final Boolean newValue) {
-//		if (Boolean.TRUE.equals(newValue)) {
-//			filterOut.add(type);
-//		} else {
-//			filterOut.remove(type);
-//		}
-//		try {
-//			final var filesMap = filterHistory(historyFiles);
-//			allHistoryBoxes = filesMap.size();
-//			page = 0; // When a filter changes the page should reset to the first one.
-//			loadHistoryVBox(filesMap);
-//			buildPagingHBox();
-//			buildAdvanceHBox();
-//		} catch (final HederaClientException e) {
-//			logger.error(e);
-//		}
-//	}
-
-	private Button buildPageButton(final int p) {
-		final var button = new Button(String.valueOf(p));
-		button.setOnAction(actionEvent -> {
-			page = p - 1;
-			forceUpdate = true;
-			initializeHomePane();
-		});
-		button.setStyle(STYLE_ACTIVE);
-		button.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		return button;
-	}
-
-	private Button buildDummyButton(final int p) {
-		final var button = new Button(String.valueOf(p));
-		button.setStyle(STYLE_INACTIVE);
-		button.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		return button;
-
-	}
-
-//	public List<RemoteFile> getHistory() {
-//		return historyFiles.getFiles();
-//	}
 
 	class SortByFileBaseName implements Comparator<File> {
 
