@@ -255,7 +255,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private void removeHistoryFiles() {
 		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
 			logger.info(rf.getName());
-			if (controller.historyPaneController.getHistoryMap().containsKey(rf.hashCode())) {
+			final var historyMap = controller.historyPaneController.getHistoryMap();
+			if (historyMap.containsKey(rf.hashCode()) && historyMap.get(rf.hashCode()).isHistory()) {
 				remoteFilesMap.remove(rf.getName());
 			}
 		}
