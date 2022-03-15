@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.remote;
 
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileActions;
@@ -32,6 +33,7 @@ import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PublicKey;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -63,7 +66,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		try {
 			final var accountInfo = AccountInfo.fromBytes(readBytes(file.getFullPath()));
 			this.key = accountInfo.key;
-			this.accountID = new Identifier(accountInfo.accountId);
+			this.accountID = new Identifier(accountInfo.accountId, getNetwork(file.getFullPath()));
 			this.timestamp = new Timestamp(file.getAttributes().creationTime().toMillis() / 1000, 0);
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e);
@@ -172,5 +175,20 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	private String getNetwork(final String accountPath) throws HederaClientException, InvalidProtocolBufferException {
+		final var name = FilenameUtils.getBaseName(accountPath);
+		if (name.contains("-")) {
+			return name.substring(name.lastIndexOf("-") + 1).toUpperCase(Locale.ROOT);
+		}
+		final var info = AccountInfo.fromBytes(readBytes(accountPath));
+		if (info.ledgerId != null) {
+			if (!"".equals(info.ledgerId.toString())) {
+				return info.ledgerId.toString().toUpperCase(Locale.ROOT);
+			}
+			return "UNKNOWN";
+		}
+		return "UNKNOWN";
 	}
 }

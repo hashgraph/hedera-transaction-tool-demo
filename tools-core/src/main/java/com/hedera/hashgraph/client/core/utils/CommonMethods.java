@@ -345,13 +345,19 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 */
 	public static String nicknameOrNumber(final Identifier accountNumber, final JsonObject accounts) {
 		final var name = accountNumber.toReadableString();
-		final var nickname = (accounts.has(name)) ? accounts.get(name).getAsString() : "";
-		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(name));
+		final var nameAndNet = accountNumber.toReadableAccountAndNetwork();
+		final var nickname = (accounts.has(nameAndNet)) ? accounts.get(nameAndNet).getAsString() : "";
+
+
+		final var ledger = NetworkEnum.asLedger(accountNumber.getNetworkName());
+
+
+		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(ledger.toBytes(), name));
 		if (name.equals(nickname) || "".equals(nickname)) {
 			return formattedName;
 		} else {
 			return String.format("%s (%s-%s)", nickname.replace(" ", "\u00A0"), name,
-					AddressChecksums.checksum(name));
+					AddressChecksums.checksum(ledger.toBytes(), name));
 		}
 	}
 

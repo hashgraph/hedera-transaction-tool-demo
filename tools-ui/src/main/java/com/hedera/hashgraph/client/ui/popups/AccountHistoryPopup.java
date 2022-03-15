@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import com.hedera.hashgraph.sdk.AccountId;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -76,11 +75,11 @@ public class AccountHistoryPopup {
 		AccountHistoryPopup.controller = controller;
 	}
 
-	public static void display(final AccountId accountId, final Controller controller) {
+	public static void display(final Identifier accountId, final Controller controller) {
 		history.clear();
 		setController(controller);
 		try {
-			final var name = new Identifier(accountId).toReadableString();
+			final var name = accountId.toReadableAccountAndNetwork();
 			final var current = readJson(new File(ACCOUNTS_INFO_FOLDER, name + "." + JSON_EXTENSION));
 			final var lines = getTableLines(accountId, current);
 
@@ -181,8 +180,9 @@ public class AccountHistoryPopup {
 	}
 
 	@NotNull
-	private static List<TableLine> getTableLines(final AccountId accountId,
+	private static List<TableLine> getTableLines(final Identifier accountId,
 			final JsonObject current) throws IOException {
+
 		getHistory(accountId);
 
 		final List<TableLine> lines = new ArrayList<>();
@@ -198,8 +198,8 @@ public class AccountHistoryPopup {
 		return lines;
 	}
 
-	private static void getHistory(final AccountId accountId) throws IOException {
-		final var name = new Identifier(accountId).toReadableString();
+	private static void getHistory(final Identifier accountId) throws IOException {
+		final var name = accountId.toReadableAccountAndNetwork();
 		final var archive = new File(ACCOUNTS_INFO_FOLDER, "Archive").listFiles(
 				(dir, filename) -> filename.contains(name + "_") && filename.endsWith(JSON_EXTENSION));
 

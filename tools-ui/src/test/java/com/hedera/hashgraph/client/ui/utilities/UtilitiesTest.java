@@ -81,61 +81,61 @@ public class UtilitiesTest {
 	public void parseAccountNumbers() {
 
 		final var testString = "";
-		final var parseList = Utilities.parseAccountNumbers(testString);
+		final var parseList = Utilities.parseAccountNumbers(testString, "MAINNET");
 		assertTrue(parseList.isEmpty());
 
 		final var testString0 = "1,2 ,3";
-		final var parseList0 = Utilities.parseAccountNumbers(testString0);
+		final var parseList0 = Utilities.parseAccountNumbers(testString0, "MAINNET");
 
 		assertEquals(3, parseList0.size());
-		assertTrue(parseList0.contains(new Identifier(0, 0, 1).asAccount()));
-		assertTrue(parseList0.contains(new Identifier(0, 0, 2).asAccount()));
-		assertTrue(parseList0.contains(new Identifier(0, 0, 3).asAccount()));
+		assertTrue(parseList0.contains(new Identifier(0, 0, 1, "MAINNET").asAccount()));
+		assertTrue(parseList0.contains(new Identifier(0, 0, 2, "MAINNET").asAccount()));
+		assertTrue(parseList0.contains(new Identifier(0, 0, 3, "MAINNET").asAccount()));
 
 		final var testString1 = "1,2 ,k";
-		final var parseList1 = Utilities.parseAccountNumbers(testString1);
+		final var parseList1 = Utilities.parseAccountNumbers(testString1, "MAINNET");
 		assertTrue(parseList1.isEmpty());
 
 		final var testString2 = "1-3";
-		final var parseList2 = Utilities.parseAccountNumbers(testString2);
-		assertTrue(parseList2.contains(new Identifier(0, 0, 1).asAccount()));
-		assertTrue(parseList2.contains(new Identifier(0, 0, 2).asAccount()));
-		assertTrue(parseList2.contains(new Identifier(0, 0, 3).asAccount()));
+		final var parseList2 = Utilities.parseAccountNumbers(testString2, "MAINNET");
+		assertTrue(parseList2.contains(new Identifier(0, 0, 1, "MAINNET").asAccount()));
+		assertTrue(parseList2.contains(new Identifier(0, 0, 2, "MAINNET").asAccount()));
+		assertTrue(parseList2.contains(new Identifier(0, 0, 3, "MAINNET").asAccount()));
 
 		final var testString3 = "1-2,3";
-		final var parseList3 = Utilities.parseAccountNumbers(testString3);
-		assertTrue(parseList3.contains(new Identifier(0, 0, 1).asAccount()));
-		assertTrue(parseList3.contains(new Identifier(0, 0, 2).asAccount()));
-		assertTrue(parseList3.contains(new Identifier(0, 0, 3).asAccount()));
+		final var parseList3 = Utilities.parseAccountNumbers(testString3, "MAINNET");
+		assertTrue(parseList3.contains(new Identifier(0, 0, 1, "MAINNET").asAccount()));
+		assertTrue(parseList3.contains(new Identifier(0, 0, 2, "MAINNET").asAccount()));
+		assertTrue(parseList3.contains(new Identifier(0, 0, 3, "MAINNET").asAccount()));
 
 		final var testString4 = "0.1";
-		final var parseList4 = Utilities.parseAccountNumbers(testString4);
+		final var parseList4 = Utilities.parseAccountNumbers(testString4, "MAINNET");
 		assertTrue(parseList4.isEmpty());
 
 		final var testString5 = "1.2.1-1.2.3";
-		final var parseList5 = Utilities.parseAccountNumbers(testString5);
-		assertTrue(parseList5.contains(new Identifier(1, 2, 1).asAccount()));
-		assertTrue(parseList5.contains(new Identifier(1, 2, 2).asAccount()));
-		assertTrue(parseList5.contains(new Identifier(1, 2, 3).asAccount()));
+		final var parseList5 = Utilities.parseAccountNumbers(testString5, "MAINNET");
+		assertTrue(parseList5.contains(new Identifier(1, 2, 1, "MAINNET").asAccount()));
+		assertTrue(parseList5.contains(new Identifier(1, 2, 2, "MAINNET").asAccount()));
+		assertTrue(parseList5.contains(new Identifier(1, 2, 3, "MAINNET").asAccount()));
 
 		final var testString6 = "1.2.1-2.2.3";
-		final var parseList6 = Utilities.parseAccountNumbers(testString6);
+		final var parseList6 = Utilities.parseAccountNumbers(testString6, "MAINNET");
 		assertTrue(parseList6.isEmpty());
 
 		final var testString7 = "1.2.1-1.k.3";
-		final var parseList7 = Utilities.parseAccountNumbers(testString7);
+		final var parseList7 = Utilities.parseAccountNumbers(testString7, "MAINNET");
 		assertTrue(parseList7.isEmpty());
 
 		final var testString8 = "l.2.1-1.2.3";
-		final var parseList8 = Utilities.parseAccountNumbers(testString8);
+		final var parseList8 = Utilities.parseAccountNumbers(testString8, "MAINNET");
 		assertTrue(parseList8.isEmpty());
 
 		final var testString9 = "121-";
-		final var parseList9 = Utilities.parseAccountNumbers(testString9);
+		final var parseList9 = Utilities.parseAccountNumbers(testString9, "MAINNET");
 		assertTrue(parseList9.isEmpty());
 
 		final var testString10 = "121-156-6";
-		final var parseList10 = Utilities.parseAccountNumbers(testString10);
+		final var parseList10 = Utilities.parseAccountNumbers(testString10, "MAINNET");
 		assertTrue(parseList10.isEmpty());
 	}
 

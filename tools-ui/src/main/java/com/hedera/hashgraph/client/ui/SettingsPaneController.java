@@ -291,7 +291,10 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 
 			try {
-				final var id = Identifier.parse(customFeePayerTextField.getText());
+				final var network =
+						networkChoicebox.getValue() instanceof String ? (String) networkChoicebox.getValue() : "";
+				final var id =
+						Identifier.parse(customFeePayerTextField.getText(), network);
 				controller.setDefaultFeePayer(id);
 				customFeePayerTextField.setVisible(false);
 				customFeePayerTextField.clear();
@@ -322,10 +325,13 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		feePayerChoicebox.getSelectionModel().select(feePayer);
 		feePayerChoicebox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
-			if (t1 instanceof String) {
+			if (t1 instanceof String && !"".equals(t1)) {
 				final var text = (String) t1;
-				deleteCustomPayerButton.setDisable(controller.getFeePayers().contains(Identifier.parse(text)));
-				controller.setDefaultFeePayer(Identifier.parse(text));
+				final var idString =
+						(text.contains("(")) ? text.substring(text.indexOf("(") + 1, text.indexOf(")")) : text;
+				deleteCustomPayerButton.setDisable(
+						controller.getFeePayers().contains(Identifier.parse(idString, controller.getCurrentNetwork())));
+				controller.setDefaultFeePayer(Identifier.parse(text, controller.getCurrentNetwork()));
 			}
 		});
 	}
@@ -342,6 +348,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					controller.setCurrentNetwork(selectedNetwork);
 					deleteCustomNetworkButton.setDisable(
 							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
+					controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
 				}
 				if (t1 instanceof Separator) {
 					comboBox.getSelectionModel().select(o);
@@ -785,7 +792,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		if (!(selectedItem instanceof String)) {
 			return;
 		}
-		controller.removeCustomFeePayer(Identifier.parse((String) selectedItem));
+		controller.removeCustomFeePayer(Identifier.parse((String) selectedItem, controller.getCurrentNetwork()));
 
 		final var allPayers = new TreeSet<>(controller.getFeePayers());
 		allPayers.addAll(controller.getCustomFeePayers());
@@ -798,7 +805,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			controller.accountsPaneController.setupFeePayerChoiceBox();
 			return;
 		}
-		controller.setDefaultFeePayer(Identifier.ZERO);
+		var zero = Identifier.ZERO;
+		zero.setNetworkName(controller.getCurrentNetwork());
+		controller.setDefaultFeePayer(zero);
 		controller.accountsPaneController.initializeAccountPane();
 		addFeePayerAction();
 	}

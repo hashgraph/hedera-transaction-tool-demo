@@ -136,7 +136,6 @@ public class KeyPairUtilityTest extends TestBase {
 
 	@Test
 	public void mapExpiration_test() {
-
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");

@@ -30,24 +30,28 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.fromString;
 
 public class AccountLineInformation implements Comparable<AccountLineInformation> {
 	private static final Logger logger = LogManager.getLogger(AccountLineInformation.class);
+	private final BooleanProperty selected = new SimpleBooleanProperty();
 	private String nickname;
 	private Identifier account;
 	private StringProperty balance;
 	private String signer;
 	private long date;
-	private final BooleanProperty selected = new SimpleBooleanProperty();
+	private String ledgerId;
 
 	public AccountLineInformation(final String nickname, final Identifier account, final Hbar balance, final long date,
-			final boolean signer) {
+			final boolean signer, final String ledgerId) {
 		this.nickname = nickname;
 		this.account = account;
 		this.balance = new SimpleStringProperty(balance.toString());
 		this.date = date;
 		this.signer = signer ? "Yes" : "No";
+		this.ledgerId = ledgerId;
 		this.selected.setValue(false);
 	}
 
@@ -75,6 +79,10 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		this.balance = new SimpleStringProperty(balance.toString());
 	}
 
+	public String getLedgerId() {
+		return ledgerId;
+	}
+
 	public String isSigner() {
 		return signer;
 	}
@@ -96,6 +104,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return "AccountLineInformation{" +
 				"nickname='" + nickname + '\'' +
 				", account='" + account.toReadableString() + '\'' +
+				", ledger='" + ledgerId.toUpperCase(Locale.ROOT) + '\'' +
 				", balance='" + balance.getValue() + '\'' +
 				", date='" + date + '\'' +
 				", signer=" + signer +
@@ -112,8 +121,9 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 			return this.nickname.equals(line.getNickname()) &&
 					this.account.equals(line.getAccount()) &&
 					fromString(this.balance.getValue()).equals(line.getBalance()) &&
-					this.date == line.getDate()
-					&& this.signer.equals(line.signer);
+					this.date == line.getDate() &&
+					this.signer.equals(line.signer) &&
+					this.ledgerId.equals(line.getLedgerId());
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 			return false;
@@ -124,18 +134,18 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return selected.get();
 	}
 
-	public BooleanProperty selectedProperty() {
-		return selected;
-	}
-
 	public void setSelected(final boolean selected) {
 		this.selected.set(selected);
+	}
+
+	public BooleanProperty selectedProperty() {
+		return selected;
 	}
 
 	@Override
 	public int hashCode() {
 		return nickname.hashCode() + account.hashCode() + balance.getValue().hashCode() + Long.hashCode(
-				date) + signer.hashCode();
+				date) + signer.hashCode() + ledgerId.hashCode();
 	}
 
 	@Override
@@ -143,4 +153,7 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 		return this.getAccount().compareTo(o.getAccount());
 	}
 
+	public void setLedgerID(final String ledgerID) {
+		this.ledgerId = ledgerID;
+	}
 }

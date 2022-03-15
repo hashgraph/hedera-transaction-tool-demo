@@ -18,6 +18,10 @@
 
 package com.hedera.hashgraph.client.core.enums;
 
+import com.hedera.hashgraph.sdk.LedgerId;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public enum NetworkEnum {
@@ -34,6 +38,46 @@ public enum NetworkEnum {
 		if (Stream.of("mainnet", "previewnet", "integration", "testnet", "custom").anyMatch(
 				s -> s.equalsIgnoreCase(name))) {
 			this.name = name;
+		}
+	}
+
+	public static NetworkEnum from(final LedgerId ledgerId) {
+		if (ledgerId == null) {
+			return UNKNOWN;
+		}
+		switch (new String(ledgerId.toBytes(), StandardCharsets.UTF_8)) {
+			case "0x00":
+				return MAINNET;
+			case "0x01":
+				return TESTNET;
+			case "0x02":
+				return PREVIEWNET;
+			default:
+				return UNKNOWN;
+		}
+	}
+
+	public static LedgerId asLedger(final String name) {
+		if (name.equals("")) {
+			return LedgerId.MAINNET;
+		}
+		if (!isNetwork(name)) {
+			return LedgerId.fromString("05");
+		}
+		switch (NetworkEnum.valueOf(name.toUpperCase(Locale.ROOT))) {
+			case MAINNET:
+				return LedgerId.MAINNET;
+			case PREVIEWNET:
+				return LedgerId.PREVIEWNET;
+			case TESTNET:
+				return LedgerId.TESTNET;
+			case INTEGRATION:
+				return LedgerId.fromString("04");
+			case CUSTOM:
+				return LedgerId.fromString("05");
+			case UNKNOWN:
+			default:
+				return LedgerId.fromString("ff");
 		}
 	}
 

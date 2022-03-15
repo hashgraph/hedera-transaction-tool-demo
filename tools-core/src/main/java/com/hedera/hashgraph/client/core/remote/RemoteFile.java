@@ -61,6 +61,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -538,8 +539,9 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			return new HashSet<>();
 		}
 		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
-				accountString -> new File(ACCOUNTS_INFO_FOLDER, accountString + "." + INFO_EXTENSION)).filter(
-				File::exists).forEach(accountFile -> {
+				accountString -> new File(ACCOUNTS_INFO_FOLDER).listFiles(
+						(dir, filename) -> filename.contains(accountString + ".") || filename.contains(accountString + "-"))).filter(
+				Objects::nonNull).flatMap(Arrays::stream).filter(File::exists).forEach(accountFile -> {
 			try {
 				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
 				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
