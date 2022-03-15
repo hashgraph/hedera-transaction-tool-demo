@@ -113,8 +113,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private Map<String, String> publicKeyMap;
 
 	// region FXML
-	public HBox chooseLength;
-	public HBox pagesHBox;
+
 	public VBox defaultViewVBox;
 	public VBox newFilesViewVBox;
 	public VBox historyFilesViewVBox;
@@ -294,10 +293,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	 * Remove the files from the map that are also in the history
 	 */
 	private void removeHistoryFiles() {
-		for (RemoteFile rf : remoteFilesMap.getFiles()) {
+		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
 			logger.info(rf.getName());
 			if (controller.historyPaneController.getHistoryMap().containsKey(rf.hashCode())) {
-				logger.info("poop");
+				remoteFilesMap.remove(rf.getName());
 			}
 
 //			if (historyFiles.exists(rf.getName())) {
@@ -618,6 +617,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			try {
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(DECLINE, rf.getCommentArea().getText(), "");
+				controller.historyPaneController.addToHistory(rf.getPath());
 				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error(e);

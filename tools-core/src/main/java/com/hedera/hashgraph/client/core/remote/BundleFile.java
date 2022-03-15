@@ -245,28 +245,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 	@Override
 	public int hashCode() {
-		var code = 0;
-		for (final var entry : accountInfoMap.entrySet()) {
-			code += entry.getKey().hashCode();
-		}
-		try {
-			for (final var info : getInfos()) {
-				code += info;
-			}
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-		for (final var entry : publicKeyMap.entrySet()) {
-			code += entry.getKey().hashCode();
-		}
-		try {
-			for (final var publicKey : getPublicKeys()) {
-				code += publicKey;
-			}
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-		return code;
+		return super.hashCode();
 	}
 
 	/**

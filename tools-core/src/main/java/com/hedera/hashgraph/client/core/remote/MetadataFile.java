@@ -125,6 +125,6 @@ public class MetadataFile extends RemoteFile {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + metadataActions.hashCode();
+		return super.hashCode();
 	}
 }

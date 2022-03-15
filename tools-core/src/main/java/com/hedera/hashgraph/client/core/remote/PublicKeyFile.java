@@ -160,11 +160,6 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 	}
 
 	@Override
-	public int hashCode() {
-		return super.hashCode() + actions.hashCode() + timestamp.hashCode();
-	}
-
-	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
 		toJson.add("timestamp", timestamp.asJSON());

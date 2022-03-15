@@ -391,7 +391,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + timestamp.hashCode() + version.hashCode() + digest.hashCode();
+		return super.hashCode();
 	}
 
 	@Override

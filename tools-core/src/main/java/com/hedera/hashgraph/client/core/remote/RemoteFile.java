@@ -63,6 +63,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -95,7 +96,6 @@ import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
-import static org.apache.commons.io.FilenameUtils.getExtension;
 
 public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteAware {
 
@@ -718,7 +718,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			return type.toKind();
 		}
 
-		final String title = ((TransactionFile) this).getTransactionType().toString();
+		final var title = ((TransactionFile) this).getTransactionType().toString();
 
 		if ("Content Transaction".equals(title)) {
 			final var toolSystemTransaction = (ToolSystemTransaction) ((TransactionFile) this).getTransaction();
@@ -888,7 +888,15 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	@Override
 	public int hashCode() {
-		return new File(parentPath, name).hashCode();
+
+		final var file = new File(parentPath, name);
+		var bytes = new byte[0];
+		try {
+			bytes = Files.readAllBytes(file.toPath());
+		} catch (final IOException e) {
+			logger.error(e.getMessage());
+		}
+		return Arrays.hashCode(bytes);
 	}
 
 	@Override
