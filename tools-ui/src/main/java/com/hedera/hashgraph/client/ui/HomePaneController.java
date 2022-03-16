@@ -549,6 +549,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		cancelButton.setOnAction(event -> {
 			try {
 				rf.moveToHistory();
+				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
 				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error(e);
@@ -591,12 +592,12 @@ public class HomePaneController implements GenericFileReadWriteAware {
 								"button, otherwise CANCEL",
 						true, "CANCEL", "CONTINUE");
 			}
-
 			if (answer) {
 				return;
 			}
 			try {
 				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
+				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
 			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
@@ -879,6 +880,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			rf.execute(pair, user, output);
 			exportComments(rf, rf.getCommentArea(), rf.getName());
 			rf.setHistory(true);
+			controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {

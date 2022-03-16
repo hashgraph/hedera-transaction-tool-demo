@@ -125,6 +125,7 @@ public class Constants {
 	public static final String INTEGRATION_NODES_JSON = "src/main/resources/IntegrationNodes.json";
 	public static final String PUBLIC_KEY_LOCATION = "Files/.System/gpgPublicKey.asc";
 	public static final String TEMP_FOLDER_LOCATION = System.getProperty("java.io.tmpdir");
+	public static final String HISTORY_MAP_JSON = "historyMap.json";
 
 	// endregion
 

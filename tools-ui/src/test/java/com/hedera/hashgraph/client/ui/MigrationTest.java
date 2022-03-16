@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 import org.zeroturnaround.zip.ZipUtil;
@@ -49,6 +50,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Ignore
 public class MigrationTest extends TestBase {
 
 	private static final String DOCUMENTS =
@@ -90,7 +92,7 @@ public class MigrationTest extends TestBase {
 		FileUtils.deleteDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS));
 	}
 
-	@Test
+	//@Test
 	public void handleMigration_test() throws Exception {
 
 		final var accountsFolder = TRANSACTION_TOOL_PATH + "Accounts";

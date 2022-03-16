@@ -28,7 +28,6 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
@@ -359,11 +358,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
+				historyPaneController.initializeHistoryPane();
+				historyPaneController.clearHistoryMap();
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + getSetupPhase());
@@ -938,7 +940,4 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return feePayer;
 	}
 
-//	public List<RemoteFile> getHistory() {
-//		return homePaneController.getHistory();
-//	}
 }

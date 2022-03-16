@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.ui;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -84,6 +83,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
+import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -92,7 +94,7 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNum
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	private static final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
-	private static final String HISTORY_MAP = Constants.SYSTEM_FOLDER + File.separator + "historyMap.json";
+	private static final String HISTORY_MAP = SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
@@ -120,6 +122,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	public DatePicker expirationEndDatePicker;
 	public DatePicker actionsStartDatePicker;
 	public DatePicker actionsEndDatePicker;
+
 	public LocalDate start = LocalDate.now();
 	public LocalDate end = LocalDate.now();
 
@@ -150,6 +153,15 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
+	 * Clears the contents of the history map only valid on TEST
+	 */
+	public void clearHistoryMap() {
+		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+			historyMap.clear();
+		}
+	}
+
+	/**
 	 * Adds a file to the map
 	 *
 	 * @param path
@@ -172,7 +184,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private ArrayList<RemoteFile> getRemoteFiles() {
-		final var filenames = new File(Constants.DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
+		final var filenames = new File(DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
 		final var remoteFiles = new ArrayList<RemoteFile>();
 		for (final var filename : filenames) {
 			FileDetails details = null;
@@ -191,7 +203,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	// endregion
-
 
 	// region INITIALIZATION
 	void injectMainController(final Controller controller) {
@@ -543,7 +554,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return actionColumn;
 	}
 
-
 	/**
 	 * Sets up the transaction details box
 	 *
@@ -865,7 +875,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * @return a formatted button
 	 */
 	@NotNull
-	private Button getToolTipButton(String text) {
+	private Button getToolTipButton(final String text) {
 		final var image = new Image("icons" + File.separator + "helpIcon.png");
 		final var imageView = new ImageView(image);
 		imageView.setPreserveRatio(true);

@@ -393,20 +393,6 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(finalKeys.contains("KeyStore-2.pub"));
 		assertTrue(finalKeys.contains("KeyStore-3.pub"));
 
-		// test that the bundle exists in history
-
-		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
-
-		var labels = new ArrayList<String>();
-		for (var node : nodes) {
-			if (node instanceof Label) {
-				labels.add(((Label) node).getText());
-			}
-		}
-
-		assertTrue(labels.stream().anyMatch(f -> f.contains("AccountOne")));
-		assertTrue(labels.stream().anyMatch(f -> f.contains("Treasury test")));
-
 	}
 
 	@Test
