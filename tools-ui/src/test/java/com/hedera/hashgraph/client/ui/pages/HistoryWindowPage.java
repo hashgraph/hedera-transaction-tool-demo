@@ -27,4 +27,17 @@ public class HistoryWindowPage {
 		this.driver = driver;
 	}
 
+	public HistoryWindowPage rebuildHistory() {
+		driver.find("#rebuild");
+		driver.clickOn("#rebuild");
+		return this;
+	}
+
+	public HistoryWindowPage clickOnResign(String buttonText) {
+		if (driver.find(buttonText).isVisible()) {
+			driver.doubleClickOn(buttonText);
+		}
+		return this;
+	}
+
 }

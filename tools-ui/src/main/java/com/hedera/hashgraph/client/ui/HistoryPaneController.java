@@ -74,6 +74,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -122,6 +124,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	public DatePicker expirationEndDatePicker;
 	public DatePicker actionsStartDatePicker;
 	public DatePicker actionsEndDatePicker;
+
+	public Button rebuild;
+
 
 	public LocalDate start = LocalDate.now();
 	public LocalDate end = LocalDate.now();
@@ -210,6 +215,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeHistoryPane() {
+		rebuild.managedProperty().bind(rebuild.visibleProperty());
 		typeFilter.addAll(EnumSet.allOf(FileType.class));
 		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
 
@@ -522,7 +528,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 						if (!empty) {
 							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
 								final var x = table.getItems().get(getIndex());
-								button.setText(x.getFileName() + "T");
+								button.setText(x.getFileName());
 								button.setStyle("-fx-font-size: 2");
 							}
 							final var historyData = getTableView().getItems().get(getIndex());
@@ -889,5 +895,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		toolTipButton.setOnAction(
 				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
 		return toolTipButton;
+	}
+
+	public void rebuildHistory() throws IOException {
+		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+			Files.deleteIfExists(Path.of(HISTORY_MAP));
+			loadMap();
+			initializeHistoryPane();
+		}
 	}
 }

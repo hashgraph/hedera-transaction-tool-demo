@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
@@ -84,6 +85,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	public static final int ONE_SECOND = 1000;
 	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
+	private HistoryWindowPage historyWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -98,6 +100,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	private final List<VBox> softwareBoxes = new ArrayList<>();
 	private final List<VBox> systemBoxes = new ArrayList<>();
 	private final List<VBox> freezeBoxes = new ArrayList<>();
+	private final List<VBox> bundleBoxes = new ArrayList<>();
 
 
 	@Before
@@ -168,6 +171,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
+		historyWindowPage = new HistoryWindowPage(this);
+
+		mainWindowPage.clickOnHistoryButton();
+		mainWindowPage.clickOnHomeButton();
 
 		initBoxes();
 	}
@@ -867,16 +874,17 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		softwareBoxes.clear();
 		systemBoxes.clear();
 		freezeBoxes.clear();
+		bundleBoxes.clear();
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 
 		logger.info("========>>> {}", newFiles.size());
 		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
+				systemBoxes, freezeBoxes, bundleBoxes);
 
 		assertEquals(newFiles.size(),
 				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size()
-						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size() + bundleBoxes.size());
 	}
 
 	private List<File> findByStringExtension(final File dir, final String ext) {
@@ -884,11 +892,15 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		return new ArrayList<>(FileUtils.listFiles(dir, extensions, false));
 	}
 
-	private void separateBoxes(final ObservableList<Node> newFiles, final List<VBox> publicKeyBoxes,
+	private void separateBoxes(final ObservableList<Node> newFiles,
+			final List<VBox> publicKeyBoxes,
 			final List<VBox> accountInfoBoxes,
-			final List<VBox> batchBoxes, final List<VBox> transactionBoxes, final List<VBox> softwareBoxes,
+			final List<VBox> batchBoxes,
+			final List<VBox> transactionBoxes,
+			final List<VBox> softwareBoxes,
 			final List<VBox> systemBoxes,
-			final List<VBox> freezeBoxes) {
+			final List<VBox> freezeBoxes,
+			final List<VBox> bundleBoxes) {
 		for (final var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
@@ -911,6 +923,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 					systemBoxes.add((VBox) box);
 				} else if (l.contains("Freeze") || l.contains("Upgrade")) {
 					freezeBoxes.add((VBox) box);
+				} else if (l.contains("Information")) {
+					bundleBoxes.add((VBox) box);
 				} else {
 					logger.info("here");
 				}
@@ -976,6 +990,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@After
 	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
 		batchBoxes.clear();
@@ -1002,9 +1020,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
-		ensureEventQueueComplete();
-		FxToolkit.hideStage();
-		FxToolkit.cleanupStages();
+
 	}
 
 	private static boolean accept(final File pathname) {

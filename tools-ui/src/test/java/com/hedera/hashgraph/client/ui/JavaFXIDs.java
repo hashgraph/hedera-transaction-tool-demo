@@ -41,7 +41,7 @@ public class JavaFXIDs {
 	public final static String KEYS_BUTTON = "#keysButton";
 	public final static String SETTINGS_BUTTON = "#settingsButton";
 	public final static String CREATE_ANCHOR_PANE = "#createAnchorPane";
-
+	public final static String HISTORY_BUTTON = "#historyButton";
 
 	// Home Pane
 	public final static String NEW_FILES_VBOX = "#newFilesViewVBox";

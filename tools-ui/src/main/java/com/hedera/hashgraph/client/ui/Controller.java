@@ -360,6 +360,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePane.setVisible(true);
 				historyPaneController.initializeHistoryPane();
 				historyPaneController.clearHistoryMap();
+				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
 				homePaneController.initializeHomePane();
