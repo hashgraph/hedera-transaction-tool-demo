@@ -72,6 +72,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -98,6 +99,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 	private JsonObject nicknames;
+	private JsonObject oldInfo;
 
 	public TransactionFile() {
 		super();
@@ -331,6 +333,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
 
+		final var hasOldInfo = oldInfo != null;
 		final var keysLink = new Hyperlink("Click for more details");
 		if (updateTransaction.getKey() != null) {
 			detailsGridPane.add(new Label("Key: "), 0, count);
@@ -340,17 +343,28 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		if (updateTransaction.getAutoRenewDuration() != null) {
 			detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-			detailsGridPane.add(
-					new Label(String.format("%s seconds",
-							updateTransaction.getAutoRenewDuration().getSeconds()))
-					, 1, count++);
+			final var labelString = hasOldInfo ?
+					String.format("%s seconds (updated from %s s)",
+							updateTransaction.getAutoRenewDuration().getSeconds(),
+							oldInfo.get("autoRenewPeriod").getAsJsonObject().get("seconds").getAsString()) :
+					String.format("%s seconds", updateTransaction.getAutoRenewDuration().getSeconds());
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count++);
 		}
 
 		if (updateTransaction.isReceiverSignatureRequired() != null) {
 			detailsGridPane.add(sigReqLabel, 0, count);
-			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
-					1,
-					count);
+			final var oldValue = (oldInfo.has("receiverSignatureRequired")) ?
+					oldInfo.get("receiverSignatureRequired").getAsString() :
+					"FALSE";
+			final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
+			final var labelString = hasOldInfo ?
+					String.format("%s (updated from %s)", newValue, oldValue) :
+					String.format("%s", newValue);
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count);
 		}
 	}
 
@@ -570,7 +584,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		keys.getChildren().add(keysPaneNew);
 
-		if (oldKeyTreeView.getRoot() != null) {
+		if (oldKeyTreeView.getRoot() != null && !isHistory()) {
 			final var keyPaneOld = getKeyVBox("Old Key", oldKeyTreeView);
 			keys.getChildren().add(keyPaneOld);
 		}
@@ -622,4 +636,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 
+	public void setOldInfo(JsonObject oldInfo) {
+		this.oldInfo = oldInfo;
+	}
 }

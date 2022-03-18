@@ -165,8 +165,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
 		final var keysSet = super.getSigningKeys(accountsInfoFolder);
-		keysSet.addAll(EncryptionUtils.flatPubKeys(
-				Collections.singletonList(((AccountUpdateTransaction) transaction).getKey())));
+		final var key = ((AccountUpdateTransaction) transaction).getKey();
+		if (key != null) {
+			keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(key)));
+		}
 		return keysSet;
 	}
 
