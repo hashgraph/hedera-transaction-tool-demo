@@ -99,7 +99,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 	private JsonObject nicknames;
-	private JsonObject oldInfo;
+	private JsonObject oldInfo = null;
 
 	public TransactionFile() {
 		super();
@@ -355,7 +355,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		if (updateTransaction.isReceiverSignatureRequired() != null) {
 			detailsGridPane.add(sigReqLabel, 0, count);
-			final var oldValue = (oldInfo.has("receiverSignatureRequired")) ?
+			final var oldValue = (hasOldInfo && oldInfo.has("receiverSignatureRequired")) ?
 					oldInfo.get("receiverSignatureRequired").getAsString() :
 					"FALSE";
 			final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
