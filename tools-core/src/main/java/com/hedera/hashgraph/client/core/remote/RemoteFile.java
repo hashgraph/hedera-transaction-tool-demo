@@ -538,17 +538,24 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		if (accounts == null) {
 			return new HashSet<>();
 		}
-		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
-				accountString -> new File(ACCOUNTS_INFO_FOLDER).listFiles(
-						(dir, filename) -> filename.contains(accountString + ".") || filename.contains(accountString + "-"))).filter(
-				Objects::nonNull).flatMap(Arrays::stream).filter(File::exists).forEach(accountFile -> {
-			try {
-				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
-				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-			} catch (final InvalidProtocolBufferException | HederaClientException e) {
-				logger.error(e);
+		for (final var account : accounts) {
+			final var accountString = new Identifier(Objects.requireNonNull(account)).toReadableString();
+			final var files = new File(ACCOUNTS_INFO_FOLDER).listFiles(
+					(dir, filename) -> (filename.contains(accountString + ".") || filename.contains(accountString +
+							"-")) && INFO_EXTENSION.equals(FilenameUtils.getExtension(filename)));
+			if (files != null) {
+				for (final var accountFile : files) {
+					if (accountFile.exists()) {
+						try {
+							final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+							keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
+						} catch (final InvalidProtocolBufferException | HederaClientException e) {
+							logger.error(e);
+						}
+					}
+				}
 			}
-		});
+		}
 
 		return keysSet;
 	}

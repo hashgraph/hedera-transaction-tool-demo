@@ -18,12 +18,14 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
@@ -40,6 +42,7 @@ import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.KeyList;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -84,10 +87,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_OF_SINGLE_BOXES;
@@ -414,7 +419,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf.getType().equals(FileType.METADATA) || rf.getType().equals(FileType.COMMENT)) {
 				continue;
 			}
-
 			if (rf instanceof TransactionFile) {
 				setupKeyTree((TransactionFile) rf);
 			}
@@ -437,16 +441,42 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			// old style transaction
 			return;
 		}
+		KeyList oldKey = null;
 		controller.loadPubKeys();
 		var key = new KeyList();
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
 		}
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
+			oldKey = getOldKey(((ToolCryptoUpdateTransaction) rf.getTransaction()).getAccount());
 			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
 		}
 		if (key != null) {
 			rf.setTreeView(controller.buildKeyTreeView(key));
+		}
+		if (oldKey != null) {
+			rf.setOldKey(controller.buildKeyTreeView(oldKey));
+		}
+	}
+
+	private KeyList getOldKey(final Identifier account) {
+		final var accounts = new File(DEFAULT_ACCOUNTS).listFiles((dir, name) -> {
+			final var stringAccount = account.toReadableString();
+			return INFO_EXTENSION.equals(FilenameUtils.getExtension(name)) && (name.contains(
+					stringAccount + ".") || name.contains(stringAccount + "-"));
+		});
+
+		if (accounts.length != 1) {
+			logger.error("Cannot determine old account");
+			return null;
+		}
+
+		try {
+			final var info = AccountInfo.fromBytes(readBytes(accounts[0].getAbsolutePath()));
+			return (KeyList) info.key;
+		} catch (final InvalidProtocolBufferException | HederaClientException e) {
+			logger.error(e.getMessage());
+			return null;
 		}
 	}
 
@@ -590,7 +620,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						}
 						break;
 					default:
-						logger.info("No action taken: {}",rf.getType());
+						logger.info("No action taken: {}", rf.getType());
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
