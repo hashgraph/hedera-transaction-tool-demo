@@ -147,7 +147,6 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			accountUpdateTransaction.setKey(key);
 		}
 		if (autoRenewDuration != null) {
-			//noinspection deprecation
 			accountUpdateTransaction.setAutoRenewPeriod(autoRenewDuration);
 		}
 		if (receiverSignatureRequired != null) {
@@ -166,8 +165,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
 		final var keysSet = super.getSigningKeys(accountsInfoFolder);
-		keysSet.addAll(EncryptionUtils.flatPubKeys(
-				Collections.singletonList(((AccountUpdateTransaction) transaction).getKey())));
+		final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
+		if (keyFromTransaction != null) {
+			keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(keyFromTransaction)));
+		}
 		return keysSet;
 	}
 

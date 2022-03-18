@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -465,21 +466,24 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * @return a list of ByteStrings
 	 */
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
-		final Set<ByteString> keysSet = new HashSet<>();
 		final var accounts = getSigningAccounts();
-		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
-				accountString -> new File(accountsInfoFolder).listFiles(
-						(dir, name) -> name.contains(accountString + ".") || name.contains(accountString + "-"))).filter(
-				Objects::nonNull).forEach(
-				files -> java.util.Arrays.stream(files).filter(File::exists).forEach(accountFile -> {
-					try {
-						final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
-						keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
-					} catch (final InvalidProtocolBufferException | HederaClientException e) {
-						logger.error(e);
-					}
-				}));
+		return accounts.stream()
+				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
+				.filter(files -> files != null && files.length == 1)
+				.flatMap(files -> addToKeySet(files).stream())
+				.collect(Collectors.toSet());
+	}
 
+	private Set<ByteString> addToKeySet(final File[] files) {
+		final Set<ByteString> keysSet = new HashSet<>();
+		java.util.Arrays.stream(files).filter(File::exists).forEachOrdered(accountFile -> {
+			try {
+				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
+				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
+			} catch (final InvalidProtocolBufferException | HederaClientException e) {
+				logger.error(e);
+			}
+		});
 		return keysSet;
 	}
 

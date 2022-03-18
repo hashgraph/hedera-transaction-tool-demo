@@ -37,7 +37,6 @@ import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -49,6 +48,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -60,6 +61,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
@@ -70,7 +72,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -92,11 +94,12 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private TransactionType transactionType;
 	private Timestamp expiration;
 	private TreeView<String> treeView = new TreeView<>();
+	private TreeView<String> oldKey = new TreeView<>();
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 	private JsonObject nicknames;
-
+	private JsonObject oldInfo = null;
 
 	public TransactionFile() {
 		super();
@@ -131,6 +134,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	public void setTreeView(final TreeView<String> treeView) {
 		this.treeView = treeView;
+	}
+
+	public void setOldKey(final TreeView<String> treeView) {
+		this.oldKey = treeView;
 	}
 
 	public String getMemo() {
@@ -260,7 +267,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				((ToolTransferTransaction) transaction).getAccountAmountMap();
 		final List<Pair<String, String>> senders = new ArrayList<>();
 		final List<Pair<String, String>> receivers = new ArrayList<>();
-		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
+		for (final var entry : accountAmountMap.entrySet()) {
 			final var amount = entry.getValue();
 			final var identifier = entry.getKey();
 			if (amount.toTinybars() < 0) {
@@ -294,7 +301,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		final var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
 		detailsGridPane.add(new Label("Key: "), 0, count);
-		keysLink.setOnAction(actionEvent -> displayKey(treeView));
+		keysLink.setOnAction(actionEvent -> displayKey(treeView, new TreeView<>()));
 		detailsGridPane.add(keysLink, 1, count++);
 
 		detailsGridPane.add(new Label("Auto renew period: "), 0, count);
@@ -326,28 +333,41 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
 
+		final var hasOldInfo = oldInfo != null;
 		final var keysLink = new Hyperlink("Click for more details");
 		if (updateTransaction.getKey() != null) {
 			detailsGridPane.add(new Label("Key: "), 0, count);
-			keysLink.setOnAction(actionEvent -> displayKey(treeView));
+			keysLink.setOnAction(actionEvent -> displayKey(treeView, oldKey));
 			detailsGridPane.add(keysLink, 1, count++);
 		}
 
 		if (updateTransaction.getAutoRenewDuration() != null) {
 			detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-			detailsGridPane.add(
-					new Label(String.format("%s seconds",
-							updateTransaction.getAutoRenewDuration().getSeconds()))
-					, 1, count++);
+			final var labelString = hasOldInfo ?
+					String.format("%s seconds (updated from %s s)",
+							updateTransaction.getAutoRenewDuration().getSeconds(),
+							oldInfo.get("autoRenewPeriod").getAsJsonObject().get("seconds").getAsString()) :
+					String.format("%s seconds", updateTransaction.getAutoRenewDuration().getSeconds());
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count++);
 		}
 
 		if (updateTransaction.isReceiverSignatureRequired() != null) {
 			detailsGridPane.add(sigReqLabel, 0, count);
-			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isReceiverSignatureRequired())),
-					1,
-					count);
+			final var oldValue = (hasOldInfo && oldInfo.has("receiverSignatureRequired")) ?
+					oldInfo.get("receiverSignatureRequired").getAsString() :
+					"FALSE";
+			final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
+			final var labelString = hasOldInfo ?
+					String.format("%s (updated from %s)", newValue, oldValue) :
+					String.format("%s", newValue);
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count);
 		}
 	}
+
 
 	/**
 	 * Add the SYSTEM exclusive fields to the grid pane
@@ -390,7 +410,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var freezeType = toolFreezeTransaction.getFreezeType();
 		final Label startTimeLabel;
 		final Label fileIDLabel;
-		final Text fileHashLabel = new Text();
+		final var fileHashLabel = new Text();
 		fileHashLabel.setFont(Font.font("Courier New", 18));
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
@@ -458,7 +478,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		final var keyName = FilenameUtils.getBaseName(pair.getLeft());
 		final var tempStorage =
-				new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()).getAbsolutePath() + "/Transaction/" + keyName;
+				new File(System.getProperty("java.io.tmpdir"),
+						LocalDate.now().toString()).getAbsolutePath() + "/Transaction/" + keyName;
 		final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
 				this.getBaseName() + "-" + keyName + ".zip");
 
@@ -528,7 +549,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		try {
 			return transaction.getSigningKeys(ACCOUNTS_INFO_FOLDER);
 		} catch (final Exception e) {
-			logger.error(e);
+			logger.error(e.getMessage());
 		}
 		return super.getSigningPublicKeys();
 	}
@@ -552,24 +573,30 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return count;
 	}
 
-	private void displayKey(final TreeView<String> keyTreeView) {
+	private void displayKey(final TreeView<String> keyTreeView, final TreeView<String> oldKeyTreeView) {
 		final var window = new Stage();
-		keyTreeView.setStyle("-fx-font-size: 16");
-		final var keysPane = new ScrollPane();
-		keysPane.setFitToWidth(true);
-		keysPane.setFitToHeight(true);
-		keysPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-		keysPane.setContent(keyTreeView);
+		final var keys = new HBox();
+		keys.setPrefHeight(Region.USE_COMPUTED_SIZE);
+		keys.setPrefWidth(Region.USE_COMPUTED_SIZE);
+		keys.setSpacing(15);
+
+		final var keysPaneNew = getKeyVBox("New Key", keyTreeView);
+
+		keys.getChildren().add(keysPaneNew);
+
+		if (oldKeyTreeView.getRoot() != null && !isHistory()) {
+			final var keyPaneOld = getKeyVBox("Old Key", oldKeyTreeView);
+			keys.getChildren().add(keyPaneOld);
+		}
+
 		final var okButton = new Button("CLOSE");
 		okButton.setStyle(WHITE_BUTTON_STYLE);
 		okButton.setOnAction(event -> window.close());
 		final var layout = new VBox();
-		final var titleLabel = new Label("New Key");
-		titleLabel.setStyle("-fx-font-size: 20");
 		final var hBox = new HBox();
 		hBox.getChildren().add(okButton);
 		hBox.setAlignment(Pos.BASELINE_RIGHT);
-		layout.getChildren().addAll(titleLabel, keysPane, hBox);
+		layout.getChildren().addAll(keys, hBox);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 		layout.setSpacing(15);
 		layout.setPrefHeight(400);
@@ -584,5 +611,32 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		window.showAndWait();
 	}
 
+	@NotNull
+	private VBox getKeyVBox(final String title, final TreeView<String> keyTreeView) {
+		final var keyBox = new VBox();
+		keyBox.setPrefWidth(Region.USE_COMPUTED_SIZE);
+		keyBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
+		keyBox.setSpacing(10);
 
+		final var titleLabel = new Label(title);
+		titleLabel.setStyle("-fx-font-size: 20");
+
+		keyBox.getChildren().add(titleLabel);
+		HBox.setHgrow(keyBox, Priority.ALWAYS);
+
+		keyTreeView.setStyle("-fx-font-size: 16");
+		final var keysPane = new ScrollPane();
+		keysPane.setFitToWidth(true);
+		keysPane.setFitToHeight(true);
+		keysPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+		keysPane.setContent(keyTreeView);
+		keyBox.getChildren().add(keysPane);
+
+		return keyBox;
+	}
+
+
+	public void setOldInfo(JsonObject oldInfo) {
+		this.oldInfo = oldInfo;
+	}
 }
