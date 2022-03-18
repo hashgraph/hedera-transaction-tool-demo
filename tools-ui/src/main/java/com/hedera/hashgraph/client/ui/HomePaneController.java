@@ -793,7 +793,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	private HBox formatRequiredSignersBox(final RemoteFile rf, final ButtonBar buttonBar, final ButtonBar extraBar) {
-		//poop
 		final var signingKeys = new HBox();
 		signingKeys.setAlignment(Pos.TOP_RIGHT);
 		signingKeys.setSpacing(10);

@@ -41,10 +41,12 @@ import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.control.Label;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -57,11 +59,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
@@ -629,6 +634,45 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return identifier.toReadableStringAndChecksum();
 		}
 		return "";
+	}
+
+	/**
+	 * Checks if a filename contains the account id
+	 *
+	 * @param accountString
+	 * 		the readable account id
+	 * @param filename
+	 * 		the filename
+	 * @return true if the filename contains the string
+	 */
+	public static boolean isAccount(final String accountString, final String filename) {
+		return filename.contains(accountString + ".") || filename.contains(
+				accountString + "-");
+	}
+
+	/**
+	 * Checks if a file is an info file
+	 *
+	 * @param filename
+	 * 		the name of the file
+	 * @return true if the extension is `.info`
+	 */
+	public static boolean isInfo(final String filename) {
+		return INFO_EXTENSION.equals(FilenameUtils.getExtension(filename));
+	}
+
+	/**
+	 * Get all the info files that correspond to the account
+	 *
+	 * @param account
+	 * 		the account id
+	 * @return an array of files
+	 */
+	@Nullable
+	public static File[] getInfoFiles(final String infoFolder, final AccountId account) {
+		final var accountString = new Identifier(Objects.requireNonNull(account)).toReadableString();
+		return new File(infoFolder).listFiles(
+				(dir, filename) -> isAccount(accountString, filename) && isInfo(filename));
 	}
 }
 
