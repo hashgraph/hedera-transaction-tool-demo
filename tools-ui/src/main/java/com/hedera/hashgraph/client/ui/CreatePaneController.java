@@ -184,7 +184,6 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.CREATE_NETWORK_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
@@ -222,7 +221,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public ScrollPane createScrollPane;
 
 	public ChoiceBox<String> selectTransactionType;
-	public ChoiceBox<String> selectNetwork;
 
 	// Buttons
 	public Button createKeyButton;
@@ -236,7 +234,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// Tooltip buttons
 	public Button nowTimeToolTip;
-	public Button networkToolTip;
 
 	public AnchorPane createAnchorPane;
 
@@ -394,6 +391,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		loadAccountNicknames();
 
+		setupLedget();
+
 		// region INITIALIZE FIELDS
 		makeBoxesInvisible();
 
@@ -428,37 +427,23 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setupSelectTransaction();
 
-		setupSelectNetwork();
 	}
 
-	private void setupSelectNetwork() {
-		noise = true;
-		selectNetwork.getItems().clear();
-		final var names = controller.getDefaultNetworks();
-		selectNetwork.setItems(FXCollections.observableArrayList(names));
-		selectNetwork.setValue("MAINNET");
-		noise = false;
-		selectNetwork.valueProperty().addListener((observableValue, s, t1) -> {
-			if (noise || s.equals(t1)) {
-				return;
-			}
-			switch (t1.toUpperCase(Locale.ROOT)) {
-				case "MAINNET":
-					ledgerId = LedgerId.MAINNET;
-					break;
-				case "TESTNET":
-					ledgerId = LedgerId.TESTNET;
-					break;
-				case "PREVIEWNET":
-					ledgerId = LedgerId.PREVIEWNET;
-					break;
-				default:
-					logger.error("Ledger not defined, reverting to MAINNET");
-					ledgerId = LedgerId.MAINNET;
-			}
-			logger.info("New ledger ID: {}", ledgerId.toString());
-		});
-
+	private void setupLedget() {
+		switch(controller.getCurrentNetwork()){
+			case "MAINNET":
+				ledgerId = LedgerId.MAINNET;
+				break;
+			case "PREVIEWNET":
+				ledgerId = LedgerId.PREVIEWNET;
+				break;
+			case "TESTNET":
+				ledgerId = LedgerId.TESTNET;
+				break;
+			default:
+				logger.info("Custom network: defaulting to Mainnet");
+				ledgerId = LedgerId.MAINNET;
+		}
 	}
 
 	private void setupSelectTransaction() {
@@ -779,8 +764,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				actionEvent -> showTooltip(controller.settingsPane, nowTimeToolTip,
 						NOW_TOOLTIP_TEXT));
 
-		networkToolTip.setOnAction(actionEvent -> showTooltip(controller.settingsPane, networkToolTip,
-				CREATE_NETWORK_TOOLTIP_TEXT));
 	}
 
 	private void setupOutputDirectoriesList() {
@@ -2134,7 +2117,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var newTokens = updateMaxTokensNew.getText();
 		try {
 			if (Integer.parseInt(oldTokens) != Integer.parseInt(newTokens)) {
-				input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
+				input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
+						newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
 			}
 		} catch (final NumberFormatException e) {
 			logger.error("Cannot parse string: {}", e.getMessage());

@@ -704,7 +704,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
 
-		sleep(10000);
 		final var children = systemBoxes.get(1).getChildren();
 
 		// Check the time and local time are correct
@@ -813,9 +812,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void transactionSignHistory_Test() throws IOException, HederaClientException {
-		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var totalBoxes = newFiles.size();
+	public void transactionSignHistory_Test() {
 
 		boolean found = false;
 		int k = 0;
@@ -846,7 +843,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertTrue(found);
 
 		//DECLINE
-		var children = (transactionBoxes.get(k)).getChildren();
+		final var children = (transactionBoxes.get(k)).getChildren();
 		final var reject = TestUtil.findButtonInPopup(children, "DECLINE");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), reject);
@@ -856,13 +853,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		// make sure history order is correct
-		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
 
 		var declinedFound = false;
 		var keyFound = false;
-		for (var node : nodes) {
+		for (final var node : nodes) {
 			if (node instanceof Label) {
-				var text = ((Label) node).getText();
+				final var text = ((Label) node).getText();
 				if (text.contains("Declined on")) {
 					declinedFound = true;
 				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
@@ -880,9 +877,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void transactionCancel_Test() throws IOException, HederaClientException {
-		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var totalBoxes = newFiles.size();
+	public void transactionCancel_Test() {
 
 		boolean found = false;
 		int k = 0;
@@ -913,7 +908,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertTrue(found);
 
 		//DECLINE
-		var children = (transactionBoxes.get(k)).getChildren();
+		final var children = (transactionBoxes.get(k)).getChildren();
 		final var cancel = TestUtil.findButtonInPopup(children, "CANCEL");
 
 		ensureVisible(find(MAIN_TRANSACTIONS_SCROLLPANE), cancel);
@@ -923,13 +918,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(cancel);
 
 		// make sure history order is correct
-		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
 
 		var declinedCount = 0;
 		var keyCount = 0;
-		for (var node : nodes) {
+		for (final var node : nodes) {
 			if (node instanceof Label) {
-				var text = ((Label) node).getText();
+				final var text = ((Label) node).getText();
 				if (text.contains("Declined on")) {
 					++declinedCount;
 				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {

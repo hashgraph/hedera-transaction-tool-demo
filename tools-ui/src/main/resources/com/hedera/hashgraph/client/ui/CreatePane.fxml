@@ -51,26 +51,11 @@
 				</columnConstraints>
 				<rowConstraints>
 					<RowConstraints minHeight="30.0" vgrow="SOMETIMES" />
-					<RowConstraints maxHeight="30.0" minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES" />
 					<RowConstraints maxHeight="30.0" minHeight="30.0" vgrow="SOMETIMES" />
 				</rowConstraints>
 				<Label text="Transaction Type" />
 				<ChoiceBox fx:id="selectTransactionType" onAction="#chooseTransactionTypeChangedAction" prefWidth="300.0" style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" />
-				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false" onAction="#loadFormFromTransaction" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-				<HBox alignment="CENTER_LEFT" GridPane.rowIndex="1">
-					<Label text="Network" />
-					<Button fx:id="networkToolTip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
-						<graphic>
-							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
-								<Image url="@../../../../../icons/helpIcon.png" />
-							</ImageView>
-						</graphic>
-						<padding>
-							<Insets bottom="7.0" />
-						</padding>
-					</Button>
-				</HBox>
-				<ChoiceBox fx:id="selectNetwork" onAction="#chooseTransactionTypeChangedAction" prefWidth="300.0" style="-fx-border-color: #0b9dfd; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+				<Button fx:id="browseTransactions" minWidth="70.0" mnemonicParsing="false" onAction="#loadFormFromTransaction" prefWidth="300.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="IMPORT TRANSACTION" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 			</GridPane>
 			<Region HBox.hgrow="ALWAYS" />
 			<HBox fx:id="createChoiceHBox" />

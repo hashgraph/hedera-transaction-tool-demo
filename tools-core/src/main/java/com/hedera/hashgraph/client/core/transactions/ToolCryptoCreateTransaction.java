@@ -40,6 +40,7 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
@@ -152,11 +153,11 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		}
 
 		try {
-			this.accountMemo = input.has(MEMO_FIELD_NAME) ?
-					trimString(input.get(MEMO_FIELD_NAME).getAsString(), MAX_MEMO_BYTES) :
+			this.accountMemo = input.has(ACCOUNT_MEMO_FIELD_NAME) ?
+					trimString(input.get(ACCOUNT_MEMO_FIELD_NAME).getAsString(), MAX_MEMO_BYTES) :
 					"";
 		} catch (final Exception e) {
-			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MEMO_FIELD_NAME);
+			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
 			answer = false;
 		}
 
