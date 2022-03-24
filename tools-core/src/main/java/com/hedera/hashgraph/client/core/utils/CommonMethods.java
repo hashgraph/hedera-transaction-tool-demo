@@ -50,6 +50,10 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -63,7 +67,6 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
@@ -411,8 +414,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var n = secondString.length();
 		final var suffix = new int[m + 1][n + 1];
 		var len = 0;
-		int row = 0;
-		int col = 0;
+		var row = 0;
+		var col = 0;
 
 		for (var i = 0; i <= m; i++) {
 			for (var j = 0; j <= n; j++) {
@@ -436,7 +439,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return "";
 		}
 
-		final StringBuilder resultStr = new StringBuilder();
+		final var resultStr = new StringBuilder();
 		while (suffix[row][col] != 0) {
 			resultStr.insert(0, firstString.charAt(row - 1));
 			--len;
@@ -515,7 +518,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	}
 
 	public static void checkFiles(final String... filePath) throws HederaClientException {
-		for (final String path : filePath) {
+		for (final var path : filePath) {
 			if (!new File(path).exists()) {
 				throw new HederaClientException(String.format("File %s does not exist",
 						path));
@@ -565,7 +568,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000);
 		}
 		if (split.length == 2) {
-			final StringBuilder tiny = new StringBuilder(split[1]);
+			final var tiny = new StringBuilder(split[1]);
 			while (tiny.length() < 8) {
 				tiny.append("0");
 			}
@@ -673,6 +676,32 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var accountString = new Identifier(Objects.requireNonNull(account)).toReadableString();
 		return new File(infoFolder).listFiles(
 				(dir, filename) -> isAccount(accountString, filename) && isInfo(filename));
+	}
+
+	/**
+	 * Trims a string to fit in a byte array
+	 *
+	 * @param aString
+	 * 		string to be trimmed
+	 * @param limit
+	 * 		the size of the array
+	 * @return a trimmed string
+	 */
+	public static String trimString(final String aString, final int limit) {
+		final var charset = StandardCharsets.UTF_8;
+		final var decoder = charset.newDecoder();
+		final var bytes = aString.getBytes(charset);
+		if (bytes.length <= limit) {
+			return aString;
+		}
+		final var byteBuffer = ByteBuffer.wrap(bytes, 0, limit);
+		final var charBuffer = CharBuffer.allocate(limit);
+
+		decoder.onMalformedInput(CodingErrorAction.IGNORE);
+		decoder.decode(byteBuffer, charBuffer, true);
+		decoder.flush(charBuffer);
+
+		return new String(charBuffer.array(), 0, charBuffer.position());
 	}
 }
 

@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -39,10 +38,16 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.trimString;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.verifyFieldExist;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 
 public class ToolCryptoCreateTransaction extends ToolTransaction {
@@ -51,6 +56,9 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	private KeyList key;
 	private Duration autoRenewDuration;
 	private boolean receiverSignatureRequired;
+	private int maxTokenAssociations = MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
+	private String accountMemo = "";
+
 	private static final Logger logger = LogManager.getLogger(ToolCryptoCreateTransaction.class);
 
 	public ToolCryptoCreateTransaction(final JsonObject input) throws HederaClientException {
@@ -60,11 +68,12 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	public ToolCryptoCreateTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
-
 		this.initialBalance = ((AccountCreateTransaction) transaction).getInitialBalance();
 		this.key = (KeyList) ((AccountCreateTransaction) transaction).getKey();
 		this.autoRenewDuration = ((AccountCreateTransaction) transaction).getAutoRenewPeriod();
 		this.receiverSignatureRequired = ((AccountCreateTransaction) transaction).getReceiverSignatureRequired();
+		this.maxTokenAssociations = ((AccountCreateTransaction) transaction).getMaxAutomaticTokenAssociations();
+		this.accountMemo = ((AccountCreateTransaction) transaction).getAccountMemo();
 		setTransactionType(TransactionType.CRYPTO_CREATE);
 	}
 
@@ -84,11 +93,19 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		return receiverSignatureRequired;
 	}
 
+	public int getMaxTokenAssociations() {
+		return maxTokenAssociations;
+	}
+
+	public String getAccountMemo() {
+		return accountMemo;
+	}
+
 	@Override
 	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
 
-		if (!CommonMethods.verifyFieldExist(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
+		if (!verifyFieldExist(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
 				INITIAL_BALANCE_FIELD_NAME, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 			return false;
 		}
@@ -124,6 +141,25 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 			answer = false;
 		}
 
+		try {
+			this.maxTokenAssociations = input.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME) ?
+					Math.min(input.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt(),
+							MAX_TOKEN_AUTOMATIC_ASSOCIATIONS) :
+					0;
+		} catch (final Exception e) {
+			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			this.accountMemo = input.has(MEMO_FIELD_NAME) ?
+					trimString(input.get(MEMO_FIELD_NAME).getAsString(), MAX_MEMO_BYTES) :
+					"";
+		} catch (final Exception e) {
+			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MEMO_FIELD_NAME);
+			answer = false;
+		}
+
 		return answer;
 	}
 
@@ -144,6 +180,8 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 				.setTransactionMemo(memo)
 				.setTransactionValidDuration(transactionValidDuration)
 				.setReceiverSignatureRequired(receiverSignatureRequired)
+				.setAccountMemo(accountMemo)
+				.setMaxAutomaticTokenAssociations(maxTokenAssociations)
 				.freeze();
 	}
 

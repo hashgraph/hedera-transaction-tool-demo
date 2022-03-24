@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -373,5 +374,30 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 
 		final var id = new Identifier(78098098, 987987, 987987);
 		assertEquals("78098098.987987.987987-fydsl", CommonMethods.removeNickname(id.toReadableStringAndChecksum()));
+	}
+
+	@Test
+	public void trimString_test() {
+		String aString =
+				"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore " +
+						"et dolore magna aliqua. Morbi tempus iaculis urna id volutpat. Ac turpis egestas sed tempus." +
+						" " +
+						"Id volutpat lacus laoreet non curabitur gravida arcu ac tortor. Amet mauris commodo quis " +
+						"imperdiet. Neque volutpat ac tincidunt vitae semper quis lectus nulla. Aliquam purus sit " +
+						"amet luctus venenatis lectus. Massa vitae tortor condimentum lacinia quis. Faucibus nisl " +
+						"tincidunt eget nullam non nisi est. Vulputate eu scelerisque felis imperdiet proin fermentum" +
+						" " +
+						"leo. Pharetra pharetra massa massa ultricies. Scelerisque purus semper eget duis at tellus at." +
+						" " +
+						"Adipiscing bibendum est ultricies integer quis auctor elit.";
+
+		assertEquals(
+				"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore ",
+				CommonMethods.trimString(aString, 100));
+
+		assertEquals(100, CommonMethods.trimString(aString, 100).getBytes(StandardCharsets.UTF_8).length);
+
+		assertEquals("Lorem ipsum dolor sit amet", CommonMethods.trimString("Lorem ipsum dolor sit amet", 100));
+
 	}
 }

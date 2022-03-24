@@ -419,7 +419,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				final var infoFile = entry.getValue();
 				if (new File(infoFile).exists()) {
 					final var info = AccountInfo.fromBytes(readBytes(infoFile));
-					map.put(new Identifier(info.accountId), info);
+					final var baseName = FilenameUtils.getBaseName(infoFile);
+					final var ledger = "".equals(info.ledgerId.toString()) ? baseName.substring(
+							baseName.indexOf("-") + 1) : info.ledgerId.toString();
+					map.put(new Identifier(info.accountId, ledger), info);
 				}
 			}
 		} catch (final InvalidProtocolBufferException | HederaClientException e) {
@@ -917,7 +920,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		choiceBox.getItems().clear();
 
 		// In case the default was deleted
-		if ((defaultFeePayer.getAccountNum()!=0) && !getCustomFeePayers().contains(defaultFeePayer)) {
+		if ((defaultFeePayer.getAccountNum() != 0) && !getCustomFeePayers().contains(defaultFeePayer)) {
 			addCustomFeePayer(defaultFeePayer);
 		}
 
