@@ -42,6 +42,9 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -124,7 +127,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		if (input.mkdirs()) {
 			logger.info("Input directory created");
 		}
-		createAccounts();
+		setupClient();
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		setupUI();
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
@@ -154,8 +157,27 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException {
-		final var nickname = testAccountId.toString();
+	public void requestOneBalance_test() throws InterruptedException, HederaClientException, KeyStoreException,
+			ReceiptStatusException, PrecheckStatusException, TimeoutException {
+
+		createAccounts();
+		mainWindowPage.clickOnHomeButton();
+
+		for (final Node node : findAll("ACCEPT")) {
+			if (node instanceof Button && node.getParent().getParent() instanceof ButtonBar) {
+				clickOn(node);
+			}
+		}
+
+		final var nodes = TestUtil.getPopupNodes();
+
+		assert nodes != null;
+		final var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
+		clickOn(button);
+
+		mainWindowPage.clickOnAccountsButton();
+
+		final var nickname = new Identifier(testAccountId, "INTEGRATION").toReadableString();
 		final var oldBalance = accountsPanePage.getBalance(nickname);
 
 		accountsPanePage.expandRow(nickname)
@@ -175,14 +197,14 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestCheckedBalances_test() throws InterruptedException, HederaClientException {
+	public void requestCheckedBalances_test() throws HederaClientException {
 		final var balancesFiles = new File(Constants.BALANCES_FILE);
 		assertTrue(balancesFiles.exists());
 		final JsonArray initialBalances = readJsonArray(balancesFiles.getAbsolutePath());
 
 		// Request all balances
 		accountsPanePage.selectRow("treasury")
-				.selectRow(testAccountId.toString())
+				.selectRow("seventySix")
 				.requestSelectedBalances();
 
 		while (true) {
@@ -224,7 +246,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		int counter = 0;
 		for (final JsonElement balance : balances) {
 			final String account = balance.getAsJsonObject().get("account").getAsString();
-			if (new Identifier(testAccountId).toReadableString().equals(account)) {
+			if (new Identifier(0, 0, 76, "INTEGRATION").toReadableAccountAndNetwork().equals(account)) {
 				counter++;
 			}
 		}
@@ -236,11 +258,11 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	public void requestOneInfo_test() throws InterruptedException, HederaClientException {
 		// Request all balances
 		accountsPanePage.selectRow("treasury")
-				.selectRow(testAccountId.toString())
+				.selectRow("seventySix")
 				.requestSelectedBalances();
 
 		final var oldBalance = accountsPanePage.getBalance("treasury");
-
+		sleep(1000);
 		accountsPanePage.selectRow("treasury")
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
@@ -254,7 +276,9 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	public void requestUnknownAccountsInfo_test() throws HederaClientException {
 
 		final var accounts = accountsPanePage.getAccounts().size();
-		accountsPanePage.openAccordion()
+
+		accountsPanePage
+				.openAccordion()
 				.enterAccounts("30-40")
 				.clickRequestAccountsButton()
 				.enterPasswordInPopup(TEST_PASSWORD)
@@ -275,16 +299,8 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 	}
 
-	private void createAccounts() throws KeyStoreException, HederaClientException, TimeoutException,
+	private void createAccounts() throws HederaClientException, TimeoutException,
 			PrecheckStatusException, ReceiptStatusException {
-		// create payer account
-		final var keyStore =
-				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
-		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
-
-
-		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKey.json"));
 		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
@@ -303,6 +319,17 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		logger.info("Account Balance = {}", accountInfo.balance.toString());
 		writeBytes(String.format("%s/%s.info", "src/test/resources/Transactions - Documents/InputFiles", testAccountId),
 				accountInfo.toBytes());
+	}
+
+	private void setupClient() throws KeyStoreException {
+		// create payer account
+		final var keyStore =
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/KeyFiles/genesis.pem");
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+
+
+		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 	}
 
 	private void setupUI() throws IOException, KeyStoreException, TimeoutException, PrecheckStatusException,
@@ -372,35 +399,32 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		}
 
 		Files.copy(Path.of("src/test/resources/customNetwork.json"),
-				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/integration.json"));
-		properties.setCustomNetworks(Collections.singleton("integration"));
+				Path.of(DEFAULT_STORAGE, "Files/.System/CustomNetworks/INTEGRATION.json"));
+		properties.setCustomNetworks(Collections.singleton("INTEGRATION"));
 
 		final Set<String> defaultNetworks = new HashSet<>();
 		defaultNetworks.add("MAINNET");
 		defaultNetworks.add("TESTNET");
 		defaultNetworks.add("PREVIEWNET");
 
-		properties.setCurrentNetwork("integration", defaultNetworks);
+		properties.setCurrentNetwork("INTEGRATION", defaultNetworks);
 
-		final var treasuryInfo = new AccountInfoQuery()
-				.setAccountId(new AccountId(2))
-				.execute(client);
-		writeBytes(String.format("%s/0.0.2.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
+		getTreasury();
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
-		clickOn("ACCEPT");
-
-		final var nodes = TestUtil.getPopupNodes();
-
-		assert nodes != null;
-		final var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
-		clickOn(button);
 
 		mainWindowPage = new MainWindowPage(this);
 		accountsPanePage = new AccountsPanePage(this);
 		settingsPanePage = new SettingsPanePage(this);
+	}
+
+	private void getTreasury() throws TimeoutException, PrecheckStatusException, HederaClientException {
+		final var treasuryInfo = new AccountInfoQuery()
+				.setAccountId(new AccountId(2))
+				.execute(client);
+		writeBytes(String.format("%s/0.0.2-INTEGRATION.info", ACCOUNTS_INFO_FOLDER), treasuryInfo.toBytes());
 	}
 
 	@Test
@@ -410,7 +434,10 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		FxToolkit.cleanupStages();
 
 		FileUtils.cleanDirectory(new File(ACCOUNTS_INFO_FOLDER));
+		properties.clearDefaultFeePayers();
 		properties.setDefaultFeePayer(Identifier.ZERO);
+		properties.clearCustomFeePayers();
+
 		Files.deleteIfExists(Path.of(Constants.DEFAULT_STORAGE, "Files/.System/accountMapFile.json"));
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -442,7 +469,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.enterPasswordInPopup(TEST_PASSWORD)
 				.enterTextInPopup("treasury");
 
-
 		mainWindowPage.clickOnSettingsButton();
 		assertTrue(find("#deleteCustomPayerButton").isDisabled());
 		assertTrue(find("#deleteCustomPayerButton").isVisible());
@@ -450,12 +476,14 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		mainWindowPage.clickOnAccountsButton();
 
 		accountsPanePage.deleteAccount("treasury");
+
 		assertFalse(find("#feePayerTextFieldA").isVisible());
 		assertTrue(find("#feePayerChoiceBoxA").isVisible());
 
 		mainWindowPage.clickOnSettingsButton();
 		assertFalse(find("#customFeePayerTextField").isVisible());
 		assertTrue(find("#feePayerChoicebox").isVisible());
+
 		assertFalse(find("#deleteCustomPayerButton").isDisabled());
 		assertTrue(find("#deleteCustomPayerButton").isVisible());
 
@@ -463,6 +491,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		mainWindowPage.clickOnAccountsButton();
 		accountsPanePage.openAccordion();
+
 		assertTrue(find("#feePayerTextFieldA").isVisible());
 		assertFalse(find("#feePayerChoiceBoxA").isVisible());
 	}

@@ -54,9 +54,9 @@ import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonIn
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class ToolTransferTransactionTest implements GenericFileReadWriteAware {
+class ToolCryptoCreateTransactionTest implements GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(ToolTransferTransactionTest.class);
+	private static final Logger logger = LogManager.getLogger(ToolCryptoCreateTransactionTest.class);
 
 	@BeforeEach
 	void setUp() throws IOException {

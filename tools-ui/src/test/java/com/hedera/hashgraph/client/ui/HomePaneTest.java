@@ -756,7 +756,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void transactionSignHistory_Test() throws HederaClientException {
+	public void transactionSignHistory_Test() {
 
 		boolean found = false;
 		int k = 0;
@@ -797,23 +797,31 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		// make sure history order is correct
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
-		assertTrue(historyMap.size() > 0);
-		final var transactionHistory = historyMap.get(0).getAsJsonObject();
-		final var actions = transactionHistory.get("actions").getAsJsonArray();
-		assertEquals(3, actions.size());
-		final var element0 = actions.get(0);
-		assertTrue(element0.getAsString().toUpperCase(Locale.ROOT).contains("DECLINE"));
-		final var element1 = actions.get(1);
-		assertTrue(element1.getAsString().toUpperCase(Locale.ROOT).contains("ACCEPT"));
-		final var element2 = actions.get(2);
-		assertTrue(element2.getAsString().toUpperCase(Locale.ROOT).contains("DECLINE"));
-		logger.info("Done");
+		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+
+		var declinedFound = false;
+		var keyFound = false;
+		for (final var node : nodes) {
+			if (node instanceof Label) {
+				final var text = ((Label) node).getText();
+				if (text.contains("Declined on")) {
+					declinedFound = true;
+				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
+					keyFound = true;
+
+					// declined should be first
+					assertTrue(declinedFound);
+				}
+			}
+		}
+
+		assertTrue(declinedFound);
+		assertTrue(keyFound);
 
 	}
 
 	@Test
-	public void transactionCancel_Test() throws HederaClientException {
+	public void transactionCancel_Test() {
 
 		boolean found = false;
 		int k = 0;

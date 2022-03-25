@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.core.security;
 
+import com.hedera.hashgraph.sdk.LedgerId;
+
 import java.util.regex.Pattern;
 
 /**
@@ -77,7 +79,7 @@ public class AddressChecksums {
 			return correctChecksum;
 		}
 
-    public String getChecksum() {
+		public String getChecksum() {
 			return givenChecksum;
 		}
 
@@ -102,7 +104,7 @@ public class AddressChecksums {
 	 *
 	 * @return the address components, checksum, and forms
 	 */
-	public static ParsedAddress parseAddress(final String addr) {
+	public static ParsedAddress parseAddress(final byte[] ledger, final String addr) {
 		final var results = new ParsedAddress();
 		final var match = ADDRESS_INPUT_FORMAT.matcher(addr);
 		if (!match.matches()) {
@@ -114,7 +116,7 @@ public class AddressChecksums {
 		results.num2 = Integer.parseInt(match.group(2));
 		results.num3 = Integer.parseInt(match.group(3));
 		final var ad = results.num1 + "." + results.num2 + "." + results.num3;
-		final var c = checksum(ad);
+		final var c = checksum(ledger, ad);
 		final var matchGroup = match.group(4).toLowerCase();
 		if ("".equals(matchGroup)) {
 			results.status = parseStatus.GOOD_NO_CHECKSUM;
@@ -129,6 +131,10 @@ public class AddressChecksums {
 		results.noChecksumFormat = ad;
 		results.withChecksumFormat = ad + "(" + c + ")";
 		return results;
+	}
+
+	public static ParsedAddress parseAddress(final String addr) {
+		return parseAddress(LedgerId.MAINNET.toBytes(), addr);
 	}
 
 	/**

@@ -28,18 +28,19 @@ import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_INFO_MAP;
 import static com.hedera.hashgraph.client.core.constants.Constants.CURRENT_NETWORK;
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_AUTO_RENEW_PERIOD;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_FEE_PAYER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HOURS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_MINUTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_NODE_ID;
@@ -61,6 +62,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANS
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.VERSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
+import static java.util.Collections.unmodifiableSet;
 
 public class UserAccessibleProperties {
 
@@ -447,39 +449,96 @@ public class UserAccessibleProperties {
 		properties.setProperty(CURRENT_NETWORK, network);
 	}
 
+	public void setCurrentNetwork(final String network) {
+		properties.setProperty(CURRENT_NETWORK, network);
+	}
+
 	public String getCurrentNetwork() {
 		return properties.getProperty(CURRENT_NETWORK, "MAINNET");
 	}
 
 	public Identifier getDefaultFeePayer() {
-		final var idString = properties.getProperty(DEFAULT_FEE_PAYER, "");
-		return idString.equals("") ? Identifier.ZERO : Identifier.parse(idString);
+		return getDefaultFeePayer(getCurrentNetwork());
+	}
+
+
+	public Identifier getDefaultFeePayer(final String currentNetwork) {
+		final var idString = getDefaultFeePayers();
+		final var defaultPayer = idString.getOrDefault(currentNetwork.toUpperCase(Locale.ROOT), "");
+		return "".equals(defaultPayer) ? Identifier.ZERO : Identifier.parse(defaultPayer, currentNetwork);
 	}
 
 	public void setDefaultFeePayer(final Identifier feePayer) {
-		properties.setProperty(DEFAULT_FEE_PAYER, feePayer.toReadableString());
+		final var payers = getDefaultFeePayers();
+		payers.put(feePayer.getNetworkName(), feePayer.toReadableStringAndChecksum());
+		setDefaultFeePayers(payers);
 	}
 
-	public Set<Identifier> getCustomFeePayers() {
-		final var idStrings = properties.getSetProperty(CUSTOM_FEE_PAYERS, new HashSet<>());
-		return idStrings.stream().map(Identifier::parse).collect(Collectors.toSet());
+	public void clearDefaultFeePayers(){
+		setDefaultFeePayers(new HashMap<>());
 	}
 
-	public void setCustomFeePayers(final Set<Identifier> identifiers) {
-		final var payers = identifiers.stream().map(Identifier::toReadableString).collect(Collectors.toSet());
-		properties.setSetProperty(CUSTOM_FEE_PAYERS, payers);
+	public Map<String, String> getDefaultFeePayers() {
+		return properties.getMapProperty("defaultFeePayers", new HashMap<>());
+	}
+
+	public void setDefaultFeePayers(final Map<String, String> map) {
+		properties.setProperty("defaultFeePayers", map);
+	}
+
+	public Set<Identifier> getCustomFeePayers(final String network) {
+		final var idMap = properties.getMapProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
+		final var accounts = idMap.getOrDefault(network.toUpperCase(Locale.ROOT), "");
+		return "".equals(accounts) ?
+				new HashSet<>() :
+				Arrays.stream(accounts.split(","))
+						.map(s -> Identifier.parse(s, network))
+						.collect(Collectors.toSet());
+	}
+
+	public void setCustomFeePayers(final Set<Identifier> ids) {
+		if (ids.isEmpty()) {
+			return;
+		}
+		final var network = ids.iterator().next().getNetworkName().toUpperCase(Locale.ROOT);
+		if (ids.stream().anyMatch(id -> !id.getNetworkName().equalsIgnoreCase(network))) {
+			return;
+		}
+
+		final var idHash = properties.getMapProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
+		final var stringJoiner = new StringJoiner(",");
+		ids.stream().map(Identifier::toReadableStringAndChecksum).forEach(stringJoiner::add);
+		idHash.put(network, stringJoiner.toString());
+		setCustomFeePayers(idHash);
+	}
+
+	public void setCustomFeePayers(final Map<String, String> identifiers) {
+		properties.setProperty(CUSTOM_FEE_PAYERS, identifiers);
 	}
 
 	public void addCustomFeePayer(final Identifier identifier) {
-		final var customFeePayers = getCustomFeePayers();
+		final var customFeePayers = getCustomFeePayers(identifier.getNetworkName());
 		customFeePayers.add(identifier);
-		setCustomFeePayers(Collections.unmodifiableSet(customFeePayers));
+		setCustomFeePayers(unmodifiableSet(customFeePayers));
 	}
 
 	public void removeCustomFeePayer(final Identifier identifier) {
-		final var payers = getCustomFeePayers();
+		final var payers = getCustomFeePayers(identifier.getNetworkName());
 		payers.remove(identifier);
-		setCustomFeePayers(Collections.unmodifiableSet(payers));
+		if (payers.isEmpty()){
+			clearCustomFeePayers();
+		}
+		setCustomFeePayers(unmodifiableSet(payers));
+	}
+
+	public void removeDefaultFeePayer(final String network) {
+		final var payers = getDefaultFeePayers();
+		payers.remove(network);
+		setDefaultFeePayers(payers);
+	}
+
+	public void clearCustomFeePayers() {
+		properties.setProperty(CUSTOM_FEE_PAYERS, new HashMap<>());
 	}
 
 

@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,7 +137,6 @@ public class KeyPairUtilityTest extends TestBase {
 
 	@Test
 	public void mapExpiration_test() {
-
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
@@ -205,15 +205,16 @@ public class KeyPairUtilityTest extends TestBase {
 		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME + 1))) {
 			// wait for timer to expire
 		}
-
-		//	clickOn("ADD MORE SIGNATURES");
+		ensureVisible(find("ADD MORE SIGNATURES"));
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 
 		assertNotNull(getPopupNodes());
 		homePanePage.enterPasswordInPopup("123654789");
 
-		//	clickOn("ADD MORE SIGNATURES");
+		ensureVisible(find("ADD MORE SIGNATURES"));
+		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("ADD MORE");
 

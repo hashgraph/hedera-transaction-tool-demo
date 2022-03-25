@@ -228,24 +228,24 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
-		assertTrue(initialAcountObject.has("0.0.2"));
-		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+		assertTrue(initialAcountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2-UNKNOWN").getAsString());
 
 		final var button = TestUtil.findButtonInPopup(accountsBundle.getChildren(), "ACCEPT");
 		ensureVisible(button);
 		clickOn(button);
 		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(9, finalAccountObject.keySet().size());
-		assertTrue(finalAccountObject.has("0.0.1"));
-		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
-		assertTrue(finalAccountObject.has("0.0.2"));
-		assertEquals("Treasury test", finalAccountObject.get("0.0.2").getAsString());
-		assertTrue(finalAccountObject.has("0.0.3"));
-		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
-		assertTrue(finalAccountObject.has("0.0.4"));
-		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
-		assertTrue(finalAccountObject.has("0.0.6"));
-		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
+		assertTrue(finalAccountObject.has("0.0.1-UNKNOWN"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("Treasury test", finalAccountObject.get("0.0.2-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3-UNKNOWN"));
+		assertEquals("node1", finalAccountObject.get("0.0.3-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4-UNKNOWN"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6-UNKNOWN"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6-UNKNOWN").getAsString());
 	}
 
 	@Test
@@ -254,8 +254,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
-		assertTrue(initialAcountObject.has("0.0.2"));
-		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+		assertTrue(initialAcountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2-UNKNOWN").getAsString());
 
 		final var checkBox = findCheckBoxInGridpane(accountsBundle);
 		assertNotNull(checkBox);
@@ -269,16 +269,16 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		clickOn(button);
 		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(9, finalAccountObject.keySet().size());
-		assertTrue(finalAccountObject.has("0.0.1"));
-		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
-		assertTrue(finalAccountObject.has("0.0.2"));
-		assertEquals("treasury", finalAccountObject.get("0.0.2").getAsString());
-		assertTrue(finalAccountObject.has("0.0.3"));
-		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
-		assertTrue(finalAccountObject.has("0.0.4"));
-		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
-		assertTrue(finalAccountObject.has("0.0.6"));
-		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
+		assertTrue(finalAccountObject.has("0.0.1-UNKNOWN"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", finalAccountObject.get("0.0.2-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3-UNKNOWN"));
+		assertEquals("node1", finalAccountObject.get("0.0.3-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4-UNKNOWN"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6-UNKNOWN"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6-UNKNOWN").getAsString());
 	}
 
 	@Test
@@ -287,8 +287,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(accountsBundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
-		assertTrue(initialAcountObject.has("0.0.2"));
-		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+		assertTrue(initialAcountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2-UNKNOWN").getAsString());
 
 		final var button = TestUtil.findButtonInPopup(accountsBundle.getChildren(), "DECLINE");
 		ensureVisible(button);
@@ -355,8 +355,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(bundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
-		assertTrue(initialAcountObject.has("0.0.2"));
-		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+		assertTrue(initialAcountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2-UNKNOWN").getAsString());
 
 		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
 				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
@@ -369,16 +369,16 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		clickOn(button);
 		final var finalAccountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(9, finalAccountObject.keySet().size());
-		assertTrue(finalAccountObject.has("0.0.1"));
-		assertEquals("AccountOne", finalAccountObject.get("0.0.1").getAsString());
-		assertTrue(finalAccountObject.has("0.0.2"));
-		assertEquals("Treasury test", finalAccountObject.get("0.0.2").getAsString());
-		assertTrue(finalAccountObject.has("0.0.3"));
-		assertEquals("node1", finalAccountObject.get("0.0.3").getAsString());
-		assertTrue(finalAccountObject.has("0.0.4"));
-		assertEquals("0.0.4", finalAccountObject.get("0.0.4").getAsString());
-		assertTrue(finalAccountObject.has("0.0.6"));
-		assertEquals("AnotherNode", finalAccountObject.get("0.0.6").getAsString());
+		assertTrue(finalAccountObject.has("0.0.1-UNKNOWN"));
+		assertEquals("AccountOne", finalAccountObject.get("0.0.1-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("Treasury test", finalAccountObject.get("0.0.2-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.3-UNKNOWN"));
+		assertEquals("node1", finalAccountObject.get("0.0.3-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.4-UNKNOWN"));
+		assertEquals("0.0.4", finalAccountObject.get("0.0.4-UNKNOWN").getAsString());
+		assertTrue(finalAccountObject.has("0.0.6-UNKNOWN"));
+		assertEquals("AnotherNode", finalAccountObject.get("0.0.6-UNKNOWN").getAsString());
 
 		final var finalPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
 				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));
@@ -401,8 +401,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(bundle.getChildren().size() > 0);
 		final var initialAcountObject = readJsonObject(Constants.ACCOUNTS_MAP_FILE);
 		assertEquals(5, initialAcountObject.keySet().size());
-		assertTrue(initialAcountObject.has("0.0.2"));
-		assertEquals("treasury", initialAcountObject.get("0.0.2").getAsString());
+		assertTrue(initialAcountObject.has("0.0.2-UNKNOWN"));
+		assertEquals("treasury", initialAcountObject.get("0.0.2-UNKNOWN").getAsString());
 
 		final var initialPublicKeys = new File(Constants.KEYS_FOLDER).listFiles(
 				(dir, name) -> Constants.PUB_EXTENSION.equals(FilenameUtils.getExtension(name)));

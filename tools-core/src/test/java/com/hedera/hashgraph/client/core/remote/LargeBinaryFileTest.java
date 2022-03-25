@@ -207,7 +207,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		assertEquals(120, largeBinary.getTransactionValidDuration());
 		assertEquals(new Timestamp(1662166800, 0), largeBinary.getTransactionValidStart());
 		assertEquals(100, largeBinary.getValidIncrement());
-		assertEquals(new Identifier(0, 0, 3), largeBinary.getNodeID());
+		assertEquals(new Identifier(0, 0, 3, "mainnet"), largeBinary.getNodeID());
 		assertEquals(190000000L, largeBinary.getTransactionFee());
 		assertEquals("a memo included", largeBinary.getMemo());
 		assertEquals(1, largeBinary.getSigningAccounts().size());

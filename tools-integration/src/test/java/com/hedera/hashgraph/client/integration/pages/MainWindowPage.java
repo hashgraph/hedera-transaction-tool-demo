@@ -25,6 +25,7 @@ public class MainWindowPage {
 	private final TestBase driver;
 	private static final String ACCOUNTS_BUTTON = "#accountsButton";
 	private static final String SETTINGS_PANE = "#settingsButton";
+	private static final String HOME_PANE = "#homeButton";
 
 	public MainWindowPage(final TestBase driver) {
 		this.driver = driver;
@@ -37,6 +38,11 @@ public class MainWindowPage {
 
 	public MainWindowPage clickOnSettingsButton() {
 		driver.clickOn(SETTINGS_PANE);
+		return new MainWindowPage(driver);
+	}
+
+	public MainWindowPage clickOnHomeButton() {
+		driver.clickOn(HOME_PANE);
 		return new MainWindowPage(driver);
 	}
 }

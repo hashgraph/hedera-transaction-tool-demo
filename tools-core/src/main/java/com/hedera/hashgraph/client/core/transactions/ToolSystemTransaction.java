@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.transactions;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -76,7 +77,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 			throw new HederaClientException("Cannot determine if the entity is a contract or a file");
 		}
 		this.isFile = (file != null);
-		this.entity = isFile ? new Identifier(file) : new Identifier(contract);
+		this.entity = isFile ? new Identifier(file, NetworkEnum.MAINNET.toString()) : new Identifier(contract, NetworkEnum.MAINNET.toString());
 
 		this.expiration = (isDelete) ? ((SystemDeleteTransaction) transaction).getExpirationTime() : null;
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;

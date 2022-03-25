@@ -19,9 +19,14 @@
 package com.hedera.hashgraph.client.core.constants;
 
 public class ToolTipMessages {
+
 	private ToolTipMessages() {
 		throw new IllegalStateException("Constants class");
 	}
+
+	public static final String CREATE_NETWORK_TOOLTIP_TEXT =
+			"This setting is used to determine the correct checksum for accounts in the form. It is not needed for the " +
+					"actual transaction creation.";
 
 	public static final String NOW_TOOLTIP_TEXT =
 			"The transaction must be submitted to the network shortly after the time chosen (within 2 " +
