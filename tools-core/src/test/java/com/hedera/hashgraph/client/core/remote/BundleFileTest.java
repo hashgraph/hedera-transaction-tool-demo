@@ -200,8 +200,8 @@ public class BundleFileTest extends TestBase {
 		assertNotEquals(mixedBundle, otherBundle);
 		assertNotEquals(mixedBundle.hashCode(), otherBundle.hashCode());
 
-		assertEquals(249992671, mixedBundle.hashCode());
-		assertEquals(-1532255002, otherBundle.hashCode());
+		assertEquals(-1133878251, mixedBundle.hashCode());
+		assertEquals(1500381343, otherBundle.hashCode());
 	}
 
 	@Test

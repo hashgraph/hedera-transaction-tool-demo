@@ -195,7 +195,7 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	public String getFeePayer() {
-		return feePayer.toReadableAccountAndChecksum();
+		return feePayer.toReadableStringAndChecksum();
 	}
 
 	public String getExpirationDate() {

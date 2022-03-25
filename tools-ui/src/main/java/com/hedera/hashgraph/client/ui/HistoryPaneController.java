@@ -244,7 +244,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void setupPredicates() {
 		feePayerPredicate = historyData -> {
-			final var accounts = parseAccountNumbers(feePayerTextField.getText());
+			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
 			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
 		};
 
