@@ -395,10 +395,10 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 		// test that the bundle exists in history
 
-		var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
+		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
 
-		var labels = new ArrayList<String>();
-		for (var node : nodes) {
+		final var labels = new ArrayList<String>();
+		for (final var node : nodes) {
 			if (node instanceof Label) {
 				labels.add(((Label) node).getText());
 			}

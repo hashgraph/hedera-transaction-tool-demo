@@ -22,7 +22,6 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.sdk.FreezeType;
-import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -237,7 +236,7 @@ public class CreatePanePage {
 	}
 
 	private void clearTree() {
-		var node = driver.find("Threshold key (2 of 4)");
+		final var node = driver.find("Threshold key (2 of 4)");
 		driver.clickOn(node);
 		clickOnDeletePublicKeyButton();
 
@@ -275,39 +274,6 @@ public class CreatePanePage {
 			}
 		}
 		return this;
-	}
-
-	public Button getCenterButton(final CenterButtons button) {
-		final var popupNodes = getPopupNodes();
-		assert popupNodes != null;
-		assert popupNodes.size() == 2;
-		assert popupNodes.get(1) instanceof VBox;
-		final var vBox0 = (VBox) popupNodes.get(1);
-		final var inner0 = vBox0.getChildren();
-		assert inner0 != null;
-		assert inner0.size() == 2;
-		assert inner0.get(0) instanceof HBox;
-
-		final var hBox1 = (HBox) inner0.get(0);
-		final var inner1 = hBox1.getChildren();
-		assert inner1 != null;
-		assert inner1.get(1) instanceof VBox;
-
-		final var inner2 = ((VBox) inner1.get(1)).getChildren();
-		assert inner2 != null;
-		Button centerButton = null;
-		for (final var node : ((VBox) inner2.get(0)).getChildren()) {
-			assert node instanceof Button;
-			final var text = ((Button) node).getText();
-			if (text.isEmpty() && button.equals(CenterButtons.ARROW_BUTTON)) {
-				centerButton = (Button) node;
-			}
-			if (!text.isEmpty() && button.equals(CenterButtons.CROSS_BUTTON)) {
-				centerButton = (Button) node;
-			}
-		}
-		return centerButton;
-
 	}
 
 	public TitledPane getTitledPane(final TitledPaneEnum paneEnum) {
@@ -367,7 +333,7 @@ public class CreatePanePage {
 		final var inner0 = vBox0.getChildren();
 		final var vBox1 = (VBox) ((HBox) inner0.get(0)).getChildren().get(1);
 		final var buttons = ((VBox) vBox1.getChildren().get(0)).getChildren();
-		for (final Node button : buttons) {
+		for (final var button : buttons) {
 			if (button instanceof Button && button.isVisible()) {
 				return (Button) button;
 			}
@@ -833,28 +799,6 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public CreatePanePage doubleClickOnPublicKey(final String string) {
-		final var publicKeyTitledPane = getTitledPane(PUBLIC_KEYS);
-		final var publicKeyTitledPaneContent = publicKeyTitledPane.getContent();
-		assertTrue(publicKeyTitledPaneContent instanceof VBox);
-		final var innerVBox = ((VBox) publicKeyTitledPaneContent).getChildren();
-		assertEquals(1, innerVBox.size());
-		assertTrue(innerVBox.get(0) instanceof VBox);
-
-		final var lists = ((VBox) innerVBox.get(0)).getChildren();
-		assertEquals(1, lists.size());
-
-		final var publicKeys = ((ListView<?>) lists.get(0)).getItems();
-		for (final Object publicKey : publicKeys) {
-			assertTrue(publicKey instanceof String);
-			if (string.equals(publicKey)) {
-				driver.doubleClickOn((String) publicKey);
-				break;
-			}
-		}
-		return this;
-	}
-
 	public CreatePanePage clickOnAddPublicKeyButton() {
 		final var publicKeyButtons = getVisibleAddButton();
 		driver.clickOn(publicKeyButtons);
@@ -913,7 +857,7 @@ public class CreatePanePage {
 			return treeItem;
 		}
 		if (!treeItem.getChildren().isEmpty()) {
-			for (final TreeItem<String> child : treeItem.getChildren()) {
+			for (final var child : treeItem.getChildren()) {
 				final var childResult = findFromRoot(child, key);
 				if (childResult != null) {
 					return childResult;
@@ -948,6 +892,48 @@ public class CreatePanePage {
 		driver.clickOn(close);
 	}
 
+	public CreatePanePage setNewAccountMemo(final String memoString) {
+		final var n = driver.find("#updateAccountMemoNew");
+		driver.ensureVisible(n);
+		assertTrue(n instanceof TextField);
+		driver.doubleClickOn(n);
+		driver.clickOn(n);
+		driver.write(memoString);
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setNewMaxTokenAss(final int associations) {
+		final var n = driver.find("#updateMaxTokensNew");
+		driver.ensureVisible(n);
+		assertTrue(n instanceof TextField);
+		driver.doubleClickOn(n);
+		driver.write(String.valueOf(associations));
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setAccountMemo(final String text) {
+		final var n = driver.find("#createAccountMemo");
+		driver.ensureVisible(n);
+		assertTrue(n instanceof TextField);
+		driver.doubleClickOn(n);
+		driver.clickOn(n);
+		driver.write(text);
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage setTokenAssociations(final int i) {
+		final var n = driver.find("#createMaxTokenAssociations");
+		driver.ensureVisible(n);
+		assertTrue(n instanceof TextField);
+		driver.doubleClickOn(n);
+		driver.write(String.valueOf(i));
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
 	public enum OperationType {
 		delete, undelete
 	}
@@ -963,10 +949,6 @@ public class CreatePanePage {
 		TitledPaneEnum(final int i) {
 			value = i;
 		}
-	}
-
-	public enum CenterButtons {
-		ARROW_BUTTON, CROSS_BUTTON
 	}
 
 }

@@ -82,6 +82,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class TransactionFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -100,6 +102,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 	private JsonObject nicknames;
 	private JsonObject oldInfo = null;
+	private String network = "MAINNET";
 
 	public TransactionFile() {
 		super();
@@ -162,6 +165,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	public Timestamp getExpiration() {
 		return expiration;
+	}
+
+	public void setNetwork(final String network) {
+		this.network = network;
 	}
 
 	@Override
@@ -306,14 +313,26 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		detailsGridPane.add(new Label("Auto renew period: "), 0, count);
 		detailsGridPane.add(
-				new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds()))
-				, 1, count++);
+				new Label(String.format("%s seconds", createTransaction.getAutoRenewDuration().getSeconds())), 1,
+				count++);
 
 		detailsGridPane.add(new Label("Initial balance: "), 0, count);
 		final var initialBalance = new Label(createTransaction.getInitialBalance().toString());
 		initialBalance.setFont(COURIER_FONT);
 		initialBalance.setStyle(DEBIT);
 		detailsGridPane.add(initialBalance, 1, count++);
+
+		final var titleLabel = new Label("Maximum automatic token associations: ");
+		titleLabel.setWrapText(true);
+		detailsGridPane.add(titleLabel, 0, count);
+		final var maxTokens = new Label(String.valueOf(createTransaction.getMaxTokenAssociations()));
+		detailsGridPane.add(maxTokens, 1, count++);
+
+
+		detailsGridPane.add(new Label("Account memo: "), 0, count);
+		final var accountMemo = new Label(createTransaction.getAccountMemo());
+		detailsGridPane.add(accountMemo, 1, count++);
+
 
 		detailsGridPane.add(sigReqLabel, 0, count);
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
@@ -329,7 +348,14 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * 		the number of rows in the grid pane
 	 */
 	private void handleCryptoUpdateTransactionField(final GridPane detailsGridPane, int count) {
+
 		final var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
+
+		detailsGridPane.add(new Label("Account to update"), 0, count);
+		final var account = updateTransaction.getAccount();
+		account.setNetworkName(network);
+		detailsGridPane.add(new Label(account.toNicknameAndChecksum(nicknames)), 1, count++);
+
 		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
 
@@ -361,6 +387,32 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
 			final var labelString = hasOldInfo ?
 					String.format("%s (updated from %s)", newValue, oldValue) :
+					String.format("%s", newValue);
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count++);
+		}
+
+		if (updateTransaction.getMaxTokenAssociations() != null) {
+			final var labelMAT = new Label("Maximum automatic token associations");
+			labelMAT.setWrapText(true);
+			detailsGridPane.add(labelMAT, 0, count);
+			final var newValue = updateTransaction.getMaxTokenAssociations();
+			final var labelString = (hasOldInfo && oldInfo.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) ?
+					String.format("%d (updated from %d)", newValue,
+							oldInfo.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt()) :
+					String.format("%d", newValue);
+			final var label = new Label(labelString);
+			label.setWrapText(true);
+			detailsGridPane.add(label, 1, count++);
+		}
+
+		if (updateTransaction.getAccountMemo() != null) {
+			detailsGridPane.add(new Label("Account memo"), 0, count);
+			final var newValue = updateTransaction.getAccountMemo();
+			final var labelString = (hasOldInfo && oldInfo.has(ACCOUNT_MEMO_FIELD_NAME)) ?
+					String.format("%s (updated from %s)", newValue,
+							oldInfo.get(ACCOUNT_MEMO_FIELD_NAME).getAsString()) :
 					String.format("%s", newValue);
 			final var label = new Label(labelString);
 			label.setWrapText(true);
@@ -636,7 +688,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 
-	public void setOldInfo(JsonObject oldInfo) {
+	public void setOldInfo(final JsonObject oldInfo) {
 		this.oldInfo = oldInfo;
 	}
 }
