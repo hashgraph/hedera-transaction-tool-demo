@@ -53,12 +53,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HistoryPaneTest.class);
 	private static final Path currentRelativePath = Paths.get("");
 
-	private UserAccessibleProperties properties;
 	private HistoryWindowPage historyWindowPage;
 	private MainWindowPage mainWindowPage;
 
@@ -84,7 +84,8 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
 
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		final var properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {
@@ -118,7 +119,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final Controller controller = new Controller();
+		final var controller = new Controller();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
@@ -144,9 +145,6 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 
 	@After
 	public void tearDown() throws Exception {
-		ensureEventQueueComplete();
-		FxToolkit.hideStage();
-		FxToolkit.cleanupStages();
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
