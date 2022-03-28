@@ -24,7 +24,6 @@ import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
-import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
@@ -206,7 +205,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	private void loadNewFilesBox(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
 		newFilesViewVBox.getChildren().clear();
-		final var newFiles = displayFiles(remoteFilesMap, false);
+		final var newFiles = displayFiles(remoteFilesMap);
 		if (!newFiles.isEmpty()) {
 			newFilesViewVBox.getChildren().addAll(newFiles);
 		}
@@ -290,8 +289,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return Hex.toHexString(readBytes(fileName));
 	}
 
-	private List<VBox> displayFiles(final RemoteFilesMap remoteFilesMap,
-			final boolean history) throws HederaClientException {
+	private List<VBox> displayFiles(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
 
 		// Filter all but the last software update
 		final List<RemoteFile> files = new ArrayList<>();
@@ -310,26 +308,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			files.add(sFile);
 		}
 		Collections.sort(files);
-
-
-		final List<VBox> showBoxes = new ArrayList<>();
-
-		final var boxes = getFileBoxes(files);
-
-		if (!history) {
-			return boxes;
-		}
-		var i = 0;
-		final int boxesPerPage = 10;
-		while (i < boxesPerPage) {
-			if (i < boxes.size()) {
-				showBoxes.add(boxes.get(i));
-			} else {
-				break;
-			}
-			i++;
-		}
-		return showBoxes;
+		return getFileBoxes(files);
 	}
 
 	private List<VBox> getFileBoxes(final List<RemoteFile> fileList) throws HederaClientException {
@@ -343,6 +322,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				setupKeyTree((TransactionFile) rf);
 			}
 
+			if (controller.historyPaneController.isHistory(rf.hashCode())) {
+				continue;
+			}
 			final var fileBox = rf.buildDetailsBox();
 			final var buttonsBox = getButtonsBox(rf);
 			if (buttonsBox != null) {

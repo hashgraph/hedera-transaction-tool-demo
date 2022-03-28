@@ -19,6 +19,13 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
+import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+
+import static org.junit.Assert.assertTrue;
 
 public class HistoryWindowPage {
 	private final TestBase driver;
@@ -33,7 +40,7 @@ public class HistoryWindowPage {
 		return this;
 	}
 
-	public HistoryWindowPage clickOnResign(String buttonText) {
+	public HistoryWindowPage clickOnResign(final String buttonText) {
 		if (driver.find(buttonText).isVisible()) {
 			driver.doubleClickOn(buttonText);
 		}

@@ -374,9 +374,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var typeColumn = getTypeColumn(table);
 		final var feePayerColumn = getFeePayerColumn(table);
 		final var lastAction = getLastActionColumn(table);
-
 		final var expirationDateColumn = getExpirationColumn(table);
-
 		final var expanderColumn = getExpanderColumn();
 		final var reSignColumn = getReSignColumn(table);
 
@@ -549,11 +547,11 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					private void setHistoryDataAction(final HistoryData historyData) {
 						historyData.setHistory(false);
 						noise = false;
-						historyMap.remove(historyData.getCode());
 						historyMap.put(historyData.getCode(), historyData);
 						button.setDisable(true);
 						noise = true;
 						controller.homePaneController.setForceUpdate(true);
+						controller.homePaneController.initializeHomePane();
 					}
 				};
 		actionColumn.setCellFactory(cellFactory);
@@ -758,12 +756,19 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private HBox getTitleBox(final String title, final VBox filterBox) {
-		final var lastActionBox = new HBox();
-		lastActionBox.getChildren().add(new Label(title));
-		final var lastActionRegion = getRegion();
-		lastActionBox.getChildren().add(lastActionRegion);
-		final var lastActionButton = formatButton(FILTER_ICON, 20);
-		lastActionButton.setOnAction(actionEvent -> {
+		final var hBox = new HBox();
+		final var isTest = SetupPhase.TEST_PHASE.equals(controller.getSetupPhase());
+
+		if (!isTest) {
+			hBox.getChildren().add(new Label(title));
+			final var region = getRegion();
+			hBox.getChildren().add(region);
+		}
+
+		final var button = isTest ?
+				new Button(title + "@@@") :
+				formatButton(FILTER_ICON, 20);
+		button.setOnAction(actionEvent -> {
 			final var b = !filterBox.isVisible();
 			feePayerFilterVBox.setVisible(false);
 			typeFilterVBox.setVisible(false);
@@ -771,9 +776,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			expirationDateFilterVBox.setVisible(false);
 			filterBox.setVisible(b);
 		});
-		lastActionBox.getChildren().add(lastActionButton);
-		lastActionBox.setAlignment(Pos.CENTER_RIGHT);
-		return lastActionBox;
+		hBox.getChildren().add(button);
+		hBox.setAlignment(Pos.CENTER_RIGHT);
+		return hBox;
 	}
 
 	/**
@@ -902,6 +907,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			Files.deleteIfExists(Path.of(HISTORY_MAP));
 			loadMap();
 			initializeHistoryPane();
+			controller.homePaneController.setForceUpdate(true);
+			controller.homePaneController.initializeHomePane();
 		}
+	}
+
+	public boolean isHistory(final int code) {
+		return historyMap.containsKey(code) && historyMap.get(code).isHistory();
 	}
 }

@@ -22,7 +22,6 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
-import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import javafx.scene.control.ScrollPane;
@@ -38,7 +37,6 @@ import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -48,13 +46,10 @@ import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
-import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
-import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
-import static java.nio.file.Files.deleteIfExists;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -96,7 +91,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 			logger.info("Keys path created");
 		}
 
-		// Special case for test: Does not ask for password during setup
+		// Special case for test
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		final var pathname =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
@@ -112,7 +107,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 
 		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents - Empty/",
 				"test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
@@ -144,6 +139,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnHistoryButton();
 		historyWindowPage.rebuildHistory();
+		populateHistory();
 	}
 
 	@After
@@ -164,22 +160,21 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 	@Test
 	public void reSign_test() {
 		mainWindowPage.clickOnHomeButton();
-		final var initialFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+		final var initialFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
 		mainWindowPage.clickOnHistoryButton();
-		populateHistory();
-//		historyWindowPage.clickOnResign(transactions.get(0).getFileName());
-//		mainWindowPage.clickOnHomeButton();
-//		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-///		assertEquals(initialFiles.size(), finalFiles.size() - 1);
-
-		sleep(100000);
+		historyWindowPage.clickOnResign(transactions.get(0).getFileName());
+		final var button = find(transactions.get(0).getFileName());
+		assertNotNull(button);
+		assertTrue(button.isDisable());
+		mainWindowPage.clickOnHomeButton();
+		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
+		assertEquals(initialFiles, finalFiles - 1);
 	}
 
 	private void populateHistory() {
 		final var content = ((ScrollPane) find("#contentScrollPane")).getContent();
 		assertTrue(content instanceof TableView);
 		final var tableItems = ((TableView<HistoryData>) content).getItems();
-		assertEquals(27, tableItems.size());
 		for (final var tableItem : tableItems) {
 			switch (tableItem.getType()) {
 				case TRANSACTION:
