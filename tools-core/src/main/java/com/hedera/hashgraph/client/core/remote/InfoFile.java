@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
-import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
@@ -166,16 +165,6 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 	@Override
 	public List<FileActions> getActions() {
 		return actions;
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
 	}
 
 	private String getNetwork(final String accountPath) throws HederaClientException, InvalidProtocolBufferException {

@@ -44,10 +44,6 @@ public class MetadataFile extends RemoteFile {
 
 	private final Set<MetadataAction> metadataActions = new HashSet<>();
 
-	public MetadataFile() {
-		super();
-	}
-
 	public MetadataFile(final FileDetails f) {
 		super(f);
 		if (!isValid()) {
@@ -118,13 +114,4 @@ public class MetadataFile extends RemoteFile {
 		}
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
 }

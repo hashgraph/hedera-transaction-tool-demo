@@ -50,13 +50,8 @@ import static org.apache.commons.io.FileUtils.contentEquals;
 
 public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(PublicKeyFile.class);
-
-	private Timestamp timestamp;
 	private final List<FileActions> actions = Arrays.asList(FileActions.ACCEPT, FileActions.DECLINE);
-
-	public PublicKeyFile() {
-		super();
-	}
+	private final Timestamp timestamp;
 
 	public PublicKeyFile(final FileDetails f) {
 		super(f);
@@ -152,11 +147,6 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 			logger.error(e);
 		}
 		return false;
-	}
-
-	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
 	}
 
 	@Override

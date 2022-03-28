@@ -82,16 +82,6 @@ public class CommentFile extends RemoteFile {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
 		toJson.add("timeStamp", timestamp.asJSON());

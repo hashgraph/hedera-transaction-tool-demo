@@ -206,7 +206,6 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return formattedText;
 	}
 
-
 	/**
 	 * If the notes contain a Hyperlink, show it to the user
 	 *
