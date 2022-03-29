@@ -79,13 +79,7 @@ public class NewPasswordPopupTest extends TestBase {
 	@Before
 	public void setUp() throws Exception {
 
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("TransactionTools folder created");
-		}
+		TestUtil.buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -118,7 +112,7 @@ public class NewPasswordPopupTest extends TestBase {
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE, MNEMONIC_PATH));

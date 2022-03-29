@@ -79,7 +79,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -89,7 +88,7 @@ import java.util.function.Predicate;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
-import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -98,7 +97,7 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNum
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	private static final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
-	private static final String HISTORY_MAP = SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
+	private static final String HISTORY_MAP = DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
@@ -608,7 +607,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		if (noise) {
 			return;
 		}
-		if (new File(SYSTEM_FOLDER).mkdirs()) {
+		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
 			logger.info("Creating system folder");
 		}
 		logger.info("Storing map to {}", HISTORY_MAP);

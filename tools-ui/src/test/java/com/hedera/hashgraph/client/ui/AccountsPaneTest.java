@@ -102,16 +102,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Before
 	public void setUp() throws Exception {
-
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("TransactionTools folder created");
-		}
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		if (new File(
 				currentRelativePath + "/src/test/resources/Transactions - Documents/OutputFiles/test1" +

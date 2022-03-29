@@ -55,7 +55,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -82,14 +81,9 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -124,7 +118,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));

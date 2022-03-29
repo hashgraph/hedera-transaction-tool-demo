@@ -105,6 +105,9 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 	//@BeforeEach
 	@Before
 	public void setUp() throws Exception {
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+
 		if (new File(USER_HOME + "Documents" + File.separator + "initialMap.json").delete()) {
 			logger.info("Default drives file deleted");
 		}
@@ -228,7 +231,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		final var nodes = TestUtil.getPopupNodes();
 		assertNotNull(nodes);
 		assertTrue(nodes.get(1) instanceof Label);
-		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again") );
+		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again"));
 		initialStartupPage.enterNewPasswordInPopup(PASSWORD);
 
 

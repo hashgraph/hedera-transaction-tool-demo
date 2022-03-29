@@ -23,7 +23,6 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
@@ -68,8 +67,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
-import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
@@ -85,7 +84,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	public static final int ONE_SECOND = 1000;
 	private HomePanePage homePanePage;
 	private MainWindowPage mainWindowPage;
-	private HistoryWindowPage historyWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
@@ -105,14 +103,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -147,7 +140,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
@@ -161,7 +154,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
-		final var historyMap = new File(SYSTEM_FOLDER, HISTORY_MAP_JSON);
+		final var historyMap = new File(DEFAULT_SYSTEM_FOLDER, HISTORY_MAP_JSON);
 		Files.deleteIfExists(historyMap.toPath());
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
@@ -171,7 +164,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
-		historyWindowPage = new HistoryWindowPage(this);
 
 		mainWindowPage.clickOnHistoryButton();
 		mainWindowPage.clickOnHomeButton();
@@ -316,7 +308,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertEquals(1, historyMap.size());
 
 	}
@@ -338,7 +330,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertEquals(1, historyMap.size());
 
 	}
@@ -379,7 +371,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		sleep(ONE_SECOND);
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var map = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var map = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertEquals(1, map.size());
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
@@ -484,7 +476,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(totalBoxes - 1, refreshFiles.size());
 
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertEquals(1, historyMap.size());
 
 	}
@@ -580,7 +572,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertEquals(1, historyMap.size());
 
 	}
@@ -797,7 +789,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		// make sure history order is correct
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertTrue(historyMap.size() > 0);
 		final var transactionHistory = historyMap.get(0).getAsJsonObject();
 		final var actions = transactionHistory.get("actions").getAsJsonArray();
@@ -854,7 +846,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(cancel);
 
 		// make sure history order is correct
-		final var historyMap = readJsonArray(SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 		assertTrue(historyMap.size() > 0);
 		final var transactionHistory = historyMap.get(0).getAsJsonObject();
 		final var actions = transactionHistory.get("actions").getAsJsonArray();
@@ -1014,7 +1006,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		if (new File(out).exists()) {
 			FileUtils.cleanDirectory(new File(out));
 		}
-		final var historyMap = new File(SYSTEM_FOLDER, HISTORY_MAP_JSON);
+		final var historyMap = new File(DEFAULT_SYSTEM_FOLDER, HISTORY_MAP_JSON);
 		Files.deleteIfExists(historyMap.toPath());
 
 		if (new File(DEFAULT_STORAGE).exists()) {

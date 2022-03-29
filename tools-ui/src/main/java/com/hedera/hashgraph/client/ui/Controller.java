@@ -98,7 +98,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_H
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
-import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -294,7 +294,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		// Then replace it with the key provided in the app resources.
 		final InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 
-		if (new File(SYSTEM_FOLDER).mkdirs()) {
+		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
 			logger.info("System folder created");
 		}
 

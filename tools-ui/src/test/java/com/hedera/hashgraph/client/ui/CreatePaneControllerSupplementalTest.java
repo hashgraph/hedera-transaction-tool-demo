@@ -112,13 +112,10 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	@Before
 	public void setUp() {
 		try {
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
+			System.gc();
+			logger.info("Starting test class: {}", getClass().getSimpleName());
+			TestUtil.buildFolders();
 
-			if (new File(DEFAULT_STORAGE).mkdirs()) {
-				logger.info("TransactionTools folder created");
-			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
@@ -165,7 +162,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 			properties.setHash("123456789".toCharArray());
 
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-			setupTransactionDirectory(DEFAULT_STORAGE);
+			//setupTransactionDirectory(DEFAULT_STORAGE);
 
 			final var controller = new Controller();
 			final var version = controller.getVersion();

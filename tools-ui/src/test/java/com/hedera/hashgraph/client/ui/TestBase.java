@@ -47,12 +47,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 
 public class TestBase extends ApplicationTest {
 
-	private static final Logger logger = LogManager.getLogger(TestBase.class);
 	public static final String KEYS_STRING = "Keys";
 	public static final String ACCOUNTS_STRING = "Accounts";
+	private static final Logger logger = LogManager.getLogger(TestBase.class);
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
+		System.gc();
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
 
@@ -75,59 +76,8 @@ public class TestBase extends ApplicationTest {
 		FxToolkit.cleanupStages();
 	}
 
-	@Override
-	public void start(final Stage stage) {
-		stage.show();
-	}
-
 	public static void ensureEventQueueComplete() {
 		WaitForAsyncUtils.waitForFxEvents(1);
-	}
-
-	/* Helper method to retrieve Java FX GUI components. */
-	public <T extends Node> T find(final String query) {
-
-		try {
-			return (T) lookup(query).queryAll().iterator().next();
-		} catch (final Exception e) {
-			return null;
-		}
-	}
-
-	/* Helper method to retrieve Java FX GUI components. */
-	public Set<Node> findAll(final String query) {
-		return lookup(query).queryAll();
-	}
-
-
-	public boolean exists(final String query) {
-		try {
-			final Node x = lookup(query).queryAll().iterator().next();
-			return x != null;
-		} catch (final Exception e) {
-			return false;
-		}
-	}
-
-	public void remakeTransactionTools() {
-		final String toolsFolder =
-				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
-		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
-			logger.info("Folder {} created", toolsFolder);
-		}
-
-		try {
-			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
-					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
-				logger.info("Accounts folder created");
-			}
-			if (!new File(toolsFolder, KEYS_STRING).exists() &&
-					new File(toolsFolder, KEYS_STRING).mkdirs()) {
-				logger.info("{} folder created", KEYS_STRING);
-			}
-		} catch (final Exception cause) {
-			logger.error("Unable to remake Transaction folders.", cause);
-		}
 	}
 
 	/**
@@ -159,7 +109,7 @@ public class TestBase extends ApplicationTest {
 	 * @param location
 	 * 		root folder
 	 */
-	public static void setupTransactionDirectory(final String location) throws IOException {
+	public static void setupTransactionDirectory_(final String location) throws IOException {
 		final File directory = new File(location);
 		if (!directory.exists()) {
 			if (!directory.mkdirs()) {
@@ -184,6 +134,56 @@ public class TestBase extends ApplicationTest {
 		}
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
 				new File(location, "Files/.System/recovery.aes"));
+	}
+
+	@Override
+	public void start(final Stage stage) {
+		stage.show();
+	}
+
+	/* Helper method to retrieve Java FX GUI components. */
+	public <T extends Node> T find(final String query) {
+
+		try {
+			return (T) lookup(query).queryAll().iterator().next();
+		} catch (final Exception e) {
+			return null;
+		}
+	}
+
+	/* Helper method to retrieve Java FX GUI components. */
+	public Set<Node> findAll(final String query) {
+		return lookup(query).queryAll();
+	}
+
+	public boolean exists(final String query) {
+		try {
+			final Node x = lookup(query).queryAll().iterator().next();
+			return x != null;
+		} catch (final Exception e) {
+			return false;
+		}
+	}
+
+	public void remakeTransactionTools() {
+		final String toolsFolder =
+				new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents/TransactionTools";
+		if (!(new File(toolsFolder)).exists() && new File(toolsFolder).mkdirs()) {
+			logger.info("Folder {} created", toolsFolder);
+		}
+
+		try {
+			if (!new File(toolsFolder, ACCOUNTS_STRING).exists() &&
+					new File(toolsFolder, ACCOUNTS_STRING).mkdirs()) {
+				logger.info("Accounts folder created");
+			}
+			if (!new File(toolsFolder, KEYS_STRING).exists() &&
+					new File(toolsFolder, KEYS_STRING).mkdirs()) {
+				logger.info("{} folder created", KEYS_STRING);
+			}
+		} catch (final Exception cause) {
+			logger.error("Unable to remake Transaction folders.", cause);
+		}
 	}
 
 	/**

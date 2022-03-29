@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.KeysTableRow;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -100,14 +101,9 @@ public class KeysPaneTest extends TestBase {
 
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("TransactionTools folder created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -139,7 +135,7 @@ public class KeysPaneTest extends TestBase {
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE, MNEMONIC_PATH));

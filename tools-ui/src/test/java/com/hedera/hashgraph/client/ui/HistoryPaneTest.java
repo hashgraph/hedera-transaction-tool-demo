@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
@@ -32,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -54,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+@Ignore
 public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HistoryPaneTest.class);
@@ -72,13 +75,9 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 
 	@Before
 	public void setUp() throws Exception {
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -114,7 +113,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));

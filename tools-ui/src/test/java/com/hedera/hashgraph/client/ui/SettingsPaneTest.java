@@ -83,16 +83,9 @@ public class SettingsPaneTest extends TestBase {
 
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (!new File(DEFAULT_STORAGE + "/Files/").exists()) {
-			if (new File(DEFAULT_STORAGE + "/Files/").mkdirs()) {
-				logger.info("Files folder created");
-			}
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -128,7 +121,7 @@ public class SettingsPaneTest extends TestBase {
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		properties.setOneDriveCredentials(emailMap);
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		final Controller controller = new Controller();
 		final var version = controller.getVersion();
