@@ -79,6 +79,8 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
@@ -162,8 +164,11 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	public void clearHistoryMap() {
 		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+			noise= true;
 			historyMap.clear();
+			noise= false;
 		}
+		storeMap();
 	}
 
 	/**
@@ -174,8 +179,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	public void addToHistory(final String path) {
 		try {
+			noise = false;
 			final var addition = new HistoryData(path);
 			addition.setHistory(true);
+			historyMap.remove(addition.getCode());
 			historyMap.put(addition.getCode(), addition);
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e.getMessage());
@@ -369,6 +376,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	// endregion
 
 	// region TABLE
+	private void refreshTable(){
+		tableList.clear();
+		final List<HistoryData> historyData = new ArrayList<>(historyMap.values());
+		Collections.sort(historyData);
+		tableList.addAll(historyData);
+	}
+
 	private TableView<HistoryData> setupTable() {
 		final var table = new TableView<HistoryData>();
 		final var typeColumn = getTypeColumn(table);
@@ -441,7 +455,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
 
 		tableList.clear();
-		tableList.addAll(historyMap.values());
+		final List<HistoryData> historyData = new ArrayList<>(historyMap.values());
+		Collections.sort(historyData);
+		tableList.addAll(historyData);
 		final var sortedList = new SortedList<>(filteredList);
 
 		sortedList.comparatorProperty().bind(table.comparatorProperty());
@@ -531,6 +547,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 							}
 							final var historyData = getTableView().getItems().get(getIndex());
 							button.setVisible(!historyData.isExpired());
+							button.setDisable(!historyData.isHistory());
 
 							if (historyData.getType().equals(FileType.ACCOUNT_INFO) ||
 									historyData.getType().equals(FileType.BUNDLE) ||
@@ -549,7 +566,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 						noise = false;
 						historyMap.put(historyData.getCode(), historyData);
 						button.setDisable(true);
-						noise = true;
 						controller.homePaneController.setForceUpdate(true);
 						controller.homePaneController.initializeHomePane();
 					}
@@ -589,6 +605,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void storeMap() {
 		// Store map
+		if (noise) {
+			return;
+		}
+		if (new File(SYSTEM_FOLDER).mkdirs()) {
+			logger.info("Creating system folder");
+		}
 		logger.info("Storing map to {}", HISTORY_MAP);
 		final var array = new JsonArray();
 		for (final var entry : historyMap.entrySet()) {
@@ -631,7 +653,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		historyMap.addListener((MapChangeListener<Integer, HistoryData>) change -> {
 			if (!noise) {
 				storeMap();
-				setupTable();
+				refreshTable();
+				//setupTable();
 			}
 		});
 	}
@@ -643,7 +666,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * 		if a file is not found
 	 */
 	private void parseHistoryFolder() throws FileNotFoundException {
-		noise = true;
+
 		final var files = getRemoteFiles();
 		for (final var file : files) {
 			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
@@ -652,8 +675,11 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			logger.info("Parsing file {}", file.getName());
 			final var data = new HistoryData(file);
 			data.setHistory(true);
+			noise = true;
 			historyMap.put(data.getCode(), data);
+			noise = false;
 		}
+		logger.info("here");
 		storeMap();
 		noise = false;
 	}

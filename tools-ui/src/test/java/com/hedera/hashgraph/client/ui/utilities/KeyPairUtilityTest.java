@@ -24,13 +24,16 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
+import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -51,12 +54,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("StatementWithEmptyBody")
+@Ignore
 public class KeyPairUtilityTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
 
 	private final Controller controller = new Controller();
+	MainWindowPage mainWindowPage;
 	HomePanePage homePanePage;
+	HistoryWindowPage historyWindowPage;
 
 	@Before
 	public void setUp() throws Exception {
@@ -121,7 +127,9 @@ public class KeyPairUtilityTest extends TestBase {
 		properties.setVersionString(version);
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
+		mainWindowPage = new MainWindowPage(this);
 		homePanePage = new HomePanePage(this);
+		historyWindowPage = new HistoryWindowPage(this);
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -143,8 +151,10 @@ public class KeyPairUtilityTest extends TestBase {
 		clickOn("SIGN\u2026");
 
 		homePanePage.enterPasswordInPopup("123654789");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
 
-		//	clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("SIGN\u2026");
@@ -156,7 +166,10 @@ public class KeyPairUtilityTest extends TestBase {
 			// wait for timer to expire
 		}
 
-		//	clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 		popup = getPopupNodes();
@@ -173,7 +186,10 @@ public class KeyPairUtilityTest extends TestBase {
 
 		homePanePage.enterPasswordInPopup("123654789");
 
-		//	clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
@@ -190,7 +206,10 @@ public class KeyPairUtilityTest extends TestBase {
 		homePanePage.enterPasswordInPopup(TEST_PASSWORD);
 
 
-		//	clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("ADD MORE");
@@ -205,16 +224,21 @@ public class KeyPairUtilityTest extends TestBase {
 		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME + 1))) {
 			// wait for timer to expire
 		}
-		ensureVisible(find("ADD MORE SIGNATURES"));
-		clickOn("ADD MORE SIGNATURES");
+
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 
 		assertNotNull(getPopupNodes());
 		homePanePage.enterPasswordInPopup("123654789");
 
-		ensureVisible(find("ADD MORE SIGNATURES"));
-		clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("ADD MORE");
 

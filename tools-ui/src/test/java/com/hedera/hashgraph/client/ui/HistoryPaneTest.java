@@ -108,7 +108,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 
 		final Map<String, String> emailMap = new HashMap<>();
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents - Empty/",
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
@@ -166,7 +166,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		assertTrue(button.isDisable());
 		mainWindowPage.clickOnHomeButton();
 		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
-		assertEquals(initialFiles, finalFiles - 1);
+		assertEquals(initialFiles, finalFiles);
 	}
 
 	private void populateHistory() {
