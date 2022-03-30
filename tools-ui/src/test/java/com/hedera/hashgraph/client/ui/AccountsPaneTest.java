@@ -92,6 +92,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
