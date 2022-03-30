@@ -44,6 +44,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.testfx.api.FxRobotException;
@@ -80,6 +81,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class InitialStartupPaneControllerTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static BooleanSupplier isInCircleCi = () ->
