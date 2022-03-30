@@ -51,6 +51,7 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testfx.api.FxRobotException;
@@ -86,6 +87,7 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("rawtypes")
 @RunWith(JUnitParamsRunner.class)
+@Ignore
 public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";
