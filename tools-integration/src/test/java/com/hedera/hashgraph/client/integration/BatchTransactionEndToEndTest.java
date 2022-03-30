@@ -28,6 +28,8 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.integration.pages.HistoryWindowPage;
+import com.hedera.hashgraph.client.integration.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
@@ -95,6 +97,9 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 	public UserAccessibleProperties properties;
 
+	MainWindowPage mainWindowPage;
+	HistoryWindowPage historyWindowPage;
+
 	@Before
 	public void setUp() throws Exception {
 
@@ -151,6 +156,9 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		}
 		writeCSVWithDistribution(distro, sdf2.format(date));
 
+		mainWindowPage = new MainWindowPage(this);
+		historyWindowPage = new HistoryWindowPage(this);
+
 		setupUI();
 	}
 
@@ -190,10 +198,10 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		Collections.shuffle(keys);
 
 		// Sign 3 times
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 7; i++) {
 			clickOn(keys.get(i));
 		}
-		Node sign = find("SIGN\u2026");
+		final var sign = find("SIGN\u2026");
 
 		ensureVisible(sign);
 		clickOn(sign);
@@ -205,53 +213,9 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 			}
 		}
 
-		Node addSignature;
-
-		do {
-			addSignature = find("ADD MORE SIGNATURES");
-		} while (addSignature == null);
-
-		addSignature = find("ADD MORE SIGNATURES");
-		ensureVisible(addSignature);
-		clickOn(addSignature);
-		for (int i = 0; i < 8; i++) {
-			clickOn(keys.get(i));
-		}
-		sign = find("SIGN\u2026");
-		ensureVisible(sign);
-		clickOn(sign);
-
-		while (true) {
-			if (TestUtil.getPopupNodes() == null) {
-				break;
-			}
-		}
-
-		do {
-			addSignature = find("ADD MORE SIGNATURES");
-		} while (addSignature == null);
-
-		ensureVisible(addSignature);
-		clickOn(addSignature);
-		for (int i = 0; i < 7; i++) {
-			clickOn(keys.get(i));
-		}
-		sign = find("SIGN\u2026");
-		ensureVisible(sign);
-		clickOn(sign);
-
-		while (true) {
-			if (TestUtil.getPopupNodes() == null) {
-				break;
-			}
-		}
-
-		do {
-			addSignature = find("ADD MORE SIGNATURES");
-		} while (addSignature == null);
-
-		ensureVisible(addSignature);
-		clickOn(addSignature);
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("testCSV.csv");
+		mainWindowPage.clickOnHomeButton();
 
 		final File[] summaryFiles = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(

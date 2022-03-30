@@ -30,7 +30,6 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.ContractId;
 import com.hedera.hashgraph.sdk.FileId;
-import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.ContractID;
 import com.hedera.hashgraph.sdk.proto.FileID;
@@ -194,9 +193,11 @@ public class Identifier implements Comparable<Identifier> {
 		if (id == null || id.isEmpty()) {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
+		if (id.contains("0.0.0")) {
+			return Identifier.ZERO;
+		}
 
 		String idC = "";
-
 		final var pattern1 = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
 		final var pattern2 = Pattern.compile(FULL_ACCOUNT_REGEX);
 		final var pattern3 = Pattern.compile(NUMBER_REGEX);
@@ -319,7 +320,8 @@ public class Identifier implements Comparable<Identifier> {
 					MAINNET_NAME_STRING)).toReadableStringAndChecksum();
 		}
 		return String.format("%s-%s", this.toReadableString(),
-				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetworkName()).toBytes(), this.toReadableString()));
+				AddressChecksums.checksum(NetworkEnum.asLedger(this.getNetworkName()).toBytes(),
+						this.toReadableString()));
 	}
 
 	@Override
