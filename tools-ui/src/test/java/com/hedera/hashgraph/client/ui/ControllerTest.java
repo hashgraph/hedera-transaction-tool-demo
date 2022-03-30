@@ -44,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore
 class ControllerTest {
 	private Controller controller;
 	private final static String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
