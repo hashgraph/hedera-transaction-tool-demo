@@ -54,7 +54,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("StatementWithEmptyBody")
-@Ignore
+
 public class KeyPairUtilityTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);

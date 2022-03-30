@@ -41,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore
 class UpdateHelperTest {
 
 	private static final Logger logger = LogManager.getLogger(UpdateHelperTest.class);

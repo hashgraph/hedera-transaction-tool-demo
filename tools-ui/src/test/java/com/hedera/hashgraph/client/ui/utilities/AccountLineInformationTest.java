@@ -29,7 +29,6 @@ import org.junit.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-@Ignore
 public class AccountLineInformationTest {
 	private static final Logger logger = LogManager.getLogger(AccountLineInformationTest.class);
 

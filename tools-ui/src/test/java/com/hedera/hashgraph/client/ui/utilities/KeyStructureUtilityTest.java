@@ -42,7 +42,6 @@ import java.util.Objects;
 
 import static junit.framework.TestCase.assertEquals;
 
-@Ignore
 public class KeyStructureUtilityTest {
 
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtilityTest.class);
