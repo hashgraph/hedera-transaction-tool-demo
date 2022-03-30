@@ -29,6 +29,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -41,6 +42,7 @@ import java.util.Objects;
 
 import static junit.framework.TestCase.assertEquals;
 
+@Ignore
 public class KeyStructureUtilityTest {
 
 	private static final Logger logger = LogManager.getLogger(KeyStructureUtilityTest.class);
