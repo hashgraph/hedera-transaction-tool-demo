@@ -31,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -45,6 +46,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static org.junit.Assert.assertTrue;
 
+@Ignore
 public class CommonMethodsTest extends TestBase {
 	private static final Logger logger = LogManager.getLogger(CommonMethodsTest.class);
 
