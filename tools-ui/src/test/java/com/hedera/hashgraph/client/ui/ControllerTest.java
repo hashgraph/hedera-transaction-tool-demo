@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Ignore
 class ControllerTest {
 	private Controller controller;
 	private final static String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
