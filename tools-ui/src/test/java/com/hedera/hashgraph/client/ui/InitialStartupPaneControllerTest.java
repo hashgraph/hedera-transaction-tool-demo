@@ -81,7 +81,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class InitialStartupPaneControllerTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static BooleanSupplier isInCircleCi = () ->
