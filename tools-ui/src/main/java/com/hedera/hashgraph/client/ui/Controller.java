@@ -91,6 +91,7 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
@@ -98,7 +99,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_H
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -177,7 +177,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
 	@FXML
-	public HistoryPaneController historyPaneController;
+	public HistoryPaneController2 historyPaneController;
 
 
 	// Utility
@@ -348,10 +348,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePane.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
+				historyPaneController.initializeHistoryPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
-				historyPaneController.initializeHistoryPane();
 				break;
 			case TEST_PHASE:
 				properties =
@@ -361,7 +361,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				thisPane = homePane;
 				homePane.setVisible(true);
 				historyPaneController.initializeHistoryPane();
-				historyPaneController.clearHistoryMap();
+				historyPaneController.cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
@@ -835,7 +835,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 		try {
 			writeJsonObject(ACCOUNTS_MAP_FILE, jsonObject);
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 	}

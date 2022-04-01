@@ -136,6 +136,10 @@ public class HistoryData implements Comparable<HistoryData> {
 		return lastAction.getActions();
 	}
 
+	public long getLasActionSeconds(){
+		return lastAction.getTimeStamp().getSeconds();
+	}
+
 	public String getLastAction() {
 		final var actionString = Actions.ACCEPT == lastAction.getActions() ?
 				TRANSACTION.equals(getType()) || BATCH.equals(getType()) ?

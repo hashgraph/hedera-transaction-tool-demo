@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -88,7 +89,6 @@ import java.util.function.Predicate;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -97,7 +97,6 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNum
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	private static final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
-	private static final String HISTORY_MAP = DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
@@ -618,14 +617,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
 			logger.info("Creating system folder");
 		}
-		logger.info("Storing map to {}", HISTORY_MAP);
+		logger.info("Storing map to {}", Constants.HISTORY_MAP);
 		final var array = new JsonArray();
 		for (final var entry : historyMap.entrySet()) {
 			array.add(entry.getValue().asJson());
 		}
 
 		try {
-			writeJsonObject(HISTORY_MAP, array);
+			writeJsonObject(Constants.HISTORY_MAP, array);
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
@@ -636,7 +635,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void loadMap() {
 		try {
-			final var mapFile = new File(HISTORY_MAP);
+			final var mapFile = new File(Constants.HISTORY_MAP);
 			if (!mapFile.exists()) {
 				logger.info("Parsing history folder");
 				parseHistoryFolder();
@@ -937,7 +936,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	public void rebuildHistory() throws IOException {
 		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-			Files.deleteIfExists(Path.of(HISTORY_MAP));
+			Files.deleteIfExists(Path.of(Constants.HISTORY_MAP));
 			loadMap();
 			initializeHistoryPane();
 			controller.homePaneController.setForceUpdate(true);
