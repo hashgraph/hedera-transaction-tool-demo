@@ -43,10 +43,9 @@ import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -565,8 +564,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertEquals(Status.BREACHED, passwordPolicy.check("1234567890"));
 	}
 
-	@AfterEach
-	public void tearDown() throws IOException {
+	@After
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		final var currentRelativePath = Paths.get("");
 		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {

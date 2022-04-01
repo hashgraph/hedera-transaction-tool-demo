@@ -59,6 +59,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
@@ -75,7 +76,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.PUBLIC_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNING_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -708,29 +708,29 @@ public class KeysPaneTest extends TestBase {
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			final var currentRelativePath = Paths.get("");
-			final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
-			if ((new File(s)).exists()) {
-				FileUtils.deleteDirectory(new File(s));
-			}
+	public void tearDown() throws TimeoutException, IOException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			final var out =
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-							"Documents/OutputFiles/test1.council2@hederacouncil.org";
-			FileUtils.cleanDirectory(new File(out));
-
-			properties.resetProperties();
-
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNull(e);
+		final var currentRelativePath = Paths.get("");
+		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		if ((new File(s)).exists()) {
+			FileUtils.deleteDirectory(new File(s));
 		}
+
+		final var out =
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+		FileUtils.cleanDirectory(new File(out));
+
+		properties.resetProperties();
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
+
 	}
 
 	// region AUXILIARY METHODS

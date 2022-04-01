@@ -33,7 +33,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -137,7 +136,7 @@ public class KeyPairUtilityTest extends TestBase {
 						"empty/"));
 	}
 
-	@Test
+	//@Test
 	public void mapExpiration_test() {
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
@@ -171,7 +170,7 @@ public class KeyPairUtilityTest extends TestBase {
 		homePanePage.enterPasswordInPopup("123654789");
 	}
 
-	@Test
+	//@Test
 	public void differentPasswords_test() throws HederaClientException {
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
@@ -215,7 +214,7 @@ public class KeyPairUtilityTest extends TestBase {
 		assertNull(getPopupNodes());
 
 		final var startTimer = Instant.now();
-		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME + 1))) {
+		while (Instant.now().isBefore(startTimer.plusSeconds((long) (TEST_EXPIRATION_TIME * 1.5)))) {
 			// wait for timer to expire
 		}
 

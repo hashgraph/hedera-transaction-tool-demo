@@ -144,6 +144,10 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 
 	@After
 	public void tearDown() throws Exception {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}

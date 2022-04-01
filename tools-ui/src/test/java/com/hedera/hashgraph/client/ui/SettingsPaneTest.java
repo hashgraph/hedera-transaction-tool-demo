@@ -53,6 +53,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_RECORD_SLIDER;
@@ -394,7 +395,12 @@ public class SettingsPaneTest extends TestBase {
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() throws IOException, TimeoutException {
+
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		final Path currentRelativePath = Paths.get("");
 		final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {

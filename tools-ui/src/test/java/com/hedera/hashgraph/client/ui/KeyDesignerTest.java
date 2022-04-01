@@ -39,7 +39,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -51,6 +50,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
@@ -68,7 +68,6 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 
-@Ignore
 public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(KeyDesignerTest.class);
 
@@ -180,30 +179,29 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = (new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
-					});
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f :
-					transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = (new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
+				});
+
+		assert transactions != null;
+		for (final var f :
+				transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 

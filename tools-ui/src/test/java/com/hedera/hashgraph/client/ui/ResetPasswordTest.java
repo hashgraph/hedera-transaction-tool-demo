@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -63,7 +64,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
+@Ignore
 public class ResetPasswordTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ResetPasswordTest.class);
 
@@ -158,6 +159,10 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 	@After
 	public void tearDown() throws Exception {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		final var storage = new File(Constants.DEFAULT_STORAGE);
 		if (storage.exists()) {
 			FileUtils.deleteDirectory(storage);

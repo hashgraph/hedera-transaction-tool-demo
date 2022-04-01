@@ -95,7 +95,7 @@ public class BatchFile extends RemoteFile {
 	private static final String NODE_IDS = "node ids";
 	private static final String TRANSACTION_FEE = "transaction fee";
 	private static final String DURATION = "transaction valid duration";
-	public static final String ACCOUNT_ID = "account id";
+	public static final String ACCOUNT_ID = "account";
 	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
 	private static final String MEMO_STRING = "memo";
 
@@ -411,9 +411,17 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 */
 	private void checkTransfers(final List<String> csvList) {
+		final var distributionStart = getDistributionStart(csvList);
+		if (distributionStart == csvList.size()) {
+			logger.error("Cannot find the start of the distribution");
+			setValid(false);
+			return;
+		}
+
 		try {
 			transfers = new ArrayList<>();
-			for (var i = getDistributionStart(csvList); i < csvList.size(); i++) {
+
+			for (var i = distributionStart; i < csvList.size(); i++) {
 				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
 			}
 			this.firstTransaction = getFirstDate();
@@ -545,6 +553,9 @@ public class BatchFile extends RemoteFile {
 			if (seconds < first) {
 				first = seconds;
 			}
+		}
+		if (Long.MAX_VALUE == first) {
+			first = 0;
 		}
 		final var instant = new Timestamp(first, 0).asInstant();
 		return LocalDate.ofInstant(instant, ZoneId.of("UTC"));

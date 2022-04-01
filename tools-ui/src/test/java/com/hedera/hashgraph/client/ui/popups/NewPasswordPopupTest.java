@@ -61,7 +61,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Ignore
 public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";

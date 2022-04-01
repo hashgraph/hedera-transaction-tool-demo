@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
@@ -62,7 +63,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class HomePaneSupplementalTest extends TestBase implements GenericFileReadWriteAware {
 
 	private final Path currentRelativePath = Paths.get("");
@@ -157,7 +157,11 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
 		batchBoxes.clear();

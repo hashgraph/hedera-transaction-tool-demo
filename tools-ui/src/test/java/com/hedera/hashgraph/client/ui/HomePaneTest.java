@@ -78,6 +78,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Ignore
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
@@ -104,7 +105,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Before
 	public void setUp() throws Exception {
-		System.gc();
+
 		logger.info("Starting test class: {}", getClass().getSimpleName());
 		TestUtil.buildFolders();
 
@@ -173,7 +174,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 
-	@Test
+	//@Test
 	public void clickOnBogusItem() {
 		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 		sleep(100);

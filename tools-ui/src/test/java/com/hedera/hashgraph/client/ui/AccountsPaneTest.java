@@ -51,7 +51,6 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testfx.api.FxRobotException;
@@ -72,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -79,7 +79,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -87,7 +86,6 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("rawtypes")
 @RunWith(JUnitParamsRunner.class)
-@Ignore
 public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";
@@ -105,7 +103,6 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Before
 	public void setUp() throws Exception {
-		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
 		TestUtil.buildFolders();
 
@@ -437,29 +434,28 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@After
-	public void tearDown() throws IOException, BackingStoreException {
-		try {
-			final Path currentRelativePath = Paths.get("");
-			final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
-			if ((new File(s)).exists()) {
-				FileUtils.deleteDirectory(new File(s));
-			}
+	public void tearDown() throws IOException, BackingStoreException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			final String out =
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-							"Documents/OutputFiles/test1.council2@hederacouncil.org";
-			FileUtils.cleanDirectory(new File(out));
-
-			properties.resetProperties();
-
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNull(e);
+		final Path currentRelativePath = Paths.get("");
+		final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		if ((new File(s)).exists()) {
+			FileUtils.deleteDirectory(new File(s));
 		}
+
+		final String out =
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+		FileUtils.cleanDirectory(new File(out));
+
+		properties.resetProperties();
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
 	}
 
 	// region AUXILIARY METHODS

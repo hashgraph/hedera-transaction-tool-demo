@@ -44,7 +44,8 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CURRENT_ACCOUNT_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.HIDDEN_ACCOUNT_INFO_TEXTFIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.*;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findPasswordInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChoiceBoxesFromExpander;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
@@ -273,17 +274,15 @@ public class AccountsPanePage {
 			}
 			count++;
 			if (item.toString().equalsIgnoreCase(network)) {
+				driver.type(KeyCode.ENTER);
 				break;
 			}
 			driver.type(KeyCode.DOWN);
 		}
-		if (count < choice.getItems().size()) {
-			driver.type(KeyCode.ENTER);
-		}
 		return this;
 	}
 
-	public List<ChoiceBox> findChoiceBoxes(){
+	public List<ChoiceBox> findChoiceBoxes() {
 		return getChoiceBoxesFromExpander(this.driver);
 	}
 }

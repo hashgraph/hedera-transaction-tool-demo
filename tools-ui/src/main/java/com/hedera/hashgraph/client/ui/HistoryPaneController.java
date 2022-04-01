@@ -87,8 +87,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -163,9 +163,11 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	public void clearHistoryMap() {
 		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-			noise= true;
+			noise = true;
 			historyMap.clear();
-			noise= false;
+			tableList.clear();
+			filteredList.clear();
+			noise = false;
 		}
 		storeMap();
 	}
@@ -204,6 +206,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			} catch (final IOException e) {
 				logger.error(e.getMessage());
 			}
+
 			try {
 				remoteFiles.add(new RemoteFile().getSingleRemoteFile(details));
 			} catch (final HederaClientException e) {
@@ -224,6 +227,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		rebuild.managedProperty().bind(rebuild.visibleProperty());
 		typeFilter.addAll(EnumSet.allOf(FileType.class));
 		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+		noise = true;
+		historyMap.clear();
+		tableList.clear();
+		filteredList.clear();
 
 		setupMapListener();
 		setupPredicates();
@@ -239,6 +246,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
 				actionsEndDatePicker);
+		noise = false;
 	}
 
 	// endregion
@@ -375,7 +383,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	// endregion
 
 	// region TABLE
-	private void refreshTable(){
+	private void refreshTable() {
 		tableList.clear();
 		final List<HistoryData> historyData = new ArrayList<>(historyMap.values());
 		Collections.sort(historyData);

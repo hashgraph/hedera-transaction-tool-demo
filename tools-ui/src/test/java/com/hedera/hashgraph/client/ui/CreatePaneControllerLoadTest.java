@@ -40,23 +40,23 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class CreatePaneControllerLoadTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
 
@@ -167,32 +167,31 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(Constants.TXT_EXTENSION) ||
-								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
-								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
-					});
+	public void tearDown() throws TimeoutException, IOException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f :
-					transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(Constants.TXT_EXTENSION) ||
+							name.endsWith(Constants.TRANSACTION_EXTENSION) ||
+							name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
+				});
+
+		assert transactions != null;
+		for (final var f :
+				transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 

@@ -63,7 +63,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -90,6 +89,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
@@ -158,7 +158,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class CreatePaneControllerTest extends TestBase implements Supplier<TestBase>, GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
@@ -2132,31 +2131,30 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(Constants.TXT_EXTENSION) ||
-								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
-								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
-					});
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f : transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(Constants.TXT_EXTENSION) ||
+							name.endsWith(Constants.TRANSACTION_EXTENSION) ||
+							name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
+				});
+
+		assert transactions != null;
+		for (final var f : transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 
