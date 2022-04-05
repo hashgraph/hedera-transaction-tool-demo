@@ -51,12 +51,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -522,7 +524,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	private TableRowExpanderColumn<HistoryData> getExpanderColumn() {
-		final var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
+		final var expanderColumn = new TableRowExpanderColumn<>(this::buildTransactionVBox);
 		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
 		return expanderColumn;
 
@@ -587,7 +589,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * 		the tablerow
 	 * @return a VBox
 	 */
-	private VBox buildAccountVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
+	private VBox buildTransactionVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
 		final var data = parameter.getValue();
 		final var returnBox = new VBox();
 		try {

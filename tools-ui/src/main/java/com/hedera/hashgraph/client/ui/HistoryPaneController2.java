@@ -93,8 +93,7 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 
-	private static final Map<Integer, Boolean> historyMap = new HashMap<>();
-
+	private final Map<Integer, Boolean> historyMap = new HashMap<>();
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
 	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
 	private final ObservableList<HistoryData> tableList = FXCollections.observableArrayList();
