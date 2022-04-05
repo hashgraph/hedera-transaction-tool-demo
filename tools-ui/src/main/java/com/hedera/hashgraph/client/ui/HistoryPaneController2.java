@@ -37,9 +37,9 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
@@ -56,6 +56,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -70,7 +72,6 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -175,6 +176,7 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 				tableList.add(historyData);
 				historyMap.put(historyData.getCode(), historyData.isHistory());
 			}
+			FXCollections.sort(tableList, Comparator.reverseOrder());
 		} catch (final HederaClientException | JsonProcessingException e) {
 			logger.error(e.getMessage());
 		}
@@ -282,10 +284,10 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getReSignColumn(tableView));
 
 		final var sortedList = new SortedList<>(filteredList);
+//		sortedList.setComparator(HistoryData::compareTo);
 		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
 		tableView.setItems(sortedList);
 		tableView.sort();
-
 	}
 
 	/**
@@ -345,7 +347,6 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 
 		filteredList.predicateProperty().bind(
 				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
-
 
 	}
 
@@ -629,8 +630,35 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	// region HELPERS
 
 
-	private HBox getTitleBox(String s, VBox actedDateFilterVBox) {
-		return null;
+	/**
+	 * Sets up the title box for each column
+	 * @param title the explanatory title of the column
+	 * @param filterBox the filter box corresponding to the column
+	 * @return an HBox that will be placed as the graphic for the column
+	 */
+	private HBox getTitleBox(final String title, final VBox filterBox) {
+		final var hBox = new HBox();
+		final var isTest = SetupPhase.TEST_PHASE.equals(controller.getSetupPhase());
+
+		if (!isTest) {
+			hBox.getChildren().add(new Label(title));
+			hBox.getChildren().add(getRegion());
+		}
+
+		final var button = isTest ?
+				new Button(title + "@@@") :
+				formatButton(FILTER_ICON, 20);
+		button.setOnAction(actionEvent -> {
+			final var b = !filterBox.isVisible();
+			feePayerFilterVBox.setVisible(false);
+			typeFilterVBox.setVisible(false);
+			actedDateFilterVBox.setVisible(false);
+			expirationDateFilterVBox.setVisible(false);
+			filterBox.setVisible(b);
+		});
+		hBox.getChildren().add(button);
+		hBox.setAlignment(Pos.CENTER_RIGHT);
+		return hBox;
 	}
 
 	/**
@@ -747,7 +775,7 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Setup a checkbox for the type filter
+	 * Sets up a checkbox for the type filter
 	 *
 	 * @param type
 	 * 		the type of file
@@ -863,11 +891,25 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	}
 
 	/**
+	 * Configures a region that grows to use all available space
+	 * @return a Region
+	 */
+	@NotNull
+	private Region getRegion() {
+		final var region = new Region();
+		HBox.setHgrow(region, Priority.ALWAYS);
+		VBox.setVgrow(region, Priority.ALWAYS);
+		region.setPrefWidth(Region.USE_COMPUTED_SIZE);
+		region.setPrefHeight(Region.USE_COMPUTED_SIZE);
+		return region;
+	}
+
+
+	/**
 	 * TESTING ONLY: rebuilds the history from the folder
 	 *
-	 * @param actionEvent
 	 */
-	public void rebuildHistory(ActionEvent actionEvent) {
+	public void rebuildHistory() {
 
 	}
 	// endregion

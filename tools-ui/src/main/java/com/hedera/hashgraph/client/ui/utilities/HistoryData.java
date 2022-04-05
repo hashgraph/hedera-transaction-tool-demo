@@ -136,7 +136,7 @@ public class HistoryData implements Comparable<HistoryData> {
 		return lastAction.getActions();
 	}
 
-	public long getLasActionSeconds(){
+	public long getLasActionSeconds() {
 		return lastAction.getTimeStamp().getSeconds();
 	}
 
@@ -194,8 +194,14 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.history = history;
 	}
 
-	public Long lastAction() {
-		return Collections.max(actions).getTimeStamp().getSeconds();
+	public Timestamp lastAction() {
+		Timestamp t = new Timestamp(0, 0);
+		for (final var action : actions) {
+			if (action.getTimeStamp().compareTo(t) > 0) {
+				t = action.getTimeStamp();
+			}
+		}
+		return t;
 	}
 
 	public String getFeePayer() {
@@ -251,8 +257,7 @@ public class HistoryData implements Comparable<HistoryData> {
 
 	@Override
 	public int compareTo(@NotNull final HistoryData o) {
-
-		return Long.compare(lastAction(), o.lastAction());
+		return lastAction().compareTo(o.lastAction());
 	}
 
 	public LocalDate getExpirationLocalDate() {

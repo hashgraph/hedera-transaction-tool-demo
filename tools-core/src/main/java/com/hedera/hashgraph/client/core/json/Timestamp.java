@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -38,7 +39,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.NANOS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.SECONDS;
 
 
-public class Timestamp {
+public class Timestamp implements Comparable<Timestamp> {
 
 	@JsonProperty(required = true)
 	private long seconds;
@@ -205,6 +206,17 @@ public class Timestamp {
 	}
 
 	@Override
+	public int compareTo(@NotNull final Timestamp o) {
+		if (!(o instanceof Timestamp)) {
+			return -1;
+		}
+		if (this.seconds != o.getSeconds()) {
+			return Long.compare(this.seconds, o.getSeconds());
+		}
+		return Integer.compare(this.nanos, o.getNanos());
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(seconds, nanos);
 	}
@@ -216,4 +228,6 @@ public class Timestamp {
 				.append(NANOS, nanos)
 				.toString();
 	}
+
+
 }
