@@ -96,7 +96,6 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNum
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
-	private static final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
 	private static final String HISTORY_MAP = DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
@@ -104,6 +103,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
 	private final ObservableList<HistoryData> tableList = FXCollections.observableArrayList();
 	private final FilteredList<HistoryData> filteredList = new FilteredList<>(tableList, p -> true);
+
+	private final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
 
 	private boolean noise = true;
 
