@@ -1833,14 +1833,21 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 	public void updateSelectedBalances() {
-		final List<AccountLineInformation> list = new ArrayList<>();
-		for (final var lineInformation : accountLineInformation) {
-			if (lineInformation.isSelected() && !UNKNOWN_NETWORK_STRING.equals(lineInformation.getLedgerId())) {
-				list.add(lineInformation);
-				lineInformation.setSelected(false);
+		final List<AccountLineInformation> list =
+				accountLineInformation.stream().filter(AccountLineInformation::isSelected).collect(Collectors.toList());
+
+		for (final var lineInformation : list) {
+			if (UNKNOWN_NETWORK_STRING.equals(lineInformation.getLedgerId())) {
+				PopupMessage.display("Unknown network",
+						"One or more accounts don't have a known network. Please select the network in the account " +
+								"card and try again");
+				return;
 			}
 		}
+
 		updateBalances(list);
+
+		accountLineInformation.forEach(lineInformation -> lineInformation.setSelected(false));
 	}
 
 	private void updateSelectedInfos() {
