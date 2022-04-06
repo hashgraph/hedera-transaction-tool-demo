@@ -35,9 +35,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
@@ -51,14 +49,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -75,15 +71,14 @@ import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -91,16 +86,19 @@ import java.util.function.Predicate;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
+import static java.nio.file.Files.deleteIfExists;
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
-	private static final ObservableMap<Integer, HistoryData> historyMap = FXCollections.observableHashMap();
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String FILTER_ICON = "icons/filter.png";
+
+	private final Map<Integer, Boolean> historyMap = new HashMap<>();
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
 	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
 	private final ObservableList<HistoryData> tableList = FXCollections.observableArrayList();
@@ -129,7 +127,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	public Button rebuild;
 
-
 	public LocalDate start = LocalDate.now();
 	public LocalDate end = LocalDate.now();
 
@@ -139,85 +136,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	private Predicate<HistoryData> actionDatePredicate;
 	private Predicate<HistoryData> actionTypePredicate;
 	private Predicate<HistoryData> expirationDatePredicate;
+	private final TableView<HistoryData> tableView = new TableView<>();
 
 	private final String dateFormat = Locale.getDefault().equals(Locale.US) ? "MM/dd/yyyy" : "dd/MM/yyyy";
 
 	@FXML
 	private Controller controller;
-
-	// region GETTERS and SETTERS
-
-	/**
-	 * Get the history file map
-	 *
-	 * @return the history map
-	 */
-	public Map<Integer, HistoryData> getHistoryMap() {
-		if (historyMap.isEmpty()) {
-			loadMap();
-		}
-		return historyMap;
-	}
-
-	/**
-	 * Clears the contents of the history map only valid on TEST
-	 */
-	public void clearHistoryMap() {
-		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-			noise = true;
-			historyMap.clear();
-			tableList.clear();
-			filteredList.clear();
-			noise = false;
-		}
-		storeMap();
-	}
-
-	/**
-	 * Adds a file to the map
-	 *
-	 * @param path
-	 * 		the path to the new file
-	 */
-	public void addToHistory(final String path) {
-		try {
-			noise = false;
-			final var addition = new HistoryData(path);
-			addition.setHistory(true);
-			historyMap.remove(addition.getCode());
-			historyMap.put(addition.getCode(), addition);
-		} catch (final IOException | HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-	}
-
-	/**
-	 * Loads all the remote files from the history folder.
-	 *
-	 * @return an array of remote files
-	 */
-	@NotNull
-	private ArrayList<RemoteFile> getRemoteFiles() {
-		final var filenames = new File(DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
-		final var remoteFiles = new ArrayList<RemoteFile>();
-		for (final var filename : filenames) {
-			FileDetails details = null;
-			try {
-				details = FileDetails.parse(filename);
-			} catch (final IOException e) {
-				logger.error(e.getMessage());
-			}
-
-			try {
-				remoteFiles.add(new RemoteFile().getSingleRemoteFile(details));
-			} catch (final HederaClientException e) {
-				logger.error(e.getMessage());
-			}
-		}
-		return remoteFiles;
-	}
-
-	// endregion
 
 	// region INITIALIZATION
 	void injectMainController(final Controller controller) {
@@ -225,29 +149,363 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeHistoryPane() {
+		loadHistory();
+		setupTable();
+		setupPredicates();
+		setupFilterBoxes();
+		setupBindings();
+	}
+
+	private void setupBindings() {
 		rebuild.managedProperty().bind(rebuild.visibleProperty());
-		typeFilter.addAll(EnumSet.allOf(FileType.class));
-		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+		contentScrollPane.setFitToWidth(true);
+	}
+
+
+	/**
+	 * Load history from flat file
+	 */
+	private void loadHistory() {
+		cleanHistory();
+		try {
+			if (!new File(HISTORY_MAP).exists()) {
+				logger.info("Map not found. Parsing history folder");
+				parseHistoryFolder();
+			}
+			final var array = readJsonArray(HISTORY_MAP);
+			for (final var element : array) {
+				final var jsonObject = element.getAsJsonObject();
+				logger.info("Loading element {}", jsonObject.get("filename").toString());
+				final var historyData = new HistoryData(jsonObject);
+				tableList.add(historyData);
+				historyMap.put(historyData.getCode(), historyData.isHistory());
+			}
+			FXCollections.sort(tableList, Comparator.reverseOrder());
+		} catch (final HederaClientException | JsonProcessingException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * Stores the map to a file
+	 */
+	private void storeHistory() {
+		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
+			logger.info("Creating system folder");
+		}
+		logger.info("Storing map to {}", HISTORY_MAP);
+		final var array = new JsonArray();
+		for (final var entry : tableList) {
+			array.add(entry.asJson());
+		}
+
+		try {
+			writeJsonObject(HISTORY_MAP, array);
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	/**
+	 * For backwards compatibility: parse the history folder and creates the flat history file
+	 */
+	private void parseHistoryFolder() {
+		final var files = getRemoteFiles();
 		noise = true;
+		for (final RemoteFile file : files) {
+			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
+				continue;
+			}
+			logger.info("Parsing file {}", file.getName());
+			final var data = new HistoryData(file);
+			data.setHistory(true);
+			historyMap.put(data.getCode(), data.isHistory());
+			tableList.add(data);
+		}
+		storeHistory();
+		noise = false;
+	}
+
+	// endregion
+
+	// region GETTER and SETTERS
+
+	/**
+	 * Adds a file to the map
+	 */
+	public void addToHistory(final RemoteFile remoteFile) {
+		noise = false;
+		final var addition = new HistoryData(remoteFile);
+		addition.setHistory(true);
+		historyMap.put(addition.getCode(), true);
+		tableList.add(addition);
+	}
+
+	/**
+	 * Check if the file is in history
+	 *
+	 * @param code
+	 * 		the hashcode of the file
+	 * @return If the code is in the map, and it is marked as history, return true
+	 */
+	public boolean isHistory(final int code) {
+		return historyMap.containsKey(code) && (Boolean.TRUE.equals(historyMap.get(code)));
+	}
+
+	/**
+	 * Cleans all maps and tables
+	 */
+	public void cleanHistory() {
+		noise = false;
 		historyMap.clear();
 		tableList.clear();
 		filteredList.clear();
+	}
 
-		setupMapListener();
-		setupPredicates();
-		if (historyMap.isEmpty()) {
-			loadMap();
+	// endregion
+
+	// region TABLE SETUP
+
+	/**
+	 * Set up the main history table
+	 */
+	private void setupTable() {
+		tableList.addListener((ListChangeListener<HistoryData>) change -> {
+			while (change.next()) {
+				if (change.wasRemoved() || change.wasAdded()) {
+					storeHistory();
+				}
+			}
+		});
+		contentScrollPane.setContent(tableView);
+		setupTableBindings();
+
+		tableView.getColumns().add(getExpanderColumn());
+		tableView.getColumns().add(getTypeColumn());
+		tableView.getColumns().add(getExpirationColumn());
+		tableView.getColumns().add(getFeePayerColumn());
+		tableView.getColumns().add(getLastActionColumn());
+		tableView.getColumns().add(getReSignColumn(tableView));
+
+		final var sortedList = new SortedList<>(filteredList);
+//		sortedList.setComparator(HistoryData::compareTo);
+		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
+		tableView.setItems(sortedList);
+		tableView.sort();
+	}
+
+	/**
+	 * Set up the table bindings and listeners
+	 */
+	private void setupTableBindings() {
+		typeFilter.addListener((ListChangeListener<FileType>) change -> {
+			while (change.next()) {
+				if (!noise && (change.wasAdded() || change.wasRemoved())) {
+					typePredicate = statesModel -> {
+						if (!noise && (change.wasAdded() || change.wasRemoved())) {
+							return typeFilter.contains(statesModel.getType());
+						}
+						return false;
+					};
+					filters.add(typePredicate);
+				}
+			}
+		});
+
+		actionsFilter.addListener((ListChangeListener<Actions>) change -> {
+			while (change.next()) {
+				if (!noise && (change.wasAdded() || change.wasRemoved())) {
+					actionTypePredicate = historyData -> {
+						if (!noise && (change.wasAdded() || change.wasRemoved())) {
+							return actionsFilter.contains(historyData.getActions());
+						}
+						return false;
+					};
+					filters.add(actionTypePredicate);
+				}
+			}
+		});
+
+		acceptedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				actionsFilter.add(Actions.ACCEPT);
+			} else {
+				actionsFilter.remove(Actions.ACCEPT);
+			}
+		});
+
+		declinedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				actionsFilter.add(Actions.DECLINE);
+			} else {
+				actionsFilter.remove(Actions.DECLINE);
+			}
+		});
+
+		feePayerTextField.setOnKeyReleased(event -> {
+			if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
+				return;
+			}
+			feePayerFilterAccept();
+		});
+
+		filteredList.predicateProperty().bind(
+				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
+
+	}
+
+	/**
+	 * Set up the type column
+	 *
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<HistoryData, String> getTypeColumn() {
+		final var typeColumn = new TableColumn<HistoryData, String>("");
+		final var typeBox = getTitleBox("Type", typeFilterVBox);
+		typeColumn.setGraphic(typeBox);
+		typeColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
+		typeColumn.prefWidthProperty().bind(tableView.widthProperty().divide(32).multiply(9));
+		return typeColumn;
+	}
+
+	/**
+	 * Set up the fee payer table
+	 *
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<HistoryData, String> getFeePayerColumn() {
+		final var feePayerColumn = new TableColumn<HistoryData, String>("");
+		feePayerColumn.setCellValueFactory(new PropertyValueFactory<>("feePayer"));
+		feePayerColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
+		feePayerColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		feePayerColumn.setCellValueFactory(this::setupFeePayerCell);
+		final var feePayerHBox = getTitleBox("Fee Payer Account", feePayerFilterVBox);
+		feePayerColumn.setGraphic(feePayerHBox);
+		return feePayerColumn;
+	}
+
+	/**
+	 * Set up the expiration date column
+	 *
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<HistoryData, String> getExpirationColumn() {
+		final var expirationDateColumn = new TableColumn<HistoryData, String>("");
+		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
+		expirationDateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
+		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		final HBox lastActionBox = getTitleBox("Expiration Date:", expirationDateFilterVBox);
+		expirationDateColumn.setGraphic(lastActionBox);
+		return expirationDateColumn;
+	}
+
+	/**
+	 * Set up the last action column
+	 *
+	 * @return a formatted column
+	 */
+	@NotNull
+	private TableColumn<HistoryData, String> getLastActionColumn() {
+		final var lastAction = new TableColumn<HistoryData, String>("");
+		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
+		lastAction.prefWidthProperty().bind(tableView.widthProperty().divide(5));
+		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		lastAction.setSortType(TableColumn.SortType.DESCENDING);
+		final HBox lastActionBox = getTitleBox("Last acted on:", actedDateFilterVBox);
+		lastAction.setGraphic(lastActionBox);
+		return lastAction;
+	}
+
+	/**
+	 * Set up the expander column
+	 *
+	 * @return a formatted expander column
+	 */
+	private TableRowExpanderColumn<HistoryData> getExpanderColumn() {
+		final var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
+		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
+		return expanderColumn;
+
+	}
+
+	/**
+	 * Setups the column with the re-sign button
+	 *
+	 * @param table
+	 * 		The table where the button will be added
+	 * @return a TableColumn
+	 */
+	private TableColumn<HistoryData, String> getReSignColumn(final TableView<HistoryData> table) {
+		final var actionColumn = new TableColumn<HistoryData, String>("");
+		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
+		final var cellFactory =
+				(Callback<TableColumn<HistoryData, String>, TableCell<HistoryData, String>>) column -> new TableCell<>() {
+					final Button button = formatButton(RESET_ICON, 30);
+
+					@Override
+					public void updateItem(final String item, final boolean empty) {
+						setText(null);
+						if (!empty) {
+							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+								final var historyData = table.getItems().get(getIndex());
+								button.setText(historyData.getFileName());
+								button.setStyle("-fx-font-size: 2");
+							}
+							final var historyData = getTableView().getItems().get(getIndex());
+							button.setVisible(!historyData.isExpired());
+							button.setDisable(!historyData.isHistory());
+
+							if (historyData.getType().equals(FileType.ACCOUNT_INFO) ||
+									historyData.getType().equals(FileType.BUNDLE) ||
+									historyData.getType().equals(FileType.PUBLIC_KEY)) {
+								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
+							}
+							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
+							setGraphic(button);
+							return;
+						}
+						setGraphic(null);
+					}
+
+					private void setHistoryDataAction(final HistoryData historyData) {
+						noise = false;
+						historyMap.put(historyData.getCode(), false);
+						tableList.remove(historyData);
+						historyData.setHistory(false);
+						tableList.add(historyData);
+						button.setDisable(true);
+						controller.homePaneController.setForceUpdate(true);
+						controller.homePaneController.initializeHomePane();
+					}
+				};
+		actionColumn.setCellFactory(cellFactory);
+		return actionColumn;
+	}
+
+	/**
+	 * Sets up the transaction details box
+	 *
+	 * @param parameter
+	 * 		the tablerow
+	 * @return a VBox
+	 */
+	private VBox buildAccountVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
+		final var data = parameter.getValue();
+		final var returnBox = new VBox();
+		try {
+			final var remoteFile =
+					new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(data.getRemoteFilePath())));
+			remoteFile.setHistory(true);
+			return remoteFile.buildDetailsBox();
+		} catch (final HederaClientException | IOException e) {
+			logger.error(e);
 		}
-		setupTypeFilterBox();
-		setupFeePayerFilterBox();
-		setupExpirationDateBox();
-		setupActionDateBox();
-		contentScrollPane.setContent(setupTable());
-		contentScrollPane.setFitToWidth(true);
-
-		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
-				actionsEndDatePicker);
-		noise = false;
+		final var l = new Label(data.getFileName());
+		returnBox.getChildren().add(l);
+		return returnBox;
 	}
 
 	// endregion
@@ -255,9 +513,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	// region FILTERS
 
 	/**
-	 * Set up the predicates
+	 * Set up the predicate filters
 	 */
 	private void setupPredicates() {
+		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
+				actionsEndDatePicker);
+
 		feePayerPredicate = historyData -> {
 			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
 			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
@@ -276,6 +537,16 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			final var b2 = date.isEqual(end) || date.isBefore(end);
 			return b1 && b2;
 		};
+
+	}
+
+	private void setupFilterBoxes() {
+		typeFilter.addAll(EnumSet.allOf(FileType.class));
+		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+		setupTypeFilterBox();
+		setupFeePayerFilterBox();
+		setupExpirationDateBox();
+		setupActionDateBox();
 	}
 
 	private void setupTypeFilterBox() {
@@ -334,23 +605,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		final List<CheckBox> checkBoxes = new ArrayList<>();
 
-		for (final var type : EnumSet.allOf(FileType.class)) {
-			final var typeCounter = countType(type);
+		EnumSet.allOf(FileType.class).forEach(type -> {
 			final var typeString = type.toKind().toLowerCase();
 			if (!"".equals(typeString)) {
-				final var checkBox = new CheckBox(String.format("%s (%d)", typeString, typeCounter));
-				checkBox.setSelected(typeFilter.contains(type));
-				checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-					if (Boolean.FALSE.equals(t1)) {
-						typeFilter.remove(type);
-					} else {
-						typeFilter.add(type);
-
-					}
-				});
-				checkBoxes.add(checkBox);
+				checkBoxes.add(getCheckBox(type, typeString));
 			}
-		}
+		});
 
 		selectAll.setOnAction(actionEvent -> checkBoxes.forEach(checkBox -> checkBox.setSelected(true)));
 
@@ -371,432 +631,28 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return gridPane;
 	}
 
-	private int countType(final FileType type) {
-		var count = 0;
-		for (final var value : historyMap.values()) {
-			if (type.equals(value.getType())) {
-				count++;
-			}
-		}
-		return count;
-	}
 
 	// endregion
 
-	// region TABLE
-	private void refreshTable() {
-		tableList.clear();
-		final List<HistoryData> historyData = new ArrayList<>(historyMap.values());
-		Collections.sort(historyData);
-		tableList.addAll(historyData);
-	}
-
-	private TableView<HistoryData> setupTable() {
-		final var table = new TableView<HistoryData>();
-		final var typeColumn = getTypeColumn(table);
-		final var feePayerColumn = getFeePayerColumn(table);
-		final var lastAction = getLastActionColumn(table);
-		final var expirationDateColumn = getExpirationColumn(table);
-		final var expanderColumn = getExpanderColumn();
-		final var reSignColumn = getReSignColumn(table);
-
-		table.getColumns().add(expanderColumn);
-		table.getColumns().add(typeColumn);
-		table.getColumns().add(expirationDateColumn);
-		table.getColumns().add(feePayerColumn);
-		table.getColumns().add(lastAction);
-		table.getColumns().add(reSignColumn);
-		table.getSortOrder().add(lastAction);
-
-		typeFilter.addListener((ListChangeListener<FileType>) change -> {
-			while (change.next()) {
-				if (!noise && (change.wasAdded() || change.wasRemoved())) {
-					typePredicate = statesModel -> {
-						if (!noise && (change.wasAdded() || change.wasRemoved())) {
-							return typeFilter.contains(statesModel.getType());
-						}
-						return false;
-					};
-					filters.add(typePredicate);
-				}
-			}
-		});
-
-		actionsFilter.addListener((ListChangeListener<Actions>) change -> {
-			while (change.next()) {
-				if (!noise && (change.wasAdded() || change.wasRemoved())) {
-					actionTypePredicate = historyData -> {
-						if (!noise && (change.wasAdded() || change.wasRemoved())) {
-							return actionsFilter.contains(historyData.getActions());
-						}
-						return false;
-					};
-					filters.add(actionTypePredicate);
-				}
-			}
-		});
-
-		acceptedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				actionsFilter.add(Actions.ACCEPT);
-			} else {
-				actionsFilter.remove(Actions.ACCEPT);
-			}
-		});
-
-		declinedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				actionsFilter.add(Actions.DECLINE);
-			} else {
-				actionsFilter.remove(Actions.DECLINE);
-			}
-		});
-
-		feePayerTextField.setOnKeyReleased(event -> {
-			if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
-				return;
-			}
-			feePayerFilterAccept();
-		});
-
-		filteredList.predicateProperty().bind(
-				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
-
-		tableList.clear();
-		final List<HistoryData> historyData = new ArrayList<>(historyMap.values());
-		Collections.sort(historyData);
-		tableList.addAll(historyData);
-		final var sortedList = new SortedList<>(filteredList);
-
-		sortedList.comparatorProperty().bind(table.comparatorProperty());
-		table.setItems(sortedList);
-		table.sort();
-		setupTypeFilterBox();
-		return table;
-	}
-
-	@NotNull
-	private TableColumn<HistoryData, String> getExpirationColumn(final TableView<HistoryData> table) {
-		final var expirationDateColumn = new TableColumn<HistoryData, String>("");
-		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
-		expirationDateColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
-		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		final HBox lastActionBox = getTitleBox("Expiration Date:", expirationDateFilterVBox);
-		expirationDateColumn.setGraphic(lastActionBox);
-		return expirationDateColumn;
-	}
-
-	@NotNull
-	private TableColumn<HistoryData, String> getLastActionColumn(final TableView<HistoryData> table) {
-		final var lastAction = new TableColumn<HistoryData, String>("");
-		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
-		lastAction.prefWidthProperty().bind(table.widthProperty().divide(5));
-		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		lastAction.setSortType(TableColumn.SortType.DESCENDING);
-		final HBox lastActionBox = getTitleBox("Last acted on:", actedDateFilterVBox);
-		lastAction.setGraphic(lastActionBox);
-
-		return lastAction;
-	}
-
-	@NotNull
-	private TableColumn<HistoryData, String> getFeePayerColumn(final TableView<HistoryData> table) {
-		final var feePayerColumn = new TableColumn<HistoryData, String>("");
-		feePayerColumn.setCellValueFactory(new PropertyValueFactory<>("feePayer"));
-		feePayerColumn.prefWidthProperty().bind(table.widthProperty().divide(5));
-		feePayerColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		feePayerColumn.setCellValueFactory(this::setupFeePayerCell);
-		final var feePayerHBox = getTitleBox("Fee Payer Account", feePayerFilterVBox);
-		feePayerColumn.setGraphic(feePayerHBox);
-		return feePayerColumn;
-	}
-
-	@NotNull
-	private TableColumn<HistoryData, String> getTypeColumn(final TableView<HistoryData> table) {
-		final var typeColumn = new TableColumn<HistoryData, String>("");
-
-		final var typeBox = getTitleBox("Type", typeFilterVBox);
-		typeColumn.setGraphic(typeBox);
-		typeColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-		typeColumn.prefWidthProperty().bind(table.widthProperty().divide(32).multiply(9));
-
-		return typeColumn;
-	}
-
-	private TableRowExpanderColumn<HistoryData> getExpanderColumn() {
-		final var expanderColumn = new TableRowExpanderColumn<>(this::buildTransactionVBox);
-		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
-		return expanderColumn;
-
-	}
-
-	/**
-	 * Setups the column with the re-sign button
-	 *
-	 * @param table
-	 * 		The table where the button will be added
-	 * @return a TableColumn
-	 */
-	private TableColumn<HistoryData, String> getReSignColumn(final TableView<HistoryData> table) {
-		final var actionColumn = new TableColumn<HistoryData, String>("");
-		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
-		final var cellFactory =
-				(Callback<TableColumn<HistoryData, String>, TableCell<HistoryData, String>>) column -> new TableCell<>() {
-					final Button button = formatButton(RESET_ICON, 30);
-
-					@Override
-					public void updateItem(final String item, final boolean empty) {
-						setText(null);
-						if (!empty) {
-							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-								final var x = table.getItems().get(getIndex());
-								button.setText(x.getFileName());
-								button.setStyle("-fx-font-size: 2");
-							}
-							final var historyData = getTableView().getItems().get(getIndex());
-							button.setVisible(!historyData.isExpired());
-							button.setDisable(!historyData.isHistory());
-
-							if (historyData.getType().equals(FileType.ACCOUNT_INFO) ||
-									historyData.getType().equals(FileType.BUNDLE) ||
-									historyData.getType().equals(FileType.PUBLIC_KEY)) {
-								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
-							}
-							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
-							setGraphic(button);
-							return;
-						}
-						setGraphic(null);
-					}
-
-					private void setHistoryDataAction(final HistoryData historyData) {
-						historyData.setHistory(false);
-						noise = false;
-						historyMap.put(historyData.getCode(), historyData);
-						button.setDisable(true);
-						controller.homePaneController.setForceUpdate(true);
-						controller.homePaneController.initializeHomePane();
-					}
-				};
-		actionColumn.setCellFactory(cellFactory);
-		return actionColumn;
-	}
-
-	/**
-	 * Sets up the transaction details box
-	 *
-	 * @param parameter
-	 * 		the tablerow
-	 * @return a VBox
-	 */
-	private VBox buildTransactionVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
-		final var data = parameter.getValue();
-		final var returnBox = new VBox();
-		try {
-			final var remoteFile =
-					new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(data.getRemoteFilePath())));
-			remoteFile.setHistory(true);
-			return remoteFile.buildDetailsBox();
-		} catch (final HederaClientException | IOException e) {
-			logger.error(e);
-		}
-		final var l = new Label(data.getFileName());
-		returnBox.getChildren().add(l);
-		return returnBox;
-	}
-
-	// endregion
+	// region HELPERS
 
 
 	/**
-	 * Store the map to the System Files folder
-	 */
-	private void storeMap() {
-		// Store map
-		if (noise) {
-			return;
-		}
-		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
-			logger.info("Creating system folder");
-		}
-		logger.info("Storing map to {}", Constants.HISTORY_MAP);
-		final var array = new JsonArray();
-		for (final var entry : historyMap.entrySet()) {
-			array.add(entry.getValue().asJson());
-		}
-
-		try {
-			writeJsonObject(Constants.HISTORY_MAP, array);
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-	}
-
-	/**
-	 * Load all the allowed files from the history folder
-	 */
-	private void loadMap() {
-		try {
-			final var mapFile = new File(Constants.HISTORY_MAP);
-			if (!mapFile.exists()) {
-				logger.info("Parsing history folder");
-				parseHistoryFolder();
-				return;
-			}
-			final var array = readJsonArray(mapFile.getAbsolutePath());
-			for (final var element : array) {
-				logger.info("Loading element: {}", element.getAsJsonObject().get("filename").getAsString());
-				final var historyData = new HistoryData(element.getAsJsonObject());
-				historyMap.put(historyData.getCode(), historyData);
-			}
-		} catch (final FileNotFoundException | HederaClientException | JsonProcessingException e) {
-			logger.error(e.getMessage());
-		}
-	}
-
-	/**
-	 * Add a listener to the map to store and reload the table
-	 */
-	private void setupMapListener() {
-		historyMap.addListener((MapChangeListener<Integer, HistoryData>) change -> {
-			if (!noise) {
-				storeMap();
-				refreshTable();
-				//setupTable();
-			}
-		});
-	}
-
-	/**
-	 * Parses the files in the history folder
-	 *
-	 * @throws FileNotFoundException
-	 * 		if a file is not found
-	 */
-	private void parseHistoryFolder() throws FileNotFoundException {
-
-		final var files = getRemoteFiles();
-		for (final var file : files) {
-			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
-				continue;
-			}
-			logger.info("Parsing file {}", file.getName());
-			final var data = new HistoryData(file);
-			data.setHistory(true);
-			noise = true;
-			historyMap.put(data.getCode(), data);
-			noise = false;
-		}
-		logger.info("here");
-		storeMap();
-		noise = false;
-	}
-
-	/**
-	 * Only allow files that are allowed by the app
-	 *
-	 * @param name
-	 * 		the name of the file
-	 * @return true if the file type is allowed
-	 */
-	private boolean isAllowedFile(final String name) {
-		try {
-			return !FileType.getType(FilenameUtils.getExtension(name)).equals(FileType.UNKNOWN);
-		} catch (final HederaClientException e) {
-			return false;
-		}
-	}
-
-
-	/**
-	 * Adds the fee filter to the list
-	 */
-	public void feePayerFilterAccept() {
-		filters.add(feePayerPredicate);
-	}
-
-	/**
-	 * Removes the fee filter. Resets the filter box
-	 */
-	public void resetFeeFilter() {
-		feePayerTextField.clear();
-		filters.remove(feePayerPredicate);
-	}
-
-	/**
-	 * Filters the table according to the last action column
-	 */
-	public void actionFilterAccept() {
-		logger.info("Filtering action dates");
-		final var startValue = actionsStartDatePicker.getValue();
-		final var endValue = actionsEndDatePicker.getValue();
-
-		final var start = startValue != null ? startValue : LocalDate.now();
-		final var end = endValue != null ? endValue : LocalDate.now();
-
-		if (start.isAfter(end)) {
-			return;
-		}
-
-		filters.add(actionDatePredicate);
-	}
-
-	/**
-	 * Removes the action date filter from the filter list. Resets the filter box
-	 */
-	public void actionFilterReset() {
-		declinedCheckBox.setSelected(true);
-		acceptedCheckBox.setSelected(true);
-		actionsStartDatePicker.getEditor().clear();
-		actionsEndDatePicker.getEditor().clear();
-		filters.remove(actionDatePredicate);
-	}
-
-	/**
-	 * Filters the table according to the expiration date column
-	 */
-	public void expirationFilterAccept() {
-		logger.info("Filtering action dates");
-		final var startValue = expirationStartDatePicker.getValue();
-		final var endValue = expirationEndDatePicker.getValue();
-
-		start = startValue != null ? startValue : LocalDate.now();
-		end = endValue != null ? endValue : LocalDate.now();
-
-		if (start.isAfter(end)) {
-			return;
-		}
-
-		filters.add(expirationDatePredicate);
-	}
-
-	/**
-	 * Remove the expiration date filter from the filter list. Resets the filter box
-	 */
-	public void expirationFilterReset() {
-		expirationEndDatePicker.getEditor().clear();
-		expirationStartDatePicker.getEditor().clear();
-		filters.remove(expirationDatePredicate);
-	}
-
-	/**
-	 * Setups an HBox with the title and a button to open the filterbox
+	 * Sets up the title box for each column
 	 *
 	 * @param title
-	 * 		The title that will be set in the header.
+	 * 		the explanatory title of the column
 	 * @param filterBox
-	 * 		The filterbox that should be toggled.
-	 * @return an HBox with a label and a button.
+	 * 		the filter box corresponding to the column
+	 * @return an HBox that will be placed as the graphic for the column
 	 */
-	@NotNull
 	private HBox getTitleBox(final String title, final VBox filterBox) {
 		final var hBox = new HBox();
 		final var isTest = SetupPhase.TEST_PHASE.equals(controller.getSetupPhase());
 
 		if (!isTest) {
 			hBox.getChildren().add(new Label(title));
-			final var region = getRegion();
-			hBox.getChildren().add(region);
+			hBox.getChildren().add(getRegion());
 		}
 
 		final var button = isTest ?
@@ -830,6 +686,233 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		button.setGraphic(imageView);
 		button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
 		return button;
+	}
+
+	/**
+	 * Loads all the remote files from the history folder.
+	 *
+	 * @return an array of remote files
+	 */
+	private ArrayList<RemoteFile> getRemoteFiles() {
+		final var filenames = new File(DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
+		final var remoteFiles = new ArrayList<RemoteFile>();
+		for (final var filename : filenames) {
+			FileDetails details = null;
+			try {
+				details = FileDetails.parse(filename);
+			} catch (final IOException e) {
+				logger.error(e.getMessage());
+			}
+
+			try {
+				remoteFiles.add(new RemoteFile().getSingleRemoteFile(details));
+			} catch (final HederaClientException e) {
+				logger.error(e.getMessage());
+			}
+		}
+		return remoteFiles;
+	}
+
+	/**
+	 * Only allow files that are allowed by the app
+	 *
+	 * @param name
+	 * 		the name of the file
+	 * @return true if the file type is allowed
+	 */
+	private boolean isAllowedFile(final String name) {
+		try {
+			return !FileType.getType(FilenameUtils.getExtension(name)).equals(FileType.UNKNOWN);
+		} catch (final HederaClientException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Set up a tooltip button
+	 *
+	 * @param text
+	 * 		the text of the tooltip
+	 * @return a formatted button
+	 */
+	@NotNull
+	private Button getToolTipButton(final String text) {
+		final var image = new Image("icons" + File.separator + "helpIcon.png");
+		final var imageView = new ImageView(image);
+		imageView.setPreserveRatio(true);
+		imageView.setFitHeight(15);
+		final var toolTipButton = new Button();
+		toolTipButton.setGraphic(imageView);
+		toolTipButton.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
+		toolTipButton.setPadding(new Insets(0, 0, 10, 0));
+		toolTipButton.setMinWidth(25);
+
+		toolTipButton.setOnAction(
+				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
+		return toolTipButton;
+	}
+
+	/**
+	 * Allow cells to wrap
+	 *
+	 * @return a tablecell
+	 */
+	@NotNull
+	private TableCell<HistoryData, String> setWrapping() {
+		final var cell = new TableCell<HistoryData, String>();
+		final var text = new Text();
+		cell.setGraphic(text);
+		cell.setPrefHeight(Control.USE_COMPUTED_SIZE);
+		text.wrappingWidthProperty().bind(cell.widthProperty());
+		text.textProperty().bind(cell.itemProperty());
+		return cell;
+	}
+
+	/**
+	 * Sets up the format for an account ID cell
+	 *
+	 * @param cellData
+	 * 		a cell that should have an account ID
+	 * @return a SimpleStringProperty
+	 */
+	@NotNull
+	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
+		final var id = Identifier.parse(cellData.getValue().getFeePayer(), controller.getCurrentNetwork());
+		if (id.equals(Identifier.ZERO)) {
+			return new SimpleStringProperty("");
+		}
+		return new SimpleStringProperty(id.toNicknameAndChecksum(controller.getAccountsList()));
+	}
+
+	/**
+	 * Sets up a checkbox for the type filter
+	 *
+	 * @param type
+	 * 		the type of file
+	 * @param typeString
+	 * 		the assigned label for the checkbox
+	 * @return a formatted checkbox
+	 */
+	@NotNull
+	private CheckBox getCheckBox(final FileType type, final String typeString) {
+		final var checkBox = new CheckBox(String.format("%s (%d)", typeString, countType(type)));
+		checkBox.setSelected(typeFilter.contains(type));
+		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.FALSE.equals(t1)) {
+				typeFilter.remove(type);
+			} else {
+				typeFilter.add(type);
+
+			}
+		});
+		return checkBox;
+	}
+
+	/**
+	 * Counts the number of files with a certain type
+	 *
+	 * @param type
+	 * 		the type needed
+	 * @return an integer
+	 */
+	private int countType(final FileType type) {
+		var count = 0;
+		for (final var value : tableList) {
+			if (type.equals(value.getType())) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	// endregion
+
+	// region EVENTS
+
+	/**
+	 * Adds the fee filter to the list
+	 */
+	public void feePayerFilterAccept() {
+		filters.add(feePayerPredicate);
+	}
+
+	/**
+	 * Removes the fee filter. Resets the filter box
+	 */
+	public void resetFeeFilter() {
+		feePayerTextField.clear();
+		filters.remove(feePayerPredicate);
+	}
+
+	/**
+	 * Filters the table according to the expiration date column
+	 */
+	public void expirationFilterAccept() {
+		logger.info("Filtering action dates");
+		final var startValue = expirationStartDatePicker.getValue();
+		final var endValue = expirationEndDatePicker.getValue();
+
+		start = startValue != null ? startValue : LocalDate.now();
+		end = endValue != null ? endValue : LocalDate.now();
+
+		if (start.isAfter(end)) {
+			return;
+		}
+
+		filters.add(expirationDatePredicate);
+	}
+
+	/**
+	 * Remove the expiration date filter from the filter list. Resets the filter box
+	 */
+	public void expirationFilterReset() {
+		expirationEndDatePicker.getEditor().clear();
+		expirationStartDatePicker.getEditor().clear();
+		filters.remove(expirationDatePredicate);
+	}
+
+	/**
+	 * Filters the table according to the last action column
+	 */
+	public void actionFilterAccept() {
+		logger.info("Filtering action dates");
+		final var startValue = actionsStartDatePicker.getValue();
+		final var endValue = actionsEndDatePicker.getValue();
+
+		final var start = startValue != null ? startValue : LocalDate.now();
+		final var end = endValue != null ? endValue : LocalDate.now();
+
+		if (start.isAfter(end)) {
+			return;
+		}
+
+		filters.add(actionDatePredicate);
+	}
+
+	/**
+	 * Removes the action date filter from the filter list. Resets the filter box
+	 */
+	public void actionFilterReset() {
+		declinedCheckBox.setSelected(true);
+		acceptedCheckBox.setSelected(true);
+		actionsStartDatePicker.getEditor().clear();
+		actionsEndDatePicker.getEditor().clear();
+		filters.remove(actionDatePredicate);
+	}
+
+	/**
+	 * Configures a region that grows to use all available space
+	 *
+	 * @return a Region
+	 */
+	@NotNull
+	private Region getRegion() {
+		final var region = new Region();
+		HBox.setHgrow(region, Priority.ALWAYS);
+		VBox.setVgrow(region, Priority.ALWAYS);
+		region.setPrefWidth(Region.USE_COMPUTED_SIZE);
+		region.setPrefHeight(Region.USE_COMPUTED_SIZE);
+		return region;
 	}
 
 	/**
@@ -867,86 +950,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	}
 
 	/**
-	 * Set up an expanding region
-	 *
-	 * @return a region that always grows horizontally
+	 * TESTING ONLY: rebuilds the history from the folder
 	 */
-	@NotNull
-	private Region getRegion() {
-		final var typeRegion = new Region();
-		typeRegion.setPrefHeight(Region.USE_COMPUTED_SIZE);
-		typeRegion.setPrefWidth(Region.USE_COMPUTED_SIZE);
-		HBox.setHgrow(typeRegion, Priority.ALWAYS);
-		return typeRegion;
-	}
-
-	/**
-	 * Allow cells to wrap
-	 *
-	 * @return a tablecell
-	 */
-	@NotNull
-	private TableCell<HistoryData, String> setWrapping() {
-		final var cell = new TableCell<HistoryData, String>();
-		final var text = new Text();
-		cell.setGraphic(text);
-		cell.setPrefHeight(Control.USE_COMPUTED_SIZE);
-		text.wrappingWidthProperty().bind(cell.widthProperty());
-		text.textProperty().bind(cell.itemProperty());
-		return cell;
-	}
-
-	/**
-	 * Sets up the format for an account ID cell
-	 *
-	 * @param cellData
-	 * 		a cell that should have an account ID
-	 * @return a SimpleStringProperty
-	 */
-	@NotNull
-	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
-		final var id = Identifier.parse(cellData.getValue().getFeePayer(), controller.getCurrentNetwork());
-		if (id.equals(Identifier.ZERO)) {
-			return new SimpleStringProperty("");
-		}
-		return new SimpleStringProperty(id.toNicknameAndChecksum(controller.getAccountsList()));
-	}
-
-	/**
-	 * Set up a tooltip button
-	 *
-	 * @param text
-	 * 		the text of the tooltip
-	 * @return a formatted button
-	 */
-	@NotNull
-	private Button getToolTipButton(final String text) {
-		final var image = new Image("icons" + File.separator + "helpIcon.png");
-		final var imageView = new ImageView(image);
-		imageView.setPreserveRatio(true);
-		imageView.setFitHeight(15);
-		final var toolTipButton = new Button();
-		toolTipButton.setGraphic(imageView);
-		toolTipButton.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		toolTipButton.setPadding(new Insets(0, 0, 10, 0));
-		toolTipButton.setMinWidth(25);
-
-		toolTipButton.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
-		return toolTipButton;
-	}
-
 	public void rebuildHistory() throws IOException {
-		if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-			Files.deleteIfExists(Path.of(Constants.HISTORY_MAP));
-			loadMap();
-			initializeHistoryPane();
-			controller.homePaneController.setForceUpdate(true);
-			controller.homePaneController.initializeHomePane();
-		}
+		deleteIfExists(Path.of(Constants.HISTORY_MAP));
+		initializeHistoryPane();
+		controller.homePaneController.setForceUpdate(true);
+		controller.homePaneController.initializeHomePane();
 	}
-
-	public boolean isHistory(final int code) {
-		return historyMap.containsKey(code) && historyMap.get(code).isHistory();
-	}
+	// endregion
 }

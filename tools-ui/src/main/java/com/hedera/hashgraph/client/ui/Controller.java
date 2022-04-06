@@ -177,7 +177,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
 	@FXML
-	public HistoryPaneController2 historyPaneController;
+	public HistoryPaneController historyPaneController;
 
 
 	// Utility
