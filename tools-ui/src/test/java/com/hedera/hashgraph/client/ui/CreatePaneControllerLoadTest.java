@@ -60,17 +60,20 @@ import static org.junit.Assert.assertTrue;
 public class CreatePaneControllerLoadTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
 
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+
 
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
+
+
 	public UserAccessibleProperties properties;
 
 	@Before

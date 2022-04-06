@@ -82,25 +82,26 @@ import static org.junit.Assert.assertTrue;
 
 public class InitialStartupPaneControllerTest extends TestBase implements GenericFileReadWriteAware {
 
-	public static BooleanSupplier isInCircleCi = () ->
+	private static final Logger logger = LogManager.getLogger(InitialStartupPage.class);
+
+	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final BooleanSupplier isInGithubActions = () ->
 			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 
-	public static final String PASSWORD = "tempura hopscotch";
-	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
-	private final Logger logger = LogManager.getLogger(InitialStartupPage.class);
+	private static final String PASSWORD = "tempura hopscotch";
+	private static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive";
 	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	private static final String STORED_MNEMONIC =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	private InitialStartupPage initialStartupPage;
 	private UserAccessibleProperties properties;
 
-	private final String storedMnemonic =
-			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
-					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	//@BeforeEach
 	@Before
@@ -268,7 +269,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("generatePassphraseFromProvidedWords_Text");
 			logger.info("Load stored mnemonic for testing");
 
-			final var storedWords = storedMnemonic.toLowerCase().split(" ");
+			final var storedWords = STORED_MNEMONIC.toLowerCase().split(" ");
 
 			initialStartupPage.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
@@ -338,13 +339,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		final var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		final var longStringSelection = new StringSelection("test " + storedMnemonic);
+		final var longStringSelection = new StringSelection("test " + STORED_MNEMONIC);
 		final var shortStringSelection =
 				new StringSelection("Dignity domain involve report sail middle rhythm husband usage pretty");
 		final var latinStringSelection = new StringSelection(
 				"magna di curant, parva neglegunt. magna di curant, parva neglegunt. magna di curant, parva neglegunt" +
 						". magna di curant, parva neglegunt. magna di curant, parva");
-		final var goodStringSelection = new StringSelection(storedMnemonic);
+		final var goodStringSelection = new StringSelection(STORED_MNEMONIC);
 
 		clipboard.setContents(longStringSelection, longStringSelection);
 		initialStartupPage.pressPaste();

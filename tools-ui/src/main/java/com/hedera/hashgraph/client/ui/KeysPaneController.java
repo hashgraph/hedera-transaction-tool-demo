@@ -130,7 +130,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private static final String DUPLICATED_KEY_NAME_MESSAGE =
 			"Cannot replace a public key that is associated with an existing private key.";
-	public static final String KEYS_STRING = "/Keys/";
+	private static final String KEYS_STRING = "/Keys/";
 	private static final String ACCEPT_MESSAGE = "CONTINUE";
 	private static final String MNEMONIC_IS_NULL = "Mnemonic is null";
 

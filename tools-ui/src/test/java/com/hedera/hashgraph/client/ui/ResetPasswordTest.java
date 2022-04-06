@@ -28,8 +28,6 @@ import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.Mnemonic;
-import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -40,7 +38,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -64,28 +61,24 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-@Ignore
+
 public class ResetPasswordTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ResetPasswordTest.class);
 
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
-	private KeysPanePage keysPanePage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
+	private static final Path CURRENT_RELATIVE_PATH = Paths.get("");
 	private static final String PASSWORD = "tempurasushi";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-
-	private static final List<String> testWords =
+	private static final List<String> TEST_WORDS =
 			Arrays.asList("dignity", "domain", "involve", "report",
 					"sail", "middle", "rhythm", "husband",
 					"usage", "pretty", "rate", "town",
 					"account", "side", "extra", "outer",
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
-	private static final List<String> testWords2 =
+	private static final List<String> TEST_WORDS_2 =
 			Arrays.asList("hurry", "rib", "magnet", "advance",
 					"mirror", "gift", "token", "border",
 					"slogan", "universe", "local", "appear",
@@ -93,15 +86,19 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 					"myth", "normal", "profit", "trim",
 					"fault", "decide", "kiss", "afford");
 
+	private KeysPanePage keysPanePage;
+
+
 	@Before
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
 		TestUtil.buildFolders();
 
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
+		final var properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
-		if (new File(currentRelativePath.toAbsolutePath() + OUTPUT_PATH).mkdirs()) {
+		if (new File(CURRENT_RELATIVE_PATH.toAbsolutePath() + OUTPUT_PATH).mkdirs()) {
 			logger.info("Output path created");
 		}
 
@@ -111,7 +108,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
+				CURRENT_RELATIVE_PATH.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
@@ -121,7 +118,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		final Controller controller = new Controller();
+		final var controller = new Controller();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
@@ -135,7 +132,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
-		final Mnemonic mnemonic = Mnemonic.fromWords(testWords);
+		final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 		properties.setMnemonicHashCode(mnemonic.words.hashCode());
 		properties.setHash(TEST_PASSWORD.toCharArray());
 		properties.setLegacy(false);
@@ -153,7 +150,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		}
 
 		keysPanePage = new KeysPanePage(this);
-		final MainWindowPage mainWindowPage = new MainWindowPage(this);
+		final var mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnKeysButton();
 	}
 
@@ -175,7 +172,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.pressPopupHyperlink()
 				.clickOnPopupButton("RESET")
 				.clickOnPopupButton("RESET")
-				.setWords(testWords)
+				.setWords(TEST_WORDS)
 				.clickOnPopupButton("RECOVER")
 				.clickOnPopupButton("CONTINUE")
 				.enterPasswordAndConfirm(PASSWORD)
@@ -195,8 +192,8 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		assertEquals(1, labels.size());
 		assertTrue(labels.get(0) instanceof Label);
 
-		final String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (final String testWord : testWords) {
+		final var words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (final var testWord : TEST_WORDS) {
 			assertTrue(words.contains(testWord));
 		}
 	}
@@ -206,19 +203,19 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		keysPanePage.createKey("testKey", TEST_PASSWORD);
 		doubleClickOn("testKey");
 
-		final File pem = new File(DEFAULT_KEYS, "testKey.pem");
+		final var pem = new File(DEFAULT_KEYS, "testKey.pem");
 		final var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		final ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
-		final ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		final var privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		final var privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
 		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
 		assertTrue(privateKeyNodes.get(1) instanceof VBox);
 
-		final VBox vBox = (VBox) privateKeyNodes.get(1);
+		final var vBox = (VBox) privateKeyNodes.get(1);
 		assertEquals(3, vBox.getChildren().size());
-		final Node show = vBox.getChildren().get(0);
+		final var show = vBox.getChildren().get(0);
 		assertTrue(show instanceof Button);
 		assertEquals("SHOW", ((Button) show).getText());
 		clickOn(show);
@@ -240,19 +237,19 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	public void forgottenPasswordKeyDifferentMnemonic_test() throws KeyStoreException {
 		doubleClickOn("principalTestingKey");
 
-		final File pem = new File(DEFAULT_KEYS, "principalTestingKey.pem");
+		final var pem = new File(DEFAULT_KEYS, "principalTestingKey.pem");
 		final var keyStoreBefore = Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), pem.getAbsolutePath());
 
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		assert popupNodes != null;
-		final ObservableList<Node> privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
-		final ObservableList<Node> privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
+		final var privateKeyVBoxNodes = ((VBox) popupNodes.get(3)).getChildren();
+		final var privateKeyNodes = ((HBox) privateKeyVBoxNodes.get(2)).getChildren();
 		assertTrue(privateKeyNodes.get(0) instanceof TextArea);
 		assertTrue(privateKeyNodes.get(1) instanceof VBox);
 
-		final VBox vBox = (VBox) privateKeyNodes.get(1);
+		final var vBox = (VBox) privateKeyNodes.get(1);
 		assertEquals(3, vBox.getChildren().size());
-		final Node show = vBox.getChildren().get(0);
+		final var show = vBox.getChildren().get(0);
 		assertTrue(show instanceof Button);
 		assertEquals("SHOW", ((Button) show).getText());
 		clickOn(show);
@@ -280,8 +277,8 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		assertTrue(labels.get(0) instanceof Label);
 
 
-		String words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (final String testWord : testWords) {
+		var words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
+		for (final var testWord : TEST_WORDS) {
 			assertTrue(words.contains(testWord));
 		}
 		keysPanePage.pressCloseViewMnemonic();
@@ -289,7 +286,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.pressPopupHyperlink()
 				.clickOnPopupButton("RESET")
 				.clickOnPopupButton("RESET")
-				.setWords(testWords2)
+				.setWords(TEST_WORDS_2)
 				.clickOnPopupButton("RECOVER")
 				.clickOnPopupButton("CONTINUE")
 				.clickOnPopupButton("CANCEL")
@@ -304,7 +301,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 				.pressPopupHyperlink()
 				.clickOnPopupButton("RESET")
 				.clickOnPopupButton("RESET")
-				.setWords(testWords2)
+				.setWords(TEST_WORDS_2)
 				.clickOnPopupButton("RECOVER")
 				.clickOnPopupButton("CONTINUE")
 				.clickOnPopupButton("CONTINUE")
@@ -325,7 +322,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		assertTrue(labels.get(0) instanceof Label);
 
 		words = ((Label) labels.get(0)).getText().toLowerCase(Locale.ROOT);
-		for (final String testWord : testWords2) {
+		for (final var testWord : TEST_WORDS_2) {
 			assertTrue(words.contains(testWord));
 		}
 

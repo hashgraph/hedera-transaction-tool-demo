@@ -73,14 +73,18 @@ import static org.junit.Assert.assertTrue;
 
 public class SettingsPaneTest extends TestBase {
 
-	private SettingsPanePage settingsPanePage;
-	private final MainWindowPage mainWindowPage = new MainWindowPage(this);
-	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
+	private static final Path CURRENT_RELATIVE_PATH = Paths.get("");
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
+
+	private final MainWindowPage mainWindowPage = new MainWindowPage(this);
+	private SettingsPanePage settingsPanePage;
+
+	private UserAccessibleProperties properties;
+
 
 	@Before
 	public void setUp() throws Exception {
@@ -91,19 +95,19 @@ public class SettingsPaneTest extends TestBase {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
 				"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 			logger.info("Output path created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
 				"/InputFiles/").mkdirs()) {
 			logger.info("Second input folder created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
 				"/OutputFiles/test@testemail.net").mkdirs()) {
 			logger.info("Second output folder created");
 		}
@@ -115,7 +119,7 @@ public class SettingsPaneTest extends TestBase {
 		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
+				CURRENT_RELATIVE_PATH.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();

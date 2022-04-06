@@ -805,7 +805,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			controller.accountsPaneController.setupFeePayerChoiceBox();
 			return;
 		}
-		var zero = Identifier.ZERO;
+		final var zero = Identifier.ZERO;
 		zero.setNetworkName(controller.getCurrentNetwork());
 		controller.setDefaultFeePayer(zero);
 		controller.accountsPaneController.initializeAccountPane();

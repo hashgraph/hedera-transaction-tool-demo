@@ -89,10 +89,16 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	public static final String LOREM_IPSUM =
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et" +
 					" dolore magna aliqua.";
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
+	private static final List<String> TEST_WORDS =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
 
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
@@ -102,13 +108,8 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	public UserAccessibleProperties properties;
 
-	private static final List<String> testWords =
-			Arrays.asList("dignity", "domain", "involve", "report",
-					"sail", "middle", "rhythm", "husband",
-					"usage", "pretty", "rate", "town",
-					"account", "side", "extra", "outer",
-					"eagle", "eight", "design", "page",
-					"regular", "bird", "race", "answer");
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
 
 
 	@Before
@@ -145,7 +146,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
-			final var mnemonic = Mnemonic.fromWords(testWords);
+			final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);

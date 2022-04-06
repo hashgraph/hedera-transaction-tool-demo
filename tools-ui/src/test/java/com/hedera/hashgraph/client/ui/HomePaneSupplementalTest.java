@@ -38,7 +38,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -69,8 +68,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private final List<VBox> publicKeyBoxes = new ArrayList<>();
 	private final List<VBox> accountInfoBoxes = new ArrayList<>();
 	private final List<VBox> batchBoxes = new ArrayList<>();
@@ -79,7 +78,6 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	private final List<VBox> systemBoxes = new ArrayList<>();
 	private final List<VBox> freezeBoxes = new ArrayList<>();
 	private final List<VBox> bundleBoxes = new ArrayList<>();
-
 
 	@Before
 	public void setUp() throws Exception {
@@ -91,7 +89,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
 
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		final var properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {

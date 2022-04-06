@@ -82,7 +82,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
@@ -537,7 +536,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
-				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
+				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 				controller.loadPubKeys();
 				controller.accountsPaneController.initializeAccountPane();
@@ -557,7 +556,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			try {
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(DECLINE, rf.getCommentArea().getText(), "");
-				controller.historyPaneController.addToHistory(rf.getPath());
+				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error(e);
@@ -573,7 +572,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		cancelButton.setOnAction(event -> {
 			try {
 				rf.moveToHistory();
-				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
+				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error(e);
@@ -621,7 +620,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 			try {
 				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
-				controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
+				controller.historyPaneController.addToHistory(rf);
 			} catch (final HederaClientException e) {
 				logger.error(e);
 			}
@@ -904,7 +903,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			rf.execute(pair, user, output);
 			exportComments(rf, rf.getCommentArea(), rf.getName());
 			rf.setHistory(true);
-			controller.historyPaneController.addToHistory(String.format("%s/%s", DEFAULT_HISTORY, rf.getName()));
+			controller.historyPaneController.addToHistory(rf);
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {

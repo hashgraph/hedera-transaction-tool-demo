@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -78,21 +77,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Ignore
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
 	protected static final String PASSWORD = "123456789";
 	public static final int ONE_SECOND = 1000;
-	private HomePanePage homePanePage;
-	private MainWindowPage mainWindowPage;
 
-	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private final List<VBox> publicKeyBoxes = new ArrayList<>();
 	private final List<VBox> accountInfoBoxes = new ArrayList<>();
 	private final List<VBox> batchBoxes = new ArrayList<>();
@@ -101,7 +96,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	private final List<VBox> systemBoxes = new ArrayList<>();
 	private final List<VBox> freezeBoxes = new ArrayList<>();
 	private final List<VBox> bundleBoxes = new ArrayList<>();
+	private final Path currentRelativePath = Paths.get("");
 
+	private HomePanePage homePanePage;
+	private MainWindowPage mainWindowPage;
+
+
+	private UserAccessibleProperties properties;
 
 	@Before
 	public void setUp() throws Exception {
@@ -174,7 +175,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 
-	//@Test
+	@Test
 	public void clickOnBogusItem() {
 		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 		sleep(100);
@@ -367,16 +368,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
-		sleep(ONE_SECOND);
-
 		homePanePage.clickOn2ButtonBar(1, accountInfoBoxes.get(1));
 
-		sleep(ONE_SECOND);
-		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var map = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
-		assertEquals(1, map.size());
-		assertEquals(totalBoxes - 1, refreshFiles.size());
 
+		assertEquals(1, map.size());
+		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+
+		assertEquals(totalBoxes - 1, refreshFiles.size());
 		assertEquals(10, Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 
 	}

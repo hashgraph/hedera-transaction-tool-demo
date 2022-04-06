@@ -897,7 +897,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	@Override
 	public int hashCode() {
-
 		final var file = new File(parentPath, name);
 		var bytes = new byte[0];
 		try {

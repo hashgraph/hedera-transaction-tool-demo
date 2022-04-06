@@ -46,7 +46,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class CommonMethodsTest extends TestBase {
 	private static final Logger logger = LogManager.getLogger(CommonMethodsTest.class);
 

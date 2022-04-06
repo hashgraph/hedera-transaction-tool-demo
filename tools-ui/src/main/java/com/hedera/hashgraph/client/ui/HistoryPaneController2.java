@@ -227,20 +227,13 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 
 	/**
 	 * Adds a file to the map
-	 *
-	 * @param path
-	 * 		the path to the new file
 	 */
-	public void addToHistory(final String path) {
-		try {
-			noise = false;
-			final var addition = new HistoryData(path);
-			addition.setHistory(true);
-			historyMap.put(addition.getCode(), true);
-			tableList.add(addition);
-		} catch (final IOException | HederaClientException e) {
-			logger.error(e.getMessage());
-		}
+	public void addToHistory(final RemoteFile remoteFile) {
+		noise = false;
+		final var addition = new HistoryData(remoteFile);
+		addition.setHistory(true);
+		historyMap.put(addition.getCode(), true);
+		tableList.add(addition);
 	}
 
 	/**
@@ -251,7 +244,7 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	 * @return If the code is in the map, and it is marked as history, return true
 	 */
 	public boolean isHistory(final int code) {
-		return !historyMap.containsKey(code) && (Boolean.TRUE.equals(historyMap.get(code)));
+		return historyMap.containsKey(code) && (Boolean.TRUE.equals(historyMap.get(code)));
 	}
 
 	/**
@@ -272,6 +265,13 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 	 * Set up the main history table
 	 */
 	private void setupTable() {
+		tableList.addListener((ListChangeListener<HistoryData>) change -> {
+			while (change.next()) {
+				if (change.wasRemoved() || change.wasAdded()) {
+					storeHistory();
+				}
+			}
+		});
 		contentScrollPane.setContent(tableView);
 		setupTableBindings();
 
@@ -631,8 +631,11 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 
 	/**
 	 * Sets up the title box for each column
-	 * @param title the explanatory title of the column
-	 * @param filterBox the filter box corresponding to the column
+	 *
+	 * @param title
+	 * 		the explanatory title of the column
+	 * @param filterBox
+	 * 		the filter box corresponding to the column
 	 * @return an HBox that will be placed as the graphic for the column
 	 */
 	private HBox getTitleBox(final String title, final VBox filterBox) {
@@ -891,6 +894,7 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 
 	/**
 	 * Configures a region that grows to use all available space
+	 *
 	 * @return a Region
 	 */
 	@NotNull
@@ -906,7 +910,6 @@ public class HistoryPaneController2 implements GenericFileReadWriteAware {
 
 	/**
 	 * TESTING ONLY: rebuilds the history from the folder
-	 *
 	 */
 	public void rebuildHistory() {
 

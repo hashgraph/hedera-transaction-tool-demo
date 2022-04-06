@@ -163,10 +163,19 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
 
 	private static final long THREAD_PAUSE_TIME = 1000;
-	public static final int TENTH_OF_A_SECOND = 100;
-	public static final int AUTO_RENEW_DEFAULT = 7000013;
-	public static final String CLOUD_OUTPUT_DIRECTORY =
+	private static final int TENTH_OF_A_SECOND = 100;
+	private static final int AUTO_RENEW_DEFAULT = 7000013;
+	private static final String CLOUD_OUTPUT_DIRECTORY =
 			"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org";
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+	private static final List<String> TEST_WORDS =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
+
 	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
 			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
@@ -177,17 +186,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	public UserAccessibleProperties properties;
-
-	private static final List<String> testWords =
-			Arrays.asList("dignity", "domain", "involve", "report",
-					"sail", "middle", "rhythm", "husband",
-					"usage", "pretty", "rate", "town",
-					"account", "side", "extra", "outer",
-					"eagle", "eight", "design", "page",
-					"regular", "bird", "race", "answer");
-
 
 	@Before
 	public void setUp() {
@@ -223,7 +222,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
-			final var mnemonic = Mnemonic.fromWords(testWords);
+			final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);

@@ -84,20 +84,24 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("ALL")
 public class KeysPaneTest extends TestBase {
+
+	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
-	private KeysPanePage keysPanePage;
-	private MainWindowPage mainWindowPage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
-	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+	private static final Path currentRelativePath = Paths.get("");
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	private final String storedMnemonic =
+	private static final String STORED_MNEMONIC =
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
+
+	private KeysPanePage keysPanePage;
+	private MainWindowPage mainWindowPage;
+
+	private UserAccessibleProperties properties;
+
 
 	@Before
 	public void setUp() throws Exception {

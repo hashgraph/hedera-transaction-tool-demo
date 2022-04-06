@@ -26,7 +26,6 @@ import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ControllerTest {
 	private Controller controller;
-	private final static String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
 	private static final Logger logger = LogManager.getLogger(ControllerTest.class);
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;

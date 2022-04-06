@@ -78,7 +78,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static junit.framework.TestCase.assertEquals;
-@Ignore
+
 public class BatchTransactionEndToEndTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
