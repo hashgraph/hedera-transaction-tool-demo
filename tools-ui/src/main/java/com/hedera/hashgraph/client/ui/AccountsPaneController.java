@@ -1358,7 +1358,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		parameter.toggleExpanded();
 		lineInformation.setNickname(newNickname);
-		changeNickname(newNickname, lineInformation.getAccount().toReadableString());
+		changeNickname(newNickname, lineInformation.getAccount().toReadableAccountAndNetwork());
 	}
 
 	/**
