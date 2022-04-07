@@ -91,7 +91,7 @@ public class HistoryData implements Comparable<HistoryData> {
 				((TransactionFile) remoteFile).getExpiration() :
 				remoteFile.getType().equals(BATCH) ?
 						((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
-						new Timestamp();
+						new Timestamp(0, 0);
 		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
@@ -209,6 +209,9 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	public String getExpirationDate() {
+		if (this.expirationDate.equals(new Timestamp(0, 0))) {
+			return "";
+		}
 		final var stamp = expirationDate.asDate();
 		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy\nhh:mm:ss aa" : "dd/MM/yyyy\nHH:mm:ss";
 		final var sdf = new SimpleDateFormat(format);

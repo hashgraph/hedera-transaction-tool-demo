@@ -163,6 +163,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		mainWindowPage.clickOnHomeButton();
 		final var initialFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
 		mainWindowPage.clickOnHistoryButton();
+
 		historyWindowPage.clickOnResign(transactions.get(0).getFileName());
 		final var button = find(transactions.get(0).getFileName());
 		assertNotNull(button);

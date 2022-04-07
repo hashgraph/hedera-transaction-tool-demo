@@ -211,6 +211,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void parseHistoryFolder() {
 		final var files = getRemoteFiles();
+		final var jsonArray = new JsonArray();
 		noise = true;
 		for (final RemoteFile file : files) {
 			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
@@ -219,6 +220,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			logger.info("Parsing file {}", file.getName());
 			final var data = new HistoryData(file);
 			data.setHistory(true);
+			jsonArray.add(data.asJson());
 			historyMap.put(data.getCode(), data.isHistory());
 			tableList.add(data);
 		}
@@ -271,6 +273,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void setupTable() {
 		tableList.addListener((ListChangeListener<HistoryData>) change -> {
+			if (noise) {
+				return;
+			}
 			while (change.next()) {
 				if (change.wasRemoved() || change.wasAdded()) {
 					storeHistory();
