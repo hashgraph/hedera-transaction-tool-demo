@@ -70,7 +70,7 @@ public class PopupMessage {
 		label.setWrapText(true);
 		label.setText(message);
 		label.setWrapText(true);
-		label.setTextAlignment(TextAlignment.LEFT);
+		label.setTextAlignment(TextAlignment.CENTER);
 		label.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		label.setMaxWidth(450);
 		label.setStyle("-fx-font-size: 16");

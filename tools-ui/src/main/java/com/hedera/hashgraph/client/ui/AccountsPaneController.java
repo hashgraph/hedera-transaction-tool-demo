@@ -432,10 +432,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	@NotNull
 	private String precheckErrorString(final PrecheckStatusException e) {
-		final var message = e.getMessage();
-		var error = message.substring(message.indexOf("`") + 1);
-		error = "Request " + error.substring(error.indexOf("`") + 1);
-		return error;
+		return "Request " + e.getMessage();
 	}
 
 
