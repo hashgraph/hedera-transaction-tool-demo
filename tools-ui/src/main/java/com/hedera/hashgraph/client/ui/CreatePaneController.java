@@ -430,7 +430,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupLedget() {
-		switch(controller.getCurrentNetwork()){
+		switch (controller.getCurrentNetwork()) {
 			case "MAINNET":
 				ledgerId = LedgerId.MAINNET;
 				break;
@@ -1581,8 +1581,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void loadCommonTransactionFields(final ToolTransaction transaction) {
 		setNowTime(transaction.getTransactionValidStart());
 		transactionFee.setText(Utilities.setCurrencyFormat(transaction.getTransactionFee().toTinybars()));
-		nodeAccountField.setText(transaction.getNodeID().toNicknameAndChecksum(controller.getAccountsList()));
-		feePayerAccountField.setText(transaction.getFeePayerID().toNicknameAndChecksum(controller.getAccountsList()));
+		final var nodeID = transaction.getNodeID();
+		nodeID.setNetworkName(controller.getCurrentNetwork());
+		nodeAccountField.setText(nodeID.toNicknameAndChecksum(controller.getAccountsList()));
+		final var feePayerID = transaction.getFeePayerID();
+		feePayerID.setNetworkName(controller.getCurrentNetwork());
+		feePayerAccountField.setText(feePayerID.toNicknameAndChecksum(controller.getAccountsList()));
 		memoField.setText(transaction.getMemo());
 	}
 
@@ -1591,10 +1595,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var transfers = transaction.getAccountAmountMap();
 		for (final var entry : transfers.entrySet()) {
 			final AccountAmountStrings newTransaction;
+			final var key = entry.getKey();
+			key.setNetworkName(controller.getCurrentNetwork());
+			final var value = entry.getValue();
 			newTransaction =
-					new AccountAmountStrings(entry.getKey().toNicknameAndChecksum(controller.getAccountsList()),
-							String.valueOf(Math.abs(entry.getValue().toTinybars())));
-			final var table = entry.getValue().toTinybars() > 0 ? toTransferTable : fromTransferTable;
+					new AccountAmountStrings(key.toNicknameAndChecksum(controller.getAccountsList()),
+							String.valueOf(Math.abs(value.toTinybars())));
+			final var table = value.toTinybars() > 0 ? toTransferTable : fromTransferTable;
 			table.getItems().add(newTransaction);
 		}
 		transferCurrencyVBox.setVisible(true);
@@ -1613,7 +1620,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadCryptoUpdateToForm(final ToolCryptoUpdateTransaction transaction) {
 		cleanAllUpdateFields();
-		updateAccountID.setText(transaction.getAccount().toNicknameAndChecksum(controller.getAccountsList()));
+		final var account = transaction.getAccount();
+		account.setNetworkName(controller.getCurrentNetwork());
+		updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 		findAccountInfoAndPreloadFields();
 		final var autoRenewDuration = transaction.getAutoRenewDuration();
 		if (autoRenewDuration != null) {
@@ -1658,9 +1667,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		if (details.has(FILE_ID_PROPERTIES)) {
-			updateFileID.setText(
-					Identifier.parse(details.get(FILE_ID_PROPERTIES).getAsJsonObject()).toNicknameAndChecksum(
-							controller.getAccountsList()));
+			final var fileIdentifier = Identifier.parse(details.get(FILE_ID_PROPERTIES).getAsJsonObject());
+			fileIdentifier.setNetworkName(controller.getCurrentNetwork());
+			updateFileID.setText(fileIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
 		}
 		if (details.has(FEE_PAYER_ACCOUNT_ID_PROPERTY)) {
 			feePayerAccountField.setText(
@@ -1669,9 +1678,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 							controller.getAccountsList()));
 		}
 		if (details.has(NODE_ID_PROPERTIES)) {
-			nodeAccountField.setText(
-					Identifier.parse(details.get(NODE_ID_PROPERTIES).getAsJsonObject()).toNicknameAndChecksum(
-							controller.getAccountsList()));
+			final var nodeIdentifier = Identifier.parse(details.get(NODE_ID_PROPERTIES).getAsJsonObject());
+			nodeIdentifier.setNetworkName(controller.getCurrentNetwork());
+			nodeAccountField.setText(nodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
 		}
 		if (details.has(CHUNK_SIZE_PROPERTIES)) {
 			chunkSizeTextField.setText(String.valueOf(details.get(CHUNK_SIZE_PROPERTIES).getAsInt()));
@@ -1697,7 +1706,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (transaction.isDelete()) {
 			systemFieldsSet.setDate(transaction.getExpiration());
 		}
-		entityID.setText(transaction.getEntity().toNicknameAndChecksum(controller.getAccountsList()));
+		final var entity = transaction.getEntity();
+		entity.setNetworkName(controller.getCurrentNetwork());
+		entityID.setText(entity.toNicknameAndChecksum(controller.getAccountsList()));
 		if (Boolean.TRUE.equals(transaction.isDelete())) {
 			systemActionChoiceBox.getSelectionModel().select(0);
 		}
@@ -1739,8 +1750,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				// A non-freezing operation that initiates network wide preparation in advance of a scheduled
 				// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
 				// start_time field may be omitted and any value present will be ignored.
-				freezeFileIDTextField.setText(
-						transaction.getFileID().toNicknameAndChecksum(controller.getAccountsList()));
+				final var fileID = transaction.getFileID();
+				fileID.setNetworkName(controller.getCurrentNetwork());
+				freezeFileIDTextField.setText(fileID.toNicknameAndChecksum(controller.getAccountsList()));
 				freezeFileHashTextField.setText(transaction.getFileHash());
 				break;
 			case FREEZE_UPGRADE:
@@ -1750,8 +1762,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				// Freezes the network at the specified time and performs the previously prepared automatic
 				// upgrade across the entire network.
 				freezeFieldsSet.setDate(transaction.getStartTime().asInstant());
-				freezeFileIDTextField.setText(
-						transaction.getFileID().toNicknameAndChecksum(controller.getAccountsList()));
+				final var fileID1 = transaction.getFileID();
+				fileID1.setNetworkName(controller.getCurrentNetwork());
+				freezeFileIDTextField.setText(fileID1.toNicknameAndChecksum(controller.getAccountsList()));
 				freezeFileHashTextField.setText(transaction.getFileHash());
 				break;
 			case FREEZE_ABORT:
