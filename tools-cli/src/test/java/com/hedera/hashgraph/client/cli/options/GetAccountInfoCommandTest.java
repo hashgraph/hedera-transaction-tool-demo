@@ -36,6 +36,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
@@ -90,6 +92,10 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 		final var jsons = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.JSON_EXTENSION));
 
+		Arrays.sort(infos, Comparator.comparing(File::getName));
+		Arrays.sort(jsons, Comparator.comparing(File::getName));
+
+
 		assert infos != null;
 		assertEquals(1, infos.length);
 		assert jsons != null;
@@ -114,6 +120,9 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.INFO_EXTENSION));
 		final var jsons = new File("src/test/resources/infos_temp").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(Constants.JSON_EXTENSION));
+
+		Arrays.sort(infos, Comparator.comparing(File::getName));
+		Arrays.sort(jsons, Comparator.comparing(File::getName));
 
 		assert infos != null;
 		assertEquals(2, infos.length);
