@@ -225,8 +225,27 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	void initializeAccountPane() {
-		fixAccountNames();
 		hiddenPathAccount.clear();
+
+		fixAccountNames();
+		setupAccountMaps();
+
+		accountsScrollPane.setContent(setupAccountTable());
+		accountLineInformation.addListener((ListChangeListener<AccountLineInformation>) change -> {
+			if (!noise) {
+				selectAll.setSelected(false);
+			}
+		});
+		selectAccountsButton.setOnAction(event -> selectAccountsButtonAction());
+
+		setupTooltips();
+		setupFeePayers();
+		setupNetworkBox(networkChoiceBoxA);
+		setupFeePayerChoiceBox();
+		setupInfoRequestFields();
+	}
+
+	public void setupAccountMaps() {
 		try {
 			getAccountsFromFileSystem(accountInfos, idNickNames);
 			getBalancesFromFileSystem();
@@ -235,21 +254,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		} catch (final Exception exception) {
 			logger.error(exception);
 		}
-		accountsScrollPane.setContent(setupAccountTable());
-		accountLineInformation.addListener((ListChangeListener<AccountLineInformation>) change -> {
-			if (!noise) {
-				selectAll.setSelected(false);
-			}
-		});
-
-		selectAccountsButton.setOnAction(event -> selectAccountsButtonAction());
-
-		setupTooltips();
-
-		setupFeePayers();
-		setupNetworkBox(networkChoiceBoxA);
-		setupFeePayerChoiceBox();
-		setupInfoRequestFields();
 	}
 
 	private void fixAccountNames() {
@@ -428,10 +432,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	@NotNull
 	private String precheckErrorString(final PrecheckStatusException e) {
-		final var message = e.getMessage();
-		var error = message.substring(message.indexOf("`") + 1);
-		error = "Request " + error.substring(error.indexOf("`") + 1);
-		return error;
+		return "Request " + e.getMessage();
 	}
 
 
@@ -1359,6 +1360,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		parameter.toggleExpanded();
 		lineInformation.setNickname(newNickname);
 		changeNickname(newNickname, lineInformation.getAccount().toReadableAccountAndNetwork());
+		setupFeePayers();
+		noise = true;
+		setupFeePayerChoiceBox();
+		noise = false;
 	}
 
 	/**
@@ -1977,6 +1982,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		feePayerChoiceBoxA.getSelectionModel().select(feePayer);
 		feePayerChoiceBoxA.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
+			if (noise) {
+				return;
+			}
 			final var net = networkChoiceBoxA.getValue();
 			if (t1 instanceof String && net instanceof String && !"".equals(t1) && !"".equals(net)) {
 				final var text = (String) t1;
@@ -1988,7 +1996,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void setupNetworkBox(final ChoiceBox<Object> choiceBox) {
 		noise = true;
 		controller.networkBoxSetup(choiceBox);
-		noise = false;
+
 		choiceBox.getSelectionModel().select(controller.getCurrentNetwork());
 		choiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (t1 instanceof String) {
@@ -2001,6 +2009,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		});
+		noise = false;
 	}
 
 	public void addFeePayerAction() {

@@ -400,7 +400,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				changeTab(homePane);
 				break;
 			case "createButton":
-				accountsPaneController.initializeAccountPane();
+//				createPaneController.initializeCreatePane();
 				changeTab(createPane);
 				break;
 			case "accountsButton":
@@ -901,10 +901,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 */
 	public Map<String, String> getDefaultFeePayers() {
 		return properties.getDefaultFeePayers();
-	}
-
-	public void setDefaultFeePayers(final Map<String, String> map) {
-		properties.setDefaultFeePayers(map);
 	}
 
 	public void setDefaultFeePayer(final Identifier feePayer) {
