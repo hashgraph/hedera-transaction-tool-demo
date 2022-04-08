@@ -64,6 +64,9 @@ public class JsonConstants {
 	public static final String INITIAL_BALANCE_FIELD_NAME = "initialBalance";
 	public static final String AUTO_RENEW_PERIOD_FIELD_NAME = "autoRenewPeriod";
 	public static final String RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME = "receiverSignatureRequired";
+	public static final String MAX_TOKEN_ASSOCIATIONS_FIELD_NAME = "maxTokenAssociations";
+	public static final String ACCOUNT_MEMO_FIELD_NAME = "accountMemo";
+
 
 	public static final String TRANSFERS = "transfers";
 	public static final String ACCOUNT = "account";

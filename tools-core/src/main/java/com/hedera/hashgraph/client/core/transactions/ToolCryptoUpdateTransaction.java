@@ -41,8 +41,10 @@ import java.util.Collections;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
 
@@ -52,6 +54,9 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	private KeyList key;
 	private Duration autoRenewDuration;
 	private Boolean receiverSignatureRequired;
+	private Integer maxTokenAssociations;
+	private String accountMemo;
+
 	private static final Logger logger = LogManager.getLogger(ToolCryptoUpdateTransaction.class);
 
 	public ToolCryptoUpdateTransaction(final JsonObject input) throws HederaClientException {
@@ -65,6 +70,8 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		this.key = (KeyList) ((AccountUpdateTransaction) transaction).getKey();
 		this.autoRenewDuration = ((AccountUpdateTransaction) transaction).getAutoRenewPeriod();
 		this.receiverSignatureRequired = ((AccountUpdateTransaction) transaction).getReceiverSignatureRequired();
+		this.maxTokenAssociations = ((AccountUpdateTransaction) transaction).getMaxAutomaticTokenAssociations();
+		this.accountMemo = ((AccountUpdateTransaction) transaction).getAccountMemo();
 		setTransactionType(TransactionType.CRYPTO_UPDATE);
 	}
 
@@ -84,6 +91,14 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return account;
 	}
 
+	public Integer getMaxTokenAssociations() {
+		return maxTokenAssociations;
+	}
+
+	public String getAccountMemo() {
+		return accountMemo;
+	}
+
 	@Override
 	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
@@ -93,7 +108,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		}
 
 		if (!CommonMethods.verifyOneOfExists(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
-				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
+				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, ACCOUNT_MEMO_FIELD_NAME, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) {
 			return false;
 		}
 
@@ -133,6 +148,25 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
 			answer = false;
 		}
+
+		try {
+			if (input.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) {
+				this.maxTokenAssociations = input.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt();
+			}
+		} catch (final Exception e) {
+			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			if (input.has(ACCOUNT_MEMO_FIELD_NAME)) {
+				this.accountMemo = input.get(ACCOUNT_MEMO_FIELD_NAME).getAsString();
+			}
+		} catch (final Exception e) {
+			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
+			answer = false;
+		}
+
 		return answer;
 	}
 
@@ -147,11 +181,16 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			accountUpdateTransaction.setKey(key);
 		}
 		if (autoRenewDuration != null) {
-			//noinspection deprecation
 			accountUpdateTransaction.setAutoRenewPeriod(autoRenewDuration);
 		}
 		if (receiverSignatureRequired != null) {
 			accountUpdateTransaction.setReceiverSignatureRequired(receiverSignatureRequired);
+		}
+		if (maxTokenAssociations != null) {
+			accountUpdateTransaction.setMaxAutomaticTokenAssociations(maxTokenAssociations);
+		}
+		if (accountMemo != null) {
+			accountUpdateTransaction.setAccountMemo(accountMemo);
 		}
 
 		return accountUpdateTransaction
@@ -166,8 +205,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
 		final var keysSet = super.getSigningKeys(accountsInfoFolder);
-		keysSet.addAll(EncryptionUtils.flatPubKeys(
-				Collections.singletonList(((AccountUpdateTransaction) transaction).getKey())));
+		final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
+		if (keyFromTransaction != null) {
+			keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(keyFromTransaction)));
+		}
 		return keysSet;
 	}
 

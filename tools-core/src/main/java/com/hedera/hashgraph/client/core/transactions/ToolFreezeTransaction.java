@@ -43,6 +43,7 @@ import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_START_TIME_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_TYPE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.enums.NetworkEnum.MAINNET;
 
 public class ToolFreezeTransaction extends ToolTransaction {
 	private static final Logger logger = LogManager.getLogger(ToolFreezeTransaction.class);
@@ -68,7 +69,7 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		this.startTime = ((FreezeTransaction) transaction).getStartTime();
 		this.freezeType = ((FreezeTransaction) transaction).getFreezeType();
 		if (((FreezeTransaction) transaction).getFileId() != null) {
-			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()));
+			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()), MAINNET.toString());
 		}
 		if (((FreezeTransaction) transaction).getFileHash() != null) {
 			this.fileHash = ((FreezeTransaction) transaction).getFileHash();

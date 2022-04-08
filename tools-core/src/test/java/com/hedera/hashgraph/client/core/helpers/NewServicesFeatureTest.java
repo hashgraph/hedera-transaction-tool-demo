@@ -21,31 +21,53 @@ package com.hedera.hashgraph.client.core.helpers;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.sdk.AccountBalanceQuery;
+import com.hedera.hashgraph.sdk.AccountCreateTransaction;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.AccountInfoQuery;
+import com.hedera.hashgraph.sdk.Hbar;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.CryptoGetInfoResponse;
 import com.hedera.hashgraph.sdk.proto.Key;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStoreException;
+import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class NewServicesFeatureTest implements GenericFileReadWriteAware {
+	private static final Logger logger = LogManager.getLogger(NewServicesFeatureTest.class);
+
 	@Test
 	void newAccounInfo_test() throws HederaClientException, InvalidProtocolBufferException {
 		final var info = AccountInfo.fromBytes(readBytes(new File("src/test/resources/AccountInfos/0.0.2.info")));
-		final AccountID account =
+		final var account =
 				AccountID.newBuilder()
 						.setAccountNum(info.accountId.num)
 						.setRealmNum(info.accountId.realm)
 						.setShardNum(info.accountId.shard)
 						.build();
-		final Key key = Key.newBuilder()
+		final var key = Key.newBuilder()
 				.setEd25519(ByteString.copyFrom(readBytes("src/test/resources/Keys/genesis.pub")))
 				.build();
-		final CryptoGetInfoResponse.AccountInfo newInfo =
+		final var newInfo =
 				CryptoGetInfoResponse.AccountInfo.newBuilder()
 						.setAccountID(account)
 						.setBalance(info.balance.toTinybars())
@@ -57,5 +79,52 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 
 		final var testInfo = AccountInfo.fromBytes(readBytes(new File("src/test/resources/AccountInfos/0.0.2_2.info")));
 		assertEquals("Treasury test", testInfo.accountMemo);
+	}
+
+	@Test
+	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
+			HederaClientException, ReceiptStatusException {
+		final var keyStore =
+				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
+		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+
+
+		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		logger.info(client.getNetwork());
+
+		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKeyList.json"));
+		final var transactionResponse = new AccountCreateTransaction()
+				.setKey(key)
+				.setInitialBalance(new Hbar(0))
+				.setAccountMemo("Test payer account")
+				.execute(client);
+
+		final var receipt = transactionResponse.getReceipt(client);
+		final var payerId = Objects.requireNonNull(receipt.accountId);
+		logger.info("Payer Id: {}", payerId.toString());
+
+		final var accountInfo = new AccountInfoQuery()
+				.setAccountId(payerId)
+				.execute(client);
+
+		logger.info("account ledger: \"{}\"", Hex.toHexString(accountInfo.ledgerId.toBytes()));
+		logger.info("account ledger (decoded): \"{}\"",
+				new String(accountInfo.ledgerId.toBytes(), StandardCharsets.UTF_8));
+
+		final var ledgerId = client.getLedgerId();
+		if (ledgerId != null) {
+			logger.info("client ledger: \"{}\"", Hex.toHexString(ledgerId.toBytes()));
+		}
+	}
+
+	@Test
+	void checkOldInfo_test() throws HederaClientException, InvalidProtocolBufferException {
+		final var oldInfo = AccountInfo.fromBytes(readBytes("src/test/resources/infos/0.0.2.info"));
+
+		if (oldInfo.ledgerId != null) {
+			logger.info(Hex.toHexString(oldInfo.ledgerId.toBytes()));
+		}
+
 	}
 }

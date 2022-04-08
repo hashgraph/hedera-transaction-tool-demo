@@ -209,9 +209,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			remakeTransactionTools();
 
 			//Copy Accounts folders
-			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original/Accounts"),
+			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original_II/Accounts"),
 					new File(DEFAULT_STORAGE + "/Accounts"));
-			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original/Files"),
+			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original_II/Files"),
 					new File(DEFAULT_STORAGE + "/Files"));
 
 			properties.setSetupPhase(SetupPhase.TEST_PHASE);
@@ -908,6 +908,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		final var newTree = ((ScrollPane) newKey).getContent();
 		assertTrue(newTree instanceof TreeView);
 
+
 		assertEquals(18, TestUtil.countTreeNodes(((TreeView<String>) newTree).getRoot()));
 
 		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
@@ -1143,7 +1144,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("largeFileUpdate.zip", jsonObject.get("filename").getAsString());
 
 		assertTrue(jsonObject.has("fileID"));
-		assertEquals(new Identifier(0, 0, 155).asJSON(), jsonObject.getAsJsonObject("fileID"));
+		assertEquals(new Identifier(0, 0, 155, "MAINNET").asJSON(), jsonObject.getAsJsonObject("fileID"));
 
 		assertTrue(jsonObject.has("chunkSize"));
 		assertEquals(1000, jsonObject.get("chunkSize").getAsInt());

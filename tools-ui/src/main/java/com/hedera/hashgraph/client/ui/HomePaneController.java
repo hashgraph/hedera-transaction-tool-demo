@@ -18,12 +18,14 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.fileservices.LocalFileServiceAdapter;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
@@ -69,6 +71,7 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -84,10 +87,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_OF_SINGLE_BOXES;
@@ -414,7 +419,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf.getType().equals(FileType.METADATA) || rf.getType().equals(FileType.COMMENT)) {
 				continue;
 			}
-
 			if (rf instanceof TransactionFile) {
 				setupKeyTree((TransactionFile) rf);
 			}
@@ -437,17 +441,54 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			// old style transaction
 			return;
 		}
+
+		JsonObject oldInfo = null;
+		JsonObject oldKey = null;
 		controller.loadPubKeys();
 		var key = new KeyList();
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
 		}
 		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
-			key = ((ToolCryptoUpdateTransaction) rf.getTransaction()).getKey();
+			final var transaction = (ToolCryptoUpdateTransaction) rf.getTransaction();
+			oldInfo = getOldInfo(transaction.getAccount());
+			if (oldInfo != null) {
+				oldKey = oldInfo.get("key").getAsJsonObject();
+			}
+			key = transaction.getKey();
 		}
 		if (key != null) {
 			rf.setTreeView(controller.buildKeyTreeView(key));
 		}
+		if (oldKey != null) {
+			rf.setOldInfo(oldInfo);
+			rf.setOldKey(controller.buildKeyTreeView(oldKey));
+		}
+	}
+
+	private JsonObject getOldInfo(final Identifier account) {
+		final File[] accounts = getFiles(account);
+		if (accounts.length != 1) {
+			logger.error("Cannot determine old account");
+			return null;
+		}
+
+		try {
+			return readJsonObject(accounts[0]);
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+			return null;
+		}
+
+	}
+
+	@Nullable
+	private File[] getFiles(final Identifier account) {
+		return new File(DEFAULT_ACCOUNTS).listFiles((dir, name) -> {
+			final var stringAccount = account.toReadableString();
+			return JSON_EXTENSION.equals(FilenameUtils.getExtension(name)) && (name.contains(
+					stringAccount + ".") || name.contains(stringAccount + "-"));
+		});
 	}
 
 	private VBox getButtonsBox(final RemoteFile rf) {
@@ -590,7 +631,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						}
 						break;
 					default:
-						logger.info("No action taken: {}",rf.getType());
+						logger.info("No action taken: {}", rf.getType());
 				}
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");

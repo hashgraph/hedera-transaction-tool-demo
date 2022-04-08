@@ -255,7 +255,7 @@ public class Utilities {
 	 * 		a string containing a range of accounts, or a comma separated list of accounts, or a combination
 	 * @return a list of accounts
 	 */
-	public static List<AccountId> parseAccountNumbers(final String text) {
+	public static List<AccountId> parseAccountNumbers(final String text, String network) {
 		final List<AccountId> ids = new ArrayList<>();
 		final List<String> ranges = new ArrayList<>();
 		final List<String> singles = new ArrayList<>();
@@ -280,7 +280,7 @@ public class Utilities {
 				logger.error("String {} cannot be parsed.", single);
 				return new ArrayList<>();
 			}
-			final AccountId accountId = Identifier.parse(single).asAccount();
+			final AccountId accountId = Identifier.parse(single, network).asAccount();
 			ids.add(accountId);
 		}
 
@@ -296,8 +296,8 @@ public class Utilities {
 				return new ArrayList<>();
 			}
 
-			final Identifier start = Identifier.parse(range[0]);
-			final Identifier end = Identifier.parse(range[1]);
+			final Identifier start = Identifier.parse(range[0], network);
+			final Identifier end = Identifier.parse(range[1], network);
 
 
 			if (end.getShardNum() != start.getShardNum() || end.getRealmNum() != start.getRealmNum()) {
@@ -307,7 +307,7 @@ public class Utilities {
 
 			LongStream.rangeClosed(Math.min(start.getAccountNum(), end.getAccountNum()),
 							Math.max(start.getAccountNum(), end.getAccountNum()))
-					.mapToObj(i -> new Identifier(start.getShardNum(), end.getRealmNum(), i).asAccount())
+					.mapToObj(i -> new Identifier(start.getShardNum(), end.getRealmNum(), i, network).asAccount())
 					.forEach(ids::add);
 		}
 
@@ -348,7 +348,7 @@ public class Utilities {
 
 	private static boolean isIdentifier(final String s) {
 		try {
-			Identifier.parse(s);
+			Identifier.parse(s, "");
 			return true;
 		} catch (final Exception e) {
 			return false;

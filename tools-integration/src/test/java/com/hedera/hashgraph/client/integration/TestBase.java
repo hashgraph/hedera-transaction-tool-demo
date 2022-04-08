@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyStoreException;
+import java.util.Set;
 
 public class TestBase extends ApplicationTest {
 
@@ -84,7 +85,9 @@ public class TestBase extends ApplicationTest {
 			return null;
 		}
 	}
-
+	public Set<Node> findAll(final String query) {
+		return lookup(query).queryAll();
+	}
 
 	/**
 	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts

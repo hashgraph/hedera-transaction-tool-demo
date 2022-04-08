@@ -238,7 +238,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildPrepareUpgrade() throws HederaClientException {
-		final var fileIdentifier = new Identifier(0, 0, 123);
+		final var fileIdentifier = new Identifier(0, 0, 123, "mainnet");
 
 		final var inputPrepareUpgrade = getBasicJsonObject();
 		inputPrepareUpgrade.addProperty(FREEZE_TYPE_FIELD_NAME, "PREPARE_UPGRADE");
@@ -258,7 +258,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildFreezeUpgrade_test() throws HederaClientException {
-		final var fileIdentifier = new Identifier(0, 0, 123);
+		final var fileIdentifier = new Identifier(0, 0, 123, "MAINNET");
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
 		final var inputFreezeUpgrade = getBasicJsonObject();
@@ -282,7 +282,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void buildTelemetryUpgrade_test() throws HederaClientException {
-		final var fileIdentifier = new Identifier(0, 0, 123);
+		final var fileIdentifier = new Identifier(0, 0, 123, "Mainnet");
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
 		final var inputTelemetryUpgrade = getBasicJsonObject();
@@ -324,7 +324,7 @@ class ToolFreezeTransactionTest {
 
 	@Test
 	void asJson_test() throws HederaClientException {
-		final var fileIdentifier = new Identifier(0, 0, 123);
+		final var fileIdentifier = new Identifier(0, 0, 123, "mainNet");
 		final var startFreeze = new Timestamp(Instant.now().plusSeconds(100));
 
 		final var input = getBasicJsonObject();

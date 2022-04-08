@@ -68,8 +68,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
@@ -219,7 +219,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	@Override
 	public Transaction<? extends Transaction<?>> collate(
 			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
-		for (final Map.Entry<PublicKey, byte[]> entry : signatures.entrySet()) {
+		for (final var entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}
 		return transaction;
@@ -229,7 +229,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
 		final var signatures = otherTransaction.getSignatures();
 		assert signatures.size() == 1;
-		for (final Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
+		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
 			collate(nodeSignatures);
 		}
@@ -248,8 +248,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	@Override
 	public boolean verify(final PublicKey publicKey) throws HederaClientRuntimeException {
-		final Map<AccountId, Map<PublicKey, byte[]>> signatures = transaction.getSignatures();
-		for (final Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : signatures.entrySet()) {
+		final var signatures = transaction.getSignatures();
+		for (final var entry : signatures.entrySet()) {
 			if (entry.getValue().containsKey(publicKey)) {
 				return true;
 			}
@@ -270,7 +270,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	private boolean verifyWithKeyList(final KeyList keyList) {
-		final int threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
+		final var threshold = (keyList.threshold != null) ? keyList.threshold : keyList.size();
 		var count = 0;
 		for (final var key : keyList) {
 			if (verifyWithKey(key)) {
@@ -466,11 +466,17 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * @return a list of ByteStrings
 	 */
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
-		final Set<ByteString> keysSet = new HashSet<>();
 		final var accounts = getSigningAccounts();
-		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
-				accountString -> new File(accountsInfoFolder, accountString + "." + INFO_EXTENSION)).filter(
-				File::exists).forEach(accountFile -> {
+		return accounts.stream()
+				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
+				.filter(files -> files != null && files.length == 1)
+				.flatMap(files -> addToKeySet(files).stream())
+				.collect(Collectors.toSet());
+	}
+
+	private Set<ByteString> addToKeySet(final File[] files) {
+		final Set<ByteString> keysSet = new HashSet<>();
+		java.util.Arrays.stream(files).filter(File::exists).forEachOrdered(accountFile -> {
 			try {
 				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
 				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
@@ -478,7 +484,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				logger.error(e);
 			}
 		});
-
 		return keysSet;
 	}
 
@@ -500,7 +505,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			return false;
 		}
 
-		final Transaction<?> tx = ((ToolTransaction) obj).getTransaction();
+		final var tx = ((ToolTransaction) obj).getTransaction();
 		if (tx == null && this.transaction == null) {
 			return this.asJson().equals(((ToolTransaction) obj).asJson());
 		}

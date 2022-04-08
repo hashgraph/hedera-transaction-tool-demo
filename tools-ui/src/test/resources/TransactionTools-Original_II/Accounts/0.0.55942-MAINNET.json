@@ -1,0 +1,67 @@
+{
+  "accountID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 55942
+  },
+  "contractAccountID": "000000000000000000000000000000000000da86",
+  "proxyAccountID": {
+    "realmNum": 0,
+    "shardNum": 0,
+    "accountNum": 3
+  },
+  "key": {
+    "keyList": [
+      {
+        "thresholdKey": {
+          "threshold": 2,
+          "keyList": [
+            {
+              "thresholdKey": {
+                "threshold": 1,
+                "keyList": [
+                  {
+                    "Ed25519": "f65aa1a38eca15d9fbee60a4545261cc5470b6b717498d1345d633245fdcf645"
+                  },
+                  {
+                    "Ed25519": "a3222abc4b08ef622b49d7cc4473586810ba4be797a47ac9aa53be5615a634bb"
+                  }
+                ]
+              }
+            },
+            {
+              "thresholdKey": {
+                "threshold": 2,
+                "keyList": [
+                  {
+                    "Ed25519": "ef1d989de192681a1c638791baa7bf9a2c3cc630d96ffed722d7cf89c98e452a"
+                  },
+                  {
+                    "Ed25519": "f65aa1a38eca15d9fbee60a4545261cc5470b6b717498d1345d633245fdcf645"
+                  },
+                  {
+                    "Ed25519": "a3222abc4b08ef622b49d7cc4473586810ba4be797a47ac9aa53be5615a634bb"
+                  },
+                  {
+                    "Ed25519": "5aba01bb0c5204e971a6744da916e1b82c952967abbbf7715dd12bd3ce4f8cb8"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "balance": 500000000,
+  "generateSendRecordThreshold": 500000000000000000,
+  "generateReceiveRecordThreshold": 500000000000000000,
+  "expirationTime": {
+    "seconds": 1610473694,
+    "nanos": 0
+  },
+  "autoRenewPeriod": {
+    "seconds": 7776000,
+    "nanos": 0
+  }
+}

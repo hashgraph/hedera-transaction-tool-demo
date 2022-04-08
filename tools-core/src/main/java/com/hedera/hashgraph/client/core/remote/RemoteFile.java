@@ -27,12 +27,12 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.MetadataAction;
 import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -61,12 +61,13 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.KeyPair;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
@@ -228,6 +229,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			default:
 				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
 		}
+	}
+
+	private static File[] getInfos(final AccountId accountId) {
+		return CommonMethods.getInfoFiles(ACCOUNTS_INFO_FOLDER, accountId);
 	}
 
 	// region GETTERS AND SETTERS
@@ -532,14 +537,20 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return a set of keys
 	 */
 	public Set<ByteString> getSigningPublicKeys() {
-		final Set<ByteString> keysSet = new HashSet<>();
 		final var accounts = getSigningAccounts();
-		if (accounts == null) {
-			return new HashSet<>();
-		}
-		accounts.stream().map(account -> new Identifier(Objects.requireNonNull(account)).toReadableString()).map(
-				accountString -> new File(ACCOUNTS_INFO_FOLDER, accountString + "." + INFO_EXTENSION)).filter(
-				File::exists).forEach(accountFile -> {
+		return accounts == null ? new HashSet<>() : getSetOfKeys(accounts);
+	}
+
+	private Set<ByteString> getSetOfKeys(final Set<AccountId> accounts) {
+		return accounts.stream().map(RemoteFile::getInfos)
+				.filter(files -> files != null && files.length == 1)
+				.flatMap(files -> addKeysToSet(files).stream())
+				.collect(Collectors.toUnmodifiableSet());
+	}
+
+	private Set<ByteString> addKeysToSet(final File[] files) {
+		final Set<ByteString> keysSet = new HashSet<>();
+		Arrays.stream(files).filter(File::exists).forEachOrdered(accountFile -> {
 			try {
 				final var accountInfo = AccountInfo.fromBytes(readBytes(accountFile.getAbsolutePath()));
 				keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(accountInfo.key)));
@@ -547,7 +558,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				logger.error(e);
 			}
 		});
-
 		return keysSet;
 	}
 

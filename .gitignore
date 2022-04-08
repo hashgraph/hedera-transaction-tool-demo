@@ -104,3 +104,4 @@ tools-integration/src/test/resources/TempReceipts
 tools-integration/src/test/resources/TempTransactions
 
 .mvn/**/*.jar
+/.mvn/

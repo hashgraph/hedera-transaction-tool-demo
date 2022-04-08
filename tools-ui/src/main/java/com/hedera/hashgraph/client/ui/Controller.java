@@ -79,6 +79,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -190,7 +191,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		keyPairUtility = (properties.getSetupPhase().equals(TEST_PHASE)) ? new KeyPairUtility(
+		keyPairUtility = properties.getSetupPhase().equals(TEST_PHASE) ? new KeyPairUtility(
 				Constants.TEST_EXPIRATION_TIME) : new KeyPairUtility();
 		keyStructureUtility = new KeyStructureUtility(this);
 
@@ -387,7 +388,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				changeTab(homePane);
 				break;
 			case "createButton":
-				accountsPaneController.initializeAccountPane();
+//				createPaneController.initializeCreatePane();
 				changeTab(createPane);
 				break;
 			case "accountsButton":
@@ -418,7 +419,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				final var infoFile = entry.getValue();
 				if (new File(infoFile).exists()) {
 					final var info = AccountInfo.fromBytes(readBytes(infoFile));
-					map.put(new Identifier(info.accountId), info);
+					final var baseName = FilenameUtils.getBaseName(infoFile);
+					final var ledger = "".equals(info.ledgerId.toString()) ? baseName.substring(
+							baseName.indexOf("-") + 1) : info.ledgerId.toString();
+					map.put(new Identifier(info.accountId, ledger), info);
 				}
 			}
 		} catch (final InvalidProtocolBufferException | HederaClientException e) {
@@ -757,8 +761,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getGenerateRecord();
 	}
 
+	public Set<Identifier> getCustomFeePayers(final String network) {
+		return properties.getCustomFeePayers(network);
+	}
+
 	public Set<Identifier> getCustomFeePayers() {
-		return properties.getCustomFeePayers();
+		return properties.getCustomFeePayers(getCurrentNetwork());
 	}
 
 	public void addCustomFeePayer(final Identifier identifier) {
@@ -798,11 +806,23 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public JsonObject getAccountsList() {
 		JsonObject object = new JsonObject();
 		try {
-			object = (new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			object = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 		return object;
+	}
+
+	public void removeAccount(final String account) {
+		final var jsonObject = getAccountsList();
+		if (jsonObject.has(account)) {
+			jsonObject.remove(account);
+		}
+		try {
+			writeJsonObject(ACCOUNTS_MAP_FILE, jsonObject);
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	public void setLastBrowsedDirectory(final File file) {
@@ -855,8 +875,25 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getDefaultFeePayer();
 	}
 
+	public Identifier getDefaultFeePayer(final String network) {
+		return properties.getDefaultFeePayer(network);
+	}
+
+	/**
+	 * Returns the stored fee payers per known network
+	 *
+	 * @return a map where the keys are networks and the values are account nicknames.
+	 */
+	public Map<String, String> getDefaultFeePayers() {
+		return properties.getDefaultFeePayers();
+	}
+
 	public void setDefaultFeePayer(final Identifier feePayer) {
 		properties.setDefaultFeePayer(feePayer);
+	}
+
+	public void removeDefaultFeePayer(final String network) {
+		properties.removeDefaultFeePayer(network);
 	}
 
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
@@ -870,23 +907,34 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	String setupChoiceBoxFeePayer(final ChoiceBox<Object> choiceBox, final TextField textfield) {
-		final var defaultFeePayer = getDefaultFeePayer();
+		return setupChoiceBoxFeePayer(choiceBox, textfield, getCurrentNetwork());
+	}
+
+	String setupChoiceBoxFeePayer(final ChoiceBox<Object> choiceBox, final TextField textfield,
+			final String currentNetwork) {
+		final var defaultFeePayer = getDefaultFeePayer(currentNetwork);
+		choiceBox.getItems().clear();
 
 		// In case the default was deleted
-		if (!Identifier.ZERO.equals(defaultFeePayer) && !getCustomFeePayers().contains(defaultFeePayer)) {
+		if ((defaultFeePayer.getAccountNum() != 0) && !getCustomFeePayers().contains(defaultFeePayer)) {
 			addCustomFeePayer(defaultFeePayer);
 		}
 
-		var feePayer = Identifier.ZERO.equals(defaultFeePayer) ? "" :
+		var feePayer = defaultFeePayer.getAccountNum() == 0 ? "" :
 				defaultFeePayer.toNicknameAndChecksum(getAccountsList());
 
+		final List<String> accounts = new ArrayList<>();
 
-		final List<String> accounts = getFeePayers().stream().map(
-				payer -> payer.toNicknameAndChecksum(getAccountsList())).sorted().collect(
-				Collectors.toList());
+		for (final Identifier payer : getFeePayers()) {
+			if (payer.getNetworkName().equals(currentNetwork.toUpperCase(Locale.ROOT))) {
+				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
+				accounts.add(toNicknameAndChecksum);
+			}
+		}
+		accounts.sort(null);
 
 		final List<String> customFeePayers = new ArrayList<>();
-		getCustomFeePayers().forEach(customFeePayer -> {
+		getCustomFeePayers(currentNetwork).forEach(customFeePayer -> {
 			final String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
 			if (accounts.contains(s)) {
 				removeCustomFeePayer(customFeePayer);
@@ -918,11 +966,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				textfield.requestFocus();
 			} else {
 				feePayer = sortedAllPayers.get(0);
-				setDefaultFeePayer(Identifier.parse(feePayer));
+				setDefaultFeePayer(Identifier.parse(feePayer, currentNetwork));
 			}
 		}
 
-		textfield.setVisible(Identifier.ZERO.equals(getDefaultFeePayer()));
+		choiceBox.getSelectionModel().select(feePayer);
+
+		textfield.setVisible(Identifier.ZERO.equals(defaultFeePayer));
 
 		return feePayer;
 	}

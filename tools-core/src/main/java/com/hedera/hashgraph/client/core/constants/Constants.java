@@ -103,6 +103,9 @@ public class Constants {
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
 	public static final int NUMBER_OF_THREADS = 200;
+	public static final int MAX_TOKEN_AUTOMATIC_ASSOCIATIONS = 1000;
+	public static final int MAX_MEMO_BYTES = 100;
+
 	// endregion
 
 	// region FILES
@@ -176,6 +179,38 @@ public class Constants {
 
 
 	public static final long TEST_EXPIRATION_TIME = 10L;
+
+
+	public static final int LIMIT = 255;
+	public static final double FIXED_CELL_SIZE = 30;
+	public static final String SELECT_STRING = "SELECT";
+	public static final String REGEX = "[^\\d]";
+	public static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
+	public static final String START_STYLE = "-fx-background-radius: 10; -fx-border-radius: 10;";
+	public static final String MENU_BUTTON_STYLE =
+			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
+					"-fx-background-radius: 10;";
+	public static final String FILE_ID_PROPERTIES = "fileID";
+	public static final String FILENAME_PROPERTY = "filename";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
+	public static final String NODE_ID_PROPERTIES = "nodeID";
+	public static final String CHUNK_SIZE_PROPERTIES = "chunkSize";
+	public static final String FIRST_TRANSACTION_VALID_START_PROPERTY = "firsTransactionValidStart";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
+	public static final String TEXTFIELD_ERROR = "-fx-text-fill: red; -fx-background-radius: 10;-fx-border-radius: 10";
+	public static final String TEXTFIELD_DEFAULT =
+			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
+	public static final String SELECT_FREEZE_TYPE = "SELECT FREEZE TYPE";
+	public static final String ACCOUNT_PARSED = "Account {} parsed";
+	public static final String REMAINING_TIME_MESSAGE =
+			"The transaction will expire in %d seconds. This might not be enough time to sign, " +
+					"collate, and submit it";
+	public static final String NINE_ZEROS = "000000000";
+	public static final String FREEZE_AND_UPGRADE = "Freeze and upgrade";
+	public static final int MEMO_LENGTH = 99;
 
 
 }

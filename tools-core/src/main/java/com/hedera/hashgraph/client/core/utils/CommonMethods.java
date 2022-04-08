@@ -41,13 +41,19 @@ import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.control.Label;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -57,11 +63,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
@@ -345,13 +353,19 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 */
 	public static String nicknameOrNumber(final Identifier accountNumber, final JsonObject accounts) {
 		final var name = accountNumber.toReadableString();
-		final var nickname = (accounts.has(name)) ? accounts.get(name).getAsString() : "";
-		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(name));
+		final var nameAndNet = accountNumber.toReadableAccountAndNetwork();
+		final var nickname = (accounts.has(nameAndNet)) ? accounts.get(nameAndNet).getAsString() : "";
+
+
+		final var ledger = NetworkEnum.asLedger(accountNumber.getNetworkName());
+
+
+		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(ledger.toBytes(), name));
 		if (name.equals(nickname) || "".equals(nickname)) {
 			return formattedName;
 		} else {
 			return String.format("%s (%s-%s)", nickname.replace(" ", "\u00A0"), name,
-					AddressChecksums.checksum(name));
+					AddressChecksums.checksum(ledger.toBytes(), name));
 		}
 	}
 
@@ -400,8 +414,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var n = secondString.length();
 		final var suffix = new int[m + 1][n + 1];
 		var len = 0;
-		int row = 0;
-		int col = 0;
+		var row = 0;
+		var col = 0;
 
 		for (var i = 0; i <= m; i++) {
 			for (var j = 0; j <= n; j++) {
@@ -425,7 +439,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return "";
 		}
 
-		final StringBuilder resultStr = new StringBuilder();
+		final var resultStr = new StringBuilder();
 		while (suffix[row][col] != 0) {
 			resultStr.insert(0, firstString.charAt(row - 1));
 			--len;
@@ -504,7 +518,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	}
 
 	public static void checkFiles(final String... filePath) throws HederaClientException {
-		for (final String path : filePath) {
+		for (final var path : filePath) {
 			if (!new File(path).exists()) {
 				throw new HederaClientException(String.format("File %s does not exist",
 						path));
@@ -554,7 +568,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return Hbar.fromTinybars(Long.parseLong(split[0]) * 100000000);
 		}
 		if (split.length == 2) {
-			final StringBuilder tiny = new StringBuilder(split[1]);
+			final var tiny = new StringBuilder(split[1]);
 			while (tiny.length() < 8) {
 				tiny.append("0");
 			}
@@ -623,6 +637,71 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			return identifier.toReadableStringAndChecksum();
 		}
 		return "";
+	}
+
+	/**
+	 * Checks if a filename contains the account id
+	 *
+	 * @param accountString
+	 * 		the readable account id
+	 * @param filename
+	 * 		the filename
+	 * @return true if the filename contains the string
+	 */
+	public static boolean isAccount(final String accountString, final String filename) {
+		return filename.contains(accountString + ".") || filename.contains(
+				accountString + "-");
+	}
+
+	/**
+	 * Checks if a file is an info file
+	 *
+	 * @param filename
+	 * 		the name of the file
+	 * @return true if the extension is `.info`
+	 */
+	public static boolean isInfo(final String filename) {
+		return INFO_EXTENSION.equals(FilenameUtils.getExtension(filename));
+	}
+
+	/**
+	 * Get all the info files that correspond to the account
+	 *
+	 * @param account
+	 * 		the account id
+	 * @return an array of files
+	 */
+	@Nullable
+	public static File[] getInfoFiles(final String infoFolder, final AccountId account) {
+		final var accountString = new Identifier(Objects.requireNonNull(account)).toReadableString();
+		return new File(infoFolder).listFiles(
+				(dir, filename) -> isAccount(accountString, filename) && isInfo(filename));
+	}
+
+	/**
+	 * Trims a string to fit in a byte array
+	 *
+	 * @param aString
+	 * 		string to be trimmed
+	 * @param limit
+	 * 		the size of the array
+	 * @return a trimmed string
+	 */
+	public static String trimString(final String aString, final int limit) {
+		final var charset = StandardCharsets.UTF_8;
+		final var decoder = charset.newDecoder();
+		final var bytes = aString.getBytes(charset);
+		if (bytes.length <= limit) {
+			return aString;
+		}
+		final var byteBuffer = ByteBuffer.wrap(bytes, 0, limit);
+		final var charBuffer = CharBuffer.allocate(limit);
+
+		decoder.onMalformedInput(CodingErrorAction.IGNORE);
+		decoder.decode(byteBuffer, charBuffer, true);
+		decoder.flush(charBuffer);
+
+		return new String(charBuffer.array(), 0, charBuffer.position());
 	}
 }
 

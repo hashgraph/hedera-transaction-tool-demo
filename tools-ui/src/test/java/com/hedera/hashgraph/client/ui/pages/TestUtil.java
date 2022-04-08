@@ -19,17 +19,19 @@
 
 package com.hedera.hashgraph.client.ui.pages;
 
+import com.hedera.hashgraph.client.ui.TestBase;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -38,6 +40,8 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.controlsfx.control.table.TableRowExpanderColumn;
+import org.jetbrains.annotations.NotNull;
 import org.testfx.api.FxRobot;
 
 import javax.swing.JFileChooser;
@@ -47,6 +51,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 
 @SuppressWarnings("rawtypes")
 public class TestUtil {
@@ -312,5 +318,32 @@ public class TestUtil {
 		}
 
 		return nodes;
+	}
+
+	public static List<ChoiceBox> findChoiceBoxes(final ObservableList<Node> children) {
+		final List<ChoiceBox> nodes = new ArrayList<>();
+		children.forEach(popupNode -> {
+			if (popupNode instanceof ChoiceBox) {
+				nodes.add((ChoiceBox) popupNode);
+			}
+			if (popupNode instanceof GridPane) {
+				nodes.addAll(findChoiceBoxes(((GridPane) popupNode).getChildren()));
+			} else if (popupNode instanceof HBox) {
+				nodes.addAll(findChoiceBoxes(((HBox) popupNode).getChildren()));
+			} else if (popupNode instanceof VBox) {
+				nodes.addAll(findChoiceBoxes(((VBox) popupNode).getChildren()));
+			}
+		});
+
+		return nodes;
+	}
+
+	@NotNull
+	public static List<ChoiceBox> getChoiceBoxesFromExpander(final TestBase driver) {
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final var tableView = (TableView) scrollPane.getContent();
+		final var tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
+		final var vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
+		return findChoiceBoxes(vBox.getChildren());
 	}
 }
