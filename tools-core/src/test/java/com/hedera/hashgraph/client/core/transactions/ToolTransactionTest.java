@@ -628,9 +628,6 @@ class ToolTransactionTest {
 
 		final Exception e = assertThrows(HederaClientRuntimeException.class, transfer::submit);
 		assertTrue(e.getMessage().contains("failed pre-check with the status `INVALID_SIGNATURE`"));
-
-		final var endTime = new Timestamp().asInstant();
-		assertTrue(endTime.isAfter(startTime));
 	}
 
 	private AccountInfo createAccount(
