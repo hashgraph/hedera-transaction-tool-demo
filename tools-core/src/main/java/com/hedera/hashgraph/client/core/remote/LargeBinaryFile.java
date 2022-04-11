@@ -125,20 +125,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
 		assert jsons != null;
-		if (jsons.length != 1) {
-			final var formattedError =
-					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length);
-			handleError(formattedError);
-			return;
-		}
-
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
 		assert bins != null;
-		if (bins.length != 1) {
-			final var formattedError =
-					String.format("There should be exactly one binary file in the zip archive. We found: %d",
-							bins.length);
-			handleError(formattedError);
+
+		if (checkFiles(jsons, bins)) {
 			return;
 		}
 
@@ -155,17 +145,16 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		final Identifier fileIdentifier = getFileIdentifier(details);
-		final Identifier nodeIdentifier = getNodeIdentifier(details);
-		final Identifier payerIdentifier = getPayerIdentifier(details);
-		final JsonObject tvStamp = getTransactionValidStamp(details);
+		final var fileIdentifier = getFileIdentifier(details);
+		final var nodeIdentifier = getNodeIdentifier(details);
+		final var payerIdentifier = getPayerIdentifier(details);
+		final var tvStamp = getTransactionValidStamp(details);
 
 		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp)) {
 			return;
 		}
-		final Timestamp timestamp = getTimestamp(tvStamp);
+		final var timestamp = getTimestamp(tvStamp);
 		if (timestamp.equals(new Timestamp(0, 0))) {
-
 			return;
 		}
 
@@ -186,6 +175,25 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
+	}
+
+	private boolean checkFiles(final File[] jsons, final File[] bins) {
+		var checkFiles = false;
+		if (jsons.length != 1) {
+			final var formattedError =
+					String.format("There should be exactly one json file in zip archive. We found: %d", jsons.length);
+			handleError(formattedError);
+			checkFiles = true;
+		}
+
+		if (bins.length != 1) {
+			final var formattedError =
+					String.format("There should be exactly one binary file in the zip archive. We found: %d",
+							bins.length);
+			handleError(formattedError);
+			checkFiles = true;
+		}
+		return checkFiles;
 	}
 
 	private boolean checkNotNulls(final Object... ids) {
@@ -294,7 +302,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 * @return the transaction valid start if it exists and is correct, Null otherwise.
 	 */
 	private Timestamp getTimestamp(final JsonObject tvStamp) {
-		Timestamp timestamp = new Timestamp(0, 0);
+		var timestamp = new Timestamp(0, 0);
 
 		try {
 			if (tvStamp.has("seconds") && tvStamp.has("nanos")) {

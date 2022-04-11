@@ -149,11 +149,7 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		messages.add(l);
 
 		if (isHistory()) {
-			try {
-				messages = getHistory("account");
-			} catch (final HederaClientException e) {
-				logger.error(e);
-			}
+			messages = getHistory("account");
 		}
 		var count = 0;
 		for (final var message : messages) {

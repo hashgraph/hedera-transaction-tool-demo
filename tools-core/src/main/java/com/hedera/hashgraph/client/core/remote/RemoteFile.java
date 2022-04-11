@@ -618,7 +618,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * 		the name of the key or file id
 	 * @return a label with a message appropriate to the situation
 	 */
-	public List<Label> getHistory(final String entity) throws HederaClientException {
+	public List<Label> getHistory(final String entity) {
 		final List<Label> messages = new ArrayList<>();
 		final var metadataFileList = getSigningHistory();
 		for (final var m : metadataFileList) {
@@ -659,8 +659,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return true if the file has been accepted.
 	 */
 	public boolean accepted() {
-		List<MetadataAction> signingHistory = new ArrayList<>();
-		signingHistory = getSigningHistory();
+		final var signingHistory = getSigningHistory();
 		return signingHistory.stream().anyMatch(metadataAction -> metadataAction.getActions().equals(Actions.ACCEPT));
 	}
 

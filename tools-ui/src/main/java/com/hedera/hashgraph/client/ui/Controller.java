@@ -400,7 +400,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				changeTab(homePane);
 				break;
 			case "createButton":
-//				createPaneController.initializeCreatePane();
 				changeTab(createPane);
 				break;
 			case "accountsButton":

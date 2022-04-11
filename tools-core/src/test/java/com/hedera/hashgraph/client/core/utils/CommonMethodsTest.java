@@ -377,19 +377,17 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
-	public void trimString_test() {
-		String aString =
+	void trimString_test() {
+		final String aString =
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore " +
-						"et dolore magna aliqua. Morbi tempus iaculis urna id volutpat. Ac turpis egestas sed tempus." +
-						" " +
+						"et dolore magna aliqua. Morbi tempus iaculis urna id volutpat. Ac turpis egestas sed tempus. " +
 						"Id volutpat lacus laoreet non curabitur gravida arcu ac tortor. Amet mauris commodo quis " +
 						"imperdiet. Neque volutpat ac tincidunt vitae semper quis lectus nulla. Aliquam purus sit " +
 						"amet luctus venenatis lectus. Massa vitae tortor condimentum lacinia quis. Faucibus nisl " +
 						"tincidunt eget nullam non nisi est. Vulputate eu scelerisque felis imperdiet proin fermentum" +
 						" " +
-						"leo. Pharetra pharetra massa massa ultricies. Scelerisque purus semper eget duis at tellus at." +
-						" " +
-						"Adipiscing bibendum est ultricies integer quis auctor elit.";
+						"leo. Pharetra pharetra massa massa ultricies. Scelerisque purus semper eget duis at tellus " +
+						"at. Adipiscing bibendum est ultricies integer quis auctor elit.";
 
 		assertEquals(
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore ",
