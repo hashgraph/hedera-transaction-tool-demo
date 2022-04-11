@@ -711,28 +711,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		nicknameColumn.setCellValueFactory(new PropertyValueFactory<>("nickname"));
 		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(40).multiply(7));
 		nicknameColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
-		nicknameColumn.setCellFactory(
-				new Callback<>() {
-					@Override
-					public TableCell<AccountLineInformation, String> call(
-							final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-						return new TableCell<>() {
-							@Override
-							protected void updateItem(final String s, final boolean b) {
-								super.updateItem(s, b);
-								if (isEmpty()) {
-									setText("");
-								} else {
-									setWrapText(true);
-									setText(s);
-								}
-							}
-						};
-					}
-				});
+		nicknameColumn.setCellFactory(getNicknameCallback());
 		return nicknameColumn;
 	}
-
 
 	private TableColumn<AccountLineInformation, String> getLastRefreshDateColumn(
 			final TableView<AccountLineInformation> table) {
@@ -800,27 +781,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkColumn.setCellValueFactory(new PropertyValueFactory<>("ledgerId"));
 		networkColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(2));
 		networkColumn.setStyle(COLUMN_STYLE_STRING);
-
-		networkColumn.setCellFactory(
-
-				new Callback<>() {
-					@Override
-					public TableCell<AccountLineInformation, String> call(
-							final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-						return new TableCell<>() {
-							@Override
-							protected void updateItem(final String s, final boolean b) {
-								super.updateItem(s, b);
-								if (isEmpty()) {
-									setText("");
-								} else {
-									setFont(Font.font("Consolas", 15));
-									setText(s);
-								}
-							}
-						};
-					}
-				});
+		networkColumn.setCellFactory(getNetworkColumnCallback());
 		return networkColumn;
 	}
 
@@ -1191,32 +1152,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (!noise) {
 				if (t1 instanceof String) {
-					final var selectedNetwork = (String) t1;
-					final var oldName = new Identifier(info.accountId,
-							accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
-					final var newName = new Identifier(info.accountId, selectedNetwork).toReadableAccountAndNetwork();
-					final var oldFiles =
-							new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.contains(oldName));
-					for (final var oldFile : oldFiles) {
-						try {
-							Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
-						} catch (final IOException e) {
-							logger.error("Cannot rename file: {}", e.getMessage());
-						}
-					}
-
-					updateNicknamesFile(accountLineInformation, oldName, newName);
-
-					final var oldBalance = balances.get(oldName);
-					balances.remove(oldName);
-					balances.add(newName, oldBalance);
-
-					accountLineInformation.setLedgerID(selectedNetwork);
-					if (isSigner(info)) {
-						setupFeePayers();
-						setupFeePayerChoiceBox();
-					}
-					initializeAccountPane();
+					handleNetworkString(info, accountLineInformation, (String) t1);
 				}
 				if (t1 instanceof Separator) {
 					networkChoiceBox.getSelectionModel().select(o);
@@ -1227,6 +1163,35 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var networkTextField = setupBoxTextField(accountLineInformation.getLedgerId());
 		networkBox.getChildren().add(doesNotHaveLedger ? networkChoiceBox : networkTextField);
 		return networkBox;
+	}
+
+	private void handleNetworkString(
+			final AccountInfo info, final AccountLineInformation accountLineInformation, final String t1) {
+		final var oldName = new Identifier(info.accountId,
+				accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
+		final var newName = new Identifier(info.accountId, t1).toReadableAccountAndNetwork();
+		final var oldFiles =
+				new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.contains(oldName));
+		for (final var oldFile : oldFiles) {
+			try {
+				Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
+			} catch (final IOException e) {
+				logger.error("Cannot rename file: {}", e.getMessage());
+			}
+		}
+
+		updateNicknamesFile(accountLineInformation, oldName, newName);
+
+		final var oldBalance = balances.get(oldName);
+		balances.remove(oldName);
+		balances.add(newName, oldBalance);
+
+		accountLineInformation.setLedgerID(t1);
+		if (isSigner(info)) {
+			setupFeePayers();
+			setupFeePayerChoiceBox();
+		}
+		initializeAccountPane();
 	}
 
 	private void updateNicknamesFile(
@@ -2045,5 +2010,53 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 
 	}
+
+	// region CALLBACKS
+	@NotNull
+	private Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> getNicknameCallback() {
+		return new Callback<>() {
+			@Override
+			public TableCell<AccountLineInformation, String> call(
+					final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
+				return new TableCell<>() {
+					@Override
+					protected void updateItem(final String s, final boolean b) {
+						super.updateItem(s, b);
+						if (isEmpty()) {
+							setText("");
+						} else {
+							setWrapText(true);
+							setText(s);
+						}
+					}
+				};
+			}
+		};
+	}
+
+	@NotNull
+	private Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> getNetworkColumnCallback() {
+		return new Callback<>() {
+			@Override
+			public TableCell<AccountLineInformation, String> call(
+					final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
+				return new TableCell<>() {
+					@Override
+					protected void updateItem(final String s, final boolean b) {
+						super.updateItem(s, b);
+						if (isEmpty()) {
+							setText("");
+						} else {
+							setFont(Font.font("Consolas", 15));
+							setText(s);
+						}
+					}
+				};
+			}
+		};
+	}
+
+
+	// endregion
 
 }
