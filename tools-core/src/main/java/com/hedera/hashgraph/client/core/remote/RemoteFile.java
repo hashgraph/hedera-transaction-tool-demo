@@ -159,8 +159,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	public RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
 		final RemoteFile remoteFile;
-		final var type = FileType.getType(fileDetails.getExtension());
-		switch (type) {
+		switch (FileType.getType(fileDetails.getExtension())) {
 			case TRANSACTION:
 				remoteFile = new TransactionFile(fileDetails);
 				break;

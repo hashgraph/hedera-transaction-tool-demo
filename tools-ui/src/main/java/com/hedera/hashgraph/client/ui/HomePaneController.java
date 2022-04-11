@@ -122,7 +122,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private int lastCount = 0;
 	private boolean historyChanged = false;
 	private boolean forceUpdate = false;
-	//private RemoteFilesMap historyFiles = new RemoteFilesMap();
 	private final RemoteFilesMap remoteFilesMap = new RemoteFilesMap();
 	private String output = "";
 	private String user = "";
@@ -151,12 +150,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 			setForceUpdate(true);
 			remoteFilesMap.clearMap();
-			//loadHistory();
 			loadRemoteFilesMap();
 
 			lastCount = countFiles;
 
-			//loadHistoryBox(historyFiles);
 			loadNewFilesBox(remoteFilesMap);
 			newFilesViewVBox.setVisible(true);
 			newFilesViewVBox.setDisable(false);

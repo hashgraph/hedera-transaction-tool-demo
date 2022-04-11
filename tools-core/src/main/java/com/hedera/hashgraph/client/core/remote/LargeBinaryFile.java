@@ -80,6 +80,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
+	public static final String FILENAME = "filename";
+	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
+	public static final String VALID_DURATION_PROPERTY = "validDuration";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String FILE_ID_PROPERTY = "fileID";
+	public static final String NODE_ID_PROPERTY = "nodeID";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 
 	private String filename;
 	private Identifier fileID;
@@ -140,7 +149,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		if (!details.get("filename").getAsString().equals(bins[0].getName())) {
+		if (!details.get(FILENAME).getAsString().equals(bins[0].getName())) {
 			handleError("The binary file does not correspond to the file specified in the details");
 			return;
 		}
@@ -158,20 +167,20 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		this.filename = details.get("filename").getAsString();
+		this.filename = details.get(FILENAME).getAsString();
 		this.fileID = fileIdentifier;
-		this.chunkSize = details.has("chunkSize") ? details.get("chunkSize").getAsInt() : 1024;
+		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
 		if (getChunkSize() > 1024) {
 			throw new HederaClientException("Maximum chunk size is 1024 for unsigned file update transactions.");
 		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
-				Duration.ofSeconds(details.has("validDuration") ? details.get("validDuration").getAsLong() : 120);
+				Duration.ofSeconds(details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
-		this.validIncrement = details.has("validIncrement") ? details.get("validIncrement").getAsInt() : 100;
+		this.validIncrement = details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
-		this.transactionFee = details.has("transactionFee") ? details.get("transactionFee").getAsLong() : 200000000;
-		this.memo = details.has("memo") ? details.get("memo").getAsString() : "";
+		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
@@ -210,11 +219,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getFileIdentifier(final JsonObject details) {
 		final Identifier fileIdentifier;
-		if (!details.has("fileID")) {
+		if (!details.has(FILE_ID_PROPERTY)) {
 			handleError("Missing file ID in details file");
 			return null;
 		}
-		final var fileJson = details.getAsJsonObject("fileID");
+		final var fileJson = details.getAsJsonObject(FILE_ID_PROPERTY);
 
 		try {
 			fileIdentifier = Identifier.parse(fileJson);
@@ -235,12 +244,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getNodeIdentifier(final JsonObject details) {
 		final Identifier nodeIdentifier;
-		if (!details.has("nodeID")) {
+		if (!details.has(NODE_ID_PROPERTY)) {
 			handleError("Missing node ID in details file");
 			return null;
 		}
 
-		final var nodeJson = details.getAsJsonObject("nodeID");
+		final var nodeJson = details.getAsJsonObject(NODE_ID_PROPERTY);
 
 		try {
 			nodeIdentifier = Identifier.parse(nodeJson);
@@ -261,12 +270,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getPayerIdentifier(final JsonObject details) {
 		Identifier payerIdentifier = null;
-		if (!details.has("feePayerAccountId")) {
+		if (!details.has(FEE_PAYER_ACCOUNT_ID_PROPERTY)) {
 			handleError("Missing fee payer ID in details file");
 			return null;
 		}
 
-		final var payerJson = details.getAsJsonObject("feePayerAccountId");
+		final var payerJson = details.getAsJsonObject(FEE_PAYER_ACCOUNT_ID_PROPERTY);
 
 		try {
 			payerIdentifier = Identifier.parse(payerJson);
@@ -571,16 +580,16 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
-		toJson.addProperty("filename", filename);
-		toJson.add("fileID", fileID.asJSON());
-		toJson.addProperty("chunkSize", chunkSize);
-		toJson.add("feePayerAccountId", feePayerAccountId.asJSON());
+		toJson.addProperty(FILENAME, filename);
+		toJson.add(FILE_ID_PROPERTY, fileID.asJSON());
+		toJson.addProperty(CHUNK_SIZE_PROPERTY, chunkSize);
+		toJson.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, feePayerAccountId.asJSON());
 		toJson.addProperty("transactionValidDuration", transactionValidDuration.getSeconds());
 		toJson.add("transactionValidStart", transactionValidStart.asJSON());
-		toJson.addProperty("validIncrement", validIncrement);
-		toJson.add("nodeID", nodeID.asJSON());
-		toJson.addProperty("transactionFee", transactionFee);
-		toJson.addProperty("memo", memo);
+		toJson.addProperty(VALID_INCREMENT_PROPERTY, validIncrement);
+		toJson.add(NODE_ID_PROPERTY, nodeID.asJSON());
+		toJson.addProperty(TRANSACTION_FEE_PROPERTY, transactionFee);
+		toJson.addProperty(MEMO_PROPERTY, memo);
 		toJson.addProperty("content", content.getAbsolutePath());
 		return toJson;
 	}

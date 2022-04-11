@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -70,7 +69,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		this.startTime = ((FreezeTransaction) transaction).getStartTime();
 		this.freezeType = ((FreezeTransaction) transaction).getFreezeType();
 		if (((FreezeTransaction) transaction).getFileId() != null) {
-			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()), MAINNET.toString());
+			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()),
+					MAINNET.toString());
 		}
 		if (((FreezeTransaction) transaction).getFileHash() != null) {
 			this.fileHash = ((FreezeTransaction) transaction).getFileHash();

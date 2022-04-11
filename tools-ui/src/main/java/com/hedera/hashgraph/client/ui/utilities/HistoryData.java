@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -84,19 +83,15 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.actions.addAll(remoteFile.getSigningHistory());
 		this.feePayer = remoteFile.getType().equals(TRANSACTION) ?
 				((TransactionFile) remoteFile).getFeePayerAccountId() :
-				remoteFile.getType().equals(BATCH) ?
-						((BatchFile) remoteFile).getFeePayerAccountID() :
-						Identifier.ZERO;
+				getFeePayerIdentifier(remoteFile);
 		this.expirationDate = remoteFile.getType().equals(TRANSACTION) ?
 				((TransactionFile) remoteFile).getExpiration() :
-				remoteFile.getType().equals(BATCH) ?
-						((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
-						new Timestamp(0, 0);
+				getExpirationTimestamp(remoteFile);
 		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
 
-	public HistoryData(final JsonObject object) throws JsonProcessingException, HederaClientException {
+	public HistoryData(final JsonObject object) throws HederaClientException {
 		this.title = object.get(TITLE_PROPERTY).getAsString();
 		this.fileName = object.get(FILENAME_PROPERTY).getAsString();
 		this.code = object.get(CODE_PARAMETER).getAsInt();
@@ -142,9 +137,7 @@ public class HistoryData implements Comparable<HistoryData> {
 
 	public String getLastAction() {
 		final var actionString = Actions.ACCEPT == lastAction.getActions() ?
-				TRANSACTION.equals(getType()) || BATCH.equals(getType()) ?
-						"Signed" :
-						"Accepted" :
+				getLastActionString() :
 				"Declined";
 		final var stamp = lastAction.getTimeStamp().asDate();
 		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy hh:mm:ss aa" : "dd/MM/yyyy HH:mm:ss";
@@ -152,6 +145,11 @@ public class HistoryData implements Comparable<HistoryData> {
 
 		return String.format("%s on %s", actionString,
 				sdf.format(stamp) + " " + TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT));
+	}
+
+	@NotNull
+	private String getLastActionString() {
+		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) ? "Signed" : "Accepted";
 	}
 
 	public String getFileName() {
@@ -270,4 +268,17 @@ public class HistoryData implements Comparable<HistoryData> {
 	public LocalDate getActionLocalDate() {
 		return lastAction.getTimeStamp().asInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 	}
+
+	private Timestamp getExpirationTimestamp(final RemoteFile remoteFile) {
+		return remoteFile.getType().equals(BATCH) ?
+				((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
+				new Timestamp(0, 0);
+	}
+
+	private Identifier getFeePayerIdentifier(final RemoteFile remoteFile) {
+		return remoteFile.getType().equals(BATCH) ?
+				((BatchFile) remoteFile).getFeePayerAccountID() :
+				Identifier.ZERO;
+	}
+
 }

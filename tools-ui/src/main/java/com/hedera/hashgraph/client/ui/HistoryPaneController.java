@@ -31,8 +31,8 @@ import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -43,7 +43,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -55,6 +54,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -92,6 +92,7 @@ import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.nio.file.Files.deleteIfExists;
+import static javafx.beans.binding.Bindings.createObjectBinding;
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
@@ -127,8 +128,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	public Button rebuild;
 
-	public LocalDate start = LocalDate.now();
-	public LocalDate end = LocalDate.now();
+	private LocalDate start = LocalDate.now();
+	private LocalDate end = LocalDate.now();
 
 	private final ObservableList<Predicate<HistoryData>> filters = FXCollections.observableArrayList();
 	private Predicate<HistoryData> feePayerPredicate;
@@ -175,13 +176,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			final var array = readJsonArray(HISTORY_MAP);
 			for (final var element : array) {
 				final var jsonObject = element.getAsJsonObject();
-				logger.info("Loading element {}", jsonObject.get("filename").toString());
+				final var message = jsonObject.get("filename").toString();
+				logger.info("Loading element {}", message);
 				final var historyData = new HistoryData(jsonObject);
 				tableList.add(historyData);
 				historyMap.put(historyData.getCode(), historyData.isHistory());
 			}
 			FXCollections.sort(tableList, Comparator.reverseOrder());
-		} catch (final HederaClientException | JsonProcessingException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
 	}
@@ -293,7 +295,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getReSignColumn(tableView));
 
 		final var sortedList = new SortedList<>(filteredList);
-//		sortedList.setComparator(HistoryData::compareTo);
 		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
 		tableView.setItems(sortedList);
 		tableView.sort();
@@ -303,59 +304,18 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * Set up the table bindings and listeners
 	 */
 	private void setupTableBindings() {
-		typeFilter.addListener((ListChangeListener<FileType>) change -> {
-			while (change.next()) {
-				if (!noise && (change.wasAdded() || change.wasRemoved())) {
-					typePredicate = statesModel -> {
-						if (!noise && (change.wasAdded() || change.wasRemoved())) {
-							return typeFilter.contains(statesModel.getType());
-						}
-						return false;
-					};
-					filters.add(typePredicate);
-				}
-			}
-		});
+		typeFilter.addListener(this::typeFilterOnChanged);
 
-		actionsFilter.addListener((ListChangeListener<Actions>) change -> {
-			while (change.next()) {
-				if (!noise && (change.wasAdded() || change.wasRemoved())) {
-					actionTypePredicate = historyData -> {
-						if (!noise && (change.wasAdded() || change.wasRemoved())) {
-							return actionsFilter.contains(historyData.getActions());
-						}
-						return false;
-					};
-					filters.add(actionTypePredicate);
-				}
-			}
-		});
+		actionsFilter.addListener(this::actionsFilterOnChanged);
 
-		acceptedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				actionsFilter.add(Actions.ACCEPT);
-			} else {
-				actionsFilter.remove(Actions.ACCEPT);
-			}
-		});
+		acceptedCheckBox.selectedProperty().addListener(this::acceptedCheckBoxOnChanged);
 
-		declinedCheckBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				actionsFilter.add(Actions.DECLINE);
-			} else {
-				actionsFilter.remove(Actions.DECLINE);
-			}
-		});
+		declinedCheckBox.selectedProperty().addListener(this::declinedCheckBoxOnChanged);
 
-		feePayerTextField.setOnKeyReleased(event -> {
-			if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
-				return;
-			}
-			feePayerFilterAccept();
-		});
+		feePayerTextField.setOnKeyReleased(this::feePayerTextFieldHandle);
 
 		filteredList.predicateProperty().bind(
-				Bindings.createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
+				createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
 
 	}
 
@@ -767,7 +727,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var cell = new TableCell<HistoryData, String>();
 		final var text = new Text();
 		cell.setGraphic(text);
-		cell.setPrefHeight(Control.USE_COMPUTED_SIZE);
+		cell.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		text.wrappingWidthProperty().bind(cell.widthProperty());
 		text.textProperty().bind(cell.itemProperty());
 		return cell;
@@ -884,10 +844,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var startValue = actionsStartDatePicker.getValue();
 		final var endValue = actionsEndDatePicker.getValue();
 
-		final var start = startValue != null ? startValue : LocalDate.now();
-		final var end = endValue != null ? endValue : LocalDate.now();
+		final var startLocalDate = startValue != null ? startValue : LocalDate.now();
+		final var endLocalDate = endValue != null ? endValue : LocalDate.now();
 
-		if (start.isAfter(end)) {
+		if (startLocalDate.isAfter(endLocalDate)) {
 			return;
 		}
 
@@ -962,6 +922,99 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		initializeHistoryPane();
 		controller.homePaneController.setForceUpdate(true);
 		controller.homePaneController.initializeHomePane();
+	}
+
+	/**
+	 * Action when type filter has changed
+	 *
+	 * @param change
+	 * 		change listener
+	 */
+	private void typeFilterOnChanged(final ListChangeListener.Change<? extends FileType> change) {
+		while (change.next()) {
+			if (!noise && (change.wasAdded() || change.wasRemoved())) {
+				typePredicate = statesModel -> {
+					if (!noise && (change.wasAdded() || change.wasRemoved())) {
+						return typeFilter.contains(statesModel.getType());
+					}
+					return false;
+				};
+				filters.add(typePredicate);
+			}
+		}
+	}
+
+	/**
+	 * Action when actions filter has changed
+	 *
+	 * @param change
+	 * 		change listener
+	 */
+	private void actionsFilterOnChanged(final ListChangeListener.Change<? extends Actions> change) {
+		while (change.next()) {
+			if (!noise && (change.wasAdded() || change.wasRemoved())) {
+				actionTypePredicate = historyData -> {
+					if (!noise && (change.wasAdded() || change.wasRemoved())) {
+						return actionsFilter.contains(historyData.getActions());
+					}
+					return false;
+				};
+				filters.add(actionTypePredicate);
+			}
+		}
+	}
+
+	/**
+	 * Action when the accepted checkbox has changed
+	 *
+	 * @param observableValue
+	 * 		observable
+	 * @param aBoolean
+	 * 		boolean
+	 * @param t1
+	 * 		new value
+	 */
+	private void acceptedCheckBoxOnChanged(final ObservableValue<? extends Boolean> observableValue,
+			final Boolean aBoolean,
+			final Boolean t1) {
+		if (Boolean.TRUE.equals(t1)) {
+			actionsFilter.add(Actions.ACCEPT);
+		} else {
+			actionsFilter.remove(Actions.ACCEPT);
+		}
+	}
+
+	/**
+	 * Action when the declined checkbox is selected
+	 *
+	 * @param observableValue
+	 * 		observable
+	 * @param aBoolean
+	 * 		boolean
+	 * @param t1
+	 * 		new value
+	 */
+	private void declinedCheckBoxOnChanged(final ObservableValue<? extends Boolean> observableValue,
+			final Boolean aBoolean,
+			final Boolean t1) {
+		if (Boolean.TRUE.equals(t1)) {
+			actionsFilter.add(Actions.DECLINE);
+		} else {
+			actionsFilter.remove(Actions.DECLINE);
+		}
+	}
+
+	/**
+	 * Action when a key is pressed in the fee payer box
+	 *
+	 * @param event
+	 * 		the key event
+	 */
+	private void feePayerTextFieldHandle(final KeyEvent event) {
+		if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
+			return;
+		}
+		feePayerFilterAccept();
 	}
 	// endregion
 }

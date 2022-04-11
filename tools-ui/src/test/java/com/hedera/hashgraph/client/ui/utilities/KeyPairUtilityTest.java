@@ -136,7 +136,7 @@ public class KeyPairUtilityTest extends TestBase {
 						"empty/"));
 	}
 
-	//@Test
+	@Test
 	public void mapExpiration_test() {
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
@@ -170,7 +170,7 @@ public class KeyPairUtilityTest extends TestBase {
 		homePanePage.enterPasswordInPopup("123654789");
 	}
 
-	//@Test
+	@Test
 	public void differentPasswords_test() throws HederaClientException {
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
