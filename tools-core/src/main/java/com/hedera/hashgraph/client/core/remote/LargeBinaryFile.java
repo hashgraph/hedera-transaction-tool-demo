@@ -80,7 +80,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
-	public static final String FILENAME = "filename";
+	public static final String FILENAME_PROPERTY = "filename";
 	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
 	public static final String VALID_DURATION_PROPERTY = "validDuration";
 	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
@@ -149,7 +149,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		if (!details.get(FILENAME).getAsString().equals(bins[0].getName())) {
+		if (!details.get(FILENAME_PROPERTY).getAsString().equals(bins[0].getName())) {
 			handleError("The binary file does not correspond to the file specified in the details");
 			return;
 		}
@@ -167,7 +167,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		this.filename = details.get(FILENAME).getAsString();
+		this.filename = details.get(FILENAME_PROPERTY).getAsString();
 		this.fileID = fileIdentifier;
 		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
 		if (getChunkSize() > 1024) {
@@ -580,7 +580,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
-		toJson.addProperty(FILENAME, filename);
+		toJson.addProperty(FILENAME_PROPERTY, filename);
 		toJson.add(FILE_ID_PROPERTY, fileID.asJSON());
 		toJson.addProperty(CHUNK_SIZE_PROPERTY, chunkSize);
 		toJson.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, feePayerAccountId.asJSON());

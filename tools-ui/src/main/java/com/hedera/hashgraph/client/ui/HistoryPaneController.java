@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
