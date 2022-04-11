@@ -1862,7 +1862,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observable, oldValue, newValue) -> mtaChangeListener(oldValue, newValue, textField,
 						errorLabel));
 		textField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (t1) {
+			if (Boolean.TRUE.equals(t1)) {
 				textField.selectAll();
 			}
 			errorLabel.setVisible(false);
