@@ -711,7 +711,20 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		nicknameColumn.setCellValueFactory(new PropertyValueFactory<>("nickname"));
 		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(40).multiply(7));
 		nicknameColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
-		nicknameColumn.setCellFactory(getNicknameCallback());
+		nicknameColumn.setCellFactory(p -> new TableCell<>() {
+			@Override
+			protected void updateItem(final String s, final boolean b) {
+				super.updateItem(s, b);
+				if (isEmpty()) {
+					setText("");
+				} else {
+					setWrapText(true);
+					setText(s);
+				}
+			}
+		});
+
+
 		return nicknameColumn;
 	}
 
@@ -781,7 +794,20 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkColumn.setCellValueFactory(new PropertyValueFactory<>("ledgerId"));
 		networkColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(2));
 		networkColumn.setStyle(COLUMN_STYLE_STRING);
-		networkColumn.setCellFactory(getNetworkColumnCallback());
+		networkColumn.setCellFactory(p -> new TableCell<>() {
+			@Override
+			protected void updateItem(final String s, final boolean b) {
+				super.updateItem(s, b);
+				if (isEmpty()) {
+					setText("");
+				} else {
+					setFont(Font.font("Consolas", 15));
+					setText(s);
+				}
+			}
+		});
+		
+
 		return networkColumn;
 	}
 
@@ -2009,51 +2035,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			}
 		}
 
-	}
-
-	// region CALLBACKS
-	@NotNull
-	private Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> getNicknameCallback() {
-		return new Callback<>() {
-			@Override
-			public TableCell<AccountLineInformation, String> call(
-					final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-				return new TableCell<>() {
-					@Override
-					protected void updateItem(final String s, final boolean b) {
-						super.updateItem(s, b);
-						if (isEmpty()) {
-							setText("");
-						} else {
-							setWrapText(true);
-							setText(s);
-						}
-					}
-				};
-			}
-		};
-	}
-
-	@NotNull
-	private Callback<TableColumn<AccountLineInformation, String>, TableCell<AccountLineInformation, String>> getNetworkColumnCallback() {
-		return new Callback<>() {
-			@Override
-			public TableCell<AccountLineInformation, String> call(
-					final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-				return new TableCell<>() {
-					@Override
-					protected void updateItem(final String s, final boolean b) {
-						super.updateItem(s, b);
-						if (isEmpty()) {
-							setText("");
-						} else {
-							setFont(Font.font("Consolas", 15));
-							setText(s);
-						}
-					}
-				};
-			}
-		};
 	}
 
 
