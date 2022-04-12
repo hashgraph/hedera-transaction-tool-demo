@@ -202,4 +202,14 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	public int hashCode() {
 		return super.hashCode();
 	}
+
+	@Override
+	public JsonObject asJson() {
+		final var asJson = super.asJson();
+		asJson.addProperty("initialBalance", initialBalance.toTinybars());
+		asJson.add("key", EncryptionUtils.keyToJson(key));
+		asJson.addProperty("autoRenewDuration", autoRenewDuration.getSeconds());
+		asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+		return asJson;
+	}
 }

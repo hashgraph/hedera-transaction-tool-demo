@@ -89,6 +89,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
@@ -162,10 +163,19 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
 
 	private static final long THREAD_PAUSE_TIME = 1000;
-	public static final int TENTH_OF_A_SECOND = 100;
-	public static final int AUTO_RENEW_DEFAULT = 7000013;
-	public static final String CLOUD_OUTPUT_DIRECTORY =
+	private static final int TENTH_OF_A_SECOND = 100;
+	private static final int AUTO_RENEW_DEFAULT = 7000013;
+	private static final String CLOUD_OUTPUT_DIRECTORY =
 			"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org";
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+	private static final List<String> TEST_WORDS =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
+
 	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
 			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
@@ -176,28 +186,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private MainWindowPage mainWindowPage;
 
 	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	public UserAccessibleProperties properties;
-
-	private static final List<String> testWords =
-			Arrays.asList("dignity", "domain", "involve", "report",
-					"sail", "middle", "rhythm", "husband",
-					"usage", "pretty", "rate", "town",
-					"account", "side", "extra", "outer",
-					"eagle", "eight", "design", "page",
-					"regular", "bird", "race", "answer");
-
 
 	@Before
 	public void setUp() {
 		try {
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
+			System.gc();
+			logger.info("Starting test class: {}", getClass().getSimpleName());
+			TestUtil.buildFolders();
 
-			if (new File(DEFAULT_STORAGE).mkdirs()) {
-				logger.info("TransactionTools folder created");
-			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
@@ -225,7 +222,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
-			final var mnemonic = Mnemonic.fromWords(testWords);
+			final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);
@@ -244,7 +241,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.setHash("123456789".toCharArray());
 
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-			setupTransactionDirectory(DEFAULT_STORAGE);
+			//setupTransactionDirectory(DEFAULT_STORAGE);
 
 			final var controller = new Controller();
 			final var version = controller.getVersion();
@@ -2133,31 +2130,30 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(Constants.TXT_EXTENSION) ||
-								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
-								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
-					});
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f : transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(Constants.TXT_EXTENSION) ||
+							name.endsWith(Constants.TRANSACTION_EXTENSION) ||
+							name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
+				});
+
+		assert transactions != null;
+		for (final var f : transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 

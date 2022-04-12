@@ -50,6 +50,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -130,7 +131,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		setupClient();
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		setupUI();
-		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		mainWindowPage.clickOnAccountsButton();
 	}
 
@@ -180,8 +180,11 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		final var nickname = new Identifier(testAccountId, "INTEGRATION").toReadableString();
 		final var oldBalance = accountsPanePage.getBalance(nickname);
 
-		accountsPanePage.expandRow(nickname)
-				.requestNewBalance(nickname);
+		accountsPanePage.expandRow(nickname);
+		//sleep(1000000);
+
+
+		accountsPanePage		.requestNewBalance(nickname);
 
 		final var newBalance = accountsPanePage.getBalance(nickname);
 		assertEquals(oldBalance, newBalance);
@@ -334,19 +337,22 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 	private void setupUI() throws IOException, KeyStoreException, TimeoutException, PrecheckStatusException,
 			HederaClientException {
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		final var storage = new File(DEFAULT_STORAGE);
+		if (storage.exists()) {
+			FileUtils.cleanDirectory(storage);
+			FileUtils.deleteDirectory(storage);
 		}
 
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
+		if (storage.mkdirs()) {
 			logger.info("Transaction tools directory created");
 		}
 
-		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
+		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), storage);
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {

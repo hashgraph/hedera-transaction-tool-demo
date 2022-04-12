@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Hedera Transaction Tool
+  ~
+  ~ Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<StackPane fx:id="historyPane" minHeight="400.0" minWidth="800.0" xmlns="http://javafx.com/javafx/16"
+		   xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HistoryPaneController">
+	<VBox>
+		<StackPane.margin>
+			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0"/>
+		</StackPane.margin>
+		<HBox>
+			<VBox fx:id="typeFilterVBox" HBox.hgrow="ALWAYS"/>
+			<Region HBox.hgrow="ALWAYS"/>
+		</HBox>
+		<HBox layoutX="10.0" layoutY="10.0">
+			<VBox fx:id="feePayerFilterVBox" HBox.hgrow="NEVER">
+				<GridPane alignment="CENTER_LEFT"
+						  style="-fx-background-color: transparent; -fx-border-color: grey; -fx-border-radius: 10; -fx-background-radius: 10;"
+						  vgap="10.0" VBox.vgrow="NEVER">
+					<columnConstraints>
+						<ColumnConstraints/>
+						<ColumnConstraints hgrow="NEVER"/>
+						<ColumnConstraints hgrow="NEVER" minWidth="10.0"/>
+						<ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="10.0"/>
+					</columnConstraints>
+					<rowConstraints>
+						<RowConstraints minHeight="10.0" valignment="CENTER"/>
+						<RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+					</rowConstraints>
+					<TextField fx:id="feePayerTextField" prefWidth="250.0"
+							   style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="2"/>
+					<Button mnemonicParsing="false" onAction="#feePayerFilterAccept" prefWidth="100.0"
+							style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
+							text="Filter" GridPane.columnIndex="3">
+						<GridPane.margin>
+							<Insets left="10.0"/>
+						</GridPane.margin>
+					</Button>
+					<Button mnemonicParsing="false" onAction="#resetFeeFilter" prefWidth="100.0"
+							style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;"
+							text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+					<HBox alignment="CENTER_LEFT">
+						<Label text="Fee payer filter"/>
+					</HBox>
+					<Button fx:id="feePayerIDTooltip" mnemonicParsing="false"
+							style="-fx-background-color: transparent; -fx-border-color: transparent;"
+							GridPane.columnIndex="1" GridPane.vgrow="ALWAYS">
+						<graphic>
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
+								<Image url="@../../../../../icons/helpIcon.png"/>
+							</ImageView>
+						</graphic>
+						<padding>
+							<Insets bottom="15.0" right="10.0"/>
+						</padding>
+					</Button>
+					<VBox.margin>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</VBox.margin>
+					<padding>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</padding>
+				</GridPane>
+			</VBox>
+			<Region HBox.hgrow="ALWAYS"/>
+		</HBox>
+		<HBox>
+			<VBox fx:id="expirationDateFilterVBox">
+				<GridPane hgap="5.0"
+						  style="-fx-background-color: transparent; -fx-border-color: grey; -fx-background-radius: 10; -fx-border-radius: 10;"
+						  vgap="10.0">
+					<columnConstraints>
+						<ColumnConstraints hgrow="NEVER" minWidth="10.0" prefWidth="120.0"/>
+						<ColumnConstraints hgrow="NEVER" minWidth="10.0"/>
+						<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+						<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+					</columnConstraints>
+					<rowConstraints>
+						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+					</rowConstraints>
+					<VBox.margin>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</VBox.margin>
+					<padding>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</padding>
+					<Button mnemonicParsing="false" onAction="#expirationFilterAccept" prefWidth="100.0"
+							style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
+							text="Filter" GridPane.columnIndex="3"/>
+					<Button mnemonicParsing="false" onAction="#expirationFilterReset" prefWidth="100.0"
+							style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;"
+							text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+					<DatePicker fx:id="expirationStartDatePicker" style="-fx-border-radius: 10;"
+								GridPane.columnIndex="1"/>
+					<DatePicker fx:id="expirationEndDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+					<Label text="Start date:"/>
+					<Label text="End date:" GridPane.rowIndex="1"/>
+				</GridPane>
+			</VBox>
+		</HBox>
+		<HBox layoutX="10.0" layoutY="102.0">
+			<VBox fx:id="actedDateFilterVBox">
+				<GridPane hgap="5.0"
+						  style="-fx-background-color: transparent; -fx-border-color: grey; -fx-background-radius: 10; -fx-border-radius: 10;"
+						  vgap="10.0">
+					<columnConstraints>
+						<ColumnConstraints hgrow="NEVER" minWidth="10.0"/>
+						<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+						<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0"/>
+						<ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+					</columnConstraints>
+					<rowConstraints>
+						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+						<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+					</rowConstraints>
+					<padding>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</padding>
+					<Button mnemonicParsing="false" onAction="#actionFilterAccept" prefWidth="100.0"
+							style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
+							text="Filter" GridPane.columnIndex="3"/>
+					<Button mnemonicParsing="false" onAction="#actionFilterReset" prefWidth="100.0"
+							style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;"
+							text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+					<CheckBox fx:id="acceptedCheckBox" mnemonicParsing="false" selected="true" text="Signed / Acepted"
+							  GridPane.rowIndex="2"/>
+					<CheckBox fx:id="declinedCheckBox" mnemonicParsing="false" selected="true" text="Declined"
+							  GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+					<Label text="Start date:"/>
+					<Label text="End date" GridPane.rowIndex="1"/>
+					<DatePicker fx:id="actionsStartDatePicker" GridPane.columnIndex="1"/>
+					<DatePicker fx:id="actionsEndDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+					<VBox.margin>
+						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+					</VBox.margin>
+				</GridPane>
+			</VBox>
+		</HBox>
+		<Button fx:id="rebuild" mnemonicParsing="false" onAction="#rebuildHistory" text="rebuild" visible="false"/>
+		<ScrollPane fx:id="contentScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER"
+					style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"/>
+	</VBox>
+</StackPane>

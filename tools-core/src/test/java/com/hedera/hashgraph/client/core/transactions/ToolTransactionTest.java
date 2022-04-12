@@ -154,8 +154,8 @@ class ToolTransactionTest {
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
 		final var transfer2 = new ToolTransferTransaction(
 				new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx"));
-		assertTrue(transfer1.equals(transfer2));
-		assertFalse(transfer1.equals(update));
+		assertEquals(transfer1, transfer2);
+		assertNotEquals(transfer1, update);
 
 	}
 

@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.INCOMPATIBLE_TYPES_ERROR_MESSAGE;
@@ -65,6 +66,13 @@ public class MetadataAction implements Comparable<MetadataAction> {
 		this.actions = Actions.valueOf(metadata.get(ACTION_STRING).getAsString());
 		this.userComments = (metadata.has(USER_COMMENTS)) ? metadata.get(USER_COMMENTS).getAsString() : "";
 		this.keyName = metadata.has(KEY_NAME) ? metadata.get(KEY_NAME).getAsString() : "";
+	}
+
+	public MetadataAction() {
+		this.timeStamp = new Timestamp();
+		this.actions = Actions.DECLINE;
+		this.userComments = "";
+		this.keyName = "";
 	}
 
 	public Timestamp getTimeStamp() {
@@ -147,5 +155,9 @@ public class MetadataAction implements Comparable<MetadataAction> {
 		}
 
 		return this.keyName.compareTo(o.getKeyName());
+	}
+
+	public String toReadableString() {
+		return StringUtils.capitalize(actions.toString()) + " on " + timeStamp.asReadableLocalString();
 	}
 }

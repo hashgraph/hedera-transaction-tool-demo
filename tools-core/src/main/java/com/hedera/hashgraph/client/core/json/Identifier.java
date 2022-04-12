@@ -193,9 +193,11 @@ public class Identifier implements Comparable<Identifier> {
 		if (id == null || id.isEmpty()) {
 			throw new HederaClientRuntimeException("The provided string was null or empty");
 		}
+		if (id.contains("0.0.0")) {
+			return Identifier.ZERO;
+		}
 
 		String idC = "";
-
 		final var pattern1 = Pattern.compile(FULL_ACCOUNT_CHECKSUM_REGEX);
 		final var pattern2 = Pattern.compile(FULL_ACCOUNT_REGEX);
 		final var pattern3 = Pattern.compile(NUMBER_REGEX);

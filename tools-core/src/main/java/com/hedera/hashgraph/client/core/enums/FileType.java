@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.core.enums;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
@@ -92,5 +94,15 @@ public enum FileType {
 				throw new IllegalStateException("Unexpected value: " + this);
 		}
 		return "";
+	}
+
+	public static FileType getType(final String extension) throws HederaClientException {
+		for (final var type :
+				FileType.values()) {
+			if (type.getExtension().equals(extension)) {
+				return type;
+			}
+		}
+		throw new HederaClientException(String.format("Unrecognized extension %s", extension));
 	}
 }

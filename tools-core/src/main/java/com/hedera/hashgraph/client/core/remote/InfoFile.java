@@ -163,16 +163,6 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		return actions;
 	}
 
-	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
 	private String getNetwork(final String accountPath) throws HederaClientException, InvalidProtocolBufferException {
 		final var name = FilenameUtils.getBaseName(accountPath);
 		if (name.contains("-")) {

@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ControllerTest {
 	private Controller controller;
-	private final static String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
+	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
 	private static final Logger logger = LogManager.getLogger(ControllerTest.class);
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
@@ -52,9 +53,10 @@ class ControllerTest {
 	@BeforeEach
 	void setUp() {
 		try {
-			if (new File(DEFAULT_STORAGE).exists()) {
-				org.apache.commons.io.FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
+			System.gc();
+			logger.info("Starting test class: {}", getClass().getSimpleName());
+			TestUtil.buildFolders();
+
 			final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 			preferences.clear();
 			assertEquals(0, preferences.keys().length);

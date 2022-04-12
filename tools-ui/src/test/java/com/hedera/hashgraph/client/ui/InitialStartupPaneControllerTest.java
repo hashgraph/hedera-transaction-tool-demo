@@ -43,9 +43,9 @@ import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.assertj.core.util.Files;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.AfterEach;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -82,29 +82,33 @@ import static org.junit.Assert.assertTrue;
 
 public class InitialStartupPaneControllerTest extends TestBase implements GenericFileReadWriteAware {
 
-	public static BooleanSupplier isInCircleCi = () ->
+	private static final Logger logger = LogManager.getLogger(InitialStartupPage.class);
+
+	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final BooleanSupplier isInGithubActions = () ->
 			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 
-	public static final String PASSWORD = "tempura hopscotch";
-	public static final String USER_HOME = System.getProperty("user.home") + File.separator;
-	private final Logger logger = LogManager.getLogger(InitialStartupPage.class);
+	private static final String PASSWORD = "tempura hopscotch";
+	private static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private static final String DIR_TEST_ONE_DRIVE = "src/test/resources/OneDrive";
 	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+	private static final String STORED_MNEMONIC =
+			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
+					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	private InitialStartupPage initialStartupPage;
 	private UserAccessibleProperties properties;
 
-	private final String storedMnemonic =
-			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
-					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
 	//@BeforeEach
 	@Before
 	public void setUp() throws Exception {
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+
 		if (new File(USER_HOME + "Documents" + File.separator + "initialMap.json").delete()) {
 			logger.info("Default drives file deleted");
 		}
@@ -228,7 +232,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		final var nodes = TestUtil.getPopupNodes();
 		assertNotNull(nodes);
 		assertTrue(nodes.get(1) instanceof Label);
-		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again") );
+		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again"));
 		initialStartupPage.enterNewPasswordInPopup(PASSWORD);
 
 
@@ -265,7 +269,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 			logger.info("generatePassphraseFromProvidedWords_Text");
 			logger.info("Load stored mnemonic for testing");
 
-			final var storedWords = storedMnemonic.toLowerCase().split(" ");
+			final var storedWords = STORED_MNEMONIC.toLowerCase().split(" ");
 
 			initialStartupPage.enterPassword(PASSWORD)
 					.reEnterPassword(PASSWORD)
@@ -335,13 +339,13 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		final var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		final var longStringSelection = new StringSelection("test " + storedMnemonic);
+		final var longStringSelection = new StringSelection("test " + STORED_MNEMONIC);
 		final var shortStringSelection =
 				new StringSelection("Dignity domain involve report sail middle rhythm husband usage pretty");
 		final var latinStringSelection = new StringSelection(
 				"magna di curant, parva neglegunt. magna di curant, parva neglegunt. magna di curant, parva neglegunt" +
 						". magna di curant, parva neglegunt. magna di curant, parva");
-		final var goodStringSelection = new StringSelection(storedMnemonic);
+		final var goodStringSelection = new StringSelection(STORED_MNEMONIC);
 
 		clipboard.setContents(longStringSelection, longStringSelection);
 		initialStartupPage.pressPaste();
@@ -561,8 +565,12 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 		assertEquals(Status.BREACHED, passwordPolicy.check("1234567890"));
 	}
 
-	@AfterEach
-	public void tearDown() throws IOException {
+	@After
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		final var currentRelativePath = Paths.get("");
 		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {

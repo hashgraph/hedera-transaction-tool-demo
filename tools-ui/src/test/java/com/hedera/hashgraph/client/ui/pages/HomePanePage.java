@@ -51,8 +51,7 @@ public class HomePanePage {
 	public HomePanePage enterPasswordInPopup(final String password) {
 		final var popupNodes = TestUtil.getPopupNodes();
 		assert popupNodes != null;
-		for (final var n :
-				popupNodes) {
+		for (final var n : popupNodes) {
 			if (n instanceof PasswordField) {
 				((PasswordField) n).setText(password);
 			}
@@ -117,7 +116,7 @@ public class HomePanePage {
 		return this;
 	}
 
-	public HomePanePage clickOnPopupButton(final String button){
+	public HomePanePage clickOnPopupButton(final String button) {
 		final var node = TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), button);
 		driver.clickOn(node);
 		return this;

@@ -203,6 +203,20 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return details;
 	}
 
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		final var publicKeys = new JsonObject();
+		publicKeyMap.forEach((key, value) -> publicKeys.addProperty(key.nickname, value.getAbsolutePath()));
+		final var accounts = new JsonObject();
+		accountInfoMap.forEach((key, value) -> accounts.addProperty(key.nickname, value.getAbsolutePath()));
+		toJson.add("publicKeys", publicKeys);
+		toJson.add("accountInfos", accounts);
+		toJson.addProperty("replaceKeys", keyCheckBox.isSelected());
+		toJson.addProperty("replaceAccounts", accountCheckBox.isSelected());
+		return toJson;
+	}
+
 	public List<Integer> getInfos() throws HederaClientException {
 		final List<Integer> infos = new ArrayList<>();
 		for (final var file : accountInfoMap.values()) {
@@ -235,28 +249,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 	@Override
 	public int hashCode() {
-		var code = 0;
-		for (final var entry : accountInfoMap.entrySet()) {
-			code += entry.getKey().hashCode();
-		}
-		try {
-			for (final var info : getInfos()) {
-				code += info;
-			}
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-		for (final var entry : publicKeyMap.entrySet()) {
-			code += entry.getKey().hashCode();
-		}
-		try {
-			for (final var publicKey : getPublicKeys()) {
-				code += publicKey;
-			}
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-		return code;
+		return super.hashCode();
 	}
 
 	/**
@@ -325,6 +318,8 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 					nickname :
 					String.format("%s -> replaces the previous nickname: \"%s\"", nickname, oldNickname);
 		}
+
+
 	}
 
 	public class InfoKey implements Comparable<InfoKey> {
@@ -389,5 +384,7 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		public int compareTo(final InfoKey other) {
 			return this.id.compareTo(other.getId());
 		}
+
+
 	}
 }

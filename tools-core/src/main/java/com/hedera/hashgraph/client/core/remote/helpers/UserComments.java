@@ -22,6 +22,7 @@ package com.hedera.hashgraph.client.core.remote.helpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.logging.log4j.LogManager;
@@ -56,6 +57,9 @@ public class UserComments {
 
 	public UserComments() {
 		// Default constructor
+		author = "";
+		comment = "";
+		timestamp = "";
 	}
 
 	public String getAuthor() {
@@ -93,6 +97,22 @@ public class UserComments {
 		userCommentsBuilder.withTimestamp(
 				(comments.has(TIMESTAMP_STRING)) ? comments.get(TIMESTAMP_STRING).getAsString() : "");
 		return userCommentsBuilder.build();
+	}
+
+	public UserComments parse(final RemoteFile remoteFile) throws FileNotFoundException {
+		if (remoteFile != null) {
+			final var file = new File(remoteFile.getParentPath(), remoteFile.getName());
+			return parse(file);
+		}
+		return new UserComments();
+	}
+
+	public JsonObject asJsonObject() {
+		final var object = new JsonObject();
+		object.addProperty("author", author);
+		object.addProperty("comment", comment);
+		object.addProperty("timestamp", timestamp);
+		return object;
 	}
 
 	public static final class Builder {

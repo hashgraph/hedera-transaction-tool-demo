@@ -30,7 +30,7 @@
 <?import javafx.scene.layout.Region?>
 <BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
 			minHeight="-Infinity" minWidth="-Infinity" prefHeight="666.0" prefWidth="1000.0"
-			xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/"
+			xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
 			fx:controller="com.hedera.hashgraph.client.ui.Controller">
 	<center>
 		<AnchorPane fx:id="centerPane" style="-fx-border-color: #f4f4f4;" BorderPane.alignment="CENTER_LEFT">
@@ -38,6 +38,8 @@
 						AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
 						AnchorPane.topAnchor="0"/>
 			<fx:include fx:id="homePane" source="HomePane.fxml" visible="true" AnchorPane.bottomAnchor="0.0"
+						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+			<fx:include fx:id="historyPane" source="HistoryPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="createPane" source="CreatePane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
@@ -85,6 +87,14 @@
 						<graphic>
 							<ImageView fitHeight="35.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
 								<Image url="@../../../../../icons/icons8-key-50.png"/>
+							</ImageView>
+						</graphic>
+					</Button>
+					<Button fx:id="historyButton" layoutX="30.0" layoutY="11.0" mnemonicParsing="false"
+							onAction="#changePaneImageClicked" style="-fx-background-color: white;" text="History">
+						<graphic>
+							<ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+								<Image url="@../../../../../icons/history.png"/>
 							</ImageView>
 						</graphic>
 					</Button>

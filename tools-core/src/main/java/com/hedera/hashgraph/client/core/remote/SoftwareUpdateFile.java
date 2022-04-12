@@ -206,7 +206,6 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return formattedText;
 	}
 
-
 	/**
 	 * If the notes contain a Hyperlink, show it to the user
 	 *
@@ -391,6 +390,15 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	@Override
 	public int hashCode() {
-		return super.hashCode() + timestamp.hashCode() + version.hashCode() + digest.hashCode();
+		return super.hashCode();
+	}
+
+	@Override
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("timestamp", timestamp.asJSON());
+		toJson.addProperty("version", version);
+		toJson.addProperty("digest", digest);
+		return toJson;
 	}
 }

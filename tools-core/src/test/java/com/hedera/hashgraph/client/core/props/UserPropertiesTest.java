@@ -129,7 +129,7 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0),
+		assertEquals(new Identifier(0, 0, 0, Identifier.MAINNET_NAME_STRING),
 				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 	}
@@ -155,7 +155,7 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0),
+		assertEquals(new Identifier(0, 0, 0, Identifier.MAINNET_NAME_STRING),
 				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 
@@ -188,7 +188,7 @@ class UserPropertiesTest {
 		assertEquals("badString", properties.getProperty("testString", "badString"));
 		assertEquals(0, properties.getIntProperty("testInt", 0));
 		assertEquals(0L, properties.getLongProperty("testLong", 0));
-		assertEquals(new Identifier(0, 0, 0),
+		assertEquals(new Identifier(0, 0, 0, Identifier.MAINNET_NAME_STRING),
 				properties.getIdentifierProperty("testIdentifier", new Identifier(0, 0, 0)));
 		assertEquals(new HashMap<>(), properties.getMapProperty("testMap", new HashMap<>()));
 
