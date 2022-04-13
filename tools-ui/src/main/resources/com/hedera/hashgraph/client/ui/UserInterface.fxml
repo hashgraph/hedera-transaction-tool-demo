@@ -43,6 +43,8 @@
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="createPane" source="CreatePane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
+			<fx:include fx:id="submitPane" source="SubmitPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
+						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="accountsPane" source="AccountsPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="keysPane" source="KeysPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
@@ -67,6 +69,14 @@
 					</Button>
 					<Button fx:id="createButton" mnemonicParsing="false" onAction="#changePaneImageClicked"
 							style="-fx-background-color: white;" text="Create">
+						<graphic>
+							<ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+								<Image url="@../../../../../icons/form.png"/>
+							</ImageView>
+						</graphic>
+					</Button>
+					<Button fx:id="submitButton" mnemonicParsing="false" onAction="#changePaneImageClicked"
+							style="-fx-background-color: white;" text="Submit">
 						<graphic>
 							<ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
 								<Image url="@../../../../../icons/form.png"/>

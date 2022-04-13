@@ -129,6 +129,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Pane homePane;
 	public StackPane accountsPane;
 	public Pane createPane;
+	public Pane submitPane;
 	public Pane settingsPane;
 	public StackPane initialStartupPane;
 	public StackPane keysPane;
@@ -174,6 +175,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public SettingsPaneController settingsPaneController;
 	@FXML
 	public CreatePaneController createPaneController;
+	@FXML
+	public SubmitPaneController submitPaneController;
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
 	@FXML
@@ -255,8 +258,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		homePaneController.injectMainController(this);
 		settingsPaneController.injectMainController(this);
 		createPaneController.injectMainController(this);
+		submitPaneController.injectMainController(this);
 		keysPaneController.injectMainController(this);
 		accountsPaneController.injectMainController(this);
+
 
 
 		startupPhaseInitialization();
@@ -352,6 +357,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+				submitPaneController.initializeSubmitPane();
 				break;
 			case TEST_PHASE:
 				properties =
@@ -401,6 +407,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				break;
 			case "createButton":
 				changeTab(createPane);
+				break;
+			case "submitButton":
+				changeTab(submitPane);
 				break;
 			case "accountsButton":
 				accountsPaneController.initializeAccountPane();
