@@ -741,7 +741,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
-		final var id = Identifier.parse(cellData.getValue().getFeePayer(), controller.getCurrentNetwork());
+		final var id = cellData.getValue().getFeePayerId();
 		if (id.equals(Identifier.ZERO)) {
 			return new SimpleStringProperty("");
 		}
