@@ -25,7 +25,7 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.9.0-beta.1</version>
+		<version>0.9.1-beta.1</version>
 
 	</parent>
 
@@ -33,7 +33,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-core</artifactId>
-	<version>0.9.0-beta.1</version>
+	<version>0.9.1-beta.1</version>
 	<packaging>jar</packaging>
 
 	<dependencyManagement>

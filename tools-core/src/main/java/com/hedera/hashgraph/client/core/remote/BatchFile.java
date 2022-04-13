@@ -186,8 +186,8 @@ public class BatchFile extends RemoteFile {
 	 * @return the index of the first line that contains a distribution
 	 */
 	private int getDistributionStart(final List<String> csvList) {
-		int count = 0;
-		for (final String s : csvList) {
+		var count = 0;
+		for (final var s : csvList) {
 			count++;
 			if (s.toLowerCase(Locale.ROOT).startsWith(ACCOUNT_ID)) {
 				break;
@@ -205,7 +205,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkSender(final List<String> csvList) {
 		try {
-			final String[] senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
+			final var senderIDLine = getStrings(csvList, SENDER_ACCOUNT, "[,]", true);
 
 			if (senderIDLine.length != 2) {
 				errorBehavior(getName(), NUMBER_OF_FIELDS, SENDER_ACCOUNT);
@@ -229,7 +229,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkFeePayer(final List<String> csvList) {
 		try {
-			final String[] feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
+			final var feePayerIDLine = getStrings(csvList, FEE_PAYER_ACCOUNT, "[,]", true);
 
 			if (feePayerIDLine.length == 0) {
 				this.feePayerAccountID = this.senderAccountID;
@@ -258,7 +258,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkMemo(final List<String> csvList) {
 		try {
-			final String[] memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
+			final var memoLine = getStrings(csvList, MEMO_STRING, "[,]", false);
 
 			if (memoLine.length == 0) {
 				return false;
@@ -286,7 +286,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkTime(final List<String> csvList) {
 		try {
-			final String[] timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
+			final var timeLine = getStrings(csvList, SENDING_TIME, "[,:]", true);
 			if (timeLine.length != 3) {
 				errorBehavior(getName(), NUMBER_OF_FIELDS, "time");
 				return true;
@@ -319,7 +319,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkNodes(final List<String> csvList) {
 		nodeAccountID = new ArrayList<>();
 		try {
-			final String[] nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
+			final var nodeAccountIDLine = getStrings(csvList, NODE_IDS, "[,]", true);
 
 			if (nodeAccountIDLine.length == 0) {
 				setValid(false);
@@ -356,7 +356,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkFee(final List<String> csvList) {
 		try {
-			final String[] feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
+			final var feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
 			// If there is no transaction fee line, just use the default;
 			if (feeLine.length == 0) {
 				this.transactionFee = properties.getDefaultTxFee();
@@ -384,7 +384,7 @@ public class BatchFile extends RemoteFile {
 	 */
 	private boolean checkTransactionValidDuration(final List<String> csvList) {
 		try {
-			final String[] tvdLine = getStrings(csvList, DURATION, "[,]", true);
+			final var tvdLine = getStrings(csvList, DURATION, "[,]", true);
 			// If there is no transaction valid duration line, just use the default;
 			if (tvdLine.length == 0) {
 				this.txValidDuration = properties.getTxValidDuration();
@@ -439,11 +439,13 @@ public class BatchFile extends RemoteFile {
 	@NotNull
 	private String[] getStrings(final List<String> csvList, final String queryString, final String regex,
 			final boolean removeSpaces) {
-		String[] strings = new String[0];
-		for (final String s : csvList) {
-			if (s.toLowerCase(Locale.ROOT).startsWith(queryString)) {
-				strings = removeSpaces ? s.replace(" ", "").split(regex) : s.split(regex);
-				final String[] returnString = new String[strings.length];
+		var strings = new String[0];
+		final var query = removeSpaces? queryString.replace(" ", ""): queryString;
+		for (final var p : csvList) {
+			final var s = removeSpaces? p.replace(" ", ""): p;
+			if (s.toLowerCase(Locale.ROOT).startsWith(query)) {
+				strings = s.split(regex);
+				final var returnString = new String[strings.length];
 				// trim leading and trailing spaces
 				for (int i = 0, stringsLength = strings.length; i < stringsLength; i++) {
 					returnString[i] = strings[i].trim();
@@ -623,7 +625,7 @@ public class BatchFile extends RemoteFile {
 	@Override
 	public GridPane buildGridPane() {
 		final var detailsGridPane = new GridPane();
-		int row = 0;
+		var row = 0;
 		try {
 			final var accounts = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
 					ACCOUNTS_MAP_FILE) : new JsonObject();
