@@ -42,6 +42,7 @@ import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
 import com.hedera.hashgraph.client.ui.popups.TwoButtonPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
+import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
@@ -1644,6 +1645,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var responseTuple = new ResponseTuple();
 		while (responseTuple.getNickname().equals("")) {
 			responseTuple = TwoButtonPopup.display(file, newFiles > 1);
+			if (responseTuple.getResponseEnum().equals(ResponseEnum.UNKNOWN)){
+				responseTuple.setNickname("");
+				PopupMessage.display("Missing nickname", "A nickname for the account must be chosen. Please try again.", CONTINUE_LABEL);
+				continue;
+			}
 			if (nicknames.contains(responseTuple.getNickname())) {
 				PopupMessage.display("Duplicate nickname",
 						format(NICKNAME_IN_USE_MESSAGE, responseTuple.getNickname()),
