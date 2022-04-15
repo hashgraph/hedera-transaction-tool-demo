@@ -879,6 +879,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			final var nickname = recoverNicknameField.getText();
 			if (nickname.equals("")) {
+				PopupMessage.display("Missing nickname",
+						"Please provide a nickname for the key, for identification purposes");
 				return true;
 			}
 

@@ -206,6 +206,10 @@ public class HistoryData implements Comparable<HistoryData> {
 		return feePayer.toReadableStringAndChecksum();
 	}
 
+	public Identifier getFeePayerId() {
+		return feePayer;
+	}
+
 	public String getExpirationDate() {
 		if (this.expirationDate.equals(new Timestamp(0, 0))) {
 			return "";

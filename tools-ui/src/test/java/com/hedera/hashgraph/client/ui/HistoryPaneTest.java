@@ -33,7 +33,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -44,6 +43,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -163,10 +163,22 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		mainWindowPage.clickOnHomeButton();
 		final var initialFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
 		mainWindowPage.clickOnHistoryButton();
+		final var update = transactions.stream().filter(
+				transaction -> transaction.getFileName().equals("1768611600-0_0_54--364295398.tx")).findFirst().orElse(
+				null);
 
-		historyWindowPage.clickOnResign(transactions.get(0).getFileName());
-		final var button = find(transactions.get(0).getFileName());
+		assertNotNull(update);
+
+		historyWindowPage.clickOnResign(update.getFileName());
+		populateHistory();
+
+		final var update2 = transactions.stream().filter(
+				transaction -> transaction.getFileName().equals("1768611600-0_0_54--364295398.tx")).findFirst().orElse(
+				null);
+
+		final var button = find(update2.getFileName());
 		assertNotNull(button);
+
 		assertTrue(button.isDisable());
 		mainWindowPage.clickOnHomeButton();
 		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
