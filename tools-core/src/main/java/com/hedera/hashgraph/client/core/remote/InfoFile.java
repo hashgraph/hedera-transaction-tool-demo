@@ -178,18 +178,5 @@ public class InfoFile extends RemoteFile implements GenericFileReadWriteAware {
 		return "UNKNOWN";
 	}
 
-	private String getNetwork(final String accountPath) throws HederaClientException, InvalidProtocolBufferException {
-		final var name = FilenameUtils.getBaseName(accountPath);
-		if (name.contains("-")) {
-			return name.substring(name.lastIndexOf("-") + 1).toUpperCase(Locale.ROOT);
-		}
-		final var info = AccountInfo.fromBytes(readBytes(accountPath));
-		if (info.ledgerId != null) {
-			if (!"".equals(info.ledgerId.toString())) {
-				return info.ledgerId.toString().toUpperCase(Locale.ROOT);
-			}
-			return "UNKNOWN";
-		}
-		return "UNKNOWN";
-	}
+
 }
