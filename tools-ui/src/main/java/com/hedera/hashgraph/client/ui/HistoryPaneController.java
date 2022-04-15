@@ -82,6 +82,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
@@ -171,6 +172,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			if (!new File(HISTORY_MAP).exists()) {
 				logger.info("Map not found. Parsing history folder");
 				parseHistoryFolder();
+				FXCollections.sort(tableList, Comparator.reverseOrder());
+				return;
 			}
 			final var array = readJsonArray(HISTORY_MAP);
 			for (final var element : array) {
@@ -214,7 +217,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var files = getRemoteFiles();
 		final var jsonArray = new JsonArray();
 		noise = true;
-		for (final RemoteFile file : files) {
+		for (final var file : files) {
 			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
 				continue;
 			}
@@ -241,7 +244,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var addition = new HistoryData(remoteFile);
 		addition.setHistory(true);
 		historyMap.put(addition.getCode(), true);
-		tableList.add(addition);
+		tableList.remove(addition);
+		tableList.add(0, addition);
 	}
 
 	/**
@@ -280,12 +284,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			while (change.next()) {
 				if (change.wasRemoved() || change.wasAdded()) {
 					storeHistory();
+					filteredList.sorted();
 				}
 			}
 		});
 		contentScrollPane.setContent(tableView);
 		setupTableBindings();
 
+		tableView.getColumns().clear();
 		tableView.getColumns().add(getExpanderColumn());
 		tableView.getColumns().add(getTypeColumn());
 		tableView.getColumns().add(getExpirationColumn());
@@ -293,6 +299,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getLastActionColumn());
 		tableView.getColumns().add(getReSignColumn(tableView));
 
+		setDataToTable();
+	}
+
+	/**
+	 * Sets the history data to the table
+	 */
+	private void setDataToTable() {
 		final var sortedList = new SortedList<>(filteredList);
 		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
 		tableView.setItems(sortedList);
@@ -361,7 +374,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
 		expirationDateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
 		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		final HBox lastActionBox = getTitleBox("Expiration Date:", expirationDateFilterVBox);
+		final var lastActionBox = getTitleBox("Expiration Date:", expirationDateFilterVBox);
 		expirationDateColumn.setGraphic(lastActionBox);
 		return expirationDateColumn;
 	}
@@ -378,7 +391,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		lastAction.prefWidthProperty().bind(tableView.widthProperty().divide(5));
 		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
 		lastAction.setSortType(TableColumn.SortType.DESCENDING);
-		final HBox lastActionBox = getTitleBox("Last acted on:", actedDateFilterVBox);
+		final var lastActionBox = getTitleBox("Last acted on:", actedDateFilterVBox);
 		lastAction.setGraphic(lastActionBox);
 		return lastAction;
 	}
@@ -435,14 +448,24 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
-						noise = false;
+						noise = true;
 						historyMap.put(historyData.getCode(), false);
+						final var row = getRow(historyData);
+						if (row < 0) {
+							return;
+						}
 						tableList.remove(historyData);
 						historyData.setHistory(false);
-						tableList.add(historyData);
+						noise = false;
+						tableList.add(row, historyData);
 						button.setDisable(true);
 						controller.homePaneController.setForceUpdate(true);
 						controller.homePaneController.initializeHomePane();
+					}
+
+					private int getRow(final HistoryData historyData) {
+						return IntStream.range(0, tableList.size()).filter(
+								i -> tableList.get(i).equals(historyData)).findFirst().orElse(-1);
 					}
 				};
 		actionColumn.setCellFactory(cellFactory);

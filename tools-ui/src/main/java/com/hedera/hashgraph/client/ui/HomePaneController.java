@@ -900,7 +900,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			rf.execute(pair, user, output);
 			exportComments(rf, rf.getCommentArea(), rf.getName());
 			rf.setHistory(true);
-			controller.historyPaneController.addToHistory(rf);
+				controller.historyPaneController.addToHistory(rf);
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {
