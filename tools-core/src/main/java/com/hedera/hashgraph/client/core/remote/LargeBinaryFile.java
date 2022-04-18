@@ -164,6 +164,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		final var timestamp = getTimestamp(tvStamp);
 		if (timestamp.equals(new Timestamp(0, 0))) {
+
 			return;
 		}
 

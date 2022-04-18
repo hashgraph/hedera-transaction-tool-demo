@@ -73,7 +73,6 @@ public class TwoButtonPopup {
 
 		final var answerField = new TextField(proposedNick.get());
 
-
 		answerField.setPrefWidth(300);
 		answerField.setOnKeyPressed(event -> {
 			if (event.getCode().equals(KeyCode.ENTER)) {
@@ -97,6 +96,9 @@ public class TwoButtonPopup {
 			window.close();
 		});
 
+		// If there is only one info accepted, the ignore button makes no sense.
+		ignore.setVisible(multiple);
+		ignore.setDisable(multiple);
 
 		setButtonStyle(ignore, replace);
 
