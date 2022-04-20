@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
@@ -1080,7 +1081,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final AccountAmountStrings newTransaction;
 		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
 
-		final var status = parseAddress(newTransaction.getStrippedAccountID()).getStatus();
+		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
+				newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
