@@ -32,12 +32,14 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.animation.PauseTransition;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -353,5 +355,18 @@ public class Utilities {
 		} catch (final Exception e) {
 			return true;
 		}
+	}
+
+	public static void checkBoxListener(final Set<File> signersSet, final File keyFile, final String baseName,
+			final CheckBox checkBox) {
+		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				logger.info("Added {} to list of signing keys", baseName);
+				signersSet.add(keyFile);
+			} else {
+				logger.info("Removed {} from list of signing keys", baseName);
+				signersSet.remove(keyFile);
+			}
+		});
 	}
 }

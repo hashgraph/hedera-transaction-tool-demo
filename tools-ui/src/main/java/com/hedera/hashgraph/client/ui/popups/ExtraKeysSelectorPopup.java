@@ -19,7 +19,7 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.ui.HomePaneController;
+import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -68,7 +68,7 @@ public class ExtraKeysSelectorPopup {
 
 		final var cancelBoolean = new AtomicBoolean(true);
 
-		final Set<File> selectedSet = new HashSet<>();
+		final Set<File> selectedSet = new HashSet<>(signingKeys);
 
 		final var knownKeys =
 				new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
@@ -171,7 +171,7 @@ public class ExtraKeysSelectorPopup {
 	private static CheckBox getCheckBox(final Set<File> selectedSet, final File knownKey) {
 		final var baseName = FilenameUtils.getBaseName(knownKey.getName());
 		final var checkBox = new CheckBox(baseName);
-		HomePaneController.checkBoxListener(selectedSet, knownKey, baseName, checkBox, logger);
+		Utilities.checkBoxListener(selectedSet, knownKey, baseName, checkBox);
 		return checkBox;
 	}
 

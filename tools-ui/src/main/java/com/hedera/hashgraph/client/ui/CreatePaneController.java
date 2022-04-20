@@ -22,8 +22,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -38,6 +40,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.AccountAmountStrings;
@@ -51,6 +54,7 @@ import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.LedgerId;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -83,6 +87,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -109,6 +114,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -205,6 +211,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
 
+
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
 	private final Set<String> accountNickNames = new HashSet<>();
@@ -231,6 +238,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Button setNowValidStart;
 	public Button browseTransactions;
 	public Button resetFormButton;
+	public Button signAndSubmitButton;
+
+	public GridPane storeOrSubmitGridPane;
 
 	// Tooltip buttons
 	public Button nowTimeToolTip;
@@ -257,13 +267,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public HBox fromHBox;
 	public HBox toHBox;
-	public HBox createChoiceHBox;
 	public HBox systemSlidersHBox;
 	public HBox copyFromAccountHBox;
 	public HBox updateCopyFromAccountHBox;
 	public HBox timeZoneHBox;
 	public HBox timeZoneSystemHBox;
 	public HBox freezeTimeZoneHBox;
+	public HBox storeTransactionHBox;
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
@@ -399,7 +409,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		setupCommonFieldsEvents();
 
 		setupManagedProperty(commentsVBox, commonFieldsVBox, createAccountVBox, updateAccountVBox, transferCurrencyVBox,
-				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
+				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, storeOrSubmitGridPane,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
 				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
@@ -461,7 +471,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateAccountVBox.setVisible(false);
 		transferCurrencyVBox.setVisible(false);
 		accountIDToUpdateVBox.setVisible(false);
-		createChoiceHBox.setVisible(false);
+		storeOrSubmitGridPane.setVisible(false);
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
 		freezeVBox.setVisible(false);
@@ -1079,8 +1089,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final AccountAmountStrings newTransaction;
 		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
-
-		final var status = parseAddress(newTransaction.getStrippedAccountID()).getStatus();
+		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
+				newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
 			account.setStyle(RED_BORDER_STYLE);
 			account.selectAll();
@@ -1927,18 +1937,18 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		commentsVBox.setVisible(true);
 		commonFieldsVBox.setVisible(true);
-		createChoiceHBox.setVisible(true);
+		storeOrSubmitGridPane.setVisible(true);
 
 		if (transactionType != CreateTransactionType.SELECT) {
-			createChoiceHBox.getChildren().clear();
-			createChoiceHBox.getChildren().add(createTransactionMenuButton(transactionType));
+			storeTransactionHBox.getChildren().clear();
+			storeTransactionHBox.getChildren().add(createTransactionMenuButton(transactionType));
 		}
 
 		switch (transactionType) {
 			case SELECT:
 				commentsVBox.setVisible(false);
 				commonFieldsVBox.setVisible(false);
-				createChoiceHBox.setVisible(false);
+				storeOrSubmitGridPane.setVisible(false);
 				break;
 			case CREATE:
 				createAccountVBox.setVisible(true);
@@ -2850,12 +2860,62 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
 	}
 
-
 	public void cleanForm() {
 		fromFile = false;
 		final var type = selectTransactionType.getValue();
 		initializeCreatePane();
 		selectTransactionType.setValue(type);
+	}
+
+	public void signAndSubmitAction() throws HederaClientException, InterruptedException {
+		startFieldsSet.setDate(Instant.now().plusSeconds(1));
+		final var knownSigners = controller.accountsPaneController.getFeePayers();
+		final var pair = getUserCommentsTransactionPair(transactionType);
+		if (pair == null) {
+			return;
+		}
+
+		final var transaction = pair.getValue();
+		final var signers = transaction.getSigningAccounts();
+		final var privateKeys = controller.extractRequiredKeys(transaction.getSigningKeys());
+
+		final Set<Identifier> unknownSigners = new HashSet<>();
+		for (final var signer : signers) {
+			final var identifier = new Identifier(signer, controller.getCurrentNetwork());
+			if (!knownSigners.contains(identifier)) {
+				unknownSigners.add(identifier);
+			}
+		}
+
+		if (!unknownSigners.isEmpty()) {
+			final var ids = unknownSigners.stream().sorted().map(Identifier::toReadableAccountAndNetwork).collect(
+					Collectors.joining(", "));
+			final var message = unknownSigners.size() > 1 ?
+					String.format("accounts: \n%s\nare", ids) :
+					String.format("account %s is", ids);
+			PopupMessage.display("Unknown keys", String.format(
+					"The keys for %s unknown. You will be required to select signing keys as an extra step.", message));
+			privateKeys.addAll(ExtraKeysSelectorPopup.display(new HashSet<>(privateKeys)));
+		}
+
+		Collections.sort(privateKeys);
+
+		for (final var privateKeyFile : privateKeys) {
+			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
+			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
+			transaction.sign(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
+		}
+
+		try {
+			final var receipt = transaction.submit();
+		} catch (HederaClientRuntimeException | InterruptedException e) {
+			logger.error(e.getMessage());
+		}
+
+
+		controller.homePaneController.initializeHomePane();
+		initializeCreatePane();
+		selectTransactionType.setValue(SELECT_STRING);
 	}
 
 

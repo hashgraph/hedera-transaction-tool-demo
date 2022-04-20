@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
@@ -472,6 +473,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				.filter(files -> files != null && files.length == 1)
 				.flatMap(files -> addToKeySet(files).stream())
 				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Determines the public keys that are involved in the transactions.
+	 *
+	 * @return a list of ByteStrings
+	 */
+	public Set<ByteString> getSigningKeys(){
+		return getSigningKeys(Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	private Set<ByteString> addToKeySet(final File[] files) {
