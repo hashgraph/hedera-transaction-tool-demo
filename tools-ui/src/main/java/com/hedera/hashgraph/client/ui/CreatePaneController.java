@@ -2607,7 +2607,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			account = "0.0." + account;
 		}
 
-		final var parsedAddress = parseAddress(account);
+		final var parsedAddress = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(), account);
 		switch (parsedAddress.getStatus()) {
 			case BAD_FORMAT:
 				textField.setStyle(TEXTFIELD_ERROR);
