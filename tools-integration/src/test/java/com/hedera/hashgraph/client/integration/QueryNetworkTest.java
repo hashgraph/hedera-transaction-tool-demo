@@ -271,7 +271,9 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.enterPasswordInPopup(TEST_PASSWORD);
 
 		final var newBalance = accountsPanePage.getBalance("treasury");
-		assertTrue(newBalance.toTinybars() <= oldBalance.toTinybars());
+		logger.info("Old balance: {}", oldBalance.toTinybars());
+		logger.info("New balance: {}", newBalance.toTinybars());
+		assertTrue(newBalance.toTinybars() != oldBalance.toTinybars());
 
 	}
 
