@@ -485,7 +485,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final InfoFile infoFile;
 			try {
 				infoFile = new InfoFile(FileDetails.parse(accountFile));
-			} catch (final IOException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e.getMessage());
 				return;
 			}
@@ -1121,8 +1121,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 			final var balanceTextField = setupBoxTextField(hbars.toString());
 
+			final var memoTextField = setupBoxTextField(info.accountMemo);
+
 			final var gridPane =
-					refreshGridPane(nickname, info, networkBox, refreshButton, dateLabel, balanceTextField);
+					refreshGridPane(nickname, info, networkBox, refreshButton, dateLabel, balanceTextField,
+							memoTextField);
 			HBox.setHgrow(keysVBox, Priority.ALWAYS);
 			VBox.setVgrow(keysVBox, Priority.ALWAYS);
 
@@ -1239,7 +1242,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	@NotNull
 	private GridPane refreshGridPane(
 			final TextField nickname, final AccountInfo info, final Node network, final Button refreshButton,
-			final Label date, final TextField balance) {
+			final Label date, final TextField balance, final TextField memo) {
 		final var gridPane = new GridPane();
 		gridPane.setVgap(10);
 		gridPane.setHgap(10);
@@ -1260,6 +1263,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		gridPane.add(setupBoxTextField(getExpirationTimeString(info)), 1, 5);
 		gridPane.add(setupBoxLabel("Receiver Signature Required"), 0, 6);
 		gridPane.add(setupBoxTextField(valueOf(info.isReceiverSignatureRequired)), 1, 6);
+		if (!"".equals(memo.getText())) {
+			gridPane.add(setupBoxLabel("Account memo"), 0, 7);
+			gridPane.add(memo, 1, 7);
+		}
 
 		final var col1 = new ColumnConstraints();
 		col1.setPercentWidth(50);
@@ -1464,7 +1471,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	/**
 	 * Import accounts from a folder/folders
 	 */
-	public void importAccountFromFolder() throws HederaClientException {
+	public void importAccountFromFolder() throws HederaClientException, InvalidProtocolBufferException {
 		controller.setThisPane(accountsPane);
 		final File folder;
 		if (!hiddenPathAccount.getText().isEmpty()) {
@@ -1502,7 +1509,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if importAccountFromFile throws an exception
 	 */
-	public void importAccountFromFile() throws HederaClientException {
+	public void importAccountFromFile() throws HederaClientException, InvalidProtocolBufferException {
 
 		// browse to file
 		controller.setThisPane(accountsPane);
@@ -1535,7 +1542,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param files
 	 * 		list of files
 	 */
-	public void importInfoFiles(final List<File> files) throws HederaClientException {
+	public void importInfoFiles(final List<File> files) throws HederaClientException, InvalidProtocolBufferException {
 		final List<File> duplicates = new ArrayList<>();
 		final List<File> newFiles = new ArrayList<>();
 		final Set<String> nicknames = new HashSet<>(idNickNames.values());
@@ -1588,7 +1595,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		list of nicknames
 	 * @return the number of accounts accepted
 	 */
-	private int handleNewFiles(final List<File> newFiles, final Set<String> nicknames) throws HederaClientException {
+	private int handleNewFiles(final List<File> newFiles, final Set<String> nicknames) throws HederaClientException,
+			InvalidProtocolBufferException {
 		var counter = 0;
 		var responseEnum = ResponseEnum.UNKNOWN;
 		var keepAsking = true;
@@ -1597,10 +1605,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			return counter;
 		}
 		for (final var file : newFiles) {
-			var newNickname = "";
+			final var memo = AccountInfo.fromBytes(readBytes(file)).accountMemo;
+			var newNickname = "".equals(memo) ? FilenameUtils.getBaseName(file.getName()) : memo;
 			if (keepAsking) {
 				final var responseTuple =
-						getNicknameTuple(newFiles.size(), nicknames, FilenameUtils.getBaseName(file.getName()));
+						getNicknameTuple(newFiles.size(), nicknames, newNickname);
 				responseEnum = responseTuple.getResponseEnum();
 				nicknames.add(responseTuple.getNickname());
 				newNickname = responseTuple.getNickname();
@@ -1957,7 +1966,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param keyEvent
 	 * 		the triggering key event
 	 */
-	public void choosePath(final KeyEvent keyEvent) throws HederaClientException {
+	public void choosePath(final KeyEvent keyEvent) throws HederaClientException, InvalidProtocolBufferException {
 		if (KeyCode.ENTER.equals(keyEvent.getCode())) {
 			final var infoPath = hiddenPathAccount.getText().replace(" ", "");
 			if (infoPath.endsWith(".info") && new File(infoPath).exists()) {

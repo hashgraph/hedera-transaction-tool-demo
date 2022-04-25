@@ -113,11 +113,7 @@ public class LocalFileServiceAdapter implements FileService {
 
 		assert files != null;
 		for (final var f : files) {
-			try {
-				directory.add(FileDetails.parse(f));
-			} catch (final IOException e) {
-				logger.error(e);
-			}
+			directory.add(FileDetails.parse(f));
 		}
 		return directory;
 	}

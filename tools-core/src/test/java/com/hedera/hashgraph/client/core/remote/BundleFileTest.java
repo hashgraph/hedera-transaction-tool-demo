@@ -81,7 +81,7 @@ public class BundleFileTest extends TestBase {
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		var file = new File("src/test/resources/Files/bundleFileTests/mixed.zip");
 		var details = FileDetails.parse(file);
 
@@ -112,7 +112,7 @@ public class BundleFileTest extends TestBase {
 	}
 
 	@Test
-	public void buildGridpane_test() throws IOException {
+	public void buildGridpane_test() throws HederaClientException {
 		var file = new File("src/test/resources/Files/bundleFileTests/mixed.zip");
 		var details = FileDetails.parse(file);
 
@@ -150,7 +150,7 @@ public class BundleFileTest extends TestBase {
 	}
 
 	@Test
-	public void nickname_test() throws IOException {
+	public void nickname_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/bundleFileTests/mixed.zip");
 		final var details = FileDetails.parse(file);
 
@@ -180,7 +180,7 @@ public class BundleFileTest extends TestBase {
 	}
 
 	@Test
-	public void equals_test() throws IOException {
+	public void equals_test() throws HederaClientException {
 		final var mixed = new File("src/test/resources/Files/bundleFileTests/mixed.zip");
 		final var mixedDetails = FileDetails.parse(mixed);
 
@@ -205,7 +205,7 @@ public class BundleFileTest extends TestBase {
 	}
 
 	@Test
-	public void bug221_test() throws IOException, HederaClientException {
+	public void bug221_test() throws HederaClientException {
 		final var infoBug = new File("src/test/resources/Files/bundleFileTests/info.zip");
 		final var fileDetails = FileDetails.parse(infoBug);
 

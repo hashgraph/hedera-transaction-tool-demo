@@ -152,7 +152,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException, HederaClientException {
+	public void buildGridPane_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
 
@@ -194,7 +194,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void getters_test() throws IOException, HederaClientException {
+	public void getters_test() throws HederaClientException {
 
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
@@ -284,7 +284,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void chunkTooLarge_test() throws IOException {
+	public void chunkTooLarge_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.lfu");
 		final var info = FileDetails.parse(file);
 		final Exception exception = assertThrows(HederaClientException.class, () -> new LargeBinaryFile(info));

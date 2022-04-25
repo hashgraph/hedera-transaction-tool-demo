@@ -41,6 +41,8 @@ import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -702,6 +705,21 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		decoder.flush(charBuffer);
 
 		return new String(charBuffer.array(), 0, charBuffer.position());
+	}
+
+	@NotNull
+	public static ImageView getImageView(final String name) {
+		final Image image;
+		try (final var input = new FileInputStream(name)) {
+			image = new Image(input);
+			final var imageView = new ImageView(image);
+			imageView.setFitHeight(20);
+			imageView.setFitWidth(20);
+			return imageView;
+		} catch (final IOException e) {
+			logger.error(e.getCause());
+		}
+		return new ImageView();
 	}
 }
 

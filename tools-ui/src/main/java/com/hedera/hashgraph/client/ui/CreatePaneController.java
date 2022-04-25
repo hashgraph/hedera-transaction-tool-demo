@@ -22,14 +22,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.JsonConstants;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
@@ -54,8 +57,12 @@ import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.LedgerId;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import com.hedera.hashgraph.sdk.Status;
+import com.hedera.hashgraph.sdk.TransactionReceipt;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -129,6 +136,8 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
 import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
@@ -147,6 +156,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_S
 import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
 import static com.hedera.hashgraph.client.core.constants.Constants.NODE_ID_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.REMAINING_TIME_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_FREEZE_TYPE;
@@ -2058,7 +2068,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var jsonArray = new JsonArray();
 			for (final var a : transfers) {
 				final var accountAmountPair = new JsonObject();
-				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
+				final var accountAsJSON =
+						Identifier.parse(a.getStrippedAccountID(), controller.getCurrentNetwork()).asJSON();
+				accountAmountPair.add(ACCOUNT, accountAsJSON);
 				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
 				jsonArray.add(accountAmountPair);
 			}
@@ -2867,7 +2879,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		selectTransactionType.setValue(type);
 	}
 
-	public void signAndSubmitAction() throws HederaClientException, InterruptedException {
+	public void signAndSubmitAction() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now().plusSeconds(1));
 		final var knownSigners = controller.accountsPaneController.getFeePayers();
 		final var pair = getUserCommentsTransactionPair(transactionType);
@@ -2900,26 +2912,220 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		Collections.sort(privateKeys);
 
+		final var transactionName = transaction.getTransaction().getTransactionId().toString().replace(
+				"@", "_").replace(".", "_");
+		final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
+		transaction.store(location);
+		final var rf = new TransactionFile(location);
+		final var comments = createCommentsTextArea.getText();
+
+
 		for (final var privateKeyFile : privateKeys) {
 			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
 			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
 			transaction.sign(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
+			rf.moveToHistory(Actions.ACCEPT, comments, FilenameUtils.getBaseName(privateKeyFile.getName()));
 		}
+
+		rf.setHistory(true);
+		controller.historyPaneController.addToHistory(rf);
 
 		try {
 			final var receipt = transaction.submit();
-		} catch (HederaClientRuntimeException | InterruptedException e) {
+			logger.info(receipt.toString());
+			switch (receipt.status) {
+				case OK:
+				case SUCCESS:
+					final var message = getPopupMessage(transaction.getTransactionType(), receipt);
+					PopupMessage.display("Final status", message);
+					break;
+				default:
+					PopupMessage.display("Final status", getErrorMessage(receipt.status));
+			}
+			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
+			controller.homePaneController.initializeHomePane();
+			initializeCreatePane();
+			selectTransactionType.setValue(SELECT_STRING);
+		} catch (final Exception e) {
 			logger.error(e.getMessage());
+			if (e instanceof ReceiptStatusException) {
+				storeReceipt(((ReceiptStatusException) e).receipt, transactionName, rf.getTransactionType().toString());
+				PopupMessage.display("Status", getErrorMessage(((ReceiptStatusException) e).receipt.status));
+			}
+			if (e instanceof PrecheckStatusException) {
+				storeReceipt(((PrecheckStatusException) e).status, transactionName);
+				PopupMessage.display("Status", getErrorMessage(((PrecheckStatusException) e).status));
+			}
 		}
+	}
 
-
-		controller.homePaneController.initializeHomePane();
-		initializeCreatePane();
-		selectTransactionType.setValue(SELECT_STRING);
+	private String getPopupMessage(final TransactionType transactionType, final TransactionReceipt receipt) {
+		var message = "";
+		switch (transactionType) {
+			case CRYPTO_TRANSFER:
+				message = "The transfer transaction suceeded";
+				break;
+			case CRYPTO_CREATE:
+				message = String.format("The crypto create transaction suceeded. Account created with account id %s",
+						receipt.accountId);
+				break;
+			case CRYPTO_UPDATE:
+				message = String.format("The crypto update transaction suceeded. Account %s was updated",
+						receipt.accountId);
+				break;
+			case SYSTEM_DELETE_UNDELETE:
+				message = "TBD system message";
+				break;
+			case FILE_UPDATE:
+				message = String.format("The file update transaction suceeded. File %s was updated", receipt.fileId);
+				break;
+			case FILE_APPEND:
+				message = String.format("The file append transaction suceeded. File %s was updated", receipt.fileId);
+				break;
+			case FREEZE:
+				message = "The freeze transaction suceeded";
+				break;
+			default:
+				message = "Unknown transaction type";
+		}
+		return message;
 	}
 
 
 	//endregion
 
 
+	private String getErrorMessage(final Status status) {
+
+		var message = "";
+		switch (status) {
+			case OK:
+			case UNKNOWN:
+			case INVALID_TRANSACTION:
+			case PAYER_ACCOUNT_NOT_FOUND:
+			case INVALID_NODE_ACCOUNT:
+			case TRANSACTION_EXPIRED:
+			case INVALID_TRANSACTION_START:
+			case INVALID_TRANSACTION_DURATION:
+			case INVALID_SIGNATURE:
+			case MEMO_TOO_LONG:
+			case INSUFFICIENT_TX_FEE:
+			case INSUFFICIENT_PAYER_BALANCE:
+			case DUPLICATE_TRANSACTION:
+			case BUSY:
+			case NOT_SUPPORTED:
+			case INVALID_FILE_ID:
+			case INVALID_ACCOUNT_ID:
+			case INVALID_CONTRACT_ID:
+			case INVALID_TRANSACTION_ID:
+			case RECEIPT_NOT_FOUND:
+			case INSUFFICIENT_ACCOUNT_BALANCE:
+			case ACCOUNT_UPDATE_FAILED:
+			case INVALID_FEE_SUBMITTED:
+			case INVALID_PAYER_SIGNATURE:
+			case FILE_CONTENT_EMPTY:
+			case INVALID_ACCOUNT_AMOUNTS:
+			case EMPTY_TRANSACTION_BODY:
+			case INVALID_TRANSACTION_BODY:
+			case ACCOUNT_ID_DOES_NOT_EXIST:
+			case PLATFORM_NOT_ACTIVE:
+			case INVALID_RENEWAL_PERIOD:
+			case INVALID_PAYER_ACCOUNT_ID:
+			case ACCOUNT_DELETED:
+			case FILE_DELETED:
+			case ACCOUNT_REPEATED_IN_ACCOUNT_AMOUNTS:
+			case FILE_SYSTEM_EXCEPTION:
+			case AUTORENEW_DURATION_NOT_IN_RANGE:
+			case INVALID_FREEZE_TRANSACTION_BODY:
+			case FREEZE_TRANSACTION_BODY_NOT_FOUND:
+			case TRANSFER_LIST_SIZE_LIMIT_EXCEEDED:
+			case NOT_SPECIAL_ACCOUNT:
+			case INVALID_FEE_FILE:
+			case TRANSFER_ACCOUNT_SAME_AS_DELETE_ACCOUNT:
+			case RECEIVER_SIG_REQUIRED:
+			case SCHEDULE_IS_IMMUTABLE:
+			case INVALID_SCHEDULE_PAYER_ID:
+			case INVALID_SCHEDULE_ACCOUNT_ID:
+			case NO_NEW_VALID_SIGNATURES:
+			case SCHEDULED_TRANSACTION_NOT_IN_WHITELIST:
+			case SOME_SIGNATURES_WERE_INVALID:
+			case TRANSACTION_ID_FIELD_NOT_ALLOWED:
+			case IDENTICAL_SCHEDULE_ALREADY_CREATED:
+			case SCHEDULE_ALREADY_DELETED:
+			case SCHEDULE_ALREADY_EXECUTED:
+			case MESSAGE_SIZE_TOO_LARGE:
+			case OPERATION_REPEATED_IN_BUCKET_GROUPS:
+			case BUCKET_CAPACITY_OVERFLOW:
+			case ACCOUNT_EXPIRED_AND_PENDING_REMOVAL:
+			case PAYER_ACCOUNT_DELETED:
+			case EXISTING_AUTOMATIC_ASSOCIATIONS_EXCEED_GIVEN_LIMIT:
+			case REQUESTED_NUM_AUTOMATIC_ASSOCIATIONS_EXCEEDS_ASSOCIATION_LIMIT:
+			case FREEZE_UPDATE_FILE_DOES_NOT_EXIST:
+			case FREEZE_UPDATE_FILE_HASH_DOES_NOT_MATCH:
+			case NO_UPGRADE_HAS_BEEN_PREPARED:
+			case NO_FREEZE_IS_SCHEDULED:
+			case UPDATE_FILE_HASH_CHANGED_SINCE_PREPARE_UPGRADE:
+			case FREEZE_START_TIME_MUST_BE_FUTURE:
+			case PREPARED_UPDATE_FILE_IS_IMMUTABLE:
+			case FREEZE_ALREADY_SCHEDULED:
+			case FREEZE_UPGRADE_IN_PROGRESS:
+			case UPDATE_FILE_ID_DOES_NOT_MATCH_PREPARED:
+			case UPDATE_FILE_HASH_DOES_NOT_MATCH_PREPARED:
+			case INVALID_PROXY_ACCOUNT_ID:
+			case INVALID_TRANSFER_ACCOUNT_ID:
+			case INVALID_FEE_COLLECTOR_ACCOUNT_ID:
+			case AMOUNT_EXCEEDS_TOKEN_MAX_SUPPLY:
+			case MAX_ALLOWANCES_EXCEEDED:
+			case EMPTY_ALLOWANCES:
+				message = "Message TBD " + status;
+				break;
+			default:
+				message = status.toString();
+		}
+		return message;
+	}
+
+	private void storeReceipt(final TransactionReceipt receipt, final String name, final String type) {
+		try {
+			if (new File(DEFAULT_RECEIPTS).mkdirs()) {
+				logger.info("Receipts folder created");
+			}
+			final var pathname = DEFAULT_RECEIPTS + File.separator + name + "." + RECEIPT_EXTENSION;
+			if (new File(pathname).exists()) {
+				Files.deleteIfExists(Path.of(pathname));
+			}
+			final var jsonObject = new JsonObject();
+			jsonObject.addProperty(JsonConstants.STATUS_PROPERTY, receipt.status.toString());
+			jsonObject.addProperty(JsonConstants.RECEIPT_PROPERTY, receipt.toString());
+			jsonObject.add(JsonConstants.TIMESTAMP_PROPERTY, new Timestamp().asJSON());
+			jsonObject.addProperty(JsonConstants.TYPE_PROPERTY, type);
+			if ("Create New Account Transaction".equals(type)) {
+				jsonObject.addProperty(JsonConstants.ENTITY_PROPERTY, receipt.accountId.toString());
+			}
+
+			writeJsonObject(pathname, jsonObject);
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+
+	}
+
+	private void storeReceipt(final Status status, final String name) {
+		try {
+			if (new File(DEFAULT_RECEIPTS).mkdirs()) {
+				logger.info("Receipts folder created");
+			}
+			final var pathname = DEFAULT_RECEIPTS + File.separator + name + "." + RECEIPT_EXTENSION;
+			if (new File(pathname).exists()) {
+				Files.deleteIfExists(Path.of(pathname));
+			}
+			final var jsonObject = new JsonObject();
+			jsonObject.addProperty(JsonConstants.STATUS_PROPERTY, status.toString());
+			jsonObject.addProperty(JsonConstants.RECEIPT_PROPERTY, "No receipt available");
+			jsonObject.add(JsonConstants.TIMESTAMP_PROPERTY, new Timestamp().asJSON());
+			writeJsonObject(pathname, jsonObject);
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
 }

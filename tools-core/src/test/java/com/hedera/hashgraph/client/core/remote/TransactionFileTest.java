@@ -119,7 +119,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var emptyFile = new TransactionFile();
 		assertFalse(emptyFile.isValid());
 
@@ -159,7 +159,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void getters_test() throws IOException {
+	public void getters_test() throws HederaClientException {
 		final var file = new File(
 				"src/test/resources/Files/TransactionFileTests/createAccount.tx");
 		final var info = FileDetails.parse(file);
@@ -179,7 +179,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneCreate_test() throws IOException {
+	public void buildGridPaneCreate_test() throws HederaClientException {
 		final var file = new File(
 				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/1743832800-0_0_94-58824159.tx");
 		final var info = FileDetails.parse(file);
@@ -210,7 +210,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneTransfer_test() throws IOException {
+	public void buildGridPaneTransfer_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
 		final var info = FileDetails.parse(file);
 
@@ -246,7 +246,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneFileUpdate_test() throws IOException {
+	public void buildGridPaneFileUpdate_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/systemDelete.tx");
 		final var info = FileDetails.parse(file);
 

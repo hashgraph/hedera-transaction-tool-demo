@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -80,6 +81,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
@@ -97,8 +99,6 @@ import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 public class HomePaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
-	private static final String OUTPUT_FILES = "OutputFiles";
-	private static final String INPUT_FILES = "InputFiles";
 	public static final double VBOX_SPACING = 20;
 
 
@@ -798,7 +798,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 
-	private String buildCommentFile(final RemoteFile rf, final TextArea comment, final String name) throws IOException {
+	public String buildCommentFile(final RemoteFile rf, final TextArea comment, final String name) throws IOException {
 		final var userComments = new UserComments.Builder()
 				.withAuthor(controller.getEmailFromMap(rf.getParentPath()))
 				.withComment(comment.getText())

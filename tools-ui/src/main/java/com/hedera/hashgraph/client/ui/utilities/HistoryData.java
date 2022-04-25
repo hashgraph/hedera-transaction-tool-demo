@@ -20,6 +20,8 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -36,7 +38,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -46,11 +47,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
 import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 
-public class HistoryData implements Comparable<HistoryData> {
+public class HistoryData implements Comparable<HistoryData>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryData.class);
 
 	private static final String FILENAME_PROPERTY = "filename";
@@ -110,7 +113,7 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.expired = object.get(EXPIRED_PARAMETER).getAsBoolean();
 	}
 
-	public HistoryData(final String path) throws IOException, HederaClientException {
+	public HistoryData(final String path) throws HederaClientException {
 		this(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(path))));
 	}
 
@@ -285,4 +288,19 @@ public class HistoryData implements Comparable<HistoryData> {
 				Identifier.ZERO;
 	}
 
+	public Boolean transactionSucceeded() {
+		final var file = new File(
+				DEFAULT_RECEIPTS + File.separator + FilenameUtils.getBaseName(getFileName()) + "." + RECEIPT_EXTENSION);
+		if (!file.exists()) {
+			return null;
+		}
+		try {
+			final var receipt = readJsonObject(file);
+			return receipt.get(JsonConstants.STATUS_PROPERTY).getAsString().equalsIgnoreCase("SUCCESS") ?
+					Boolean.TRUE :
+					Boolean.FALSE;
+		} catch (final HederaClientException e) {
+			return null;
+		}
+	}
 }

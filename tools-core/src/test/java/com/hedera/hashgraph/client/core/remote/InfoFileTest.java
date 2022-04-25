@@ -83,7 +83,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 
@@ -104,7 +104,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPane_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 

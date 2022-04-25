@@ -108,6 +108,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		super();
 	}
 
+	public TransactionFile(String location) throws HederaClientException {
+		this(FileDetails.parse(new File(location)));
+	}
+
 	public TransactionFile(final FileDetails fileDetails) {
 		super(fileDetails);
 		if (!isValid() || !FileType.TRANSACTION.equals(getType())) {
@@ -627,7 +631,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		return super.getSigningPublicKeys();
 	}
-
 
 
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,

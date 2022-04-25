@@ -23,8 +23,10 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
@@ -98,7 +100,7 @@ public interface SDKInterface {
 	 *
 	 * @return the transaction receipt from the network
 	 */
-	TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException;
+	TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException, PrecheckStatusException, ReceiptStatusException;
 
 	/**
 	 * Checks the input provided before attempting to build a transaction. Provides feedback to the user regarding

@@ -213,7 +213,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public byte[] sign(final PrivateKey key) throws HederaClientRuntimeException {
+	public byte[] sign(final PrivateKey key) {
 		return key.signTransaction(transaction);
 	}
 
@@ -285,7 +285,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException {
+	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException,
+			PrecheckStatusException, ReceiptStatusException {
 
 		final TransactionReceipt receipt;
 		try (final var client = setupClient(input)) {
@@ -298,7 +299,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			}
 			final var transactionResponse = transaction.execute(client);
 			receipt = transactionResponse.getReceipt(client);
-		} catch (final HederaClientException | TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
+		} catch (final HederaClientException | TimeoutException e) {
 			logger.error(e);
 			throw new HederaClientRuntimeException(e);
 		}
