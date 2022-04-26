@@ -42,6 +42,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -514,6 +515,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
 				actionsEndDatePicker);
 
+		setupStartEndDates(expirationStartDatePicker, expirationEndDatePicker);
+		setupStartEndDates(actionsStartDatePicker, actionsEndDatePicker);
+
 		feePayerPredicate = historyData -> {
 			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
 			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
@@ -533,6 +537,18 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			return b1 && b2;
 		};
 
+	}
+
+	private void setupStartEndDates(final DatePicker start, final DatePicker end) {
+		end.disableProperty().bind(start.valueProperty().isNull());
+		end.setDayCellFactory(picker -> new DateCell() {
+			public void updateItem(final LocalDate date, final boolean empty) {
+				super.updateItem(date, empty);
+				final var begin = start.getValue();
+				final LocalDate today = LocalDate.now();
+				setDisable(empty || date.compareTo(begin) < 0 || date.compareTo(today) > 0);
+			}
+		});
 	}
 
 	private void setupFilterBoxes() {
@@ -939,6 +955,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 						return LocalDate.parse(s, dateFormatter);
 					}
 					return null;
+				}
+			});
+			picker.setDayCellFactory(p -> new DateCell() {
+				public void updateItem(final LocalDate date, final boolean empty) {
+					super.updateItem(date, empty);
+					final LocalDate today = LocalDate.now();
+					setDisable(empty || date.compareTo(today) > 0);
 				}
 			});
 		}
