@@ -382,7 +382,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
 		expirationDateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
 		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
-		final var lastActionBox = getTitleBox("Expiration Date:", expirationDateFilterVBox);
+		final var lastActionBox = getTitleBox("Expiration:", expirationDateFilterVBox);
 		expirationDateColumn.setGraphic(lastActionBox);
 		return expirationDateColumn;
 	}
@@ -542,6 +542,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	private void setupStartEndDates(final DatePicker start, final DatePicker end) {
 		end.disableProperty().bind(start.valueProperty().isNull());
 		end.setDayCellFactory(picker -> new DateCell() {
+			@Override
 			public void updateItem(final LocalDate date, final boolean empty) {
 				super.updateItem(date, empty);
 				final var begin = start.getValue();
@@ -958,6 +959,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 				}
 			});
 			picker.setDayCellFactory(p -> new DateCell() {
+				@Override
 				public void updateItem(final LocalDate date, final boolean empty) {
 					super.updateItem(date, empty);
 					final LocalDate today = LocalDate.now();
