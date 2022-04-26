@@ -88,8 +88,14 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTO
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
+import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
+import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
+import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
+import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
+import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
+import static com.hedera.hashgraph.client.core.enums.FileType.getType;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
@@ -242,10 +248,11 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	public void addToHistory(final RemoteFile remoteFile) {
 		noise = false;
 		final var addition = new HistoryData(remoteFile);
+		tableList.remove(addition);
 		addition.setHistory(true);
 		historyMap.put(addition.getCode(), true);
-		tableList.remove(addition);
 		tableList.add(0, addition);
+		tableView.refresh();
 	}
 
 	/**
@@ -435,9 +442,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 							button.setVisible(!historyData.isExpired());
 							button.setDisable(!historyData.isHistory());
 
-							if (historyData.getType().equals(FileType.ACCOUNT_INFO) ||
-									historyData.getType().equals(FileType.BUNDLE) ||
-									historyData.getType().equals(FileType.PUBLIC_KEY)) {
+							if (ACCOUNT_INFO.equals(historyData.getType()) ||
+									BUNDLE.equals(historyData.getType()) ||
+									PUBLIC_KEY.equals(historyData.getType()) ||
+									SOFTWARE_UPDATE.equals(historyData.getType())) {
 								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
 							}
 							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
@@ -709,7 +717,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private boolean isAllowedFile(final String name) {
 		try {
-			return !FileType.getType(FilenameUtils.getExtension(name)).equals(FileType.UNKNOWN);
+			return !getType(FilenameUtils.getExtension(name)).equals(UNKNOWN);
 		} catch (final HederaClientException e) {
 			return false;
 		}
