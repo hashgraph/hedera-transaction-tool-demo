@@ -577,7 +577,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.maxWidthProperty().bind(fileVBox.widthProperty().divide(2));
 		}
 
-		fileVBox.getChildren().addAll(titleLabel, hBox);
+		if (!isHistory()) {
+			fileVBox.getChildren().add(titleLabel);
+		}
+		fileVBox.getChildren().add(hBox);
 		return fileVBox;
 	}
 
