@@ -311,16 +311,17 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final List<VBox> boxes = new ArrayList<>();
 		Collections.sort(fileList);
 		for (final var rf : fileList) {
-			if (rf.getType().equals(FileType.METADATA) || rf.getType().equals(FileType.COMMENT)) {
+			if (rf.getType().equals(FileType.METADATA) ||
+					rf.getType().equals(FileType.COMMENT) ||
+					controller.historyPaneController.isHistory(rf.hashCode())) {
 				continue;
 			}
+
 			if (rf instanceof TransactionFile) {
 				setupKeyTree((TransactionFile) rf);
 			}
 
-			if (controller.historyPaneController.isHistory(rf.hashCode())) {
-				continue;
-			}
+
 			final var fileBox = rf.buildDetailsBox();
 			final var buttonsBox = getButtonsBox(rf);
 			if (buttonsBox != null) {
@@ -900,7 +901,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			rf.execute(pair, user, output);
 			exportComments(rf, rf.getCommentArea(), rf.getName());
 			rf.setHistory(true);
-				controller.historyPaneController.addToHistory(rf);
+			controller.historyPaneController.addToHistory(rf);
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {
