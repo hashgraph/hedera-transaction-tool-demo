@@ -258,26 +258,6 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestOneInfo_test() throws InterruptedException, HederaClientException {
-		// Request all balances
-		accountsPanePage.selectRow("treasury")
-				.selectRow("seventySix")
-				.requestSelectedBalances();
-
-		final var oldBalance = accountsPanePage.getBalance("treasury");
-		sleep(1000);
-		accountsPanePage.selectRow("treasury")
-				.requestSelectedInfo()
-				.enterPasswordInPopup(TEST_PASSWORD);
-
-		final var newBalance = accountsPanePage.getBalance("treasury");
-		logger.info("Old balance: {}", oldBalance.toTinybars());
-		logger.info("New balance: {}", newBalance.toTinybars());
-		assertTrue(newBalance.toTinybars() != oldBalance.toTinybars());
-
-	}
-
-	@Test
 	public void requestUnknownAccountsInfo_test() throws HederaClientException {
 
 		final var accounts = accountsPanePage.getAccounts().size();
