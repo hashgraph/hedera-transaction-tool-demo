@@ -45,7 +45,6 @@ public class JavaFXIDs {
 
 	// Home Pane
 	public final static String NEW_FILES_VBOX = "#newFilesViewVBox";
-	public final static String HISTORY_FILES_VBOX = "#historyFilesVBox";
 	public final static String MAIN_TRANSACTIONS_SCROLLPANE = "#homeFilesScrollPane";
 
 
@@ -90,7 +89,7 @@ public class JavaFXIDs {
 	public final static String SYSTEM_TRANSACTION_EXPIRATION_DATEPICKER = "#datePickerSystem";
 	public final static String CREATE_FILE_UPDATE_FILE_ID = "#updateFileID";
 	public final static String CREATE_FILE_UPDATE_CONTENTS = "#contentsTextField";
-
+	public static final String STORE_OR_SUBMIT_GRID_PANE = "#storeOrSubmitGridPane";
 	public final static String CREATE_FROM_TABLE = "#fromTransferTable";
 	public final static String CREATE_TO_TABLE = "#toTransferTable";
 
@@ -134,8 +133,6 @@ public class JavaFXIDs {
 
 	public final static String CREATE_KEYS_VBOX = "#createKeysVBox";
 	public final static String NICKNAME = "#nicknameTextBox";
-	public final static String PASSWORD_BOX = "#passwordBox";
-	public final static String RETYPE_PASSWORD_BOX = "#retypePasswordBox";
 	public final static String HIDDEN_ACCOUNT_INFO_TEXTFIELD = "#hiddenPathAccount";
 	public final static String CURRENT_ACCOUNT_PANE = "#currentAccountPane";
 	public final static String ACCOUNTS_RECOVER_KEY_INDEX = "#recoverIndexField";
@@ -178,4 +175,5 @@ public class JavaFXIDs {
 	public static final String FREEZE_SECONDS_FIELD = "#freezeSecondsField";
 	public static final String FREEZE_FILE_HASH_TEXT_FIELD = "#freezeFileHashTextField";
 	public static final String FREEZE_FILE_IDTEXT_FIELD = "#freezeFileIDTextField";
+
 }

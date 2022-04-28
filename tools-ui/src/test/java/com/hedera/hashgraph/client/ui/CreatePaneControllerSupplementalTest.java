@@ -282,8 +282,6 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setNewAccountMemo("Account memo test")
 				.setNewMaxTokenAss(250);
 
-
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -444,7 +442,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setAccountMemo(LOREM_IPSUM)
 				.setTokenAssociations(666);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 

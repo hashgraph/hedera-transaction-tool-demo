@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 
+import com.hedera.hashgraph.client.ui.JavaFXIDs;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.sdk.FreezeType;
@@ -49,7 +50,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMENTS_AREA;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_DATE_PICKER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_EDIT_KEY;
@@ -343,7 +343,9 @@ public class CreatePanePage {
 
 	public CreatePanePage createAndExport(final String folder) {
 		logger.info("Exporting transaction to {}", folder);
-		final HBox hBox = driver.find(CREATE_CHOICE_BOX);
+		final GridPane gridPane = driver.find(JavaFXIDs.STORE_OR_SUBMIT_GRID_PANE);
+		final var hBox = gridPane.getChildren().stream().filter(child -> child instanceof HBox).findFirst().map(
+				child -> (HBox) child).orElse(new HBox());
 		final var children = hBox.getChildren();
 
 		try {
@@ -353,7 +355,6 @@ public class CreatePanePage {
 					final var nodes = driver.findAll(folder);
 					for (final var node : nodes) {
 						if (node instanceof Label && !(node.getParent() instanceof GridPane)) {
-							logger.info("click!");
 							driver.clickOn(node);
 						}
 					}
