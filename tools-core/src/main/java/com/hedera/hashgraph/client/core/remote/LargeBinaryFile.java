@@ -159,12 +159,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var payerIdentifier = getPayerIdentifier(details);
 		final var tvStamp = getTransactionValidStamp(details);
 
-		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier, tvStamp)) {
+		if (checkNotNulls(fileIdentifier, nodeIdentifier, payerIdentifier)) {
+			return;
+		}
+		if (tvStamp == null) {
 			return;
 		}
 		final var timestamp = getTimestamp(tvStamp);
 		if (timestamp.equals(new Timestamp(0, 0))) {
-
 			return;
 		}
 
@@ -176,11 +178,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
-				Duration.ofSeconds(details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
+				Duration.ofSeconds(
+						details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
-		this.validIncrement = details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
+		this.validIncrement =
+				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
-		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+		this.transactionFee =
+				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
 		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
 
@@ -313,7 +318,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	 */
 	private Timestamp getTimestamp(final JsonObject tvStamp) {
 		var timestamp = new Timestamp(0, 0);
-
+		if (tvStamp == null) {
+			return timestamp;
+		}
 		try {
 			if (tvStamp.has("seconds") && tvStamp.has("nanos")) {
 				timestamp = new Timestamp(tvStamp.get("seconds").getAsLong(), tvStamp.get("nanos").getAsInt());

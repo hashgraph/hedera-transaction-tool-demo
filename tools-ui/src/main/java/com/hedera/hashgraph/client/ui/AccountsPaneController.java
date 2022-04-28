@@ -1748,11 +1748,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (!file.getName().endsWith(INFO_EXTENSION)) {
 			throw new HederaClientException(format("%s is not an info file", file.getAbsolutePath()));
 		}
-		final var names = FilenameUtils.getBaseName(file.getName()).split("-");
-
-		if (names.length == 2) {
-			return Identifier.parse(names[0], names[1]);
-		}
 
 		try {
 			final var info = AccountInfo.fromBytes(readBytes(file.getAbsolutePath()));
