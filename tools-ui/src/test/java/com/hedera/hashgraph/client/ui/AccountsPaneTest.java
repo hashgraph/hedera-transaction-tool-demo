@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
@@ -78,7 +79,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -90,6 +90,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
@@ -102,16 +103,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	@Before
 	public void setUp() throws Exception {
-
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("TransactionTools folder created");
-		}
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		if (new File(
 				currentRelativePath + "/src/test/resources/Transactions - Documents/OutputFiles/test1" +
@@ -441,29 +434,28 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@After
-	public void tearDown() throws IOException, BackingStoreException {
-		try {
-			final Path currentRelativePath = Paths.get("");
-			final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
-			if ((new File(s)).exists()) {
-				FileUtils.deleteDirectory(new File(s));
-			}
+	public void tearDown() throws IOException, BackingStoreException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			final String out =
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-							"Documents/OutputFiles/test1.council2@hederacouncil.org";
-			FileUtils.cleanDirectory(new File(out));
-
-			properties.resetProperties();
-
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNull(e);
+		final Path currentRelativePath = Paths.get("");
+		final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		if ((new File(s)).exists()) {
+			FileUtils.deleteDirectory(new File(s));
 		}
+
+		final String out =
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+		FileUtils.cleanDirectory(new File(out));
+
+		properties.resetProperties();
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
 	}
 
 	// region AUXILIARY METHODS

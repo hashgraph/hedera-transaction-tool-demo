@@ -91,6 +91,7 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
@@ -98,7 +99,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_H
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
-import static com.hedera.hashgraph.client.core.constants.Constants.SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -132,8 +132,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Pane settingsPane;
 	public StackPane initialStartupPane;
 	public StackPane keysPane;
+	public StackPane historyPane;
 
 	public Button homeButton;
+	public Button historyButton;
 	public Button createButton;
 	public Button accountsButton;
 	public Button keysButton;
@@ -174,6 +176,8 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public CreatePaneController createPaneController;
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
+	@FXML
+	public HistoryPaneController historyPaneController;
 
 
 	// Utility
@@ -191,8 +195,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
-		keyPairUtility = properties.getSetupPhase().equals(TEST_PHASE) ? new KeyPairUtility(
-				Constants.TEST_EXPIRATION_TIME) : new KeyPairUtility();
+		keyPairUtility = properties.getSetupPhase().equals(TEST_PHASE) ?
+				new KeyPairUtility(Constants.TEST_EXPIRATION_TIME) :
+				new KeyPairUtility();
 		keyStructureUtility = new KeyStructureUtility(this);
 
 		resetButtonBackgrounds();
@@ -246,11 +251,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			service.start();
 		}
 		initialStartupPaneController.injectMainController(this);
+		historyPaneController.injectMainController(this);
 		homePaneController.injectMainController(this);
 		settingsPaneController.injectMainController(this);
 		createPaneController.injectMainController(this);
 		keysPaneController.injectMainController(this);
 		accountsPaneController.injectMainController(this);
+
 
 		startupPhaseInitialization();
 
@@ -288,7 +295,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		// Then replace it with the key provided in the app resources.
 		final InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 
-		if (new File(SYSTEM_FOLDER).mkdirs()) {
+		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
 			logger.info("System folder created");
 		}
 
@@ -341,6 +348,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePane.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
+				historyPaneController.initializeHistoryPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
@@ -352,11 +360,15 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
+				historyPaneController.initializeHistoryPane();
+				historyPaneController.cleanHistory();
+				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + getSetupPhase());
@@ -388,7 +400,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				changeTab(homePane);
 				break;
 			case "createButton":
-//				createPaneController.initializeCreatePane();
 				changeTab(createPane);
 				break;
 			case "accountsButton":
@@ -402,6 +413,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			case "keysButton":
 				keysPaneController.initializeKeysPane();
 				changeTab(keysPane);
+				break;
+			case "historyButton":
+				changeTab(historyPane);
 				break;
 			default:
 				throw new IllegalStateException("Unexpected value: " + button.getId());

@@ -69,7 +69,8 @@ public class ToolFreezeTransaction extends ToolTransaction {
 		this.startTime = ((FreezeTransaction) transaction).getStartTime();
 		this.freezeType = ((FreezeTransaction) transaction).getFreezeType();
 		if (((FreezeTransaction) transaction).getFileId() != null) {
-			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()), MAINNET.toString());
+			this.fileID = new Identifier(Objects.requireNonNull(((FreezeTransaction) transaction).getFileId()),
+					MAINNET.toString());
 		}
 		if (((FreezeTransaction) transaction).getFileHash() != null) {
 			this.fileHash = ((FreezeTransaction) transaction).getFileHash();

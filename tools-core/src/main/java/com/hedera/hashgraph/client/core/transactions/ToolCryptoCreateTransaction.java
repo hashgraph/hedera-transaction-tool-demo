@@ -44,7 +44,6 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_M
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.trimString;
@@ -202,5 +201,15 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	@Override
+	public JsonObject asJson() {
+		final var asJson = super.asJson();
+		asJson.addProperty("initialBalance", initialBalance.toTinybars());
+		asJson.add("key", EncryptionUtils.keyToJson(key));
+		asJson.addProperty("autoRenewDuration", autoRenewDuration.getSeconds());
+		asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+		return asJson;
 	}
 }

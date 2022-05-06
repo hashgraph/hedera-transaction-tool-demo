@@ -19,9 +19,9 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519PublicKey;
@@ -49,13 +49,8 @@ import static org.apache.commons.io.FileUtils.contentEquals;
 
 public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(PublicKeyFile.class);
-
-	private Timestamp timestamp;
 	private final List<FileActions> actions = Arrays.asList(FileActions.ACCEPT, FileActions.DECLINE);
-
-	public PublicKeyFile() {
-		super();
-	}
+	private final Timestamp timestamp;
 
 	public PublicKeyFile(final FileDetails f) {
 		super(f);
@@ -128,11 +123,7 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		messages.add(l);
 
 		if (isHistory()) {
-			try {
-				messages = getHistory("key");
-			} catch (final HederaClientException e) {
-				logger.error(e);
-			}
+			messages = getHistory("key");
 		}
 
 		var count = 0;
@@ -154,12 +145,9 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode() + actions.hashCode() + timestamp.hashCode();
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		toJson.add("timestamp", timestamp.asJSON());
+		return toJson;
 	}
 }

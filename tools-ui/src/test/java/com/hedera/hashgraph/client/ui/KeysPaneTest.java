@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.KeysPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.KeysTableRow;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -58,6 +59,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
@@ -74,7 +76,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.PUBLIC_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNING_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -83,31 +84,30 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("ALL")
 public class KeysPaneTest extends TestBase {
+
+	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
-	private KeysPanePage keysPanePage;
-	private MainWindowPage mainWindowPage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
-	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+	private static final Path currentRelativePath = Paths.get("");
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	private final String storedMnemonic =
+	private static final String STORED_MNEMONIC =
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 
+	private KeysPanePage keysPanePage;
+	private MainWindowPage mainWindowPage;
+
+	private UserAccessibleProperties properties;
+
+
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("TransactionTools folder created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -139,7 +139,7 @@ public class KeysPaneTest extends TestBase {
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE, MNEMONIC_PATH));
@@ -712,29 +712,29 @@ public class KeysPaneTest extends TestBase {
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			final var currentRelativePath = Paths.get("");
-			final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
-			if ((new File(s)).exists()) {
-				FileUtils.deleteDirectory(new File(s));
-			}
+	public void tearDown() throws TimeoutException, IOException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			final var out =
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-							"Documents/OutputFiles/test1.council2@hederacouncil.org";
-			FileUtils.cleanDirectory(new File(out));
-
-			properties.resetProperties();
-
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNull(e);
+		final var currentRelativePath = Paths.get("");
+		final var s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
+		if ((new File(s)).exists()) {
+			FileUtils.deleteDirectory(new File(s));
 		}
+
+		final var out =
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
+						"Documents/OutputFiles/test1.council2@hederacouncil.org";
+		FileUtils.cleanDirectory(new File(out));
+
+		properties.resetProperties();
+
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
+
 	}
 
 	// region AUXILIARY METHODS

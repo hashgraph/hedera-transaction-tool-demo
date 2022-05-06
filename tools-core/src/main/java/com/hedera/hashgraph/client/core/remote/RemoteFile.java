@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -134,7 +136,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		this.name = FilenameUtils.getName(location);
 		this.type = parseType(FilenameUtils.getExtension(location));
 
-		final var filePath = Paths.get(parentPath, name);
+		final var filePath = Paths.get(location);
 		if (!this.type.equals(METADATA)) {
 			try {
 				final var attr =
@@ -154,6 +156,44 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 		this.valid = true;
 	}
+
+	public RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
+		final RemoteFile remoteFile;
+		switch (FileType.getType(fileDetails.getExtension())) {
+			case TRANSACTION:
+				remoteFile = new TransactionFile(fileDetails);
+				break;
+			case LARGE_BINARY:
+				remoteFile = new LargeBinaryFile(fileDetails);
+				break;
+			case BATCH:
+				remoteFile = new BatchFile(fileDetails);
+				break;
+			case COMMENT:
+				remoteFile = new CommentFile(fileDetails);
+				break;
+			case ACCOUNT_INFO:
+				remoteFile = new InfoFile(fileDetails);
+				break;
+			case PUBLIC_KEY:
+				remoteFile = new PublicKeyFile(fileDetails);
+				break;
+			case BUNDLE:
+				remoteFile = new BundleFile(fileDetails);
+				break;
+			case SOFTWARE_UPDATE:
+			case CONFIG:
+				remoteFile = new SoftwareUpdateFile(fileDetails);
+				break;
+			case METADATA:
+				remoteFile = new MetadataFile(fileDetails);
+				break;
+			default:
+				throw new HederaClientException(String.format("Unrecognized type %s", type));
+		}
+		return remoteFile;
+	}
+
 
 	public RemoteFile(final FileType type, final String parentPath, final long date) {
 		this.type = type;
@@ -506,7 +546,6 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		final var titleLabel = TRANSACTION.equals(type) ? setupTitle(
 				((TransactionFile) this).getTransactionType().toString()) : setupTitle(type.toKind());
 
-
 		final var commentsVBox = setupCommentsArea();
 
 		final var detailsGridPane = buildGridPane();
@@ -527,7 +566,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.maxWidthProperty().bind(fileVBox.widthProperty().divide(2));
 		}
 
-		fileVBox.getChildren().addAll(titleLabel, hBox);
+		if (!isHistory()) {
+			fileVBox.getChildren().add(titleLabel);
+		}
+		fileVBox.getChildren().add(hBox);
 		return fileVBox;
 	}
 
@@ -578,7 +620,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * 		the name of the key or file id
 	 * @return a label with a message appropriate to the situation
 	 */
-	public List<Label> getHistory(final String entity) throws HederaClientException {
+	public List<Label> getHistory(final String entity) {
 		final List<Label> messages = new ArrayList<>();
 		final var metadataFileList = getSigningHistory();
 		for (final var m : metadataFileList) {
@@ -619,8 +661,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return true if the file has been accepted.
 	 */
 	public boolean accepted() {
-		List<MetadataAction> signingHistory = new ArrayList<>();
-		signingHistory = getSigningHistory();
+		final var signingHistory = getSigningHistory();
 		return signingHistory.stream().anyMatch(metadataAction -> metadataAction.getActions().equals(Actions.ACCEPT));
 	}
 
@@ -680,6 +721,42 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		titleLabel.styleProperty().bind(
 				Bindings.concat("-fx-font-size: ", Constants.FONT_SIZE.asString(), "; -fx-font-weight: bold;"));
 		return titleLabel;
+	}
+
+	public String getTitle() {
+		if (!TRANSACTION.equals(type)) {
+			return type.toKind();
+		}
+
+		final var title = ((TransactionFile) this).getTransactionType().toString();
+
+		if ("Content Transaction".equals(title)) {
+			final var toolSystemTransaction = (ToolSystemTransaction) ((TransactionFile) this).getTransaction();
+			return ((toolSystemTransaction.isDelete() ? "Remove " : "Restore ") + (toolSystemTransaction.isFile() ?
+					"File" : "Contract"));
+		}
+		if ("Freeze Transaction".equals(title)) {
+			final var freezeType = ((ToolFreezeTransaction) ((TransactionFile) this).getTransaction()).getFreezeType();
+			switch (freezeType) {
+				case FREEZE_ONLY:
+					return ("Freeze Only Transaction");
+
+				case PREPARE_UPGRADE:
+					return ("Prepare Upgrade Transaction");
+
+				case FREEZE_UPGRADE:
+					return ("Freeze and Upgrade Transaction");
+
+				case FREEZE_ABORT:
+					return ("Abort Freeze Transaction");
+
+				case TELEMETRY_UPGRADE:
+					return ("Telemetry Upgrade Transaction");
+				default:
+					throw new IllegalStateException("Unexpected value: " + freezeType);
+			}
+		}
+		return ((TransactionFile) this).getTransaction().getTransactionType().toString();
 	}
 
 	private void showCreatorComments(final VBox commentsVBox) throws HederaClientException {
@@ -821,7 +898,14 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	@Override
 	public int hashCode() {
-		return new File(parentPath, name).hashCode();
+		final var file = new File(parentPath, name);
+		var bytes = new byte[0];
+		try {
+			bytes = Files.readAllBytes(file.toPath());
+		} catch (final IOException e) {
+			logger.error(e.getMessage());
+		}
+		return Arrays.hashCode(bytes);
 	}
 
 	@Override
@@ -833,5 +917,29 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		// Lastly the files are ordered according to the modification date (not expiration)
 		return Long.compare(this.getDate(), o.getDate());
+	}
+
+	public JsonObject toJson() {
+		final var signers = new JsonArray();
+		signerSet.stream().map(File::getAbsolutePath).forEachOrdered(signers::add);
+
+		final var extras = new JsonArray();
+		extraSigners.stream().map(File::getAbsolutePath).forEachOrdered(extras::add);
+
+		final var toJson = new JsonObject();
+		toJson.add("signerSet", signers);
+		toJson.add("extraSigners", extras);
+		toJson.addProperty("type", type.getExtension());
+		toJson.addProperty("name", name);
+		toJson.addProperty("parentPath", parentPath);
+		toJson.addProperty("date", date);
+		toJson.addProperty("history", history);
+		toJson.addProperty("valid", valid);
+		toJson.addProperty("hasComments", hasComments);
+		if (hasComments) {
+			toJson.addProperty("commentsFile", commentsFile.parentPath + "/" + commentsFile.getName());
+		}
+		toJson.addProperty("signDateInSecs", signDateInSecs);
+		return toJson;
 	}
 }

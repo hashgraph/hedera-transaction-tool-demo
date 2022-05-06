@@ -52,10 +52,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -68,8 +68,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private final List<VBox> publicKeyBoxes = new ArrayList<>();
 	private final List<VBox> accountInfoBoxes = new ArrayList<>();
 	private final List<VBox> batchBoxes = new ArrayList<>();
@@ -79,23 +79,18 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	private final List<VBox> freezeBoxes = new ArrayList<>();
 	private final List<VBox> bundleBoxes = new ArrayList<>();
 
-
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE + "/Accounts/0.0.56"));
 
-		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
+		final var properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + "Files/user.properties", "");
 
 		if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory" +
 				"/TransactionTools/Keys/").mkdirs()) {
@@ -124,7 +119,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
@@ -161,7 +156,11 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
 		batchBoxes.clear();
@@ -392,20 +391,6 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(finalKeys.contains("KeyStore-1.pub"));
 		assertTrue(finalKeys.contains("KeyStore-2.pub"));
 		assertTrue(finalKeys.contains("KeyStore-3.pub"));
-
-		// test that the bundle exists in history
-
-		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
-
-		final var labels = new ArrayList<String>();
-		for (final var node : nodes) {
-			if (node instanceof Label) {
-				labels.add(((Label) node).getText());
-			}
-		}
-
-		assertTrue(labels.stream().anyMatch(f -> f.contains("AccountOne")));
-		assertTrue(labels.stream().anyMatch(f -> f.contains("Treasury test")));
 
 	}
 

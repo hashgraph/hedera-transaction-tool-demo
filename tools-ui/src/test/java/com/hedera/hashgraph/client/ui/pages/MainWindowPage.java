@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.ui.TestBase;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_BUTTON;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.HOME_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SETTINGS_BUTTON;
@@ -64,6 +65,12 @@ public class MainWindowPage {
 
 		driver.find(SETTINGS_BUTTON);
 		driver.clickOn(SETTINGS_BUTTON);
+		return new MainWindowPage(driver);
+	}
+
+	public MainWindowPage clickOnHistoryButton(){
+		driver.find(HISTORY_BUTTON);
+		driver.clickOn(HISTORY_BUTTON);
 		return new MainWindowPage(driver);
 	}
 

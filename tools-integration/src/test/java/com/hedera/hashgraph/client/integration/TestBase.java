@@ -45,6 +45,7 @@ public class TestBase extends ApplicationTest {
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
+		System.gc();
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
 

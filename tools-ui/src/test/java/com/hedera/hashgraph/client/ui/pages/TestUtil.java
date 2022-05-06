@@ -38,6 +38,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
@@ -46,12 +47,20 @@ import org.testfx.api.FxRobot;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_DELETED_ACCOUNTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_KEYS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_LOGS;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 
 @SuppressWarnings("rawtypes")
@@ -345,5 +354,31 @@ public class TestUtil {
 		final var tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
 		final var vBox = (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
 		return findChoiceBoxes(vBox.getChildren());
+	}
+
+	public static void buildFolders() throws IOException {
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
+		}
+
+		if (new File(DEFAULT_ACCOUNTS).mkdirs()) {
+			logger.info("Accounts folder created");
+		}
+		if (new File(DEFAULT_DELETED_ACCOUNTS).mkdirs()) {
+			logger.info("Deleted accounts folder created");
+		}
+		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
+			logger.info("System folder created");
+		}
+		if (new File(DEFAULT_HISTORY).mkdirs()) {
+			logger.info("History folder created");
+		}
+		if (new File(DEFAULT_KEYS).mkdirs()) {
+			logger.info("Keys folder created");
+		}
+		if (new File(DEFAULT_LOGS).mkdirs()) {
+			logger.info("Logs folder created");
+		}
+
 	}
 }

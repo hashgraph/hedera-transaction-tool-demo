@@ -399,7 +399,7 @@ public class RemoteFilesMap {
 				s = (SoftwareUpdateFile) file;
 			}
 		}
-		if (!s.isExpired()) {
+		if (!s.isExpired() && s.getTimestamp() != null) {
 			add(s);
 		}
 

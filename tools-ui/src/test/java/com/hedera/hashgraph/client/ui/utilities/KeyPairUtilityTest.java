@@ -24,7 +24,9 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
+import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,24 +53,21 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("StatementWithEmptyBody")
+
 public class KeyPairUtilityTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
 
 	private final Controller controller = new Controller();
+	MainWindowPage mainWindowPage;
 	HomePanePage homePanePage;
+	HistoryWindowPage historyWindowPage;
 
 	@Before
 	public void setUp() throws Exception {
 		final var currentRelativePath = Paths.get("");
 
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE, KEYS_STRING));
@@ -104,7 +103,7 @@ public class KeyPairUtilityTest extends TestBase {
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE, MNEMONIC_PATH));
@@ -121,7 +120,9 @@ public class KeyPairUtilityTest extends TestBase {
 		properties.setVersionString(version);
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
+		mainWindowPage = new MainWindowPage(this);
 		homePanePage = new HomePanePage(this);
+		historyWindowPage = new HistoryWindowPage(this);
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
@@ -143,8 +144,10 @@ public class KeyPairUtilityTest extends TestBase {
 		clickOn("SIGN\u2026");
 
 		homePanePage.enterPasswordInPopup("123654789");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
 
-		clickOn("ADD MORE SIGNATURES");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("SIGN\u2026");
@@ -156,7 +159,10 @@ public class KeyPairUtilityTest extends TestBase {
 			// wait for timer to expire
 		}
 
-		clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 		popup = getPopupNodes();
@@ -173,7 +179,10 @@ public class KeyPairUtilityTest extends TestBase {
 
 		homePanePage.enterPasswordInPopup("123654789");
 
-		clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("apopowycz-tx");
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
@@ -190,7 +199,10 @@ public class KeyPairUtilityTest extends TestBase {
 		homePanePage.enterPasswordInPopup(TEST_PASSWORD);
 
 
-		clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("shunjan-tx");
 		clickOn("ADD MORE");
@@ -202,19 +214,24 @@ public class KeyPairUtilityTest extends TestBase {
 		assertNull(getPopupNodes());
 
 		final var startTimer = Instant.now();
-		while (Instant.now().isBefore(startTimer.plusSeconds(TEST_EXPIRATION_TIME + 1))) {
+		while (Instant.now().isBefore(startTimer.plusSeconds((long) (TEST_EXPIRATION_TIME * 1.5)))) {
 			// wait for timer to expire
 		}
-		ensureVisible(find("ADD MORE SIGNATURES"));
-		clickOn("ADD MORE SIGNATURES");
+
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("SIGN\u2026");
 
 		assertNotNull(getPopupNodes());
 		homePanePage.enterPasswordInPopup("123654789");
 
-		ensureVisible(find("ADD MORE SIGNATURES"));
-		clickOn("ADD MORE SIGNATURES");
+		mainWindowPage.clickOnHistoryButton();
+		historyWindowPage.clickOnResign("1743832800-0_0_94-58824159.tx");
+		mainWindowPage.clickOnHomeButton();
+
 		clickOn("lbaird-tx");
 		clickOn("ADD MORE");
 

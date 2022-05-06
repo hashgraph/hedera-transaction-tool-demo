@@ -50,6 +50,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
@@ -82,13 +83,10 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 	@Before
 	public void setUp() {
 		try {
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
+			System.gc();
+			logger.info("Starting test class: {}", getClass().getSimpleName());
+			TestUtil.buildFolders();
 
-			if (new File(DEFAULT_STORAGE).mkdirs()) {
-				logger.info("TransactionTools folder created");
-			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 			if (new File(currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
@@ -123,7 +121,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			properties.setHash("123456789".toCharArray());
 
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-			setupTransactionDirectory(DEFAULT_STORAGE);
+			//setupTransactionDirectory(DEFAULT_STORAGE);
 
 			final Controller controller = new Controller();
 			final var version = controller.getVersion();
@@ -181,30 +179,29 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = (new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
-					});
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f :
-					transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = (new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org")).listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(".tx") || name.endsWith(".txt") || name.endsWith("txsig");
+				});
+
+		assert transactions != null;
+		for (final var f :
+				transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 

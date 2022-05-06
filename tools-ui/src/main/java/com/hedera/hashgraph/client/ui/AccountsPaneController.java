@@ -711,28 +711,22 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		nicknameColumn.setCellValueFactory(new PropertyValueFactory<>("nickname"));
 		nicknameColumn.prefWidthProperty().bind(table.widthProperty().divide(40).multiply(7));
 		nicknameColumn.setStyle("-fx-alignment: TOP-LEFT; -fx-padding: 10");
-		nicknameColumn.setCellFactory(
-				new Callback<>() {
-					@Override
-					public TableCell<AccountLineInformation, String> call(
-							final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-						return new TableCell<>() {
-							@Override
-							protected void updateItem(final String s, final boolean b) {
-								super.updateItem(s, b);
-								if (isEmpty()) {
-									setText("");
-								} else {
-									setWrapText(true);
-									setText(s);
-								}
-							}
-						};
-					}
-				});
+		nicknameColumn.setCellFactory(p -> new TableCell<>() {
+			@Override
+			protected void updateItem(final String s, final boolean b) {
+				super.updateItem(s, b);
+				if (isEmpty()) {
+					setText("");
+				} else {
+					setWrapText(true);
+					setText(s);
+				}
+			}
+		});
+
+
 		return nicknameColumn;
 	}
-
 
 	private TableColumn<AccountLineInformation, String> getLastRefreshDateColumn(
 			final TableView<AccountLineInformation> table) {
@@ -800,27 +794,20 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkColumn.setCellValueFactory(new PropertyValueFactory<>("ledgerId"));
 		networkColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(2));
 		networkColumn.setStyle(COLUMN_STYLE_STRING);
+		networkColumn.setCellFactory(p -> new TableCell<>() {
+			@Override
+			protected void updateItem(final String s, final boolean b) {
+				super.updateItem(s, b);
+				if (isEmpty()) {
+					setText("");
+				} else {
+					setFont(Font.font("Consolas", 15));
+					setText(s);
+				}
+			}
+		});
 
-		networkColumn.setCellFactory(
 
-				new Callback<>() {
-					@Override
-					public TableCell<AccountLineInformation, String> call(
-							final TableColumn<AccountLineInformation, String> accountLineInformationStringTableColumn) {
-						return new TableCell<>() {
-							@Override
-							protected void updateItem(final String s, final boolean b) {
-								super.updateItem(s, b);
-								if (isEmpty()) {
-									setText("");
-								} else {
-									setFont(Font.font("Consolas", 15));
-									setText(s);
-								}
-							}
-						};
-					}
-				});
 		return networkColumn;
 	}
 
@@ -1191,32 +1178,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (!noise) {
 				if (t1 instanceof String) {
-					final var selectedNetwork = (String) t1;
-					final var oldName = new Identifier(info.accountId,
-							accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
-					final var newName = new Identifier(info.accountId, selectedNetwork).toReadableAccountAndNetwork();
-					final var oldFiles =
-							new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.contains(oldName));
-					for (final var oldFile : oldFiles) {
-						try {
-							Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
-						} catch (final IOException e) {
-							logger.error("Cannot rename file: {}", e.getMessage());
-						}
-					}
-
-					updateNicknamesFile(accountLineInformation, oldName, newName);
-
-					final var oldBalance = balances.get(oldName);
-					balances.remove(oldName);
-					balances.add(newName, oldBalance);
-
-					accountLineInformation.setLedgerID(selectedNetwork);
-					if (isSigner(info)) {
-						setupFeePayers();
-						setupFeePayerChoiceBox();
-					}
-					initializeAccountPane();
+					handleNetworkString(info, accountLineInformation, (String) t1);
 				}
 				if (t1 instanceof Separator) {
 					networkChoiceBox.getSelectionModel().select(o);
@@ -1227,6 +1189,35 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var networkTextField = setupBoxTextField(accountLineInformation.getLedgerId());
 		networkBox.getChildren().add(doesNotHaveLedger ? networkChoiceBox : networkTextField);
 		return networkBox;
+	}
+
+	private void handleNetworkString(
+			final AccountInfo info, final AccountLineInformation accountLineInformation, final String t1) {
+		final var oldName = new Identifier(info.accountId,
+				accountLineInformation.getLedgerId()).toReadableAccountAndNetwork();
+		final var newName = new Identifier(info.accountId, t1).toReadableAccountAndNetwork();
+		final var oldFiles =
+				new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.contains(oldName));
+		for (final var oldFile : oldFiles) {
+			try {
+				Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
+			} catch (final IOException e) {
+				logger.error("Cannot rename file: {}", e.getMessage());
+			}
+		}
+
+		updateNicknamesFile(accountLineInformation, oldName, newName);
+
+		final var oldBalance = balances.get(oldName);
+		balances.remove(oldName);
+		balances.add(newName, oldBalance);
+
+		accountLineInformation.setLedgerID(t1);
+		if (isSigner(info)) {
+			setupFeePayers();
+			setupFeePayerChoiceBox();
+		}
+		initializeAccountPane();
 	}
 
 	private void updateNicknamesFile(
@@ -1653,6 +1644,12 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		var responseTuple = new ResponseTuple();
 		while (responseTuple.getNickname().equals("")) {
 			responseTuple = TwoButtonPopup.display(file, newFiles > 1);
+			if (responseTuple.getResponseEnum().equals(ResponseEnum.UNKNOWN)) {
+				responseTuple.setNickname("");
+				PopupMessage.display("Missing nickname", "A nickname for the account must be chosen. Please try again.",
+						CONTINUE_LABEL);
+				continue;
+			}
 			if (nicknames.contains(responseTuple.getNickname())) {
 				PopupMessage.display("Duplicate nickname",
 						format(NICKNAME_IN_USE_MESSAGE, responseTuple.getNickname()),
@@ -1741,11 +1738,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		if (!file.getName().endsWith(INFO_EXTENSION)) {
 			throw new HederaClientException(format("%s is not an info file", file.getAbsolutePath()));
-		}
-		final var names = FilenameUtils.getBaseName(file.getName()).split("-");
-
-		if (names.length == 2) {
-			return Identifier.parse(names[0], names[1]);
 		}
 
 		try {
@@ -2045,5 +2037,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 
 	}
+
+
+	// endregion
 
 }

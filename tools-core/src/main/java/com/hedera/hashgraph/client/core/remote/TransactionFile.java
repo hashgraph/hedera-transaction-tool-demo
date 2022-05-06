@@ -368,58 +368,80 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		if (updateTransaction.getAutoRenewDuration() != null) {
-			detailsGridPane.add(new Label("Auto renew period: "), 0, count);
-			final var labelString = hasOldInfo ?
-					String.format("%s seconds (updated from %s s)",
-							updateTransaction.getAutoRenewDuration().getSeconds(),
-							oldInfo.get("autoRenewPeriod").getAsJsonObject().get("seconds").getAsString()) :
-					String.format("%s seconds", updateTransaction.getAutoRenewDuration().getSeconds());
-			final var label = new Label(labelString);
-			label.setWrapText(true);
-			detailsGridPane.add(label, 1, count++);
+			count = handleAutoRenewDuration(detailsGridPane, count, updateTransaction, hasOldInfo);
 		}
 
 		if (updateTransaction.isReceiverSignatureRequired() != null) {
-			detailsGridPane.add(sigReqLabel, 0, count);
-			final var oldValue = (hasOldInfo && oldInfo.has("receiverSignatureRequired")) ?
-					oldInfo.get("receiverSignatureRequired").getAsString() :
-					"FALSE";
-			final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
-			final var labelString = hasOldInfo ?
-					String.format("%s (updated from %s)", newValue, oldValue) :
-					String.format("%s", newValue);
-			final var label = new Label(labelString);
-			label.setWrapText(true);
-			detailsGridPane.add(label, 1, count++);
+			count = handleIsReceiverSigRequired(detailsGridPane, count, updateTransaction, sigReqLabel, hasOldInfo);
 		}
 
 		if (updateTransaction.getMaxTokenAssociations() != null) {
-			final var labelMAT = new Label("Maximum automatic token associations");
-			labelMAT.setWrapText(true);
-			detailsGridPane.add(labelMAT, 0, count);
-			final var newValue = updateTransaction.getMaxTokenAssociations();
-			final var labelString = (hasOldInfo && oldInfo.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) ?
-					String.format("%d (updated from %d)", newValue,
-							oldInfo.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt()) :
-					String.format("%d", newValue);
-			final var label = new Label(labelString);
-			label.setWrapText(true);
-			detailsGridPane.add(label, 1, count++);
+			count = handleMaxTokenAssociations(detailsGridPane, count, updateTransaction, hasOldInfo);
 		}
 
 		if (updateTransaction.getAccountMemo() != null) {
-			detailsGridPane.add(new Label("Account memo"), 0, count);
-			final var newValue = updateTransaction.getAccountMemo();
-			final var labelString = (hasOldInfo && oldInfo.has(ACCOUNT_MEMO_FIELD_NAME)) ?
-					String.format("%s (updated from %s)", newValue,
-							oldInfo.get(ACCOUNT_MEMO_FIELD_NAME).getAsString()) :
-					String.format("%s", newValue);
-			final var label = new Label(labelString);
-			label.setWrapText(true);
-			detailsGridPane.add(label, 1, count);
+			handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
 		}
 	}
 
+	private int handleAutoRenewDuration(final GridPane detailsGridPane, int count,
+			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
+		detailsGridPane.add(new Label("Auto renew period: "), 0, count);
+		final var labelString = hasOldInfo ?
+				String.format("%s seconds (updated from %s s)",
+						updateTransaction.getAutoRenewDuration().getSeconds(),
+						oldInfo.get("autoRenewPeriod").getAsJsonObject().get("seconds").getAsString()) :
+				String.format("%s seconds", updateTransaction.getAutoRenewDuration().getSeconds());
+		final var label = new Label(labelString);
+		label.setWrapText(true);
+		detailsGridPane.add(label, 1, count++);
+		return count;
+	}
+
+	private int handleIsReceiverSigRequired(final GridPane detailsGridPane, int count,
+			final ToolCryptoUpdateTransaction updateTransaction, final Label sigReqLabel, final boolean hasOldInfo) {
+		detailsGridPane.add(sigReqLabel, 0, count);
+		final var oldValue = (hasOldInfo && oldInfo.has("receiverSignatureRequired")) ?
+				oldInfo.get("receiverSignatureRequired").getAsString() :
+				"FALSE";
+		final var newValue = updateTransaction.isReceiverSignatureRequired().toString().toUpperCase(Locale.ROOT);
+		final var labelString = hasOldInfo ?
+				String.format("%s (updated from %s)", newValue, oldValue) :
+				String.format("%s", newValue);
+		final var label = new Label(labelString);
+		label.setWrapText(true);
+		detailsGridPane.add(label, 1, count++);
+		return count;
+	}
+
+	private int handleMaxTokenAssociations(final GridPane detailsGridPane, int count,
+			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
+		final var labelMAT = new Label("Maximum automatic token associations");
+		labelMAT.setWrapText(true);
+		detailsGridPane.add(labelMAT, 0, count);
+		final var newValue = updateTransaction.getMaxTokenAssociations();
+		final var labelString = (hasOldInfo && oldInfo.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) ?
+				String.format("%d (updated from %d)", newValue,
+						oldInfo.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt()) :
+				String.format("%d", newValue);
+		final var label = new Label(labelString);
+		label.setWrapText(true);
+		detailsGridPane.add(label, 1, count++);
+		return count;
+	}
+
+	private void handleAccountMemo(final GridPane detailsGridPane, final int count,
+			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
+		detailsGridPane.add(new Label("Account memo"), 0, count);
+		final var newValue = updateTransaction.getAccountMemo();
+		final var labelString = (hasOldInfo && oldInfo.has(ACCOUNT_MEMO_FIELD_NAME)) ?
+				String.format("%s (updated from %s)", newValue,
+						oldInfo.get(ACCOUNT_MEMO_FIELD_NAME).getAsString()) :
+				String.format("%s", newValue);
+		final var label = new Label(labelString);
+		label.setWrapText(true);
+		detailsGridPane.add(label, 1, count);
+	}
 
 	/**
 	 * Add the SYSTEM exclusive fields to the grid pane
@@ -605,6 +627,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		return super.getSigningPublicKeys();
 	}
+
+
 
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,
 			final List<Pair<String, String>> receivers) {

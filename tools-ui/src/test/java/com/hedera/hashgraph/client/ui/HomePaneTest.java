@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
@@ -51,6 +50,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -59,6 +59,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -66,7 +67,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.HISTORY_FILES_VBOX;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
@@ -80,15 +82,12 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
 	protected static final String PASSWORD = "123456789";
 	public static final int ONE_SECOND = 1000;
-	private HomePanePage homePanePage;
-	private MainWindowPage mainWindowPage;
 
-	private final Path currentRelativePath = Paths.get("");
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
 	private final List<VBox> publicKeyBoxes = new ArrayList<>();
 	private final List<VBox> accountInfoBoxes = new ArrayList<>();
 	private final List<VBox> batchBoxes = new ArrayList<>();
@@ -96,18 +95,20 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	private final List<VBox> softwareBoxes = new ArrayList<>();
 	private final List<VBox> systemBoxes = new ArrayList<>();
 	private final List<VBox> freezeBoxes = new ArrayList<>();
+	private final List<VBox> bundleBoxes = new ArrayList<>();
+	private final Path currentRelativePath = Paths.get("");
 
+	private HomePanePage homePanePage;
+	private MainWindowPage mainWindowPage;
+
+
+	private UserAccessibleProperties properties;
 
 	@Before
 	public void setUp() throws Exception {
 
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (new File(DEFAULT_STORAGE).mkdirs()) {
-			logger.info("Transaction tools directory created");
-		}
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -142,7 +143,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		properties.setOneDriveCredentials(emailMap);
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
@@ -156,6 +157,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
 				new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
 
+		final var historyMap = new File(DEFAULT_SYSTEM_FOLDER, HISTORY_MAP_JSON);
+		Files.deleteIfExists(historyMap.toPath());
+
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
 		FxToolkit.registerPrimaryStage();
@@ -163,6 +167,9 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage = new HomePanePage(this);
 		mainWindowPage = new MainWindowPage(this);
+
+		mainWindowPage.clickOnHistoryButton();
+		mainWindowPage.clickOnHomeButton();
 
 		initBoxes();
 	}
@@ -287,7 +294,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void findPublicKeysAndAcceptOne_Test() {
+	public void findPublicKeysAndAcceptOne_Test() throws HederaClientException {
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -302,27 +309,15 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		homePanePage.clickOn2ButtonBar(index, publicKeyBoxes.get(1));
 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
-
-		sleep(ONE_SECOND);
-
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size());
 
-		final var acceptedKey = (VBox) historyFiles.get(0);
-		final var legend =
-				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
-
-		assertTrue(legend instanceof Label);
-		assertTrue(((Label) legend).getText().contains("accepted on"));
-
-		assertEquals(2, Objects.requireNonNull(
-				new File(storage).listFiles(pathname -> pathname.getName().endsWith(Constants.PUB_EXTENSION))).length);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertEquals(1, historyMap.size());
 
 	}
 
 	@Test
-	public void findPublicKeysAndRejectOne_Test() {
+	public void findPublicKeysAndRejectOne_Test() throws HederaClientException {
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -336,20 +331,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		sleep(ONE_SECOND);
 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
-
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size()); // see other note
 
-		final var acceptedKey = (VBox) historyFiles.get(0);
-		final var legend =
-				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
-
-		assertTrue(legend instanceof Label);
-		assertTrue(((Label) legend).getText().contains("declined on"));
-
-		assertEquals(1, Objects.requireNonNull(
-				new File(storage).listFiles(pathname -> pathname.getName().endsWith(Constants.PUB_EXTENSION))).length);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertEquals(1, historyMap.size());
 
 	}
 
@@ -369,52 +354,28 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.enterStringInPopup("testAccount");
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size()); // see other note
-
-
-		final var acceptedKey = (VBox) historyFiles.get(0);
-		final var legend =
-				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
-
-
-		assertTrue(legend instanceof Label);
-		assertTrue(((Label) legend).getText().contains("accepted on"));
-
 		assertEquals(12,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 	}
 
 	@Test
-	public void findAccountInfosAndRejectOne_Test() {
+	public void findAccountInfosAndRejectOne_Test() throws HederaClientException {
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
 
 		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,
 				Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
-		sleep(ONE_SECOND);
-
 		homePanePage.clickOn2ButtonBar(1, accountInfoBoxes.get(1));
 
-		sleep(ONE_SECOND);
+		final var map = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
 
+		assertEquals(1, map.size());
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find("#historyFilesVBox")).getChildren();
 
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-
-		assertEquals(1, historyFiles.size());
-
-		final var acceptedKey = (VBox) historyFiles.get(0);
-		final var legend =
-				((GridPane) ((HBox) acceptedKey.getChildren().get(1)).getChildren().get(0)).getChildren().get(0);
-
-		assertTrue(legend instanceof Label);
-		assertTrue(((Label) legend).getText().contains("declined on"));
-
 		assertEquals(10, Objects.requireNonNull(new File(storage).listFiles(File::isFile)).length);
 
 	}
@@ -499,7 +460,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void declineBatchTransaction_Test() {
+	public void declineBatchTransaction_Test() throws HederaClientException {
 		sleep(ONE_SECOND);
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -514,21 +475,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
-
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size()); // see other note
 
-		final var out =
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
-		if (new File(out).mkdirs()) {
-			logger.info("Output directory created");
-		}
-
-		final var extensions = new String[] { "zip" };
-		final var x = FileUtils.listFiles(new File(out), extensions, false);
-		assertEquals(0, x.size());
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertEquals(1, historyMap.size());
 
 	}
 
@@ -550,7 +500,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 			final var timestamp = new Timestamp(1675214610, 0);
 			final var localDateTime = timestamp.asReadableLocalString();
 			final var utcDateTime = timestamp.asUTCString().replace("_", " ");
-
 			for (final var n : gridPane.getChildren()) {
 				if (n instanceof Label) {
 					final var text = ((Label) n).getText();
@@ -610,7 +559,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void declineTransaction_Test() {
+	public void declineTransaction_Test() throws HederaClientException {
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -623,21 +572,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		final var refreshFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
-		final var historyFiles = ((VBox) find(HISTORY_FILES_VBOX)).getChildren();
-
 		assertEquals(totalBoxes - 1, refreshFiles.size());
-		assertEquals(1, historyFiles.size()); // see other note
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertEquals(1, historyMap.size());
 
-		final var out =
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-						"Documents/OutputFiles/test1.council2@hederacouncil.org";
-
-		if (new File(out).mkdirs()) {
-			logger.info("Output directory created");
-		}
-
-		final var zips = findByStringExtension(new File(out), "zip");
-		assertEquals(0, zips.size());
 	}
 
 	@Test
@@ -703,7 +641,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
-
 		final var children = systemBoxes.get(1).getChildren();
 
 		// Check the time and local time are correct
@@ -812,7 +749,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void transactionSignHistory_Test() {
+	public void transactionSignHistory_Test() throws HederaClientException {
 
 		boolean found = false;
 		int k = 0;
@@ -853,31 +790,23 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(reject);
 
 		// make sure history order is correct
-		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
-
-		var declinedFound = false;
-		var keyFound = false;
-		for (final var node : nodes) {
-			if (node instanceof Label) {
-				final var text = ((Label) node).getText();
-				if (text.contains("Declined on")) {
-					declinedFound = true;
-				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
-					keyFound = true;
-
-					// declined should be first
-					assertTrue(declinedFound);
-				}
-			}
-		}
-
-		assertTrue(declinedFound);
-		assertTrue(keyFound);
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertTrue(historyMap.size() > 0);
+		final var transactionHistory = historyMap.get(0).getAsJsonObject();
+		final var actions = transactionHistory.get("actions").getAsJsonArray();
+		assertEquals(3, actions.size());
+		final var element0 = actions.get(0);
+		assertTrue(element0.getAsString().toUpperCase(Locale.ROOT).contains("DECLINE"));
+		final var element1 = actions.get(1);
+		assertTrue(element1.getAsString().toUpperCase(Locale.ROOT).contains("ACCEPT"));
+		final var element2 = actions.get(2);
+		assertTrue(element2.getAsString().toUpperCase(Locale.ROOT).contains("DECLINE"));
+		logger.info("Done");
 
 	}
 
 	@Test
-	public void transactionCancel_Test() {
+	public void transactionCancel_Test() throws HederaClientException {
 
 		boolean found = false;
 		int k = 0;
@@ -918,27 +847,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		clickOn(cancel);
 
 		// make sure history order is correct
-		final var nodes = lookup(HISTORY_FILES_VBOX).lookup(".label").queryAll();
-
-		var declinedCount = 0;
-		var keyCount = 0;
-		for (final var node : nodes) {
-			if (node instanceof Label) {
-				final var text = ((Label) node).getText();
-				if (text.contains("Declined on")) {
-					++declinedCount;
-				} else if (text.contains(PRINCIPAL_TESTING_KEY)) {
-					keyCount++;
-
-					// declined should be first
-					assertTrue(keyCount > 0);
-				}
-			}
-		}
-
-		assertEquals(declinedCount, 1);
-		assertEquals(keyCount, 1);
-
+		final var historyMap = readJsonArray(DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON);
+		assertTrue(historyMap.size() > 0);
+		final var transactionHistory = historyMap.get(0).getAsJsonObject();
+		final var actions = transactionHistory.get("actions").getAsJsonArray();
+		assertEquals(2, actions.size());
+		final var element0 = actions.get(0);
+		assertTrue(element0.getAsString().toUpperCase(Locale.ROOT).contains("DECLINE"));
+		final var element1 = actions.get(1);
+		assertTrue(element1.getAsString().toUpperCase(Locale.ROOT).contains("ACCEPT"));
+		logger.info("Done");
 	}
 
 	private void initBoxes() {
@@ -949,14 +867,17 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		softwareBoxes.clear();
 		systemBoxes.clear();
 		freezeBoxes.clear();
+		bundleBoxes.clear();
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
+
+		logger.info("========>>> {}", newFiles.size());
 		separateBoxes(newFiles, publicKeyBoxes, accountInfoBoxes, batchBoxes, transactionBoxes, softwareBoxes,
-				systemBoxes, freezeBoxes);
+				systemBoxes, freezeBoxes, bundleBoxes);
 
 		assertEquals(newFiles.size(),
 				publicKeyBoxes.size() + accountInfoBoxes.size() + batchBoxes.size() + transactionBoxes.size()
-						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size());
+						+ softwareBoxes.size() + systemBoxes.size() + freezeBoxes.size() + bundleBoxes.size());
 	}
 
 	private List<File> findByStringExtension(final File dir, final String ext) {
@@ -964,11 +885,15 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		return new ArrayList<>(FileUtils.listFiles(dir, extensions, false));
 	}
 
-	private void separateBoxes(final ObservableList<Node> newFiles, final List<VBox> publicKeyBoxes,
+	private void separateBoxes(final ObservableList<Node> newFiles,
+			final List<VBox> publicKeyBoxes,
 			final List<VBox> accountInfoBoxes,
-			final List<VBox> batchBoxes, final List<VBox> transactionBoxes, final List<VBox> softwareBoxes,
+			final List<VBox> batchBoxes,
+			final List<VBox> transactionBoxes,
+			final List<VBox> softwareBoxes,
 			final List<VBox> systemBoxes,
-			final List<VBox> freezeBoxes) {
+			final List<VBox> freezeBoxes,
+			final List<VBox> bundleBoxes) {
 		for (final var box : newFiles) {
 			assertTrue(box instanceof VBox);
 
@@ -991,6 +916,8 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 					systemBoxes.add((VBox) box);
 				} else if (l.contains("Freeze") || l.contains("Upgrade")) {
 					freezeBoxes.add((VBox) box);
+				} else if (l.contains("Information")) {
+					bundleBoxes.add((VBox) box);
 				} else {
 					logger.info("here");
 				}
@@ -1055,7 +982,11 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		publicKeyBoxes.clear();
 		accountInfoBoxes.clear();
 		batchBoxes.clear();
@@ -1076,10 +1007,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		if (new File(out).exists()) {
 			FileUtils.cleanDirectory(new File(out));
 		}
+		final var historyMap = new File(DEFAULT_SYSTEM_FOLDER, HISTORY_MAP_JSON);
+		Files.deleteIfExists(historyMap.toPath());
 
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
+
 	}
 
 	private static boolean accept(final File pathname) {

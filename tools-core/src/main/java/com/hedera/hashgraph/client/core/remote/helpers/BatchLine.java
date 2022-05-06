@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote.helpers;
 
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -133,6 +134,14 @@ public class BatchLine implements Comparable<BatchLine> {
 
 		return Long.compare(this.getAmount(), o.getAmount());
 
+	}
+
+	public JsonObject asJSON(){
+		final var asJSON = new JsonObject();
+		asJSON.add("receiverAccountID", receiverAccountID.asJSON());
+		asJSON.addProperty("amount", amount);
+		asJSON.add("date", date.asJSON());
+		return asJSON;
 	}
 
 	public static final class Builder {

@@ -98,6 +98,10 @@
 	-fx-shape: null;
 }
 
+.table-row-cell:selected .text {
+	-fx-fill: black ;
+}
+
 .table-view *.scroll-bar:horizontal *.increment-button,
 .table-view *.scroll-bar:horizontal *.decrement-button {
 	-fx-background-color: null;

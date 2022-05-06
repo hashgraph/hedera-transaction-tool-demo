@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -94,7 +95,7 @@ public class BatchFile extends RemoteFile {
 	private static final String NODE_IDS = "node ids";
 	private static final String TRANSACTION_FEE = "transaction fee";
 	private static final String DURATION = "transaction valid duration";
-	public static final String ACCOUNT_ID = "account id";
+	public static final String ACCOUNT_ID = "account";
 	private static final String FEE_PAYER_ACCOUNT = "fee payer account";
 	private static final String MEMO_STRING = "memo";
 
@@ -410,9 +411,17 @@ public class BatchFile extends RemoteFile {
 	 * 		an array of strings that contains the csv file
 	 */
 	private void checkTransfers(final List<String> csvList) {
+		final var distributionStart = getDistributionStart(csvList);
+		if (distributionStart == csvList.size()) {
+			logger.error("Cannot find the start of the distribution");
+			setValid(false);
+			return;
+		}
+
 		try {
 			transfers = new ArrayList<>();
-			for (var i = getDistributionStart(csvList); i < csvList.size(); i++) {
+
+			for (var i = distributionStart; i < csvList.size(); i++) {
 				transfers.add(BatchLine.parse(csvList.get(i), hoursUTC, minutesUTC));
 			}
 			this.firstTransaction = getFirstDate();
@@ -546,6 +555,9 @@ public class BatchFile extends RemoteFile {
 			if (seconds < first) {
 				first = seconds;
 			}
+		}
+		if (Long.MAX_VALUE == first) {
+			first = 0;
 		}
 		final var instant = new Timestamp(first, 0).asInstant();
 		return LocalDate.ofInstant(instant, ZoneId.of("UTC"));
@@ -723,7 +735,8 @@ public class BatchFile extends RemoteFile {
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 			final String output) throws HederaClientException {
 		final var tempStorage =
-				new File(TEMP_FOLDER_LOCATION, LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
+				new File(TEMP_FOLDER_LOCATION,
+						LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
 						5) + File.separator + "Batch" + File.separator + FilenameUtils.getBaseName(
 						pair.getLeft()) + File.separator;
 		final DoubleProperty progress = new SimpleDoubleProperty(1);
@@ -815,14 +828,21 @@ public class BatchFile extends RemoteFile {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		return super.equals(o);
+	public JsonObject toJson() {
+		final var toJson = super.toJson();
+		final var nodes = new JsonArray();
+		nodeAccountID.stream().map(Identifier::asJSON).forEach(nodes::add);
+		final var lines = new JsonArray();
+		transfers.stream().map(BatchLine::asJSON).forEachOrdered(lines::add);
+
+		toJson.add("senderAccountID", senderAccountID.asJSON());
+		toJson.add("feePayerAccountID", feePayerAccountID.asJSON());
+		toJson.add("nodeAccountID", nodes);
+		toJson.addProperty("hoursUTC", hoursUTC);
+		toJson.addProperty("minutesUTC", minutesUTC);
+		toJson.add("transfers", lines);
+		toJson.addProperty("memo", memo);
+
+		return toJson;
 	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-
 }

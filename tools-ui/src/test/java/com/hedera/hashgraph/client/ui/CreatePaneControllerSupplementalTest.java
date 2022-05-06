@@ -53,6 +53,7 @@ import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -68,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
@@ -87,10 +89,16 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	public static final String LOREM_IPSUM =
 			"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et" +
 					" dolore magna aliqua.";
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
+	private static final List<String> TEST_WORDS =
+			Arrays.asList("dignity", "domain", "involve", "report",
+					"sail", "middle", "rhythm", "husband",
+					"usage", "pretty", "rate", "town",
+					"account", "side", "extra", "outer",
+					"eagle", "eight", "design", "page",
+					"regular", "bird", "race", "answer");
 
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
@@ -100,25 +108,17 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	public UserAccessibleProperties properties;
 
-	private static final List<String> testWords =
-			Arrays.asList("dignity", "domain", "involve", "report",
-					"sail", "middle", "rhythm", "husband",
-					"usage", "pretty", "rate", "town",
-					"account", "side", "extra", "outer",
-					"eagle", "eight", "design", "page",
-					"regular", "bird", "race", "answer");
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
 
 
 	@Before
 	public void setUp() {
 		try {
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
+			System.gc();
+			logger.info("Starting test class: {}", getClass().getSimpleName());
+			TestUtil.buildFolders();
 
-			if (new File(DEFAULT_STORAGE).mkdirs()) {
-				logger.info("TransactionTools folder created");
-			}
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
@@ -146,7 +146,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
 					"test1.council2@hederacouncil.org");
 
-			final var mnemonic = Mnemonic.fromWords(testWords);
+			final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);
@@ -165,7 +165,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 			properties.setHash("123456789".toCharArray());
 
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-			setupTransactionDirectory(DEFAULT_STORAGE);
+			//setupTransactionDirectory(DEFAULT_STORAGE);
 
 			final var controller = new Controller();
 			final var version = controller.getVersion();
@@ -217,31 +217,30 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 	}
 
 	@After
-	public void tearDown() {
-		try {
-			properties.resetProperties();
-			properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-			final var transactions = new File(
-					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
-					pathname -> {
-						final var name = pathname.getName();
-						return name.endsWith(Constants.TXT_EXTENSION) ||
-								name.endsWith(Constants.TRANSACTION_EXTENSION) ||
-								name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
-					});
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
 
-			assert transactions != null;
-			for (final var f : transactions) {
-				if (f.delete()) {
-					logger.debug(String.format("%s has been deleted", f.getName()));
-				}
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+		final var transactions = new File(
+				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(Constants.TXT_EXTENSION) ||
+							name.endsWith(Constants.TRANSACTION_EXTENSION) ||
+							name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
+				});
+
+		assert transactions != null;
+		for (final var f : transactions) {
+			if (f.delete()) {
+				logger.debug(String.format("%s has been deleted", f.getName()));
 			}
-			if (new File(DEFAULT_STORAGE).exists()) {
-				FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-			}
-		} catch (final Exception e) {
-			logger.error(e);
-			assertNotNull(e);
+		}
+		if (new File(DEFAULT_STORAGE).exists()) {
+			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		}
 	}
 

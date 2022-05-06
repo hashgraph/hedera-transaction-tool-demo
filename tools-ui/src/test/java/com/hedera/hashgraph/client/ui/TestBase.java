@@ -23,7 +23,6 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -47,9 +46,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 
 public class TestBase extends ApplicationTest {
 
-	private static final Logger logger = LogManager.getLogger(TestBase.class);
 	public static final String KEYS_STRING = "Keys";
 	public static final String ACCOUNTS_STRING = "Accounts";
+	private static final Logger logger = LogManager.getLogger(TestBase.class);
 
 	@BeforeClass
 	public static void setupHeadlessMode() {
@@ -75,13 +74,36 @@ public class TestBase extends ApplicationTest {
 		FxToolkit.cleanupStages();
 	}
 
+	public static void ensureEventQueueComplete() {
+		WaitForAsyncUtils.waitForFxEvents(1);
+	}
+
+	/**
+	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
+	 *
+	 * @param defaultStorage
+	 * 		Storage location
+	 */
+	public static void fixMissingMnemonicHashCode(final String defaultStorage) throws KeyStoreException, IOException {
+		final File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
+		assert keyFiles != null;
+		for (final File keyFile : keyFiles) {
+			final Integer mnemonicHash =
+					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
+			logger.info("{} has hash {}", keyFile.getAbsolutePath(), mnemonicHash);
+			if (mnemonicHash == null) {
+				final BufferedWriter output =
+						new BufferedWriter(new FileWriter(keyFile.getAbsolutePath(), true));
+				output.append("Recovery Phrase Hash: -915976044");
+				output.close();
+				logger.info("Added dummy hash to: {}", keyFile.getName());
+			}
+		}
+	}
+
 	@Override
 	public void start(final Stage stage) {
 		stage.show();
-	}
-
-	public static void ensureEventQueueComplete() {
-		WaitForAsyncUtils.waitForFxEvents(1);
 	}
 
 	/* Helper method to retrieve Java FX GUI components. */
@@ -98,7 +120,6 @@ public class TestBase extends ApplicationTest {
 	public Set<Node> findAll(final String query) {
 		return lookup(query).queryAll();
 	}
-
 
 	public boolean exists(final String query) {
 		try {
@@ -128,62 +149,6 @@ public class TestBase extends ApplicationTest {
 		} catch (final Exception cause) {
 			logger.error("Unable to remake Transaction folders.", cause);
 		}
-	}
-
-	/**
-	 * Check if keys have been created using an old version of the app and fixes them to avoid timeouts
-	 *
-	 * @param defaultStorage
-	 * 		Storage location
-	 */
-	public static void fixMissingMnemonicHashCode(final String defaultStorage) throws KeyStoreException, IOException {
-		final File[] keyFiles = new File(defaultStorage, "Keys").listFiles((dir, name) -> name.endsWith("pem"));
-		assert keyFiles != null;
-		for (final File keyFile : keyFiles) {
-			final Integer mnemonicHash =
-					Ed25519KeyStore.getMnemonicHashCode(keyFile.getAbsolutePath());
-			logger.info("{} has hash {}", keyFile.getAbsolutePath(), mnemonicHash);
-			if (mnemonicHash == null) {
-				final BufferedWriter output =
-						new BufferedWriter(new FileWriter(keyFile.getAbsolutePath(), true));
-				output.append("Recovery Phrase Hash: -915976044");
-				output.close();
-				logger.info("Added dummy hash to: {}", keyFile.getName());
-			}
-		}
-	}
-
-	/**
-	 * Set up the required folder structure for the tools
-	 *
-	 * @param location
-	 * 		root folder
-	 */
-	public static void setupTransactionDirectory(final String location) throws IOException {
-		final File directory = new File(location);
-		if (!directory.exists()) {
-			if (!directory.mkdirs()) {
-				logger.info("Directory already exists");
-			}
-		}
-
-		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
-			logger.info("User files folder has been created");
-		}
-		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
-			logger.info("System files folder has been created");
-		}
-		if (new File(String.format("%s/Keys/Archive", location)).mkdirs()) {
-			logger.info("Keys archive folder has been created");
-		}
-		if (new File(String.format("%s/History/", location)).mkdirs()) {
-			logger.info("History folder has been created");
-		}
-		if (new File(String.format("%s/logs/", location)).mkdirs()) {
-			logger.info("Log folder has been created");
-		}
-		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
-				new File(location, "Files/.System/recovery.aes"));
 	}
 
 	/**

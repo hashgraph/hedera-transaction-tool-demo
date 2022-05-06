@@ -32,7 +32,7 @@ public class FileDetails {
 	private final String path;
 	private final String extension;
 
-	private FileDetails(final BasicFileAttributes attributes, final String name, final String path,
+	public FileDetails(final BasicFileAttributes attributes, final String name, final String path,
 			final String extension) {
 		this.attributes = attributes;
 		this.name = name;

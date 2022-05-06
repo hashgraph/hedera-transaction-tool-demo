@@ -53,6 +53,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_RECORD_SLIDER;
@@ -72,44 +73,41 @@ import static org.junit.Assert.assertTrue;
 
 public class SettingsPaneTest extends TestBase {
 
-	private SettingsPanePage settingsPanePage;
-	private final MainWindowPage mainWindowPage = new MainWindowPage(this);
-	private final Path currentRelativePath = Paths.get("");
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
+
+	private static final Path CURRENT_RELATIVE_PATH = Paths.get("");
+	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-	public UserAccessibleProperties properties;
+
+	private final MainWindowPage mainWindowPage = new MainWindowPage(this);
+	private SettingsPanePage settingsPanePage;
+
+	private UserAccessibleProperties properties;
+
 
 	@Before
 	public void setUp() throws Exception {
-
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
-
-		if (!new File(DEFAULT_STORAGE + "/Files/").exists()) {
-			if (new File(DEFAULT_STORAGE + "/Files/").mkdirs()) {
-				logger.info("Files folder created");
-			}
-		}
+		System.gc();
+		logger.info("Starting test class: {}", getClass().getSimpleName());
+		TestUtil.buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/Transactions - " +
 				"Documents/OutputFiles/test1.council2@hederacouncil.org/").mkdirs()) {
 			logger.info("Output path created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
 				"/InputFiles/").mkdirs()) {
 			logger.info("Second input folder created");
 		}
 
 		if (new File(
-				currentRelativePath.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
+				CURRENT_RELATIVE_PATH.toAbsolutePath().toString(), "src/test/resources/OneDrive/SecondDrive" +
 				"/OutputFiles/test@testemail.net").mkdirs()) {
 			logger.info("Second output folder created");
 		}
@@ -121,14 +119,14 @@ public class SettingsPaneTest extends TestBase {
 		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				currentRelativePath.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
+				CURRENT_RELATIVE_PATH.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		properties.setOneDriveCredentials(emailMap);
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
-		setupTransactionDirectory(DEFAULT_STORAGE);
+		//setupTransactionDirectory(DEFAULT_STORAGE);
 
 		final Controller controller = new Controller();
 		final var version = controller.getVersion();
@@ -401,7 +399,12 @@ public class SettingsPaneTest extends TestBase {
 	}
 
 	@After
-	public void tearDown() throws IOException {
+	public void tearDown() throws IOException, TimeoutException {
+
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
 		final Path currentRelativePath = Paths.get("");
 		final String s = currentRelativePath.toAbsolutePath() + "/src/test/resources/testDirectory";
 		if ((new File(s)).exists()) {
