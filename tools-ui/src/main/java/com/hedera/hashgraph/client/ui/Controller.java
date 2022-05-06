@@ -468,8 +468,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				if (new File(infoFile).exists()) {
 					final var info = AccountInfo.fromBytes(readBytes(infoFile));
 					final var baseName = FilenameUtils.getBaseName(infoFile);
-					final var ledger = "".equals(info.ledgerId.toString()) ? baseName.substring(
-							baseName.indexOf("-") + 1) : info.ledgerId.toString();
+					final String ledger = getLedger(info, baseName);
 					map.put(new Identifier(info.accountId, ledger), info);
 				}
 			}
@@ -478,6 +477,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 
 		return map;
+	}
+
+	private String getLedger(final AccountInfo info, final String baseName) {
+		final var aString = info.ledgerId.toString();
+		return "".equals(aString) || "03".equals(aString) ?
+				baseName.substring(baseName.indexOf("-") + 1) :
+				aString;
 	}
 
 	private void resetButtonBackgrounds() {

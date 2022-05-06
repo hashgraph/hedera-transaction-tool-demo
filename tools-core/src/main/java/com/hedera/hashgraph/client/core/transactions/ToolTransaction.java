@@ -118,6 +118,11 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 	}
 
+	public void setNetwork(final String networkName) {
+		this.network = NetworkEnum.valueOf(networkName);
+		input.addProperty(NETWORK_FIELD_NAME, networkName);
+	}
+
 	public ToolTransaction(final File inputFile) throws HederaClientException {
 		switch (FilenameUtils.getExtension(inputFile.getName())) {
 			case TRANSACTION_EXTENSION:
@@ -536,5 +541,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
 		}
 		return false;
+	}
+
+	public ToolTransaction atNow() throws HederaClientException {
+		final var json = this.asJson();
+		final var now = new Timestamp();
+		json.addProperty(TRANSACTION_VALID_START_READABLE_FIELD_NAME, now.asRFCString());
+		json.add(TRANSACTION_VALID_START_FIELD_NAME, now.asJSON());
+		return new ToolTransaction(json);
 	}
 }

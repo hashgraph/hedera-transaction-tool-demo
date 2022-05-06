@@ -21,7 +21,7 @@ package com.hedera.hashgraph.client.ui;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
+import com.hedera.hashgraph.client.ui.pages.HistoryPanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
@@ -43,7 +43,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -62,7 +61,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 	private static final Logger logger = LogManager.getLogger(HistoryPaneTest.class);
 	private static final Path currentRelativePath = Paths.get("");
 
-	private HistoryWindowPage historyWindowPage;
+	private HistoryPanePage historyWindowPage;
 	private MainWindowPage mainWindowPage;
 
 	private final List<HistoryData> transactions = new ArrayList<>();
@@ -135,7 +134,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
-		historyWindowPage = new HistoryWindowPage(this);
+		historyWindowPage = new HistoryPanePage(this);
 		mainWindowPage = new MainWindowPage(this);
 		mainWindowPage.clickOnHistoryButton();
 		historyWindowPage.rebuildHistory();

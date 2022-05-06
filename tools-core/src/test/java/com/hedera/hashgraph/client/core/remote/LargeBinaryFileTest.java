@@ -34,6 +34,7 @@ import javafx.scene.control.Label;
 import javafx.scene.text.Text;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,7 @@ import java.util.zip.ZipInputStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
@@ -236,21 +238,33 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 		final var transactions = unzipped.listFiles();
 		assert transactions != null;
-		assertEquals(18234, transactions.length);
+		assertEquals(18233, transactions.length);
 
 		final var update = new File(unzipped.getAbsolutePath(), "hundredThousandBytes-00000.txsig");
 		assertTrue(update.exists());
 		final var updateTx = Transaction.fromBytes(readBytes(update));
 		assertTrue(updateTx instanceof FileUpdateTransaction);
 
-		for (var i = 1; i < 50; i++) {
+		var bytes = ((FileUpdateTransaction) updateTx).getContents().toByteArray();
+		for (var i = 1; i < transactions.length; i++) {
 			final var append = new File(unzipped.getAbsolutePath(), String.format("hundredThousandBytes-%05d.txsig",
 					i));
 			assertTrue(append.exists());
 			final var appendTx = Transaction.fromBytes(readBytes(append));
 			assertTrue(appendTx instanceof FileAppendTransaction);
+			final var contents = ((FileAppendTransaction) appendTx).getContents().toByteArray();
+			bytes = ArrayUtils.addAll(bytes, contents);
 		}
 
+		final var original = new File("src/test/resources/Files/largeBinaryTests/hundredThousandBytes.zip");
+		final var arr = new byte[(int) original.length()];
+		try (final var fl = new FileInputStream(original)) {
+			fl.read(arr);
+		}
+		logger.info("File size = {}", arr.length);
+		logger.info("Payload size = {}", bytes.length);
+		assertArrayEquals(arr, bytes);
+		logger.info("here");
 	}
 
 	@After

@@ -464,7 +464,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
 				count++);
 
-		if (isDelete) {
+		if (isDelete && toolSystemTransaction.getExpiration() != null) {
 			final var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
 			subLabel.setWrapText(true);
 			detailsGridPane.add(subLabel, 0, count);

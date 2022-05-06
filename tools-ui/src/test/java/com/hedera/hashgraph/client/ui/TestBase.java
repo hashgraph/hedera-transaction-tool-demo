@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -53,7 +54,7 @@ public class TestBase extends ApplicationTest {
 	@BeforeClass
 	public static void setupHeadlessMode() {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
-		System.setProperty("headless", "true");
+		//System.setProperty("headless", "true");
 
 		if (Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
@@ -204,4 +205,39 @@ public class TestBase extends ApplicationTest {
 		}
 		scrollPane.setVvalue(vValueCurrent + vValueDelta);
 	}
+
+	/**
+	 * Set up the required folder structure for the tools
+	 *
+	 * @param location
+	 * 		root folder
+	 */
+	public static void setupTransactionDirectory(final String location) throws IOException {
+		final File directory = new File(location);
+		if (!directory.exists()) {
+			if (!directory.mkdirs()) {
+				logger.info("Directory already exists");
+			}
+		}
+
+		if (new File(String.format("%s/Files/UserFiles", location)).mkdirs()) {
+			logger.info("User files folder has been created");
+		}
+		if (new File(String.format("%s/Files/.System", location)).mkdirs()) {
+			logger.info("System files folder has been created");
+		}
+		if (new File(String.format("%s/Keys/Archive", location)).mkdirs()) {
+			logger.info("Keys archive folder has been created");
+		}
+		if (new File(String.format("%s/History/", location)).mkdirs()) {
+			logger.info("History folder has been created");
+		}
+		if (new File(String.format("%s/logs/", location)).mkdirs()) {
+			logger.info("Log folder has been created");
+		}
+		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
+				new File(location, "Files/.System/recovery.aes"));
+	}
+
+
 }

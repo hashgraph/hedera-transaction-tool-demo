@@ -289,18 +289,20 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	public Boolean transactionSucceeded() {
-		final var file = new File(
-				DEFAULT_RECEIPTS + File.separator + FilenameUtils.getBaseName(getFileName()) + "." + RECEIPT_EXTENSION);
-		if (!file.exists()) {
-			return null;
-		}
+		Boolean b = null;
 		try {
-			final var receipt = readJsonObject(file);
-			return receipt.get(JsonConstants.STATUS_PROPERTY).getAsString().equalsIgnoreCase("SUCCESS") ?
-					Boolean.TRUE :
-					Boolean.FALSE;
+			final var file = new File(DEFAULT_RECEIPTS + File.separator + FilenameUtils.getBaseName(
+					getFileName()) + "." + RECEIPT_EXTENSION);
+			if (file.exists()) {
+				final var receipt = readJsonObject(file);
+				b = receipt.get(JsonConstants.STATUS_PROPERTY).getAsString().equalsIgnoreCase("SUCCESS") ?
+						Boolean.TRUE :
+						Boolean.FALSE;
+			}
 		} catch (final HederaClientException e) {
-			return null;
+			logger.error(e.getMessage());
 		}
+		return b;
+
 	}
 }

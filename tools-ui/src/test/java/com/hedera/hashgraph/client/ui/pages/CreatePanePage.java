@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.ui.JavaFXIDs;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
@@ -48,6 +49,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMENTS_AREA;
@@ -237,12 +239,14 @@ public class CreatePanePage {
 
 	private void clearTree() {
 		final var node = driver.find("Threshold key (2 of 4)");
-		driver.clickOn(node);
-		clickOnDeletePublicKeyButton();
-
+		if (node != null) {
+			driver.clickOn(node);
+			clickOnDeletePublicKeyButton();
+		}
 	}
 
 	public CreatePanePage doubleClickOnAccountKey(final String account) {
+
 		final var titledPane3 = getTitledPane(ACCOUNTS);
 		final var inner3 = titledPane3.getContent();
 		assert inner3 instanceof VBox;
@@ -277,7 +281,8 @@ public class CreatePanePage {
 	}
 
 	public TitledPane getTitledPane(final TitledPaneEnum paneEnum) {
-		final var popupNodes = getPopupNodes();
+		var popupNodes = getPopupNodes();
+		while (popupNodes == null) popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
@@ -887,10 +892,11 @@ public class CreatePanePage {
 		return this;
 	}
 
-	public void closePopup() {
+	public CreatePanePage closePopup(final String legend) {
 		final var popupNodes = getPopupNodes();
-		final var close = findButtonInPopup(popupNodes, "CANCEL");
+		final var close = findButtonInPopup(popupNodes, legend);
 		driver.clickOn(close);
+		return this;
 	}
 
 	public CreatePanePage setNewAccountMemo(final String memoString) {
@@ -931,6 +937,22 @@ public class CreatePanePage {
 		assertTrue(n instanceof TextField);
 		driver.doubleClickOn(n);
 		driver.write(String.valueOf(i));
+		driver.type(KeyCode.ENTER);
+		return this;
+	}
+
+	public CreatePanePage submit() {
+		driver.clickOn(JavaFXIDs.CREATE_SIGN_AND_SUBMIT_BUTTON);
+		return this;
+	}
+
+	public CreatePanePage signWithPassword(final String testPassword) throws HederaClientException {
+		final var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()));
+		if (passwords == null) {
+			throw new HederaClientException("Unexpected popup");
+		}
+		driver.clickOn(passwords);
+		driver.write(testPassword);
 		driver.type(KeyCode.ENTER);
 		return this;
 	}

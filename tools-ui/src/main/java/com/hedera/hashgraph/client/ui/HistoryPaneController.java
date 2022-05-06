@@ -40,7 +40,6 @@ import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.DateCell;
@@ -87,10 +86,8 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP;
-import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
 import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
@@ -433,8 +430,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var cellFactory =
 				(Callback<TableColumn<HistoryData, String>, TableCell<HistoryData, String>>) column -> new TableCell<>() {
 					final Button button = formatButton(RESET_ICON, 30);
-					//final Button image = formatButton(SENT_ICON, 30);
-					final HBox image = twoImages(false);
 
 					@Override
 					public void updateItem(final String item, final boolean empty) {
@@ -450,25 +445,29 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 								return;
 							}
 
-							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-								button.setText(historyData.getFileName());
-								button.setStyle("-fx-font-size: 2");
-							}
-
-							button.setVisible(!historyData.isExpired());
-							button.setDisable(!historyData.isHistory());
-
-							if (ACCOUNT_INFO.equals(historyData.getType()) ||
-									BUNDLE.equals(historyData.getType()) ||
-									PUBLIC_KEY.equals(historyData.getType()) ||
-									SOFTWARE_UPDATE.equals(historyData.getType())) {
-								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
-							}
-							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
+							setupButtonBehavior(historyData);
 							setGraphic(button);
 							return;
 						}
 						setGraphic(null);
+					}
+
+					private void setupButtonBehavior(final HistoryData historyData) {
+						if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+							button.setText(historyData.getFileName());
+							button.setStyle("-fx-font-size: 2");
+						}
+
+						button.setVisible(!historyData.isExpired());
+						button.setDisable(!historyData.isHistory());
+
+						if (ACCOUNT_INFO.equals(historyData.getType()) ||
+								BUNDLE.equals(historyData.getType()) ||
+								PUBLIC_KEY.equals(historyData.getType()) ||
+								SOFTWARE_UPDATE.equals(historyData.getType())) {
+							button.setVisible(historyData.getActions().equals(Actions.DECLINE));
+						}
+						button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
@@ -714,13 +713,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			imageView.setPreserveRatio(true);
 			button.setGraphic(imageView);
 			button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			logger.error(e.getMessage());
 		}
 		return button;
 	}
 
-	private HBox twoImages(boolean success) {
+	private HBox twoImages(final boolean success) {
 		final var sent = new Image(SENT_ICON);
 		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-100.png");
 		final var bottom = new ImageView(sent);
@@ -729,8 +728,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var top = new ImageView(check);
 		top.setFitHeight(15);
 		top.setPreserveRatio(true);
-		Group blend = new Group(bottom, top);
-		HBox layout = new HBox(10);
+		final HBox layout = new HBox(10);
 		layout.getChildren().addAll(bottom, top);
 		layout.setSpacing(-1);
 		layout.setPadding(new Insets(10));

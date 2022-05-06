@@ -297,7 +297,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 				.clickOnAddPublicKeyButton();
 
 		assertEquals(initialSize, createPanePage.getKeyTreeSize() - 1);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -308,7 +308,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 				.clickOnAddAccountButton();
 
 		assertEquals(9, createPanePage.getKeyTreeSize());
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -324,7 +324,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 				.clickOnAddPublicKeyButton();
 
 		assertEquals(5, createPanePage.getKeyTreeSize());
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -348,7 +348,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		node = find("Threshold key (2 of 3)");
 		assertNotNull(node);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -373,7 +373,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		node = find("KeyStore key (2 of 2)");
 		assertNotNull(node);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -395,7 +395,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 				"selected threshold does not have a list of keys associated with it."));
 
 		clickOn(TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), "CONTINUE"));
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -436,7 +436,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		nodeCount = createPanePage.getKeyTreeSize();
 		assertEquals(14, nodeCount);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 
 	}
 
@@ -480,7 +480,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		node = find("KeyStore key (x of 4)");
 		assertNotNull(node);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -502,7 +502,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		createPanePage.deleteKeyFromTree("KeyStore key (x of 2)");
 		assertEquals(2, createPanePage.getKeyTreeSize());
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -521,7 +521,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertEquals(initialCount, createPanePage.getKeyTreeSize() + 1);
 		final var node = find("Threshold key (x of 3)");
 		assertNotNull(node);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	@Test
@@ -550,7 +550,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		final var node1 = find("KeyStore key (1 of 2)");
 		assertNotNull(node1);
-		createPanePage.closePopup();
+		createPanePage.closePopup("CANCEL");
 	}
 
 	private TreeView<?> getDesignTreeView() {

@@ -1943,6 +1943,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				finalWindow.close();
 			}
 		});
+
 		task.setOnFailed(workerStateEvent -> {
 			logger.info("Update balances failed");
 			if (finalWindow != null) {

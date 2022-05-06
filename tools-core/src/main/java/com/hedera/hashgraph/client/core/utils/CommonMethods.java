@@ -102,7 +102,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			throw new HederaClientException("Missing critical fields in the JSON input to set up the client");
 		}
 		final var client = getClient(NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString()));
-		client.setDefaultMaxQueryPayment(JsonUtils.jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME)));
+		if (input.get(TRANSACTION_FEE_FIELD_NAME).isJsonPrimitive()) {
+			client.setDefaultMaxQueryPayment(Hbar.fromTinybars(input.get(TRANSACTION_FEE_FIELD_NAME).getAsLong()));
+		}
+		if (input.get(TRANSACTION_FEE_FIELD_NAME).isJsonObject()) {
+			client.setDefaultMaxQueryPayment(JsonUtils.jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME)));
+		}
 		return client;
 	}
 

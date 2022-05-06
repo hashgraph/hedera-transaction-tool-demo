@@ -176,4 +176,6 @@ public class JavaFXIDs {
 	public static final String FREEZE_FILE_HASH_TEXT_FIELD = "#freezeFileHashTextField";
 	public static final String FREEZE_FILE_IDTEXT_FIELD = "#freezeFileIDTextField";
 
+	public static final String CREATE_SIGN_AND_SUBMIT_BUTTON = "#signAndSubmitButton";
+	public static final String HISTORY_CONTENT_SCROLL_PANE = "#contentScrollPane";
 }

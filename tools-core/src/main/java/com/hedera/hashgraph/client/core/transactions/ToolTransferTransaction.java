@@ -79,6 +79,21 @@ public class ToolTransferTransaction extends ToolTransaction {
 		return accountAmountMap;
 	}
 
+	/**
+	 * Return the total number of Hbars transferred (sum of all deductions from the senders accounts)
+	 *
+	 * @return an Hbar value
+	 */
+	public Hbar getHbarsTransferred() {
+		var total = 0L;
+		for (Hbar value : accountAmountMap.values()) {
+			if (value.toTinybars() > 0) {
+				total += value.toTinybars();
+			}
+		}
+		return Hbar.fromTinybars(total);
+	}
+
 	@Override
 	public boolean checkInput(final JsonObject input) throws HederaClientRuntimeException {
 

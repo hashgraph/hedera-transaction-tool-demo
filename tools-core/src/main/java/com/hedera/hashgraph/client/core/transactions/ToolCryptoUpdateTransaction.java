@@ -37,7 +37,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
@@ -56,6 +59,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	private Boolean receiverSignatureRequired;
 	private Integer maxTokenAssociations;
 	private String accountMemo;
+	private Set<String> updateList;
 
 	private static final Logger logger = LogManager.getLogger(ToolCryptoUpdateTransaction.class);
 
@@ -102,6 +106,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
+		updateList = new HashSet<>();
 		if (!input.has(ACCOUNT_TO_UPDATE)) {
 			logger.error("The input json does not contain the account ID to update");
 			return false;
@@ -124,6 +129,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			if (input.has(NEW_KEY_FIELD_NAME)) {
 				final var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
 				this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
+				updateList.add("key");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, NEW_KEY_FIELD_NAME);
@@ -134,6 +140,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(AUTO_RENEW_PERIOD_FIELD_NAME)) {
 				this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
+				updateList.add("auto renew duration");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
@@ -143,6 +150,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 				this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
+				updateList.add("receiver signature required");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
@@ -152,6 +160,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) {
 				this.maxTokenAssociations = input.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt();
+				updateList.add("maximum number of token associations");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME);
@@ -161,6 +170,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(ACCOUNT_MEMO_FIELD_NAME)) {
 				this.accountMemo = input.get(ACCOUNT_MEMO_FIELD_NAME).getAsString();
+				updateList.add("account memo");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
@@ -168,6 +178,17 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		}
 
 		return answer;
+	}
+
+	/**
+	 * Returns an ordered list of the fields updated
+	 *
+	 * @return a list
+	 */
+	public List<String> getUpdateList() {
+		final var list = new ArrayList<>(updateList);
+		Collections.sort(list);
+		return list;
 	}
 
 	@Override

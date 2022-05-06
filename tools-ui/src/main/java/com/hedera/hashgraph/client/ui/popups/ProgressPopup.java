@@ -66,8 +66,10 @@ public class ProgressPopup {
 		bar.setPrefWidth(375);
 
 		final var text = new Text();
-		bar.progressProperty().addListener((observableValue, number, t1) -> text.setText(
-				String.format("Requesting %d of %d", Math.round(number.doubleValue() * size), size)));
+		bar.progressProperty().addListener((observableValue, number, t1) -> {
+			final var v = number.doubleValue() < 0 ? 0 : Math.round(number.doubleValue() * size) + 1;
+			text.setText(String.format("Submitting %d of %d", v, size));
+		});
 
 		layout.getChildren().addAll(titleLabel, messageLabel, bar, text, cancelButton);
 
