@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.stage.Stage;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -53,7 +54,7 @@ public class TestBase extends ApplicationTest {
 	@BeforeClass
 	public static void setupHeadlessMode() {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
-		//System.setProperty("headless", "true");
+		System.setProperty("headless", "true");
 
 		if (Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
@@ -237,6 +238,4 @@ public class TestBase extends ApplicationTest {
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.aes"),
 				new File(location, "Files/.System/recovery.aes"));
 	}
-
-
 }
