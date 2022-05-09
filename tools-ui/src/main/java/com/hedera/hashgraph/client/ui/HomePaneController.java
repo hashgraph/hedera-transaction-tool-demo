@@ -41,7 +41,6 @@ import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.KeyList;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;

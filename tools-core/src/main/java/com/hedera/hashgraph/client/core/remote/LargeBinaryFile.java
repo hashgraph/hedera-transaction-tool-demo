@@ -83,6 +83,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
+	public static final String FILENAME_PROPERTY = "filename";
+	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
+	public static final String VALID_DURATION_PROPERTY = "validDuration";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String FILE_ID_PROPERTY = "fileID";
+	public static final String NODE_ID_PROPERTY = "nodeID";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 
 	private String filename;
 	private Identifier fileID;
