@@ -43,8 +43,6 @@
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="createPane" source="CreatePane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
-			<fx:include fx:id="submitPane" source="SubmitPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
-						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="accountsPane" source="AccountsPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"
 						AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 			<fx:include fx:id="keysPane" source="KeysPane.fxml" visible="false" AnchorPane.bottomAnchor="0.0"

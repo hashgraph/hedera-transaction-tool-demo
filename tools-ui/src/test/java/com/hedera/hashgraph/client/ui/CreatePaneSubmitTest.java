@@ -53,6 +53,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -91,9 +92,14 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-
+@Ignore
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
 	private final static Logger logger = LogManager.getLogger(CreatePaneSubmitTest.class);
+	public static final String ONE_DRIVE = "/src/test/resources/Transactions/";
+	public static final String ONE_DRIVE_INPUT = "src/test/resources/Transactions/InputFiles/";
+	public static final String ONE_DRIVE_OUTPUT =
+			"src/test/resources/Transactions/OutputFiles/test1.council2@hederacouncil.org";
+
 	private MainWindowPage mainWindowPage;
 	private HomePanePage homePanePage;
 	private CreatePanePage createPanePage;
@@ -105,8 +111,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	@Before
 	public void setUp() throws Exception {
-		final var output =
-				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+		final var output = new File(ONE_DRIVE_OUTPUT);
 		if (output.exists()) {
 			FileUtils.cleanDirectory(output);
 		}
@@ -114,7 +119,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 			logger.info("Output directory created");
 		}
 
-		final var input = new File("src/test/resources/Transactions - Documents/InputFiles/");
+		final var input = new File(ONE_DRIVE_INPUT);
 		if (input.exists()) {
 			FileUtils.cleanDirectory(input);
 		}
@@ -138,13 +143,12 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 			}
 		}
 
-		final var output =
-				new File("src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
+		final var output = new File(ONE_DRIVE_OUTPUT);
 		if (output.exists()) {
 			FileUtils.cleanDirectory(output);
 		}
 
-		final var input = new File("src/test/resources/Transactions - Documents/InputFiles/");
+		final var input = new File(ONE_DRIVE_INPUT);
 		if (input.exists()) {
 			FileUtils.cleanDirectory(input);
 		}
@@ -584,8 +588,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 					.execute(client);
 
 			logger.info("Account Balance = {}", accountInfo.balance.toString());
-			writeBytes(String.format("%s/%s.info", "src/test/resources/Transactions - Documents/InputFiles", accountId),
-					accountInfo.toBytes());
+			writeBytes(String.format("%s/%s.info", ONE_DRIVE_INPUT, accountId), accountInfo.toBytes());
 		}
 	}
 
@@ -593,14 +596,12 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 		final var treasuryInfo = new AccountInfoQuery()
 				.setAccountId(new AccountId(2))
 				.execute(client);
-		writeBytes(String.format("%s/treasury.info", "src/test/resources/Transactions - Documents/InputFiles"),
-				treasuryInfo.toBytes());
+		writeBytes(String.format("%s/treasury.info", ONE_DRIVE_INPUT), treasuryInfo.toBytes());
 
 		final var operatorInfo = new AccountInfoQuery()
 				.setAccountId(new AccountId(50))
 				.execute(client);
-		writeBytes(String.format("%s/operator.info", "src/test/resources/Transactions - Documents/InputFiles"),
-				operatorInfo.toBytes());
+		writeBytes(String.format("%s/operator.info", ONE_DRIVE_INPUT), operatorInfo.toBytes());
 	}
 
 	private void setupUI() throws IOException, KeyStoreException, TimeoutException, PrecheckStatusException,
@@ -628,12 +629,10 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 			logger.info("Keys path created");
 		}
 
-
-		// Special case for test: Does not ask for password during setup
 		properties.setSetupPhase(SetupPhase.TEST_PHASE);
 		final var pathname =
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
-						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
+				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions/OutputFiles/test1" +
+						".council2@hederacouncil.org/";
 
 		if (new File(pathname).exists()) {
 			FileUtils.deleteDirectory(new File(pathname));
@@ -644,9 +643,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 		}
 
 		final Map<String, String> emailMap = new HashMap<>();
-		emailMap.put(
-				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
-				"test1.council2@hederacouncil.org");
+		emailMap.put(currentRelativePath.toAbsolutePath() + ONE_DRIVE, "test1.council2@hederacouncil.org");
 
 		properties.setOneDriveCredentials(emailMap);
 

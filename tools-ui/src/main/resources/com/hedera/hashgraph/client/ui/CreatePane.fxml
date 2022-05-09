@@ -433,7 +433,7 @@
 							<Label fx:id="invalidEntity" text="Cannot recognize entity ID" textFill="RED" visible="false" />
 						</HBox>
 					</VBox>
-					<VBox fx:id="systemExpirationVBox" disable="true" spacing="10.0">
+					<VBox fx:id="systemExpirationVBox" spacing="10.0">
 						<Label fx:id="expirationLabel" text="File will expire on:" />
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
 							<DatePicker fx:id="datePickerSystem" />
