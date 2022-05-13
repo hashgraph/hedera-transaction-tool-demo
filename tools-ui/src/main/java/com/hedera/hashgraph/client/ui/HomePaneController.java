@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -92,6 +91,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LO
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.*;
 
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored" })
@@ -716,7 +716,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var baseName = FilenameUtils.getBaseName(keyFile.getName());
 		final var checkBox = new CheckBox(baseName);
 		checkBox.setSelected(true);
-		Utilities.checkBoxListener(signersSet, keyFile, baseName, checkBox);
+		checkBoxListener(signersSet, keyFile, baseName, checkBox);
 		return checkBox;
 	}
 

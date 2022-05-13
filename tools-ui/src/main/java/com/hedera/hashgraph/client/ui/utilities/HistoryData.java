@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
+import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
@@ -50,9 +51,11 @@ import java.util.TimeZone;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
+import static com.hedera.hashgraph.client.core.enums.FileType.LARGE_BINARY;
 import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 
+@SuppressWarnings("unused")
 public class HistoryData implements Comparable<HistoryData>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryData.class);
 
@@ -84,12 +87,8 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 		this.code = remoteFile.hashCode();
 		this.remoteFilePath = remoteFile.getPath();
 		this.actions.addAll(remoteFile.getSigningHistory());
-		this.feePayer = remoteFile.getType().equals(TRANSACTION) ?
-				((TransactionFile) remoteFile).getFeePayerAccountId() :
-				getFeePayerIdentifier(remoteFile);
-		this.expirationDate = remoteFile.getType().equals(TRANSACTION) ?
-				((TransactionFile) remoteFile).getExpiration() :
-				getExpirationTimestamp(remoteFile);
+		this.feePayer = getFeePayerIdentifier(remoteFile);
+		this.expirationDate = getExpirationTimestamp(remoteFile);
 		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
@@ -152,7 +151,8 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 
 	@NotNull
 	private String getLastActionString() {
-		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) ? "Signed" : "Accepted";
+		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
+				getType()) ? "Signed" : "Accepted";
 	}
 
 	public String getFileName() {
@@ -196,7 +196,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	public Timestamp lastAction() {
-		Timestamp t = new Timestamp(0, 0);
+		var t = new Timestamp(0, 0);
 		for (final var action : actions) {
 			if (action.getTimeStamp().compareTo(t) > 0) {
 				t = action.getTimeStamp();
@@ -277,15 +277,35 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	private Timestamp getExpirationTimestamp(final RemoteFile remoteFile) {
-		return remoteFile.getType().equals(BATCH) ?
-				((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
-				new Timestamp(0, 0);
+		var timestamp = new Timestamp(0, 0);
+		switch (remoteFile.getType()) {
+			case TRANSACTION:
+				timestamp = ((TransactionFile) remoteFile).getExpiration();
+				break;
+			case BATCH:
+				timestamp = ((BatchFile) remoteFile).getFirstTransactionTimeStamp();
+				break;
+			case LARGE_BINARY:
+				timestamp = ((LargeBinaryFile) remoteFile).getTransactionValidStart();
+				break;
+		}
+		return timestamp;
 	}
 
 	private Identifier getFeePayerIdentifier(final RemoteFile remoteFile) {
-		return remoteFile.getType().equals(BATCH) ?
-				((BatchFile) remoteFile).getFeePayerAccountID() :
-				Identifier.ZERO;
+		var returnValue = Identifier.ZERO;
+		switch (remoteFile.getType()) {
+			case TRANSACTION:
+				returnValue = ((TransactionFile) remoteFile).getFeePayerAccountId();
+				break;
+			case BATCH:
+				returnValue = ((BatchFile) remoteFile).getFeePayerAccountID();
+				break;
+			case LARGE_BINARY:
+				returnValue = ((LargeBinaryFile) remoteFile).getFeePayerAccountId();
+				break;
+		}
+		return returnValue;
 	}
 
 	public Boolean transactionSucceeded() {

@@ -102,10 +102,9 @@ import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
 
 public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteAware {
 
-	public static final String SENT_ICON = "resources/icons/sent.png";
-	public static final String SUCCESS_ICON = "resources/icons/success.png";
-	public static final String FAILURE_ICON = "resources/icons/failure.png";
 	private static final Logger logger = LogManager.getLogger(RemoteFile.class);
+	public static final int LEFT = 0;
+	public static final int RIGHT = 1;
 	private final TextArea commentArea = new TextArea();
 	private final Set<File> signerSet = new HashSet<>();
 	private final Set<File> extraSigners = new HashSet<>();
@@ -529,16 +528,19 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		columnConstraint2.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
 		detailsGridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2);
 
-		detailsGridPane.add(new Label("Fee Payer Account ID: "), 0, 0);
+		int count = 0;
+		detailsGridPane.add(new Label("Transaction ID:"), LEFT, count++);
+
+		detailsGridPane.add(new Label("Fee Payer Account ID: "), LEFT, count++);
 
 		final var txFeeLabel = new Label("Maximum Transaction Fee: ");
 		txFeeLabel.setWrapText(true);
-		detailsGridPane.add(txFeeLabel, 0, 1);
+		detailsGridPane.add(txFeeLabel, LEFT, count++);
 
 		final var s = sent ? "Submitted on:" : "To be submitted on: ";
 		final var subLabel = new Label(s);
 		subLabel.setWrapText(true);
-		detailsGridPane.add(subLabel, 0, 3);
+		detailsGridPane.add(subLabel, LEFT, count);
 
 		detailsGridPane.setHgap(20);
 		detailsGridPane.setVgap(10);
@@ -683,7 +685,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		return !getSigningHistory().isEmpty();
 	}
 
-	private VBox buildFileVBox(final boolean isHistory) {
+	public VBox buildFileVBox(final boolean isHistory) {
 		final var fileVBox = new VBox();
 		fileVBox.setSpacing(10);
 		fileVBox.setPadding(new Insets(10, 10, 10, 10));
@@ -773,7 +775,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	private void showCreatorComments(final VBox commentsVBox) throws HederaClientException {
 		if (hasComments()) {
 			final var txComments = buildTransactionCommentsArea(getCommentsFile());
-			if (txComments.getText().length() > 0) {
+			if (txComments.getText().length() > LEFT) {
 				final var region = new Region();
 				region.setMaxHeight(10);
 				region.setMinHeight(10);
@@ -823,7 +825,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		final var charsLeft = new Label(String.format("Characters left: %d", COMMENT_FIELD_CHARACTER_LIMIT));
 		commentArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
 			if (newValue.intValue() > oldValue.intValue() && commentArea.getText().length() >= COMMENT_FIELD_CHARACTER_LIMIT) {
-				commentArea.setText(commentArea.getText().substring(0, COMMENT_FIELD_CHARACTER_LIMIT));
+				commentArea.setText(commentArea.getText().substring(LEFT, COMMENT_FIELD_CHARACTER_LIMIT));
 			}
 			charsLeft.setText(String.format("Characters left: %d",
 					COMMENT_FIELD_CHARACTER_LIMIT - commentArea.getText().length()));
@@ -884,26 +886,26 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		}
 		if (accepted) {
 			final var s = sent ? "Signed by" : "Previously signed by:";
-			detailsGridPane.add(new Label(s), 0, rowCount++);
+			detailsGridPane.add(new Label(s), LEFT, rowCount++);
 		}
 		for (final var metadataAction : signingHistory) {
 			if (Actions.ACCEPT.equals(metadataAction.getActions())) {
 				final var label = new Label(String.format("\t%s on: ", metadataAction.getKeyName()));
 				label.setWrapText(true);
-				detailsGridPane.add(label, 0, rowCount);
+				detailsGridPane.add(label, LEFT, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			} else if (Actions.DECLINE.equals(metadataAction.getActions())) {
-				detailsGridPane.add(new Label("Declined on: "), 0, rowCount);
+				detailsGridPane.add(new Label("Declined on: "), LEFT, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
 			}
 		}
 		if (sent) {
 			try {
 				final var receiptJson = readJsonObject(pathname);
-				detailsGridPane.add(new Label("Network response"), 0, rowCount);
+				detailsGridPane.add(new Label("Network response"), LEFT, rowCount);
 				detailsGridPane.add(new Label(receiptJson.get("status").getAsString()), 1, rowCount++);
 				if (receiptJson.has("entity")) {
-					detailsGridPane.add(new Label("Entity created"), 0, rowCount);
+					detailsGridPane.add(new Label("Entity created"), LEFT, rowCount);
 					detailsGridPane.add(new Label(receiptJson.get("entity").getAsString()), 1, rowCount++);
 
 				}
@@ -928,7 +930,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	@Override
 	public int hashCode() {
 		final var file = new File(parentPath, name);
-		var bytes = new byte[0];
+		var bytes = new byte[LEFT];
 		try {
 			bytes = Files.readAllBytes(file.toPath());
 		} catch (final IOException e) {

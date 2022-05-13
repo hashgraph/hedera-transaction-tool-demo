@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -32,9 +31,11 @@ import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.FXUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.TransactionId;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -68,14 +69,24 @@ import java.util.Set;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.CHUNK_SIZE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_DURATION_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_INCREMENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -83,15 +94,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
-	public static final String FILENAME_PROPERTY = "filename";
-	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
-	public static final String VALID_DURATION_PROPERTY = "validDuration";
-	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
-	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
-	public static final String MEMO_PROPERTY = "memo";
-	public static final String FILE_ID_PROPERTY = "fileID";
-	public static final String NODE_ID_PROPERTY = "nodeID";
-	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 
 	private String filename;
 	private Identifier fileID;
@@ -152,7 +154,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		if (!details.get(JsonConstants.FILENAME_PROPERTY).getAsString().equals(bins[0].getName())) {
+		if (!details.get(FILENAME_PROPERTY).getAsString().equals(bins[0].getName())) {
 			handleError("The binary file does not correspond to the file specified in the details");
 			return;
 		}
@@ -173,28 +175,28 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		this.filename = details.get(JsonConstants.FILENAME_PROPERTY).getAsString();
+		this.filename = details.get(FILENAME_PROPERTY).getAsString();
 		this.fileID = fileIdentifier;
-		this.chunkSize = details.has(JsonConstants.CHUNK_SIZE_PROPERTY) ? details.get(
-				JsonConstants.CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
+		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(
+				CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
 		if (getChunkSize() > 1024) {
 			throw new HederaClientException("Maximum chunk size is 1024 for unsigned file update transactions.");
 		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
 				Duration.ofSeconds(
-						details.has(JsonConstants.VALID_DURATION_PROPERTY) ? details.get(
-								JsonConstants.VALID_DURATION_PROPERTY).getAsLong() : 120);
+						details.has(VALID_DURATION_PROPERTY) ? details.get(
+								VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
 		this.validIncrement =
-				details.has(JsonConstants.VALID_INCREMENT_PROPERTY) ? details.get(
-						JsonConstants.VALID_INCREMENT_PROPERTY).getAsInt() : 100;
+				details.has(VALID_INCREMENT_PROPERTY) ? details.get(
+						VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee =
-				details.has(JsonConstants.TRANSACTION_FEE_PROPERTY) ? details.get(
-						JsonConstants.TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(
+						TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
 		this.memo =
-				details.has(JsonConstants.MEMO_PROPERTY) ? details.get(JsonConstants.MEMO_PROPERTY).getAsString() : "";
+				details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();
@@ -223,6 +225,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return Arrays.stream(ids).anyMatch(Objects::isNull);
 	}
 
+	public Identifier getFeePayerAccountId() {
+		return feePayerAccountId;
+	}
+
 	/**
 	 * Returns the file id
 	 *
@@ -233,11 +239,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getFileIdentifier(final JsonObject details) {
 		final Identifier fileIdentifier;
-		if (!details.has(JsonConstants.FILE_ID_PROPERTY)) {
+		if (!details.has(FILE_ID_PROPERTY)) {
 			handleError("Missing file ID in details file");
 			return null;
 		}
-		final var fileJson = details.getAsJsonObject(JsonConstants.FILE_ID_PROPERTY);
+		final var fileJson = details.getAsJsonObject(FILE_ID_PROPERTY);
 
 		try {
 			fileIdentifier = Identifier.parse(fileJson);
@@ -258,12 +264,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getNodeIdentifier(final JsonObject details) {
 		final Identifier nodeIdentifier;
-		if (!details.has(JsonConstants.NODE_ID_PROPERTY)) {
+		if (!details.has(NODE_ID_PROPERTY)) {
 			handleError("Missing node ID in details file");
 			return null;
 		}
 
-		final var nodeJson = details.getAsJsonObject(JsonConstants.NODE_ID_PROPERTY);
+		final var nodeJson = details.getAsJsonObject(NODE_ID_PROPERTY);
 
 		try {
 			nodeIdentifier = Identifier.parse(nodeJson);
@@ -284,12 +290,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private Identifier getPayerIdentifier(final JsonObject details) {
 		Identifier payerIdentifier = null;
-		if (!details.has(JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY)) {
+		if (!details.has(FEE_PAYER_ACCOUNT_ID_PROPERTY)) {
 			handleError("Missing fee payer ID in details file");
 			return null;
 		}
 
-		final var payerJson = details.getAsJsonObject(JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY);
+		final var payerJson = details.getAsJsonObject(FEE_PAYER_ACCOUNT_ID_PROPERTY);
 
 		try {
 			payerIdentifier = Identifier.parse(payerJson);
@@ -545,13 +551,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public GridPane buildGridPane() {
 		final var detailsGridPane = super.buildGridPane();
+		final var id = new TransactionId(feePayerAccountId.asAccount(), transactionValidStart.asInstant());
+		detailsGridPane.add(FXUtils.buildTransactionIDBox(detailsGridPane, id.toString()), RIGHT, 0);
 
 		try {
 			final var map =
 					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, map));
 			feePayerLabel.setWrapText(true);
-			detailsGridPane.add(feePayerLabel, 1, 0);
+			detailsGridPane.add(feePayerLabel, RIGHT, 1);
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
@@ -560,16 +568,16 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
-		detailsGridPane.add(text, 1, 1);
-
-		if (!"".equals(memo)) {
-			detailsGridPane.add(new Label("Memo: "), 0, 2);
-			detailsGridPane.add(new Label(memo), 1, 2);
-		}
+		detailsGridPane.add(text, 1, 2);
 
 		final var timeLabel = getTimeLabel(transactionValidStart, true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
+
+		if (!"".equals(memo)) {
+			detailsGridPane.add(new Label("Memo: "), 0, 4);
+			detailsGridPane.add(new Label(memo), 1, 4);
+		}
 
 
 		final var fileLink = new Hyperlink("Click for more details");
@@ -587,35 +595,35 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		});
 
 
-		detailsGridPane.add(new Label("File contents"), 0, 4);
-		detailsGridPane.add(fileLink, 1, 4);
+		detailsGridPane.add(new Label("File contents"), 0, 5);
+		detailsGridPane.add(fileLink, 1, 5);
 
-		detailsGridPane.add(new Label("File Hash"), 0, 5);
+		detailsGridPane.add(new Label("File Hash"), 0, 6);
 		final var checksum = new Text(getChecksum());
 		checksum.setFont(Font.font("Courier New", 16));
-		detailsGridPane.add(checksum, 1, 5);
+		detailsGridPane.add(checksum, 1, 6);
 
-		detailsGridPane.add(new Label("File size"), 0, 6);
+		detailsGridPane.add(new Label("File size"), 0, 7);
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
-		detailsGridPane.add(new Label(formattedContentSize), 1, 6);
+		detailsGridPane.add(new Label(formattedContentSize), 1, 7);
 
 		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
-			detailsGridPane.add(new Label("Chunk size"), 0, 7);
+			detailsGridPane.add(new Label("Chunk size"), 0, 8);
 			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
-			detailsGridPane.add(new Label(formattedChunkSize), 1, 7);
+			detailsGridPane.add(new Label(formattedChunkSize), 1, 8);
 
-			detailsGridPane.add(new Label("Number of transactions"), 0, 8);
+			detailsGridPane.add(new Label("Number of transactions"), 0, 9);
 			final var formattedChunkNumber = String.format("%d", chunks);
-			detailsGridPane.add(new Label(formattedChunkNumber), 1, 8);
+			detailsGridPane.add(new Label(formattedChunkNumber), 1, 9);
 
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
-			detailsGridPane.add(interval, 0, 9);
+			detailsGridPane.add(interval, 0, 10);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
-			detailsGridPane.add(new Label(formattedIntervalLength), 1, 9);
+			detailsGridPane.add(new Label(formattedIntervalLength), 1, 10);
 		}
 
 		return detailsGridPane;
@@ -624,17 +632,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
-		toJson.addProperty(JsonConstants.FILENAME_PROPERTY, filename);
-		toJson.add(JsonConstants.FILE_ID_PROPERTY, fileID.asJSON());
-		toJson.addProperty(JsonConstants.CHUNK_SIZE_PROPERTY, chunkSize);
-		toJson.add(JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY, feePayerAccountId.asJSON());
-		toJson.addProperty("transactionValidDuration", transactionValidDuration.getSeconds());
-		toJson.add("transactionValidStart", transactionValidStart.asJSON());
-		toJson.addProperty(JsonConstants.VALID_INCREMENT_PROPERTY, validIncrement);
-		toJson.add(JsonConstants.NODE_ID_PROPERTY, nodeID.asJSON());
-		toJson.addProperty(JsonConstants.TRANSACTION_FEE_PROPERTY, transactionFee);
-		toJson.addProperty(JsonConstants.MEMO_PROPERTY, memo);
-		toJson.addProperty("content", content.getAbsolutePath());
+		toJson.addProperty(FILENAME_PROPERTY, filename);
+		toJson.add(FILE_ID_PROPERTY, fileID.asJSON());
+		toJson.addProperty(CHUNK_SIZE_PROPERTY, chunkSize);
+		toJson.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, feePayerAccountId.asJSON());
+		toJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
+		toJson.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
+		toJson.addProperty(VALID_INCREMENT_PROPERTY, validIncrement);
+		toJson.add(NODE_ID_PROPERTY, nodeID.asJSON());
+		toJson.addProperty(TRANSACTION_FEE_PROPERTY, transactionFee);
+		toJson.addProperty(MEMO_PROPERTY, memo);
+		toJson.addProperty(CONTENT_PROPERTY, content.getAbsolutePath());
 		return toJson;
 	}
 }

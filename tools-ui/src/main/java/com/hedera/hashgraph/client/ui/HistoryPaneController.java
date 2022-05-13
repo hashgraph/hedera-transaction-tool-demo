@@ -28,8 +28,8 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -97,6 +97,7 @@ import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 import static com.hedera.hashgraph.client.core.enums.FileType.getType;
+import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
@@ -434,11 +435,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					@Override
 					public void updateItem(final String item, final boolean empty) {
 						setText(null);
-
 						if (!empty) {
-
 							final var historyData = table.getItems().get(getIndex());
-
 							final var succeeded = historyData.transactionSucceeded();
 							if (succeeded != null) {
 								setGraphic(twoImages(Boolean.TRUE.equals(succeeded)));
@@ -697,28 +695,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return hBox;
 	}
 
-	/**
-	 * Setups a button with an icon
-	 *
-	 * @param imageLocation
-	 * 		the relative location of the image of the icon to be used
-	 * @return a button with the image provided
-	 */
-	private Button formatButton(final String imageLocation, final int size) {
-		final var button = new Button();
-		try {
-			final var image = new Image(imageLocation);
-			final var imageView = new ImageView(image);
-			imageView.setFitHeight(size);
-			imageView.setPreserveRatio(true);
-			button.setGraphic(imageView);
-			button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		} catch (final Exception e) {
-			logger.error(e.getMessage());
-		}
-		return button;
-	}
-
 	private HBox twoImages(final boolean success) {
 		final var sent = new Image(SENT_ICON);
 		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-100.png");
@@ -795,7 +771,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		toolTipButton.setMinWidth(25);
 
 		toolTipButton.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
+				actionEvent -> CommonMethods.showTooltip(controller.homePane, toolTipButton, text));
 		return toolTipButton;
 	}
 

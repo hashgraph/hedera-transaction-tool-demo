@@ -25,6 +25,7 @@ import java.io.File;
 
 public class Constants {
 
+
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -206,5 +207,8 @@ public class Constants {
 	public static final String FREEZE_AND_UPGRADE = "Freeze and upgrade";
 	public static final int MEMO_LENGTH = 99;
 
+	public static final String BUTTON_CONTINUE = "CONTINUE";
+	public static final String BUTTON_CANCEL = "CANCEL";
+	public static final String BUTTON_ADD = "ADD MORE";
 
 }

@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.constants;
 
 public class JsonConstants {
 
+
 	private JsonConstants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -39,7 +40,7 @@ public class JsonConstants {
 	public static final String TIMESTAMP_PROPERTY = "timestamp";
 	public static final String TYPE_PROPERTY = "type";
 	public static final String ENTITY_PROPERTY = "entity";
-
+	public static final String CONTENT_PROPERTY = "content";
 
 	public static final String PREFERRED_KEY_LOCATION = "keyLocation";
 	public static final String PREFERRED_REALM = "preferredRealm";

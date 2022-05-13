@@ -34,6 +34,7 @@ import com.hedera.hashgraph.client.core.remote.InfoFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.AddressChecksums;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.AccountHistoryPopup;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
@@ -45,7 +46,6 @@ import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -348,11 +348,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupTooltips() {
-		accountsTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, accountsTooltip,
+		accountsTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.accountsPane, accountsTooltip,
 				ACCOUNTS_TO_QUERY_TOOLTIP_MESSAGE));
-		feePayerTooltipA.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, feePayerTooltipA,
+		feePayerTooltipA.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.accountsPane, feePayerTooltipA,
 				FEE_PAYER_TOOLTIP_MESSAGES));
-		networkTooltipA.setOnAction(actionEvent -> Utilities.showTooltip(controller.accountsPane, networkTooltipA,
+		networkTooltipA.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.accountsPane, networkTooltipA,
 				NETWORKS_TOOLTIP_MESSAGES));
 	}
 

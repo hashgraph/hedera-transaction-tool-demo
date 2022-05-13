@@ -33,6 +33,9 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+
 /**
  * This class introduces a popup with 3 buttons, to be used when replacing a file.
  * The options are: IGNORE (do nothing), KEEP BOTH (keeps the old file and the new file, renaming the new one if
@@ -44,8 +47,7 @@ public class ThreeButtonPopup {
 	protected static final String MESSAGE =
 			"A key named %s has a duplicate in the Keys folder.\nDo you want to replace it with the one " +
 					"you're importing?";
-	protected static final String PUB_EXTENSION = "pub";
-	protected static final String INFO_EXTENSION = "info";
+
 	private static ResponseEnum responseEnum = ResponseEnum.UNKNOWN;
 
 	public static ResponseEnum display(final File file, final boolean multipleFiles) {

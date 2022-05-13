@@ -172,40 +172,6 @@ public class Utilities {
 	}
 
 	/**
-	 * Shows an informational tooltip when the user presses a button
-	 *
-	 * @param owner
-	 * 		pane that will show the tooltip
-	 * @param control
-	 * 		the node that will be attached to (typically a button)
-	 * @param tooltipText
-	 * 		the text that will be displayed
-	 */
-	public static void showTooltip(final Pane owner, final Control control, final String tooltipText) {
-		final var customTooltip = new Tooltip();
-		final var p = control.localToScene(15.0, 15.0);
-		customTooltip.setText(tooltipText);
-		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
-		customTooltip.setMaxWidth(300);
-		customTooltip.setWrapText(true);
-		control.setTooltip(customTooltip);
-
-		customTooltip.setAutoHide(true);
-
-		if (customTooltip.isShowing()) {
-			customTooltip.hide();
-		} else {
-			customTooltip.show(owner, p.getX()
-					+ control.getScene().getX() + control.getScene().getWindow().getX(), p.getY()
-					+ control.getScene().getY() + control.getScene().getWindow().getY());
-		}
-
-		final var pt = new PauseTransition(new javafx.util.Duration(5000));
-		pt.setOnFinished(e -> customTooltip.hide());
-		pt.play();
-	}
-
-	/**
 	 * Given an account info, returns a list of string keys
 	 *
 	 * @param info

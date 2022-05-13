@@ -52,14 +52,13 @@ import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
+import com.hedera.hashgraph.client.ui.popups.TransactionPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountAmountStrings;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
-import com.hedera.hashgraph.sdk.FileAppendTransaction;
-import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -111,7 +110,6 @@ import javafx.scene.text.Text;
 import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -147,6 +145,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
 import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
@@ -214,13 +213,14 @@ import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CR
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.showTooltip;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
 import static com.hedera.hashgraph.client.ui.AccountsPaneController.CANCEL_LABEL;
+import static com.hedera.hashgraph.client.ui.popups.SigningKeysPopup.display;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.showTooltip;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
 import static java.lang.Thread.sleep;
@@ -819,7 +819,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllCreateFields() {
-		cleanFields();
+		cleanCommonFields();
+		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		createSignatureRequired.setSelected(false);
+		createInitialBalance.setText("0");
+		newKeyJSON = emptyKeyObject();
+		createNewKey.setContent(new HBox());
+		createNewKey.setVisible(false);
 		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
 	}
 
@@ -892,11 +898,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllUpdateFields() {
+		cleanCommonFields();
 		updateAccountID.clear();
-		cleanFields();
+		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		updateReceiverSignatureRequired.setSelected(false);
 		updateARPOriginal.clear();
 		updateRSROriginal.setText("???");
 		updateOriginalKey.setContent(new HBox());
+		updateNewKey.setContent(new HBox());
+		updateNewKey.setVisible(false);
 
 		clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey, invalidNode,
 				invalidUpdateAccountToUpdate);
@@ -907,32 +917,38 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var accountsInfoMap = controller.getAccountInfoMap();
 		try {
 			final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
-			if (accountsInfoMap.containsKey(account)) {
-				final var accountInfo = accountsInfoMap.get(account);
-				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
-				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
-				controller.loadPubKeys();
-				final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
-				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
-				final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-				setupKeyPane(oldKeyTreeView, updateOriginalKey);
-				updateAccountMemoOriginal.setText(accountInfo.accountMemo);
-				updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
-				if (!fromFile) {
-					updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
-					updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
-					newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
-					updateAccountMemoOriginal.setText("");
-					updateMaxTokensOriginal.setText("0");
-
-					final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-					setupKeyPane(newKeyTreeView, updateNewKey);
-				}
-				// in case they were visible before
-				clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
-						invalidNode, invalidUpdateAccountToUpdate);
-
+			if (!accountsInfoMap.containsKey(account)) {
+				PopupMessage.display("Missing account information",
+						String.format(
+								"In order to display data regarding account %s, please download the information from " +
+										"the network.",
+								account.toReadableStringAndChecksum()));
+				return;
 			}
+			final var accountInfo = accountsInfoMap.get(account);
+			updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
+			updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
+			controller.loadPubKeys();
+			final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
+			originalKey = EncryptionUtils.keyToJson(accountInfo.key);
+			final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+			setupKeyPane(oldKeyTreeView, updateOriginalKey);
+			updateAccountMemoOriginal.setText(accountInfo.accountMemo);
+			updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
+			if (!fromFile) {
+				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
+				updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
+				newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
+				updateAccountMemoOriginal.setText("");
+				updateMaxTokensOriginal.setText("0");
+
+				final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+				setupKeyPane(newKeyTreeView, updateNewKey);
+			}
+			// in case they were visible before
+			clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
+					invalidNode, invalidUpdateAccountToUpdate);
+
 		} catch (final Exception e) {
 			logger.info("Not an account ID");
 			invalidUpdateAccountToUpdate.setVisible(true);
@@ -1005,16 +1021,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllTransferFields() {
-
 		cleanCommonFields();
-		createCommentsTextArea.clear();
-
 		toTransferTable.getItems().clear();
 		fromTransferTable.getItems().clear();
 		transferCurrencyVBox.setVisible(false);
-
 		clearErrorMessages(invalidDate, invalidFeePayer, invalidNode);
-
 		initializeTable(fromTransferTable);
 		initializeTable(toTransferTable);
 	}
@@ -1324,8 +1335,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		contentsLink.setText("");
 		contentsLink.setVisible(false);
 		contentsTextField.clear();
-		intervalTextField.clear();
-		chunkSizeTextField.clear();
+		intervalTextField.setText("1000000000");
+		chunkSizeTextField.setText("1024");
 		fileDigest.setText("");
 		shaTextFlow.setVisible(false);
 		contentsFilePathError.setVisible(false);
@@ -1465,17 +1476,32 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private String createLargeFileUpdateFiles() throws HederaClientException {
-		final var location = String.format("%s/%s", TEMP_DIRECTORY,
-				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 		final var outputObject = getFileUpdateJson();
+		final var payer = Identifier.parse(outputObject.get("feePayerAccountId").getAsJsonObject()).toReadableString();
+		final var time = new Timestamp(outputObject.get("firsTransactionValidStart").getAsJsonObject());
+
+		final var name = contents.getName();
+		final var extension = FilenameUtils.getExtension(name);
+		final var location = String.format("%s/%s", TEMP_DIRECTORY, extension.equals("") ?
+				name + "." + JSON_EXTENSION :
+				name.replace(extension, JSON_EXTENSION));
+
 		writeJsonObject(location, outputObject);
 		final var jsonFile = new File(location);
 		final var toPack = new File[] { jsonFile, contents };
 
-		final var destZipFile = new File(location.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION));
-		final var destTxtFile = new File(location.replace(JSON_EXTENSION, TXT_EXTENSION));
+		final var destZipFile = new File(
+				String.format("%s/%s_%s_%s.%s", TEMP_DIRECTORY, payer.replace(".", "_"), time.getSeconds(),
+						time.getNanos(), LARGE_BINARY_EXTENSION));
+		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
 
-		ZipUtil.packEntries(toPack, destZipFile);
+		try {
+			Files.deleteIfExists(destZipFile.toPath());
+			ZipUtil.packEntries(toPack, destZipFile);
+		} catch (final Exception e) {
+			throw new HederaClientException(e);
+		}
+
 		final var userComments = new UserComments.Builder()
 				.withAuthor(controller.getUserName())
 				.withComment(createCommentsTextArea.getText())
@@ -1519,7 +1545,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 */
 	@FXML
 	private void browseToContentsFile() {
-		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane);
+		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane, "Content",
+				CONTENT_EXTENSION);
 		if (contents == null) {
 			return;
 		}
@@ -1544,7 +1571,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public void loadFormFromTransaction() {
 		File transactionFile = null;
-		cleanFields();
+		cleanForm();
 		if (SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 			transactionFile = loadTransaction();
 			fromFile = true;
@@ -2250,28 +2277,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		controller.displaySystemMessage(String.format("With comments: %s", creatorComments));
 
-		switch (transactionType) {
-			case CREATE:
-				cleanAllCreateFields();
-				break;
-			case UPDATE:
-				cleanAllUpdateFields();
-				break;
-			case TRANSFER:
-				cleanAllTransferFields();
-				break;
-			case SYSTEM:
-				cleanAllSystemFields();
-				break;
-			case FILE_UPDATE:
-				cleanAllFileUpdateContentsFields();
-				break;
-			case FREEZE:
-				cleanAllFreezeFields();
-				break;
-			default:
-				logger.error("Unknown transaction");
-		}
 
 		return new Pair<>(creatorComments, tx);
 	}
@@ -2424,8 +2429,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (pair == null) {
 				return;
 			}
-
 			storeTransactionAndComment(pair, fileService);
+			cleanForm();
 		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 		}
@@ -2778,27 +2783,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		scrollPane.managedProperty().bind(scrollPane.visibleProperty());
 	}
 
-	private void cleanFields() {
-		cleanCommonFields();
-		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		createSignatureRequired.setSelected(false);
-		updateReceiverSignatureRequired.setSelected(false);
-		createCommentsTextArea.clear();
-		createInitialBalance.setText("0");
-		newKeyJSON = emptyKeyObject();
-
-		createNewKey.setContent(new HBox());
-		createNewKey.setVisible(false);
-
-		updateNewKey.setContent(new HBox());
-		updateNewKey.setVisible(false);
-	}
-
 	private void cleanCommonFields() {
 		startFieldsSet.reset(controller.getDefaultHours(), controller.getDefaultMinutes(),
 				controller.getDefaultSeconds());
 		feePayerAccountField.clear();
+		createCommentsTextArea.clear();
 		final var defaultNodeID =
 				Identifier.parse(controller.getDefaultNodeID(), controller.getCurrentNetwork()).toNicknameAndChecksum(
 						controller.getAccountsList());
@@ -2893,6 +2882,29 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public void cleanForm() {
 		fromFile = false;
 		final var type = selectTransactionType.getValue();
+		switch (CreateTransactionType.get(type)) {
+			case CREATE:
+				cleanAllCreateFields();
+				break;
+			case UPDATE:
+				cleanAllUpdateFields();
+				break;
+			case TRANSFER:
+				cleanAllTransferFields();
+				break;
+			case SYSTEM:
+				cleanAllSystemFields();
+				break;
+			case FILE_UPDATE:
+				cleanAllFileUpdateContentsFields();
+				break;
+			case FREEZE:
+				cleanAllFreezeFields();
+				break;
+			default:
+				logger.error("Unknown transaction");
+		}
+
 		initializeCreatePane();
 		selectTransactionType.setValue(type);
 	}
@@ -2916,46 +2928,41 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
-
-		byte[] data = new byte[0];
-		try {
-			data = Files.readAllBytes(Path.of(contentsTextField.getText()));
-		} catch (final IOException e) {
-			logger.error(e.getMessage());
-		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
 		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
 		final var transactions = largeBinaryFile.createTransactionList();
 		logger.info("Transactions created");
-		var bytes = ((FileUpdateTransaction) transactions.get(0).getTransaction()).getContents().toByteArray();
-		for (var i = 1; i < transactions.size(); i++) {
-			final var contents =
-					((FileAppendTransaction) transactions.get(i).getTransaction()).getContents().toByteArray();
-			bytes = ArrayUtils.addAll(bytes, contents);
-		}
-		logger.info("Payload = {}", bytes.length);
-
-		assert Arrays.equals(data, bytes);
 
 		final var privateKeyFiles = getPrivateKeys(transactions.get(0));
+		if (privateKeyFiles.isEmpty()) {
+			return;
+		}
 		final List<PrivateKey> privateKeys = new ArrayList<>();
 		for (final var privateKeyFile : privateKeyFiles) {
 			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
 			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
 			privateKeys.add(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
 		}
+
+		final var submit = TransactionPopup.display(largeBinaryFile);
+		if (!submit) {
+			return;
+		}
+
 		final var progressBar = new ProgressBar();
 		final var cancelButton = new Button(CANCEL_LABEL);
 		final var size = transactions.size();
 		final var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating File Contents",
 				"Please wait while the file update transactions are being submitted.", size);
+		final Status[] error = new Status[1];
+		final var comments = createCommentsTextArea.getText();
 
 		final Task<Void> task = new Task<>() {
 			@Override
 			protected Void call() throws InterruptedException, HederaClientException {
 				long counter = 0;
 				for (final var transaction : transactions) {
-					var toolTransaction = transaction.atNow();
+					final var toolTransaction = transaction.atNow();
 					toolTransaction.setNetwork(controller.getCurrentNetwork());
 					for (final var privateKey : privateKeys) {
 						toolTransaction.sign(privateKey);
@@ -2966,20 +2973,20 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
 								TransactionType.FILE_UPDATE.toString());
 						if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
-							PopupMessage.display("Update failed",
-									String.format("File update failed with error %s", getErrorMessage(receipt.status)));
+							error[0] = receipt.status;
 							cancel();
 						}
 						logger.info(receipt);
 					} catch (final PrecheckStatusException e) {
 						logger.error(e.getMessage());
-						PopupMessage.display("Update failed",
-								String.format("File update failed with error %s", getErrorMessage(e.status)));
+						storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
+						error[0] = e.status;
 						cancel();
 					} catch (final ReceiptStatusException e) {
 						logger.error(e.getMessage());
-						PopupMessage.display("Update failed",
-								String.format("File update failed with error %s", getErrorMessage(e.receipt.status)));
+						storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+								TransactionType.FILE_UPDATE.toString());
+						error[0] = e.receipt.status;
 						cancel();
 					}
 					counter++;
@@ -3000,15 +3007,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		task.setOnSucceeded(workerStateEvent -> {
 			logger.info("Transactions signed");
 			largeBinaryFile.setHistory(true);
-			try {
-				for (final var privateKeyFile : privateKeyFiles) {
-					largeBinaryFile.moveToHistory(Actions.ACCEPT, "",
-							FilenameUtils.getBaseName(privateKeyFile.getName()));
-				}
-
-			} catch (final HederaClientException e) {
-				logger.error(e.getMessage());
-			}
+			moveToHistory(largeBinaryFile, privateKeyFiles);
 			controller.historyPaneController.addToHistory(largeBinaryFile);
 
 			if (window != null) {
@@ -3024,16 +3023,38 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (window != null) {
 				window.close();
 			}
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			largeBinaryFile.setHistory(true);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+
+			final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "CANCELLED";
+			PopupMessage.display("Update failed",
+					String.format("File update failed with error %s. Please review the transaction and try again.",
+							errorMessage));
+			initializeCreatePane();
 		});
 
 		task.setOnFailed(workerStateEvent -> {
 			logger.info("Update balances failed");
+			moveToHistory(largeBinaryFile, privateKeyFiles);
 			if (window != null) {
 				window.close();
 			}
 		});
 
 
+	}
+
+	private void moveToHistory(final LargeBinaryFile largeBinaryFile, final List<File> privateKeyFiles) {
+		try {
+			for (final var privateKeyFile : privateKeyFiles) {
+				largeBinaryFile.moveToHistory(Actions.ACCEPT, "",
+						FilenameUtils.getBaseName(privateKeyFile.getName()));
+			}
+
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
 	}
 
 	private void signAndSubmitSingleTransaction() throws HederaClientException {
@@ -3045,6 +3066,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final var transaction = pair.getValue();
 		final var privateKeys = getPrivateKeys(transaction);
+		if (privateKeys.isEmpty()) {
+			return;
+		}
 
 		Collections.sort(privateKeys);
 
@@ -3055,7 +3079,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var rf = new TransactionFile(location);
 		final var comments = createCommentsTextArea.getText();
 
-
 		for (final var privateKeyFile : privateKeys) {
 			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
 			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
@@ -3063,9 +3086,22 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			rf.moveToHistory(Actions.ACCEPT, comments, FilenameUtils.getBaseName(privateKeyFile.getName()));
 		}
 
-		rf.setHistory(true);
-		controller.historyPaneController.addToHistory(rf);
+		final var keyTree = getKeyTree(rf);
+		if (keyTree.getRoot() != null) {
+			rf.setTreeView(keyTree);
+		}
+		final var oldKeyTree = getOldKey(rf);
+		if (oldKeyTree.getRoot() != null) {
+			rf.setOldKey(oldKeyTree);
+		}
+		rf.setHistory(false);
 
+		final var submit = TransactionPopup.display(rf);
+		if (!submit) {
+			return;
+		}
+
+		rf.setHistory(true);
 
 		try {
 			final var receipt = transaction.submit();
@@ -3077,16 +3113,46 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			selectTransactionType.setValue(SELECT_STRING);
 		} catch (final InterruptedException e) {
 			logger.error(e.getMessage());
+			PopupMessage.display("Status",
+					String.format("Transaction failed with error %s. Please review the transaction and try again.",
+							e.getMessage()));
 			throw new HederaClientRuntimeException(e);
 		} catch (final ReceiptStatusException e) {
 			logger.error(e.getMessage());
 			storeReceipt(e.receipt, transactionName, rf.getTransactionType().toString());
-			PopupMessage.display("Status", getErrorMessage(e.receipt.status));
+			PopupMessage.display("Status",
+					String.format("Transaction failed with error %s. Please review the transaction and try again.",
+							getErrorMessage(e.receipt.status)));
 		} catch (final PrecheckStatusException e) {
 			logger.error(e.getMessage());
 			storeReceipt(e.status, transactionName);
-			PopupMessage.display("Status", getErrorMessage(e.status));
+			PopupMessage.display("Status",
+					String.format("Transaction failed with error %s. Please review the transaction and try again.",
+							getErrorMessage(e.status)));
 		}
+		controller.historyPaneController.addToHistory(rf);
+	}
+
+	private TreeView<String> getOldKey(final TransactionFile transactionFile) {
+		return TransactionType.CRYPTO_UPDATE.equals(transactionFile.getTransaction().getTransactionType()) ?
+				controller.buildKeyTreeView(originalKey) :
+				new TreeView<>();
+	}
+
+
+	private TreeView<String> getKeyTree(final TransactionFile transactionFile) {
+		var key = new KeyList();
+		switch (transactionFile.getTransaction().getTransactionType()) {
+			case CRYPTO_CREATE:
+				key = ((ToolCryptoCreateTransaction) transactionFile.getTransaction()).getKey();
+				break;
+			case CRYPTO_UPDATE:
+				key = ((ToolCryptoUpdateTransaction) transactionFile.getTransaction()).getKey();
+				break;
+			default:
+				return new TreeView<>();
+		}
+		return controller.buildKeyTreeView(key);
 	}
 
 	private void showReceiptOnPopup(final ToolTransaction transaction, final TransactionReceipt receipt) {
@@ -3097,7 +3163,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				PopupMessage.display("Final status", message);
 				break;
 			default:
-				PopupMessage.display("Final status", getErrorMessage(receipt.status));
+				PopupMessage.display("Final status",
+						String.format("The transaction failed with status %s. Please review and try again.",
+								getErrorMessage(receipt.status)));
 		}
 	}
 
@@ -3105,7 +3173,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private List<File> getPrivateKeys(final ToolTransaction transaction) {
 		final var knownSigners = controller.accountsPaneController.getFeePayers();
 		final var signers = transaction.getSigningAccounts();
-		final var privateKeys = controller.extractRequiredKeys(transaction.getSigningKeys());
+		final var privateKeys = new HashSet<>(controller.extractRequiredKeys(transaction.getSigningKeys()));
 
 		final Set<Identifier> unknownSigners = new HashSet<>();
 		for (final var signer : signers) {
@@ -3125,7 +3193,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					"The keys for %s unknown. You will be required to select signing keys as an extra step.", message));
 			privateKeys.addAll(ExtraKeysSelectorPopup.display(new HashSet<>(privateKeys)));
 		}
-		return privateKeys;
+		var response = display(privateKeys);
+		while (!Boolean.TRUE.equals(response)) {
+			if (response == null) {
+				return new ArrayList<>();
+			}
+			final var list = ExtraKeysSelectorPopup.display(new HashSet<>(privateKeys));
+			privateKeys.clear();
+			privateKeys.addAll(list);
+			response = display(privateKeys);
+		}
+		return new ArrayList<>(privateKeys);
 	}
 
 	private String getPopupMessage(final ToolTransaction transaction, final TransactionReceipt receipt) {
@@ -3175,93 +3253,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 
 	private String getErrorMessage(final Status status) {
-
-		var message = "";
-		switch (status) {
-			case OK:
-			case UNKNOWN:
-			case INVALID_TRANSACTION:
-			case PAYER_ACCOUNT_NOT_FOUND:
-			case INVALID_NODE_ACCOUNT:
-			case TRANSACTION_EXPIRED:
-			case INVALID_TRANSACTION_START:
-			case INVALID_TRANSACTION_DURATION:
-			case INVALID_SIGNATURE:
-			case MEMO_TOO_LONG:
-			case INSUFFICIENT_TX_FEE:
-			case INSUFFICIENT_PAYER_BALANCE:
-			case DUPLICATE_TRANSACTION:
-			case BUSY:
-			case NOT_SUPPORTED:
-			case INVALID_FILE_ID:
-			case INVALID_ACCOUNT_ID:
-			case INVALID_CONTRACT_ID:
-			case INVALID_TRANSACTION_ID:
-			case RECEIPT_NOT_FOUND:
-			case INSUFFICIENT_ACCOUNT_BALANCE:
-			case ACCOUNT_UPDATE_FAILED:
-			case INVALID_FEE_SUBMITTED:
-			case INVALID_PAYER_SIGNATURE:
-			case FILE_CONTENT_EMPTY:
-			case INVALID_ACCOUNT_AMOUNTS:
-			case EMPTY_TRANSACTION_BODY:
-			case INVALID_TRANSACTION_BODY:
-			case ACCOUNT_ID_DOES_NOT_EXIST:
-			case PLATFORM_NOT_ACTIVE:
-			case INVALID_RENEWAL_PERIOD:
-			case INVALID_PAYER_ACCOUNT_ID:
-			case ACCOUNT_DELETED:
-			case FILE_DELETED:
-			case ACCOUNT_REPEATED_IN_ACCOUNT_AMOUNTS:
-			case FILE_SYSTEM_EXCEPTION:
-			case AUTORENEW_DURATION_NOT_IN_RANGE:
-			case INVALID_FREEZE_TRANSACTION_BODY:
-			case FREEZE_TRANSACTION_BODY_NOT_FOUND:
-			case TRANSFER_LIST_SIZE_LIMIT_EXCEEDED:
-			case NOT_SPECIAL_ACCOUNT:
-			case INVALID_FEE_FILE:
-			case TRANSFER_ACCOUNT_SAME_AS_DELETE_ACCOUNT:
-			case RECEIVER_SIG_REQUIRED:
-			case SCHEDULE_IS_IMMUTABLE:
-			case INVALID_SCHEDULE_PAYER_ID:
-			case INVALID_SCHEDULE_ACCOUNT_ID:
-			case NO_NEW_VALID_SIGNATURES:
-			case SCHEDULED_TRANSACTION_NOT_IN_WHITELIST:
-			case SOME_SIGNATURES_WERE_INVALID:
-			case TRANSACTION_ID_FIELD_NOT_ALLOWED:
-			case IDENTICAL_SCHEDULE_ALREADY_CREATED:
-			case SCHEDULE_ALREADY_DELETED:
-			case SCHEDULE_ALREADY_EXECUTED:
-			case MESSAGE_SIZE_TOO_LARGE:
-			case OPERATION_REPEATED_IN_BUCKET_GROUPS:
-			case BUCKET_CAPACITY_OVERFLOW:
-			case ACCOUNT_EXPIRED_AND_PENDING_REMOVAL:
-			case PAYER_ACCOUNT_DELETED:
-			case EXISTING_AUTOMATIC_ASSOCIATIONS_EXCEED_GIVEN_LIMIT:
-			case REQUESTED_NUM_AUTOMATIC_ASSOCIATIONS_EXCEEDS_ASSOCIATION_LIMIT:
-			case FREEZE_UPDATE_FILE_DOES_NOT_EXIST:
-			case FREEZE_UPDATE_FILE_HASH_DOES_NOT_MATCH:
-			case NO_UPGRADE_HAS_BEEN_PREPARED:
-			case NO_FREEZE_IS_SCHEDULED:
-			case UPDATE_FILE_HASH_CHANGED_SINCE_PREPARE_UPGRADE:
-			case FREEZE_START_TIME_MUST_BE_FUTURE:
-			case PREPARED_UPDATE_FILE_IS_IMMUTABLE:
-			case FREEZE_ALREADY_SCHEDULED:
-			case FREEZE_UPGRADE_IN_PROGRESS:
-			case UPDATE_FILE_ID_DOES_NOT_MATCH_PREPARED:
-			case UPDATE_FILE_HASH_DOES_NOT_MATCH_PREPARED:
-			case INVALID_PROXY_ACCOUNT_ID:
-			case INVALID_TRANSFER_ACCOUNT_ID:
-			case INVALID_FEE_COLLECTOR_ACCOUNT_ID:
-			case AMOUNT_EXCEEDS_TOKEN_MAX_SUPPLY:
-			case MAX_ALLOWANCES_EXCEEDED:
-			case EMPTY_ALLOWANCES:
-				message = "Message TBD " + status;
-				break;
-			default:
-				message = status.toString();
-		}
-		return message;
+		return status.toString();
 	}
 
 	private void storeReceipt(final TransactionReceipt receipt, final String name, final String type) {

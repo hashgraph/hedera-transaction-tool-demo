@@ -158,13 +158,14 @@ public class ToolTransferTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
+		final var accountsSet = super.getSigningAccounts();
 		Map<AccountId, AccountInfo> infos = new HashMap<>();
 		try {
 			infos = loadAccountInfos();
 		} catch (final HederaClientException | InvalidProtocolBufferException e) {
 			logger.warn("Unable to load account information, some required receiver signatures may be omitted", e);
 		}
-		final var accountsSet = super.getSigningAccounts();
+
 		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
 			final var accountId = entry.getKey().asAccount();
 			if (entry.getValue().toTinybars() < 0) {
