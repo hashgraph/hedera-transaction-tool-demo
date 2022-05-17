@@ -120,6 +120,10 @@ public class EncryptionUtils {
 	public static JsonObject keyToJson(final Key keyObject) {
 		final var jsonObject = new JsonObject();
 
+		if (keyObject == null) {
+			return jsonObject;
+		}
+
 		if (keyObject instanceof PublicKey) {
 			jsonObject.addProperty(ED_25519, trimTo64(keyObject));
 			return jsonObject;

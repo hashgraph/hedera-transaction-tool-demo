@@ -1073,6 +1073,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setInterval(1000000000);
 
 		logger.info("Exporting to \"{}\"", resources);
+
 		createPanePage.createAndExport(resources);
 
 		final var transactions = new File(
@@ -1089,7 +1090,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		File zipFile = null;
 
 		for (final var f : transactions) {
-			if (f.getName().contains("large")) {
+			if (f.getName().contains("10019")) {
 				if (f.getName().endsWith(Constants.LARGE_BINARY_EXTENSION)) {
 					zipFile = f;
 				}
@@ -1692,9 +1693,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums8_test() {
-
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNotNull(TestUtil.getPopupNodes());
+		createPanePage.closePopup("CONTINUE");
 		assertFalse(find("#invalidUpdateAccountToUpdate").isVisible());
 	}
 

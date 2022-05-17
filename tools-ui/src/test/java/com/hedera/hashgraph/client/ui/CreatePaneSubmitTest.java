@@ -53,7 +53,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -92,7 +91,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-@Ignore
+
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
 	private final static Logger logger = LogManager.getLogger(CreatePaneSubmitTest.class);
 	public static final String ONE_DRIVE = "/src/test/resources/Transactions/";
@@ -166,7 +165,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.addDebit(accounts.get(0).num, 1)
 				.addCredit(accounts.get(1).num, 1)
 				.submit()
+				.closePopup("CONTINUE")
 				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT")
 				.closePopup("CONTINUE");
 
 		final var newHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
@@ -212,7 +213,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.saveKey()
 				.setAccountMemo("account_2")
 				.submit()
-				.signWithPassword(TEST_PASSWORD);
+				.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT");
 
 		final var labels = getLabels(getPopupNodes());
 		assertEquals(1, labels.size());
@@ -258,7 +261,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setThreshold(1)
 				.saveKey()
 				.submit()
-				.signWithPassword(TEST_PASSWORD);
+				.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT");
 
 		final var popup = getLabels(getPopupNodes());
 		assertTrue(popup.get(0).contains(accounts.get(1).toString()));
@@ -306,7 +311,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setFeePayerAccount(accounts.get(0).toString())
 				.setNewAccountMemo("account_2")
 				.submit()
-				.signWithPassword(TEST_PASSWORD);
+				.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT");
 
 		final var popup = getLabels(getPopupNodes());
 		assertTrue(popup.get(0).contains(accounts.get(1).toString()));
@@ -355,7 +362,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setNewAccountMemo("account_2")
 				.setNewMaxTokenAss(5)
 				.submit()
-				.signWithPassword(TEST_PASSWORD);
+				.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT");
 
 		final var popup = getLabels(getPopupNodes());
 		assertTrue(popup.get(0).contains(accounts.get(1).toString()));
@@ -430,7 +439,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setFeePayerAccount(50)
 				.setEntityID(fileID.num)
 				.submit()
+				.closePopup("CONTINUE")
 				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT")
 				.closePopup("CONTINUE");
 
 		final var newHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
@@ -467,6 +478,8 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setOperation(undelete)
 				.setEntityID(fileID.num)
 				.submit()
+				.closePopup("CONTINUE")
+				.closePopup("SUBMIT")
 				.closePopup("CONTINUE");
 
 		final var fileInfoRestored = new FileInfoQuery()
@@ -500,8 +513,6 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	@Test
 	public void submitLargeFileUpdate() throws KeyStoreException, HederaClientException, PrecheckStatusException,
 			TimeoutException, ReceiptStatusException, IOException {
-		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
-				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
 
 		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
@@ -535,7 +546,9 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.setChunkSize(1000)
 				.setInterval(1000000000)
 				.submit()
-				.signWithPassword(TEST_PASSWORD);
+				.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD)
+				.closePopup("SUBMIT");
 
 		Button button = null;
 		while (button == null) {

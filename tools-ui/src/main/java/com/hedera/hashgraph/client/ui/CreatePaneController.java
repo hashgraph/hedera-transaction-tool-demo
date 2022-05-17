@@ -1447,11 +1447,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			throw new HederaClientException(e);
 		}
 
-		createLargeFileUpdateFiles();
+		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();
-		files.add(new File(jsonName.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION)));
-		files.add(new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION)));
+		files.add(new File(lfuFile));
+		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)));
 		moveToOutput(files, remoteLocation);
 
 		for (final var file : files) {
@@ -2955,7 +2955,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating File Contents",
 				"Please wait while the file update transactions are being submitted.", size);
 		final Status[] error = new Status[1];
-		final var comments = createCommentsTextArea.getText();
 
 		final Task<Void> task = new Task<>() {
 			@Override
