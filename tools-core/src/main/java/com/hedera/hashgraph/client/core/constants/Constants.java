@@ -83,7 +83,8 @@ public class Constants {
 	public static final String NETWORKS = "networks";
 	public static final String CURRENT_NETWORK = "currentNetwork";
 	public static final String DEFAULT_FEE_PAYER = "defaultFeePayer";
-	// endregion
+	public static final String NO_ACCOUNT_FOUND_TEXT = "No account found";
+// endregion
 
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
