@@ -161,36 +161,36 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		final var largeBinary = new LargeBinaryFile(info);
 		final var gridPane = largeBinary.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(20, gridPane.getChildren().size());
+		assertEquals(22, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
-		var label = (Label) gridPane.getChildren().get(3);
+		var label = (Label) gridPane.getChildren().get(5);
 		assertEquals("0.0.56-kqmmh", label.getText());
 
-		var text = (Text) gridPane.getChildren().get(4);
+		var text = (Text) gridPane.getChildren().get(6);
 		assertEquals("190000000 ℏ", text.getText());
 
-		label = (Label) gridPane.getChildren().get(6);
+		label = (Label) gridPane.getChildren().get(9);
 		assertEquals("a memo included", label.getText());
 
-		assertTrue(gridPane.getChildren().get(9) instanceof Hyperlink);
+		assertTrue(gridPane.getChildren().get(11) instanceof Hyperlink);
 
 		label = (Label) gridPane.getChildren().get(7);
 		assertTrue(label.getText().contains("2022-09-03 01:00:00 UTC"));
 
-		text = (Text) gridPane.getChildren().get(11);
+		text = (Text) gridPane.getChildren().get(13);
 		assertTrue(text.getText().contains("9242 b8c9 5482 e9b7 237d 7ecc"));
 
-		label = (Label) gridPane.getChildren().get(13);
+		label = (Label) gridPane.getChildren().get(15);
 		assertEquals("18651636 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(15);
+		label = (Label) gridPane.getChildren().get(17);
 		assertEquals("1023 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(17);
+		label = (Label) gridPane.getChildren().get(19);
 		assertEquals("18233", label.getText());
 
-		label = (Label) gridPane.getChildren().get(19);
+		label = (Label) gridPane.getChildren().get(21);
 		assertEquals("100 nanoseconds", label.getText());
 
 	}
