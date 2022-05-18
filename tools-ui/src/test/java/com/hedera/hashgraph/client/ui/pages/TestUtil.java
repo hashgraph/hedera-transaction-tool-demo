@@ -25,6 +25,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -249,6 +250,39 @@ public class TestUtil {
 			}
 		}
 		return labels;
+	}
+
+	/**
+	 * Returns a list of CheckBoxes contained in the Popup
+	 * @param popupNodes list of nodes in the popup
+	 * @return a list of checkboxes
+	 */
+	public static List<CheckBox> findCheckBoxesInPopup(final ObservableList<Node> popupNodes){
+		final List<CheckBox> checkBoxes = new ArrayList<>();
+		for (final var popupNode : popupNodes) {
+			if (popupNode instanceof CheckBox) {
+				checkBoxes.add((CheckBox) popupNode);
+			}
+			if (popupNode instanceof HBox) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((HBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof VBox) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((VBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof GridPane) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((GridPane) popupNode).getChildren())));
+			}
+			if (popupNode instanceof TitledPane) {
+				checkBoxes.addAll(Objects.requireNonNull(findCheckBoxesInPopup(
+						FXCollections.singletonObservableList(((TitledPane) popupNode).getContent()))));
+			}
+		}
+		return checkBoxes;
+
+
 	}
 
 	/**

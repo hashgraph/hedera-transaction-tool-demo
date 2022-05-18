@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.ui.pages.CreatePanePage;
 import com.hedera.hashgraph.client.ui.pages.HistoryPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -47,12 +48,15 @@ import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.TextField;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -84,12 +88,14 @@ import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTE
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.undelete;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.*;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getLabels;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
@@ -197,7 +203,69 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	}
 
-	//@Test
+	@Test
+	public void popups_test() throws HederaClientException {
+		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
+				.setFeePayerAccount(accounts.get(0).toString())
+				.addDebit(accounts.get(0).num, 1)
+				.addCredit(accounts.get(1).num, 1)
+				.submit();
+
+		createPanePage.closePopup("CANCEL");
+
+		final TextField payer = find("#feePayerAccountField");
+		assertTrue(payer.getText().contains(new Identifier(0, 0, (int) accounts.get(0).num).toReadableString()));
+		final TextField node = find("#nodeAccountField");
+		assertTrue(node.getText().contains("0.0.3"));
+
+		createPanePage.submit().closePopup("ADD MORE");
+		final var checkboxes = findCheckBoxesInPopup(getPopupNodes());
+		for (final var checkbox : checkboxes) {
+			if (checkbox.getText().contains("KeyStore-0")) {
+				clickOn(checkbox);
+			}
+			if (checkbox.getText().contains("genesis")) {
+				clickOn(checkbox);
+			}
+		}
+		createPanePage.closePopup("ACCEPT");
+		final var labels = getLabels(getPopupNodes());
+
+		assertFalse(labels.contains("\t• keystore-0"));
+		assertTrue(labels.contains("\t• genesis"));
+
+		createPanePage.closePopup("CONTINUE")
+				.signWithPassword(TEST_PASSWORD);
+
+		final var labels2 = getLabels(getPopupNodes());
+		assertTrue(labels2.contains("-1 ℏ"));
+		assertTrue(labels2.contains("1 ℏ"));
+
+		assertTrue(labels2.contains("0.0.3-tzfmz"));
+
+		createPanePage.closePopup("SUBMIT");
+		final var labels3 = getLabels(getPopupNodes());
+		assertTrue(labels3.get(0).contains("transferred"));
+
+		createPanePage.closePopup("CONTINUE");
+
+		assertFalse(find("#commentsVBox").isVisible());
+		assertFalse(find("#freezeChoiceVBox").isVisible());
+		assertFalse(find("#accountIDToUpdateVBox").isVisible());
+		assertFalse(find("#fileIDToUpdateVBox").isVisible());
+		assertFalse(find("#systemSlidersHBox").isVisible());
+		assertFalse(find("#commonFieldsVBox").isVisible());
+		assertFalse(find("#createAccountVBox").isVisible());
+		assertFalse(find("#updateAccountVBox").isVisible());
+		assertFalse(find("#transferCurrencyVBox").isVisible());
+		assertFalse(find("#systemDeleteUndeleteVBox").isVisible());
+		assertFalse(find("#fileContentsUpdateVBox").isVisible());
+		assertFalse(find("#freezeVBox").isVisible());
+		assertTrue(find("#createScrollPane").isVisible());
+	}
+
+	@Ignore //Flaky test
+	@Test
 	public void submitOneCreate() throws HederaClientException, PrecheckStatusException, TimeoutException {
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
