@@ -82,6 +82,8 @@ public class CompleteKeysPopup {
 	private static final String WHITE_BUTTON_STYLE = WHITE_WITH_BLUE_BORDER_STYLE +
 			" -fx-border-radius: 10; -fx-background-radius: 10;";
 	private static final String FX_FONT_SIZE = "-fx-font-size: 16";
+	public static final String ASSOCIATED_ACCOUNTS = "Associated accounts";
+	public static final String NO_ACCOUNT_FOUND_TEXT = "No account found";
 
 	private static Boolean reloadTable = false;
 	private static List<FileService> outputDirectories = new ArrayList<>();
@@ -96,7 +98,11 @@ public class CompleteKeysPopup {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Boolean display(final String pubKeyAddress, final boolean showNicknameEdit) {
+	public static Boolean display(final String pubKeyAddres, final boolean showNicknameEdit) {
+		return display(pubKeyAddres, "", showNicknameEdit);
+	}
+
+	public static Boolean display(final String pubKeyAddress, final String accounts, final boolean showNicknameEdit) {
 		initializeOutputDirectories();
 		publicKey = pubKeyAddress;
 		privateKey = pubKeyAddress.replace(PUB_EXTENSION, PK_EXTENSION).replace(TXT_EXTENSION, PK_EXTENSION);
@@ -272,7 +278,35 @@ public class CompleteKeysPopup {
 		address.setMaxWidth(500);
 		address.setWrapText(true);
 
-		layout.getChildren().addAll(nickNameVBox, address, publicKeyVBox, privateKeyVBox, continueButton);
+		final var accountsText = new TextArea(accounts);
+		accountsText.setWrapText(true);
+		accountsText.setStyle(WHITE_WITH_BLUE_BORDER_STYLE + " -fx-opacity: 1;");
+		accountsText.setEditable(false);
+		accountsText.setDisable(true);
+		accountsText.setPrefRowCount(3);
+
+		final var accountsBox = new HBox();
+		accountsBox.getChildren().add(accountsText);
+		accountsBox.setSpacing(10);
+		accountsBox.setMinWidth(500);
+		accountsBox.setMaxWidth(500);
+
+		final var accountsTitle = new Label(ASSOCIATED_ACCOUNTS);
+		accountsTitle.setStyle(FX_FONT_SIZE);
+		accountsTitle.setMaxWidth(500);
+		accountsTitle.setWrapText(true);
+
+
+		final var associatedAccountsVBox = new VBox();
+		associatedAccountsVBox.getChildren().addAll(accountsTitle, accountsBox);
+		associatedAccountsVBox.setAlignment(Pos.CENTER_LEFT);
+		associatedAccountsVBox.setSpacing(5);
+		associatedAccountsVBox.setVisible(!("".equals(accounts) || NO_ACCOUNT_FOUND_TEXT.equals(accounts)));
+		associatedAccountsVBox.managedProperty().bind(associatedAccountsVBox.visibleProperty());
+
+
+		layout.getChildren().addAll(nickNameVBox, address, publicKeyVBox, privateKeyVBox, associatedAccountsVBox,
+				continueButton);
 		layout.setSpacing(20);
 		layout.setPadding(new Insets(20, 20, 20, 20));
 		layout.setAlignment(Pos.CENTER);

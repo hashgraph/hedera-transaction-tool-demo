@@ -167,11 +167,12 @@ public class NewPasswordPopupTest extends TestBase {
 	public void checkPopupNodes_test() {
 		doubleClickOn("principalTestingKey");
 		final var labels = keysPanePage.getPopupLabels();
-		assertEquals(5, labels.size());
+		assertEquals(6, labels.size());
 		assertEquals("Key Name", labels.get(0).getText());
 		assertEquals("Public Key", labels.get(2).getText());
 		assertEquals("Private Key", labels.get(3).getText());
 		assertEquals("Index: 1", labels.get(4).getText());
+		assertEquals("Associated accounts", labels.get(5).getText());
 		assertTrue(labels.get(1).getText().contains("principalTestingKey.pub"));
 
 		final var buttons = keysPanePage.getPopupButtons();
