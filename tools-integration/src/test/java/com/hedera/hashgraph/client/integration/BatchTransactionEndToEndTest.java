@@ -78,7 +78,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static junit.framework.TestCase.assertEquals;
-
 public class BatchTransactionEndToEndTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
@@ -183,6 +182,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 	}
 
 	@Test
+	@Ignore
 	public void signBatchTransaction_test() throws Exception {
 		final List<String> keys = new ArrayList<>();
 		keys.add("KeyStore-0");
