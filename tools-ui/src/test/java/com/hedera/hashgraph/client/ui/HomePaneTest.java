@@ -162,6 +162,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
+		logger.info("Starting application");
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
@@ -171,7 +172,10 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		mainWindowPage.clickOnHistoryButton();
 		mainWindowPage.clickOnHomeButton();
 
+		logger.info("Counting boxes");
 		initBoxes();
+
+		logger.info("Starting test");
 	}
 
 
@@ -729,7 +733,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(16, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
 	}
 
-	@Test
+	//@Test
 	public void acceptSystemTransaction_Test() throws IOException, HederaClientException {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
