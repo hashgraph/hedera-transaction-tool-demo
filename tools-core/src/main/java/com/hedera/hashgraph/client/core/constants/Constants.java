@@ -103,7 +103,7 @@ public class Constants {
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
-	public static final int NUMBER_OF_THREADS = 200;
+	public static final int NUMBER_OF_THREADS = 50;
 	public static final int MAX_TOKEN_AUTOMATIC_ASSOCIATIONS = 1000;
 	public static final int MAX_MEMO_BYTES = 100;
 

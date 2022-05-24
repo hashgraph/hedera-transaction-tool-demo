@@ -181,7 +181,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 
 	}
 
-	//@Test
+	@Test
 	public void signBatchTransaction_test() throws Exception {
 		final List<String> keys = new ArrayList<>();
 		keys.add("KeyStore-0");
