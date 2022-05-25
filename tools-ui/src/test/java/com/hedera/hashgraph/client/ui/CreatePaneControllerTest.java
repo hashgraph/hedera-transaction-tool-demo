@@ -88,7 +88,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -176,18 +175,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					"account", "side", "extra", "outer",
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
-
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
+	private final Path currentRelativePath = Paths.get("");
+	public UserAccessibleProperties properties;
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
 
 	@Before
 	public void setUp() {
@@ -1807,7 +1803,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidFeePayer").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void createAccountFieldsChecksums2_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -1852,7 +1848,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidNode").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void createAccountFieldsChecksums5_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -1899,7 +1895,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidFeePayer").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void updateAccountFieldsChecksums2_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -1944,7 +1940,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidNode").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void updateAccountFieldsChecksums5_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -1990,7 +1986,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidUpdateAccountToUpdate").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void updateAccountFieldsChecksums8_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2037,7 +2033,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidFeePayer").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void systemAccountFieldsChecksums2_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2082,7 +2078,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidNode").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void systemAccountFieldsChecksums5_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2127,7 +2123,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find("#invalidEntity").isVisible());
 	}
 
-	//@Test
+	@Test
 	public void systemAccountFieldsChecksums8_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2177,7 +2173,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//	@Test
+	@Test
 	public void fileAccountFieldsChecksums2_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2225,7 +2221,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void fileAccountFieldsChecksums5_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2274,7 +2270,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void fileAccountFieldsChecksums8_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2323,7 +2319,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void transferAccountFieldsChecksums2_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2374,7 +2370,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void transferAccountFieldsChecksums5_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2425,7 +2421,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void transferAccountFieldsChecksums8_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
@@ -2476,7 +2472,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	}
 
-	//@Test
+	@Test
 	public void transferAccountFieldsChecksums11_test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames
