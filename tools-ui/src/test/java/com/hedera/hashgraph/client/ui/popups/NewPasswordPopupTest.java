@@ -61,7 +61,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Ignore
 public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -228,6 +227,7 @@ public class NewPasswordPopupTest extends TestBase {
 		keysPanePage.enterPopupPassword(PASSWORD);
 		assertTrue(buttons.get(2).isVisible());
 		clickOn(buttons.get(4));
+
 	}
 
 	@Test
@@ -266,7 +266,7 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(4));
 	}
 
-	@Test
+	//@Test
 	public void forgotMnemonicPasswordCancel_test() {
 		logger.info("forgotMnemonicPasswordCancel_test");
 		keysPanePage.pressRecoveryPhrase()
@@ -298,7 +298,6 @@ public class NewPasswordPopupTest extends TestBase {
 		}
 
 		keysPanePage.pressPopupButton("CANCEL");
-
 	}
 
 }
