@@ -78,7 +78,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@Ignore
+
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";
