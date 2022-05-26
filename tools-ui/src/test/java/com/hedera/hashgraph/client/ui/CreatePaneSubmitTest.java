@@ -33,7 +33,6 @@ import com.hedera.hashgraph.client.ui.pages.CreatePanePage;
 import com.hedera.hashgraph.client.ui.pages.HistoryPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
-import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -48,7 +47,6 @@ import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -88,14 +86,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTE
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.undelete;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.*;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
+import static com.hedera.hashgraph.client.ui.pages.TestUtil.findCheckBoxesInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getLabels;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
@@ -161,6 +158,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	@Test
 	public void submitOneTransfer() throws HederaClientException, PrecheckStatusException, TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
 				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
@@ -205,6 +210,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	@Test
 	public void popups_test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount(accounts.get(0).toString())
 				.addDebit(accounts.get(0).num, 1)
@@ -315,6 +328,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	@Test
 	public void submitOneUpdateKey() throws HederaClientException, PrecheckStatusException, TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
 				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
@@ -370,6 +391,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 	@Test
 	public void submitOneUpdateMemo() throws HederaClientException, PrecheckStatusException, TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
 				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
@@ -420,6 +449,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	@Test
 	public void submitOneUpdateAssociationsAndMemo() throws HederaClientException, PrecheckStatusException,
 			TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
 				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
@@ -471,6 +508,13 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	@Test
 	public void submitFileDeleteUndelete() throws PrecheckStatusException, TimeoutException, HederaClientException,
 			ReceiptStatusException, KeyStoreException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
 				(dir, name) -> !FilenameUtils.getExtension(name).equals(METADATA_EXTENSION)));
@@ -581,6 +625,14 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	@Test
 	public void submitLargeFileUpdate() throws KeyStoreException, HederaClientException, PrecheckStatusException,
 			TimeoutException, ReceiptStatusException, IOException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 
 		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
