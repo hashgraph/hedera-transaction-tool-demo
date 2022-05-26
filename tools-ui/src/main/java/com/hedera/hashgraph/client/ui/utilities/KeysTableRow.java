@@ -18,10 +18,13 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.hedera.hashgraph.client.core.constants.Constants;
 import javafx.beans.property.SimpleStringProperty;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.*;
 
 public class KeysTableRow {
 
@@ -55,7 +58,7 @@ public class KeysTableRow {
 	}
 
 	public KeysTableRow(final String keyName, final String index, final boolean signer, final boolean mnemonic) {
-		this(new SimpleStringProperty(keyName), new SimpleStringProperty("No account found"), index, signer, mnemonic);
+		this(new SimpleStringProperty(keyName), new SimpleStringProperty(NO_ACCOUNT_FOUND_TEXT), index, signer, mnemonic);
 	}
 
 	public KeysTableRow(
@@ -135,7 +138,7 @@ public class KeysTableRow {
 	private String getStringAccountList(final List<String> accounts) {
 		Collections.sort(accounts);
 		if (accounts.isEmpty()) {
-			return "No account found";
+			return NO_ACCOUNT_FOUND_TEXT;
 		}
 
 		final var builder = new StringBuilder();

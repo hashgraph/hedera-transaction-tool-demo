@@ -174,18 +174,15 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					"account", "side", "extra", "outer",
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
-
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-
+	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
+			System.getProperty("user.home") + "/", "") + "/";
+	private final Path currentRelativePath = Paths.get("");
+	public UserAccessibleProperties properties;
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
 
 	@Before
 	public void setUp() {
@@ -293,6 +290,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void openCreatePageTab_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertNotNull(find(CREATE_ANCHOR_PANE));
 		assertNotNull(find(CREATE_MAIN_CHOICE_BOX));
 		sleep(THREAD_PAUSE_TIME);
@@ -300,6 +305,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transactionHeader1_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
@@ -324,6 +336,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transactionHeader2_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
@@ -348,6 +367,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transactionHeader3_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		try {
 			createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 			assertNotNull(find(CREATE_MEMO_FIELD));
@@ -377,6 +403,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void exclusiveFields1_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -407,6 +440,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void exclusiveFields2_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -440,6 +480,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void exclusiveFields3_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -475,6 +522,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void checkTimeDate_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var sdf = new SimpleDateFormat("MM/dd/yyyy");
 
@@ -529,6 +584,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void useTheNowButton_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 
 		var localDateTime = LocalDateTime.now();
@@ -556,6 +619,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void useTheNowButtonErrorMessages_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 
 		var localDateTime = LocalDateTime.now();
@@ -588,6 +659,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@NotNull
 	private String getFormattedDate(final LocalDateTime localDateTime) {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		return datePickerFormat.format(Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant()));
@@ -595,6 +674,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void changeTimeZone() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.clickOnNowButton();
@@ -641,6 +727,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccount_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -741,6 +835,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createTransfer_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -839,6 +941,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void setTotalsToTransfer_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.addDebit(1001, 100000000)
 				.addDebit(1002, 666666666);
@@ -857,6 +967,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createUpdateAccount_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -960,6 +1078,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountUpdateAutoRenew_test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -1045,6 +1171,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createLargeBinaryUpdate_test() throws HederaClientException, IOException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -1161,6 +1295,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createSystemDeleteFile_Test() throws HederaClientException, InterruptedException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1255,6 +1397,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createSystemDeleteContract_Test() throws HederaClientException, InterruptedException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1325,6 +1474,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void checkRemainingTimePopup_Test() throws Exception {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		var localDateTime = LocalDateTime.now().plusMinutes(1);
 		var expiration = LocalDateTime.now().plusMinutes(5);
 
@@ -1375,6 +1532,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createSystemUnDeleteFile_Test() throws HederaClientException, InterruptedException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1442,6 +1606,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createSystemUnDeleteContract_Test() throws HederaClientException, InterruptedException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1508,6 +1679,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void errorMessagesCreate_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
 			// Test will not work on headless mode
@@ -1542,6 +1721,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void errorMessagesUpdate_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
 			// Test will not work on headless mode
@@ -1577,6 +1764,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums0_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setFeePayerAccount("0.1");
 		checkBadChecksum("e.g.");
@@ -1585,6 +1780,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums1_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
@@ -1594,6 +1796,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums2_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setFeePayerAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1602,6 +1811,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums3_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -1610,6 +1826,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums4_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1618,6 +1841,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void createAccountFieldsChecksums5_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1626,6 +1856,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums0_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
 				.setFeePayerAccount("0.1");
@@ -1635,6 +1872,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums1_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
@@ -1644,6 +1888,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums2_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setFeePayerAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1652,6 +1903,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums3_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -1660,6 +1918,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums4_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1668,6 +1933,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums5_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1676,6 +1948,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums6_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount("0.66");
 		checkBadChecksum("e.g.");
@@ -1684,6 +1963,13 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums7_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(
 				"0.0.888888-aaaaa");
@@ -1693,6 +1979,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void updateAccountFieldsChecksums8_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(123);
 		assertNotNull(TestUtil.getPopupNodes());
 		createPanePage.closePopup("CONTINUE");
@@ -1701,6 +1995,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums0_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setFeePayerAccount("0.1");
 		checkBadChecksum("e.g.");
@@ -1709,6 +2011,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums1_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1717,6 +2027,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums2_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setFeePayerAccount(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
@@ -1724,6 +2042,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums3_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
 		assertTrue(find("#invalidNode").isVisible());
@@ -1731,6 +2057,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums4_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
 		assertTrue(find("#invalidNode").isVisible());
@@ -1738,6 +2072,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums5_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
@@ -1745,6 +2087,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums6_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID("0.66");
 		checkBadChecksum("e.g.");
 		assertTrue(find("#invalidEntity").isVisible());
@@ -1752,6 +2102,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums7_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID("0.0.888888-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
 		assertTrue(find("#invalidEntity").isVisible());
@@ -1759,6 +2117,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void systemAccountFieldsChecksums8_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidEntity").isVisible());
@@ -1767,6 +2133,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums0_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
 				.setUpdateFileID("0.3");
 		checkBadChecksum("e.g.");
@@ -1776,6 +2150,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums1_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setUpdateFileID(
 				"0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1785,14 +2167,29 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums2_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setUpdateFileID(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidUpdateFileToUpdate").isVisible());
-
 	}
 
 	@Test
 	public void fileAccountFieldsChecksums3_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount("0.1");
 		checkBadChecksum("e.g.");
 		assertTrue(find("#invalidFeePayer").isVisible());
@@ -1801,6 +2198,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums4_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount(
 				"0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1810,6 +2215,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums5_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
@@ -1818,6 +2231,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums6_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
 		assertTrue(find("#invalidNode").isVisible());
@@ -1826,6 +2247,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums7_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount(
 				"0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1835,6 +2264,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void fileAccountFieldsChecksums8_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount(123);
 		assertNull(TestUtil.getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
@@ -1842,6 +2279,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums0_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount("0.1");
 		checkBadChecksum("e.g.");
@@ -1851,6 +2296,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums1_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1860,6 +2313,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums2_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1869,6 +2330,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums3_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -1878,6 +2347,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums4_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1887,6 +2364,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums5_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1896,6 +2381,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums6_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer("0.33");
 		checkBadChecksum("e.g.");
@@ -1905,6 +2398,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums7_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1914,6 +2415,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums8_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1923,6 +2432,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums9_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer("0.33");
 		checkBadChecksum("e.g.");
@@ -1932,6 +2449,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums10_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1941,6 +2466,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void transferAccountFieldsChecksums11_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer(123);
 		assertNull(TestUtil.getPopupNodes());
@@ -1949,6 +2482,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void freezeOnly_test() throws InterruptedException, HederaClientException, InvalidProtocolBufferException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var startTime = LocalDateTime.now().plusMinutes(5);
 
@@ -1990,6 +2531,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void freezeAbort_test() throws InterruptedException, HederaClientException, InvalidProtocolBufferException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
@@ -2027,6 +2576,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	@Test
 	public void freezeUpgrade_test() throws InterruptedException, HederaClientException,
 			InvalidProtocolBufferException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var startTime = LocalDateTime.now().plusMinutes(5);
 
@@ -2079,6 +2636,14 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	@Test
 	public void prepareUpgrade_test() throws HederaClientException, InvalidProtocolBufferException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var localDateTime = LocalDateTime.now().plusHours(1);
 
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())

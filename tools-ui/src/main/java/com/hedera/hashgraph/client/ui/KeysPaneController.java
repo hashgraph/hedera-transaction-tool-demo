@@ -529,7 +529,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	private void showPrivateKeyCompletePopup(final KeysTableRow rowData) {
 		final var pubKeyAddress = publicKeysMap.get(rowData.getKeyName() + "." + PUB_EXTENSION);
-		final var answer = CompleteKeysPopup.display(pubKeyAddress, true);
+		final var answer = CompleteKeysPopup.display(pubKeyAddress, rowData.getAccountList(), true);
 		if (Boolean.TRUE.equals(answer)) {
 			initializeKeysPane();
 		}
