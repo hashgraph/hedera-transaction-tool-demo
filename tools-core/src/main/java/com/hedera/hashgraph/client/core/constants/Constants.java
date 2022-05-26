@@ -83,7 +83,8 @@ public class Constants {
 	public static final String NETWORKS = "networks";
 	public static final String CURRENT_NETWORK = "currentNetwork";
 	public static final String DEFAULT_FEE_PAYER = "defaultFeePayer";
-	// endregion
+	public static final String NO_ACCOUNT_FOUND_TEXT = "No account found";
+// endregion
 
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
@@ -102,7 +103,7 @@ public class Constants {
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
-	public static final int NUMBER_OF_THREADS = 200;
+	public static final int NUMBER_OF_THREADS = 10;
 	public static final int MAX_TOKEN_AUTOMATIC_ASSOCIATIONS = 1000;
 	public static final int MAX_MEMO_BYTES = 100;
 

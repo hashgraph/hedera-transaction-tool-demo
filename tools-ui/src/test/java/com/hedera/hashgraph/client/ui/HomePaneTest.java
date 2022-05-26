@@ -42,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -76,6 +77,7 @@ import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
 
@@ -162,6 +164,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
 
+		logger.info("Starting application");
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);
 
@@ -171,18 +174,37 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		mainWindowPage.clickOnHistoryButton();
 		mainWindowPage.clickOnHomeButton();
 
+		logger.info("Counting boxes");
 		initBoxes();
+
+		logger.info("Starting test");
 	}
 
 
 	@Test
 	public void clickOnBogusItem() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 		sleep(100);
 	}
 
 	@Test
 	public void uploadVersion_test() throws IOException, TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final File outputDirectory = new File(currentRelativePath.toAbsolutePath().toString(),
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
 		if (outputDirectory.mkdirs()) {
@@ -222,6 +244,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void startHomePane_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
 		assertEquals(totalBoxes, newFiles.size());
@@ -229,6 +259,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void verifySoftwareCard_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var storage = DEFAULT_STORAGE + KEYS_STRING;
 		assertEquals(3, Objects.requireNonNull(new File(storage).listFiles(HomePaneTest::accept)).length);
 
@@ -295,6 +333,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findPublicKeysAndAcceptOne_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -318,6 +363,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findPublicKeysAndRejectOne_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -340,6 +392,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findAccountInfosAndAcceptOne_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
 
@@ -362,6 +421,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void findAccountInfosAndRejectOne_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
 
@@ -382,6 +448,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void acceptBatchTransaction_Test() throws IOException, HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		sleep(ONE_SECOND);
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -461,6 +534,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void declineBatchTransaction_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 		sleep(ONE_SECOND);
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -484,6 +564,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void acceptTransaction_Test() throws IOException, HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
 						"Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -560,6 +648,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void declineTransaction_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
@@ -580,6 +675,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void freezeTransactions_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		assertEquals(4, freezeBoxes.size());
 		VBox abort = null;
 		VBox freeze = null;
@@ -632,8 +735,16 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals(16, ((GridPane) freezeUpgradeHBox.getChildren().get(0)).getChildren().size());
 	}
 
-	@Test
+	//@Test
 	public void acceptSystemTransaction_Test() throws IOException, HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		sleep(ONE_SECOND);
 		final var out =
 				currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - " +
@@ -711,6 +822,14 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void nicknameExists_Test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
 		final var nicknames = findAll("0.0.70-bvqyx");
 		sleep(ONE_SECOND);
 		final var nicknameLabels = new HashSet<Label>();
@@ -728,6 +847,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void nicknameNegative_Tests() throws TimeoutException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		mainWindowPage.clickOnAccountsButton();
 		sleep(ONE_SECOND);
@@ -750,6 +876,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void transactionSignHistory_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		boolean found = false;
 		int k = 0;
@@ -807,6 +940,13 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	@Test
 	public void transactionCancel_Test() throws HederaClientException {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
 
 		boolean found = false;
 		int k = 0;
