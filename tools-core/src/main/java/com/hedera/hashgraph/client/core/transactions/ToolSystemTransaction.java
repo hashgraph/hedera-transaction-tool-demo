@@ -130,11 +130,6 @@ public class ToolSystemTransaction extends ToolTransaction {
 			answer = false;
 		}
 
-//		if (isDelete && !input.has(EXPIRATION_DATE_TIME)) {
-//			logger.error("Missing expiration for deletion");
-//			return false;
-//		}
-
 		try {
 			if (input.has(EXPIRATION_DATE_TIME)) {
 				expiration = new Timestamp(input.get(EXPIRATION_DATE_TIME)).asInstant();

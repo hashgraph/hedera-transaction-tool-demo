@@ -47,6 +47,10 @@ public class SigningKeysPopup {
 
 	private static Boolean answer = null;
 
+	private SigningKeysPopup() {
+		throw new IllegalStateException("Popup class");
+	}
+
 	public static Boolean display(final Set<File> keys) {
 		final var window = new Stage();
 		window.setTitle("Signing keys");

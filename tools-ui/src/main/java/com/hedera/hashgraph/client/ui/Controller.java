@@ -1052,7 +1052,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	 * @return a map (KEY-NAME, FILE)
 	 */
 	@NotNull
-	public HashMap<String, File> getPrivateKeys() {
+	public Map<String, File> getPrivateKeys() {
 		final var privateKeys = new HashMap<String, File>();
 
 		final var files = new File(getPreferredStorageDirectory() + File.separator + "Keys").listFiles(

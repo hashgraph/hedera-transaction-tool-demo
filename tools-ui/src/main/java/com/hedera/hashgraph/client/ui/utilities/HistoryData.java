@@ -277,7 +277,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	private Timestamp getExpirationTimestamp(final RemoteFile remoteFile) {
-		var timestamp = new Timestamp(0, 0);
+		final Timestamp timestamp;
 		switch (remoteFile.getType()) {
 			case TRANSACTION:
 				timestamp = ((TransactionFile) remoteFile).getExpiration();
@@ -288,12 +288,14 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 			case LARGE_BINARY:
 				timestamp = ((LargeBinaryFile) remoteFile).getTransactionValidStart();
 				break;
+			default:
+				timestamp = new Timestamp(0, 0);
 		}
 		return timestamp;
 	}
 
 	private Identifier getFeePayerIdentifier(final RemoteFile remoteFile) {
-		var returnValue = Identifier.ZERO;
+		final Identifier returnValue;
 		switch (remoteFile.getType()) {
 			case TRANSACTION:
 				returnValue = ((TransactionFile) remoteFile).getFeePayerAccountId();
@@ -304,6 +306,8 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 			case LARGE_BINARY:
 				returnValue = ((LargeBinaryFile) remoteFile).getFeePayerAccountId();
 				break;
+			default:
+				returnValue  = Identifier.ZERO;
 		}
 		return returnValue;
 	}

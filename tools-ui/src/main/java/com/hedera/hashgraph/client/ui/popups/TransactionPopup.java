@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -35,10 +34,14 @@ import org.apache.logging.log4j.Logger;
 import static com.hedera.hashgraph.client.core.constants.Constants.BUTTON_CANCEL;
 
 public class TransactionPopup {
-	private final static Logger logger = LogManager.getLogger(TransactionPopup.class);
+	private static final Logger logger = LogManager.getLogger(TransactionPopup.class);
 	private static boolean response;
 
-	public static boolean display(final RemoteFile remoteFile) throws HederaClientException {
+	private TransactionPopup() {
+		throw new IllegalStateException("Popup class");
+	}
+
+	public static boolean display(final RemoteFile remoteFile) {
 		final var window = new Stage();
 		window.setTitle("Transaction");
 		window.sizeToScene();

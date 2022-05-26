@@ -28,7 +28,6 @@ import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -229,6 +228,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// private fields
 	private static final Logger logger = LogManager.getLogger(CreatePaneController.class);
+	public static final String STATUS = "Status";
+	public static final String TRANSACTION_FAILED_ERROR_MESSAGE =
+			"Transaction failed with error %s. Please review the transaction and try again.";
 
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
@@ -1441,8 +1443,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
+		final var jsonNamePath = Path.of(jsonName);
 		try {
-			Files.deleteIfExists(Path.of(jsonName));
+			Files.deleteIfExists(jsonNamePath);
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
@@ -1464,7 +1467,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			Files.deleteIfExists(Path.of(jsonName));
+			Files.deleteIfExists(jsonNamePath);
 			logger.info("Json file deleted");
 		} catch (final IOException e) {
 			logger.error("Json file could not be deleted");
@@ -1928,7 +1931,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		if (!newValue.matches("\\d*")) {
-			textField.setText(newValue.replaceAll("[^\\d]", ""));
+			textField.setText(newValue.replaceAll("\\D", ""));
 		}
 
 		error.setVisible(false);
@@ -3104,7 +3107,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		try {
 			final var receipt = transaction.submit();
-			logger.info(receipt.toString());
+			logger.info(receipt);
 			showReceiptOnPopup(transaction, receipt);
 			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
 			controller.homePaneController.initializeHomePane();
@@ -3112,22 +3115,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			selectTransactionType.setValue(SELECT_STRING);
 		} catch (final InterruptedException e) {
 			logger.error(e.getMessage());
-			PopupMessage.display("Status",
-					String.format("Transaction failed with error %s. Please review the transaction and try again.",
-							e.getMessage()));
-			throw new HederaClientRuntimeException(e);
+			logger.error("Thread interrupted");
+			Thread.currentThread().interrupt();
 		} catch (final ReceiptStatusException e) {
 			logger.error(e.getMessage());
 			storeReceipt(e.receipt, transactionName, rf.getTransactionType().toString());
-			PopupMessage.display("Status",
-					String.format("Transaction failed with error %s. Please review the transaction and try again.",
-							getErrorMessage(e.receipt.status)));
+			PopupMessage.display(STATUS,
+					String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.receipt.status)));
 		} catch (final PrecheckStatusException e) {
 			logger.error(e.getMessage());
 			storeReceipt(e.status, transactionName);
-			PopupMessage.display("Status",
-					String.format("Transaction failed with error %s. Please review the transaction and try again.",
-							getErrorMessage(e.status)));
+			PopupMessage.display(STATUS, String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.status)));
 		}
 		controller.historyPaneController.addToHistory(rf);
 	}
@@ -3140,7 +3138,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 
 	private TreeView<String> getKeyTree(final TransactionFile transactionFile) {
-		var key = new KeyList();
+		final KeyList key;
 		switch (transactionFile.getTransaction().getTransactionType()) {
 			case CRYPTO_CREATE:
 				key = ((ToolCryptoCreateTransaction) transactionFile.getTransaction()).getKey();
@@ -3186,7 +3184,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var ids = unknownSigners.stream().sorted().map(Identifier::toReadableAccountAndNetwork).collect(
 					Collectors.joining(", "));
 			final var message = unknownSigners.size() > 1 ?
-					String.format("accounts: \n%s\nare", ids) :
+					String.format("accounts: %n%s%nare", ids) :
 					String.format("account %s is", ids);
 			PopupMessage.display("Unknown keys", String.format(
 					"The keys for %s unknown. You will be required to select signing keys as an extra step.", message));

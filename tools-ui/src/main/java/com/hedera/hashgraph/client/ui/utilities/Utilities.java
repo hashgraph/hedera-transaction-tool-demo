@@ -31,11 +31,7 @@ import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
-import javafx.animation.PauseTransition;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.Pane;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -528,7 +528,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		columnConstraint2.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
 		detailsGridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2);
 
-		int count = 0;
+		var count = 0;
 		detailsGridPane.add(new Label("Transaction ID:"), LEFT, count++);
 
 		detailsGridPane.add(new Label("Fee Payer Account ID: "), LEFT, count++);
@@ -889,30 +889,45 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.add(new Label(s), LEFT, rowCount++);
 		}
 		for (final var metadataAction : signingHistory) {
-			if (Actions.ACCEPT.equals(metadataAction.getActions())) {
+			rowCount = addSigningHistory(detailsGridPane, rowCount, metadataAction);
+		}
+		if (sent) {
+			addReceiptInformation(detailsGridPane, pathname, rowCount);
+		}
+	}
+
+	private void addReceiptInformation(final GridPane detailsGridPane, final String pathname, final int row) {
+		var rowCount = row;
+		try {
+			final var receiptJson = readJsonObject(pathname);
+			detailsGridPane.add(new Label("Network response"), LEFT, rowCount);
+			detailsGridPane.add(new Label(receiptJson.get("status").getAsString()), 1, rowCount++);
+			if (receiptJson.has("entity")) {
+				detailsGridPane.add(new Label("Entity created"), LEFT, rowCount);
+				detailsGridPane.add(new Label(receiptJson.get("entity").getAsString()), 1, rowCount);
+
+			}
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	private int addSigningHistory(final GridPane detailsGridPane, final int row, final MetadataAction metadataAction) {
+		var rowCount = row;
+		switch (metadataAction.getActions()) {
+			case ACCEPT:
 				final var label = new Label(String.format("\t%s on: ", metadataAction.getKeyName()));
 				label.setWrapText(true);
 				detailsGridPane.add(label, LEFT, rowCount);
-				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
-			} else if (Actions.DECLINE.equals(metadataAction.getActions())) {
+				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1,
+						rowCount++);
+				break;
+			case DECLINE:
 				detailsGridPane.add(new Label("Declined on: "), LEFT, rowCount);
 				detailsGridPane.add(new Label(metadataAction.getTimeStamp().asReadableLocalString()), 1, rowCount++);
-			}
+				break;
 		}
-		if (sent) {
-			try {
-				final var receiptJson = readJsonObject(pathname);
-				detailsGridPane.add(new Label("Network response"), LEFT, rowCount);
-				detailsGridPane.add(new Label(receiptJson.get("status").getAsString()), 1, rowCount++);
-				if (receiptJson.has("entity")) {
-					detailsGridPane.add(new Label("Entity created"), LEFT, rowCount);
-					detailsGridPane.add(new Label(receiptJson.get("entity").getAsString()), 1, rowCount++);
-
-				}
-			} catch (final HederaClientException e) {
-				logger.error(e.getMessage());
-			}
-		}
+		return rowCount;
 	}
 
 	@Override
