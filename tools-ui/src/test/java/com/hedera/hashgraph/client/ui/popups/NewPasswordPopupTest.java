@@ -185,7 +185,7 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(4));
 	}
 
-	@Test
+	//@Test
 	public void changePasswordCancel_test() {
 		doubleClickOn("principalTestingKey");
 		final var buttons = keysPanePage.getPopupButtons();
