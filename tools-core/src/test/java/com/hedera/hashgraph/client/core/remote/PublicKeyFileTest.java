@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.remote;
 
 import com.hedera.hashgraph.client.core.enums.FileActions;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import javafx.scene.control.Label;
 import org.apache.commons.io.FileUtils;
@@ -58,7 +59,7 @@ public class PublicKeyFileTest extends TestBase {
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
 		final var info = FileDetails.parse(file);
 
@@ -78,7 +79,7 @@ public class PublicKeyFileTest extends TestBase {
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPane_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
 		final var info = FileDetails.parse(file);
 
@@ -118,7 +119,7 @@ public class PublicKeyFileTest extends TestBase {
 	}
 
 	@Test
-	public void duplicate_test() throws IOException {
+	public void duplicate_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Keys/genesis.pub");
 		final var info = FileDetails.parse(file);
 

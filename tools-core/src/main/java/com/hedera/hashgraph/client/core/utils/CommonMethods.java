@@ -40,7 +40,13 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
+import javafx.animation.PauseTransition;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +54,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -99,7 +106,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 			throw new HederaClientException("Missing critical fields in the JSON input to set up the client");
 		}
 		final var client = getClient(NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString()));
-		client.setDefaultMaxQueryPayment(JsonUtils.jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME)));
+		if (input.get(TRANSACTION_FEE_FIELD_NAME).isJsonPrimitive()) {
+			client.setDefaultMaxQueryPayment(Hbar.fromTinybars(input.get(TRANSACTION_FEE_FIELD_NAME).getAsLong()));
+		}
+		if (input.get(TRANSACTION_FEE_FIELD_NAME).isJsonObject()) {
+			client.setDefaultMaxQueryPayment(JsonUtils.jsonToHBars(input.getAsJsonObject(TRANSACTION_FEE_FIELD_NAME)));
+		}
 		return client;
 	}
 
@@ -702,6 +714,55 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		decoder.flush(charBuffer);
 
 		return new String(charBuffer.array(), 0, charBuffer.position());
+	}
+
+	@NotNull
+	public static ImageView getImageView(final String name) {
+		final Image image;
+		try (final var input = new FileInputStream(name)) {
+			image = new Image(input);
+			final var imageView = new ImageView(image);
+			imageView.setFitHeight(20);
+			imageView.setFitWidth(20);
+			return imageView;
+		} catch (final IOException e) {
+			logger.error(e.getCause());
+		}
+		return new ImageView();
+	}
+
+	/**
+	 * Shows an informational tooltip when the user presses a button
+	 *
+	 * @param owner
+	 * 		pane that will show the tooltip
+	 * @param control
+	 * 		the node that will be attached to (typically a button)
+	 * @param tooltipText
+	 * 		the text that will be displayed
+	 */
+	public static void showTooltip(final Pane owner, final Control control, final String tooltipText) {
+		final var customTooltip = new Tooltip();
+		final var p = control.localToScene(15.0, 15.0);
+		customTooltip.setText(tooltipText);
+		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
+		customTooltip.setMaxWidth(300);
+		customTooltip.setWrapText(true);
+		control.setTooltip(customTooltip);
+
+		customTooltip.setAutoHide(true);
+
+		if (customTooltip.isShowing()) {
+			customTooltip.hide();
+		} else {
+			customTooltip.show(owner, p.getX()
+					+ control.getScene().getX() + control.getScene().getWindow().getX(), p.getY()
+					+ control.getScene().getY() + control.getScene().getWindow().getY());
+		}
+
+		final var pt = new PauseTransition(new javafx.util.Duration(5000));
+		pt.setOnFinished(e -> customTooltip.hide());
+		pt.play();
 	}
 }
 

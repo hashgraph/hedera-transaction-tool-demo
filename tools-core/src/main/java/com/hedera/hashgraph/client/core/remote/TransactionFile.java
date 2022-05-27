@@ -37,6 +37,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.client.core.utils.FXUtils;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -89,7 +90,7 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 public class TransactionFile extends RemoteFile implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
-	public static final String UNBREAKABLE_SPACE = "\u00A0";
+	private static final String UNBREAKABLE_SPACE = "\u00A0";
 	private static final Font COURIER_FONT = Font.font("Courier New", 17);
 
 	private ToolTransaction transaction;
@@ -106,6 +107,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	public TransactionFile() {
 		super();
+	}
+
+	public TransactionFile(final String location) throws HederaClientException {
+		this(FileDetails.parse(new File(location)));
 	}
 
 	public TransactionFile(final FileDetails fileDetails) {
@@ -197,6 +202,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	public GridPane buildGridPane() {
 		final var detailsGridPane = super.buildGridPane();
 		handleTransactionCommonFields(detailsGridPane);
+
+		final HBox hbox = FXUtils.buildTransactionIDBox(detailsGridPane, transaction.getTransaction().getTransactionId().toString());
+		detailsGridPane.add(hbox, RIGHT, 0);
+
 		final var count = detailsGridPane.getRowCount() + 1;
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
@@ -232,6 +241,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 * 		the pane where the transaction details are entered
 	 */
 	private void handleTransactionCommonFields(final GridPane detailsGridPane) {
+		int count = 1;
 		try {
 			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
@@ -241,23 +251,26 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), nicknames));
 		feePayerLabel.setWrapText(true);
-		detailsGridPane.add(feePayerLabel, 1, 0);
+		detailsGridPane.add(feePayerLabel, RIGHT, count);
 
 		final var text = new Text(transaction.getTransactionFee().toString().replace(" ", UNBREAKABLE_SPACE));
 		text.setFont(COURIER_FONT);
 		text.setFill(Color.RED);
-		detailsGridPane.add(text, 1, 1);
-
-		if (!"".equals(transaction.getMemo())) {
-			detailsGridPane.add(new Label("Memo: "), 0, 2);
-			detailsGridPane.add(new Label(transaction.getMemo()), 1, 2);
-		}
+		detailsGridPane.add(text, RIGHT, ++count);
 
 		final var timeLabel = getTimeLabel(new Timestamp(transaction.getTransactionValidStart()), true);
 		timeLabel.setWrapText(true);
-		detailsGridPane.add(timeLabel, 1, 3);
-		detailsGridPane.add(new Label("Node:"), 0, 4);
-		detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), 1, 4);
+		detailsGridPane.add(timeLabel, RIGHT, ++count);
+
+		detailsGridPane.add(new Label("Node:"), LEFT, ++count);
+		detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), RIGHT, count);
+
+		if (!"".equals(transaction.getMemo())) {
+			detailsGridPane.add(new Label("Memo: "), LEFT, ++count);
+			detailsGridPane.add(new Label(transaction.getMemo()), RIGHT, count);
+		}
+
+
 	}
 
 	/**
@@ -460,7 +473,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(new Label(toolSystemTransaction.getEntity().toReadableString()), 1,
 				count++);
 
-		if (isDelete) {
+		if (isDelete && toolSystemTransaction.getExpiration() != null) {
 			final var subLabel = new Label((isFile ? "File" : "Contract") + " will expire on: ");
 			subLabel.setWrapText(true);
 			detailsGridPane.add(subLabel, 0, count);
@@ -627,7 +640,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		return super.getSigningPublicKeys();
 	}
-
 
 
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,

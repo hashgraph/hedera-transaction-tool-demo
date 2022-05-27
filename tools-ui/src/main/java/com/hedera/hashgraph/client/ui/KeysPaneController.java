@@ -32,6 +32,7 @@ import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.CompleteKeysPopup;
 import com.hedera.hashgraph.client.ui.popups.FinishBox;
@@ -241,15 +242,15 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			recoveryVBox.managedProperty().bind(recoveryVBox.visibleProperty());
 
 			// region Tooltips
-			publicKeyToolTip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, publicKeyToolTip,
+			publicKeyToolTip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, publicKeyToolTip,
 					Messages.UNLINKED_PUBLIC_KEY_TOOLTIP_TEXT));
 
 			linkedPrivateToolTip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, linkedPrivateToolTip,
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, linkedPrivateToolTip,
 							Messages.LINKED_PUBLIC_KEY_TOOLTIP_TEXT));
 
 			unlinkedPrivateToolTip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, unlinkedPrivateToolTip,
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, unlinkedPrivateToolTip,
 							Messages.UNLINKED_PK_TOOLTIP_TEXT));
 
 			controller.homePaneController.setForceUpdate(true);

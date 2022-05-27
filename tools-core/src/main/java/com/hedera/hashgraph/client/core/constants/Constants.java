@@ -26,7 +26,6 @@ import java.io.File;
 public class Constants {
 
 
-
 	private Constants() {
 		throw new IllegalStateException("Constants class");
 	}
@@ -82,6 +81,9 @@ public class Constants {
 	public static final String CUSTOM_NETWORKS = "customNetwork";
 	public static final String NETWORKS = "networks";
 	public static final String CURRENT_NETWORK = "currentNetwork";
+	public static final String INPUT_FILES = "InputFiles";
+	public static final String OUTPUT_FILES = "OutputFiles";
+	// endregion
 	public static final String DEFAULT_FEE_PAYER = "defaultFeePayer";
 	public static final String NO_ACCOUNT_FOUND_TEXT = "No account found";
 // endregion
@@ -91,7 +93,6 @@ public class Constants {
 	public static final int DRIVE_LIMIT = 32;
 	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
-	public static final int NUMBER_OF_SINGLE_BOXES = 5;
 	public static final String TEST_PASSWORD = "123456789";
 	public static final String COMMA_DELIMITER = ",";
 	// endregion
@@ -116,6 +117,7 @@ public class Constants {
 	public static final String INITIAL_MAP_LOCATION = DOCUMENTS_FOLDER + "initialMap.json";
 	public static final String USER_PROPERTIES = "Files/user.properties";
 	public static final String DEFAULT_HISTORY = DEFAULT_STORAGE + "History";
+	public static final String DEFAULT_RECEIPTS = DEFAULT_STORAGE + "Receipts";
 	public static final String DEFAULT_DELETED_ACCOUNTS = DEFAULT_STORAGE + "Deleted/Accounts";
 	public static final String DEFAULT_ACCOUNTS = DEFAULT_STORAGE + "Accounts";
 	public static final String DEFAULT_KEYS = DEFAULT_STORAGE + "Keys";
@@ -142,17 +144,8 @@ public class Constants {
 	public static final String WHITE_BUTTON_STYLE =
 			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
 					"-fx-background-radius: 10;";
-	public static final String TEXT_BOX_STYLE =
-			"-fx-background-radius: 15; -fx-border-radius: 15;-fx-border-color: lightgray;" +
-					"-fx-background-color: white";
 	public static final String DEBIT = "-fx-text-fill:RED";
 	public static final String CREDIT = "-fx-text-fill:GREEN";
-	public static final String STYLE_ACTIVE =
-			"-fx-background-color: white; -fx-border-color: lightgray; -fx-border-radius: 2; " +
-					"-fx-background-radius: 2; -fx-text-fill: black";
-	public static final String STYLE_INACTIVE =
-			"-fx-background-color: #0b9dfd ; -fx-border-color:  #0b9dfd; -fx-border-radius: 2; " +
-					"-fx-background-radius: 2; -fx-text-fill: white";
 
 	public static final String HISTORY_BOX_STYLE =
 			"-fx-background-color: aliceblue; -fx-border-color: grey; -fx-background-radius: 15; " +
@@ -217,5 +210,8 @@ public class Constants {
 	public static final String FREEZE_AND_UPGRADE = "Freeze and upgrade";
 	public static final int MEMO_LENGTH = 99;
 
+	public static final String BUTTON_CONTINUE = "CONTINUE";
+	public static final String BUTTON_CANCEL = "CANCEL";
+	public static final String BUTTON_ADD = "ADD MORE";
 
 }

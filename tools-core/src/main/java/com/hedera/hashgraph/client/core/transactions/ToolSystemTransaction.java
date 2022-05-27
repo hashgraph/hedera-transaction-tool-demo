@@ -77,7 +77,8 @@ public class ToolSystemTransaction extends ToolTransaction {
 			throw new HederaClientException("Cannot determine if the entity is a contract or a file");
 		}
 		this.isFile = (file != null);
-		this.entity = isFile ? new Identifier(file, NetworkEnum.MAINNET.toString()) : new Identifier(contract, NetworkEnum.MAINNET.toString());
+		this.entity = isFile ? new Identifier(file, NetworkEnum.MAINNET.toString()) : new Identifier(contract,
+				NetworkEnum.MAINNET.toString());
 
 		this.expiration = (isDelete) ? ((SystemDeleteTransaction) transaction).getExpirationTime() : null;
 		this.transactionType = TransactionType.SYSTEM_DELETE_UNDELETE;
@@ -129,13 +130,10 @@ public class ToolSystemTransaction extends ToolTransaction {
 			answer = false;
 		}
 
-		if (isDelete && !input.has(EXPIRATION_DATE_TIME)) {
-			logger.error("Missing expiration for deletion");
-			return false;
-		}
-
 		try {
-			expiration = new Timestamp(input.get(EXPIRATION_DATE_TIME)).asInstant();
+			if (input.has(EXPIRATION_DATE_TIME)) {
+				expiration = new Timestamp(input.get(EXPIRATION_DATE_TIME)).asInstant();
+			}
 		} catch (final NumberFormatException | ParseException e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, EXPIRATION_DATE_TIME);
 			answer = false;
@@ -150,12 +148,14 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 		if (isDelete) {
 			final var systemTransaction = new SystemDeleteTransaction()
-					.setExpirationTime(expiration)
 					.setTransactionId(transactionId)
 					.setTransactionMemo(memo)
 					.setMaxTransactionFee(transactionFee)
 					.setNodeAccountIds(Collections.singletonList(nodeID.asAccount()))
 					.setTransactionValidDuration(transactionValidDuration);
+			if (expiration != null) {
+				systemTransaction.setExpirationTime(expiration);
+			}
 
 			if (isFile) {
 				return systemTransaction.setFileId(entity.asFile()).freeze();

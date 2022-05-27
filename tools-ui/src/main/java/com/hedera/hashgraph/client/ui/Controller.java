@@ -41,6 +41,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ChoiceBox;
@@ -54,8 +55,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.encoders.Hex;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.commons.IOUtils;
 
 import java.io.BufferedWriter;
@@ -70,6 +74,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.KeyPair;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -93,10 +98,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_HIGHLIGHT_COLOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
+import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
@@ -121,6 +129,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					"If you are not a Hedera Council member or staff member, use of this application or of the " +
 					"code in its current form is not recommended and is at your own risk.";
 	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
+
 	private boolean disableButtons = false;
 	private boolean drivesChanged = false;
 
@@ -137,6 +146,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public Button homeButton;
 	public Button historyButton;
 	public Button createButton;
+	public Button submitButton;
 	public Button accountsButton;
 	public Button keysButton;
 	public Button settingsButton;
@@ -194,6 +204,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	@Override
 	public void initialize(final URL location, final ResourceBundle resources) {
+
+		setManagedProperty(homeButton, historyButton, createButton, accountsButton, keysButton, settingsButton,
+				submitButton);
+
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		keyPairUtility = properties.getSetupPhase().equals(TEST_PHASE) ?
 				new KeyPairUtility(Constants.TEST_EXPIRATION_TIME) :
@@ -277,6 +291,18 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	}
 
+	/**
+	 * Bind the managed property of a node to its visible property
+	 *
+	 * @param nodes
+	 * 		a set of nodes
+	 */
+	private void setManagedProperty(final Node... nodes) {
+		for (final var node : nodes) {
+			node.managedProperty().bind(node.visibleProperty());
+		}
+	}
+
 	public void setDrivesChanged(final boolean drivesChanged) {
 		this.drivesChanged = drivesChanged;
 	}
@@ -293,7 +319,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 		}
 		// Then replace it with the key provided in the app resources.
-		final InputStream readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
+		final var readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 
 		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
 			logger.info("System folder created");
@@ -434,8 +460,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				if (new File(infoFile).exists()) {
 					final var info = AccountInfo.fromBytes(readBytes(infoFile));
 					final var baseName = FilenameUtils.getBaseName(infoFile);
-					final var ledger = "".equals(info.ledgerId.toString()) ? baseName.substring(
-							baseName.indexOf("-") + 1) : info.ledgerId.toString();
+					final String ledger = getLedger(info, baseName);
 					map.put(new Identifier(info.accountId, ledger), info);
 				}
 			}
@@ -444,6 +469,13 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 
 		return map;
+	}
+
+	private String getLedger(final AccountInfo info, final String baseName) {
+		final var aString = info.ledgerId.toString();
+		return "".equals(aString) || "03".equals(aString) ?
+				baseName.substring(baseName.indexOf("-") + 1) :
+				aString;
 	}
 
 	private void resetButtonBackgrounds() {
@@ -459,7 +491,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		createPane.setVisible(false);
 		settingsPane.setVisible(false);
 		initialStartupPane.setVisible(false);
-		final Pane lastPane = thisPane;
+		final var lastPane = thisPane;
 		lastPane.setVisible(false);
 		thisPane = next;
 		thisPane.setVisible(true);
@@ -818,7 +850,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	public JsonObject getAccountsList() {
-		JsonObject object = new JsonObject();
+		var object = new JsonObject();
 		try {
 			object = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
@@ -853,7 +885,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		if (customNetworksFolder.mkdirs()) {
 			logger.info("Custom networks folder storage created");
 		}
-		final File[] networks = customNetworksFolder.listFiles(
+		final var networks = customNetworksFolder.listFiles(
 				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		assert networks != null;
 		final var networkSet =
@@ -939,9 +971,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final List<String> accounts = new ArrayList<>();
 
-		for (final Identifier payer : getFeePayers()) {
+		for (final var payer : getFeePayers()) {
 			if (payer.getNetworkName().equals(currentNetwork.toUpperCase(Locale.ROOT))) {
-				final String toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
+				final var toNicknameAndChecksum = payer.toNicknameAndChecksum(getAccountsList());
 				accounts.add(toNicknameAndChecksum);
 			}
 		}
@@ -949,7 +981,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final List<String> customFeePayers = new ArrayList<>();
 		getCustomFeePayers(currentNetwork).forEach(customFeePayer -> {
-			final String s = customFeePayer.toNicknameAndChecksum(getAccountsList());
+			final var s = customFeePayer.toNicknameAndChecksum(getAccountsList());
 			if (accounts.contains(s)) {
 				removeCustomFeePayer(customFeePayer);
 			} else {
@@ -991,4 +1023,92 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return feePayer;
 	}
 
+	/**
+	 * Loads a map of public keys from the keys folder
+	 *
+	 * @return a map (HEX KEY, PATH)
+	 */
+	public Map<String, String> getPublicKeys() {
+		final var map = new HashMap<String, String>();
+		try {
+			final var pubFiles = new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
+			if (pubFiles == null) {
+				return new HashMap<>();
+			}
+			for (final var pubFile : pubFiles) {
+				final var absolutePath = pubFile.getAbsolutePath();
+				map.put(Hex.toHexString(readBytes(absolutePath)), absolutePath);
+			}
+			logger.debug("pubFiles loaded");
+		} catch (final Exception ex) {
+			logger.error(ex.getMessage());
+		}
+		return map;
+	}
+
+	/**
+	 * loads a map of private keys from the keys folder
+	 *
+	 * @return a map (KEY-NAME, FILE)
+	 */
+	@NotNull
+	public Map<String, File> getPrivateKeys() {
+		final var privateKeys = new HashMap<String, File>();
+
+		final var files = new File(getPreferredStorageDirectory() + File.separator + "Keys").listFiles(
+				(dir, name) -> name.endsWith(PK_EXTENSION));
+		if (files != null) {
+			for (final var file : files) {
+				privateKeys.put(FilenameUtils.getBaseName(file.getName()), file);
+			}
+		}
+		return privateKeys;
+	}
+
+	/**
+	 * Given a list of signers, extract the list of private key files
+	 *
+	 * @param signers
+	 * 		a set of public keys
+	 * @return a list of the available private key files
+	 */
+	@NotNull
+	public List<File> extractRequiredKeys(final Set<ByteString> signers) {
+		final Map<String, File> privateKeys = getPrivateKeys();
+		final Map<String, String> publicKeys = getPublicKeys();
+		final List<File> requiredKeys = new ArrayList<>();
+		for (final var signer : signers) {
+			final var key = Hex.toHexString(Hex.encode(signer.toByteArray()));
+			if (publicKeys.containsKey(key)) {
+				final var filename = FilenameUtils.getBaseName(publicKeys.get(key));
+				if (privateKeys.containsKey(filename)) {
+					requiredKeys.add(privateKeys.get(filename));
+				}
+			}
+		}
+		requiredKeys.sort(homePaneController.new SortByFileBaseName());
+		return requiredKeys;
+	}
+
+	/**
+	 * Load a key pair from a file
+	 *
+	 * @param pemFile
+	 * 		the file containing the private key
+	 * @return a tuple with the name and the key pair
+	 * @throws HederaClientException
+	 * 		if the key cannot be decrypted
+	 */
+	public Pair<String, KeyPair> getAccountKeyPair(final File pemFile) throws HederaClientException {
+		final var pair = getKeyPairUtility().getAccountKeyPair(pemFile);
+		if (pair == null) {
+			displaySystemMessage(String.format("File %s not decrypted", pemFile.getName()));
+			throw new HederaClientException(String.format("File %s not decrypted", pemFile.getName()));
+		}
+		if (pair.getValue() == null) {
+			displaySystemMessage(String.format("Invalid keypair in file %s", pemFile.getName()));
+			throw new HederaClientException(String.format("Invalid keypair in file %s", pemFile.getName()));
+		}
+		return pair;
+	}
 }

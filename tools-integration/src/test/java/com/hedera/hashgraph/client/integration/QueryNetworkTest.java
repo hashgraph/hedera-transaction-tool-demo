@@ -168,6 +168,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			}
 		}
 
+
 		final var nodes = TestUtil.getPopupNodes();
 
 		assert nodes != null;
@@ -176,13 +177,10 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 		mainWindowPage.clickOnAccountsButton();
 
-		final var nickname = new Identifier(testAccountId, "INTEGRATION").toReadableString();
+		final var nickname = "Test payer account";
 		final var oldBalance = accountsPanePage.getBalance(nickname);
 
 		accountsPanePage.expandRow(nickname);
-		//sleep(1000000);
-
-
 		accountsPanePage.requestNewBalance(nickname);
 
 		final var newBalance = accountsPanePage.getBalance(nickname);

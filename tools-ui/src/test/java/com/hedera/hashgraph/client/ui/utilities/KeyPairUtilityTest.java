@@ -24,7 +24,7 @@ import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
-import com.hedera.hashgraph.client.ui.pages.HistoryWindowPage;
+import com.hedera.hashgraph.client.ui.pages.HistoryPanePage;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
 import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
@@ -61,7 +61,7 @@ public class KeyPairUtilityTest extends TestBase {
 	private final Controller controller = new Controller();
 	MainWindowPage mainWindowPage;
 	HomePanePage homePanePage;
-	HistoryWindowPage historyWindowPage;
+	HistoryPanePage historyWindowPage;
 
 	@Before
 	public void setUp() throws Exception {
@@ -122,7 +122,7 @@ public class KeyPairUtilityTest extends TestBase {
 
 		mainWindowPage = new MainWindowPage(this);
 		homePanePage = new HomePanePage(this);
-		historyWindowPage = new HistoryWindowPage(this);
+		historyWindowPage = new HistoryPanePage(this);
 
 		FxToolkit.registerPrimaryStage();
 		FxToolkit.setupApplication(StartUI.class);

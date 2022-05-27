@@ -22,16 +22,24 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.JsonConstants;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
+import com.hedera.hashgraph.client.core.remote.TransactionFile;
+import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
@@ -39,8 +47,11 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
+import com.hedera.hashgraph.client.ui.popups.ProgressPopup;
+import com.hedera.hashgraph.client.ui.popups.TransactionPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountAmountStrings;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
@@ -51,8 +62,12 @@ import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
-import com.hedera.hashgraph.sdk.LedgerId;
+import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import com.hedera.hashgraph.sdk.Status;
+import com.hedera.hashgraph.sdk.TransactionReceipt;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -60,6 +75,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -71,6 +87,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
@@ -84,6 +101,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
@@ -96,6 +114,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
@@ -110,6 +129,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -124,6 +144,9 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
 import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
@@ -142,6 +165,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_S
 import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
 import static com.hedera.hashgraph.client.core.constants.Constants.NODE_ID_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.REMAINING_TIME_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_FREEZE_TYPE;
@@ -188,30 +212,36 @@ import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CR
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.showTooltip;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
+import static com.hedera.hashgraph.client.ui.AccountsPaneController.CANCEL_LABEL;
+import static com.hedera.hashgraph.client.ui.popups.SigningKeysPopup.display;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.showTooltip;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
+import static java.lang.Thread.sleep;
 
 public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// private fields
 	private static final Logger logger = LogManager.getLogger(CreatePaneController.class);
+	public static final String STATUS = "Status";
+	public static final String TRANSACTION_FAILED_ERROR_MESSAGE =
+			"Transaction failed with error %s. Please review the transaction and try again.";
 
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
+
 
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
 	private final Set<String> accountNickNames = new HashSet<>();
 	private JsonObject newKeyJSON = null;
 	private JsonObject originalKey = new JsonObject();
-	private LedgerId ledgerId = LedgerId.MAINNET;
 
 	File contents = null;
 
@@ -232,6 +262,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Button setNowValidStart;
 	public Button browseTransactions;
 	public Button resetFormButton;
+	public Button signAndSubmitButton;
+
+	public GridPane storeOrSubmitGridPane;
 
 	// Tooltip buttons
 	public Button nowTimeToolTip;
@@ -258,13 +291,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public HBox fromHBox;
 	public HBox toHBox;
-	public HBox createChoiceHBox;
 	public HBox systemSlidersHBox;
 	public HBox copyFromAccountHBox;
 	public HBox updateCopyFromAccountHBox;
 	public HBox timeZoneHBox;
 	public HBox timeZoneSystemHBox;
 	public HBox freezeTimeZoneHBox;
+	public HBox storeTransactionHBox;
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
@@ -392,15 +425,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		loadAccountNicknames();
 
-		setupLedget();
-
 		// region INITIALIZE FIELDS
 		makeBoxesInvisible();
 
 		setupCommonFieldsEvents();
 
 		setupManagedProperty(commentsVBox, commonFieldsVBox, createAccountVBox, updateAccountVBox, transferCurrencyVBox,
-				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, createChoiceHBox,
+				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, storeOrSubmitGridPane,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
 				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
@@ -430,23 +461,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	}
 
-	private void setupLedget() {
-		switch (controller.getCurrentNetwork()) {
-			case "MAINNET":
-				ledgerId = LedgerId.MAINNET;
-				break;
-			case "PREVIEWNET":
-				ledgerId = LedgerId.PREVIEWNET;
-				break;
-			case "TESTNET":
-				ledgerId = LedgerId.TESTNET;
-				break;
-			default:
-				logger.info("Custom network: defaulting to Mainnet");
-				ledgerId = LedgerId.MAINNET;
-		}
-	}
-
 	private void setupSelectTransaction() {
 		noise = true;
 		selectTransactionType.getItems().clear();
@@ -462,7 +476,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateAccountVBox.setVisible(false);
 		transferCurrencyVBox.setVisible(false);
 		accountIDToUpdateVBox.setVisible(false);
-		createChoiceHBox.setVisible(false);
+		storeOrSubmitGridPane.setVisible(false);
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
 		freezeVBox.setVisible(false);
@@ -489,7 +503,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void setupCreateFields() {
-		setupNewKeyObject();
+		newKeyJSON = emptyKeyObject();
 		formatHBarTextField(createInitialBalance);
 		loadAccountNicknames();
 		final var autoCompleteNickname = new AutoCompleteNickname(accountNickNames);
@@ -653,7 +667,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
 
 		formatAccountTextField(entityID, invalidEntity, entityID.getParent());
-		systemExpirationVBox.disableProperty().bind(Bindings.isNull(datePicker.valueProperty()));
+
 	}
 
 	private void setupFreezeFields() {
@@ -807,7 +821,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllCreateFields() {
-		cleanFields();
+		cleanCommonFields();
+		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		createSignatureRequired.setSelected(false);
+		createInitialBalance.setText("0");
+		newKeyJSON = emptyKeyObject();
+		createNewKey.setContent(new HBox());
+		createNewKey.setVisible(false);
 		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
 	}
 
@@ -858,7 +878,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if ("".equals(updateAccountID.getText())) {
 				invalidUpdateAccountToUpdate.setVisible(true);
 			} else {
-				final var account = Identifier.parse(updateAccountID.getText(), ledgerId.toString());
+				final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
 				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
 			}
 		} catch (final Exception e) {
@@ -880,11 +900,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllUpdateFields() {
+		cleanCommonFields();
 		updateAccountID.clear();
-		cleanFields();
+		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		updateReceiverSignatureRequired.setSelected(false);
 		updateARPOriginal.clear();
 		updateRSROriginal.setText("???");
 		updateOriginalKey.setContent(new HBox());
+		updateNewKey.setContent(new HBox());
+		updateNewKey.setVisible(false);
 
 		clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey, invalidNode,
 				invalidUpdateAccountToUpdate);
@@ -894,33 +918,39 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void findAccountInfoAndPreloadFields() {
 		final var accountsInfoMap = controller.getAccountInfoMap();
 		try {
-			final var account = Identifier.parse(updateAccountID.getText(), ledgerId.toString());
-			if (accountsInfoMap.containsKey(account)) {
-				final var accountInfo = accountsInfoMap.get(account);
-				updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
-				updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
-				controller.loadPubKeys();
-				final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
-				originalKey = EncryptionUtils.keyToJson(accountInfo.key);
-				final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-				setupKeyPane(oldKeyTreeView, updateOriginalKey);
-				updateAccountMemoOriginal.setText(accountInfo.accountMemo);
-				updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
-				if (!fromFile) {
-					updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
-					updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
-					newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
-					updateAccountMemoOriginal.setText("");
-					updateMaxTokensOriginal.setText("0");
-
-					final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-					setupKeyPane(newKeyTreeView, updateNewKey);
-				}
-				// in case they were visible before
-				clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
-						invalidNode, invalidUpdateAccountToUpdate);
-
+			final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
+			if (!accountsInfoMap.containsKey(account)) {
+				PopupMessage.display("Missing account information",
+						String.format(
+								"In order to display data regarding account %s, please download the information from " +
+										"the network.",
+								account.toReadableStringAndChecksum()));
+				return;
 			}
+			final var accountInfo = accountsInfoMap.get(account);
+			updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
+			updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
+			controller.loadPubKeys();
+			final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
+			originalKey = EncryptionUtils.keyToJson(accountInfo.key);
+			final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+			setupKeyPane(oldKeyTreeView, updateOriginalKey);
+			updateAccountMemoOriginal.setText(accountInfo.accountMemo);
+			updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
+			if (!fromFile) {
+				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
+				updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
+				newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
+				updateAccountMemoOriginal.setText("");
+				updateMaxTokensOriginal.setText("0");
+
+				final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+				setupKeyPane(newKeyTreeView, updateNewKey);
+			}
+			// in case they were visible before
+			clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
+					invalidNode, invalidUpdateAccountToUpdate);
+
 		} catch (final Exception e) {
 			logger.info("Not an account ID");
 			invalidUpdateAccountToUpdate.setVisible(true);
@@ -993,16 +1023,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private void cleanAllTransferFields() {
-
 		cleanCommonFields();
-		createCommentsTextArea.clear();
-
 		toTransferTable.getItems().clear();
 		fromTransferTable.getItems().clear();
 		transferCurrencyVBox.setVisible(false);
-
 		clearErrorMessages(invalidDate, invalidFeePayer, invalidNode);
-
 		initializeTable(fromTransferTable);
 		initializeTable(toTransferTable);
 	}
@@ -1080,7 +1105,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final AccountAmountStrings newTransaction;
 		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
-
 		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
 				newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
@@ -1158,13 +1182,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			final var account = Identifier.parse(entityID.getText(), ledgerId.toString()).toReadableString();
+			final var account = Identifier.parse(entityID.getText(), controller.getCurrentNetwork()).toReadableString();
 			logger.info(ACCOUNT_PARSED, account);
 		} catch (final Exception e) {
 			return false;
 		}
 
-		if (systemActionChoiceBox.getSelectionModel().getSelectedItem().contains("Remove")) {
+		if (systemActionChoiceBox.getSelectionModel().getSelectedItem().contains(
+				"Remove") && freezeDatePicker.getValue() != null) {
 			final var validExpiration =
 					isDateValid(hourFieldSystem, minuteFieldSystem, secondsFieldSystem, new TextField(
 									NINE_ZEROS),
@@ -1201,7 +1226,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case PREPARE_UPGRADE:
 				try {
 					final var file =
-							Identifier.parse(freezeFileIDTextField.getText(), ledgerId.toString()).toReadableString();
+							Identifier.parse(freezeFileIDTextField.getText(),
+									controller.getCurrentNetwork()).toReadableString();
 					logger.info(ACCOUNT_PARSED, file);
 				} catch (final Exception e) {
 					validFile = false;
@@ -1216,7 +1242,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				freezeTimeErrorLabel.setVisible(!validStart);
 				try {
 					final var file =
-							Identifier.parse(freezeFileIDTextField.getText(), ledgerId.toString()).toReadableString();
+							Identifier.parse(freezeFileIDTextField.getText(),
+									controller.getCurrentNetwork()).toReadableString();
 					logger.info(ACCOUNT_PARSED, file);
 				} catch (final Exception e) {
 					validFile = false;
@@ -1310,8 +1337,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		contentsLink.setText("");
 		contentsLink.setVisible(false);
 		contentsTextField.clear();
-		intervalTextField.clear();
-		chunkSizeTextField.clear();
+		intervalTextField.setText("1000000000");
+		chunkSizeTextField.setText("1024");
 		fileDigest.setText("");
 		shaTextFlow.setVisible(false);
 		contentsFilePathError.setVisible(false);
@@ -1346,7 +1373,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check file id field
 		try {
-			final var account = Identifier.parse(updateFileID.getText(), ledgerId.toString());
+			final var account = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
 			updateFileID.setText(account.toReadableString());
 		} catch (final Exception e) {
 			displayAndLogInformation(e);
@@ -1413,55 +1440,21 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!checkForm()) {
 			return;
 		}
-
-		// setup json file
-		final var outputObject = new JsonObject();
-		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
-		outputObject.add(FILE_ID_PROPERTIES, Identifier.parse(updateFileID.getText(), ledgerId.toString()).asJSON());
-		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
-				Identifier.parse(feePayerAccountField.getText()).asJSON());
-		outputObject.add(NODE_ID_PROPERTIES,
-				Identifier.parse(nodeAccountField.getText(), ledgerId.toString()).asJSON());
-		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
-
-		final var date = startFieldsSet.getDate();
-		outputObject.add(FIRST_TRANSACTION_VALID_START_PROPERTY, date.asJSON());
-		outputObject.addProperty(VALID_INCREMENT_PROPERTY, Integer.parseInt(intervalTextField.getText()));
-		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
-		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
-		outputObject.addProperty(TRANSACTION_FEE_PROPERTY,
-				Long.parseLong(stripHBarFormat(transactionFee.getText())));
-
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
+		final var jsonNamePath = Path.of(jsonName);
 		try {
-			Files.deleteIfExists(Path.of(jsonName));
+			Files.deleteIfExists(jsonNamePath);
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
 
-		writeJsonObject(jsonName, outputObject);
-		final var jsonFile = new File(jsonName);
-		assert jsonFile.exists();
-
-		final var toPack = new File[] { jsonFile, contents };
-
-		final var destZipFile = new File(jsonName.replace(JSON_EXTENSION, LARGE_BINARY_EXTENSION));
-		final var destTxtFile = new File(jsonName.replace(JSON_EXTENSION, TXT_EXTENSION));
-
-		ZipUtil.packEntries(toPack, destZipFile);
-		final var userComments = new UserComments.Builder()
-				.withAuthor(controller.getUserName())
-				.withComment(createCommentsTextArea.getText())
-				.build();
-
-		userComments.toFile(destTxtFile.getAbsolutePath());
-		displayAndLogInformation("File update contents transaction created");
+		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();
-		files.add(destZipFile);
-		files.add(destTxtFile);
+		files.add(new File(lfuFile));
+		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)));
 		moveToOutput(files, remoteLocation);
 
 		for (final var file : files) {
@@ -1474,7 +1467,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			Files.deleteIfExists(Path.of(jsonName));
+			Files.deleteIfExists(jsonNamePath);
 			logger.info("Json file deleted");
 		} catch (final IOException e) {
 			logger.error("Json file could not be deleted");
@@ -1483,6 +1476,66 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		controller.homePaneController.setForceUpdate(true);
 		initializeCreatePane();
 		selectTransactionType.setValue(SELECT_STRING);
+	}
+
+	private String createLargeFileUpdateFiles() throws HederaClientException {
+		final var outputObject = getFileUpdateJson();
+		final var payer = Identifier.parse(outputObject.get("feePayerAccountId").getAsJsonObject()).toReadableString();
+		final var time = new Timestamp(outputObject.get("firsTransactionValidStart").getAsJsonObject());
+
+		final var name = contents.getName();
+		final var extension = FilenameUtils.getExtension(name);
+		final var location = String.format("%s/%s", TEMP_DIRECTORY, extension.equals("") ?
+				name + "." + JSON_EXTENSION :
+				name.replace(extension, JSON_EXTENSION));
+
+		writeJsonObject(location, outputObject);
+		final var jsonFile = new File(location);
+		final var toPack = new File[] { jsonFile, contents };
+
+		final var destZipFile = new File(
+				String.format("%s/%s_%s_%s.%s", TEMP_DIRECTORY, payer.replace(".", "_"), time.getSeconds(),
+						time.getNanos(), LARGE_BINARY_EXTENSION));
+		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
+
+		try {
+			Files.deleteIfExists(destZipFile.toPath());
+			ZipUtil.packEntries(toPack, destZipFile);
+		} catch (final Exception e) {
+			throw new HederaClientException(e);
+		}
+
+		final var userComments = new UserComments.Builder()
+				.withAuthor(controller.getUserName())
+				.withComment(createCommentsTextArea.getText())
+				.build();
+
+		userComments.toFile(destTxtFile.getAbsolutePath());
+		displayAndLogInformation("File update contents transaction created");
+		return destZipFile.getAbsolutePath();
+	}
+
+	@NotNull
+	private JsonObject getFileUpdateJson() {
+		// setup json file
+		final var outputObject = new JsonObject();
+		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
+		outputObject.add(FILE_ID_PROPERTIES,
+				Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork()).asJSON());
+		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
+				Identifier.parse(feePayerAccountField.getText(), controller.getCurrentNetwork()).asJSON());
+		outputObject.add(NODE_ID_PROPERTIES,
+				Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork()).asJSON());
+		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
+
+		final var date = startFieldsSet.getDate();
+		outputObject.add(FIRST_TRANSACTION_VALID_START_PROPERTY, date.asJSON());
+		outputObject.addProperty(VALID_INCREMENT_PROPERTY, Integer.parseInt(intervalTextField.getText()));
+		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
+		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
+		outputObject.addProperty(TRANSACTION_FEE_PROPERTY,
+				Long.parseLong(stripHBarFormat(transactionFee.getText())));
+		return outputObject;
 	}
 
 
@@ -1495,7 +1548,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	 */
 	@FXML
 	private void browseToContentsFile() {
-		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane);
+		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane, "Content",
+				CONTENT_EXTENSION);
 		if (contents == null) {
 			return;
 		}
@@ -1520,7 +1574,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public void loadFormFromTransaction() {
 		File transactionFile = null;
-		cleanFields();
+		cleanForm();
 		if (SetupPhase.NORMAL_OPERATION_PHASE.equals(controller.getSetupPhase())) {
 			transactionFile = loadTransaction();
 			fromFile = true;
@@ -1877,7 +1931,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		if (!newValue.matches("\\d*")) {
-			textField.setText(newValue.replaceAll("[^\\d]", ""));
+			textField.setText(newValue.replaceAll("\\D", ""));
 		}
 
 		error.setVisible(false);
@@ -1917,6 +1971,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		transactionType = CreateTransactionType.get(selectTransactionType.getValue());
+		signAndSubmitButton.setDisable(true);
 
 		makeBoxesInvisible();
 
@@ -1929,38 +1984,44 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		commentsVBox.setVisible(true);
 		commonFieldsVBox.setVisible(true);
-		createChoiceHBox.setVisible(true);
+		storeOrSubmitGridPane.setVisible(true);
 
 		if (transactionType != CreateTransactionType.SELECT) {
-			createChoiceHBox.getChildren().clear();
-			createChoiceHBox.getChildren().add(createTransactionMenuButton(transactionType));
+			storeTransactionHBox.getChildren().clear();
+			storeTransactionHBox.getChildren().add(createTransactionMenuButton(transactionType));
 		}
 
 		switch (transactionType) {
 			case SELECT:
 				commentsVBox.setVisible(false);
 				commonFieldsVBox.setVisible(false);
-				createChoiceHBox.setVisible(false);
+				storeOrSubmitGridPane.setVisible(false);
 				break;
 			case CREATE:
 				createAccountVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
 				break;
 			case UPDATE:
 				accountIDToUpdateVBox.setVisible(true);
 				updateAccountVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
 				break;
 			case TRANSFER:
 				transferCurrencyVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
 				break;
 			case SYSTEM:
 				systemDeleteUndeleteVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
 				break;
 			case FILE_UPDATE:
 				fileContentsUpdateVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
 				break;
 			case FREEZE:
 				freezeChoiceVBox.setVisible(true);
 				freezeVBox.setVisible(true);
+				signAndSubmitButton.setDisable(true);
 				break;
 			case UNKNOWN:
 			default:
@@ -2019,7 +2080,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		// Fee payer
-		final var feePayerID = Identifier.parse(feePayerAccountField.getText(), ledgerId.toString());
+		final var feePayerID = Identifier.parse(feePayerAccountField.getText(), controller.getCurrentNetwork());
 		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerID.asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
@@ -2033,7 +2094,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, controller.getTxValidDuration());
 
 		// Node ID
-		input.add(NODE_ID_FIELD_NAME, Identifier.parse(nodeAccountField.getText(), ledgerId.toString()).asJSON());
+		input.add(NODE_ID_FIELD_NAME,
+				Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork()).asJSON());
 
 		// Network
 		input.addProperty(NETWORK_FIELD_NAME, controller.getCurrentNetwork());
@@ -2050,7 +2112,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var jsonArray = new JsonArray();
 			for (final var a : transfers) {
 				final var accountAmountPair = new JsonObject();
-				accountAmountPair.add(ACCOUNT, a.getAccountAsJSON());
+				final var accountAsJSON =
+						Identifier.parse(a.getStrippedAccountID(), controller.getCurrentNetwork()).asJSON();
+				accountAmountPair.add(ACCOUNT, accountAsJSON);
 				accountAmountPair.addProperty(AMOUNT, a.getAmountAsLong());
 				jsonArray.add(accountAmountPair);
 			}
@@ -2072,7 +2136,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		// Key
-		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0) {
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(emptyKeyObject())) {
 			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
 		}
 
@@ -2098,13 +2162,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void addCryptoUpdateElements(final JsonObject input) {
 		// Account ID
 		if (!"".equals(updateAccountID.getText())) {
-			input.add(ACCOUNT_TO_UPDATE, Identifier.parse(updateAccountID.getText(), ledgerId.toString()).asJSON());
+			input.add(ACCOUNT_TO_UPDATE,
+					Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork()).asJSON());
 		}
-		final var account = Identifier.parse(updateAccountID.getText(), ledgerId.toString());
+		final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
 		final var info = controller.getAccountInfoMap().getOrDefault(account, null);
 
 		// Key
-		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey)) {
+		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey) && !newKeyJSON.equals(
+				emptyKeyObject())) {
 			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
 		}
 
@@ -2143,7 +2209,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void addSystemElements(final JsonObject input) {
 		// Entity ID
 		if (!"".equals(entityID.getText())) {
-			input.add(ENTITY_TO_DEL_UNDEL, Identifier.parse(entityID.getText(), ledgerId.toString()).asJSON());
+			input.add(ENTITY_TO_DEL_UNDEL,
+					Identifier.parse(entityID.getText(), controller.getCurrentNetwork()).asJSON());
 		}
 
 		// File/Contract
@@ -2153,7 +2220,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		input.addProperty(DEL_UNDEL_SWITCH, systemActionChoiceBox.getValue());
 
 		// Expiration time
-		if (datePickerSystem != null) {
+		if (datePickerSystem.getValue() != null) {
 			input.addProperty(EXPIRATION_DATE_TIME, systemFieldsSet.getDate().asRFCString());
 		}
 	}
@@ -2177,13 +2244,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					break;
 				case PREPARE_UPGRADE:
 					input.add(FREEZE_FILE_ID_FIELD_NAME,
-							Identifier.parse(freezeFileIDTextField.getText(), ledgerId.toString()).asJSON());
+							Identifier.parse(freezeFileIDTextField.getText(), controller.getCurrentNetwork()).asJSON());
 					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
 					break;
 				case FREEZE_UPGRADE:
 				case TELEMETRY_UPGRADE:
 					input.add(FREEZE_FILE_ID_FIELD_NAME,
-							Identifier.parse(freezeFileIDTextField.getText(), ledgerId.toString()).asJSON());
+							Identifier.parse(freezeFileIDTextField.getText(), controller.getCurrentNetwork()).asJSON());
 					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
 					input.addProperty(FREEZE_START_TIME_FIELD_NAME, freezeFieldsSet.getDate().asRFCString());
 					break;
@@ -2213,28 +2280,6 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		controller.displaySystemMessage(String.format("With comments: %s", creatorComments));
 
-		switch (transactionType) {
-			case CREATE:
-				cleanAllCreateFields();
-				break;
-			case UPDATE:
-				cleanAllUpdateFields();
-				break;
-			case TRANSFER:
-				cleanAllTransferFields();
-				break;
-			case SYSTEM:
-				cleanAllSystemFields();
-				break;
-			case FILE_UPDATE:
-				cleanAllFileUpdateContentsFields();
-				break;
-			case FREEZE:
-				cleanAllFreezeFields();
-				break;
-			default:
-				logger.error("Unknown transaction");
-		}
 
 		return new Pair<>(creatorComments, tx);
 	}
@@ -2285,7 +2330,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check and flag the fee payer
 		try {
-			final var feePayer = Identifier.parse(feePayerAccountField.getText(), ledgerId.toString());
+			final var feePayer = Identifier.parse(feePayerAccountField.getText(), controller.getCurrentNetwork());
 			feePayerAccountField.setText(feePayer.toNicknameAndChecksum(accounts));
 			invalidFeePayer.setVisible(false);
 		} catch (final Exception e) {
@@ -2296,7 +2341,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Check and flag the node
 		try {
-			final var node = Identifier.parse(nodeAccountField.getText(), ledgerId.toString());
+			final var node = Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork());
 			nodeAccountField.setText(node.toNicknameAndChecksum(accounts));
 			invalidNode.setVisible(false);
 		} catch (final Exception e) {
@@ -2317,11 +2362,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		logger.error(exception);
 	}
 
-	private void setupNewKeyObject() {
+	private JsonObject emptyKeyObject() {
 		final var kk = new JsonObject();
 		kk.add("keys", new JsonArray());
-		newKeyJSON = new JsonObject();
-		newKeyJSON.add("keyList", kk);
+		final var object = new JsonObject();
+		object.add("keyList", kk);
+		return object;
 	}
 
 	private MenuButton createTransactionMenuButton(final CreateTransactionType type) {
@@ -2386,8 +2432,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			if (pair == null) {
 				return;
 			}
-
 			storeTransactionAndComment(pair, fileService);
+			cleanForm();
 		} catch (final HederaClientException e) {
 			controller.displaySystemMessage(e);
 		}
@@ -2624,7 +2670,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case GOOD_NO_CHECKSUM:
 			case GOOD_WITH_CHECKSUM:
 				textField.setStyle(TEXTFIELD_DEFAULT);
-				final var id = Identifier.parse(account, ledgerId.toString());
+				final var id = Identifier.parse(account, controller.getCurrentNetwork());
 				textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
 				errorLabel.setVisible(false);
 		}
@@ -2740,29 +2786,13 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		scrollPane.managedProperty().bind(scrollPane.visibleProperty());
 	}
 
-	private void cleanFields() {
-		cleanCommonFields();
-		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		createSignatureRequired.setSelected(false);
-		updateReceiverSignatureRequired.setSelected(false);
-		createCommentsTextArea.clear();
-		createInitialBalance.setText("0");
-		setupNewKeyObject();
-
-		createNewKey.setContent(new HBox());
-		createNewKey.setVisible(false);
-
-		updateNewKey.setContent(new HBox());
-		updateNewKey.setVisible(false);
-	}
-
 	private void cleanCommonFields() {
 		startFieldsSet.reset(controller.getDefaultHours(), controller.getDefaultMinutes(),
 				controller.getDefaultSeconds());
 		feePayerAccountField.clear();
+		createCommentsTextArea.clear();
 		final var defaultNodeID =
-				Identifier.parse(controller.getDefaultNodeID(), ledgerId.toString()).toNicknameAndChecksum(
+				Identifier.parse(controller.getDefaultNodeID(), controller.getCurrentNetwork()).toNicknameAndChecksum(
 						controller.getAccountsList());
 		nodeAccountField.setText(defaultNodeID);
 		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
@@ -2852,16 +2882,418 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
 	}
 
-
 	public void cleanForm() {
 		fromFile = false;
 		final var type = selectTransactionType.getValue();
+		switch (CreateTransactionType.get(type)) {
+			case CREATE:
+				cleanAllCreateFields();
+				break;
+			case UPDATE:
+				cleanAllUpdateFields();
+				break;
+			case TRANSFER:
+				cleanAllTransferFields();
+				break;
+			case SYSTEM:
+				cleanAllSystemFields();
+				break;
+			case FILE_UPDATE:
+				cleanAllFileUpdateContentsFields();
+				break;
+			case FREEZE:
+				cleanAllFreezeFields();
+				break;
+			default:
+				logger.error("Unknown transaction");
+		}
+
 		initializeCreatePane();
 		selectTransactionType.setValue(type);
+	}
+
+	public void signAndSubmitAction() throws HederaClientException {
+
+		switch (transactionType) {
+			case FILE_UPDATE:
+				signAndSubmitMultipleTransactions();
+				break;
+			case CREATE:
+			case UPDATE:
+			case TRANSFER:
+			case SYSTEM:
+				signAndSubmitSingleTransaction();
+				break;
+			default:
+				throw new HederaClientException("Cannot process transaction");
+		}
+	}
+
+	private void signAndSubmitMultipleTransactions() throws HederaClientException {
+		startFieldsSet.setDate(Instant.now());
+		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
+		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
+		final var transactions = largeBinaryFile.createTransactionList();
+		logger.info("Transactions created");
+
+		final var privateKeyFiles = getPrivateKeys(transactions.get(0));
+		if (privateKeyFiles.isEmpty()) {
+			return;
+		}
+		final List<PrivateKey> privateKeys = new ArrayList<>();
+		for (final var privateKeyFile : privateKeyFiles) {
+			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
+			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
+			privateKeys.add(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
+		}
+
+		final var submit = TransactionPopup.display(largeBinaryFile);
+		if (!submit) {
+			return;
+		}
+
+		final var progressBar = new ProgressBar();
+		final var cancelButton = new Button(CANCEL_LABEL);
+		final var size = transactions.size();
+		final var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating File Contents",
+				"Please wait while the file update transactions are being submitted.", size);
+		final Status[] error = new Status[1];
+
+		final Task<Void> task = new Task<>() {
+			@Override
+			protected Void call() throws InterruptedException, HederaClientException {
+				long counter = 0;
+				for (final var transaction : transactions) {
+					final var toolTransaction = transaction.atNow();
+					toolTransaction.setNetwork(controller.getCurrentNetwork());
+					for (final var privateKey : privateKeys) {
+						toolTransaction.sign(privateKey);
+						updateProgress(counter, size);
+					}
+					try {
+						final var receipt = toolTransaction.submit();
+						storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+								TransactionType.FILE_UPDATE.toString());
+						if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
+							error[0] = receipt.status;
+							cancel();
+						}
+						logger.info(receipt);
+					} catch (final PrecheckStatusException e) {
+						logger.error(e.getMessage());
+						storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
+						error[0] = e.status;
+						cancel();
+					} catch (final ReceiptStatusException e) {
+						logger.error(e.getMessage());
+						storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+								TransactionType.FILE_UPDATE.toString());
+						error[0] = e.receipt.status;
+						cancel();
+					}
+					counter++;
+				}
+				sleep(1000);
+				updateProgress(size, size);
+				return null;
+			}
+		};
+
+		cancelButton.setOnAction(actionEvent -> {
+			logger.info("Task cancelled by user");
+			task.cancel();
+		});
+
+		progressBar.progressProperty().bind(task.progressProperty());
+		new Thread(task).start();
+		task.setOnSucceeded(workerStateEvent -> {
+			logger.info("Transactions signed");
+			largeBinaryFile.setHistory(true);
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+
+			if (window != null) {
+				window.close();
+			}
+			PopupMessage.display("Update succeeded",
+					String.format("Contents update for file %s succeeded", updateFileID.getText()));
+			initializeCreatePane();
+		});
+
+		task.setOnCancelled(workerStateEvent -> {
+			logger.info("Update balances cancelled");
+			if (window != null) {
+				window.close();
+			}
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			largeBinaryFile.setHistory(true);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+
+			final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "CANCELLED";
+			PopupMessage.display("Update failed",
+					String.format("File update failed with error %s. Please review the transaction and try again.",
+							errorMessage));
+			initializeCreatePane();
+		});
+
+		task.setOnFailed(workerStateEvent -> {
+			logger.info("Update balances failed");
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			if (window != null) {
+				window.close();
+			}
+		});
+
+
+	}
+
+	private void moveToHistory(final LargeBinaryFile largeBinaryFile, final List<File> privateKeyFiles) {
+		try {
+			for (final var privateKeyFile : privateKeyFiles) {
+				largeBinaryFile.moveToHistory(Actions.ACCEPT, "",
+						FilenameUtils.getBaseName(privateKeyFile.getName()));
+			}
+
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
+
+	private void signAndSubmitSingleTransaction() throws HederaClientException {
+		startFieldsSet.setDate(Instant.now().plusSeconds(1));
+		final var pair = getUserCommentsTransactionPair(transactionType);
+		if (pair == null) {
+			return;
+		}
+
+		final var transaction = pair.getValue();
+		final var privateKeys = getPrivateKeys(transaction);
+		if (privateKeys.isEmpty()) {
+			return;
+		}
+
+		Collections.sort(privateKeys);
+
+		final var transactionName = transaction.getTransaction().getTransactionId().toString().replace(
+				"@", "_").replace(".", "_");
+		final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
+		transaction.store(location);
+		final var rf = new TransactionFile(location);
+		final var comments = createCommentsTextArea.getText();
+
+		for (final var privateKeyFile : privateKeys) {
+			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
+			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
+			transaction.sign(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
+			rf.moveToHistory(Actions.ACCEPT, comments, FilenameUtils.getBaseName(privateKeyFile.getName()));
+		}
+
+		final var keyTree = getKeyTree(rf);
+		if (keyTree.getRoot() != null) {
+			rf.setTreeView(keyTree);
+		}
+		final var oldKeyTree = getOldKey(rf);
+		if (oldKeyTree.getRoot() != null) {
+			rf.setOldKey(oldKeyTree);
+		}
+		rf.setHistory(false);
+
+		final var submit = TransactionPopup.display(rf);
+		if (!submit) {
+			return;
+		}
+
+		rf.setHistory(true);
+
+		try {
+			final var receipt = transaction.submit();
+			logger.info(receipt);
+			showReceiptOnPopup(transaction, receipt);
+			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
+			controller.homePaneController.initializeHomePane();
+			initializeCreatePane();
+			selectTransactionType.setValue(SELECT_STRING);
+		} catch (final InterruptedException e) {
+			logger.error(e.getMessage());
+			logger.error("Thread interrupted");
+			Thread.currentThread().interrupt();
+		} catch (final ReceiptStatusException e) {
+			logger.error(e.getMessage());
+			storeReceipt(e.receipt, transactionName, rf.getTransactionType().toString());
+			PopupMessage.display(STATUS,
+					String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.receipt.status)));
+		} catch (final PrecheckStatusException e) {
+			logger.error(e.getMessage());
+			storeReceipt(e.status, transactionName);
+			PopupMessage.display(STATUS, String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.status)));
+		}
+		controller.historyPaneController.addToHistory(rf);
+	}
+
+	private TreeView<String> getOldKey(final TransactionFile transactionFile) {
+		return TransactionType.CRYPTO_UPDATE.equals(transactionFile.getTransaction().getTransactionType()) ?
+				controller.buildKeyTreeView(originalKey) :
+				new TreeView<>();
+	}
+
+
+	private TreeView<String> getKeyTree(final TransactionFile transactionFile) {
+		final KeyList key;
+		switch (transactionFile.getTransaction().getTransactionType()) {
+			case CRYPTO_CREATE:
+				key = ((ToolCryptoCreateTransaction) transactionFile.getTransaction()).getKey();
+				break;
+			case CRYPTO_UPDATE:
+				key = ((ToolCryptoUpdateTransaction) transactionFile.getTransaction()).getKey();
+				break;
+			default:
+				return new TreeView<>();
+		}
+		return controller.buildKeyTreeView(key);
+	}
+
+	private void showReceiptOnPopup(final ToolTransaction transaction, final TransactionReceipt receipt) {
+		switch (receipt.status) {
+			case OK:
+			case SUCCESS:
+				final var message = getPopupMessage(transaction, receipt);
+				PopupMessage.display("Final status", message);
+				break;
+			default:
+				PopupMessage.display("Final status",
+						String.format("The transaction failed with status %s. Please review and try again.",
+								getErrorMessage(receipt.status)));
+		}
+	}
+
+	@NotNull
+	private List<File> getPrivateKeys(final ToolTransaction transaction) {
+		final var knownSigners = controller.accountsPaneController.getFeePayers();
+		final var signers = transaction.getSigningAccounts();
+		final var privateKeys = new HashSet<>(controller.extractRequiredKeys(transaction.getSigningKeys()));
+
+		final Set<Identifier> unknownSigners = new HashSet<>();
+		for (final var signer : signers) {
+			final var identifier = new Identifier(signer, controller.getCurrentNetwork());
+			if (!knownSigners.contains(identifier)) {
+				unknownSigners.add(identifier);
+			}
+		}
+
+		if (!unknownSigners.isEmpty()) {
+			final var ids = unknownSigners.stream().sorted().map(Identifier::toReadableAccountAndNetwork).collect(
+					Collectors.joining(", "));
+			final var message = unknownSigners.size() > 1 ?
+					String.format("accounts: %n%s%nare", ids) :
+					String.format("account %s is", ids);
+			PopupMessage.display("Unknown keys", String.format(
+					"The keys for %s unknown. You will be required to select signing keys as an extra step.", message));
+			privateKeys.addAll(ExtraKeysSelectorPopup.display(new HashSet<>(privateKeys)));
+		}
+		var response = display(privateKeys);
+		while (!Boolean.TRUE.equals(response)) {
+			if (response == null) {
+				return new ArrayList<>();
+			}
+			final var list = ExtraKeysSelectorPopup.display(new HashSet<>(privateKeys));
+			privateKeys.clear();
+			privateKeys.addAll(list);
+			response = display(privateKeys);
+		}
+		return new ArrayList<>(privateKeys);
+	}
+
+	private String getPopupMessage(final ToolTransaction transaction, final TransactionReceipt receipt) {
+		var message = "";
+		switch (transaction.getTransactionType()) {
+			case CRYPTO_TRANSFER:
+				final var amount = ((ToolTransferTransaction) transaction).getHbarsTransferred();
+				message = String.format("The transfer transaction suceeded. %s were transferred.", amount.toString());
+				break;
+			case CRYPTO_CREATE:
+				message = String.format("The crypto create transaction suceeded. Account created with account id %s",
+						receipt.accountId.toString());
+				break;
+			case CRYPTO_UPDATE:
+				final var account =
+						((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
+				final var fields = String.join(", ", ((ToolCryptoUpdateTransaction) transaction).getUpdateList());
+				message = String.format("The crypto update transaction suceeded. Account %s was updated (%s)", account,
+						fields);
+				break;
+			case SYSTEM_DELETE_UNDELETE:
+				final var systemTransaction = (ToolSystemTransaction) transaction;
+				final var entity = String.format(systemTransaction.isFile() ? "File %s" : "Contract %s",
+						systemTransaction.getEntity().toReadableString());
+				final var outcome = systemTransaction.isDelete() ? "has been deleted" : "has been restored";
+				message = String.format("The system transaction succeeded. %s %s", entity, outcome);
+				break;
+			case FILE_UPDATE:
+				final var file = ((ToolFileUpdateTransaction) transaction).getFile().toReadableString();
+				message = String.format("The file update transaction suceeded. File %s was updated", file);
+				break;
+			case FILE_APPEND:
+				final var append = ((ToolFileAppendTransaction) transaction).getFile().toReadableString();
+				message = String.format("The file append transaction suceeded. File %s was updated", append);
+				break;
+			case FREEZE:
+				message = "The freeze transaction suceeded";
+				break;
+			default:
+				message = "Unknown transaction type";
+		}
+		return message;
 	}
 
 
 	//endregion
 
 
+	private String getErrorMessage(final Status status) {
+		return status.toString();
+	}
+
+	private void storeReceipt(final TransactionReceipt receipt, final String name, final String type) {
+		try {
+			if (new File(DEFAULT_RECEIPTS).mkdirs()) {
+				logger.info("Receipts folder created");
+			}
+			final var pathname = DEFAULT_RECEIPTS + File.separator + name + "." + RECEIPT_EXTENSION;
+			if (new File(pathname).exists()) {
+				Files.deleteIfExists(Path.of(pathname));
+			}
+			final var jsonObject = new JsonObject();
+			jsonObject.addProperty(JsonConstants.STATUS_PROPERTY, receipt.status.toString());
+			jsonObject.addProperty(JsonConstants.RECEIPT_PROPERTY, receipt.toString());
+			jsonObject.add(JsonConstants.TIMESTAMP_PROPERTY, new Timestamp().asJSON());
+			jsonObject.addProperty(JsonConstants.TYPE_PROPERTY, type);
+			if ("Create New Account Transaction".equals(type)) {
+				jsonObject.addProperty(JsonConstants.ENTITY_PROPERTY, receipt.accountId.toString());
+			}
+
+			writeJsonObject(pathname, jsonObject);
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+
+	}
+
+	private void storeReceipt(final Status status, final String name) {
+		try {
+			if (new File(DEFAULT_RECEIPTS).mkdirs()) {
+				logger.info("Receipts folder created");
+			}
+			final var pathname = DEFAULT_RECEIPTS + File.separator + name + "." + RECEIPT_EXTENSION;
+			if (new File(pathname).exists()) {
+				Files.deleteIfExists(Path.of(pathname));
+			}
+			final var jsonObject = new JsonObject();
+			jsonObject.addProperty(JsonConstants.STATUS_PROPERTY, status.toString());
+			jsonObject.addProperty(JsonConstants.RECEIPT_PROPERTY, "No receipt available");
+			jsonObject.add(JsonConstants.TIMESTAMP_PROPERTY, new Timestamp().asJSON());
+			writeJsonObject(pathname, jsonObject);
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+	}
 }

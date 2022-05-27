@@ -1,0 +1,78 @@
+[
+  {
+    "type": "CRYPTO_CREATE",
+    "properties": [
+      {
+        "name": "Key",
+        "fieldType": "keyCreator",
+        "fieldName": "newKey",
+        "required": true
+      },
+      {
+        "name": "Initial Balance",
+        "fieldType": "currency(0)",
+        "fieldName": "initialBalance",
+        "required": false
+      },
+      {
+        "name": "Account Memo",
+        "fieldType": "text(100)",
+        "fieldName": "accountMemo",
+        "required": false
+      },
+      {
+        "name": "Auto Renew Period",
+        "fieldType": "time(7000000)(8000000)",
+        "fieldName": "autoRenewPeriod",
+        "required": false
+      },
+      {
+        "name": "Maximum automatic token associations",
+        "fieldType": "number(0)(1000)",
+        "fieldName": "maxTokenAssociations",
+        "required": false
+      },
+      {
+        "name": "Receiver signature required",
+        "fieldType": "checkbox(no)",
+        "fieldName": "receiverSignatureRequired",
+        "required": false
+      }
+    ]
+  },
+  {
+    "type": "CRYPTO_UPDATE",
+    "properties": [
+      {
+        "name": "Key",
+        "fieldType": "keyCreator",
+        "fieldName": "newKey",
+        "required": false
+      },
+      {
+        "name": "Account Memo",
+        "fieldType": "text(100)",
+        "fieldName": "accountMemo",
+        "required": false
+      },
+      {
+        "name": "Auto Renew Period",
+        "fieldType": "time(7000000)(8000000)",
+        "fieldName": "autoRenewPeriod",
+        "required": false
+      },
+      {
+        "name": "Maximum automatic token associations",
+        "fieldType": "number(0)(1000)",
+        "fieldName": "maxTokenAssociations",
+        "required": false
+      },
+      {
+        "name": "Receiver signature required",
+        "fieldType": "checkbox(no)",
+        "fieldName": "receiverSignatureRequired",
+        "required": false
+      }
+    ]
+  }
+]

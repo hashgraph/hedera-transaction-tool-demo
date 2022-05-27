@@ -99,7 +99,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_E
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_ANCHOR_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_AUTO_RENEW;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMENTS_AREA;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMENTS_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_COMMON_FIELDS_BOX;
@@ -774,7 +773,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -892,7 +890,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertEquals("0 ħ", ((Label) find(CREATE_TRANSFER_TOTAL_LABEL)).getText());
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -1026,7 +1023,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertEquals(18, TestUtil.countTreeNodes(((TreeView<String>) newTree).getRoot()));
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -1118,7 +1114,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setNodeAccount(42)
 				.setAutoRenew(AUTO_RENEW_DEFAULT);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -1211,8 +1206,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setChunkSize(1000)
 				.setInterval(1000000000);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
+
 		createPanePage.createAndExport(resources);
 
 		final var transactions = new File(
@@ -1229,7 +1224,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		File zipFile = null;
 
 		for (final var f : transactions) {
-			if (f.getName().contains("large")) {
+			if (f.getName().contains("10019")) {
 				if (f.getName().endsWith(Constants.LARGE_BINARY_EXTENSION)) {
 					zipFile = f;
 				}
@@ -1349,7 +1344,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setEntityID(2323)
 				.setExpirationDate(expiration);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
@@ -1426,7 +1420,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setEntityID(23232)
 				.setExpirationDate(expiration);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
@@ -1504,7 +1497,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFeePayerAccount(3232)
 				.setEntityID(23232)
 				.setExpirationDate(expiration);
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+
 		logger.info("Exporting to \"{}\"", resources);
 
 		createPanePage.createAndExport(resources)
@@ -1559,7 +1552,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFeePayerAccount(3232)
 				.setEntityID(2323);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
@@ -1634,7 +1626,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFeePayerAccount(3232)
 				.setEntityID(23232);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources)
 				.clickOnPopupButton("CONTINUE");
@@ -1997,7 +1988,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		logger.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNotNull(TestUtil.getPopupNodes());
+		createPanePage.closePopup("CONTINUE");
 		assertFalse(find("#invalidUpdateAccountToUpdate").isVisible());
 	}
 

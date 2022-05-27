@@ -28,8 +28,8 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -97,6 +97,7 @@ import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 import static com.hedera.hashgraph.client.core.enums.FileType.getType;
+import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
@@ -104,6 +105,7 @@ import static javafx.beans.binding.Bindings.createObjectBinding;
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	public static final String RESET_ICON = "icons/sign-back.png";
+	public static final String SENT_ICON = "icons/icons8-sent-100.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 
 	private final Map<Integer, Boolean> historyMap = new HashMap<>();
@@ -305,7 +307,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getExpirationColumn());
 		tableView.getColumns().add(getFeePayerColumn());
 		tableView.getColumns().add(getLastActionColumn());
-		tableView.getColumns().add(getReSignColumn(tableView));
+		tableView.getColumns().add(getButtonColumn(tableView));
 
 		setDataToTable();
 	}
@@ -423,7 +425,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * 		The table where the button will be added
 	 * @return a TableColumn
 	 */
-	private TableColumn<HistoryData, String> getReSignColumn(final TableView<HistoryData> table) {
+	private TableColumn<HistoryData, String> getButtonColumn(final TableView<HistoryData> table) {
 		final var actionColumn = new TableColumn<HistoryData, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		final var cellFactory =
@@ -434,26 +436,36 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					public void updateItem(final String item, final boolean empty) {
 						setText(null);
 						if (!empty) {
-							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-								final var historyData = table.getItems().get(getIndex());
-								button.setText(historyData.getFileName());
-								button.setStyle("-fx-font-size: 2");
+							final var historyData = table.getItems().get(getIndex());
+							final var succeeded = historyData.transactionSucceeded();
+							if (succeeded != null) {
+								setGraphic(twoImages(Boolean.TRUE.equals(succeeded)));
+								return;
 							}
-							final var historyData = getTableView().getItems().get(getIndex());
-							button.setVisible(!historyData.isExpired());
-							button.setDisable(!historyData.isHistory());
 
-							if (ACCOUNT_INFO.equals(historyData.getType()) ||
-									BUNDLE.equals(historyData.getType()) ||
-									PUBLIC_KEY.equals(historyData.getType()) ||
-									SOFTWARE_UPDATE.equals(historyData.getType())) {
-								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
-							}
-							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
+							setupButtonBehavior(historyData);
 							setGraphic(button);
 							return;
 						}
 						setGraphic(null);
+					}
+
+					private void setupButtonBehavior(final HistoryData historyData) {
+						if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+							button.setText(historyData.getFileName());
+							button.setStyle("-fx-font-size: 2");
+						}
+
+						button.setVisible(!historyData.isExpired());
+						button.setDisable(!historyData.isHistory());
+
+						if (ACCOUNT_INFO.equals(historyData.getType()) ||
+								BUNDLE.equals(historyData.getType()) ||
+								PUBLIC_KEY.equals(historyData.getType()) ||
+								SOFTWARE_UPDATE.equals(historyData.getType())) {
+							button.setVisible(historyData.getActions().equals(Actions.DECLINE));
+						}
+						button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
@@ -496,7 +508,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(data.getRemoteFilePath())));
 			remoteFile.setHistory(true);
 			return remoteFile.buildDetailsBox();
-		} catch (final HederaClientException | IOException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		final var l = new Label(data.getFileName());
@@ -683,21 +695,20 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return hBox;
 	}
 
-	/**
-	 * Setups a button with an icon
-	 *
-	 * @param imageLocation
-	 * 		the relative location of the image of the icon to be used
-	 * @return a button with the image provided
-	 */
-	private Button formatButton(final String imageLocation, final int size) {
-		final var button = new Button();
-		final var imageView = new ImageView(new Image(imageLocation));
-		imageView.setFitHeight(size);
-		imageView.setPreserveRatio(true);
-		button.setGraphic(imageView);
-		button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		return button;
+	private HBox twoImages(final boolean success) {
+		final var sent = new Image(SENT_ICON);
+		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-100.png");
+		final var bottom = new ImageView(sent);
+		bottom.setFitHeight(30);
+		bottom.setPreserveRatio(true);
+		final var top = new ImageView(check);
+		top.setFitHeight(15);
+		top.setPreserveRatio(true);
+		final HBox layout = new HBox(10);
+		layout.getChildren().addAll(bottom, top);
+		layout.setSpacing(-1);
+		layout.setPadding(new Insets(10));
+		return layout;
 	}
 
 	/**
@@ -712,7 +723,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			FileDetails details = null;
 			try {
 				details = FileDetails.parse(filename);
-			} catch (final IOException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e.getMessage());
 			}
 
@@ -760,7 +771,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		toolTipButton.setMinWidth(25);
 
 		toolTipButton.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
+				actionEvent -> CommonMethods.showTooltip(controller.homePane, toolTipButton, text));
 		return toolTipButton;
 	}
 

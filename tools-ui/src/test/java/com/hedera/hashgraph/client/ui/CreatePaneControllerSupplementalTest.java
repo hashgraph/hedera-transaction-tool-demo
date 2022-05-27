@@ -73,7 +73,6 @@ import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_LOCAL_TIME_LABEL;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ORIGINAL_KEY;
 import static junit.framework.TestCase.assertNotNull;
@@ -282,8 +281,6 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setNewAccountMemo("Account memo test")
 				.setNewMaxTokenAss(250);
 
-
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -444,7 +441,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setAccountMemo(LOREM_IPSUM)
 				.setTokenAssociations(666);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 

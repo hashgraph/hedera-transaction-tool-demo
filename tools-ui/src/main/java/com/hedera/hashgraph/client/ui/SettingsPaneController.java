@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
@@ -254,24 +255,24 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 			// region Tooltips
 			validDurationTooltip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, validDurationTooltip,
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, validDurationTooltip,
 							VALID_DURATION_TOOLTIP_MESSAGE));
 
 			generateRecordTooltip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, generateRecordTooltip,
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, generateRecordTooltip,
 							GENERATE_RECORD_TOOLTIP_MESSAGE));
 
 			startTimeTooltip.setOnAction(
-					actionEvent -> Utilities.showTooltip(controller.settingsPane, startTimeTooltip,
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, startTimeTooltip,
 							START_TIME_TOOLTIP_MESSAGE));
 
-			folderTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, folderTooltip,
+			folderTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, folderTooltip,
 					FOLDER_TOOLTIP_MESSAGES));
 
-			networkTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, networkTooltip,
+			networkTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, networkTooltip,
 					NETWORKS_TOOLTIP_MESSAGES));
 
-			feePayerTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, feePayerTooltip,
+			feePayerTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, feePayerTooltip,
 					FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
@@ -383,7 +384,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		maxFeeTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, maxFeeTooltip,
+		maxFeeTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, maxFeeTooltip,
 				TRANSACTION_FEE_TOOLTIP_MESSAGE));
 	}
 
@@ -477,7 +478,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		});
 
 		autoRenewTooltip.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.settingsPane, autoRenewTooltip,
+				actionEvent -> CommonMethods.showTooltip(controller.settingsPane, autoRenewTooltip,
 						ToolTipMessages.AUTO_RENEW_PERIOD_TOOLTIP_MESSAGE));
 
 
@@ -531,7 +532,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
-		nodeIDTooltip.setOnAction(actionEvent -> Utilities.showTooltip(controller.settingsPane, nodeIDTooltip,
+		nodeIDTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, nodeIDTooltip,
 				NODE_ID_TOOLTIP_MESSAGE));
 
 	}

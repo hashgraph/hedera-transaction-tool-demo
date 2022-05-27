@@ -124,7 +124,6 @@ public class AccountsPanePage {
 				break;
 			}
 		}
-
 		assert info != null;
 		return info.getBalance();
 	}

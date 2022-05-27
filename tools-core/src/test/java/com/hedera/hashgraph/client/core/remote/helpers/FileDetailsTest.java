@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote.helpers;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,11 +33,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class FileDetailsTest {
 
 	@Test
-	void parse_test() throws IOException {
+	void parse_test() throws IOException, HederaClientException {
 		final var badFile = new File("src/test/resources/Files/0.0.3.info");
-		final Exception exception = assertThrows(NoSuchFileException.class, () -> FileDetails.parse(badFile));
+		final Exception exception = assertThrows(HederaClientException.class, () -> FileDetails.parse(badFile));
 
-		assertEquals("src/test/resources/Files/0.0.3.info", exception.getMessage());
+		assertEquals("java.nio.file.NoSuchFileException: src/test/resources/Files/0.0.3.info", exception.getMessage());
 
 
 		final var file = new File("src/test/resources/Files/0.0.2.info");

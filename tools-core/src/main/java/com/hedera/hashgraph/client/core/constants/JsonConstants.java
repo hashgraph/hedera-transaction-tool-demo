@@ -21,10 +21,26 @@ package com.hedera.hashgraph.client.core.constants;
 public class JsonConstants {
 
 
-
 	private JsonConstants() {
 		throw new IllegalStateException("Constants class");
 	}
+
+	public static final String FILENAME_PROPERTY = "filename";
+	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
+	public static final String VALID_DURATION_PROPERTY = "validDuration";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String FILE_ID_PROPERTY = "fileID";
+	public static final String NODE_ID_PROPERTY = "nodeID";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
+
+	public static final String STATUS_PROPERTY = "status";
+	public static final String RECEIPT_PROPERTY = "receipt";
+	public static final String TIMESTAMP_PROPERTY = "timestamp";
+	public static final String TYPE_PROPERTY = "type";
+	public static final String ENTITY_PROPERTY = "entity";
+	public static final String CONTENT_PROPERTY = "content";
 
 	public static final String PREFERRED_KEY_LOCATION = "keyLocation";
 	public static final String PREFERRED_REALM = "preferredRealm";

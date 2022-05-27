@@ -28,9 +28,9 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
-<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
-			minHeight="-Infinity" minWidth="-Infinity" prefHeight="666.0" prefWidth="1000.0"
-			xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:id="borderPane" maxHeight="1.7976931348623157E308"
+			maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="666.0"
+			prefWidth="1000.0" xmlns="http://javafx.com/javafx/16"
 			fx:controller="com.hedera.hashgraph.client.ui.Controller">
 	<center>
 		<AnchorPane fx:id="centerPane" style="-fx-border-color: #f4f4f4;" BorderPane.alignment="CENTER_LEFT">
@@ -67,6 +67,14 @@
 					</Button>
 					<Button fx:id="createButton" mnemonicParsing="false" onAction="#changePaneImageClicked"
 							style="-fx-background-color: white;" text="Create">
+						<graphic>
+							<ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+								<Image url="@../../../../../icons/form.png"/>
+							</ImageView>
+						</graphic>
+					</Button>
+					<Button fx:id="submitButton" mnemonicParsing="false" onAction="#changePaneImageClicked"
+							style="-fx-background-color: white;" text="Submit" visible="false">
 						<graphic>
 							<ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
 								<Image url="@../../../../../icons/form.png"/>
