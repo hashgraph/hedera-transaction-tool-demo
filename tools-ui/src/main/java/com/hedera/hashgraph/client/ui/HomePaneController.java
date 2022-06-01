@@ -79,27 +79,28 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.*;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored" })
 public class HomePaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
-	public static final double VBOX_SPACING = 20;
-
+	private static final double VBOX_SPACING = 20;
+	private static boolean badDrive = false;
 
 	// region FXML
 	public VBox defaultViewVBox;
@@ -180,7 +181,17 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		var count = 0;
 		final var outs = controller.getOneDriveCredentials();
 		for (final var inputLocation : outs.keySet()) {
-			count += Objects.requireNonNull(new File(inputLocation, INPUT_FILES).listFiles()).length;
+			final var filelist = new File(inputLocation, INPUT_FILES).listFiles();
+			if (filelist == null) {
+				if (!badDrive) {
+					badDrive = true;
+					Platform.runLater(() -> PopupMessage.display("Error reading files", String.format(
+							"The application was unable to read files from the remote location: %s. Please make sure " +
+									"that the application is able to read the drive.", inputLocation)));
+				}
+				continue;
+			}
+			count += Objects.requireNonNull(filelist).length;
 		}
 		return count;
 	}
