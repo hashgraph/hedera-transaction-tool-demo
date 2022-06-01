@@ -161,6 +161,12 @@
 			<artifactId>grpc-netty</artifactId>
 		</dependency>
 
+		<!-- Maven artifact -->
+		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-artifact</artifactId>
+		</dependency>
+
 		<!-- JUnit 5.x -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

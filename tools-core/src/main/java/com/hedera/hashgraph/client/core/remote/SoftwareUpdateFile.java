@@ -39,6 +39,7 @@ import javafx.scene.text.Text;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Desktop;
@@ -153,14 +154,14 @@ public class SoftwareUpdateFile extends RemoteFile {
 		messages.add(subTitleLabel);
 
 		//comment files will have the notes highlights
-		final JsonObject notesJson = handleNotes(messages);
+		final var notesJson = handleNotes(messages);
 
 		for (final var message : messages) {
 			detailsGridPane.add(message, 0, count++);
 		}
 
 		if (notesJson.has("link")) {
-			final HBox hbox = handleHyperLink(notesJson);
+			final var hbox = handleHyperLink(notesJson);
 			detailsGridPane.add(hbox, 0, count++);
 		}
 
@@ -380,7 +381,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		if (this.actions.size() != other.actions.size()) {
 			return false;
 		}
-		for (final FileActions action : actions) {
+		for (final var action : actions) {
 			if (!other.actions.contains(action)) {
 				return false;
 			}
@@ -401,4 +402,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 		toJson.addProperty("digest", digest);
 		return toJson;
 	}
+
+	public int compareVersion(final String otherVersion) {
+		final var thisVersion = new ComparableVersion(version);
+		final var other = new ComparableVersion(otherVersion);
+		return thisVersion.compareTo(other);
+	}
+
 }
