@@ -103,7 +103,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		while (!transactions.isEmpty()) {
 			sleepUntilNeeded(transactions.peek(), readyTime);
 			final var tx = transactions.poll();
-			assert tx != null;
+			if (tx == null) {
+				throw new HederaClientRuntimeException("Invalid transaction");
+			}
 			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
 					tx.getTransactionId()));
 			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
@@ -141,9 +143,17 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	private void sleepUntilNeeded(final Transaction<?> transaction, final int readyTime) throws InterruptedException {
-		assert transaction != null;
+		if (transaction == null) {
+			throw new HederaClientRuntimeException("Invalid transaction");
+		}
+		if (transaction.getTransactionId() == null) {
+			throw new HederaClientRuntimeException("Invalid transaction ID");
+		}
 		final var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
-		assert startTime != null;
+		if (startTime == null) {
+			throw new HederaClientRuntimeException("Invalid start time");
+		}
+
 		final var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
 		if (difference > readyTime) {
 			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
@@ -155,10 +165,14 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(
 			final Set<String> files) throws HederaClientException {
 		final var transactions = new PriorityQueue<Transaction<?>>(files.size(), (o1, o2) -> {
+			if (o1.getTransactionId() == null || o2.getTransactionId() == null) {
+				throw new HederaClientRuntimeException("Invalid transaction ID");
+			}
 			final var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
 			final var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
-			assert vs1 != null;
-			assert vs2 != null;
+			if (vs1 == null || vs2 == null) {
+				throw new HederaClientRuntimeException("Invalid transaction valid start");
+			}
 			return vs1.compareTo(vs2);
 		});
 
@@ -168,7 +182,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			try {
 				tx = Transaction.fromBytes(txBytes);
-				assert tx.getTransactionValidDuration() != null;
+				if (tx == null) {
+					throw new HederaClientRuntimeException("Invalid transaction");
+				}
 			} catch (final InvalidProtocolBufferException e) {
 				logger.error(e.getMessage());
 				throw new HederaClientException(e);
@@ -231,7 +247,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		final var currentDirectory = new File(dir);
 		final var fileList = currentDirectory.list(
 				new WildcardFileFilter(fileInput.substring(fileInput.lastIndexOf("/") + 1)));
-		assert fileList != null;
+		if (fileList == null) {
+			throw new HederaClientRuntimeException("Invalid file list");
+		}
 		Arrays.stream(fileList).map(fileName -> new File(dir, fileName)).filter(file -> !file.isHidden()).forEach(
 				file -> {
 					if (file.isDirectory()) {
