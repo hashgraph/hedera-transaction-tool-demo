@@ -468,7 +468,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void setupFeePayers() {
 		// Get public keys
 		final var privateKeysFiles = new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PK_EXTENSION));
-		assert privateKeysFiles != null;
+		if (privateKeysFiles == null) {
+			throw new HederaClientRuntimeException("Error reading private keys");
+		}
+
 		for (final var privateKeysFile : privateKeysFiles) {
 			final var publicKeyFile =
 					new File(KEYS_FOLDER, FilenameUtils.getBaseName(privateKeysFile.getName()) + "." + PUB_EXTENSION);
@@ -479,7 +482,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 		final var accountFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles((dir, name) -> name.endsWith(INFO_EXTENSION));
-		assert accountFiles != null;
+		if (accountFiles == null) {
+			throw new HederaClientRuntimeException("Error reading account files");
+		}
+
 		feePayers.clear();
 		for (final var accountFile : accountFiles) {
 			final InfoFile infoFile;
@@ -983,8 +989,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		// Delete the account info from the History of accepted files
 		final var historyInfo = new File(controller.getPreferredStorageDirectory() + "/History").listFiles(
 				(dir, name) -> name.contains(accountIDString));
-
-		assert historyInfo != null;
+		if (historyInfo == null) {
+			throw new HederaClientRuntimeException("Error reading history");
+		}
 		if (historyInfo.length > 0) {
 			for (final var file : historyInfo) {
 				try {

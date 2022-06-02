@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -302,7 +303,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
 
 		try (final OutputStream outputStream = new FileOutputStream(key)) {
-			assert readStream != null;
+			if (readStream == null) {
+				throw new HederaClientRuntimeException("Read stream is null");
+			}
 			IOUtils.copy(readStream, outputStream);
 		} catch (final IOException exception) {
 			logger.error(exception.getMessage());
@@ -855,7 +858,9 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 		final File[] networks = customNetworksFolder.listFiles(
 				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
-		assert networks != null;
+		if (networks == null) {
+			throw new HederaClientRuntimeException("Error reading custom networks");
+		}
 		final var networkSet =
 				Arrays.stream(networks).map(network -> FilenameUtils.getBaseName(network.getName())).collect(
 						Collectors.toSet());
