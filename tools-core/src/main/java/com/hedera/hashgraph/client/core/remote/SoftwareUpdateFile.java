@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.MetadataAction;
@@ -67,7 +68,9 @@ public class SoftwareUpdateFile extends RemoteFile {
 	public SoftwareUpdateFile(final FileDetails file) {
 		super(file);
 		final var split = FilenameUtils.getBaseName(file.getName()).split("-");
-		assert split.length > 1;
+		if (split.length <= 1) {
+			throw new HederaClientRuntimeException("Cannot determine version");
+		}
 		this.timestamp = new Timestamp(file.getAttributes().creationTime().toInstant());
 		this.version = fixVersion(split[1]);
 		this.digest = calculateDigest();

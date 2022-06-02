@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.fileservices;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import org.apache.commons.io.FileUtils;
@@ -87,7 +88,9 @@ public class LocalFileServiceAdapter implements FileService {
 			logger.info("Exporting {} to {}", file.getAbsolutePath(), remote);
 			FileUtils.copyFile(file, new File(remote.getAbsolutePath(), file.getName()));
 			final var remotes = remote.listFiles();
-			assert remotes != null;
+			if (remotes == null) {
+				throw new HederaClientRuntimeException("Remote file list cannot be read");
+			}
 			logger.info("{} files in folder {}", remotes.length, remote.getAbsolutePath());
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
@@ -110,8 +113,10 @@ public class LocalFileServiceAdapter implements FileService {
 			throw new HederaClientException("Path must point to a folder");
 		}
 		final var files = folder.listFiles(pathname -> !pathname.isHidden());
+		if (files == null) {
+			throw new HederaClientRuntimeException("Unable to read file list");
+		}
 
-		assert files != null;
 		for (final var f : files) {
 			try {
 				directory.add(FileDetails.parse(f));
@@ -176,8 +181,11 @@ public class LocalFileServiceAdapter implements FileService {
 	@Override
 	public long lastModified() throws HederaClientException {
 		final var remote = new File(path).listFiles();
+		if (remote == null) {
+			throw new HederaClientRuntimeException("Unable to read file list");
+		}
 		long lastMod = 0;
-		assert remote != null;
+
 		for (final File file : remote) {
 			final BasicFileAttributes attr;
 			try {

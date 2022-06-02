@@ -228,7 +228,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	@Override
 	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
 		final var signatures = otherTransaction.getSignatures();
-		assert signatures.size() == 1;
+		if (signatures.size() != 1) {
+			throw new HederaClientRuntimeException("Invalid signature map size");
+		}
 		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
 			collate(nodeSignatures);
@@ -288,8 +290,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 		final TransactionReceipt receipt;
 		try (final var client = setupClient(input)) {
+			if (transaction.getTransactionId() == null) {
+				throw new HederaClientRuntimeException("Invalid transaction ID");
+			}
+			if (transaction.getTransactionId().validStart == null) {
+				throw new HederaClientRuntimeException("Invalid transaction start");
+			}
 			final var start = (Objects.requireNonNull(transaction.getTransactionId()).validStart);
-			assert start != null;
 			final var delay = start.getEpochSecond() - (new Timestamp().asInstant()).getEpochSecond();
 			if (delay > 0) {
 				logger.info(Messages.DELAY_MESSAGE, delay);
@@ -514,13 +521,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					!Objects.equals(this.transaction.getTransactionId(), tx.getTransactionId())) {
 				return false;
 			}
-			assert this.transaction.getMaxTransactionFee() != null;
-			assert tx.getMaxTransactionFee() != null;
+			if (this.transaction.getMaxTransactionFee() == null || tx.getMaxTransactionFee() == null) {
+				throw new HederaClientRuntimeException("Invalid transaction max fee");
+			}
 			if (!this.transaction.getMaxTransactionFee().equals(tx.getMaxTransactionFee())) {
 				return false;
 			}
-			assert this.transaction.getTransactionValidDuration() != null;
-			assert tx.getTransactionValidDuration() != null;
+			if (this.transaction.getTransactionValidDuration() == null || tx.getTransactionValidDuration() == null) {
+				throw new HederaClientRuntimeException("Invalid transaction valid duration");
+			}
 			return this.transaction.getTransactionValidDuration().equals(tx.getTransactionValidDuration()) &&
 					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
 		}

@@ -241,7 +241,9 @@ public interface GenericFileReadWriteAware {
 	default File zipFolder(final String source) {
 		final var destination = new File(source + "." + ZIP_EXTENSION);
 		final var toPack = new File(source).listFiles();
-		assert toPack != null;
+		if (toPack == null) {
+			throw new HederaClientRuntimeException("Pack list is null");
+		}
 		ZipUtil.packEntries(toPack, destination);
 
 		return destination;

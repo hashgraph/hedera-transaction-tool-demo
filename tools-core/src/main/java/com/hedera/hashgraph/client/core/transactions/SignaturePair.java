@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.transactions;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +54,9 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 
 	public SignaturePair(final String location) {
 		final var signaturePair = read(location);
-		assert signaturePair != null;
+		if (signaturePair == null) {
+			throw new HederaClientRuntimeException("Invalid signature pair");
+		}
 		this.publicKey = signaturePair.getPublicKey().toBytes();
 		this.signature = signaturePair.getSignature();
 	}
