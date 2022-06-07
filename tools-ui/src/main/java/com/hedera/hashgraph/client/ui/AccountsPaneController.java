@@ -396,7 +396,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				final var identifier = new Identifier(account, feePayer.getNetworkName());
 				query.setNetwork(getAccountNetwork(feePayer));
 				final var info = query.getInfo(identifier);
-				sleep(500);
 				final var filePath =
 						tmpdir.getAbsolutePath() + File.separator + identifier.toReadableAccountAndNetwork() + "." + INFO_EXTENSION;
 				writeBytes(filePath, info.toBytes());
@@ -420,8 +419,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e.getMessage());
-		} catch (InterruptedException e) {
-			throw new HederaClientRuntimeException(e);
 		}
 	}
 
