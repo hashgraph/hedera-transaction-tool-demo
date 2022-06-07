@@ -149,6 +149,7 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNum
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.timestampToString;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
+import static java.lang.Thread.sleep;
 
 
 public class AccountsPaneController implements GenericFileReadWriteAware {
@@ -395,6 +396,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				final var identifier = new Identifier(account, feePayer.getNetworkName());
 				query.setNetwork(getAccountNetwork(feePayer));
 				final var info = query.getInfo(identifier);
+				sleep(500);
 				final var filePath =
 						tmpdir.getAbsolutePath() + File.separator + identifier.toReadableAccountAndNetwork() + "." + INFO_EXTENSION;
 				writeBytes(filePath, info.toBytes());
@@ -418,6 +420,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.error(e.getMessage());
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e.getMessage());
+		} catch (InterruptedException e) {
+			throw new HederaClientRuntimeException(e);
 		}
 	}
 
@@ -1802,9 +1806,13 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		controller.createPaneController.initializeCreatePane();
 	}
 
-
 	/**
+	 * Stores an info in the Accounts folder
 	 *
+	 * @param nickname
+	 * 		the nickname of the new account
+	 * @param infoFile
+	 * 		the location of the file
 	 */
 	private void storeAccount(final String nickname, final String infoFile) {
 		try {
@@ -1834,7 +1842,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			logger.error("Unable to store AccountInfo.", ex);
 		}
 	}
-
 
 	public void updateSelectedBalances() {
 		final List<AccountLineInformation> list =
@@ -1902,7 +1909,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		}
 		final Task<Void> task = new Task<>() {
 			@Override
-			protected Void call() {
+			protected Void call() throws InterruptedException {
 				long counter = 0;
 				for (final var lineInformation : list) {
 					final var identifier = lineInformation.getAccount();
@@ -1914,6 +1921,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					updateProgress(counter, size);
 					final var accountIdString = identifier.toReadableString();
 					logger.info("Account {} new balance {}", accountIdString, balance);
+					// Add a delay to prevent timeouts
+					sleep(500);
 					counter++;
 				}
 				updateProgress(size, size);
