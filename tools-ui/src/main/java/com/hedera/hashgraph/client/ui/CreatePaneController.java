@@ -2342,8 +2342,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		// Check and flag the node
 		try {
 			final var node = Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork());
-			nodeAccountField.setText(node.toNicknameAndChecksum(accounts));
-			invalidNode.setVisible(false);
+			final var client = CommonMethods.getClient(controller.getCurrentNetwork());
+			if (client.getNetwork().containsValue(node.asAccount())) {
+				nodeAccountField.setText(node.toNicknameAndChecksum(accounts));
+				invalidNode.setVisible(false);
+			} else {
+				invalidNode.setVisible(true);
+				displayAndLogInformation("Node ID out of range");
+				flag = false;
+			}
 		} catch (final Exception e) {
 			invalidNode.setVisible(true);
 			displayAndLogInformation("Node ID cannot be parsed");
@@ -2931,6 +2938,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
+		if (!checkNode()) {
+			invalidNode.setVisible(true);
+			startFieldsSet.reset(1,0,0);
+			return;
+		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
 		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
 		final var transactions = largeBinaryFile.createTransactionList();
@@ -3043,8 +3055,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				window.close();
 			}
 		});
+	}
 
-
+	private boolean checkNode() {
+		final Identifier node;
+		try {
+			node = Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork());
+		} catch (final Exception e) {
+			return false;
+		}
+		final var client = CommonMethods.getClient(controller.getCurrentNetwork());
+		return client.getNetwork().containsValue(node.asAccount());
 	}
 
 	private void moveToHistory(final LargeBinaryFile largeBinaryFile, final List<File> privateKeyFiles) {

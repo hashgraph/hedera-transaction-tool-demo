@@ -38,7 +38,6 @@ import java.util.TimeZone;
 
 public class TimeFieldSet {
 	private static final Logger logger = LogManager.getLogger(TimeFieldSet.class);
-
 	private final DatePicker datePicker;
 	private final TextField hours;
 	private final TextField minutes;
