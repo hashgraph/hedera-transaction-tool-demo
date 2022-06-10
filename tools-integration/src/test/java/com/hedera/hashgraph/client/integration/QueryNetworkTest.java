@@ -261,13 +261,14 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 				.selectRow("seventySix")
 				.requestSelectedBalances();
 
-		final var oldBalance = accountsPanePage.getBalance("treasury");
+		final var oldBalance = accountsPanePage.getBalance("seventySix");
 		sleep(1000);
-		accountsPanePage.selectRow("treasury")
+		accountsPanePage.selectRow("seventySix")
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
 
-		final var newBalance = accountsPanePage.getBalance("treasury");
+		final var newBalance = accountsPanePage.getBalance("seventySix");
+		sleep(1000);
 		assertTrue(newBalance.toTinybars() != oldBalance.toTinybars());
 
 	}
