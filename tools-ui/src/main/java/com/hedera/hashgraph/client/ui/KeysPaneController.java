@@ -327,7 +327,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 			final var accounts = new File(controller.getPreferredStorageDirectory() + "/Accounts").listFiles(
 					(dir, name) -> name.endsWith(INFO_EXTENSION));
-			assert accounts != null;
+			if (accounts == null) {
+				throw new HederaClientRuntimeException("Error reading accounts");
+			}
 			final var nicknames =
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
@@ -345,7 +347,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			final var pubKeyFiles = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 					(dir, name) -> isPUBFile(new File(name).toPath()));
-			assert pubKeyFiles != null;
+			if (pubKeyFiles == null) {
+				throw new HederaClientRuntimeException("Error reading public keys");
+			}
+
 			stream(pubKeyFiles).forEachOrdered(
 					pubKeyFile -> publicKeysMap.put(pubKeyFile.getName(), pubKeyFile.getAbsolutePath()));
 		} catch (final Exception ex) {
@@ -1158,10 +1163,14 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void importKeys() throws IOException, KeyStoreException {
 		final var pubKeys = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(PUB_EXTENSION) || name.endsWith(TXT_EXTENSION));
-
+		if (pubKeys == null) {
+			throw new HederaClientRuntimeException("Error reading public keys list");
+		}
 		final var pemKeys = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(PK_EXTENSION));
-
+		if (pemKeys == null) {
+			throw new HederaClientRuntimeException("Error reading private keys list");
+		}
 		final var importedKeys =
 				BrowserUtilities.browseMultiFiles(controller.getLastTransactionsDirectory(), controller.keysPane,
 						"Keys");
@@ -1176,15 +1185,12 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		importedKeys.forEach(importedKey -> importSingleKey(publicKeys, privateKeys, importedKey));
 
 		var counter = 0;
-
-		assert pubKeys != null;
 		logger.info("Importing public keys first");
 		final Map<File, String> duplicates = new HashMap<>();
 		for (final var publicKey : publicKeys) {
 			counter += handlePublicKeys(duplicates, publicKey, checkIfDuplicate(publicKey, pubKeys));
 		}
 
-		assert pemKeys != null;
 		logger.info("Importing private keys second");
 		for (final var importedKey : privateKeys) {
 			counter += handlePublicKeys(duplicates, importedKey, checkIfPEMDuplicate(importedKey, pemKeys));

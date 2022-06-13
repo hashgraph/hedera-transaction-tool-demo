@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import org.apache.commons.io.FilenameUtils;
@@ -46,7 +47,9 @@ public class CommentFile extends RemoteFile {
 		}
 		this.timestamp = new Timestamp(file.getAttributes().creationTime().toInstant());
 		final var files = new File(file.getPath()).listFiles();
-		assert files != null;
+		if (files == null) {
+			throw new HederaClientRuntimeException("Cannot read file list");
+		}
 		for (final var file1 : files) {
 			if (file1.getName().endsWith(Constants.TXT_EXTENSION)) {
 				continue;

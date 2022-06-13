@@ -72,7 +72,9 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		final var fileList =
 				new File(DEFAULT_STORAGE, "Keys").list(
 						(dir, name) -> FilenameUtils.getBaseName(name).equals(getBaseName()));
-		assert fileList != null;
+		if (fileList == null) {
+			throw new HederaClientRuntimeException("Unable to read file list");
+		}
 		return fileList.length > 0;
 	}
 
