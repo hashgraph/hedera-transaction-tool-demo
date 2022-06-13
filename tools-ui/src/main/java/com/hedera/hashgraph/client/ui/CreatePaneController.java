@@ -3238,8 +3238,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case CRYPTO_UPDATE:
 				final var account =
 						((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
-				final var fields = String.join(", ", ((ToolCryptoUpdateTransaction) transaction).getUpdateList());
-				message = String.format("The crypto update transaction suceeded. Account %s was updated (%s)", account,
+				final var fields = String.join("\n\t\u2022 ", ((ToolCryptoUpdateTransaction) transaction).getUpdateList());
+				message = String.format("The account update transaction succeeded. The following account properties were updated for %s:\n\t\u2022 %s", account,
 						fields);
 				break;
 			case SYSTEM_DELETE_UNDELETE:

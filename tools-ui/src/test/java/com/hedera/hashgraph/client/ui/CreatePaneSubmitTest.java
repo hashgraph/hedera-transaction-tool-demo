@@ -734,7 +734,6 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 		logger.info("Starting test method: {}", methodName.get());
 
 
-
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount(accounts.get(0).toString())
 				.addDebit(accounts.get(0).num, 1)
