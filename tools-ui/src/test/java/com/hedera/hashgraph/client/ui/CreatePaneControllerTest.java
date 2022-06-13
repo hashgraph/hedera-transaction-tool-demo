@@ -766,7 +766,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.setMemo("A memo")
 				.setFeePayerAccount(1009)
-				.setNodeAccount(42)
+				.setNodeAccount(4)
 				.setTransactionFee(1.2345678911)
 				.setInitialBalance(1000)
 				.setCreateKey()
@@ -802,7 +802,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);
@@ -875,7 +875,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		createPanePage.setMemo("A transfer")
 				.setFeePayerAccount(10019)
-				.setNodeAccount(42);
+				.setNodeAccount(4);
 
 		createPanePage.addDebit(1001, 100000000)
 				.addDebit(1002, 666666666);
@@ -1008,7 +1008,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setSeconds(45)
 				.setMemo("A memo")
 				.setFeePayerAccount(1019)
-				.setNodeAccount(42)
+				.setNodeAccount(4)
 				.setUpdateKey("treasury");
 
 		createPanePage.saveKey();
@@ -1051,7 +1051,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
@@ -1111,7 +1111,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setSeconds(45)
 				.setMemo("A memo")
 				.setFeePayerAccount(1059)
-				.setNodeAccount(42)
+				.setNodeAccount(4)
 				.setAutoRenew(AUTO_RENEW_DEFAULT);
 
 		logger.info("Exporting to \"{}\"", resources);
@@ -1143,7 +1143,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountUpdateTransaction);
@@ -1200,7 +1200,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setSeconds(15)
 				.setMemo("A file update")
 				.setFeePayerAccount(10019)
-				.setNodeAccount(42);
+				.setNodeAccount(4);
 
 		createPanePage.setContents("src/test/resources/createTransactions/largeFileUpdate.zip")
 				.setChunkSize(1000)
