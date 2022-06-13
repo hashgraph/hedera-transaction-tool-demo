@@ -690,6 +690,68 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 		}
 	}
 
+
+	@Test
+	public void nodeOutOfRangeFileUpdate_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
+		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
+				.setFeePayerAccount(accounts.get(0).num)
+				.setTransactionFee(10)
+				.setUpdateFileID(123)
+				.setNodeAccount(123)
+				.setContents("src/test/resources/createTransactions/largeFileUpdate.zip")
+				.setChunkSize(1000)
+				.setInterval(1000000000);
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.submit();
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(3)
+				.submit();
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.closePopup("CANCEL");
+
+	}
+
+
+	@Test
+	public void nodeOutOfRangeTransfer_test() {
+		final var walker = StackWalker.getInstance();
+		final var methodName = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		assertTrue(methodName.isPresent());
+		logger.info("Starting test method: {}", methodName.get());
+
+
+		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
+				.setFeePayerAccount(accounts.get(0).toString())
+				.addDebit(accounts.get(0).num, 1)
+				.addCredit(accounts.get(1).num, 1)
+				.setNodeAccount(16);
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.submit();
+		assertTrue(find("#invalidNode").isVisible());
+
+		createPanePage.setNodeAccount(3)
+				.submit();
+		assertFalse(find("#invalidNode").isVisible());
+
+		createPanePage.closePopup("CANCEL");
+
+	}
+
 	private void setupClient() throws KeyStoreException {
 		// create payer account
 		final var keyStore =
