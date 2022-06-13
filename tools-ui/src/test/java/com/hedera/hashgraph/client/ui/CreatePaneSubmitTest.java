@@ -93,7 +93,6 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
@@ -672,13 +671,12 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				.signWithPassword(TEST_PASSWORD)
 				.closePopup("SUBMIT");
 
-		try {
-			final var button = waitForButton();
-			clickOn(button);
-		} catch (final Exception e) {
-			logger.error(e.getMessage());
-			assertNull(e);
+		Button button = null;
+		while (button == null) {
+			button = findButtonInPopup(getPopupNodes(), "CONTINUE");
 		}
+		clickOn(button);
+
 		final var contentsUpdated = new FileContentsQuery()
 				.setFileId(fileID)
 				.execute(client);
@@ -734,7 +732,6 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 
 		assertTrue(methodName.isPresent());
 		logger.info("Starting test method: {}", methodName.get());
-
 
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
