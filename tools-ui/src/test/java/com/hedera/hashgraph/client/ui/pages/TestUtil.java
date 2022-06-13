@@ -424,4 +424,23 @@ public class TestUtil {
 		}
 
 	}
+
+	public static List<String> getLabels(final ObservableList<Node> children) {
+		final List<String> labels = new ArrayList<>();
+		children.forEach(child -> {
+			if (child instanceof Label) {
+				labels.add(((Label) child).getText().toLowerCase(Locale.ROOT));
+			}
+			if (child instanceof HBox) {
+				labels.addAll(getLabels(((HBox) child).getChildren()));
+			}
+			if (child instanceof VBox) {
+				labels.addAll(getLabels(((VBox) child).getChildren()));
+			}
+			if (child instanceof GridPane) {
+				labels.addAll(getLabels(((GridPane) child).getChildren()));
+			}
+		});
+		return labels;
+	}
 }
