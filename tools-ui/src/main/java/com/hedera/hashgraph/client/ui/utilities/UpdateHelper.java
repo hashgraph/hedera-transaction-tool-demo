@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
@@ -137,8 +138,9 @@ public class UpdateHelper implements GenericFileReadWriteAware {
 		}
 		final var toPack =
 				accountsDirectory.listFiles((dir, name) -> ZIP_EXTENSION.equals(getExtension(name)));
-
-		assert toPack != null;
+		if (toPack == null) {
+			throw new HederaClientRuntimeException("Error reading files to pack");
+		}
 		ZipUtil.packEntries(toPack, new File(accountsDirectory.getAbsolutePath(), "Archive.zip"));
 		for (final var file : toPack) {
 			Files.delete(file.toPath());

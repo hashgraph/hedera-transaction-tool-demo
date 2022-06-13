@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
@@ -586,10 +587,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
 
-			for (final var file : toPack) {
-				assert file.exists();
-				assert file.isFile();
-			}
+			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
+				throw new HederaClientRuntimeException("Invalid file in file list");
+			});
 
 			final var packed = Arrays.toString(toPack);
 			logger.info("Packing {} to {}.zip", packed, tempStorage);
@@ -627,7 +627,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		return super.getSigningPublicKeys();
 	}
-
 
 
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,

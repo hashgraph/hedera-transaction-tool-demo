@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
@@ -739,7 +740,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		}
 		FileUtils.copyFile(new File(location), new File(CUSTOM_NETWORK_FOLDER, filename));
 		final var customNetworks = controller.getCustomNetworks();
-		assert customNetworks.contains(nickname);
+		if (!customNetworks.contains(nickname)) {
+			throw new HederaClientRuntimeException("Unrecognized custom network");
+		}
 		controller.setCurrentNetwork(nickname);
 		setupNetworkBox(networkChoicebox);
 	}

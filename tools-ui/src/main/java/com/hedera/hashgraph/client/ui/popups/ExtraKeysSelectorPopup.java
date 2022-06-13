@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.ui.HomePaneController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -72,7 +73,9 @@ public class ExtraKeysSelectorPopup {
 
 		final var knownKeys =
 				new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
-		assert knownKeys != null;
+		if (knownKeys == null) {
+			throw new HederaClientRuntimeException("Error reading known keys");
+		}
 		Arrays.sort(knownKeys);
 		final var columns = (int) max(3, sqrt(knownKeys.length));
 		logger.info("Grid panes will have {} columns", columns);

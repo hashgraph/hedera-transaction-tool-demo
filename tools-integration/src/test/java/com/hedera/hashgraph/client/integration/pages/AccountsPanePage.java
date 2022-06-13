@@ -168,6 +168,7 @@ public class AccountsPanePage {
 
 		assertNotNull(info);
 		info.setSelected(true);
+		driver.clickOn(nickname);
 		return this;
 	}
 

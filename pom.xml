@@ -24,7 +24,7 @@
 
 	<groupId>com.hedera.hashgraph</groupId>
 	<artifactId>hedera-transaction-tool</artifactId>
-	<version>0.10.0</version>
+	<version>0.10.1</version>
 	<name>Hedera Transaction Tool</name>
 
 	<modules>

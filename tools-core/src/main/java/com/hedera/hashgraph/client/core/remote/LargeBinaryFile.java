@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
@@ -133,9 +134,13 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
-		assert jsons != null;
+		if (jsons == null) {
+			throw new HederaClientRuntimeException("Unable to read json files");
+		}
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
-		assert bins != null;
+		if (bins == null) {
+			throw new HederaClientRuntimeException("Unable to read binary files");
+		}
 
 		if (checkFiles(jsons, bins)) {
 			return;

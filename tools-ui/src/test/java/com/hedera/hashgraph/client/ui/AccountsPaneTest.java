@@ -389,6 +389,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
 
+
+		sleep(500);
 		final File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(
 				(dir, name) -> name.startsWith("0.0.2"));
 
