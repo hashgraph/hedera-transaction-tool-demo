@@ -535,7 +535,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		feePayerPredicate = historyData -> {
 			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
-			var text = join(", ", accounts.stream()
+			final var text = join(", ", accounts.stream()
 					.map(account -> Identifier
 							.parse(account.toString(), controller.getCurrentNetwork())
 							.toReadableString())
@@ -706,12 +706,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	private HBox twoImages(final boolean success) {
 		final var sent = new Image(SENT_ICON);
-		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-100.png");
+		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-96.png");
 		final var bottom = new ImageView(sent);
 		bottom.setFitHeight(30);
 		bottom.setPreserveRatio(true);
 		final var top = new ImageView(check);
-		top.setFitHeight(15);
+		top.setFitHeight(20);
 		top.setPreserveRatio(true);
 		final HBox layout = new HBox(10);
 		layout.getChildren().addAll(bottom, top);
