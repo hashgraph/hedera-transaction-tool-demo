@@ -20,12 +20,15 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
+import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
@@ -36,7 +39,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -46,11 +48,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.FileType.BATCH;
+import static com.hedera.hashgraph.client.core.enums.FileType.LARGE_BINARY;
 import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 
-public class HistoryData implements Comparable<HistoryData> {
+@SuppressWarnings("unused")
+public class HistoryData implements Comparable<HistoryData>, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryData.class);
 
 	private static final String FILENAME_PROPERTY = "filename";
@@ -81,12 +87,8 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.code = remoteFile.hashCode();
 		this.remoteFilePath = remoteFile.getPath();
 		this.actions.addAll(remoteFile.getSigningHistory());
-		this.feePayer = remoteFile.getType().equals(TRANSACTION) ?
-				((TransactionFile) remoteFile).getFeePayerAccountId() :
-				getFeePayerIdentifier(remoteFile);
-		this.expirationDate = remoteFile.getType().equals(TRANSACTION) ?
-				((TransactionFile) remoteFile).getExpiration() :
-				getExpirationTimestamp(remoteFile);
+		this.feePayer = getFeePayerIdentifier(remoteFile);
+		this.expirationDate = getExpirationTimestamp(remoteFile);
 		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
@@ -110,7 +112,7 @@ public class HistoryData implements Comparable<HistoryData> {
 		this.expired = object.get(EXPIRED_PARAMETER).getAsBoolean();
 	}
 
-	public HistoryData(final String path) throws IOException, HederaClientException {
+	public HistoryData(final String path) throws HederaClientException {
 		this(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(path))));
 	}
 
@@ -149,7 +151,8 @@ public class HistoryData implements Comparable<HistoryData> {
 
 	@NotNull
 	private String getLastActionString() {
-		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) ? "Signed" : "Accepted";
+		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
+				getType()) ? "Signed" : "Accepted";
 	}
 
 	public String getFileName() {
@@ -193,7 +196,7 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	public Timestamp lastAction() {
-		Timestamp t = new Timestamp(0, 0);
+		var t = new Timestamp(0, 0);
 		for (final var action : actions) {
 			if (action.getTimeStamp().compareTo(t) > 0) {
 				t = action.getTimeStamp();
@@ -274,15 +277,56 @@ public class HistoryData implements Comparable<HistoryData> {
 	}
 
 	private Timestamp getExpirationTimestamp(final RemoteFile remoteFile) {
-		return remoteFile.getType().equals(BATCH) ?
-				((BatchFile) remoteFile).getFirstTransactionTimeStamp() :
-				new Timestamp(0, 0);
+		final Timestamp timestamp;
+		switch (remoteFile.getType()) {
+			case TRANSACTION:
+				timestamp = ((TransactionFile) remoteFile).getExpiration();
+				break;
+			case BATCH:
+				timestamp = ((BatchFile) remoteFile).getFirstTransactionTimeStamp();
+				break;
+			case LARGE_BINARY:
+				timestamp = ((LargeBinaryFile) remoteFile).getTransactionValidStart();
+				break;
+			default:
+				timestamp = new Timestamp(0, 0);
+		}
+		return timestamp;
 	}
 
 	private Identifier getFeePayerIdentifier(final RemoteFile remoteFile) {
-		return remoteFile.getType().equals(BATCH) ?
-				((BatchFile) remoteFile).getFeePayerAccountID() :
-				Identifier.ZERO;
+		final Identifier returnValue;
+		switch (remoteFile.getType()) {
+			case TRANSACTION:
+				returnValue = ((TransactionFile) remoteFile).getFeePayerAccountId();
+				break;
+			case BATCH:
+				returnValue = ((BatchFile) remoteFile).getFeePayerAccountID();
+				break;
+			case LARGE_BINARY:
+				returnValue = ((LargeBinaryFile) remoteFile).getFeePayerAccountId();
+				break;
+			default:
+				returnValue = Identifier.ZERO;
+		}
+		return returnValue;
 	}
 
+	public Boolean transactionSucceeded() {
+		Boolean b = null;
+		try {
+			final var file = new File(DEFAULT_RECEIPTS + File.separator + FilenameUtils.getBaseName(
+					getFileName()) + "." + RECEIPT_EXTENSION);
+			if (file.exists()) {
+				final var receipt = readJsonObject(file);
+				b = receipt.get(JsonConstants.STATUS_PROPERTY).getAsString().equalsIgnoreCase("SUCCESS") ?
+						Boolean.TRUE :
+						Boolean.FALSE;
+			}
+		} catch (final HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+		return b;
+
+	}
 }
