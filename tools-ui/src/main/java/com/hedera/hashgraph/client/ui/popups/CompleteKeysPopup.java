@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -434,7 +435,9 @@ public class CompleteKeysPopup {
 
 	private static void exportKeysToFileService(final FileService fs) {
 		final var path = publicKey;
-		assert new File(path).exists();
+		if (!new File(path).exists()) {
+			throw new HederaClientRuntimeException("Error reading public key");
+		}
 		try {
 			if (fs.exists("/OutputFiles")) {
 				final var user = properties.getOneDriveCredentials().get(fs.getPath());
@@ -455,10 +458,11 @@ public class CompleteKeysPopup {
 			if (properties.getOneDriveCredentials() != null) {
 				final var inputs = properties.getOneDriveCredentials().keySet();
 				outputDirectories = new ArrayList<>();
-				for (final var s :
-						inputs) {
+				for (final var s : inputs) {
 					final var fs = FileAdapterFactory.getAdapter(s);
-					assert fs != null;
+					if (fs == null) {
+						throw new HederaClientRuntimeException("Error creating file service");
+					}
 					if (fs.exists()) {
 						outputDirectories.add(fs);
 					}

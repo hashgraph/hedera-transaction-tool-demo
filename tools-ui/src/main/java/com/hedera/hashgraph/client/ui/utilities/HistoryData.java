@@ -307,7 +307,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 				returnValue = ((LargeBinaryFile) remoteFile).getFeePayerAccountId();
 				break;
 			default:
-				returnValue  = Identifier.ZERO;
+				returnValue = Identifier.ZERO;
 		}
 		return returnValue;
 	}

@@ -22,6 +22,7 @@ package com.hedera.hashgraph.client.core.remote;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519PublicKey;
@@ -72,7 +73,9 @@ public class PublicKeyFile extends RemoteFile implements GenericFileReadWriteAwa
 		final var fileList =
 				new File(DEFAULT_STORAGE, "Keys").list(
 						(dir, name) -> FilenameUtils.getBaseName(name).equals(getBaseName()));
-		assert fileList != null;
+		if (fileList == null) {
+			throw new HederaClientRuntimeException("Unable to read file list");
+		}
 		return fileList.length > 0;
 	}
 

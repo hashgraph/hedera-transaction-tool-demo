@@ -270,7 +270,7 @@ public class NewPasswordPopupTest extends TestBase {
 	}
 
 	@Test
-	@Ignore
+	@Ignore("Flaky test")
 	public void forgotMnemonicPasswordCancel_test() {
 		logger.info("forgotMnemonicPasswordCancel_test");
 		keysPanePage.pressRecoveryPhrase()

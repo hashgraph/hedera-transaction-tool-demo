@@ -72,6 +72,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
+import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -599,7 +600,7 @@ class ToolTransactionTest {
 
 	@Test
 	void badTransactionSubmit_test() throws KeyStoreException, ReceiptStatusException, PrecheckStatusException,
-			TimeoutException, HederaClientException {
+			TimeoutException, HederaClientException, InterruptedException {
 		final List<PublicKey> publicKeys = new ArrayList<>();
 		final var privateKey0 = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/KeyStore-0.pem").get(0).getPrivate().getEncoded());
@@ -632,12 +633,13 @@ class ToolTransactionTest {
 
 	private AccountInfo createAccount(
 			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
-			ReceiptStatusException {
+			ReceiptStatusException, InterruptedException {
 		final Client client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		final PrivateKey genesisKey = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
 				"src/test/resources/Keys/genesis.pem").get(0).getPrivate().getEncoded());
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 
+		sleep(500);
 		final TransactionResponse response = new AccountCreateTransaction()
 				.setKey(keys)
 				.setInitialBalance(Hbar.fromTinybars(1000000))

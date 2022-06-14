@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
@@ -1105,6 +1106,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final AccountAmountStrings newTransaction;
 		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+
 		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
 				newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
@@ -1443,9 +1445,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
-		final var jsonNamePath = Path.of(jsonName);
+		final var jsonPath = Path.of(jsonName);
 		try {
-			Files.deleteIfExists(jsonNamePath);
+			Files.deleteIfExists(jsonPath);
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
@@ -1467,7 +1469,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			Files.deleteIfExists(jsonNamePath);
+			Files.deleteIfExists(jsonPath);
 			logger.info("Json file deleted");
 		} catch (final IOException e) {
 			logger.error("Json file could not be deleted");
@@ -1956,7 +1958,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final Map<String, PublicKey> publicKeys = new HashMap<>();
 		final var keys =
 				new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
-		assert keys != null;
+		if (keys == null) {
+			throw new HederaClientRuntimeException("Error reading public keys list");
+		}
 		Arrays.stream(keys).forEach(keyFile -> publicKeys.put(FilenameUtils.getBaseName(keyFile.getName()),
 				EncryptionUtils.publicKeyFromFile(keyFile.getAbsolutePath())));
 		return publicKeys;
@@ -2577,7 +2581,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		var flag = true;
 		try {
 			final var zone = timeZoneHBox.getChildren().get(0);
-			assert zone instanceof AutoCompleteNickname;
+			if (!(zone instanceof AutoCompleteNickname)) {
+				throw new HederaClientRuntimeException("Unrecognized node");
+			}
 			final var zoneString = ((AutoCompleteNickname) zone).getText();
 			if (!ZoneId.getAvailableZoneIds().contains(zoneString)) {
 				displayAndLogInformation("Invalid time zone");
@@ -2749,7 +2755,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 
 			FileUtils.deleteDirectory(new File(tempStorage));
-			assert !new File(tempStorage).exists();
+			if (new File(tempStorage).exists()) {
+				throw new HederaClientRuntimeException("Unable to delete temporary storage folder");
+			}
 
 		} catch (final Exception e) {
 			throw new HederaClientException("Error while deleting temporary files");

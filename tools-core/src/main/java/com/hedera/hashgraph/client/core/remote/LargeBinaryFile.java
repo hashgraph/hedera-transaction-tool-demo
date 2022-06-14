@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
@@ -69,24 +70,15 @@ import java.util.Set;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.CHUNK_SIZE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_DURATION_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_INCREMENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -94,6 +86,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
+	public static final String FILENAME_PROPERTY = "filename";
+	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
+	public static final String VALID_DURATION_PROPERTY = "validDuration";
+	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
+	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
+	public static final String MEMO_PROPERTY = "memo";
+	public static final String FILE_ID_PROPERTY = "fileID";
+	public static final String NODE_ID_PROPERTY = "nodeID";
+	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 
 	private String filename;
 	private Identifier fileID;
@@ -138,9 +139,13 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Check input
 		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
-		assert jsons != null;
+		if (jsons == null) {
+			throw new HederaClientRuntimeException("Unable to read json files");
+		}
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
-		assert bins != null;
+		if (bins == null) {
+			throw new HederaClientRuntimeException("Unable to read binary files");
+		}
 
 		if (checkFiles(jsons, bins)) {
 			return;
@@ -177,26 +182,21 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		this.filename = details.get(FILENAME_PROPERTY).getAsString();
 		this.fileID = fileIdentifier;
-		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(
-				CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
+		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
 		if (getChunkSize() > 1024) {
 			throw new HederaClientException("Maximum chunk size is 1024 for unsigned file update transactions.");
 		}
 		this.feePayerAccountId = payerIdentifier;
 		this.transactionValidDuration =
 				Duration.ofSeconds(
-						details.has(VALID_DURATION_PROPERTY) ? details.get(
-								VALID_DURATION_PROPERTY).getAsLong() : 120);
+						details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
 		this.validIncrement =
-				details.has(VALID_INCREMENT_PROPERTY) ? details.get(
-						VALID_INCREMENT_PROPERTY).getAsInt() : 100;
+				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee =
-				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(
-						TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
-		this.memo =
-				details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
+				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
 
 		setShowAdditionalBoxes();

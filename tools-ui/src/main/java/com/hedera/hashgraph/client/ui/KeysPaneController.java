@@ -84,7 +84,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -140,8 +139,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public VBox mainVBox;
 	public VBox signingKeysVBox;
-	public VBox btnRecoverKey;
-	public VBox btnRecoveryPhrase;
 	public VBox createKeysVBox;
 	public VBox reGenerateKeysVBox;
 	public VBox mnemonicWordsVBox;
@@ -242,8 +239,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			recoveryVBox.managedProperty().bind(recoveryVBox.visibleProperty());
 
 			// region Tooltips
-			publicKeyToolTip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, publicKeyToolTip,
-					Messages.UNLINKED_PUBLIC_KEY_TOOLTIP_TEXT));
+			publicKeyToolTip.setOnAction(
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, publicKeyToolTip,
+							Messages.UNLINKED_PUBLIC_KEY_TOOLTIP_TEXT));
 
 			linkedPrivateToolTip.setOnAction(
 					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, linkedPrivateToolTip,
@@ -327,7 +325,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 			final var accounts = new File(controller.getPreferredStorageDirectory() + "/Accounts").listFiles(
 					(dir, name) -> name.endsWith(INFO_EXTENSION));
-			assert accounts != null;
+			if (accounts == null) {
+				throw new HederaClientRuntimeException("Error reading accounts");
+			}
 			final var nicknames =
 					new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 
@@ -345,7 +345,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		try {
 			final var pubKeyFiles = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 					(dir, name) -> isPUBFile(new File(name).toPath()));
-			assert pubKeyFiles != null;
+			if (pubKeyFiles == null) {
+				throw new HederaClientRuntimeException("Error reading public keys");
+			}
+
 			stream(pubKeyFiles).forEachOrdered(
 					pubKeyFile -> publicKeysMap.put(pubKeyFile.getName(), pubKeyFile.getAbsolutePath()));
 		} catch (final Exception ex) {
@@ -1071,9 +1074,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 		final Ed25519KeyStore keyStore;
 		final KeyPair keyPair;
+		final var keysPath = Path.of(prefDir, "Keys");
 		final var keyStoreName =
 				overwrite ? String.format("%s%s.pem", keysDir, nickname) : String.valueOf(findFileName(
-						Paths.get(prefDir, "Keys"), nickname, PK_EXTENSION));
+						keysPath, nickname, PK_EXTENSION));
 
 		try {
 			keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
@@ -1084,7 +1088,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 			final var pk = Ed25519PrivateKey.fromMnemonic(mnemonic, index);
 
-			final var pubName = String.valueOf(findFileName(Paths.get(prefDir, "Keys"), nickname, PUB_EXTENSION));
+			final var pubName = String.valueOf(findFileName(keysPath, nickname, PUB_EXTENSION));
 			keyPair = keyStore.insertNewKeyPair(pk);
 			if (!verifyWithPublicKey(pubName, (EdDSAPublicKey) keyPair.getPublic())) {
 				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, ACCEPT_MESSAGE);
@@ -1158,10 +1162,14 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public void importKeys() throws IOException, KeyStoreException {
 		final var pubKeys = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(PUB_EXTENSION) || name.endsWith(TXT_EXTENSION));
-
+		if (pubKeys == null) {
+			throw new HederaClientRuntimeException("Error reading public keys list");
+		}
 		final var pemKeys = new File(controller.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(PK_EXTENSION));
-
+		if (pemKeys == null) {
+			throw new HederaClientRuntimeException("Error reading private keys list");
+		}
 		final var importedKeys =
 				BrowserUtilities.browseMultiFiles(controller.getLastTransactionsDirectory(), controller.keysPane,
 						"Keys");
@@ -1176,15 +1184,12 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		importedKeys.forEach(importedKey -> importSingleKey(publicKeys, privateKeys, importedKey));
 
 		var counter = 0;
-
-		assert pubKeys != null;
 		logger.info("Importing public keys first");
 		final Map<File, String> duplicates = new HashMap<>();
 		for (final var publicKey : publicKeys) {
 			counter += handlePublicKeys(duplicates, publicKey, checkIfDuplicate(publicKey, pubKeys));
 		}
 
-		assert pemKeys != null;
 		logger.info("Importing private keys second");
 		for (final var importedKey : privateKeys) {
 			counter += handlePublicKeys(duplicates, importedKey, checkIfPEMDuplicate(importedKey, pemKeys));
@@ -1324,7 +1329,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			final String oldValue,
 			final String newValue) {
 		if (!newValue.matches("\\d*")) {
-			recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
+			recoverIndexField.setText(newValue.replaceAll("\\D", ""));
 		}
 	}
 
@@ -1383,7 +1388,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		controller.setHash(password);
 		final var salt = controller.getSalt();
 
-		final Mnemonic mnemonic = Mnemonic.fromWords(mnemonicFromBox);
+		final var mnemonic = Mnemonic.fromWords(mnemonicFromBox);
 		final var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
 		SecurityUtilities.toEncryptedFile(passwordBytes, DEFAULT_STORAGE + File.separator + MNEMONIC_PATH,
 				mnemonic.toString());
@@ -1395,7 +1400,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		if (phraseHBox.getChildren().size() != 1) {
 			return new ArrayList<>();
 		}
-		final Label phrase = (Label) phraseHBox.getChildren().get(0);
+		final var phrase = (Label) phraseHBox.getChildren().get(0);
 		final var text = phrase.getText().toLowerCase(Locale.ROOT).split("[ \n]");
 		return stream(text).filter(s -> !"".equals(s)).collect(Collectors.toCollection(ArrayList::new));
 	}

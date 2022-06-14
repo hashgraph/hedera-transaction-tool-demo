@@ -57,8 +57,12 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 	@Override
 	public String call() throws Exception {
-		assert tx != null;
-		assert tx.getTransactionValidDuration() != null;
+		if (tx == null) {
+			throw new HederaClientRuntimeException("Null transaction");
+		}
+		if (tx.getTransactionValidDuration() == null) {
+			throw new HederaClientRuntimeException("Invalid transaction valid duration");
+		}
 		if (Objects.requireNonNull(
 				Objects.requireNonNull(Objects.requireNonNull(tx.getTransactionId()).validStart).plusSeconds(
 						tx.getTransactionValidDuration().toSeconds())).isBefore(Instant.now())) {
@@ -71,8 +75,9 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 		try {
 			final var response = submit(tx);
-			assert response != null;
-
+			if (response == null) {
+				throw new HederaClientException("Response is null");
+			}
 			final var status = response.getReceipt(client).status;
 			logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
@@ -87,9 +92,16 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
-		assert tx != null;
+		if (tx == null) {
+			throw new HederaClientRuntimeException("Invalid transaction");
+		}
+		if (tx.getTransactionId() == null) {
+			throw new HederaClientRuntimeException("Invalid transaction ID");
+		}
 		final var startTime = Objects.requireNonNull(tx.getTransactionId()).validStart;
-		assert startTime != null;
+		if (startTime == null) {
+			throw new HederaClientRuntimeException("Invalid start time");
+		}
 		final var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond() - delay;
 		if (difference < 0) {
 			logger.info("Transactions occur in the future. Sleeping for {} second(s)", -difference);

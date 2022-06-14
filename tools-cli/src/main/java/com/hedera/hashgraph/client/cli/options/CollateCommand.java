@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -254,7 +255,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 		if (root.isDirectory()) {
 			final var files = root.listFiles();
-			assert files != null;
+			if (files == null) {
+				throw new HederaClientRuntimeException("Unable to read files from root");
+			}
 			for (final var file : files) {
 				loadTransactions(file);
 			}
@@ -331,7 +334,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 			if (file.isDirectory()) {
 				final var inner = file.listFiles((dir, name) -> name.endsWith(extension));
-				assert inner != null;
+				if (inner == null) {
+					throw new HederaClientRuntimeException("Unable to read files from directory");
+				}
 				parseFiles(inner, extension);
 				return;
 			}
