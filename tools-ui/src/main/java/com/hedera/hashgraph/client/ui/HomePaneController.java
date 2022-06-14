@@ -65,7 +65,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -76,7 +75,6 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,11 +84,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOU
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
@@ -106,10 +102,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private static final String INPUT_FILES = "InputFiles";
 	private static final double VBOX_SPACING = 20;
 	private boolean badDrive = false;
-
-	private final Map<String, File> privateKeyMap = new HashMap<>();
-
-	private Map<String, String> publicKeyMap;
 
 	// region FXML
 
@@ -274,27 +266,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		logger.info("Done removing history");
 	}
 
-
-	private void loadPubKeys() {
-		publicKeyMap = new HashMap<>();
-		try {
-			final var pubFiles = new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
-			if (pubFiles == null) {
-				return;
-			}
-			for (final var pubFile : pubFiles) {
-				final var absolutePath = pubFile.getAbsolutePath();
-				publicKeyMap.put(getPublicKeyHexString(absolutePath), absolutePath);
-			}
-			logger.debug("pubFiles loaded");
-		} catch (final Exception ex) {
-			logger.error(ex);
-		}
-	}
-
-	private String getPublicKeyHexString(final String fileName) throws HederaClientException {
-		return Hex.toHexString(readBytes(fileName));
-	}
 
 	private List<VBox> displayFiles(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
 
@@ -963,21 +934,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private Pair<String, KeyPair> getAccountKeyPair(final File pemFile) throws HederaClientException {
-		final var pair = controller.getKeyPairUtility().getAccountKeyPair(pemFile);
-		if (pair == null) {
-			controller.displaySystemMessage(String.format("File %s not decrypted", pemFile.getName()));
-			throw new HederaClientException(String.format("File %s not decrypted", pemFile.getName()));
-		}
-		if (pair.getValue() == null) {
-			controller.displaySystemMessage(String.format("Invalid keypair in file %s", pemFile.getName()));
-			throw new HederaClientException(String.format("Invalid keypair in file %s", pemFile.getName()));
-		}
-		return pair;
-	}
-
 	class SortByFileBaseName implements Comparator<File> {
-
 		@Override
 		public int compare(final File o1, final File o2) {
 			final var path1 = o1.getAbsolutePath();
