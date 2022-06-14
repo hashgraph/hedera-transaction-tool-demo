@@ -39,15 +39,11 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.NumberBinding;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -529,7 +525,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		final var columnConstraint2 = new ColumnConstraints();
 		columnConstraint1.setHgrow(Priority.ALWAYS);
 		columnConstraint2.setHgrow(Priority.ALWAYS);
-		final var numberBinding = Bindings.min(new SimpleDoubleProperty(300), detailsGridPane.widthProperty().divide(2));
+		final var numberBinding = Bindings.min(new SimpleDoubleProperty(300),
+				detailsGridPane.widthProperty().divide(2));
 		columnConstraint1.maxWidthProperty().bind(numberBinding);
 		columnConstraint2.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
 		detailsGridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2);

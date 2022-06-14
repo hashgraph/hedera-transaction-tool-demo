@@ -70,24 +70,15 @@ import java.util.Set;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.CHUNK_SIZE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_DURATION_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.VALID_INCREMENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
