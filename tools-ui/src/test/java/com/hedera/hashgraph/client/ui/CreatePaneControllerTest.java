@@ -174,15 +174,18 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					"account", "side", "extra", "outer",
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
-	private static final String DEFAULT_STORAGE = System.getProperty(
-			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
 	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
 			System.getProperty("user.home") + "/", "") + "/";
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
+	private static final String DEFAULT_STORAGE = System.getProperty(
+			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
+
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
+
+	private final Path currentRelativePath = Paths.get("");
+	public UserAccessibleProperties properties;
 
 	@Before
 	public void setUp() {

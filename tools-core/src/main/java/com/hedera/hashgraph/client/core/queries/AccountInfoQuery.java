@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.core.queries;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -87,9 +88,15 @@ public class AccountInfoQuery implements GenericFileReadWriteAware {
 
 		client.setDefaultMaxQueryPayment(fee);
 
-		return new com.hedera.hashgraph.sdk.AccountInfoQuery()
-				.setAccountId(account.asAccount())
-				.execute(client);
+		final AccountInfo info;
+		try {
+			info = new com.hedera.hashgraph.sdk.AccountInfoQuery()
+					.setAccountId(account.asAccount())
+					.execute(client);
+		} catch (final Exception e) {
+			throw new HederaClientRuntimeException(e);
+		}
+		return info;
 	}
 
 	public static final class Builder {

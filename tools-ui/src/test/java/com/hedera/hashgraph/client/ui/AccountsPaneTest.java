@@ -389,6 +389,8 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 				.requestSelectedInfo()
 				.enterPasswordInPopup(TEST_PASSWORD);
 
+
+		sleep(500);
 		final File[] archive = new File(DEFAULT_STORAGE, "Accounts/Archive").listFiles(
 				(dir, name) -> name.startsWith("0.0.2"));
 
@@ -459,6 +461,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	// region AUXILIARY METHODS
+	@SuppressWarnings("UnusedReturnValue")
 	private AccountsPanePage loadAccountInfo(final String name, final String location) {
 		logger.info("Loading account {} from {}", name, location);
 		return accountsPanePage.loadInfoFromHiddenTextField(location)

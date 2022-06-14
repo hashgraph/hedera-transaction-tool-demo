@@ -41,6 +41,7 @@ import com.hedera.hashgraph.sdk.proto.Key;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -82,6 +83,7 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
+	@Ignore("Empty test")
 	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException, ReceiptStatusException {
 		final var keyStore =
@@ -103,6 +105,7 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 		final var receipt = transactionResponse.getReceipt(client);
 		final var payerId = Objects.requireNonNull(receipt.accountId);
 		logger.info("Payer Id: {}", payerId.toString());
+
 
 		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(payerId)

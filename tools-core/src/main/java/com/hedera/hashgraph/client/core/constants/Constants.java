@@ -117,7 +117,6 @@ public class Constants {
 	public static final String INITIAL_MAP_LOCATION = DOCUMENTS_FOLDER + "initialMap.json";
 	public static final String USER_PROPERTIES = "Files/user.properties";
 	public static final String DEFAULT_HISTORY = DEFAULT_STORAGE + "History";
-	public static final String DEFAULT_RECEIPTS = DEFAULT_STORAGE + "Receipts";
 	public static final String DEFAULT_DELETED_ACCOUNTS = DEFAULT_STORAGE + "Deleted/Accounts";
 	public static final String DEFAULT_ACCOUNTS = DEFAULT_STORAGE + "Accounts";
 	public static final String DEFAULT_KEYS = DEFAULT_STORAGE + "Keys";

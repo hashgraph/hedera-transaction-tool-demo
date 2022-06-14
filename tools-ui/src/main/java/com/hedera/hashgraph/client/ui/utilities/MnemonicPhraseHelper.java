@@ -112,7 +112,9 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 			return false;
 		}
 		for (final var node : nodes) {
-			assert node instanceof TextField;
+			if (!(node instanceof TextField)) {
+				throw new HederaClientRuntimeException("Unrecognized node");
+			}
 			final var word = words[counter];
 
 			final var style = "-fx-background-color: white;-fx-border-color: silver;-fx-background-radius: 10;" +
@@ -188,7 +190,9 @@ public class MnemonicPhraseHelper implements GenericFileReadWriteAware {
 
 		final var nodes = mnemonicGridPane.getChildren();
 		for (final var n : nodes) {
-			assert n instanceof TextField;
+			if (!(n instanceof TextField)) {
+				throw new HederaClientRuntimeException("Unrecognized node");
+			}
 			n.setStyle(
 					"-fx-background-color: white;-fx-background-radius: 10;-fx-border-radius: 10;-fx-border-color: " +
 							"transparent");

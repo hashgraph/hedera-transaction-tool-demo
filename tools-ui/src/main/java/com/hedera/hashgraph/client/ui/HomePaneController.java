@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
@@ -834,7 +835,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				createSignedTransaction(rf, pair);
 				break;
 			case BATCH:
-				assert rf instanceof BatchFile;
+				if (!(rf instanceof BatchFile)) {
+					throw new HederaClientRuntimeException("Remote file is not a batch file");
+				}
 				createSignedTransaction(rf, pair);
 				break;
 			default:
@@ -896,8 +899,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var outputFolder =
 				("".equals(emailFromMap)) ? File.separator : File.separator + OUTPUT_FILES + File.separator;
 		var fileService = FileAdapterFactory.getAdapter(remoteLocation);
-		assert fileService != null;
-
+		if (fileService == null) {
+			throw new HederaClientRuntimeException("Error creating file service");
+		}
 		final var remoteDestination = outputFolder + ((fileService.getPath().contains("Volumes")) ? "" : user);
 
 		if (remoteDestination.contains("Volumes")) {

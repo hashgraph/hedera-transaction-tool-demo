@@ -18,10 +18,9 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
-import javafx.beans.binding.Bindings;
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.ui.HomePaneController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -85,8 +84,10 @@ public class ExtraKeysSelectorPopup {
 		final Set<File> selectedSet = new HashSet<>(signingKeys);
 
 		final var knownKeys =
-				new File(KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
-		assert knownKeys != null;
+				new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
+		if (knownKeys == null) {
+			throw new HederaClientRuntimeException("Error reading known keys");
+		}
 		Arrays.sort(knownKeys);
 		final var columns = min((int) max(3, sqrt(knownKeys.length)), 9);
 		logger.info("Grid panes will have {} columns", columns);
