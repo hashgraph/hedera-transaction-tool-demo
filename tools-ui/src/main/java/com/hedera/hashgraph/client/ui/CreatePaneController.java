@@ -1106,6 +1106,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final AccountAmountStrings newTransaction;
 		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+
 		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
 				newTransaction.getStrippedAccountID()).getStatus();
 		if (status.equals(parseStatus.BAD_CHECKSUM) || status.equals(parseStatus.BAD_FORMAT)) {
@@ -1444,9 +1445,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
-		final var jsonNamePath = Path.of(jsonName);
+		final var jsonPath = Path.of(jsonName);
 		try {
-			Files.deleteIfExists(jsonNamePath);
+			Files.deleteIfExists(jsonPath);
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
@@ -1468,7 +1469,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		try {
-			Files.deleteIfExists(jsonNamePath);
+			Files.deleteIfExists(jsonPath);
 			logger.info("Json file deleted");
 		} catch (final IOException e) {
 			logger.error("Json file could not be deleted");

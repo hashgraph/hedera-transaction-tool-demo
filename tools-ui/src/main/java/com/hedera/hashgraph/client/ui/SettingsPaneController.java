@@ -87,7 +87,7 @@ import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
-	private static final String REGEX = "[^\\d]";
+	private static final String REGEX = "\\D";
 	private static final String REGEX1 = "\\d*";
 
 

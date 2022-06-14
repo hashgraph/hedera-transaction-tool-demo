@@ -83,8 +83,6 @@ public class Constants {
 	public static final String CURRENT_NETWORK = "currentNetwork";
 	public static final String INPUT_FILES = "InputFiles";
 	public static final String OUTPUT_FILES = "OutputFiles";
-	// endregion
-	public static final String DEFAULT_FEE_PAYER = "defaultFeePayer";
 	public static final String NO_ACCOUNT_FOUND_TEXT = "No account found";
 // endregion
 

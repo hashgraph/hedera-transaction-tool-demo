@@ -84,7 +84,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -140,8 +139,6 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 
 	public VBox mainVBox;
 	public VBox signingKeysVBox;
-	public VBox btnRecoverKey;
-	public VBox btnRecoveryPhrase;
 	public VBox createKeysVBox;
 	public VBox reGenerateKeysVBox;
 	public VBox mnemonicWordsVBox;
@@ -242,8 +239,9 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			recoveryVBox.managedProperty().bind(recoveryVBox.visibleProperty());
 
 			// region Tooltips
-			publicKeyToolTip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, publicKeyToolTip,
-					Messages.UNLINKED_PUBLIC_KEY_TOOLTIP_TEXT));
+			publicKeyToolTip.setOnAction(
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, publicKeyToolTip,
+							Messages.UNLINKED_PUBLIC_KEY_TOOLTIP_TEXT));
 
 			linkedPrivateToolTip.setOnAction(
 					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, linkedPrivateToolTip,
@@ -1076,9 +1074,10 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 		final Ed25519KeyStore keyStore;
 		final KeyPair keyPair;
+		final var keysPath = Path.of(prefDir, "Keys");
 		final var keyStoreName =
 				overwrite ? String.format("%s%s.pem", keysDir, nickname) : String.valueOf(findFileName(
-						Paths.get(prefDir, "Keys"), nickname, PK_EXTENSION));
+						keysPath, nickname, PK_EXTENSION));
 
 		try {
 			keyStore = new Ed25519KeyStore.Builder().withPassword(password).build();
@@ -1089,7 +1088,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			}
 			final var pk = Ed25519PrivateKey.fromMnemonic(mnemonic, index);
 
-			final var pubName = String.valueOf(findFileName(Paths.get(prefDir, "Keys"), nickname, PUB_EXTENSION));
+			final var pubName = String.valueOf(findFileName(keysPath, nickname, PUB_EXTENSION));
 			keyPair = keyStore.insertNewKeyPair(pk);
 			if (!verifyWithPublicKey(pubName, (EdDSAPublicKey) keyPair.getPublic())) {
 				PopupMessage.display("Public Keys Mismatch", ErrorMessages.PUBLIC_KEY_MISMATCH_MESSAGE, ACCEPT_MESSAGE);
@@ -1330,7 +1329,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 			final String oldValue,
 			final String newValue) {
 		if (!newValue.matches("\\d*")) {
-			recoverIndexField.setText(newValue.replaceAll("[^\\d]", ""));
+			recoverIndexField.setText(newValue.replaceAll("\\D", ""));
 		}
 	}
 
@@ -1389,7 +1388,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		controller.setHash(password);
 		final var salt = controller.getSalt();
 
-		final Mnemonic mnemonic = Mnemonic.fromWords(mnemonicFromBox);
+		final var mnemonic = Mnemonic.fromWords(mnemonicFromBox);
 		final var passwordBytes = SecurityUtilities.keyFromPassword(password, salt);
 		SecurityUtilities.toEncryptedFile(passwordBytes, DEFAULT_STORAGE + File.separator + MNEMONIC_PATH,
 				mnemonic.toString());
@@ -1401,7 +1400,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		if (phraseHBox.getChildren().size() != 1) {
 			return new ArrayList<>();
 		}
-		final Label phrase = (Label) phraseHBox.getChildren().get(0);
+		final var phrase = (Label) phraseHBox.getChildren().get(0);
 		final var text = phrase.getText().toLowerCase(Locale.ROOT).split("[ \n]");
 		return stream(text).filter(s -> !"".equals(s)).collect(Collectors.toCollection(ArrayList::new));
 	}

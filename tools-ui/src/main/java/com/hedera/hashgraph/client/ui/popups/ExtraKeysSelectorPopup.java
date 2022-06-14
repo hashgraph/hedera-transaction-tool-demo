@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
@@ -53,7 +55,6 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.BLUE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static java.lang.Math.max;
@@ -85,8 +86,10 @@ public class ExtraKeysSelectorPopup {
 		final Set<File> selectedSet = new HashSet<>(signingKeys);
 
 		final var knownKeys =
-				new File(KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
-		assert knownKeys != null;
+				new File(Constants.KEYS_FOLDER).listFiles(pathname -> pathname.isFile() && isPEM(pathname));
+		if (knownKeys == null) {
+			throw new HederaClientRuntimeException("Error reading known keys");
+		}
 		Arrays.sort(knownKeys);
 		final var columns = min((int) max(3, sqrt(knownKeys.length)), 9);
 		logger.info("Grid panes will have {} columns", columns);

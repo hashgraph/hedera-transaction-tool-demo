@@ -260,7 +260,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	@Test
-	public void requestOneInfo_test() throws InterruptedException, HederaClientException {
+	public void requestOneInfo_test() throws InterruptedException {
 		// Request all balances
 		try {
 			accountsPanePage.selectRow("treasury")
@@ -275,7 +275,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 
 			final var newBalance = accountsPanePage.getBalance("treasury");
 			assertTrue(newBalance.toTinybars() != oldBalance.toTinybars());
-		} catch (HederaClientException e) {
+		} catch (final HederaClientException e) {
 			if (e.getMessage().contains("Unexpected popup")) {
 				accountsPanePage.clickOnPopupButton("CONTINUE");
 			}
