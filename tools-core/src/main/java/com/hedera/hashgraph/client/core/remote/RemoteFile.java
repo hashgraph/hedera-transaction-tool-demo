@@ -913,7 +913,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.add(new Label("Network response"), LEFT, rowCount);
 			detailsGridPane.add(new Label(receiptJson.get("status").getAsString()), 1, rowCount++);
 			if (receiptJson.has("entity")) {
-				detailsGridPane.add(new Label("Entity created"), LEFT, rowCount);
+				detailsGridPane.add(new Label("Account created"), LEFT, rowCount);
 				detailsGridPane.add(new Label(receiptJson.get("entity").getAsString()), 1, rowCount);
 
 			}

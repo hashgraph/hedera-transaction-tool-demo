@@ -1619,6 +1619,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				final var responseTuple =
 						getNicknameTuple(newFiles.size(), nicknames, newNickname);
 				responseEnum = responseTuple.getResponseEnum();
+				if (ResponseEnum.UNKNOWN.equals(responseEnum)) {
+					return 0;
+				}
 				nicknames.add(responseTuple.getNickname());
 				newNickname = responseTuple.getNickname();
 			}
@@ -1663,9 +1666,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			responseTuple = TwoButtonPopup.display(file, newFiles > 1);
 			if (responseTuple.getResponseEnum().equals(ResponseEnum.UNKNOWN)) {
 				responseTuple.setNickname("");
-				PopupMessage.display("Missing nickname", "A nickname for the account must be chosen. Please try again.",
-						CONTINUE_LABEL);
-				continue;
+				PopupMessage.display("Info declined", "The action has been cancelled: The account has not been " +
+						"imported", CONTINUE_LABEL);
+				return responseTuple;
 			}
 			if (nicknames.contains(responseTuple.getNickname())) {
 				PopupMessage.display("Duplicate nickname",
