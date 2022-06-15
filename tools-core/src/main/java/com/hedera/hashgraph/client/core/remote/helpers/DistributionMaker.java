@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
@@ -202,7 +203,9 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		final var transactions =
 				new File(storageLocation + TRANSACTIONS_SUFFIX).listFiles(
 						(dir, name) -> name.endsWith(TRANSACTION_EXTENSION));
-		assert transactions != null;
+		if (transactions == null) {
+			throw new HederaClientRuntimeException("Unable to read transactions list");
+		}
 		final var files = Arrays.asList(transactions);
 		Collections.sort(files);
 
@@ -236,8 +239,9 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	private void zipMessages(final String messages, final String ext) throws HederaClientException {
 		try {
 			final var txToPack = new File(storageLocation + messages).listFiles((dir, name) -> name.endsWith(ext));
-			assert txToPack != null;
-
+			if (txToPack == null) {
+				throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
+			}
 			final var zipFile = new File(storageLocation + messages.concat(".zip"));
 
 			Files.deleteIfExists(zipFile.toPath());

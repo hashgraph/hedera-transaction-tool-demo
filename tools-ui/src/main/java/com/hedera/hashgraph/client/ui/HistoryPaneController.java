@@ -83,6 +83,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -99,6 +100,8 @@ import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 import static com.hedera.hashgraph.client.core.enums.FileType.getType;
 import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
+import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
 
@@ -540,6 +543,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		feePayerPredicate = historyData -> {
 			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
+			final var text = join(", ", accounts.stream()
+					.map(account -> Identifier
+							.parse(account.toString(), controller.getCurrentNetwork())
+							.toReadableString())
+					.collect(Collectors.toCollection(ArrayList::new)));
+			feePayerTextField.setText(text);
 			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
 		};
 
@@ -585,7 +594,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		typeFilterVBox.managedProperty().bind(typeFilterVBox.visibleProperty());
 		typeFilterVBox.setVisible(false);
 		final var size = typeFilter.size();
-		final var filterTitle = size > 0 ? String.format("filters (%d)", size) : "filters";
+		final var filterTitle = size > 0 ? format("filters (%d)", size) : "filters";
 		final var title = new Label(filterTitle);
 		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
 		title.setPadding(new Insets(5));
@@ -705,12 +714,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	private HBox twoImages(final boolean success) {
 		final var sent = new Image(SENT_ICON);
-		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-100.png");
+		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-96.png");
 		final var bottom = new ImageView(sent);
 		bottom.setFitHeight(30);
 		bottom.setPreserveRatio(true);
 		final var top = new ImageView(check);
-		top.setFitHeight(15);
+		top.setFitHeight(20);
 		top.setPreserveRatio(true);
 		final HBox layout = new HBox(10);
 		layout.getChildren().addAll(bottom, top);
@@ -826,7 +835,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private CheckBox getCheckBox(final FileType type, final String typeString) {
-		final var checkBox = new CheckBox(String.format("%s (%d)", typeString, countType(type)));
+		final var checkBox = new CheckBox(format("%s (%d)", typeString, countType(type)));
 		checkBox.setSelected(typeFilter.contains(type));
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.FALSE.equals(t1)) {

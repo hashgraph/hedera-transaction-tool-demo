@@ -33,9 +33,7 @@ import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import javafx.scene.control.Label;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -49,10 +47,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStoreException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
@@ -148,9 +144,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void canSignThreshold_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
-			HederaClientException,
-			ReceiptStatusException, IOException {
+	public void canSignThreshold_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -172,9 +166,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void canSignList_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
-			HederaClientException,
-			ReceiptStatusException, IOException {
+	public void canSignList_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeyList.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -196,9 +188,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void canSignSingle_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
-			HederaClientException,
-			ReceiptStatusException, IOException {
+	public void canSignSingle_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySingle.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -223,9 +213,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 
-	private String createAccountInfo(
-			final String filePath) throws KeyStoreException, HederaClientException, TimeoutException,
-			PrecheckStatusException, ReceiptStatusException {
+	private String createAccountInfo(final String filePath) throws Exception {
 		final var keyStore =
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
@@ -242,6 +230,8 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var account = transactionResponse.getReceipt(client).accountId;
 
+
+		sleep(500);
 		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);

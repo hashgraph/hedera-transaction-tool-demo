@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
@@ -120,7 +121,9 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 	public void addSignature(final Transaction<?> transaction) {
 		final var signatures = transaction.getSignatures();
-		assert signatures.size() < 2;
+		if (signatures.size() > 1) {
+			throw new HederaClientRuntimeException("Too many signatures");
+		}
 		for (final var entry : signatures.entrySet()) {
 			final var map = entry.getValue();
 			for (final var mapEntry : map.entrySet()) {
@@ -255,7 +258,9 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 		var transactionBoolean = true;
 		if (this.transaction.getTransaction() != null && ((CollatorHelper) obj).getTransaction() != null) {
-			assert objTransaction != null;
+			if (objTransaction == null) {
+				throw new HederaClientRuntimeException("Invalid transaction");
+			}
 			transactionBoolean = Arrays.equals(this.transaction.getTransaction().toBytes(), objTransaction.toBytes());
 		}
 

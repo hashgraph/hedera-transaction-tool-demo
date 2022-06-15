@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.fileservices;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +63,9 @@ public class FileAdapterFactory {
 		final var volume = new File(File.separator + "Volumes");
 		if (volume.exists()) {
 			final var roots = volume.listFiles();
-			assert roots != null;
+			if (roots == null) {
+				throw new HederaClientRuntimeException("Volume list is null");
+			}
 			logger.debug("Found {} volumes", roots.length);
 			//Scan all volumes (MAC only)
 			if (roots.length > 0) {

@@ -23,6 +23,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
@@ -355,7 +356,8 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 			for (final var entry : accountInfoMap.entrySet()) {
 				final var entryKey = entry.getKey();
 				final var subst = entryKey.contains("-") ? entryKey.substring(0, entryKey.lastIndexOf("-")) : entryKey;
-				final var subst2 = entryKey.contains("-") ? entryKey.substring(entryKey.lastIndexOf("-") + 1) : "UNKNOWN";
+				final var subst2 =
+						entryKey.contains("-") ? entryKey.substring(entryKey.lastIndexOf("-") + 1) : "UNKNOWN";
 				final var nn = CommonMethods.nicknameOrNumber(Identifier.parse(subst, subst2), nicknameMap);
 				if (nicknameMap.has(entryKey)) {
 					accountsAddresses.put(nn, AccountInfo.fromBytes(readBytes(entry.getValue())).key);
@@ -866,15 +868,18 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	private TreeItem<String> keyToTreeView(final Key key) {
 		if (key instanceof KeyList && ((KeyList) key).size() == 1) {
 			final var object = ((KeyList) key).toArray()[0];
-			assert object instanceof Key;
+			if (!(object instanceof Key)) {
+				throw new HederaClientRuntimeException("Object should be a Key");
+			}
 			return keyToTreeView((Key) object);
 		}
 		if (key instanceof PublicKey) {
 			return new TreeItem<>(getKeyName((PublicKey) key));
-		} else {
-			assert key instanceof KeyList;
-			return getTreeItem((KeyList) key);
 		}
+		if (!(key instanceof KeyList)) {
+			throw new HederaClientRuntimeException("Object should be a KeyList");
+		}
+		return getTreeItem((KeyList) key);
 	}
 
 	/**
@@ -1201,8 +1206,10 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 	private void displayKeyPopup(final String key) {
 		final var pubKeyFiles = new File(properties.getPreferredStorageDirectory() + KEYS_STRING).listFiles(
 				(dir, name) -> name.endsWith(key + "." + PUB_EXTENSION));
-		assert pubKeyFiles != null;
-		assert pubKeyFiles.length < 2;
+		if (pubKeyFiles == null) {
+			throw new HederaClientRuntimeException("Error reading public keys list");
+		}
+
 		final var address = pubKeyFiles.length == 0 ? keyAddresses.get(key) : pubKeyFiles[0].getAbsolutePath();
 		CompleteKeysPopup.display(address, false);
 	}

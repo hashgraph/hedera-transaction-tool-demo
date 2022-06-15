@@ -277,7 +277,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setSeconds(45)
 				.setMemo("A memo")
 				.setFeePayerAccount(1019)
-				.setNodeAccount(42)
+				.setNodeAccount(4)
 				.setNewAccountMemo("Account memo test")
 				.setNewMaxTokenAss(250);
 
@@ -309,7 +309,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertEquals(new Identifier(0, 0, 1019).asAccount(),
@@ -445,6 +445,12 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
+		assertTrue(find("#invalidNode").isVisible());
+		createPanePage.setNodeAccount(4)
+				.createAndExport(resources);
+
+		assertFalse(find("#invalidNode").isVisible());
+
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -471,7 +477,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);

@@ -39,6 +39,7 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -524,20 +525,22 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		final var columnConstraint2 = new ColumnConstraints();
 		columnConstraint1.setHgrow(Priority.ALWAYS);
 		columnConstraint2.setHgrow(Priority.ALWAYS);
-		columnConstraint1.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
+		final var numberBinding = Bindings.min(new SimpleDoubleProperty(300),
+				detailsGridPane.widthProperty().divide(2));
+		columnConstraint1.maxWidthProperty().bind(numberBinding);
 		columnConstraint2.maxWidthProperty().bind(detailsGridPane.widthProperty().divide(2));
 		detailsGridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2);
 
 		var count = 0;
 		detailsGridPane.add(new Label("Transaction ID:"), LEFT, count++);
 
-		detailsGridPane.add(new Label("Fee Payer Account ID: "), LEFT, count++);
+		detailsGridPane.add(new Label("Fee Payer Account:"), LEFT, count++);
 
-		final var txFeeLabel = new Label("Maximum Transaction Fee: ");
+		final var txFeeLabel = new Label("Maximum Transaction Fee:");
 		txFeeLabel.setWrapText(true);
 		detailsGridPane.add(txFeeLabel, LEFT, count++);
 
-		final var s = sent ? "Submitted on:" : "To be submitted on: ";
+		final var s = sent ? "Submitted on:" : "To be submitted on:";
 		final var subLabel = new Label(s);
 		subLabel.setWrapText(true);
 		detailsGridPane.add(subLabel, LEFT, count);
@@ -563,6 +566,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		final var detailsGridPane = buildGridPane();
 		detailsGridPane.setMinWidth(550);
+		HBox.setHgrow(detailsGridPane, Priority.ALWAYS);
 
 		// If the type of file allows it, show the history pane
 		if (showAdditionalBoxes) {
@@ -574,7 +578,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		hBox.getChildren().add(detailsGridPane);
 
 		// If the type of file allows it, show the comments pane
-		if (showAdditionalBoxes) {
+		if (showAdditionalBoxes && commentsVBox.isVisible()) {
 			hBox.getChildren().add(commentsVBox);
 			detailsGridPane.maxWidthProperty().bind(fileVBox.widthProperty().divide(2));
 		}
@@ -790,8 +794,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		showCreatorComments(commentsVBox);
 		HBox.setHgrow(commentsVBox, Priority.ALWAYS);
 		setupUserComments(commentsVBox);
+		final boolean anyVisible =
+				commentsVBox.getChildren().stream().anyMatch(node -> node instanceof TextArea && node.isVisible());
 		commentsVBox.managedProperty().bind(commentsVBox.visibleProperty());
-		commentsVBox.setVisible(!(this instanceof SoftwareUpdateFile));
+		commentsVBox.setVisible(!(this instanceof SoftwareUpdateFile) && anyVisible);
 		return commentsVBox;
 	}
 
@@ -821,6 +827,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		commentArea.setPrefRowCount(5);
 		commentArea.setPromptText("Your comments to the coordinating administrator");
 		VBox.setVgrow(commentArea, Priority.ALWAYS);
+		commentArea.setEditable(!isHistory());
+		commentArea.visibleProperty().bind(
+				commentArea.textProperty().isEmpty().not().or(commentArea.editableProperty()));
+		commentArea.managedProperty().bind(commentArea.visibleProperty());
 
 		final var charsLeft = new Label(String.format("Characters left: %d", COMMENT_FIELD_CHARACTER_LIMIT));
 		commentArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
@@ -903,7 +913,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			detailsGridPane.add(new Label("Network response"), LEFT, rowCount);
 			detailsGridPane.add(new Label(receiptJson.get("status").getAsString()), 1, rowCount++);
 			if (receiptJson.has("entity")) {
-				detailsGridPane.add(new Label("Entity created"), LEFT, rowCount);
+				detailsGridPane.add(new Label("Account created"), LEFT, rowCount);
 				detailsGridPane.add(new Label(receiptJson.get("entity").getAsString()), 1, rowCount);
 
 			}
@@ -945,7 +955,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	@Override
 	public int hashCode() {
 		final var file = new File(parentPath, name);
-		var bytes = new byte[LEFT];
+		var bytes = new byte[0];
 		try {
 			bytes = Files.readAllBytes(file.toPath());
 		} catch (final IOException e) {

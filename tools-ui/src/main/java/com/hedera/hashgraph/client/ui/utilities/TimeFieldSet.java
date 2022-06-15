@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import javafx.scene.control.DateCell;
 import javafx.scene.control.DatePicker;
@@ -38,7 +39,6 @@ import java.util.TimeZone;
 
 public class TimeFieldSet {
 	private static final Logger logger = LogManager.getLogger(TimeFieldSet.class);
-
 	private final DatePicker datePicker;
 	private final TextField hours;
 	private final TextField minutes;
@@ -301,7 +301,9 @@ public class TimeFieldSet {
 	 */
 	private TimeZone getZoneFromBox() {
 		final var zone = timeZoneBox.getChildren().get(0);
-		assert zone instanceof AutoCompleteNickname;
+		if (!(zone instanceof AutoCompleteNickname)) {
+			throw new HederaClientRuntimeException("Unrecongized node");
+		}
 		final var zoneString = ((AutoCompleteNickname) zone).getText();
 		if (!ZoneId.getAvailableZoneIds().contains(zoneString)) {
 			logger.error("Zone is not available");
