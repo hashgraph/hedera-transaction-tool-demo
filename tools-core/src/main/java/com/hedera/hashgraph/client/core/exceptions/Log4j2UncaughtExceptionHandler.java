@@ -39,7 +39,7 @@ public final class Log4j2UncaughtExceptionHandler implements Thread.UncaughtExce
 						e.getMessage());
 		logger.error(errorMessage);
 		final var thread = t.toString();
-		logger.error("Uncaught exception {} on thread {}", e.getMessage(), thread);
+		logger.error("Uncaught exception {} on thread {}", e.getMessage(), thread, e);
 	}
 
 }
