@@ -228,6 +228,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
 				continue;
 			}
+			if (!file.isValid()){
+				logger.info("File {} cannot be parsed. Skipped",file.getName());
+				continue;
+			}
 			logger.info("Parsing file {}", file.getName());
 			final var data = new HistoryData(file);
 			data.setHistory(true);
@@ -790,7 +794,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	@NotNull
 	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
 		final var id = cellData.getValue().getFeePayerId();
-		if (id.equals(Identifier.ZERO)) {
+		if (id == null || id.equals(Identifier.ZERO)) {
 			return new SimpleStringProperty("");
 		}
 		return new SimpleStringProperty(id.toNicknameAndChecksum(controller.getAccountsList()));

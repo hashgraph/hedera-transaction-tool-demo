@@ -230,8 +230,8 @@ public class HistoryData implements Comparable<HistoryData> {
 		asJson.addProperty(CODE_PARAMETER, this.code);
 		asJson.addProperty(REMOTE_FILE_PARAMETER, this.remoteFilePath);
 		asJson.add(ACTIONS_PARAMETER, array);
-		asJson.add(FEE_PAYER_PROPERTY, feePayer.asJSON());
-		asJson.add(EXPIRATION_DATE, expirationDate.asJSON());
+		asJson.add(FEE_PAYER_PROPERTY, (feePayer != null ? feePayer : Identifier.ZERO).asJSON());
+		asJson.add(EXPIRATION_DATE, (expirationDate != null ? expirationDate : new Timestamp()).asJSON());
 		asJson.addProperty(HISTORY_BOOLEAN_PARAMETER, history);
 		asJson.addProperty(EXPIRED_PARAMETER, expired);
 
