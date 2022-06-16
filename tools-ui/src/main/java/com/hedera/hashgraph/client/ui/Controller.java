@@ -629,6 +629,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			final var value = entry.getValue();
 			final var cleanName = newVersion.replace(":", "-").replace(".", "-").replace(",", "").replace(" ", "");
 			final var fileName = String.format("%s/OutputFiles/%s/SoftwareUpdated-%s.txt", key, value, cleanName);
+			if (!new File(fileName).exists()) {
+				logger.error("Cannot export version: path {} does not exist", fileName);
+				return;
+			}
 			try (final var writer = new BufferedWriter(new FileWriter(fileName))) {
 				writer.write(
 						String.format("Software updated from version %s to version %s on %s", oldVersion, newVersion,
