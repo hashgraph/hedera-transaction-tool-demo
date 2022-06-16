@@ -113,7 +113,7 @@ public class BatchFile extends RemoteFile {
 	private int hoursUTC;
 	private int minutesUTC;
 	private LocalDate firstTransaction;
-	private List<BatchLine> transfers;
+	private List<BatchLine> transfers = new ArrayList<>();
 	private String memo = "";
 	private long transactionFee = VAL_NUM_TRANSACTION_DEFAULT_FEE;// default value
 	private long txValidDuration = VAL_NUM_TRANSACTION_VALID_DURATION; // default value

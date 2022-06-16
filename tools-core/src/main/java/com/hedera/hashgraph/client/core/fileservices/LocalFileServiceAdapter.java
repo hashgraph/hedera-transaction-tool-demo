@@ -114,7 +114,8 @@ public class LocalFileServiceAdapter implements FileService {
 		}
 		final var files = folder.listFiles(pathname -> !pathname.isHidden());
 		if (files == null) {
-			throw new HederaClientRuntimeException("Unable to read file list");
+			logger.error("Unable to read file list in listFiles() {}", folder);
+			return directory;
 		}
 
 		for (final var f : files) {
@@ -178,7 +179,8 @@ public class LocalFileServiceAdapter implements FileService {
 	public long lastModified() throws HederaClientException {
 		final var remote = new File(path).listFiles();
 		if (remote == null) {
-			throw new HederaClientRuntimeException("Unable to read file list");
+			logger.error("Unable to read file list in lastModified() {}", path);
+			return -1;
 		}
 		long lastMod = 0;
 
