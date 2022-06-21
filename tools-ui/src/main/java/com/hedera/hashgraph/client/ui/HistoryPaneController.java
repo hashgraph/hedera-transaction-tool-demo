@@ -261,6 +261,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.refresh();
 	}
 
+	public void removeFromHistory(final RemoteFile remoteFile){
+		noise = false;
+		final var remove = new HistoryData(remoteFile);
+		tableList.remove(remove);
+		historyMap.remove(remoteFile.hashCode());
+		tableView.refresh();
+	}
+
 	/**
 	 * Check if the file is in history
 	 *

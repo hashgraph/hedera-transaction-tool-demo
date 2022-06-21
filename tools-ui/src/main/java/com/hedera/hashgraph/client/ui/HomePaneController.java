@@ -258,6 +258,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	 */
 	private void removeHistoryFiles() {
 		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
+			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
+				final var su = (SoftwareUpdateFile) rf;
+				final var currentVersion = controller.getVersion().split(" ");
+				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+					controller.historyPaneController.removeFromHistory(rf);
+				}
+			}
 			if (controller.historyPaneController.isHistory(rf.hashCode())) {
 				logger.info("Removing {}", rf.getName());
 				remoteFilesMap.remove(rf.getName());
@@ -302,7 +309,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf instanceof TransactionFile) {
 				setupKeyTree((TransactionFile) rf);
 			}
-
 
 			final var fileBox = rf.buildDetailsBox();
 			final var buttonsBox = getButtonsBox(rf);
