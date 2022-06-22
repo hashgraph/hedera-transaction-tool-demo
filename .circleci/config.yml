@@ -1,0 +1,1391 @@
+version: 2.1
+
+orbs:
+  slack: circleci/slack@4.0.2
+
+workflows:
+  ######################################################################################################################
+  # Workflow Name:        build_core_branches
+  # Workflow Version:     1.2
+  # Workflow Type:        Commit                     (Branch)
+  #
+  #
+  # Description:
+  #
+  #   Continuous integration workflow that produces a full build including OWASP and Facebook Infer reports.
+  #   This workflow is executed after any commit or merge into the develop, prerelease, and master branches.
+  #
+  #   NOTE:
+  #       This workflow is designed to handle the long-lived core branches and should not be edited for the purpose of
+  #       running tasks on short-lived or developer specific branches. Please see the `build_developer_branches`
+  #       workflow instead for instructions on how to execute short-lived or developer specific branches.
+  #
+  #
+  # Jobs Executed:
+  #   - build:
+  #       - branches:
+  #             - master
+  #             - prerelease
+  #             - develop
+  #       - executors:
+  #             - openjdk_12_large
+  #             - openjdk_14_large
+  #
+  ######################################################################################################################
+  build_main_branch:
+    jobs:
+      - build:
+          name: openjdk_14_build
+          context: SonarCloud
+          runtime: openjdk_14_large
+          sonar_enabled: true
+          filters:
+            branches:
+              only:
+                - main_disabled_never
+                - develop_disabled_never
+      - prepare_semver_release:
+          name: prepare_semver_release
+          runtime: macos_medium
+          context: HederaTools
+          requires:
+            - openjdk_14_build
+          filters:
+            branches:
+              only:
+                - develop_disabled_never
+      - package_macos_installer:
+          name: package_macos_installer
+          context: SonarCloud
+          runtime: macos_medium
+          requires:
+            - prepare_semver_release
+          filters:
+            branches:
+              only:
+                - develop_disabled_never
+      - publish_github_release:
+          name: publish_github_release
+          runtime: openjdk_14_large
+          context: HederaTools
+          requires:
+            - package_macos_installer
+          filters:
+            branches:
+              only:
+                - develop_disabled_never
+
+
+  ######################################################################################################################
+  # Workflow Name:        build_developer_branches
+  # Workflow Version:     1.4
+  # Workflow Type:        Commit                     (Branch)
+  #
+  #
+  # Description:
+  #
+  #   Continuous integration workflow that produces a full build including OWASP and Facebook Infer reports.
+  #   This workflow is intended to handle the execution of short-lived or developer specific branches.
+  #
+  #   This workflow also provides developer specific versions of the nightly FCMap and Consensus performance tests
+  #   that can be executed per commit. However, please proceed with caution as these tests take upwards of 1 to 3 hours.
+  #
+  #
+  #
+  #   NOTE:
+  #       To execute a short-lived or developer specific branch under a given OpenJDK version, please replace the
+  #       `your_branch_goes_here` placeholder with the name of your Git branch name (excluding the `origin/` prefix).
+  #
+  #   NOTE:
+  #       Multiple versions of the standard `build` job are provided that allow the choice of or simultaneous execution
+  #       under multiple OpenJDK versions. Please only specify the branch name under the versions you wish to
+  #       test against.
+  #
+  #   NOTE:
+  #       Please revert any changes below back to the `your_branch_goes_here` placeholder before merging into the
+  #       develop, prerelease, or master branches.
+  #
+  #
+  #   WARNING:
+  #       The platform code currently does not pass unit testing under the OpenJDK 15 build 36 release candidate.
+  #       Enabling this executor/job workflow configuration will most likely cause the build to fail with errors.
+  #
+  #
+  # Jobs Executed:
+  #   - build:
+  #       - branches:
+  #             - developer specific
+  #       - executors:
+  #             - openjdk_12_large
+  #             - openjdk_14_large
+  #             - openjdk_15_large
+  #   - nightly_map_tests:
+  #       - branches:
+  #             - developer specific
+  #       - executors:
+  #             - openjdk_12_large
+  #   - nightly_consensus_tests:
+  #       - branches:
+  #             - developer specific
+  #       - executors:
+  #             - openjdk_12_large
+  #
+  ######################################################################################################################
+  build_feature_branch:
+    jobs:
+      - build:
+          name: openjdk_14_feature_build
+          context: SonarCloud
+          runtime: openjdk_14_large
+          sonar_enabled: true
+          filters:
+            branches:
+              only:
+                - develop_disabled_never
+
+
+executors:
+  ######################################################################################################################
+  # Executor Name:          openjdk_12_large  (docker)
+  # Executor Meta Version:  1.0
+  # Resource Class:         large             (4 vCPU, 8GB RAM)
+  # OS Version:             Ubuntu 18.04      (bionic)
+  # Java Version:           13.0.2
+  # Maven Version:          3.6.3
+  #
+  #
+  # Description:
+  #
+  #   Provides a Ubuntu based docker container with OpenJDK, Maven, and Github GHR utilities preinstalled.
+  #
+  ######################################################################################################################
+  openjdk_14_large:
+    docker:
+      - image: gcr.io/swirlds-registry/cci-openjdk-ghr:14.0.2
+    working_directory: ~/repos/primary
+    resource_class: large
+    environment:
+      MAVEN_OPTS: -Xmx5200m
+      LC_ALL: C.UTF-8
+      DEBIAN_FRONTEND: noninteractive
+
+  macos_medium:
+    macos:
+      xcode: "12.4.0"
+    working_directory: ~/repos/primary
+    resource_class: medium
+
+commands:
+  ######################################################################################################################
+  # Command Name:                     mvn_version_info
+  # Command Version:                  1.0
+  #
+  # Parameters:                       None
+  #
+  #
+  # Description:
+  #
+  #   Displays the Maven version info which includes the java version, charset, and locale information.
+  #
+  # Command Requirements:
+  #   - maven (>= 3.6.1)
+  #   - openjdk (>= 12.0.2)
+  #
+  ######################################################################################################################
+  mvn_version_info:
+    steps:
+      - run:
+          name: Display Maven and Java Version Info
+          command: mvn --version
+  mvn_install_maven:
+    steps:
+      - run:
+          name: Check for Installed Maven Executable
+          command: |
+            if command -v mvn >/dev/null 2>&1; then
+              echo "export MAVEN_INSTALLED=\"true\"" >> "${BASH_ENV}"
+            else
+              echo "export MAVEN_INSTALLED=\"false\"" >> "${BASH_ENV}"
+            fi
+      - run:
+          name: Install Maven (if required)
+          command: |
+            MAVEN_VERSION="3.8.1"
+            SUDO=""
+            if command -v sudo >/dev/null 2>&1; then
+              CURRENT_USER="$(id -u)"
+              if [[ "${CURRENT_USER}" -ne 0 ]]; then
+                SUDO="$(command -v sudo)"
+              fi
+            fi
+            if [[ "${MAVEN_INSTALLED}" = true ]]; then
+              echo "Skipping maven installation phase (Maven Already Installed)....."
+              exit 0
+            fi
+            if [[ ! -d "/tmp/maven" ]]; then
+              mkdir -p "/tmp/maven"
+            fi
+            if command -v brew >/dev/null 2>&1; then
+              brew install coreutils gnupg
+            fi
+            if [[ ! -d "/usr/local/maven" ]]; then
+              ${SUDO} mkdir -p "/usr/local/maven"
+            fi
+            pushd "/tmp/maven" > /dev/null 2>&1
+                curl -s -O "https://mirrors.gigenet.com/apache/maven/maven-3/3.8.1/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
+                set -x
+                ${SUDO} tar -xzf apache-maven-${MAVEN_VERSION}-bin.tar.gz -C /usr/local/maven
+                echo "export PATH=\"/usr/local/maven/apache-maven-${MAVEN_VERSION}/bin:${PATH}\"" >> "${BASH_ENV}"
+            popd > /dev/null 2>&1
+  shell_install_ghr_tool:
+    steps:
+      - run:
+          name: Install GHR CLI (If Required)
+          command: |
+            readonly GHR_VERSION="0.14.0"
+            if command -v ghr >/dev/null 2>&1; then
+              exit 0
+            fi
+            SUDO=""
+            if command -v sudo >/dev/null 2>&1; then
+              CURRENT_USER="$(id -u)"
+              if [[ "${CURRENT_USER}" -ne 0 ]]; then
+                SUDO="$(command -v sudo)"
+              fi
+            fi
+            if [[ ! -d "/tmp/ghr" ]]; then
+              mkdir -p "/tmp/ghr"
+            fi
+            # https://github.com/tcnksm/ghr/releases/download/v0.14.0/ghr_v0.14.0_darwin_amd64.zip
+            pushd /tmp/ghr >/dev/null 2>&1
+              curl -s -L -O "https://github.com/tcnksm/ghr/releases/download/v0.14.0/ghr_v${GHR_VERSION}_darwin_amd64.zip"
+              ${SUDO} unzip "ghr_v${GHR_VERSION}_darwin_amd64.zip" -d "/usr/local"
+              ${SUDO} ln -s "/usr/local/ghr_v${GHR_VERSION}_darwin_amd64/ghr" "/usr/local/bin/ghr"
+              ${SUDO} chmod +x "/usr/local/ghr_v${GHR_VERSION}_darwin_amd64/ghr"
+              rm -f "ghr_v${GHR_VERSION}_darwin_amd64.zip"
+            popd /tmp/ghr >/dev/null 2>&1
+            rm -rf /tmp/ghr >/dev/null 2>&1
+  shell_install_semver_tool:
+    steps:
+      - run:
+          name: Install Semantic Version CLI (If Required)
+          command: |
+            readonly SEMVER_VERSION="3.2.0"
+            if command -v semver >/dev/null 2>&1; then
+              exit 0
+            fi
+            SUDO=""
+            if command -v sudo >/dev/null 2>&1; then
+              CURRENT_USER="$(id -u)"
+              if [[ "${CURRENT_USER}" -ne 0 ]]; then
+                SUDO="$(command -v sudo)"
+              fi
+            fi
+            if [[ ! -d "/tmp/semver" ]]; then
+              mkdir -p "/tmp/semver"
+            fi
+            pushd /tmp/semver >/dev/null 2>&1
+              curl -s -L -O "https://github.com/fsaintjacques/semver-tool/archive/refs/tags/${SEMVER_VERSION}.tar.gz"
+              ${SUDO} tar xzf "${SEMVER_VERSION}.tar.gz" -C "/usr/local"
+              ${SUDO} ln -s "/usr/local/semver-tool-${SEMVER_VERSION}/src/semver" "/usr/local/bin/semver"
+              ${SUDO} chmod +x "/usr/local/semver-tool-${SEMVER_VERSION}/src/semver"
+              rm -f "${SEMVER_VERSION}.tar.gz"
+            popd /tmp/semver >/dev/null 2>&1
+            rm -rf /tmp/semver >/dev/null 2>&1
+  ######################################################################################################################
+  # Command Name:                     mvn_compile
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, default: primary
+  #
+  #
+  # Description:
+  #
+  #   Performs a fail-fast maven compilation of the Git repository specified by the `repo_name` parameter. Defaults to
+  #   compiling the primary repository if no value is specified.
+  #
+  #   This command will look for the `.circleci.settings.xml` file in the repository root and if found will pass those
+  #   settings to the maven command.
+  #
+  # Command Requirements:
+  #   - maven (>= 3.6.1)
+  #   - openjdk (>= 12.0.2)
+  #   - postgresql-server (>= 10.9)
+  #
+  ######################################################################################################################
+  mvn_compile:
+    parameters:
+      repo_name:
+        type: string
+        default: "primary"
+    steps:
+      - restore_cache:
+          name: Restoring Maven Dependency Cache
+          keys:
+            - v3-{{ arch }}-mvn-dependencies-{{ checksum "pom.xml" }}
+            - v3-{{ arch }}-mvn-dependencies-
+      - run:
+          # Fail-fast when compilation fails
+          name: Compile Code
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              if [[ -f ".circleci.settings.xml" ]]; then
+                mvn -s .circleci.settings.xml -DskipTests clean compile
+              else
+                mvn -DskipTests clean compile
+              fi
+            popd > /dev/null 2>&1
+      - save_cache:
+          name: Saving Maven Dependency Cache
+          key: v3-{{ arch }}-mvn-dependencies-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2/repository
+      - run:
+          name: Install Maven Artifacts
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              if [[ -f ".circleci.settings.xml" ]]; then
+                mvn -s .circleci.settings.xml -DskipTests install
+              else
+                mvn -DskipTests install
+              fi
+            popd > /dev/null 2>&1
+
+  ######################################################################################################################
+  # Command Name:                     mvn_javadoc
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, default: primary
+  #
+  #
+  # Description:
+  #
+  #   Performs a fail-fast maven javadoc generation against the Git repository specified by the `repo_name` parameter.
+  #   Defaults to the primary repository if no value is specified.
+  #
+  #   This command will look for the `.circleci.settings.xml` file in the repository root and if found will pass those
+  #   settings to the maven command.
+  #
+  # Command Requirements:
+  #   - maven (>= 3.6.1)
+  #   - openjdk (>= 12.0.2)
+  #
+  ######################################################################################################################
+  mvn_javadoc:
+    parameters:
+      repo_name:
+        type: string
+        default: "primary"
+    steps:
+      - run:
+          # Fail-fast when compilation fails
+          name: Generate JavaDoc
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              if [[ -f ".circleci.settings.xml" ]]; then
+                mvn -s .circleci.settings.xml -DskipTests compile javadoc:aggregate
+              else
+                mvn -DskipTests compile javadoc:aggregate
+              fi
+            popd > /dev/null 2>&1
+
+  ######################################################################################################################
+  # Command Name:                     mvn_unit_tests
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, default: primary
+  #
+  #
+  # Description:
+  #
+  #   Execute all available unit tests using maven surefire from the top-level folder of the Git repository specified by
+  #   the `repo_name` parameter. Defaults to the primary repository if no value is specified.
+  #
+  #   This command will look for the `.circleci.settings.xml` file in the repository root and if found it will pass
+  #   those settings to the maven command.
+  #
+  # Command Requirements:
+  #   - haveged (>= 1.9.1)
+  #   - maven (>= 3.6.1)
+  #   - openjdk (>= 12.0.2)
+  #   - postgresql-server (>= 10.9)
+  #
+  ######################################################################################################################
+  mvn_unit_tests:
+    parameters:
+      repo_name:
+        type: string
+        default: "primary"
+      sonar_enabled:
+        type: boolean
+        default: false
+    steps:
+      - run:
+          name: Execute Unit Tests
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            SONAR_ENABLED="<< parameters.sonar_enabled >>"
+
+            if [[ "${SONAR_ENABLED}" = true ]]; then
+              SONAR_ARGS="sonar:sonar"
+            else
+              SONAR_ARGS=""
+            fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              if [[ -f ".circleci.settings.xml" ]]; then
+                mvn -s .circleci.settings.xml -Dsonar.branch.name=${CIRCLE_BRANCH} test verify ${SONAR_ARGS}
+              else
+                mvn -Dsonar.branch.name=${CIRCLE_BRANCH} test verify ${SONAR_ARGS}
+              fi
+            popd > /dev/null 2>&1
+          no_output_timeout: 1200
+      - run:
+          name: Save Unit Test Results
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            JUNIT_PATH="${HOME}/junit/<< parameters.repo_name >>"
+
+            if [[ ! -d "${JUNIT_PATH}" ]]; then
+              mkdir -pv "${JUNIT_PATH}"
+            fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp -v {} "${JUNIT_PATH}" \;
+            popd > /dev/null 2>&1
+          when: always
+      - store_test_results:
+          path: ~/junit/<< parameters.repo_name >>
+      - store_artifacts:
+          path: ~/junit/<< parameters.repo_name >>
+
+  ######################################################################################################################
+  # Command Name:                     sonar_check_quality_gate
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, default: primary
+  #
+  #
+  # Description:
+  #
+  #   Fails the CircleCI build if the SonarCloud quality gate criteria is not met.
+  #
+  # Command Requirements:
+  #   - perl (>= 5.26.1)
+  #     - Mozilla::CA (>= 20200520) [Perl CPAN Module]
+  #     - JSON::Parse (>= 0.57) [Perl CPAN Module]
+  #
+  ######################################################################################################################
+  sonar_check_quality_gate:
+    parameters:
+      repo_name:
+        type: string
+        default: "primary"
+    steps:
+      - run:
+          name: Check SonarCloud Quality Gate
+          command: |
+            set -x
+
+            if [[ "${CIRCLE_BRANCH}" == "main" ]]; then
+              echo "Skipping SonarCloud Quality Gate Enforcement - Branch is Temporarily Excluded (main)........"
+              exit 0
+            fi
+
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            SONAR_QG_SCRIPT="${REPO_PATH}/.circleci/scripts/sonar_check_quality_gate.pl"
+            if [[ ! -f "${SONAR_QG_SCRIPT}" ]]; then exit 38; fi
+
+            SONAR_REPORT_FILE="${REPO_PATH}/target/sonar/report-task.txt"
+            if [[ ! -f "${SONAR_REPORT_FILE}" ]]; then exit 40; fi
+
+            export SONAR_TASK_ID="$(cat "${SONAR_REPORT_FILE}" | perl -0777 -e 'while (my $line = <>) { if ($line =~ /ceTaskId=([A-Za-z0-9_-]+)/ig) { print "$1"; } }')"
+            if [[ -z "${SONAR_TASK_ID}" ]]; then exit 41; fi
+
+            echo "export SONAR_CHECK_EXECUTED=\"1\"" >> "${BASH_ENV}"
+            perl ${SONAR_QG_SCRIPT}
+      - shell_extract_file_into_variable:
+          src_file_name: "/tmp/sonar_dashboard_link.txt"
+          dst_variable_name: "SONAR_DASHBOARD_LINK"
+          after_extraction:
+            - run:
+                name: Setup Slack Channel for Notifications
+                command: |
+                  set -x
+                  if [[ -z "${SONAR_CHECK_EXECUTED}" ]]; then
+                    echo "Skipping Slack notifications because SonarCloud Validation was not performed......"
+                    exit 0;
+                  fi
+
+                  echo "export SLACK_DEFAULT_CHANNEL=\"${SONAR_SLACK_CHANNEL}\"" >> "${BASH_ENV}"
+                when: on_fail
+            - slack/notify:
+                event: fail
+                custom: |
+                  {
+                      "attachments": [
+                          {
+                              "color": "#c92808",
+                              "blocks": [
+                                  {
+                                      "type": "section",
+                                      "text": {
+                                          "type": "mrkdwn",
+                                          "text": "*SonarCloud Scan Failure*"
+                                      },
+                                      "fields": [
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "*_Commit Author:_*"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "*_Branch:_*"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "${CIRCLE_USERNAME}"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "${CIRCLE_BRANCH}"
+                                          }
+                                      ]
+                                  },
+                                  {
+                                      "type": "section",
+                                      "fields": [
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "*_CircleCI Build Number:_*"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "*_SonarCloud Analysis:_*"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "<${CIRCLE_BUILD_URL}|${CIRCLE_BUILD_NUM}>"
+                                          },
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": "<${SONAR_DASHBOARD_LINK}|${CIRCLE_BRANCH}>"
+                                          }
+                                      ]
+                                  },
+                                  {
+                                      "type": "section",
+                                      "text": {
+                                          "type": "mrkdwn",
+                                          "text": "*_Git Commit:_*\n${CIRCLE_SHA1}"
+                                      }
+                                  },
+                                  {
+                                      "type": "context",
+                                      "elements": [
+                                          {
+                                              "type": "mrkdwn",
+                                              "text": ":rotating_light: Please correct the issues identified by SonarCloud before merging!"
+                                          }
+                                      ]
+                                  }
+                              ]
+                          }
+                      ]
+                  }
+
+  ######################################################################################################################
+  # Command Name:                     shell_extract_file_into_variable
+  # Command Version:                  1.1
+  #
+  # Parameters:
+  #       before_extraction           a list of steps to be executed prior to extracting the data, optional
+  #       after_extraction            a list of steps to be executed after extracting the data, optional
+  #       src_file_name               the file containing the input data to be read
+  #       dst_variable_name           the name of the bash environment variable used to store the version
+  #
+  #
+  # Description:
+  #
+  #   Extracts the contents of the file as indicated by the `src_file_name` parameter into the variable
+  #   specified by the `dst_variable_name` parameters.
+  #
+  # Command Requirements:
+  #   - perl (>= 5.26.1)
+  #
+  ######################################################################################################################
+  shell_extract_file_into_variable:
+    parameters:
+      before_extraction:
+        type: steps
+        default: [ ]
+      after_extraction:
+        type: steps
+        default: [ ]
+      src_file_name:
+        type: string
+      dst_variable_name:
+        type: string
+    steps:
+      - steps: << parameters.before_extraction >>
+      - run:
+          name: Extract Data from File << parameters.src_file_name >> To Variable << parameters.dst_variable_name >>
+          command: |
+            set -x
+            if [[ ! -f "<< parameters.src_file_name >>" ]]; then exit 0; fi
+
+            FILE_CONTENT=$(cat "<< parameters.src_file_name >>")
+            echo "export << parameters.dst_variable_name >>=\"${FILE_CONTENT}\"" >> "${BASH_ENV}"
+          when: always
+      - steps: << parameters.after_extraction >>
+
+  ######################################################################################################################
+  # Command Name:                     ssh_install_host_mapping
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       fingerprint                 the fingerprint of the SSH key to be installed, mandatory
+  #       hostname                    the resolvable hostname to which the alias should actually resolve, mandatory
+  #       alias                       the name associated with the SSH key in CircleCI
+  #
+  #
+  # Description:
+  #
+  #   Installs an SSH key configured in the CircleCI project and setups an SSH alias to use the key.
+  #
+  ######################################################################################################################
+  ssh_install_host_mapping:
+    parameters:
+      fingerprint:
+        type: string
+      hostname:
+        type: string
+      alias:
+        type: string
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - << parameters.fingerprint >>
+      - run:
+          name: Install GNU Sed CLI (If Required)
+          command: |
+            if command -v brew >/dev/null 2>&1; then
+              if command -v gsed >/dev/null 2>&1; then
+                echo "Skipping becase GNU Sed is already installed......"
+                exit 0
+              else
+                BREW="$(command -v brew)"
+                ${BREW} install gnu-sed
+              fi
+            fi
+      - run:
+          name: Setup << parameters.alias >> SSH Host Mapping
+          command: |
+            set -x
+            SED="$(command -v sed)"
+            if command -v brew >/dev/null 2>&1; then
+               if command -v gsed >/dev/null 2>&1; then
+                  SED="$(command -v gsed)"
+               fi
+            fi
+            ${SED} -i -e 's/Host << parameters.alias >>/Host << parameters.alias >>\n HostName << parameters.hostname >>/g' ~/.ssh/config
+            echo
+            cat ~/.ssh/config
+
+  ######################################################################################################################
+  # Command Name:                     git_repo_create_branch
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       before_branch               a list of steps to be executed prior to branching the git repository, optional
+  #       after_branch                a list of steps to be executed after branching the git repository, optional
+  #       update_submodules           true if the branch should be created on all submodules, default: false
+  #       version_variable            the name of the bash variable containing the version, optional
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, mandatory
+  #       branch_name                 the name of the branch to be created, mandatory
+  #
+  #
+  # Description:
+  #
+  #   Creates a new branch for the git repository specified by the `repo_name` parameter. If the `version_variable` is
+  #   provided then the version number will be appended to the `branch_name` parameter.
+  #   The `update_submodules` parameter should be set to `true` if the repository contains Git submodules and the
+  #   branch should also be created for all the associated git submodules.
+  #
+  #
+  # Command Requirements:
+  #   - git (>= 2.17.1)
+  #
+  ######################################################################################################################
+  git_repo_create_branch:
+    parameters:
+      before_branch:
+        type: steps
+        default: [ ]
+      after_branch:
+        type: steps
+        default: [ ]
+      update_submodules:
+        type: boolean
+        default: false
+      version_variable:
+        type: string
+        default: ""
+      repo_name:
+        type: string
+      branch_name:
+        type: string
+    steps:
+      - steps: << parameters.before_branch >>
+      - run:
+          name: Create Branch on << parameters.repo_name >>
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            BRANCH_NAME="<< parameters.branch_name >>"
+
+            if [[ -n "<< parameters.version_variable >>" ]]; then
+              if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                BRANCH_NAME="<< parameters.branch_name >>-${<< parameters.version_variable >>}"
+              fi
+            fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              git checkout -b "${BRANCH_NAME}"
+              git push -u origin "${BRANCH_NAME}"
+            popd > /dev/null 2>&1
+      - when:
+          condition: << parameters.update_submodules >>
+          steps:
+            - run:
+                name: Create Submodule Branches on << parameters.repo_name >>
+                command: |
+                  set -x
+                  REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+                  if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+                  BRANCH_NAME="<< parameters.branch_name >>"
+
+                  if [[ -n "<< parameters.version_variable >>" ]]; then
+                    if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                      BRANCH_NAME="<< parameters.branch_name >>-${<< parameters.version_variable >>}"
+                    fi
+                  fi
+
+                  pushd "${REPO_PATH}" > /dev/null 2>&1
+                    git submodule foreach git checkout -b "${BRANCH_NAME}"
+                    git submodule foreach git push -u origin "${BRANCH_NAME}"
+                  popd > /dev/null 2>&1
+      - steps: << parameters.after_branch >>
+
+  ######################################################################################################################
+  # Command Name:                     git_repo_create_tag
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       before_tag                  a list of steps to be executed prior to committing to the git repository, optional
+  #       after_tag                   a list of steps to be executed after committing to the git repository, optional
+  #       update_submodules           true if the submodule changes should also be committed, default: false
+  #       version_variable            the name of the bash variable containing the version, optional
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, mandatory
+  #       tag_name                    the tag name to be used for all repositories involved, mandatory
+  #
+  #
+  # Description:
+  #
+  #   Creates a tag and pushes it to the git repository specified by the `repo_name` parameter. If the
+  #   `version_variable` is provided then the version number will be appended to the `tag_name` parameter.
+  #   The `update_submodules` parameter should be set to `true` if the repository contains Git submodules and the
+  #   tag should also be created for all the associated git submodules.
+  #
+  #
+  # Command Requirements:
+  #   - git (>= 2.17.1)
+  #
+  ######################################################################################################################
+  git_repo_create_tag:
+    parameters:
+      before_tag:
+        type: steps
+        default: [ ]
+      after_tag:
+        type: steps
+        default: [ ]
+      update_submodules:
+        type: boolean
+        default: false
+      version_variable:
+        type: string
+        default: ""
+      repo_name:
+        type: string
+      tag_name:
+        type: string
+    steps:
+      - steps: << parameters.before_tag >>
+      - run:
+          name: Configure Author Name and Email Address
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            AUTHOR_NAME="${GIT_AUTHOR_NAME}"
+            AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL}"
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              [[ -n "${AUTHOR_NAME}" ]] || AUTHOR_NAME="$(git show -s --format=\"%an\")"
+              [[ -n "${AUTHOR_EMAIL}" ]] || AUTHOR_EMAIL="$(git show -s --format=\"%ae\")"
+
+              git config --global user.name "${AUTHOR_NAME}"
+              git config --global user.email "${AUTHOR_EMAIL}"
+            popd > /dev/null 2>&1
+      - when:
+          condition: << parameters.update_submodules >>
+          steps:
+            - run:
+                name: Create Submodule Tags on << parameters.repo_name >>
+                command: |
+                  set -x
+                  REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+                  if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+                  TAG_NAME="<< parameters.tag_name >>"
+
+                  if [[ -n "<< parameters.version_variable >>" ]]; then
+                    if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                      TAG_NAME="<< parameters.tag_name >>${<< parameters.version_variable >>}"
+                    fi
+                  fi
+
+                  pushd "${REPO_PATH}" > /dev/null 2>&1
+                    git submodule foreach git tag -a "${TAG_NAME}" -m "${TAG_NAME}"
+                    git submodule foreach git push origin --tags
+                  popd > /dev/null 2>&1
+      - run:
+          name: Create Tag on << parameters.repo_name >>
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            TAG_NAME="<< parameters.tag_name >>"
+
+            if [[ -n "<< parameters.version_variable >>" ]]; then
+              if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                TAG_NAME="<< parameters.tag_name >>${<< parameters.version_variable >>}"
+              fi
+            fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              git tag -a "${TAG_NAME}" -m "${TAG_NAME}"
+              git push origin --tags
+            popd > /dev/null 2>&1
+      - steps: << parameters.after_tag >>
+
+  ######################################################################################################################
+  # Command Name:                     git_repo_configure_alias
+  # Command Version:                  1.2
+  #
+  # Parameters:
+  #       update_submodules           true if the submodules should be aliased as well, default: false
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, mandatory
+  #       hostname                    the hostname currently configured in the origin.remote.url property
+  #       alias                       the name associated with the SSH key in CircleCI
+  #
+  #
+  # Description:
+  #
+  #   Configures the git `remote.origin.url` to use the specified SSH alias by replacing the original hostname. If the
+  #   `update_submodules` parameter is true, then all submodules will also be configured to use the SSH alias.
+  #
+  ######################################################################################################################
+  git_repo_configure_alias:
+    parameters:
+      update_submodules:
+        type: boolean
+        default: false
+      repo_name:
+        type: string
+      hostname:
+        type: string
+      alias:
+        type: string
+    steps:
+      - run:
+          name: Reconfigure << parameters.repo_name >> Origin URL
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              CURRENT_ORIGIN_URL="$(git config remote.origin.url)"
+              NEW_ORIGIN_URL="$(echo ${CURRENT_ORIGIN_URL} | sed -e 's/<< parameters.hostname >>/<< parameters.alias >>/g')"
+              git config remote.origin.url "${NEW_ORIGIN_URL}"
+            popd > /dev/null 2>&1
+      - when:
+          condition: << parameters.update_submodules >>
+          steps:
+            - run:
+                name: Reconfigure << parameters.repo_name >> Submodule Origin URLs
+                command: |
+                  set -x
+                  REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+                  if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+                  pushd "${REPO_PATH}" > /dev/null 2>&1
+                    git submodule foreach "
+                      CURRENT_ORIGIN_URL=\"\$(git config remote.origin.url)\"
+                      NEW_ORIGIN_URL=\"\$(echo \${CURRENT_ORIGIN_URL} | sed -e 's/<< parameters.hostname >>/<< parameters.alias >>/g')\"
+                      git config remote.origin.url \"\${NEW_ORIGIN_URL}\"
+                    "
+                  popd > /dev/null 2>&1
+
+  ######################################################################################################################
+  # Command Name:                     git_repo_commit
+  # Command Version:                  1.0
+  #
+  # Parameters:
+  #       before_commit               a list of steps to be executed prior to committing to the git repository, optional
+  #       after_commit                a list of steps to be executed after committing to the git repository, optional
+  #       update_submodules           true if the submodule changes should also be committed, default: false
+  #       version_variable            the name of the bash variable containing the version, optional
+  #       repo_name                   the name of the Git repository used during `git_repo_checkout`, mandatory
+  #       commit_msg                  the commit message to be used for all repositories involved, mandatory
+  #
+  #
+  # Description:
+  #
+  #   Commits all pending changes for the git repository specified by the `repo_name` parameter. If the
+  #   `version_variable` is provided then the version number will be appended to the `commit_msg` parameter.
+  #   The `update_submodules` parameter should be set to `true` if the repository contains Git submodules and the
+  #   pending changes should also be committed for all the associated git submodules.
+  #
+  #   NOTE: This command will add all pending changes (including new files and deletions), commit the changes, and
+  #         push the changes to the remote.
+  #
+  #
+  # Command Requirements:
+  #   - git (>= 2.17.1)
+  #
+  ######################################################################################################################
+  git_repo_commit:
+    parameters:
+      before_commit:
+        type: steps
+        default: [ ]
+      after_commit:
+        type: steps
+        default: [ ]
+      update_submodules:
+        type: boolean
+        default: false
+      version_variable:
+        type: string
+        default: ""
+      repo_name:
+        type: string
+      commit_msg:
+        type: string
+    steps:
+      - steps: << parameters.before_commit >>
+      - run:
+          name: Configure Author Name and Email Address
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            AUTHOR_NAME="${GIT_AUTHOR_NAME}"
+            AUTHOR_EMAIL="${GIT_AUTHOR_EMAIL}"
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              [[ -n "${AUTHOR_NAME}" ]] || AUTHOR_NAME="$(git show -s --format=\"%an\")"
+              [[ -n "${AUTHOR_EMAIL}" ]] || AUTHOR_EMAIL="$(git show -s --format=\"%ae\")"
+              git config --global user.name "${GIT_AUTHOR_NAME}"
+              git config --global user.email "${GIT_AUTHOR_EMAIL}"
+              git config --global user.signingKey "${GPG_KEY_FINGERPRINT}"
+              git config --global commit.gpgsign true
+            popd > /dev/null 2>&1
+      - when:
+          condition: << parameters.update_submodules >>
+          steps:
+            - run:
+                name: Commit Submodule Changes on << parameters.repo_name >>
+                command: |
+                  set -x
+                  REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+                  if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+                  COMMIT_MSG="<< parameters.commit_msg >> [ci skip]"
+
+                  if [[ -n "<< parameters.version_variable >>" ]]; then
+                    if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                      COMMIT_MSG="<< parameters.commit_msg >> ${<< parameters.version_variable >>} [ci skip]"
+                    fi
+                  fi
+
+                  pushd "${REPO_PATH}" > /dev/null 2>&1
+                    git submodule foreach git status
+                    git submodule foreach git add -A
+                    git submodule foreach git commit -S -m "${COMMIT_MSG}"
+                    git submodule foreach git push --set-upstream origin "${CIRCLE_BRANCH}"
+                  popd > /dev/null 2>&1
+      - run:
+          name: Commit Changes on << parameters.repo_name >>
+          command: |
+            set -x
+            REPO_PATH="${HOME}/repos/<< parameters.repo_name >>"
+            if [[ ! -d "${REPO_PATH}" ]]; then exit 15; fi
+
+            COMMIT_MSG="<< parameters.commit_msg >> [ci skip]"
+
+            if [[ -n "<< parameters.version_variable >>" ]]; then
+              if [[ -n "${<< parameters.version_variable >>}" ]]; then
+                COMMIT_MSG="<< parameters.commit_msg >> ${<< parameters.version_variable >>} [ci skip]"
+              fi
+            fi
+
+            pushd "${REPO_PATH}" > /dev/null 2>&1
+              git checkout "${CIRCLE_BRANCH}"
+              git status
+              git add -A
+              git commit -S -m "${COMMIT_MSG}"
+              git push --set-upstream origin "${CIRCLE_BRANCH}"
+            popd > /dev/null 2>&1
+      - steps: << parameters.after_commit >>
+
+  ######################################################################################################################
+  # Command Name:                     gpg_version_info
+  # Command Version:                  1.0
+  #
+  # Parameters:                       None
+  #
+  #
+  # Description:
+  #
+  #   Displays the GnuPG version information.
+  #
+  #   NOTE: The build will fail if the `gpg` command is not available.
+  #
+  # Command Requirements:
+  #   - gpg (>= 2.2.4)
+  #
+  ######################################################################################################################
+  gpg_version_info:
+    steps:
+      - run:
+          name: Display GnuPG Version Info
+          command: |
+            set -x
+            gpg --version
+
+  ######################################################################################################################
+  # Command Name:                     gpg_import_signing_key
+  # Command Version:                  1.0
+  #
+  # Parameters:                       None
+  #       variable_name               the name of the bash environment variable holding the key contents, optional
+  #
+  #
+  # Description:
+  #
+  #   Imports the GPG public and private keypair defined in the CircleCI environment variable specified by the
+  #   `variable_name` parameter. The default variable name `GPG_KEY_CONTENTS` will be used if not specified.
+  #
+  #   NOTE: The build will fail if the `gpg` command is not available or the environment variable is not
+  #         properly formatted.
+  #
+  # Command Requirements:
+  #   - gpg (>= 2.2.4)
+  #
+  ######################################################################################################################
+  gpg_import_signing_key:
+    parameters:
+      contents_variable:
+        type: string
+        default: "GPG_KEY_CONTENTS"
+      fingerprint_variable:
+        type: string
+        default: "GPG_KEY_FINGERPRINT"
+    steps:
+      - run:
+          name: Import the GPG Signing Key
+          command: |
+            GPG_PRESET_PASSPHRASE="/usr/lib/gnupg2/gpg-preset-passphrase"
+
+            if command -v brew >/dev/null 2>&1; then
+              BREW="$(command -v brew)"
+              OUTPUT="$(${BREW} list gnupg | grep 'libexec/gpg-preset-passphrase')"
+              [[ -n "${OUTPUT}" && -x "${OUTPUT}" ]] && GPG_PRESET_PASSPHRASE="${OUTPUT}"
+            fi
+
+            [[ -x "${GPG_PRESET_PASSPHRASE}" ]] || exit 64
+
+            export GPG_TTY=$(tty)
+            gpg-agent --allow-preset-passphrase --allow-loopback-pinentry --batch --daemon
+            ${GPG_PRESET_PASSPHRASE} -P "${GPG_KEY_PASSPHRASE}" --preset "${GPG_KEY_GRIP}"
+            echo -e "${<< parameters.contents_variable >>}" | gpg --import --batch --no-tty --pinentry-mode loopback
+            gpg --list-keys
+            gpg -K
+            echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "${<< parameters.fingerprint_variable >>}" trust
+            gpg --list-keys
+            gpg -K
+jobs:
+  ######################################################################################################################
+  # Job Name:                     build
+  # Job Version:                  1.1
+  # Target Operating Systems:     Ubuntu 18.04 (bionic), Ubuntu 20.04 (focal), CentOS 7, CentOS 8
+  #
+  # Parameters:
+  #       runtime                 a CircleCI executor reference used to control the OpenJDK and other tool versions
+  #
+  #
+  # Description:
+  #
+  #   The standard continuous integration job that is run on every commit on the develop, prerelease, master, and
+  #   individual developer branches. This job will checkout the git repository, update the git submodules, perform a
+  #   fail-fast code compilation, execute unit tests with JaCocCo/SonarQube enabled, perform an OWASP dependency check,
+  #   and generate a Facebook Infer report.
+  #
+  #   The OWASP dependency check will store an HTML dependency check report in the CircleCI job artifacts and will also
+  #   fail the build if the CVE severity level exceeds a threshold of 6.0 CVSS score. The dependency check report
+  #   should be review by developers on at least a regular basis and before every merge to the develop branch.
+  #
+  #   The Facebook Infer tool will be run on each job that passes the unit tests and will store text/HTML reports in the
+  #   CircleCI artifacts. The Infer tool will not cause a build to fail due to any warnings/errors/info detected by the
+  #   Infer tooling. The generated report must be reviewed by the developers on at least a regular basis and before
+  #   every merge into the develop branch.
+  #
+  #
+  #
+  # Executor Requirements:
+  #   - git (>= 2.17.1)
+  #   - wget (>= 1.19.4)
+  #   - zip (>= 3.0)
+  #   - unzip (>= 3.0)
+  #   - gzip (>= 1.6)
+  #   - tar (>= 1.29)
+  #   - haveged (>= 1.9.1)
+  #   - maven (>= 3.6.1)
+  #   - openjdk (>= 12.0.2)
+  #   - postgresql-server (>= 10.9)
+  #   - infer (>= 0.17.0)
+  #   - xz-utils (>= 5.2.2)
+  #   - python (>= 2.7.17)
+  #   - sqlite3 (>= 3.22.0)
+  #   - libsqlite3-dev (>= 3.22.0)
+  #
+  # References:
+  #   - OpenJDK:          https://jdk.java.net/
+  #   - Maven:            https://maven.apache.org/
+  #   - OWASP Dep Check:  https://owasp.org/www-project-dependency-check/
+  #   - Facebook Infer:   https://fbinfer.com/
+  #
+  ######################################################################################################################
+  build:
+    parameters:
+      runtime:
+        type: executor
+      sonar_enabled:
+        type: boolean
+        default: false
+    executor: << parameters.runtime >>
+    steps:
+      - checkout
+      - mvn_install_maven
+      - mvn_version_info
+      - mvn_compile
+      - mvn_unit_tests:
+          sonar_enabled: << parameters.sonar_enabled >>
+      - when:
+          condition: << parameters.sonar_enabled >>
+          steps:
+            - sonar_check_quality_gate
+
+  prepare_semver_release:
+    parameters:
+      runtime:
+        type: executor
+    executor: << parameters.runtime >>
+    steps:
+      - checkout
+      - mvn_install_maven
+      - shell_install_ghr_tool
+      - shell_install_semver_tool
+      - mvn_version_info
+      - gpg_version_info
+      - gpg_import_signing_key
+      - run:
+          name: "Check for Semantic Version Release in Commit"
+          command: |
+            # https://github.com/fsaintjacques/semver-tool/archive/refs/tags/3.2.0.tar.gz
+            # CIRCLE_SHA1
+            COMMIT_MESSAGE="$(git log --format=%s -n 1 ${CIRCLE_SHA1})"
+            COMMIT_DESCRIPTION="$(git log --format=%s -n 1 ${CIRCLE_SHA1})"
+
+            # [semver:release] New Feature: Multiple Key Supports
+            function extract_version_increment {
+              echo -n "$(echo "${1}" | perl -0777 -e 'while (my $line = <>) { if ($line =~ /\[semver:(release|prerel|patch|minor|major)\]/ig) { print "$1"; } }')"
+            }
+
+            SEMVER_INCR="$(extract_version_increment "${COMMIT_MESSAGE}")"
+
+            if [[ -z "${SEMVER_INCR}" ]]; then
+              echo "export SEMVER_INCR=\"${SEMVER_INCR}\"" >> "${BASH_ENV}"
+              printf "[FATAL] No Semantic Version specification found in commit message, terminating this build.\n\n"
+              exit 67
+            else
+              printf "[INFO] Incrementing semantic version %s level.\n\n" "${SEMVER_INCR}"
+            fi
+
+            echo "export SEMVER_INCR=\"${SEMVER_INCR}\"" >> "${BASH_ENV}"
+      - run:
+          name: "Retrieve and Update Current Version"
+          command: |
+            TOOLS_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+
+            if [[ -z "${TOOLS_VERSION}" ]]; then
+              exit 72
+            fi
+
+            NEW_TOOLS_VERSION="$(semver bump ${SEMVER_INCR} "${TOOLS_VERSION}")"
+            echo "export RELEASE_VERSION=\"${NEW_TOOLS_VERSION}\"" >> "${BASH_ENV}"
+
+            printf "[INFO] Changing project version from (%s) using semantic version increment of (%s) to the new version of (%s) across the entire project." "${TOOLS_VERSION}" "${SEMVER_INCR}" "${NEW_TOOLS_VERSION}"
+            mvn versions:set -DnewVersion="${NEW_TOOLS_VERSION}"
+            mvn versions:commit
+      - ssh_install_host_mapping:
+          fingerprint: "58:fa:c0:30:76:bd:89:d3:1d:6c:62:1e:e4:97:3b:89"
+          hostname: "github.com"
+          alias: "hedera-tools-automation"
+      - git_repo_configure_alias:
+          repo_name: "primary"
+          hostname: "github.com"
+          alias: "hedera-tools-automation"
+      - git_repo_commit:
+          repo_name: "primary"
+          version_variable: "RELEASE_VERSION"
+          commit_msg: "Tools Interim Release"
+      - git_repo_create_tag:
+          repo_name: "primary"
+          tag_name: "v"
+          version_variable: "RELEASE_VERSION"
+      - mvn_compile
+      - persist_to_workspace:
+          root: "./"
+          paths:
+            - tools-ui/target/*.zip
+            - tools-cli/target/*.zip
+            - tools-ui/installation-resources/*
+            - tools-ui/src/main/resources/license.txt
+            - installer.sh
+
+  package_macos_installer:
+    parameters:
+      runtime:
+        type: executor
+      openjdk_version:
+        type: string
+        default: "14.0.2"
+      openjdk_dl_key:
+        type: string
+        default: "205943a0976c4ed48cb16f1043c5c647/12"
+    executor: << parameters.runtime >>
+    steps:
+      - attach_workspace:
+          at: "."
+      - run:
+          name: "Install OpenJDK << parameters.openjdk_version >>"
+          command: |
+            OPENJDK_VERSION="<< parameters.openjdk_version >>"
+            OPENJDK_DL_KEY="<< parameters.openjdk_dl_key >>"
+
+            if [[ ! -d "/tmp/java" ]]; then
+              mkdir -p "/tmp/java"
+            fi
+
+            brew install coreutils
+
+            pushd "/tmp/java" > /dev/null 2>&1
+                curl -s -O "https://download.java.net/java/GA/jdk${OPENJDK_VERSION}/${OPENJDK_DL_KEY}/GPL/openjdk-${OPENJDK_VERSION}_osx-x64_bin.tar.gz"
+                sudo tar -xzf openjdk-${OPENJDK_VERSION}_osx-x64_bin.tar.gz -C /Library/Java/JavaVirtualMachines
+                echo "export JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk-${OPENJDK_VERSION}.jdk/Contents/Home/\"" >> "${BASH_ENV}"
+            popd > /dev/null 2>&1
+      - run:
+          name: "Display Java Version"
+          command: |
+            java -version
+      - run:
+          name: "Build MacOSX Release Package"
+          command: |
+            chmod +x installer.sh
+            /bin/bash installer.sh
+      - run:
+          name: "Include CLI Tools in Release Package"
+          command: |
+            cp -f tools-cli/target/tools-cli-*.zip Release
+      - persist_to_workspace:
+          root: "./"
+          paths:
+            - Release/*
+      - store_artifacts:
+          path: Release/
+
+  publish_github_release:
+    parameters:
+      runtime:
+        type: executor
+    executor: << parameters.runtime >>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: "/tmp/workspace"
+      - gpg_version_info
+      - gpg_import_signing_key
+      - run:
+          name: Sign Release Artifacts
+          command: |
+            pushd "/tmp/workspace/Release" > /dev/null 2>&1
+              for file in *; do
+                gpg --sign --detach-sign --armor --default-key "${GPG_KEY_FINGERPRINT}" --yes --batch --passphrase-fd 66 --output "${file}.asc" "${file}" 66< <(echo -n "${GPG_KEY_PASSPHRASE}")
+              done
+            popd > /dev/null 2>&1
+      - run:
+          name: Publish Release Artifacts on GitHub
+          command: |
+            git fetch
+            git pull origin "${CIRCLE_BRANCH}"
+            TOOLS_VERSION="$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+            ghr -t "${GITHUB_ACCESS_TOKEN}" -draft -prerelease -soft -n "Tools Interim Release v${TOOLS_VERSION}" -u "${CIRCLE_PROJECT_USERNAME}" -r "${CIRCLE_PROJECT_REPONAME}" "v${TOOLS_VERSION}" /tmp/workspace/Release
+      - store_artifacts:
+          path: /tmp/workspace/Release/
+
+
