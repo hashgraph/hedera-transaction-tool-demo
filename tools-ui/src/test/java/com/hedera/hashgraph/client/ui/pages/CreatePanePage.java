@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.ui.JavaFXIDs;
 import com.hedera.hashgraph.client.ui.TestBase;
@@ -892,6 +893,7 @@ public class CreatePanePage {
 		return this;
 	}
 
+	@VisibleForTesting
 	public CreatePanePage closePopup(final String legend) {
 		try {
 			sleep(500);

@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.hedera.hashgraph.client.core.constants.Constants;
 import javafx.beans.property.SimpleStringProperty;
 
 import java.util.Collections;
