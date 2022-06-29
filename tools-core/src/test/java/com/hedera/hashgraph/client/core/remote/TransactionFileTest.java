@@ -187,7 +187,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var createTransaction = new TransactionFile(info);
 		final var gridPane = createTransaction.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(22, gridPane.getChildren().size());
+		assertEquals(28, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(4);

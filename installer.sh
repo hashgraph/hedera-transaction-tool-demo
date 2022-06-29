@@ -30,13 +30,22 @@ if ! command -v realpath > /dev/null 2>&1; then
   fi
 fi
 
+JPACKAGE="${1}"
+
+echo "Java 14 jpackage path: ${JPACKAGE}";
+
+if [[ ! -x "${JPACKAGE}" ]]
+then
+    echo "'$JPACKAGE' is not executable and/or found"
+    exit 71
+fi
+
 if [[ -z "${JAVA_HOME}" ]]; then
   export JAVA_HOME="$(realpath "$(dirname "$(realpath "$(command -v java)")")/..")"
 fi
 
-JPACKAGE="${JAVA_HOME}/bin/jpackage"
 JAR="${JAVA_HOME}/bin/jar"
-MVN="$(command -v mvn)"
+MVN="./mvnw"
 
 if [[ "${CI}" != true && "${CIRCLECI}" != true ]]; then
   $MVN clean install -DskipTests
@@ -94,8 +103,6 @@ $JPACKAGE \
       --verbose \
       --resource-dir ${RESOURCE_DIR}
 
-
-
 # old options for javapackager
 #$JDK_V10/bin/javapackager \
 #    -deploy \
@@ -115,6 +122,14 @@ $JPACKAGE \
 #    -v
 
 popd > /dev/null 2>&1 || echo "Failed to revert to previous directory path"
+
+cd Release
+
+for i in *; do
+  gpg --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
+done;
+
+
 echo "Build complete."
 
 
