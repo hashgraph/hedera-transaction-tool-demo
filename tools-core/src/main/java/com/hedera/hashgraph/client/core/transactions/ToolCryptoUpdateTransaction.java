@@ -202,19 +202,19 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
 			answer = false;
 		}
+		
+		try {
+			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_NODE_ID_FIELD_NAME);
+			answer = false;
+		}
 
 		try {
 			stakedAccountId = input.has(STAKED_ACCOUNT_ID_FIELD_NAME)
 					? Identifier.parse(input.getAsJsonObject(STAKED_ACCOUNT_ID_FIELD_NAME)) : null;
 		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_ACCOUNT_ID_FIELD_NAME);
-			answer = false;
-		}
-
-		try {
-			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
-		} catch (final Exception e) {
-			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_NODE_ID_FIELD_NAME);
 			answer = false;
 		}
 
