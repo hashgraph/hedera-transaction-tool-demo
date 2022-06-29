@@ -369,7 +369,7 @@
 							<Label fx:id="invalidStakedNodeId" text="Invalid node ID" textFill="RED" visible="false"/>
 						</HBox>
 					</VBox>
-					<VBox layoutX="28.0" layoutY="546.0" spacing="10.0">
+					<VBox spacing="10.0">
 						<HBox spacing="20.0">
 							<Label text="Decline Staking Rewards"/>
 							<ToggleSwitch fx:id="declineStakingRewards"/>

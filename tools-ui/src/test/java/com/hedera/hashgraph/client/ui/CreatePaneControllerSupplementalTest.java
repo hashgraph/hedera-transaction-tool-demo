@@ -74,6 +74,7 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_LOCAL_TIME_LABEL;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ORIGINAL_KEY;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -446,6 +447,9 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 		createPanePage.createAndExport(resources);
 
 		assertTrue(find("#invalidNode").isVisible());
+		ensureVisible(find(CREATE_NODE_FIELD));
+		sleep(3000);
+		ensureVisible(find(CREATE_NODE_FIELD));
 		createPanePage.setNodeAccount(4)
 				.createAndExport(resources);
 
