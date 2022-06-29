@@ -48,7 +48,7 @@ JAR="${JAVA_HOME}/bin/jar"
 MVN="./mvnw"
 
 if [[ "${CI}" != true && "${CIRCLECI}" != true ]]; then
-  $MVN clean install -DskipTests
+  $MVN clean install -DskipTests -Djavafx.platform=mac
 fi
 
 if [[ -d "${PACKAGE_DIR}" ]]; then
@@ -125,8 +125,11 @@ popd > /dev/null 2>&1 || echo "Failed to revert to previous directory path"
 
 cd Release
 
-for i in *; do
-  gpg --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
+for i in *.zip; do
+  gpg -v --batch --yes --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
+done;
+for i in *.pkg; do
+  gpg -v --batch --yes --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
 done;
 
 
