@@ -54,6 +54,8 @@ import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.StakingInfo;
+
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -1271,9 +1273,30 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		gridPane.add(setupBoxTextField(getExpirationTimeString(info)), 1, 5);
 		gridPane.add(setupBoxLabel("Receiver Signature Required"), 0, 6);
 		gridPane.add(setupBoxTextField(valueOf(info.isReceiverSignatureRequired)), 1, 6);
+
+		var cnt = 6;
+
+		var stakingInfo = info.stakingInfo;
+		if (stakingInfo != null && stakingInfo.stakedAccountId != null) {
+			gridPane.add(setupBoxLabel("Staked Account ID"), 0, cnt++);
+			final var stakingAccountStr = new Identifier(info.stakingInfo.stakedAccountId).toReadableString();
+			gridPane.add(setupBoxTextField(format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
+		}
+
+		if (stakingInfo != null && stakingInfo.stakedNodeId != null) {
+			gridPane.add(setupBoxLabel("Staked Node ID"), 0, cnt++);
+			final var stakingNodeIdStr = new Identifier(0, 0, info.stakingInfo.stakedNodeId).toReadableString();
+			gridPane.add(setupBoxTextField(format("%s (%s)", stakingNodeIdStr, AddressChecksums.checksum(stakingNodeIdStr))), 1, cnt);
+		}
+
+		if (stakingInfo != null) {
+			gridPane.add(setupBoxLabel("Decline Staking Rewards"), 0, cnt++);
+			gridPane.add(setupBoxTextField(valueOf(info.stakingInfo.declineStakingReward)), 1, cnt);
+		}
+
 		if (!"".equals(memo.getText())) {
-			gridPane.add(setupBoxLabel("Account memo"), 0, 7);
-			gridPane.add(memo, 1, 7);
+			gridPane.add(setupBoxLabel("Account memo"), 0, cnt++);
+			gridPane.add(memo, 1, cnt);
 		}
 
 		final var col1 = new ColumnConstraints();

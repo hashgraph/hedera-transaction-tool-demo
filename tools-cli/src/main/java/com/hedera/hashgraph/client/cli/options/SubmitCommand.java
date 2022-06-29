@@ -101,7 +101,6 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		// Submit the transactions
 		var count = 0;
 		while (!transactions.isEmpty()) {
-			sleepUntilNeeded(transactions.peek(), readyTime);
 			final var tx = transactions.poll();
 			if (tx == null) {
 				throw new HederaClientRuntimeException("Invalid transaction");
@@ -140,26 +139,6 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		logger.info("Transactions succeeded: {} of {}", transactionResponses.size(), count);
 
-	}
-
-	private void sleepUntilNeeded(final Transaction<?> transaction, final int readyTime) throws InterruptedException {
-		if (transaction == null) {
-			throw new HederaClientRuntimeException("Invalid transaction");
-		}
-		if (transaction.getTransactionId() == null) {
-			throw new HederaClientRuntimeException("Invalid transaction ID");
-		}
-		final var startTime = Objects.requireNonNull(transaction.getTransactionId()).validStart;
-		if (startTime == null) {
-			throw new HederaClientRuntimeException("Invalid start time");
-		}
-
-		final var difference = Instant.now().getEpochSecond() - startTime.getEpochSecond();
-		if (difference > readyTime) {
-			logger.info("Transactions occur in the future. Sleeping for {} second", difference - readyTime);
-			sleep(1000 * (difference - readyTime));
-
-		}
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(

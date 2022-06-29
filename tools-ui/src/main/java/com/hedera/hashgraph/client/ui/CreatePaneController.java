@@ -187,6 +187,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_M
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DEL_UNDEL_SWITCH;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ENTITY_TO_DEL_UNDEL;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.EXPIRATION_DATE_TIME;
@@ -204,6 +205,8 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_F
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
@@ -302,6 +305,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
+	public TextField stakedAccountIdField;
+	public TextField stakedNodeIdField;
+	public TextField stakedAccountIdOriginal;
+	public TextField stakedAccountIdNew;
+	public TextField stakedNodeIdOriginal;
+	public TextField stakedNodeIdNew;
 	public TextField nodeAccountField;
 	public TextField createInitialBalance;
 	public TextField entityID;
@@ -358,6 +367,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label updateRSROriginal;
 	public Label newValueLabel;
 	public Label createRSRLabel;
+	public Label declineStakingRewardsLabel;
+	public Label declineStakingRewardsOriginal;
+	public Label declineStakingRewardsLabelUpdate;
 	public Label createUTCTimeLabel;
 	public Label entityLabel;
 	public Label expirationLabel;
@@ -374,6 +386,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	public Label invalidUpdateNewKey;
 	public Label invalidDate;
 	public Label invalidFeePayer;
+	public Label invalidStakedAccountId;
+	public Label invalidStakedNodeId;
+	public Label invalidStakedAccountIdUpdate;
+	public Label invalidStakedNodeIdUpdate;
 	public Label invalidNode;
 	public Label invalidCreateInitialBalance;
 	public Label invalidCreateAutoRenew;
@@ -401,6 +417,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	// Switches
 	public ToggleSwitch updateReceiverSignatureRequired;
 	public ToggleSwitch createSignatureRequired;
+	public ToggleSwitch declineStakingRewards;
+	public ToggleSwitch declineStakingRewardsNew;
 
 	public ChoiceBox<String> systemActionChoiceBox;
 	public ChoiceBox<String> systemTypeChoiceBox;
@@ -441,7 +459,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
-				freezeFileHashTextField
+				freezeFileHashTextField, stakedAccountIdField, stakedNodeIdField
 		);
 
 		setupTransferFields();
@@ -515,6 +533,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		createSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
 				));
+		declineStakingRewards.selectedProperty().addListener(
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
+				));
 
 		createAccountMemo.textProperty().addListener(
 				(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
@@ -535,6 +556,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		autoCompleteNickname.setOnKeyReleased(
 				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createNewKey));
+
+		formatAccountTextField(stakedAccountIdField, invalidStakedAccountId, stakedNodeIdField);
+		formatAccountTextField(stakedNodeIdField, invalidStakedNodeId, stakedNodeIdField.getParent());
 	}
 
 	private void setupUpdateFields() {
@@ -546,6 +570,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+		declineStakingRewardsNew.selectedProperty().addListener(
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -553,6 +579,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateCopyFromAccountHBox.getChildren().clear();
 		updateCopyFromAccountHBox.getChildren().add(updateFromNickName);
 		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate, updateAccountID.getParent());
+		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedNodeIdNew);
+		formatAccountTextField(stakedNodeIdNew, invalidStakedNodeIdUpdate, stakedNodeIdNew.getParent());
 
 		updateAccountID.setOnKeyPressed(keyEvent -> {
 			final var keyCode = keyEvent.getCode();
@@ -825,11 +853,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		cleanCommonFields();
 		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		createSignatureRequired.setSelected(false);
+		declineStakingRewards.setSelected(false);
 		createInitialBalance.setText("0");
+		stakedAccountIdField.setText("");
+		stakedNodeIdField.setText("");
 		newKeyJSON = emptyKeyObject();
 		createNewKey.setContent(new HBox());
 		createNewKey.setVisible(false);
-		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
+		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode,
+				invalidStakedAccountId, invalidStakedNodeId);
 	}
 
 	private void clearErrorMessages(final Label... errorMessages) {
@@ -846,8 +878,52 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			flag = false;
 		}
 
+		if ((stakedAccountIdField.getText() != null) && (!stakedAccountIdField.getText().isEmpty())) {
+			try {
+				final var accountId = Identifier.parse(stakedAccountIdField.getText(), controller.getCurrentNetwork());
+				stakedAccountIdField.setText(accountId.toNicknameAndChecksum(controller.getAccountsList()));
+				invalidStakedAccountId.setVisible(false);
+			} catch (final Exception e) {
+				invalidStakedAccountId.setVisible(true);
+				displayAndLogInformation("Staked Account ID cannot be parsed");
+				flag = false;
+			}
+		} else {
+			invalidStakedAccountId.setVisible(false);
+		}
+
+		if ((stakedNodeIdField.getText() != null) && (!stakedNodeIdField.getText().isEmpty())) {
+
+			if ((stakedAccountIdField.getText() != null) && (!stakedAccountIdField.getText().isEmpty())) {
+				invalidStakedNodeId.setVisible(true);
+				invalidStakedNodeId.setText("Staked Node ID cannot be set when Staked Account ID is set");
+				displayAndLogInformation("Staked Node ID cannot be set when Staked Account ID is set");
+				flag = false;
+			} else {
+				invalidStakedNodeId.setText("Invalid node ID");
+				try {
+					final var node = Identifier.parse(stakedNodeIdField.getText(), controller.getCurrentNetwork());
+					final var client = CommonMethods.getClient(controller.getCurrentNetwork());
+					if (client.getNetwork().containsValue(node.asAccount())) {
+						stakedNodeIdField.setText(node.toNicknameAndChecksum(controller.getAccountsList()));
+						invalidStakedNodeId.setVisible(false);
+					} else {
+						invalidStakedNodeId.setVisible(true);
+						displayAndLogInformation("Staked Node ID out of range");
+						flag = false;
+					}
+				} catch (final Exception e) {
+					invalidStakedNodeId.setVisible(true);
+					displayAndLogInformation("Staked Node ID cannot be parsed");
+					flag = false;
+				}
+			}
+		} else {
+			invalidStakedNodeId.setVisible(false);
+		}
+
 		if (flag) {
-			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode);
+			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode, invalidStakedAccountId);
 
 		}
 		return flag;
@@ -897,6 +973,51 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			invalidUpdatedAutoRenew.setVisible(false);
 		}
 
+
+		if ((stakedAccountIdNew.getText() != null) && (!stakedAccountIdNew.getText().isEmpty())) {
+			try {
+				final var accountId = Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork());
+				stakedAccountIdNew.setText(accountId.toNicknameAndChecksum(controller.getAccountsList()));
+				invalidStakedAccountIdUpdate.setVisible(false);
+			} catch (final Exception e) {
+				invalidStakedAccountIdUpdate.setVisible(true);
+				displayAndLogInformation("Staked Account ID cannot be parsed");
+				flag = false;
+			}
+		} else {
+			invalidStakedAccountIdUpdate.setVisible(false);
+		}
+
+		if ((stakedNodeIdNew.getText() != null) && (!stakedNodeIdNew.getText().isEmpty())) {
+
+			if ((stakedAccountIdNew.getText() != null) && (!stakedAccountIdNew.getText().isEmpty())) {
+				invalidStakedNodeIdUpdate.setVisible(true);
+				invalidStakedNodeIdUpdate.setText("Staked Node ID cannot be set when Staked Account ID is set");
+				displayAndLogInformation("Staked Node ID cannot be set when Staked Account ID is set");
+				flag = false;
+			} else {
+				invalidStakedNodeIdUpdate.setText("Invalid node ID");
+				try {
+					final var node = Identifier.parse(stakedNodeIdNew.getText(), controller.getCurrentNetwork());
+					final var client = CommonMethods.getClient(controller.getCurrentNetwork());
+					if (client.getNetwork().containsValue(node.asAccount())) {
+						stakedNodeIdNew.setText(node.toNicknameAndChecksum(controller.getAccountsList()));
+						invalidStakedNodeIdUpdate.setVisible(false);
+					} else {
+						invalidStakedNodeIdUpdate.setVisible(true);
+						displayAndLogInformation("Staked Node ID out of range");
+						flag = false;
+					}
+				} catch (final Exception e) {
+					invalidStakedNodeIdUpdate.setVisible(true);
+					displayAndLogInformation("Staked Node ID cannot be parsed");
+					flag = false;
+				}
+			}
+		} else {
+			invalidStakedNodeIdUpdate.setVisible(false);
+		}
+
 		return flag;
 	}
 
@@ -907,12 +1028,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateReceiverSignatureRequired.setSelected(false);
 		updateARPOriginal.clear();
 		updateRSROriginal.setText("???");
+		declineStakingRewardsOriginal.setText("unknown");
+		stakedAccountIdOriginal.setPromptText("unknown");
+		stakedNodeIdOriginal.setPromptText("unknown");
 		updateOriginalKey.setContent(new HBox());
 		updateNewKey.setContent(new HBox());
 		updateNewKey.setVisible(false);
 
 		clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey, invalidNode,
-				invalidUpdateAccountToUpdate);
+				invalidUpdateAccountToUpdate, invalidStakedAccountId, invalidStakedNodeId);
 
 	}
 
@@ -938,6 +1062,31 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			setupKeyPane(oldKeyTreeView, updateOriginalKey);
 			updateAccountMemoOriginal.setText(accountInfo.accountMemo);
 			updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
+			if (accountInfo.stakingInfo != null) {
+				if (accountInfo.stakingInfo.stakedAccountId != null) {
+					final var stakedAccountId = new Identifier(accountInfo.stakingInfo.stakedAccountId);
+					stakedAccountId.setNetworkName(controller.getCurrentNetwork());
+					stakedAccountIdOriginal.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
+				} else {
+					stakedAccountIdOriginal.setText("");
+					stakedAccountIdOriginal.setPromptText("unset");
+				}
+				if (accountInfo.stakingInfo.stakedNodeId != null) {
+					final var stakedNodeId = new Identifier(0, 0, accountInfo.stakingInfo.stakedNodeId);
+					stakedNodeId.setNetworkName(controller.getCurrentNetwork());
+					stakedNodeIdOriginal.setText(stakedNodeId.toNicknameAndChecksum(controller.getAccountsList()));
+				} else {
+					stakedNodeIdOriginal.setText("");
+					stakedNodeIdOriginal.setPromptText("unset");
+				}
+				declineStakingRewardsOriginal.setText(String.valueOf(accountInfo.stakingInfo.declineStakingReward));
+			} else {
+				stakedAccountIdOriginal.setText("");
+				stakedNodeIdOriginal.setText("");
+				declineStakingRewardsOriginal.setText("unset");
+				stakedAccountIdOriginal.setPromptText("unset");
+				stakedNodeIdOriginal.setPromptText("unset");
+			}
 			if (!fromFile) {
 				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 				updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
@@ -950,7 +1099,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 			// in case they were visible before
 			clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
-					invalidNode, invalidUpdateAccountToUpdate);
+					invalidNode, invalidUpdateAccountToUpdate, invalidStakedAccountIdUpdate, invalidStakedNodeIdUpdate);
 
 		} catch (final Exception e) {
 			logger.info("Not an account ID");
@@ -1674,6 +1823,26 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		processKey(EncryptionUtils.keyToJson(transaction.getKey()), createNewKey);
 		createMaxTokenAssociations.setText(String.valueOf(transaction.getMaxTokenAssociations()));
 		createAccountMemo.setText(transaction.getAccountMemo());
+
+		final var stakedAccountId = transaction.getStakedAccountId();
+		if (stakedAccountId == null) {
+			stakedAccountIdField.setText("");
+		} else {
+			stakedAccountId.setNetworkName(controller.getCurrentNetwork());
+			stakedAccountIdField.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+
+		final var stakedNodeId = transaction.getStakedNodeId();
+		if (stakedNodeId == null) {
+			stakedNodeIdField.setText("");
+		} else {
+			var stakedNodeIdentifier = new Identifier(0, 0, stakedNodeId);
+			stakedNodeIdentifier.setNetworkName(controller.getCurrentNetwork());
+			stakedNodeIdField.setText(stakedNodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+
+		declineStakingRewards.setSelected(transaction.isDeclineStakingRewards());
+		declineStakingRewardsLabel.setText(String.valueOf(transaction.isDeclineStakingRewards()));
 	}
 
 	private void loadCryptoUpdateToForm(final ToolCryptoUpdateTransaction transaction) {
@@ -1702,6 +1871,31 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var tokenAssociations = transaction.getMaxTokenAssociations();
 		if (tokenAssociations != null) {
 			updateMaxTokensNew.setText(String.valueOf(tokenAssociations));
+		}
+
+		final var stakedAccountId = transaction.getStakedAccountId();
+		if (stakedAccountId == null) {
+			stakedAccountIdNew.setText("");
+		} else {
+			stakedAccountId.setNetworkName(controller.getCurrentNetwork());
+			stakedAccountIdNew.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+
+		final var stakedNodeId = transaction.getStakedNodeId();
+		if (stakedNodeId == null) {
+			stakedNodeIdNew.setText("");
+		} else {
+			var stakedNodeIdentifier = new Identifier(0, 0, stakedNodeId);
+			stakedNodeIdentifier.setNetworkName(controller.getCurrentNetwork());
+			stakedNodeIdNew.setText(stakedNodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
+		}
+
+		if (transaction.isDeclineStakingRewards() == null) {
+			declineStakingRewardsNew.setSelected(false);
+			declineStakingRewardsLabelUpdate.setText(String.valueOf(false));
+		} else {
+			declineStakingRewardsNew.setSelected(transaction.isDeclineStakingRewards());
+			declineStakingRewardsLabelUpdate.setText(String.valueOf(transaction.isDeclineStakingRewards()));
 		}
 	}
 
@@ -2161,6 +2355,17 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var newTokens = createMaxTokenAssociations.getText();
 		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
 
+		if ((stakedAccountIdField.getText() != null) && (!stakedAccountIdField.getText().isEmpty())) {
+			input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
+					Identifier.parse(stakedAccountIdField.getText(), controller.getCurrentNetwork()).asJSON());
+		}
+		if ((stakedNodeIdField.getText() != null) && (!stakedNodeIdField.getText().isEmpty())) {
+			input.addProperty(STAKED_NODE_ID_FIELD_NAME,
+					Identifier.parse(stakedNodeIdField.getText(), controller.getCurrentNetwork()).getAccountNum());
+		}
+
+		input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards.isSelected());
+
 	}
 
 	private void addCryptoUpdateElements(final JsonObject input) {
@@ -2207,6 +2412,20 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 		} catch (final NumberFormatException e) {
 			logger.error("Cannot parse string: {}", e.getMessage());
+		}
+
+		if ((stakedAccountIdNew.getText() != null) && (!stakedAccountIdNew.getText().isEmpty())) {
+			input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
+					Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
+		}
+		if ((stakedNodeIdNew.getText() != null) && (!stakedNodeIdNew.getText().isEmpty())) {
+			input.addProperty(STAKED_NODE_ID_FIELD_NAME,
+					Identifier.parse(stakedNodeIdNew.getText(), controller.getCurrentNetwork()).getAccountNum());
+		}
+
+		final var originalDeclineStakingRewardsNew = info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
+		if (originalDeclineStakingRewardsNew != declineStakingRewardsNew.isSelected()) {
+			input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
 		}
 	}
 

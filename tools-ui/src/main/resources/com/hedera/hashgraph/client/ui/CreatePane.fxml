@@ -343,6 +343,39 @@
 							<Label fx:id="createRSRLabel" layoutX="10.0" layoutY="10.0" text="false"/>
 						</HBox>
 					</VBox>
+					<VBox spacing="10.0">
+						<Label text="Staked account ID"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+							<TextField fx:id="stakedAccountIdField" alignment="CENTER" maxWidth="1.7976931348623157E308"
+									   minWidth="300.0" promptText="X.X.XXXX"
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
+									   visible="false">
+								<Image url="@../../../../../icons/greencheck.png"/>
+							</ImageView>
+							<Label fx:id="invalidStakedAccountId" text="Cannot recognize account" textFill="RED"
+								   visible="false"/>
+						</HBox>
+					</VBox>
+					<VBox spacing="10.0">
+						<Label text="Staked node ID"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+							<TextField fx:id="stakedNodeIdField" alignment="CENTER" maxWidth="-Infinity" minWidth="300.0"
+									   promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
+									   visible="false">
+								<Image url="@../../../../../icons/greencheck.png"/>
+							</ImageView>
+							<Label fx:id="invalidStakedNodeId" text="Invalid node ID" textFill="RED" visible="false"/>
+						</HBox>
+					</VBox>
+					<VBox layoutX="28.0" layoutY="546.0" spacing="10.0">
+						<HBox spacing="20.0">
+							<Label text="Decline Staking Rewards"/>
+							<ToggleSwitch fx:id="declineStakingRewards"/>
+							<Label fx:id="declineStakingRewardsLabel" layoutX="10.0" layoutY="10.0" text="false"/>
+						</HBox>
+					</VBox>
 				</VBox>
 				<VBox fx:id="updateAccountVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
@@ -456,6 +489,43 @@
 							<Label text="New Value"/>
 							<ToggleSwitch fx:id="updateReceiverSignatureRequired"/>
 							<Label fx:id="updateRSRLabel" text="false"/>
+						</HBox>
+					</VBox>
+					<VBox spacing="10.0">
+						<Label text="Staked account ID"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+							<Label minWidth="77.0" text="Original Value"/>
+							<TextField fx:id="stakedAccountIdOriginal" disable="true" editable="false"
+									   focusTraversable="false" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
+									   promptText="unknown" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<Label minWidth="60.0" text="New Value"/>
+							<TextField fx:id="stakedAccountIdNew" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						</HBox>
+						<Label fx:id="invalidStakedAccountIdUpdate" text="Cannot recognize account" textFill="RED" visible="false"/>
+					</VBox>
+					<VBox spacing="10.0">
+						<Label text="Staked node ID"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+							<Label minWidth="77.0" text="Original Value"/>
+							<TextField fx:id="stakedNodeIdOriginal" disable="true" editable="false"
+									   focusTraversable="false" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
+									   promptText="unknown" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<Label minWidth="60.0" text="New Value"/>
+							<TextField fx:id="stakedNodeIdNew" maxWidth="250.0" minWidth="250.0" prefWidth="250.0"
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						</HBox>
+						<Label fx:id="invalidStakedNodeIdUpdate" text="Invalid node ID" textFill="RED" visible="false"/>
+					</VBox>
+					<VBox spacing="10.0">
+						<HBox spacing="20.0">
+							<Label text="Decline Staking Rewards"/>
+							<Label text="Original Value"/>
+							<Label fx:id="declineStakingRewardsOriginal" alignment="CENTER" minWidth="26.0"
+								   style="-fx-text-fill: grey;" text="???"/>
+							<Label text="New Value"/>
+							<ToggleSwitch fx:id="declineStakingRewardsNew"/>
+							<Label fx:id="declineStakingRewardsLabelUpdate" text="false"/>
 						</HBox>
 					</VBox>
 				</VBox>

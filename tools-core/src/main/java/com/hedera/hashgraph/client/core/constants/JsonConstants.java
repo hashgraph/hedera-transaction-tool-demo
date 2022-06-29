@@ -82,6 +82,9 @@ public class JsonConstants {
 	public static final String RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME = "receiverSignatureRequired";
 	public static final String MAX_TOKEN_ASSOCIATIONS_FIELD_NAME = "maxTokenAssociations";
 	public static final String ACCOUNT_MEMO_FIELD_NAME = "accountMemo";
+	public static final String STAKED_ACCOUNT_ID_FIELD_NAME = "stakedAccountId";
+	public static final String STAKED_NODE_ID_FIELD_NAME = "stakedNodeId";
+	public static final String DECLINE_STAKING_REWARDS_FIELD_NAME = "declineStakingRewards";
 
 
 	public static final String TRANSFERS = "transfers";

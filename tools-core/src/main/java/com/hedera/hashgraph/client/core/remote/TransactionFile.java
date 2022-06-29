@@ -317,8 +317,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 */
 	private void handleCryptoCreateTransactionFields(final GridPane detailsGridPane, int count) {
 		final var keysLink = new Hyperlink("Click for more details");
-		final var sigReqLabel = new Label("Receiver signature required: ");
-		sigReqLabel.setWrapText(true);
 
 		final var createTransaction = (ToolCryptoCreateTransaction) this.transaction;
 		detailsGridPane.add(new Label("Key: "), 0, count);
@@ -347,10 +345,33 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var accountMemo = new Label(createTransaction.getAccountMemo());
 		detailsGridPane.add(accountMemo, 1, count++);
 
-
+		final var sigReqLabel = new Label("Receiver signature required: ");
+		sigReqLabel.setWrapText(true);
 		detailsGridPane.add(sigReqLabel, 0, count);
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
-				count);
+				count++);
+
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (final HederaClientException e) {
+			logger.error(e);
+			nicknames = new JsonObject();
+		}
+
+
+		detailsGridPane.add(new Label("Staked account ID: "), 0, count);
+		final var stakedAccountIdLabel = new Label(createTransaction.getStakedAccountId() == null ? "" :
+				CommonMethods.nicknameOrNumber(createTransaction.getStakedAccountId(), nicknames));
+		stakedAccountIdLabel.setWrapText(true);
+		detailsGridPane.add(stakedAccountIdLabel, 1, count++);
+
+		detailsGridPane.add(new Label("Staked Node ID: "), 0, count);
+		detailsGridPane.add(new Label(createTransaction.getStakedNodeId() == null ?	"" :
+				new Identifier(0, 0, createTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
+
+		detailsGridPane.add(new Label("Decline Staking Rewards: "), 0, count);
+		detailsGridPane.add(new Label(String.format("%s", createTransaction.isDeclineStakingRewards())), 1,
+				count++);
 	}
 
 	/**
@@ -395,6 +416,33 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		if (updateTransaction.getAccountMemo() != null) {
 			handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
+		}
+
+		try {
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (final HederaClientException e) {
+			logger.error(e);
+			nicknames = new JsonObject();
+		}
+
+
+		if (updateTransaction.getStakedAccountId() != null) {
+			detailsGridPane.add(new Label("Staked account ID: "), 0, count);
+			final var stakedAccountIdLabel = new Label(CommonMethods.nicknameOrNumber(updateTransaction.getStakedAccountId(), nicknames));
+			stakedAccountIdLabel.setWrapText(true);
+			detailsGridPane.add(stakedAccountIdLabel, 1, count++);
+		}
+
+		if (updateTransaction.getStakedNodeId() != null) {
+			detailsGridPane.add(new Label("Staked Node ID: "), 0, count);
+			detailsGridPane.add(new Label(
+					new Identifier(0, 0, updateTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
+		}
+
+		if (updateTransaction.isDeclineStakingRewards() != null) {
+			detailsGridPane.add(new Label("Decline Staking Rewards: "), 0, count);
+			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isDeclineStakingRewards())), 1,
+					count++);
 		}
 	}
 
