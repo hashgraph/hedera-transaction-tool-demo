@@ -35,6 +35,7 @@ import java.io.File;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
 import static java.lang.Thread.sleep;
@@ -47,6 +48,8 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	private final String location;
 	private final Client client;
 
+	public final CountDownLatch doneSleeping = new CountDownLatch(1);
+
 	public TransactionCallableWorker(final Transaction<?> tx, final int delay, final String location,
 			final Client client) {
 		this.tx = tx;
@@ -57,6 +60,14 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 	@Override
 	public String call() throws Exception {
+		try {
+			return process();
+		} finally {
+			doneSleeping.countDown();
+		}
+	}
+
+	public String process() throws Exception {
 		if (tx == null) {
 			throw new HederaClientRuntimeException("Null transaction");
 		}
@@ -107,6 +118,8 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 			logger.info("Transactions occur in the future. Sleeping for {} second(s)", -difference);
 			sleep(-1000 * difference);
 		}
+
+		doneSleeping.countDown();
 	}
 
 	private TransactionResponse submit(final Transaction<?> tx) {

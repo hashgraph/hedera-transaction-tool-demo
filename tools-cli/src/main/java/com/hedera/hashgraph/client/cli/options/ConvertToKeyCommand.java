@@ -27,6 +27,8 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import picocli.CommandLine;
 
@@ -39,6 +41,8 @@ import static com.hedera.hashgraph.client.core.security.PasswordInput.readPasswo
 
 @CommandLine.Command(name = "convert-key", aliases = { "ck" }, description = "Convert json key to PEM")
 public class ConvertToKeyCommand implements ToolCommand {
+	private static final Logger logger = LogManager.getLogger(ConvertToKeyCommand.class);
+
 	@CommandLine.Option(names = { "-k", "--key" }, description = "Location of the fee payer's key as a json file",
 			required = true)
 	private String key = "";

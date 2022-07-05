@@ -18,58 +18,76 @@
 
 package com.hedera.hashgraph.client.cli;
 
+import com.hedera.hashgraph.client.cli.options.LoggingOptions;
 import com.hedera.hashgraph.client.cli.options.ToolCommand;
 import com.hedera.hashgraph.client.cli.options.ToolOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
-
-import java.util.Arrays;
+import picocli.CommandLine.ParameterException;
 
 public class ToolsMain {
 
-	private static final Logger logger = LogManager.getLogger(ToolsMain.class);
+	private static Logger _logger = null;
 
 	public static void main(final String[] args) throws Exception {
 
 		ToolCommand commandCopy = null;
 		try {
-			final var commandLine = new CommandLine(new ToolOptions());
+			if (args != null) {
+				CommandLine logOptsCmdLine = new CommandLine(LoggingOptions.class);
+				logOptsCmdLine.getCommandSpec().parser().collectErrors(true);
+				logOptsCmdLine.parseArgs(args);
+				LoggingOptions loggingOptions = logOptsCmdLine.getCommand();
+
+				if (loggingOptions.getLogFileName() != null) {
+					System.setProperty("toolsCliLogFileName", loggingOptions.getLogFileName());
+				}
+			} else {
+				CommandLine.usage(ToolOptions.class, System.out);
+				return;
+			}
+
+			CommandLine commandLine = new CommandLine(ToolOptions.class);
 			final CommandLine.ParseResult parsed;
 
 			try {
 				parsed = commandLine.parseArgs(args);
-			} catch (final CommandLine.MissingParameterException | CommandLine.UnmatchedArgumentException ex) {
+			} catch (final ParameterException ex) {
 				CommandLine.usage(ex.getCommandLine().getCommand(), System.out);
 				return;
 			}
-			verifyOrPrintHelp(args);
 
-			final var commandName = parsed.asCommandLineList().get(1).getCommandName();
+			var commandList = parsed.asCommandLineList();
+
+			if (commandList.size() != 2) {
+				CommandLine.usage(commandLine.getCommand(), System.out);
+				return;
+			}
+
+			final var commandName = commandList.get(1).getCommandName();
 			final var joinedCommand = String.join(" ", parsed.subcommand().originalArgs());
-			logger.info("Executing command [{}] with options [{}]", commandName, joinedCommand);
+			getLogger().info("Executing command [{}] with options [{}]", commandName, joinedCommand);
 
 			if (CommandLine.printHelpIfRequested(parsed)) {
 				return;
 			}
 
-			final var toolCommand = (ToolCommand) parsed.asCommandLineList().get(1).getCommand();
+			final var toolCommand = (ToolCommand) commandList.get(1).getCommand();
 			commandCopy = toolCommand;
 			toolCommand.execute();
 		} catch (final Exception cause) {
-			logger.error("Error in executing command: {}, message: {}",
-					commandCopy != null ? commandCopy.getClass() : null, cause.getMessage());
+			getLogger().error("Error in executing command: " +
+					(commandCopy != null ? commandCopy.getClass() : null), cause);
 			throw cause;
 		}
 	}
 
-	private static void verifyOrPrintHelp(final String... args) {
-		if (args == null || args.length < 1) {
-			final var arguments = Arrays.toString(args);
-			logger.info("invalid command argument. {}", arguments);
-			CommandLine.usage(new ToolOptions(), System.out);
-			System.exit(1);
+	private static Logger getLogger() {
+		if (_logger == null) {
+			_logger = LogManager.getLogger(ToolsMain.class);
 		}
+		return _logger;
 	}
 
 }

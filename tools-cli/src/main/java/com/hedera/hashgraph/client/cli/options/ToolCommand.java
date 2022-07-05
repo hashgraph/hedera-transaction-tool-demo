@@ -20,14 +20,9 @@ package com.hedera.hashgraph.client.cli.options;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
 public interface ToolCommand extends GenericFileReadWriteAware {
-	Logger logger = LogManager.getLogger(ToolCommand.class);
-
 	void execute() throws HederaClientException, IOException, InterruptedException;
-
 }
