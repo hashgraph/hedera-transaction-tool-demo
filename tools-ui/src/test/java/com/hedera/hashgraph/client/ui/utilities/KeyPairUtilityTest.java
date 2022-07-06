@@ -233,6 +233,7 @@ public class KeyPairUtilityTest extends TestBase {
 		mainWindowPage.clickOnHomeButton();
 
 		clickOn("lbaird-tx");
+		ensureVisible(find("ADD MORE"));
 		clickOn("ADD MORE");
 
 		homePanePage.clickOnKeyCheckBox("KeyStore-2")
