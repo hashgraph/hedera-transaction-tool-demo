@@ -82,7 +82,6 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
@@ -132,7 +131,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public void initializeHomePane() {
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
-		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
 		try {
 			// Only refresh if there have been changes in the remotes or the history
@@ -498,8 +496,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						FileUtils.copyFile(new File(rf.getPath()), keysFile);
 						break;
 					case ACCOUNT_INFO:
-						controller.accountsPaneController.importInfoFiles(
+						final var importCount = controller.accountsPaneController.importInfoFiles(
 								Collections.singletonList(new File(rf.getPath())));
+						if (importCount <= 0) {
+							return;
+						}
 						break;
 					case BUNDLE:
 						for (final Map.Entry<BundleFile.InfoKey, File> entry :

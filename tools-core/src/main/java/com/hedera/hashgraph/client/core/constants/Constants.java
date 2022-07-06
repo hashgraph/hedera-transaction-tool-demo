@@ -18,9 +18,6 @@
 
 package com.hedera.hashgraph.client.core.constants;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-
 import java.io.File;
 
 public class Constants {
@@ -170,8 +167,6 @@ public class Constants {
 	public static final String FULL_ACCOUNT_CHECKSUM_REGEX = "\\d+.\\d+.\\d+-[a-z]{5}";
 	public static final String FULL_ACCOUNT_REGEX = "^\\d+.\\d+.\\d+$";
 	public static final String NUMBER_REGEX = "^[0-9]+$";
-
-	public static final DoubleProperty FONT_SIZE = new SimpleDoubleProperty(16);
 
 
 	public static final long TEST_EXPIRATION_TIME = 10L;
