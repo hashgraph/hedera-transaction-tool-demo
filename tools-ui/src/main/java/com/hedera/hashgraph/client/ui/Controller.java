@@ -37,9 +37,6 @@ import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -129,7 +126,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 					"its current form by anyone other than members of the Hedera Council and Hedera personnel. " +
 					"If you are not a Hedera Council member or staff member, use of this application or of the " +
 					"code in its current form is not recommended and is at your own risk.";
-	private final DoubleProperty fontSize = new SimpleDoubleProperty(10);
 
 	private boolean disableButtons = false;
 	private boolean drivesChanged = false;
@@ -275,9 +271,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 
 		startupPhaseInitialization();
-
-		fontSize.bind(homePane.heightProperty().add(homePane.widthProperty()).divide(125));
-		centerPane.styleProperty().bind(Bindings.concat("-fx-font-size: ", fontSize.asString(), ";"));
 
 		createPane.setVisible(false);
 		accountsPane.setVisible(false);

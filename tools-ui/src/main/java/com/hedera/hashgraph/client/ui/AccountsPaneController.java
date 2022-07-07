@@ -1278,24 +1278,24 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		var stakingInfo = info.stakingInfo;
 		if (stakingInfo != null && stakingInfo.stakedAccountId != null) {
-			gridPane.add(setupBoxLabel("Staked Account ID"), 0, cnt++);
+			gridPane.add(setupBoxLabel("Staked Account ID"), 0, ++cnt);
 			final var stakingAccountStr = new Identifier(info.stakingInfo.stakedAccountId).toReadableString();
 			gridPane.add(setupBoxTextField(format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
 		}
 
 		if (stakingInfo != null && stakingInfo.stakedNodeId != null) {
-			gridPane.add(setupBoxLabel("Staked Node ID"), 0, cnt++);
+			gridPane.add(setupBoxLabel("Staked Node ID"), 0, ++cnt);
 			final var stakingNodeIdStr = new Identifier(0, 0, info.stakingInfo.stakedNodeId).toReadableString();
 			gridPane.add(setupBoxTextField(format("%s (%s)", stakingNodeIdStr, AddressChecksums.checksum(stakingNodeIdStr))), 1, cnt);
 		}
 
 		if (stakingInfo != null) {
-			gridPane.add(setupBoxLabel("Decline Staking Rewards"), 0, cnt++);
+			gridPane.add(setupBoxLabel("Decline Staking Rewards"), 0, ++cnt);
 			gridPane.add(setupBoxTextField(valueOf(info.stakingInfo.declineStakingReward)), 1, cnt);
 		}
 
 		if (!"".equals(memo.getText())) {
-			gridPane.add(setupBoxLabel("Account memo"), 0, cnt++);
+			gridPane.add(setupBoxLabel("Account memo"), 0, ++cnt);
 			gridPane.add(memo, 1, cnt);
 		}
 
@@ -1573,7 +1573,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @param files
 	 * 		list of files
 	 */
-	public void importInfoFiles(final List<File> files) throws HederaClientException, InvalidProtocolBufferException {
+	public int importInfoFiles(final List<File> files) throws HederaClientException, InvalidProtocolBufferException {
 		final List<File> duplicates = new ArrayList<>();
 		final List<File> newFiles = new ArrayList<>();
 		final Set<String> nicknames = new HashSet<>(idNickNames.values());
@@ -1597,6 +1597,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (counter > 0) {
 			refreshPanes();
 		}
+
+		return counter;
 	}
 
 	/**

@@ -358,18 +358,23 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			nicknames = new JsonObject();
 		}
 
-
-		detailsGridPane.add(new Label("Staked account ID: "), 0, count);
+		var label = new Label("Staked account ID: ");
+		label.setWrapText(true);
+		detailsGridPane.add(label, 0, count);
 		final var stakedAccountIdLabel = new Label(createTransaction.getStakedAccountId() == null ? "" :
 				CommonMethods.nicknameOrNumber(createTransaction.getStakedAccountId(), nicknames));
 		stakedAccountIdLabel.setWrapText(true);
 		detailsGridPane.add(stakedAccountIdLabel, 1, count++);
 
-		detailsGridPane.add(new Label("Staked Node ID: "), 0, count);
+		label = new Label("Staked Node ID: ");
+		label.setWrapText(true);
+		detailsGridPane.add(label, 0, count);
 		detailsGridPane.add(new Label(createTransaction.getStakedNodeId() == null ?	"" :
 				new Identifier(0, 0, createTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
 
-		detailsGridPane.add(new Label("Decline Staking Rewards: "), 0, count);
+		label = new Label("Decline Staking Rewards: ");
+		label.setWrapText(true);
+		detailsGridPane.add(label, 0, count);
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isDeclineStakingRewards())), 1,
 				count++);
 	}
@@ -427,20 +432,26 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		if (updateTransaction.getStakedAccountId() != null) {
-			detailsGridPane.add(new Label("Staked account ID: "), 0, count);
+			var label = new Label("Staked account ID: ");
+			label.setWrapText(true);
+			detailsGridPane.add(label, 0, count);
 			final var stakedAccountIdLabel = new Label(CommonMethods.nicknameOrNumber(updateTransaction.getStakedAccountId(), nicknames));
 			stakedAccountIdLabel.setWrapText(true);
 			detailsGridPane.add(stakedAccountIdLabel, 1, count++);
 		}
 
 		if (updateTransaction.getStakedNodeId() != null) {
-			detailsGridPane.add(new Label("Staked Node ID: "), 0, count);
+			var label = new Label("Staked Node ID: ");
+			label.setWrapText(true);
+			detailsGridPane.add(label, 0, count);
 			detailsGridPane.add(new Label(
 					new Identifier(0, 0, updateTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
 		}
 
 		if (updateTransaction.isDeclineStakingRewards() != null) {
-			detailsGridPane.add(new Label("Decline Staking Rewards: "), 0, count);
+			var label = new Label("Decline Staking Rewards: ");
+			label.setWrapText(true);
+			detailsGridPane.add(label, 0, count);
 			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isDeclineStakingRewards())), 1,
 					count++);
 		}

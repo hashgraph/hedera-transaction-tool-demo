@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
@@ -78,7 +77,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENS
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_FIELD_CHARACTER_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
-import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_BOX_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
@@ -645,7 +643,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			final var label = new Label(String.format("Information regarding %s %s was %s on %s.", entity, getName(),
 					action, m.getTimeStamp().asReadableLocalString()));
 			label.setWrapText(true);
-			label.minHeightProperty().bind(FONT_SIZE.multiply(3));
+			label.setMinHeight(66);
 			VBox.setVgrow(label, Priority.ALWAYS);
 			messages.add(label);
 		}
@@ -736,7 +734,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			}
 		}
 		titleLabel.styleProperty().bind(
-				Bindings.concat("-fx-font-size: ", Constants.FONT_SIZE.asString(), "; -fx-font-weight: bold;"));
+				Bindings.concat("-fx-font-size: 22; -fx-font-weight: bold;"));
 		return titleLabel;
 	}
 
