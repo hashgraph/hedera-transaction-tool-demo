@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +49,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -64,18 +66,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
-	private KeysPanePage keysPanePage;
-
-	private final Path currentRelativePath = Paths.get("");
-	public UserAccessibleProperties properties;
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
 	private static final String PASSWORD = "123456789";
 	private static final String DEFAULT_STORAGE = System.getProperty(
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-
+	private final Path currentRelativePath = Paths.get("");
 	private final String storedMnemonic =
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
+	private final String otherMnemonic =
+			"LUXURY PENALTY STAGE CANCEL ASK TOPIC OPEN SIEGE EMERGE FEED SUDDEN DISCOVER HELMET JEALOUS CULTURE EXIT " +
+					"ROSE DIAGRAM TURKEY TRIAL DISTANCE DYNAMIC FINAL SHIVER";
+	public UserAccessibleProperties properties;
+	private KeysPanePage keysPanePage;
 
 	@Before
 	public void setUp() throws Exception {
@@ -167,11 +170,12 @@ public class NewPasswordPopupTest extends TestBase {
 	public void checkPopupNodes_test() {
 		doubleClickOn("principalTestingKey");
 		final var labels = keysPanePage.getPopupLabels();
-		assertEquals(5, labels.size());
+		assertEquals(6, labels.size());
 		assertEquals("Key Name", labels.get(0).getText());
 		assertEquals("Public Key", labels.get(2).getText());
 		assertEquals("Private Key", labels.get(3).getText());
 		assertEquals("Index: 1", labels.get(4).getText());
+		assertEquals("Associated accounts", labels.get(5).getText());
 		assertTrue(labels.get(1).getText().contains("principalTestingKey.pub"));
 
 		final var buttons = keysPanePage.getPopupButtons();
@@ -185,7 +189,7 @@ public class NewPasswordPopupTest extends TestBase {
 		clickOn(buttons.get(4));
 	}
 
-	@Test
+	//@Test
 	public void changePasswordCancel_test() {
 		doubleClickOn("principalTestingKey");
 		final var buttons = keysPanePage.getPopupButtons();
@@ -226,6 +230,7 @@ public class NewPasswordPopupTest extends TestBase {
 		keysPanePage.enterPopupPassword(PASSWORD);
 		assertTrue(buttons.get(2).isVisible());
 		clickOn(buttons.get(4));
+
 	}
 
 	@Test
@@ -275,7 +280,7 @@ public class NewPasswordPopupTest extends TestBase {
 		Assert.assertTrue(gridPaneVBox.isVisible());
 		final var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
 		Assert.assertTrue(boxChildren.get(0) instanceof Label);
-		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toLowerCase(Locale.ROOT);
+		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toUpperCase(Locale.ROOT);
 
 		keysPanePage.pressCloseViewMnemonic()
 				.pressRecoveryPhrase()
@@ -297,7 +302,11 @@ public class NewPasswordPopupTest extends TestBase {
 		}
 
 		keysPanePage.pressPopupButton("CANCEL");
+		keysPanePage.pressRecoveryPhrase()
+				.enterPopupPassword(PASSWORD);
 
+		final var other = otherMnemonic.split(" ");
+		Arrays.stream(other).map(oldMnemonic::contains).forEach(TestCase::assertTrue);
 	}
 
 }

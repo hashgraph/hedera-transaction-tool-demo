@@ -128,15 +128,10 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 				exception3.getMessage());
 
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
-		final Exception exception4 = assertThrows(ClassCastException.class, () -> CommonMethods.setupClient(testInput));
-		assertEquals(
-				"class com.google.gson.JsonPrimitive cannot be cast to class com.google.gson.JsonObject (com.google" +
-						".gson.JsonPrimitive and com.google.gson.JsonObject are in unnamed module of loader 'app')",
-				exception4.getMessage());
 
 		final var feeJson = new JsonObject();
 		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, 100000000);
+		feeJson.addProperty(TINY_BARS, 700000000);
 		testInput.add(JsonConstants.TRANSACTION_FEE_FIELD_NAME, feeJson);
 
 		final var client = CommonMethods.setupClient(testInput);
@@ -147,7 +142,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		network.put("35.197.75.89:50211", new AccountId(6L));
 		assertEquals(network, client.getNetwork());
 
-		// Cannot access MaxTransactionFee from client
+		assertEquals(new Hbar(7), client.getDefaultMaxQueryPayment());
 
 	}
 

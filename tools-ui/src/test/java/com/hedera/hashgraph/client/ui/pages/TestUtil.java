@@ -20,10 +20,12 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -31,6 +33,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -52,6 +55,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
@@ -156,6 +160,7 @@ public class TestUtil {
 	 * @return a button
 	 */
 	public static Button findButtonInPopup(final ObservableList<Node> popupNodes, final String legend) {
+		if (popupNodes==null) return null;
 		for (final var popupNode : popupNodes) {
 			if (popupNode instanceof Button && legend.equalsIgnoreCase(((Button) popupNode).getText())) {
 				return (Button) popupNode;
@@ -209,9 +214,14 @@ public class TestUtil {
 				textFields.addAll(
 						Objects.requireNonNull(findTextFieldsInPopup(((GridPane) popupNode).getChildren())));
 			}
+			if (popupNode instanceof TitledPane) {
+				textFields.addAll(Objects.requireNonNull(findTextFieldsInPopup(
+						FXCollections.singletonObservableList(((TitledPane) popupNode).getContent()))));
+			}
 		}
 		return textFields;
 	}
+
 
 	/**
 	 * Returns a list of Labels contained in the Popup
@@ -240,6 +250,39 @@ public class TestUtil {
 			}
 		}
 		return labels;
+	}
+
+	/**
+	 * Returns a list of CheckBoxes contained in the Popup
+	 * @param popupNodes list of nodes in the popup
+	 * @return a list of checkboxes
+	 */
+	public static List<CheckBox> findCheckBoxesInPopup(final ObservableList<Node> popupNodes){
+		final List<CheckBox> checkBoxes = new ArrayList<>();
+		for (final var popupNode : popupNodes) {
+			if (popupNode instanceof CheckBox) {
+				checkBoxes.add((CheckBox) popupNode);
+			}
+			if (popupNode instanceof HBox) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((HBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof VBox) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((VBox) popupNode).getChildren())));
+			}
+			if (popupNode instanceof GridPane) {
+				checkBoxes.addAll(
+						Objects.requireNonNull(findCheckBoxesInPopup(((GridPane) popupNode).getChildren())));
+			}
+			if (popupNode instanceof TitledPane) {
+				checkBoxes.addAll(Objects.requireNonNull(findCheckBoxesInPopup(
+						FXCollections.singletonObservableList(((TitledPane) popupNode).getContent()))));
+			}
+		}
+		return checkBoxes;
+
+
 	}
 
 	/**
@@ -380,5 +423,24 @@ public class TestUtil {
 			logger.info("Logs folder created");
 		}
 
+	}
+
+	public static List<String> getLabels(final ObservableList<Node> children) {
+		final List<String> labels = new ArrayList<>();
+		children.forEach(child -> {
+			if (child instanceof Label) {
+				labels.add(((Label) child).getText().toLowerCase(Locale.ROOT));
+			}
+			if (child instanceof HBox) {
+				labels.addAll(getLabels(((HBox) child).getChildren()));
+			}
+			if (child instanceof VBox) {
+				labels.addAll(getLabels(((VBox) child).getChildren()));
+			}
+			if (child instanceof GridPane) {
+				labels.addAll(getLabels(((GridPane) child).getChildren()));
+			}
+		});
+		return labels;
 	}
 }

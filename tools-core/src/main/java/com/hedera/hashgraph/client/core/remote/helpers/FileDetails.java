@@ -19,7 +19,10 @@
 
 package com.hedera.hashgraph.client.core.remote.helpers;
 
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +30,8 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class FileDetails {
+	private static final Logger logger = LogManager.getLogger(FileDetails.class);
+
 	private final BasicFileAttributes attributes;
 	private final String name;
 	private final String path;
@@ -72,11 +77,16 @@ public class FileDetails {
 	 * 		the file
 	 * @return a File details object
 	 */
-	public static FileDetails parse(final File file) throws IOException {
-		final var attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
-		final var n = file.getName();
-		final var p = file.getParent();
-		final var e = FilenameUtils.getExtension(n);
-		return new FileDetails(attr, n, p, e);
+	public static FileDetails parse(final File file) throws HederaClientException {
+		try {
+			final var attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+			final var n = file.getName();
+			final var p = file.getParent();
+			final var e = FilenameUtils.getExtension(n);
+			return new FileDetails(attr, n, p, e);
+		} catch (final IOException | IllegalArgumentException ex) {
+			logger.error(ex.getMessage());
+			throw new HederaClientException(ex);
+		}
 	}
 }

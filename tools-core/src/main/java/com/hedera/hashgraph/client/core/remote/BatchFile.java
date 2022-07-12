@@ -449,9 +449,9 @@ public class BatchFile extends RemoteFile {
 	private String[] getStrings(final List<String> csvList, final String queryString, final String regex,
 			final boolean removeSpaces) {
 		var strings = new String[0];
-		final var query = removeSpaces? queryString.replace(" ", ""): queryString;
+		final var query = removeSpaces ? queryString.replace(" ", "") : queryString;
 		for (final var p : csvList) {
-			final var s = removeSpaces? p.replace(" ", ""): p;
+			final var s = removeSpaces ? p.replace(" ", "") : p;
 			if (s.toLowerCase(Locale.ROOT).startsWith(query)) {
 				strings = s.split(regex);
 				final var returnString = new String[strings.length];
@@ -507,10 +507,10 @@ public class BatchFile extends RemoteFile {
 		for (final var transfer : transfers) {
 			var timestamp = transfer.getDate();
 			final var seconds = timestamp.getSeconds();
-			var nanos = timestamp.getNanos() + SORTING_CONSTANT; // added a fixed amount to make sorting by time easier
+			var nanos = timestamp.getNanos(); // added a fixed amount to make sorting by time easier
 			timestamp = new Timestamp(seconds, nanos);
 			while (dedupSet.contains(timestamp)) {
-				timestamp = new Timestamp(seconds, ++nanos);
+				timestamp = new Timestamp(seconds, (++nanos) * SORTING_CONSTANT);
 			}
 			dedupSet.add(timestamp);
 			transfer.setDate(timestamp);

@@ -29,11 +29,14 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.FXUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.TransactionId;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
@@ -45,6 +48,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import javax.annotation.Nullable;
@@ -67,6 +71,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
@@ -218,6 +223,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	private boolean checkNotNulls(final Object... ids) {
 		return Arrays.stream(ids).anyMatch(Objects::isNull);
+	}
+
+	public Identifier getFeePayerAccountId() {
+		return feePayerAccountId;
 	}
 
 	/**
@@ -439,49 +448,32 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 			try (final var fileInputStream = new FileInputStream(content)) {
 				final var buffer = new byte[chunkSize];
-				var count = 1;
+				var count = 0;
 				var inputStream = fileInputStream.read(buffer);
 
-				final var input = new JsonObject();
-				input.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
-				input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccountId.asJSON());
-				input.add(FILE_ID_FIELD_NAME, fileID.asJSON());
-				input.addProperty(MEMO_FIELD_NAME, memo);
-				input.addProperty(TRANSACTION_FEE_FIELD_NAME, transactionFee);
-				input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
-				input.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
-				input.addProperty(CONTENTS_FIELD_NAME, TEMP_LOCATION);
+				final var input = getJsonInput();
 
 				var incrementedTime = transactionValidStart;
-
-				var trimmed = Arrays.copyOf(buffer, inputStream);
-				writeBytes(TEMP_LOCATION, trimmed);
-
-				// First transaction is an update
-				final var updateTransaction = new ToolFileUpdateTransaction(input);
-				updateTransaction.sign(privateKey);
-				final var filePath = String.format("%s%s-00000.%s", tempStorage, FilenameUtils.getBaseName(filename),
-						SIGNED_TRANSACTION_EXTENSION);
-				writeBytes(filePath, updateTransaction.getTransaction().toBytes());
-				toPack.add(new File(filePath));
 
 				while (inputStream > 0) {
 
 					// The other transactions are appends
-					trimmed = Arrays.copyOf(buffer, inputStream);
+					final var trimmed = Arrays.copyOf(buffer, inputStream);
 					writeBytes(TEMP_LOCATION, trimmed);
 
 					incrementedTime =
 							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
 					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
-					final var appendTransaction = new ToolFileAppendTransaction(input);
-					appendTransaction.sign(privateKey);
-					final var appendFilePath =
+					final var transaction = (count == 0) ?
+							new ToolFileUpdateTransaction(input) :
+							new ToolFileAppendTransaction(input);
+					transaction.sign(privateKey);
+					final var filePath =
 							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
 									SIGNED_TRANSACTION_EXTENSION);
-					writeBytes(appendFilePath, appendTransaction.getTransaction().toBytes());
-					toPack.add(new File(appendFilePath));
+					writeBytes(filePath, transaction.getTransaction().toBytes());
+					toPack.add(new File(filePath));
 					count++;
 					inputStream = fileInputStream.read(buffer);
 				}
@@ -511,16 +503,63 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 	}
 
+	@NotNull
+	private JsonObject getJsonInput() {
+		final var input = new JsonObject();
+		input.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
+		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerAccountId.asJSON());
+		input.add(FILE_ID_FIELD_NAME, fileID.asJSON());
+		input.addProperty(MEMO_FIELD_NAME, memo);
+		input.addProperty(TRANSACTION_FEE_FIELD_NAME, transactionFee);
+		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
+		input.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
+		input.addProperty(CONTENTS_FIELD_NAME, TEMP_LOCATION);
+		return input;
+	}
+
+	public List<ToolTransaction> createTransactionList() {
+		var incrementedTime = transactionValidStart;
+
+		final List<ToolTransaction> transactions = new ArrayList<>();
+		final var input = getJsonInput();
+
+		try (final var fileInputStream = new FileInputStream(content)) {
+			final var buffer = new byte[chunkSize];
+			var count = 0;
+			var inputStream = fileInputStream.read(buffer);
+			while (inputStream > 0) {
+				// The other transactions are appends
+				final var trimmed = Arrays.copyOf(buffer, inputStream);
+				writeBytes(TEMP_LOCATION, trimmed);
+				incrementedTime =
+						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+
+				final var transaction = (count == 0) ?
+						new ToolFileUpdateTransaction(input) :
+						new ToolFileAppendTransaction(input);
+				transactions.add(transaction);
+				count++;
+				inputStream = fileInputStream.read(buffer);
+			}
+		} catch (final IOException | HederaClientException e) {
+			logger.error(e.getMessage());
+		}
+		return transactions;
+	}
+
 	@Override
 	public GridPane buildGridPane() {
 		final var detailsGridPane = super.buildGridPane();
+		final var id = new TransactionId(feePayerAccountId.asAccount(), transactionValidStart.asInstant());
+		detailsGridPane.add(FXUtils.buildTransactionIDBox(detailsGridPane, id.toString()), RIGHT, 0);
 
 		try {
 			final var map =
 					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, map));
 			feePayerLabel.setWrapText(true);
-			detailsGridPane.add(feePayerLabel, 1, 0);
+			detailsGridPane.add(feePayerLabel, RIGHT, 1);
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}
@@ -529,16 +568,16 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
-		detailsGridPane.add(text, 1, 1);
-
-		if (!"".equals(memo)) {
-			detailsGridPane.add(new Label("Memo: "), 0, 2);
-			detailsGridPane.add(new Label(memo), 1, 2);
-		}
+		detailsGridPane.add(text, 1, 2);
 
 		final var timeLabel = getTimeLabel(transactionValidStart, true);
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, 1, 3);
+
+		if (!"".equals(memo)) {
+			detailsGridPane.add(new Label("Memo: "), 0, 4);
+			detailsGridPane.add(new Label(memo), 1, 4);
+		}
 
 
 		final var fileLink = new Hyperlink("Click for more details");
@@ -556,35 +595,35 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		});
 
 
-		detailsGridPane.add(new Label("File contents"), 0, 4);
-		detailsGridPane.add(fileLink, 1, 4);
+		detailsGridPane.add(new Label("File contents"), 0, 5);
+		detailsGridPane.add(fileLink, 1, 5);
 
-		detailsGridPane.add(new Label("File Hash"), 0, 5);
+		detailsGridPane.add(new Label("File Hash"), 0, 6);
 		final var checksum = new Text(getChecksum());
 		checksum.setFont(Font.font("Courier New", 16));
-		detailsGridPane.add(checksum, 1, 5);
+		detailsGridPane.add(checksum, 1, 6);
 
-		detailsGridPane.add(new Label("File size"), 0, 6);
+		detailsGridPane.add(new Label("File size"), 0, 7);
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
-		detailsGridPane.add(new Label(formattedContentSize), 1, 6);
+		detailsGridPane.add(new Label(formattedContentSize), 1, 7);
 
 		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
-			detailsGridPane.add(new Label("Chunk size"), 0, 7);
+			detailsGridPane.add(new Label("Chunk size"), 0, 8);
 			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
-			detailsGridPane.add(new Label(formattedChunkSize), 1, 7);
+			detailsGridPane.add(new Label(formattedChunkSize), 1, 8);
 
-			detailsGridPane.add(new Label("Number of transactions"), 0, 8);
+			detailsGridPane.add(new Label("Number of transactions"), 0, 9);
 			final var formattedChunkNumber = String.format("%d", chunks);
-			detailsGridPane.add(new Label(formattedChunkNumber), 1, 8);
+			detailsGridPane.add(new Label(formattedChunkNumber), 1, 9);
 
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
-			detailsGridPane.add(interval, 0, 9);
+			detailsGridPane.add(interval, 0, 10);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
-			detailsGridPane.add(new Label(formattedIntervalLength), 1, 9);
+			detailsGridPane.add(new Label(formattedIntervalLength), 1, 10);
 		}
 
 		return detailsGridPane;
@@ -597,13 +636,13 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		toJson.add(FILE_ID_PROPERTY, fileID.asJSON());
 		toJson.addProperty(CHUNK_SIZE_PROPERTY, chunkSize);
 		toJson.add(FEE_PAYER_ACCOUNT_ID_PROPERTY, feePayerAccountId.asJSON());
-		toJson.addProperty("transactionValidDuration", transactionValidDuration.getSeconds());
-		toJson.add("transactionValidStart", transactionValidStart.asJSON());
+		toJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
+		toJson.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
 		toJson.addProperty(VALID_INCREMENT_PROPERTY, validIncrement);
 		toJson.add(NODE_ID_PROPERTY, nodeID.asJSON());
 		toJson.addProperty(TRANSACTION_FEE_PROPERTY, transactionFee);
 		toJson.addProperty(MEMO_PROPERTY, memo);
-		toJson.addProperty("content", content.getAbsolutePath());
+		toJson.addProperty(CONTENT_PROPERTY, content.getAbsolutePath());
 		return toJson;
 	}
 }

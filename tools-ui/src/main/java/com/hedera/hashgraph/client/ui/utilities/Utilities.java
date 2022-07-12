@@ -31,13 +31,11 @@ import com.hedera.hashgraph.client.ui.Controller;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
-import javafx.animation.PauseTransition;
-import javafx.scene.control.Control;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.Pane;
+import javafx.scene.control.CheckBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -167,40 +165,6 @@ public class Utilities {
 				split.length == 2 ? Double.parseDouble("0." + split[1].substring(0, Math.min(8, split[1].length())))
 						: 0;
 		return Hbar.from(BigDecimal.valueOf(bars).add(BigDecimal.valueOf(tiny)));
-	}
-
-	/**
-	 * Shows an informational tooltip when the user presses a button
-	 *
-	 * @param owner
-	 * 		pane that will show the tooltip
-	 * @param control
-	 * 		the node that will be attached to (typically a button)
-	 * @param tooltipText
-	 * 		the text that will be displayed
-	 */
-	public static void showTooltip(final Pane owner, final Control control, final String tooltipText) {
-		final var customTooltip = new Tooltip();
-		final var p = control.localToScene(15.0, 15.0);
-		customTooltip.setText(tooltipText);
-		customTooltip.setStyle("-fx-background-color: white; -fx-text-fill: black;");
-		customTooltip.setMaxWidth(300);
-		customTooltip.setWrapText(true);
-		control.setTooltip(customTooltip);
-
-		customTooltip.setAutoHide(true);
-
-		if (customTooltip.isShowing()) {
-			customTooltip.hide();
-		} else {
-			customTooltip.show(owner, p.getX()
-					+ control.getScene().getX() + control.getScene().getWindow().getX(), p.getY()
-					+ control.getScene().getY() + control.getScene().getWindow().getY());
-		}
-
-		final var pt = new PauseTransition(new javafx.util.Duration(5000));
-		pt.setOnFinished(e -> customTooltip.hide());
-		pt.play();
 	}
 
 	/**
@@ -353,5 +317,18 @@ public class Utilities {
 		} catch (final Exception e) {
 			return true;
 		}
+	}
+
+	public static void checkBoxListener(final Set<File> signersSet, final File keyFile, final String baseName,
+			final CheckBox checkBox) {
+		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if (Boolean.TRUE.equals(t1)) {
+				logger.info("Added {} to list of signing keys", baseName);
+				signersSet.add(keyFile);
+			} else {
+				logger.info("Removed {} from list of signing keys", baseName);
+				signersSet.remove(keyFile);
+			}
+		});
 	}
 }

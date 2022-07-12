@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.remote;
 
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileActions;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -59,7 +60,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var emptyFile = new BatchFile();
 		assertFalse(emptyFile.isValid());
 
@@ -138,7 +139,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 
 
 	@Test
-	public void loadLegacyCSV_test() throws IOException {
+	public void loadLegacyCSV_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		final var info = FileDetails.parse(file);
 
@@ -175,7 +176,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void loadCurrentCSV_test() throws IOException {
+	public void loadCurrentCSV_test() throws HederaClientException {
 		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setDefaultTxFee(123456789);
@@ -209,7 +210,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void loadMixedCSV_test() throws IOException {
+	public void loadMixedCSV_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testMixedCSV.csv");
 		final var info = FileDetails.parse(file);
 		final var batchFile = new BatchFile(info);
@@ -233,7 +234,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void checksums_test() throws IOException {
+	public void checksums_test() throws HederaClientException {
 		var badFile = new File("src/test/resources/Files/batchFileTests/badSender2.csv");
 		var badFileDetails = FileDetails.parse(badFile);
 		assertFalse(new BatchFile(badFileDetails).isValid());
@@ -248,7 +249,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void getters_test() throws IOException {
+	public void getters_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		final var info = FileDetails.parse(file);
 		final var batchFile = new BatchFile(info);
@@ -285,7 +286,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void buildGridPaneLegacy_test() throws IOException {
+	public void buildGridPaneLegacy_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testCSV.csv");
 		final var info = FileDetails.parse(file);
 
@@ -320,7 +321,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPane_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/batchFileTests/testNewCSV.csv");
 		final var info = FileDetails.parse(file);
 

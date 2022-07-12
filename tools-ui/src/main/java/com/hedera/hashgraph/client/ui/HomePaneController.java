@@ -65,7 +65,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.util.encoders.Hex;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -76,7 +75,6 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,16 +82,15 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.FONT_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored" })
@@ -104,10 +101,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private static final String INPUT_FILES = "InputFiles";
 	private static final double VBOX_SPACING = 20;
 	private boolean badDrive = false;
-
-	private final Map<String, File> privateKeyMap = new HashMap<>();
-
-	private Map<String, String> publicKeyMap;
 
 	// region FXML
 
@@ -136,11 +129,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	}
 
 	public void initializeHomePane() {
-		loadPubKeys();
-		loadPKMap();
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
-		FONT_SIZE.bind(homeFilesScrollPane.widthProperty().add(homeFilesScrollPane.heightProperty()).divide(98));
 
 		try {
 			// Only refresh if there have been changes in the remotes or the history
@@ -266,6 +256,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	 */
 	private void removeHistoryFiles() {
 		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
+			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
+				final var su = (SoftwareUpdateFile) rf;
+				final var currentVersion = controller.getVersion().split(" ");
+				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+					controller.historyPaneController.removeFromHistory(rf);
+				}
+			}
 			if (controller.historyPaneController.isHistory(rf.hashCode())) {
 				logger.info("Removing {}", rf.getName());
 				remoteFilesMap.remove(rf.getName());
@@ -274,27 +271,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		logger.info("Done removing history");
 	}
 
-
-	private void loadPubKeys() {
-		publicKeyMap = new HashMap<>();
-		try {
-			final var pubFiles = new File(KEYS_FOLDER).listFiles((dir, name) -> name.endsWith(PUB_EXTENSION));
-			if (pubFiles == null) {
-				return;
-			}
-			for (final var pubFile : pubFiles) {
-				final var absolutePath = pubFile.getAbsolutePath();
-				publicKeyMap.put(getPublicKeyHexString(absolutePath), absolutePath);
-			}
-			logger.debug("pubFiles loaded");
-		} catch (final Exception ex) {
-			logger.error(ex);
-		}
-	}
-
-	private String getPublicKeyHexString(final String fileName) throws HederaClientException {
-		return Hex.toHexString(readBytes(fileName));
-	}
 
 	private List<VBox> displayFiles(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
 
@@ -331,7 +307,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf instanceof TransactionFile) {
 				setupKeyTree((TransactionFile) rf);
 			}
-
 
 			final var fileBox = rf.buildDetailsBox();
 			final var buttonsBox = getButtonsBox(rf);
@@ -521,8 +496,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						FileUtils.copyFile(new File(rf.getPath()), keysFile);
 						break;
 					case ACCOUNT_INFO:
-						controller.accountsPaneController.importInfoFiles(
+						final var importCount = controller.accountsPaneController.importInfoFiles(
 								Collections.singletonList(new File(rf.getPath())));
+						if (importCount <= 0) {
+							return;
+						}
 						break;
 					case BUNDLE:
 						for (final Map.Entry<BundleFile.InfoKey, File> entry :
@@ -663,7 +641,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final List<File> signers = new ArrayList<>(rf.getSignerSet());
 		Collections.sort(signers);
 		for (final var signer : signers) {
-			pairs.add(getAccountKeyPair(signer));
+			pairs.add(controller.getAccountKeyPair(signer));
 		}
 
 		output = rf.getParentPath().replace(INPUT_FILES, OUTPUT_FILES);
@@ -720,18 +698,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var keysPane = formatExtraSignersGridPane(KEYS_COLUMNS - 1);
 
 		final var signers = rf.getSigningPublicKeys();
-		final List<File> requiredKeys = new ArrayList<>();
-		for (final var signer : signers) {
-			final var key = Hex.toHexString(Hex.encode(signer.toByteArray()));
-			if (publicKeyMap.containsKey(key)) {
-				final var filename = FilenameUtils.getBaseName(publicKeyMap.get(key));
-				if (privateKeyMap.containsKey(filename)) {
-					requiredKeys.add(privateKeyMap.get(filename));
-					rf.addToSignerSet(privateKeyMap.get(filename));
-				}
-			}
-		}
-		requiredKeys.sort(new SortByFileBaseName());
+		final List<File> requiredKeys = controller.extractRequiredKeys(signers);
+		requiredKeys.forEach(rf::addToSignerSet);
+
 		keysPane.managedProperty().bind(keysPane.visibleProperty());
 		keysPane.visibleProperty().bind(Bindings.size(keysPane.getChildren()).greaterThan(0));
 
@@ -768,22 +737,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var baseName = FilenameUtils.getBaseName(keyFile.getName());
 		final var checkBox = new CheckBox(baseName);
 		checkBox.setSelected(true);
-		checkBoxListener(signersSet, keyFile, baseName, checkBox, logger);
+		checkBoxListener(signersSet, keyFile, baseName, checkBox);
 		return checkBox;
-	}
-
-	public static void checkBoxListener(
-			final Set<File> signersSet, final File keyFile, final String baseName, final CheckBox checkBox,
-			final Logger logger) {
-		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				logger.info("Added {} to list of signing keys", baseName);
-				signersSet.add(keyFile);
-			} else {
-				logger.info("Removed {} from list of signing keys", baseName);
-				signersSet.remove(keyFile);
-			}
-		});
 	}
 
 	private GridPane formatNeededSignersGridPane(final ButtonBar batchButtonBar, final ButtonBar extraBar,
@@ -863,18 +818,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		return filler;
 	}
 
-	private void loadPKMap() {
-		final var files = new File(controller.getPreferredStorageDirectory() + File.separator + "Keys").listFiles(
-				(dir, name) -> name.endsWith(PK_EXTENSION));
-		if (files != null) {
-			for (final var file : files) {
-				privateKeyMap.put(FilenameUtils.getBaseName(file.getName()), file);
-			}
-		}
-	}
 
-
-	private String buildCommentFile(final RemoteFile rf, final TextArea comment, final String name) throws IOException {
+	public String buildCommentFile(final RemoteFile rf, final TextArea comment, final String name) throws IOException {
 		final var userComments = new UserComments.Builder()
 				.withAuthor(controller.getEmailFromMap(rf.getParentPath()))
 				.withComment(comment.getText())
@@ -996,21 +941,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
-	private Pair<String, KeyPair> getAccountKeyPair(final File pemFile) throws HederaClientException {
-		final var pair = controller.getKeyPairUtility().getAccountKeyPair(pemFile);
-		if (pair == null) {
-			controller.displaySystemMessage(String.format("File %s not decrypted", pemFile.getName()));
-			throw new HederaClientException(String.format("File %s not decrypted", pemFile.getName()));
-		}
-		if (pair.getValue() == null) {
-			controller.displaySystemMessage(String.format("Invalid keypair in file %s", pemFile.getName()));
-			throw new HederaClientException(String.format("Invalid keypair in file %s", pemFile.getName()));
-		}
-		return pair;
-	}
-
 	class SortByFileBaseName implements Comparator<File> {
-
 		@Override
 		public int compare(final File o1, final File o2) {
 			final var path1 = o1.getAbsolutePath();

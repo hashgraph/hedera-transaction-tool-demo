@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
@@ -115,6 +116,11 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		} else {
 			throw new HederaClientException(CANNOT_VALIDATE_INPUT_ERROR_MESSAGE);
 		}
+	}
+
+	public void setNetwork(final String networkName) {
+		this.network = NetworkEnum.valueOf(networkName);
+		input.addProperty(NETWORK_FIELD_NAME, networkName);
 	}
 
 	public ToolTransaction(final File inputFile) throws HederaClientException {
@@ -212,7 +218,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public byte[] sign(final PrivateKey key) throws HederaClientRuntimeException {
+	public byte[] sign(final PrivateKey key) {
 		return key.signTransaction(transaction);
 	}
 
@@ -286,7 +292,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	@Override
-	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException {
+	public TransactionReceipt submit() throws HederaClientRuntimeException, InterruptedException,
+			PrecheckStatusException, ReceiptStatusException {
 
 		final TransactionReceipt receipt;
 		try (final var client = setupClient(input)) {
@@ -304,7 +311,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			}
 			final var transactionResponse = transaction.execute(client);
 			receipt = transactionResponse.getReceipt(client);
-		} catch (final HederaClientException | TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
+		} catch (final HederaClientException | TimeoutException e) {
 			logger.error(e);
 			throw new HederaClientRuntimeException(e);
 		}
@@ -481,6 +488,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * Determines the public keys that are involved in the transactions.
+	 *
+	 * @return a list of ByteStrings
+	 */
+	public Set<ByteString> getSigningKeys(){
+		return getSigningKeys(Constants.ACCOUNTS_INFO_FOLDER);
+	}
+
 	private Set<ByteString> addToKeySet(final File[] files) {
 		final Set<ByteString> keysSet = new HashSet<>();
 		java.util.Arrays.stream(files).filter(File::exists).forEachOrdered(accountFile -> {
@@ -534,5 +550,13 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
 		}
 		return false;
+	}
+
+	public ToolTransaction atNow() throws HederaClientException {
+		final var json = this.asJson();
+		final var now = new Timestamp();
+		json.addProperty(TRANSACTION_VALID_START_READABLE_FIELD_NAME, now.asRFCString());
+		json.add(TRANSACTION_VALID_START_FIELD_NAME, now.asJSON());
+		return new ToolTransaction(json);
 	}
 }

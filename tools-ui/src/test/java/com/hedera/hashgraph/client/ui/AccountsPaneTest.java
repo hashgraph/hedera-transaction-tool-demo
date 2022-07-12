@@ -461,6 +461,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	}
 
 	// region AUXILIARY METHODS
+	@SuppressWarnings("UnusedReturnValue")
 	private AccountsPanePage loadAccountInfo(final String name, final String location) {
 		logger.info("Loading account {} from {}", name, location);
 		return accountsPanePage.loadInfoFromHiddenTextField(location)
