@@ -197,8 +197,7 @@ public class RemoteFilesMap {
 					}
 				}
 			} catch (final Exception exception) {
-				logger.error("Could not load remote file from {} due to error {}", f.getName(), exception.getMessage());
-				logger.error(exception);
+				logger.error("Could not load remote file from '" + f.getPath() + "/" + f.getName() + "' due to error ", exception);
 			}
 		}
 		return remoteFiles;

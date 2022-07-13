@@ -203,7 +203,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
 			answer = false;
 		}
-		
+
 		try {
 			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
 			if (stakedNodeId != null) {

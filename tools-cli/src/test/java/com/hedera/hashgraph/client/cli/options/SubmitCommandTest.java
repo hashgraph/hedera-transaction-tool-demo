@@ -207,7 +207,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 	@Test
 	void submitMultipleTransactions_test() throws Exception {
-		int count = 10;
+		int count = 5;
 		final Random rand = new Random();
 		final var iterator = receipts.entrySet().iterator();
 		final List<String> transactions = new ArrayList<>();
@@ -220,11 +220,17 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 		for (int i = 0; i < TEST_SIZE; i++) {
 			final var transactionValidStart = Instant.now().plusSeconds(count);
-			final String transactionLocation =
-					createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart);
-			transactions.add(transactionLocation);
+			transactions.add(createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart));
+
+			if (i == TEST_SIZE / 2) {
+				for (int j = 1; j <= TEST_SIZE; j++) {
+					transactions.add(createTransfer(3, sender.getKey(), receiver.getKey(), transactionValidStart.plusNanos(j)));
+				}
+			}
+
 			count += rand.nextInt(5) + 1;
 		}
+
 		final String[] args =
 				{ "submit", "-t", TRANSACTIONS, "-n", "INTEGRATION", "-o", RECEIPTS };
 		ToolsMain.main(args);
@@ -242,7 +248,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				.execute(client)
 				.hbars;
 
-		assertEquals(TEST_SIZE * 1000, finalBalance.toTinybars() - initialBalance.toTinybars());
+		assertEquals(TEST_SIZE * 2000, finalBalance.toTinybars() - initialBalance.toTinybars());
 	}
 
 	@Test

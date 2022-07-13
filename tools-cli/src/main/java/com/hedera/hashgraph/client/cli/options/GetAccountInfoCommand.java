@@ -32,6 +32,9 @@ import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import io.grpc.StatusRuntimeException;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import picocli.CommandLine;
 
 import java.io.File;
@@ -42,6 +45,7 @@ import static com.hedera.hashgraph.client.core.security.PasswordInput.readPasswo
 
 @CommandLine.Command(name = "get-account-info", aliases = { "gi" }, description = "Get account information")
 public class GetAccountInfoCommand implements ToolCommand {
+	private static final  Logger logger = LogManager.getLogger(GetAccountInfoCommand.class);
 
 	@CommandLine.Option(names = { "-a", "--account" }, description = "Account number(s) of the accounts that require " +
 			"infos", split = "[, \\t\\n\\x0B\\f\\r]", required = true)

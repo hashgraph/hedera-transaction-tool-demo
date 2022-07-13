@@ -23,17 +23,13 @@ package com.hedera.hashgraph.client.cli.options;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(subcommands = {
-		GetAccountInfoCommand.class,
-		CollateCommand.class,
-		SubmitCommand.class,
-		ConvertToKeyCommand.class
+@Command
+public class LoggingOptions {
 
-}, usageHelpWidth = 135)
+	@CommandLine.Option(names = { "-lfn", "--log-file-name" }, description = "The base name of all log files (default = 'app').")
+	private String logFileName;
 
-public class ToolOptions extends LoggingOptions {
-
-	@CommandLine.Option(names = { "-h", "--help" }, usageHelp = true, description = "Display help and exit.")
-	private boolean help;
-
+	public String getLogFileName() {
+		return logFileName;
+	}
 }

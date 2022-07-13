@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -50,11 +49,10 @@ import java.util.concurrent.FutureTask;
 
 import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static java.lang.Thread.sleep;
 
 @CommandLine.Command(name = "submit", aliases = { "sbm" }, description = "Submit transaction(s)")
 public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
-	Logger logger = LogManager.getLogger(SubmitCommand.class);
+	private static final Logger logger = LogManager.getLogger(SubmitCommand.class);
 
 	@CommandLine.Option(names = { "-t", "--file-with-transaction" }, arity = "1..*", description = "The path(s) to " +
 			"the transaction file(s) or directory that contains transaction files", required = true)
@@ -77,6 +75,13 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			"submitted in the future, the app will wait until there are this amount of seconds left before waking up")
 	private int readyTime = 1;
 
+	@CommandLine.Option(names = { "-threads", "--number-of-threads" }, description =
+			"The number of threads to use to submit transactions. Defaults to 1000. This value can be large because the threads do not"
+					+ " do much work other than wait on sockets. We need it to be large because many transactions can require submission"
+					+ " at the same moment and a low number could cause transactions to expire before the tool has a chance to submit"
+					+ " them.")
+	private int numberOfThreads = 1000;
+
 	@Override
 	public void execute() throws HederaClientException, InterruptedException {
 
@@ -92,7 +97,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		// Setup threads
 		final var transactionsFutureTasks = new FutureTask[files.size()];
-		final var executorServiceTransactions = Executors.newFixedThreadPool(Constants.NUMBER_OF_THREADS);
+		final var executorServiceTransactions = Executors.newFixedThreadPool(this.numberOfThreads);
 
 
 		// Load transactions into the priority queue
@@ -110,6 +115,10 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
 			transactionsFutureTasks[count] = new FutureTask<>(worker);
 			executorServiceTransactions.submit(transactionsFutureTasks[count]);
+
+			// We wait till workers are actually executing to proceed. No need to execute more if they are just going to sleep.
+			worker.doneSleeping.await();
+
 			count++;
 
 		}
