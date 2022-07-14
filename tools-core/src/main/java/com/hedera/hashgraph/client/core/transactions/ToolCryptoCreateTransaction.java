@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -40,12 +41,16 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.trimString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.verifyFieldExist;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
@@ -58,6 +63,9 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	private boolean receiverSignatureRequired;
 	private int maxTokenAssociations = MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
 	private String accountMemo = "";
+	private Identifier stakedAccountId;
+	private Long stakedNodeId;
+	private boolean declineStakingRewards;
 
 	private static final Logger logger = LogManager.getLogger(ToolCryptoCreateTransaction.class);
 
@@ -74,6 +82,10 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		this.receiverSignatureRequired = ((AccountCreateTransaction) transaction).getReceiverSignatureRequired();
 		this.maxTokenAssociations = ((AccountCreateTransaction) transaction).getMaxAutomaticTokenAssociations();
 		this.accountMemo = ((AccountCreateTransaction) transaction).getAccountMemo();
+		this.stakedAccountId = ((AccountCreateTransaction) transaction).getStakedAccountId() == null ? null :
+				new Identifier(((AccountCreateTransaction) transaction).getStakedAccountId());
+		this.stakedNodeId = ((AccountCreateTransaction) transaction).getStakedNodeId();
+		this.declineStakingRewards = ((AccountCreateTransaction) transaction).getDeclineStakingReward();
 		setTransactionType(TransactionType.CRYPTO_CREATE);
 	}
 
@@ -99,6 +111,18 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	public String getAccountMemo() {
 		return accountMemo;
+	}
+
+	public Identifier getStakedAccountId() {
+		return stakedAccountId;
+	}
+
+	public Long getStakedNodeId() {
+		return stakedNodeId;
+	}
+
+	public boolean isDeclineStakingRewards() {
+		return declineStakingRewards;
 	}
 
 	@Override
@@ -160,6 +184,29 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 			answer = false;
 		}
 
+		try {
+			stakedAccountId = input.has(STAKED_ACCOUNT_ID_FIELD_NAME)
+					? Identifier.parse(input.getAsJsonObject(STAKED_ACCOUNT_ID_FIELD_NAME)) : null;
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_ACCOUNT_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_NODE_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			declineStakingRewards = input.has(DECLINE_STAKING_REWARDS_FIELD_NAME) && input.get(DECLINE_STAKING_REWARDS_FIELD_NAME)
+					.getAsBoolean();
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, DECLINE_STAKING_REWARDS_FIELD_NAME);
+			answer = false;
+		}
+
 		return answer;
 	}
 
@@ -169,6 +216,15 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 				new TransactionId(feePayerID.asAccount(), transactionValidStart);
 
 		final var accountCreateTransaction = new AccountCreateTransaction();
+
+		if (stakedAccountId != null) {
+			accountCreateTransaction
+				.setStakedAccountId(stakedAccountId.asAccount());
+		}
+		if (stakedNodeId != null) {
+			accountCreateTransaction
+					.setStakedNodeId(stakedNodeId);
+		}
 
 		return accountCreateTransaction
 				.setKey(key)
@@ -182,6 +238,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 				.setReceiverSignatureRequired(receiverSignatureRequired)
 				.setAccountMemo(accountMemo)
 				.setMaxAutomaticTokenAssociations(maxTokenAssociations)
+				.setDeclineStakingReward(declineStakingRewards)
 				.freeze();
 	}
 
@@ -210,6 +267,13 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		asJson.add("key", EncryptionUtils.keyToJson(key));
 		asJson.addProperty("autoRenewDuration", autoRenewDuration.getSeconds());
 		asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+		if (stakedAccountId != null) {
+			asJson.add(STAKED_ACCOUNT_ID_FIELD_NAME, stakedAccountId.asJSON());
+		}
+		if (stakedNodeId != null) {
+			asJson.addProperty(STAKED_NODE_ID_FIELD_NAME, stakedNodeId);
+		}
+		asJson.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards);
 		return asJson;
 	}
 }

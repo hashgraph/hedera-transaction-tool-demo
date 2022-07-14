@@ -119,7 +119,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var emptyFile = new TransactionFile();
 		assertFalse(emptyFile.isValid());
 
@@ -159,7 +159,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void getters_test() throws IOException {
+	public void getters_test() throws HederaClientException {
 		final var file = new File(
 				"src/test/resources/Files/TransactionFileTests/createAccount.tx");
 		final var info = FileDetails.parse(file);
@@ -179,7 +179,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneCreate_test() throws IOException {
+	public void buildGridPaneCreate_test() throws HederaClientException {
 		final var file = new File(
 				"src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/InputFiles/1743832800-0_0_94-58824159.tx");
 		final var info = FileDetails.parse(file);
@@ -187,21 +187,21 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 		final var createTransaction = new TransactionFile(info);
 		final var gridPane = createTransaction.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(20, gridPane.getChildren().size());
+		assertEquals(28, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
-		var label = (Label) gridPane.getChildren().get(3);
+		var label = (Label) gridPane.getChildren().get(4);
 		assertEquals("0.0.94-bbukb", label.getText());
 
-		label = (Label) gridPane.getChildren().get(5);
+		label = (Label) gridPane.getChildren().get(6);
 		assertTrue(label.getText().contains("2025-04-05 06:00:00 UTC"));
 
-		assertTrue(gridPane.getChildren().get(9) instanceof Hyperlink);
-
-		label = (Label) gridPane.getChildren().get(11);
-		assertEquals("7000000 seconds", label.getText());
+		assertTrue(gridPane.getChildren().get(11) instanceof Hyperlink);
 
 		label = (Label) gridPane.getChildren().get(13);
+		assertEquals("7000000 seconds", label.getText());
+
+		label = (Label) gridPane.getChildren().get(15);
 		assertEquals("0 tℏ", label.getText());
 
 		final var signers = createTransaction.getSigningPublicKeys();
@@ -210,34 +210,34 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneTransfer_test() throws IOException {
+	public void buildGridPaneTransfer_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/transferTransaction.tx");
 		final var info = FileDetails.parse(file);
 
 		final var transfer = new TransactionFile(info);
 		final var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(14, gridPane.getChildren().size());
+		assertEquals(16, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
-		var label = (Label) gridPane.getChildren().get(3);
+		var label = (Label) gridPane.getChildren().get(4);
 		assertEquals("0.0.76-csasv", label.getText());
 
-		label = (Label) gridPane.getChildren().get(5);
+		label = (Label) gridPane.getChildren().get(6);
 		assertTrue(label.getText().contains("2029-05-05 22:10:07 UTC"));
 
-		label = (Label) gridPane.getChildren().get(7);
+		label = (Label) gridPane.getChildren().get(8);
 		assertEquals("0.0.3-tzfmz", label.getText());
 
 
-		label = (Label) gridPane.getChildren().get(9);
+		label = (Label) gridPane.getChildren().get(11);
 		assertEquals("0.0.50-rlcsj", label.getText());
-		label = (Label) gridPane.getChildren().get(10);
+		label = (Label) gridPane.getChildren().get(12);
 		assertEquals("-100 ℏ", label.getText());
 
-		label = (Label) gridPane.getChildren().get(12);
+		label = (Label) gridPane.getChildren().get(14);
 		assertEquals("0.0.94-bbukb", label.getText());
-		label = (Label) gridPane.getChildren().get(13);
+		label = (Label) gridPane.getChildren().get(15);
 		assertEquals("100 ℏ", label.getText());
 
 		final var signers = transfer.getSigningPublicKeys();
@@ -246,29 +246,29 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPaneFileUpdate_test() throws IOException {
+	public void buildGridPaneFileUpdate_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionFileTests/systemDelete.tx");
 		final var info = FileDetails.parse(file);
 
 		final var transfer = new TransactionFile(info);
 		final var gridPane = transfer.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(12, gridPane.getChildren().size());
+		assertEquals(14, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
-		var label = (Label) gridPane.getChildren().get(3);
+		var label = (Label) gridPane.getChildren().get(4);
 		assertEquals("0.0.2-lpifi", label.getText());
 
-		label = (Label) gridPane.getChildren().get(5);
+		label = (Label) gridPane.getChildren().get(6);
 		assertTrue(label.getText().contains("2026-05-02 09:27:13 UTC"));
 
-		label = (Label) gridPane.getChildren().get(7);
+		label = (Label) gridPane.getChildren().get(8);
 		assertEquals("0.0.3-tzfmz", label.getText());
 
-		label = (Label) gridPane.getChildren().get(9);
+		label = (Label) gridPane.getChildren().get(11);
 		assertEquals("0.0.123", label.getText());
 
-		label = (Label) gridPane.getChildren().get(11);
+		label = (Label) gridPane.getChildren().get(13);
 		assertTrue(label.getText().contains("2028-05-06 06:00:00 UTC"));
 
 		final var signers = transfer.getSigningPublicKeys();

@@ -56,7 +56,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionTools-1.1.0-rc.1.pkg");
 		final var update = FileDetails.parse(file);
 
@@ -80,7 +80,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 	}
 
 	@Test
-	public void expired_test() throws IOException {
+	public void expired_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionTools-1.1.0-rc.1.pkg");
 		final var update = FileDetails.parse(file);
 
@@ -105,7 +105,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 	}
 
 	@Test
-	public void actions_test() throws IOException {
+	public void actions_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/TransactionTools-1.1.0-rc.1.pkg");
 		final var update = FileDetails.parse(file);
 
@@ -115,7 +115,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 	}
 
 	@Test
-	public void compareTo_test() throws IOException {
+	public void compareTo_test() throws IOException, HederaClientException {
 		final var file1 = new File("src/test/resources/Files/TransactionTools-1.1.0-rc.1.pkg");
 		final var update1 = FileDetails.parse(file1);
 		final var softwareUpdateFile1 = new SoftwareUpdateFile(update1);

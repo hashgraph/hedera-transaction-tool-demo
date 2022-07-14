@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.FileAppendTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -35,15 +36,32 @@ import java.util.Collections;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
 
 public class ToolFileAppendTransaction extends ToolTransaction {
 	private Identifier file;
 	private byte[] bytes;
+	private String location;
 	private static final Logger logger = LogManager.getLogger(ToolFileAppendTransaction.class);
 
 	public ToolFileAppendTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.FILE_APPEND;
+	}
+
+	@Override
+	public ToolFileAppendTransaction atNow() throws HederaClientException {
+		final var json = this.asJson();
+		final var now = new Timestamp();
+		writeBytes(location, bytes);
+		json.addProperty(TRANSACTION_VALID_START_READABLE_FIELD_NAME, now.asRFCString());
+		json.add(TRANSACTION_VALID_START_FIELD_NAME, now.asJSON());
+		return new ToolFileAppendTransaction(json);
+	}
+
+	public Identifier getFile() {
+		return file;
 	}
 
 	@Override
@@ -71,7 +89,8 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 		}
 
 		try {
-			bytes = readBytes(input.get(CONTENTS_FIELD_NAME).getAsString());
+			this.location = input.get(CONTENTS_FIELD_NAME).getAsString();
+			bytes = readBytes(this.location);
 		} catch (final HederaClientException e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, CONTENTS_FIELD_NAME);
 			answer = false;
@@ -100,6 +119,14 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 				.setTransactionValidDuration(transactionValidDuration)
 				.freeze();
 
+	}
+
+	@Override
+	public JsonObject asJson() {
+		final var input = super.asJson();
+		input.add(FILE_ID_FIELD_NAME, file.asJSON());
+		input.addProperty(CONTENTS_FIELD_NAME, location);
+		return input;
 	}
 
 }

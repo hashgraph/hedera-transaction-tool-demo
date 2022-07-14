@@ -351,7 +351,17 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	@Test
 	public void loadUpdateAccount_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
-		createPanePage.createAndExport(resources);
+
+		final var popup = TestUtil.getPopupNodes();
+		assertNotNull(popup);
+		final var labels = TestUtil.getLabels(popup);
+		assertEquals(
+				"in order to display data regarding account 0.0.1-dfkxr, please download the information from the " +
+						"network.",
+				labels.get(0));
+
+		createPanePage.closePopup("CONTINUE")
+				.createAndExport(resources);
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -401,7 +411,17 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 
 	@Test
 	public void loadUpdateAccountMakeChanges_test() throws HederaClientException {
-		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx")
+		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
+
+		final var popup = TestUtil.getPopupNodes();
+		assertNotNull(popup);
+		final var labels = TestUtil.getLabels(popup);
+		assertEquals(
+				"in order to display data regarding account 0.0.1-dfkxr, please download the information from the " +
+						"network.",
+				labels.get(0));
+
+		createPanePage.closePopup("CONTINUE")
 				.setMemo("A memo")
 				.setFeePayerAccount(1009);
 
@@ -456,10 +476,29 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 
 	@Test
 	public void loadUpdateAccountChangeAccount_test() throws HederaClientException {
-		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx")
+		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
+
+		final var popup = TestUtil.getPopupNodes();
+		assertNotNull(popup);
+		final var labels = TestUtil.getLabels(popup);
+		assertEquals(
+				"in order to display data regarding account 0.0.1-dfkxr, please download the information from the " +
+						"network.",
+				labels.get(0));
+
+		createPanePage.closePopup("CONTINUE")
 				.setUpdateAccount(10006);
 
-		createPanePage.createAndExport(resources);
+		final var popup2 = TestUtil.getPopupNodes();
+		assertNotNull(popup2);
+		final var labels2 = TestUtil.getLabels(popup2);
+		assertEquals(
+				"in order to display data regarding account 0.0.10006-pbphp, please download the information from the " +
+						"network.",
+				labels2.get(0));
+
+		createPanePage.closePopup("CONTINUE")
+				.createAndExport(resources);
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(

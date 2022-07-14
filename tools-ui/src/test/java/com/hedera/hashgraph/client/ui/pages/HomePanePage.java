@@ -20,10 +20,12 @@ package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.ui.TestBase;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -34,9 +36,12 @@ import javafx.scene.layout.VBox;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static java.lang.Thread.sleep;
 
 @SuppressWarnings("UnusedReturnValue")
@@ -75,20 +80,6 @@ public class HomePanePage {
 		final var textField = (TextField) Objects.requireNonNull(TestUtil.getPopupNodes()).get(1);
 		textField.setText(text);
 		driver.clickOn(textField).press(KeyCode.ENTER).release(KeyCode.ENTER);
-		return this;
-	}
-
-	public HomePanePage filter(final String query) {
-		final VBox filterBox = driver.find("#filterVBox");
-		final var pane = (GridPane) ((VBox) filterBox.getChildren().get(1)).getChildren().get(0);
-		final var checkboxes = pane.getChildren();
-		for (final var checkbox : checkboxes) {
-			assert checkbox instanceof CheckBox;
-			if (((CheckBox) checkbox).getText().toLowerCase().contains(query.toLowerCase())) {
-				driver.clickOn(checkbox);
-				return this;
-			}
-		}
 		return this;
 	}
 
@@ -147,5 +138,20 @@ public class HomePanePage {
 		ensureVisible(driver.find(MAIN_TRANSACTIONS_SCROLLPANE), button);
 		driver.clickOn(button);
 		return this;
+	}
+
+	public List<VBox> getInfoCards() {
+		final VBox vBox = driver.find(NEW_FILES_VBOX);
+		final var children = vBox.getChildren();
+		return children.stream().filter(
+				child -> child instanceof VBox && getLabel(((VBox) child).getChildren(), "Account Information")).map(
+				child -> (VBox) child).collect(Collectors.toList());
+	}
+
+	private boolean getLabel(final ObservableList<Node> nodes, final String title) {
+		return nodes.stream().anyMatch(node -> node instanceof Label && ((Label) node).getText().equals(title) ||
+				node instanceof HBox && getLabel(((HBox) node).getChildren(), title) ||
+				node instanceof VBox && getLabel(((VBox) node).getChildren(), title) ||
+				node instanceof GridPane && getLabel(((GridPane) node).getChildren(), title));
 	}
 }

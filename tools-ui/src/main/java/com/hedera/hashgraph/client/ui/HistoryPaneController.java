@@ -28,8 +28,8 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
-import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -83,6 +83,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -97,13 +98,17 @@ import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 import static com.hedera.hashgraph.client.core.enums.FileType.getType;
+import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
+import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	public static final String RESET_ICON = "icons/sign-back.png";
+	public static final String SENT_ICON = "icons/icons8-sent-100.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 
 	private final Map<Integer, Boolean> historyMap = new HashMap<>();
@@ -228,10 +233,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
 				continue;
 			}
-			if (!file.isValid()){
-				logger.info("File {} cannot be parsed. Skipped",file.getName());
-				continue;
-			}
 			logger.info("Parsing file {}", file.getName());
 			final var data = new HistoryData(file);
 			data.setHistory(true);
@@ -257,6 +258,14 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		addition.setHistory(true);
 		historyMap.put(addition.getCode(), true);
 		tableList.add(0, addition);
+		tableView.refresh();
+	}
+
+	public void removeFromHistory(final RemoteFile remoteFile){
+		noise = false;
+		final var remove = new HistoryData(remoteFile);
+		tableList.remove(remove);
+		historyMap.remove(remoteFile.hashCode());
 		tableView.refresh();
 	}
 
@@ -309,7 +318,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getExpirationColumn());
 		tableView.getColumns().add(getFeePayerColumn());
 		tableView.getColumns().add(getLastActionColumn());
-		tableView.getColumns().add(getReSignColumn(tableView));
+		tableView.getColumns().add(getButtonColumn(tableView));
 
 		setDataToTable();
 	}
@@ -427,7 +436,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * 		The table where the button will be added
 	 * @return a TableColumn
 	 */
-	private TableColumn<HistoryData, String> getReSignColumn(final TableView<HistoryData> table) {
+	private TableColumn<HistoryData, String> getButtonColumn(final TableView<HistoryData> table) {
 		final var actionColumn = new TableColumn<HistoryData, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		final var cellFactory =
@@ -438,26 +447,36 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					public void updateItem(final String item, final boolean empty) {
 						setText(null);
 						if (!empty) {
-							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
-								final var historyData = table.getItems().get(getIndex());
-								button.setText(historyData.getFileName());
-								button.setStyle("-fx-font-size: 2");
+							final var historyData = table.getItems().get(getIndex());
+							final var succeeded = historyData.transactionSucceeded();
+							if (succeeded != null) {
+								setGraphic(twoImages(Boolean.TRUE.equals(succeeded)));
+								return;
 							}
-							final var historyData = getTableView().getItems().get(getIndex());
-							button.setVisible(!historyData.isExpired());
-							button.setDisable(!historyData.isHistory());
 
-							if (ACCOUNT_INFO.equals(historyData.getType()) ||
-									BUNDLE.equals(historyData.getType()) ||
-									PUBLIC_KEY.equals(historyData.getType()) ||
-									SOFTWARE_UPDATE.equals(historyData.getType())) {
-								button.setVisible(historyData.getActions().equals(Actions.DECLINE));
-							}
-							button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
+							setupButtonBehavior(historyData);
 							setGraphic(button);
 							return;
 						}
 						setGraphic(null);
+					}
+
+					private void setupButtonBehavior(final HistoryData historyData) {
+						if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
+							button.setText(historyData.getFileName());
+							button.setStyle("-fx-font-size: 2");
+						}
+
+						button.setVisible(!historyData.isExpired());
+						button.setDisable(!historyData.isHistory());
+
+						if (ACCOUNT_INFO.equals(historyData.getType()) ||
+								BUNDLE.equals(historyData.getType()) ||
+								PUBLIC_KEY.equals(historyData.getType()) ||
+								SOFTWARE_UPDATE.equals(historyData.getType())) {
+							button.setVisible(historyData.getActions().equals(Actions.DECLINE));
+						}
+						button.setOnAction(actionEvent -> setHistoryDataAction(historyData));
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
@@ -500,7 +519,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(data.getRemoteFilePath())));
 			remoteFile.setHistory(true);
 			return remoteFile.buildDetailsBox();
-		} catch (final HederaClientException | IOException e) {
+		} catch (final HederaClientException e) {
 			logger.error(e);
 		}
 		final var l = new Label(data.getFileName());
@@ -524,6 +543,12 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		feePayerPredicate = historyData -> {
 			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
+			final var text = join(", ", accounts.stream()
+					.map(account -> Identifier
+							.parse(account.toString(), controller.getCurrentNetwork())
+							.toReadableString())
+					.collect(Collectors.toCollection(ArrayList::new)));
+			feePayerTextField.setText(text);
 			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
 		};
 
@@ -569,7 +594,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		typeFilterVBox.managedProperty().bind(typeFilterVBox.visibleProperty());
 		typeFilterVBox.setVisible(false);
 		final var size = typeFilter.size();
-		final var filterTitle = size > 0 ? String.format("filters (%d)", size) : "filters";
+		final var filterTitle = size > 0 ? format("filters (%d)", size) : "filters";
 		final var title = new Label(filterTitle);
 		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
 		title.setPadding(new Insets(5));
@@ -687,21 +712,20 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return hBox;
 	}
 
-	/**
-	 * Setups a button with an icon
-	 *
-	 * @param imageLocation
-	 * 		the relative location of the image of the icon to be used
-	 * @return a button with the image provided
-	 */
-	private Button formatButton(final String imageLocation, final int size) {
-		final var button = new Button();
-		final var imageView = new ImageView(new Image(imageLocation));
-		imageView.setFitHeight(size);
-		imageView.setPreserveRatio(true);
-		button.setGraphic(imageView);
-		button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
-		return button;
+	private HBox twoImages(final boolean success) {
+		final var sent = new Image(SENT_ICON);
+		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-96.png");
+		final var bottom = new ImageView(sent);
+		bottom.setFitHeight(30);
+		bottom.setPreserveRatio(true);
+		final var top = new ImageView(check);
+		top.setFitHeight(20);
+		top.setPreserveRatio(true);
+		final HBox layout = new HBox(10);
+		layout.getChildren().addAll(bottom, top);
+		layout.setSpacing(-1);
+		layout.setPadding(new Insets(10));
+		return layout;
 	}
 
 	/**
@@ -716,7 +740,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 			FileDetails details = null;
 			try {
 				details = FileDetails.parse(filename);
-			} catch (final IOException e) {
+			} catch (final HederaClientException e) {
 				logger.error(e.getMessage());
 			}
 
@@ -764,7 +788,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		toolTipButton.setMinWidth(25);
 
 		toolTipButton.setOnAction(
-				actionEvent -> Utilities.showTooltip(controller.homePane, toolTipButton, text));
+				actionEvent -> CommonMethods.showTooltip(controller.homePane, toolTipButton, text));
 		return toolTipButton;
 	}
 
@@ -794,7 +818,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	@NotNull
 	private SimpleStringProperty setupFeePayerCell(final TableColumn.CellDataFeatures<HistoryData, String> cellData) {
 		final var id = cellData.getValue().getFeePayerId();
-		if (id == null || id.equals(Identifier.ZERO)) {
+		if (id.equals(Identifier.ZERO)) {
 			return new SimpleStringProperty("");
 		}
 		return new SimpleStringProperty(id.toNicknameAndChecksum(controller.getAccountsList()));
@@ -811,7 +835,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private CheckBox getCheckBox(final FileType type, final String typeString) {
-		final var checkBox = new CheckBox(String.format("%s (%d)", typeString, countType(type)));
+		final var checkBox = new CheckBox(format("%s (%d)", typeString, countType(type)));
 		checkBox.setSelected(typeFilter.contains(type));
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.FALSE.equals(t1)) {

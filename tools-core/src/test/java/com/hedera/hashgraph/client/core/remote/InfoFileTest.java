@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
@@ -78,7 +79,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 
@@ -99,7 +100,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException {
+	public void buildGridPane_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 

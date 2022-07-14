@@ -48,7 +48,7 @@ public class MetaDataFileTest extends TestBase {
 	}
 
 	@Test
-	public void constructor_test() throws IOException {
+	public void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.meta");
 		final var info = FileDetails.parse(file);
 
@@ -68,8 +68,7 @@ public class MetaDataFileTest extends TestBase {
 		FileUtils.copyFile(new File("src/test/resources/Files/0.0.2.meta"),
 				fileCopy);
 
-		final var file = fileCopy;
-		final var info = FileDetails.parse(file);
+		final var info = FileDetails.parse(fileCopy);
 
 		final var metaDataFile = new MetadataFile(info);
 		final var initialActions = metaDataFile.getMetadataActions();

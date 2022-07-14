@@ -82,6 +82,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 	private final JcaPEMKeyConverter converter;
 	private final char[] password;
 
+	@SuppressWarnings("unused")
 	public static final class Builder {
 
 		public Builder withPassword(final char[] password) {
@@ -164,6 +165,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 		return generator.generateKeyPair();
 	}
 
+	@SuppressWarnings("UnusedReturnValue")
 	public KeyPair insertNewKeyPair() throws KeyStoreException {
 		try {
 			final var kp = createKeyPair();
@@ -220,7 +222,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 					.setPRF(PKCS8Generator.PRF_HMACSHA384)
 					.setIterationCount(ITERATION_COUNT)
 					.setRandom(random)
-					.setPasssword(password)
+					.setPassword(password)
 					.setProvider(BC_PROVIDER)
 					.build();
 
@@ -246,7 +248,7 @@ public class Ed25519KeyStore extends ArrayList<KeyPair> implements KeyStore {
 					.setPRF(PKCS8Generator.PRF_HMACSHA384)
 					.setIterationCount(ITERATION_COUNT)
 					.setRandom(random)
-					.setPasssword(password)
+					.setPassword(password)
 					.setProvider(BC_PROVIDER)
 					.build();
 

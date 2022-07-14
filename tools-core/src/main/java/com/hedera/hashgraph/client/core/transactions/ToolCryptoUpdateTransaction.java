@@ -37,16 +37,22 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
 
 public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
@@ -56,6 +62,10 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	private Boolean receiverSignatureRequired;
 	private Integer maxTokenAssociations;
 	private String accountMemo;
+	private Set<String> updateList;
+	private Identifier stakedAccountId;
+	private Long stakedNodeId;
+	private Boolean declineStakingRewards;
 
 	private static final Logger logger = LogManager.getLogger(ToolCryptoUpdateTransaction.class);
 
@@ -72,6 +82,14 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		this.receiverSignatureRequired = ((AccountUpdateTransaction) transaction).getReceiverSignatureRequired();
 		this.maxTokenAssociations = ((AccountUpdateTransaction) transaction).getMaxAutomaticTokenAssociations();
 		this.accountMemo = ((AccountUpdateTransaction) transaction).getAccountMemo();
+		this.stakedAccountId = ((AccountUpdateTransaction) transaction).getStakedAccountId() == null ? null :
+				new Identifier(((AccountUpdateTransaction) transaction).getStakedAccountId());
+		this.stakedNodeId = ((AccountUpdateTransaction) transaction).getStakedNodeId();
+		try {
+			this.declineStakingRewards = ((AccountUpdateTransaction) transaction).getDeclineStakingReward();
+		} catch (NullPointerException npe) {
+			this.declineStakingRewards = null;
+		}
 		setTransactionType(TransactionType.CRYPTO_UPDATE);
 	}
 
@@ -99,16 +117,30 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return accountMemo;
 	}
 
+	public Identifier getStakedAccountId() {
+		return stakedAccountId;
+	}
+
+	public Long getStakedNodeId() {
+		return stakedNodeId;
+	}
+
+	public Boolean isDeclineStakingRewards() {
+		return declineStakingRewards;
+	}
+
 	@Override
 	public boolean checkInput(final JsonObject input) {
 		var answer = super.checkInput(input);
+		updateList = new HashSet<>();
 		if (!input.has(ACCOUNT_TO_UPDATE)) {
 			logger.error("The input json does not contain the account ID to update");
 			return false;
 		}
 
 		if (!CommonMethods.verifyOneOfExists(input, NEW_KEY_FIELD_NAME, AUTO_RENEW_PERIOD_FIELD_NAME,
-				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, ACCOUNT_MEMO_FIELD_NAME, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) {
+				RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, ACCOUNT_MEMO_FIELD_NAME, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
+				STAKED_NODE_ID_FIELD_NAME, STAKED_ACCOUNT_ID_FIELD_NAME, DECLINE_STAKING_REWARDS_FIELD_NAME)) {
 			return false;
 		}
 
@@ -124,6 +156,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			if (input.has(NEW_KEY_FIELD_NAME)) {
 				final var keyAsJsonObject = input.getAsJsonObject(NEW_KEY_FIELD_NAME);
 				this.key = EncryptionUtils.jsonToKey(keyAsJsonObject);
+				updateList.add("key");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, NEW_KEY_FIELD_NAME);
@@ -134,6 +167,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(AUTO_RENEW_PERIOD_FIELD_NAME)) {
 				this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
+				updateList.add("auto renew duration");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
@@ -143,6 +177,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME)) {
 				this.receiverSignatureRequired = input.get(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME).getAsBoolean();
+				updateList.add("receiver signature required");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME);
@@ -152,6 +187,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME)) {
 				this.maxTokenAssociations = input.get(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME).getAsInt();
+				updateList.add("maximum number of token associations");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, MAX_TOKEN_ASSOCIATIONS_FIELD_NAME);
@@ -161,13 +197,57 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		try {
 			if (input.has(ACCOUNT_MEMO_FIELD_NAME)) {
 				this.accountMemo = input.get(ACCOUNT_MEMO_FIELD_NAME).getAsString();
+				updateList.add("account memo");
 			}
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
 			answer = false;
 		}
+		
+		try {
+			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
+			if (stakedNodeId != null) {
+				updateList.add("staked node id");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_NODE_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			stakedAccountId = input.has(STAKED_ACCOUNT_ID_FIELD_NAME)
+					? Identifier.parse(input.getAsJsonObject(STAKED_ACCOUNT_ID_FIELD_NAME)) : null;
+			if (stakedAccountId != null) {
+				updateList.add("staked account id");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_ACCOUNT_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			declineStakingRewards = input.has(DECLINE_STAKING_REWARDS_FIELD_NAME) ? input.get(DECLINE_STAKING_REWARDS_FIELD_NAME)
+					.getAsBoolean() : null;
+			if (declineStakingRewards != null) {
+				updateList.add("decline staking rewards");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, DECLINE_STAKING_REWARDS_FIELD_NAME);
+			answer = false;
+		}
 
 		return answer;
+	}
+
+	/**
+	 * Returns an ordered list of the fields updated
+	 *
+	 * @return a list
+	 */
+	public List<String> getUpdateList() {
+		final var list = new ArrayList<>(updateList);
+		Collections.sort(list);
+		return list;
 	}
 
 	@Override
@@ -191,6 +271,18 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		}
 		if (accountMemo != null) {
 			accountUpdateTransaction.setAccountMemo(accountMemo);
+		}
+		if (stakedAccountId != null) {
+			accountUpdateTransaction
+				.setStakedAccountId(stakedAccountId.asAccount());
+		}
+		if (stakedNodeId != null) {
+			accountUpdateTransaction
+					.setStakedNodeId(stakedNodeId);
+		}
+		if (declineStakingRewards != null) {
+			accountUpdateTransaction
+					.setDeclineStakingReward(declineStakingRewards);
 		}
 
 		return accountUpdateTransaction
@@ -240,6 +332,15 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		}
 		if (receiverSignatureRequired != null) {
 			asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+		}
+		if (stakedAccountId != null) {
+			asJson.add(STAKED_ACCOUNT_ID_FIELD_NAME, stakedAccountId.asJSON());
+		}
+		if (stakedNodeId != null) {
+			asJson.addProperty(STAKED_NODE_ID_FIELD_NAME, stakedNodeId);
+		}
+		if (declineStakingRewards != null) {
+			asJson.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards);
 		}
 		return asJson;
 	}

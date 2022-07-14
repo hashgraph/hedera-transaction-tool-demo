@@ -24,6 +24,8 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
+import com.hedera.hashgraph.client.ui.pages.MainWindowPage;
+import com.hedera.hashgraph.client.ui.pages.SettingsPanePage;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -57,6 +59,7 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.ONEDRIVE_EMAIL_TF;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -426,6 +429,53 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		assertTrue(finalKeys.contains("principalTestingKey.pub"));
 	}
 
+
+	@Test
+	public void missingRemote_test() throws IOException, TimeoutException {
+		FileUtils.deleteDirectory(new File("src/test/resources/missing"));
+
+		final var settingsPanePage = new SettingsPanePage(this);
+		final var mainPage = new MainWindowPage(this);
+		mainPage.clickOnSettingsButton();
+		new File("src/test/resources/missing").mkdirs();
+
+		final Node node = find("#transactionFoldersVBoxSP");
+		assertTrue(node instanceof VBox);
+		settingsPanePage.pressAddFolder()
+				.setPath("src/test/resources/missing")
+				.createPopup();
+
+		assertFalse(find(ONEDRIVE_EMAIL_TF).isDisabled());
+
+		settingsPanePage.setEmail("test@testemail.net").pressConfirmAddFolder().createPopup();
+
+		mainPage.clickOnHomeButton();
+
+
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+		FileUtils.deleteDirectory(new File("src/test/resources/missing"));
+		FxToolkit.registerPrimaryStage();
+		FxToolkit.setupApplication(StartUI.class);
+
+		ObservableList<Node> popupNodes = null;
+		while (popupNodes == null) {
+			popupNodes = TestUtil.getPopupNodes();
+		}
+
+		final var labels = TestUtil.getLabels(popupNodes);
+
+		assertEquals(1, labels.size());
+		assertEquals(
+				"the application was unable to read files from the remote location: src/test/resources/missing. please " +
+						"make sure that the application is able to read the drive.",
+				labels.get(0));
+
+		final var button = TestUtil.findButtonInPopup(popupNodes, "CONTINUE");
+		clickOn(button);
+
+	}
 
 	private VBox findInBoxes(final String inclusions, final String exclusions) {
 		final var include = inclusions.split(",");

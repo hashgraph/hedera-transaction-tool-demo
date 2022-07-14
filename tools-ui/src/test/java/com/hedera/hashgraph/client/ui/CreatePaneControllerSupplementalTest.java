@@ -73,8 +73,8 @@ import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_CHOICE_BOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_LOCAL_TIME_LABEL;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ORIGINAL_KEY;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
@@ -278,12 +278,10 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setSeconds(45)
 				.setMemo("A memo")
 				.setFeePayerAccount(1019)
-				.setNodeAccount(42)
+				.setNodeAccount(4)
 				.setNewAccountMemo("Account memo test")
 				.setNewMaxTokenAss(250);
 
-
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
 
@@ -312,7 +310,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertEquals(new Identifier(0, 0, 1019).asAccount(),
@@ -444,9 +442,18 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 				.setAccountMemo(LOREM_IPSUM)
 				.setTokenAssociations(666);
 
-		assertTrue(find(CREATE_CHOICE_BOX).isVisible());
+
 		logger.info("Exporting to \"{}\"", resources);
 		createPanePage.createAndExport(resources);
+
+		assertTrue(find("#invalidNode").isVisible());
+		ensureVisible(find(CREATE_NODE_FIELD));
+		sleep(3000);
+		ensureVisible(find(CREATE_NODE_FIELD));
+		createPanePage.setNodeAccount(4)
+				.createAndExport(resources);
+
+		assertFalse(find("#invalidNode").isVisible());
 
 
 		final var transactions = new File(
@@ -474,7 +481,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 
 		assertNotNull(toolTransaction);
 
-		assertEquals(new Identifier(0, 0, 42), toolTransaction.getNodeID());
+		assertEquals(new Identifier(0, 0, 4), toolTransaction.getNodeID());
 		assertEquals("A memo", toolTransaction.getMemo());
 
 		assertTrue(toolTransaction.getTransaction() instanceof AccountCreateTransaction);
