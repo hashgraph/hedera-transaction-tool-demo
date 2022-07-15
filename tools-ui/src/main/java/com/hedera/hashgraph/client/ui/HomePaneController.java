@@ -168,7 +168,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 
 		} catch (final HederaClientException e) {
-			logger.error(e);
+			logger.error("initializeHomePane error", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
 		Platform.runLater(() -> homeFilesScrollPane.setVvalue(0.0));
