@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.11.0-beta</version>
+		<version>0.11.0-beta.2</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
