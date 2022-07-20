@@ -203,6 +203,38 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_MEMO_FIELD_NAME);
 			answer = false;
 		}
+		
+		try {
+			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
+			if (stakedNodeId != null) {
+				updateList.add("staked node id");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_NODE_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			stakedAccountId = input.has(STAKED_ACCOUNT_ID_FIELD_NAME)
+					? Identifier.parse(input.getAsJsonObject(STAKED_ACCOUNT_ID_FIELD_NAME)) : null;
+			if (stakedAccountId != null) {
+				updateList.add("staked account id");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, STAKED_ACCOUNT_ID_FIELD_NAME);
+			answer = false;
+		}
+
+		try {
+			declineStakingRewards = input.has(DECLINE_STAKING_REWARDS_FIELD_NAME) ? input.get(DECLINE_STAKING_REWARDS_FIELD_NAME)
+					.getAsBoolean() : null;
+			if (declineStakingRewards != null) {
+				updateList.add("decline staking rewards");
+			}
+		} catch (final Exception e) {
+			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, DECLINE_STAKING_REWARDS_FIELD_NAME);
+			answer = false;
+		}
 
 		try {
 			stakedNodeId = input.has(STAKED_NODE_ID_FIELD_NAME) ? input.get(STAKED_NODE_ID_FIELD_NAME).getAsLong() : null;
