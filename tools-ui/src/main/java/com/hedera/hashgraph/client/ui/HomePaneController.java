@@ -35,7 +35,6 @@ import com.hedera.hashgraph.client.core.remote.RemoteFilesMap;
 import com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
@@ -75,21 +74,24 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_INTERNAL_FILES;
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
+import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
+import static com.hedera.hashgraph.client.core.security.SecurityUtilities.verifySignature;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
@@ -97,8 +99,6 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListene
 public class HomePaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
-	private static final String OUTPUT_FILES = "OutputFiles";
-	private static final String INPUT_FILES = "InputFiles";
 	private static final double VBOX_SPACING = 20;
 	private boolean badDrive = false;
 
@@ -179,8 +179,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	private int countTotalFiles() {
 		var count = 0;
-		final var outs = controller.getOneDriveCredentials();
-		for (final var inputLocation : outs.keySet()) {
+		final var outs = new LinkedList<>(controller.getOneDriveCredentials().keySet());
+		outs.add(DEFAULT_INTERNAL_FILES);
+		for (final var inputLocation : outs) {
 			final var filelist = new File(inputLocation, INPUT_FILES).listFiles();
 			if (filelist == null) {
 				if (!badDrive) {
@@ -219,6 +220,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			final var keyMap = emailMap.keySet();
 			final List<String> inputFolder = new ArrayList<>(keyMap);
 			inputFolder.add("USB");
+			inputFolder.add(DEFAULT_INTERNAL_FILES);
 			if (forceUpdate) {
 				remoteFilesMap.clearMap();
 			}
@@ -258,8 +260,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
 				final var su = (SoftwareUpdateFile) rf;
-				final var currentVersion = controller.getVersion().split(" ");
-				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+				final var currentVersion = getSoftwareVersionFromVersionStr(controller.getVersion());
+				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
 					controller.historyPaneController.removeFromHistory(rf);
 				}
 			}
@@ -616,24 +618,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			runUpdate(rf.getPath());
 		});
 		return button;
-	}
-
-	private boolean verifySignature(final String filePath) {
-		try {
-			final var signaturePath = filePath + "." + GPG_EXTENSION;
-			if (!new File(signaturePath).exists()) {
-				logger.info("Cannot find signature file");
-				return false;
-			}
-			if (!new File(DEFAULT_STORAGE + PUBLIC_KEY_LOCATION).exists()) {
-				logger.error("Cannot find gpg public key file");
-				return false;
-			}
-			return SecurityUtilities.verifyFile(filePath, signaturePath, DEFAULT_STORAGE + PUBLIC_KEY_LOCATION);
-		} catch (final Exception e) {
-			logger.error(e);
-			return false;
-		}
 	}
 
 	private void sign(final RemoteFile rf) throws HederaClientException {

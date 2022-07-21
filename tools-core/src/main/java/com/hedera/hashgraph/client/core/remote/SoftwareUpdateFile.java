@@ -48,7 +48,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class SoftwareUpdateFile extends RemoteFile {
@@ -68,12 +71,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	public SoftwareUpdateFile(final FileDetails file) {
 		super(file);
-		final var split = FilenameUtils.getBaseName(file.getName()).split("-");
-		if (split.length <= 1) {
+		this.version = getVersionFromFileName(file.getName());
+		if (this.version == null) {
 			throw new HederaClientRuntimeException("Cannot determine version");
 		}
 		this.timestamp = new Timestamp(file.getAttributes().creationTime().toInstant());
-		this.version = fixVersion(split[1]);
 		this.digest = calculateDigest();
 		if (this.digest.equals("")) {
 			this.setValid(false);
@@ -85,10 +87,6 @@ public class SoftwareUpdateFile extends RemoteFile {
 		this.version = "0.0.1";
 		this.setType(FileType.SOFTWARE_UPDATE);
 		this.digest = "";
-	}
-
-	public void setVersion(final String version) {
-		this.version = fixVersion(version);
 	}
 
 	public void setOldVersion(final String oldVersion) {
@@ -125,15 +123,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 		if (oldVersion.equals(version)) {
 			return newStamp <= oldStamp;
 		} else {
-			final var oldV = oldVersion.split("\\.");
-			final var newV = version.split("\\.");
-			if (!oldV[0].equals(newV[0])) {
-				return isOlder(oldV[0], newV[0]);
-			}
-			if (!oldV[1].equals(newV[1])) {
-				return isOlder(oldV[1], newV[1]);
-			}
-			return isOlder(oldV[2], newV[2]);
+			return new ComparableVersion(version).compareTo(new ComparableVersion(oldVersion)) < 0;
 		}
 	}
 
@@ -249,7 +239,17 @@ public class SoftwareUpdateFile extends RemoteFile {
 		final var notesJson =
 				(hasComments()) ? ((CommentFile) getCommentsFile()).getContents() : new JsonObject();
 
-		if (notesJson.has("notes")) {
+		if (notesJson.has("markdownNote")) {
+			final var jsonObject = notesJson.getAsJsonObject("markdownNote");
+			final var titleString = (jsonObject.has("title")) ? jsonObject.get("title").getAsString() : "";
+			final var contentsString = (jsonObject.has("contents")) ? jsonObject.get("contents").getAsString() : "";
+			final var titleLabel = new Label(titleString + ":");
+			titleLabel.setWrapText(true);
+			messages.add(titleLabel);
+			final var contentLabel = new Label(contentsString);
+			contentLabel.setWrapText(true);
+			messages.add(contentLabel);
+		} else if (notesJson.has("notes")) {
 			messages.add(new Label("Highlights:"));
 			final var notesArray = notesJson.getAsJsonArray("notes");
 			for (final var je : notesArray) {
@@ -302,24 +302,10 @@ public class SoftwareUpdateFile extends RemoteFile {
 	@Override
 	public int compareTo(@NotNull final RemoteFile otherFile) {
 		if (otherFile instanceof SoftwareUpdateFile) {
-			final var oldV = ((SoftwareUpdateFile) otherFile).getVersion().split("\\.");
-			final var newV = version.split("\\.");
-			if (!oldV[0].equals(newV[0])) {
-				return compareToAsIntegers(oldV[0], newV[0]);
-			}
-			if (!oldV[1].equals(newV[1])) {
-				return compareToAsIntegers(oldV[1], newV[1]);
-			}
-			return compareToAsIntegers(oldV[2], newV[2]);
+			return new ComparableVersion(version).compareTo(new ComparableVersion(((SoftwareUpdateFile) otherFile).getVersion()));
 		} else {
 			return super.compareTo(otherFile);
 		}
-	}
-
-	private int compareToAsIntegers(final String s, final String s1) {
-		final Integer n = Integer.parseInt(s1);
-		final Integer o = Integer.parseInt(s);
-		return n.compareTo(o);
 	}
 
 	private String calculateDigest() {
@@ -330,35 +316,38 @@ public class SoftwareUpdateFile extends RemoteFile {
 		return CommonMethods.splitStringDigest(digestString, 12);
 	}
 
-	private boolean isOlder(final String oldV, final String newV) {
-		final var oldInt = Integer.parseInt(oldV);
-		final var newInt = Integer.parseInt(newV);
-		return newInt < oldInt;
+	public static String getVersionFromFileName(String fileName) {
+		final var split = FilenameUtils.getBaseName(fileName).split("-(?!(alpha|beta))");
+		if (split.length < 2) {
+			return null;
+		}
+		return fixVersion(split[1]);
 	}
 
-	private String fixVersion(final String version) {
-		final var versionArray = version.split("\\.");
-		final var fixedVersion = new String[] { "0", "0", "0" };
-
-		for (var i = 0; i < Math.min(3, versionArray.length); i++) {
-			if (!isNumeric(versionArray[i])) {
-				versionArray[i] = "0";
-			}
-			fixedVersion[i] = versionArray[i];
-		}
-		return String.format("%s.%s.%s", fixedVersion[0], fixedVersion[1], fixedVersion[2]);
+	public static String fixVersion(final String version) {
+		var fixed = version.replaceAll("(beta|alpha)(\\d+)", "$1.$2");
+		fixed = fixed.replace(".alpha", "-alpha");
+		fixed = fixed.replace(".beta", "-beta");
+		return new ComparableVersion(fixed).getCanonical();
 	}
 
-	private boolean isNumeric(final String strNum) {
-		if (strNum == null || "".equals(strNum)) {
-			return false;
-		}
+	public static String getSoftwareVersionFromVersionStr(final String version) {
+		return fixVersion(version.split(", ")[0].split(" ")[1]);
+	}
+
+	public static long getBuildDateSecondsFromVersionStr(final String version) throws HederaClientException {
+
+		final var splitVersion = version.split(" ");
+		final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+		final Date dateTime;
 		try {
-			Integer.parseInt(strNum);
-		} catch (final NumberFormatException nfe) {
-			return false;
+			dateTime = formatter.parse(splitVersion[3].replace(",", ""));
+		} catch (final ParseException e) {
+			logger.error(e);
+			throw new HederaClientException(e);
 		}
-		return true;
+
+		return dateTime.getTime() / 1000;
 	}
 
 	@Override
