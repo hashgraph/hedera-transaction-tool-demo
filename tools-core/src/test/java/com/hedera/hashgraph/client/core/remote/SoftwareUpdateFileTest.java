@@ -63,7 +63,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 		final var softwareUpdateFile = new SoftwareUpdateFile(update);
 		assertNotNull(softwareUpdateFile);
 
-		assertEquals("1.1.0", softwareUpdateFile.getVersion());
+		assertEquals("1.1-rc.1", softwareUpdateFile.getVersion());
 		assertEquals(new Timestamp(update.getAttributes().creationTime().toInstant()),
 				softwareUpdateFile.getTimestamp());
 
@@ -94,7 +94,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 		softwareUpdateFile.setOldVersion("bad"); // a bad software version defaults to 0.0.0
 		assertFalse(softwareUpdateFile.isExpired());
 
-		softwareUpdateFile.setOldVersion("1.1");
+		softwareUpdateFile.setOldVersion("1.1.0-rc.1");
 		softwareUpdateFile.setOldStamp(0L);
 		softwareUpdateFile.setNewStamp(new Date().getTime());
 		assertFalse(softwareUpdateFile.isExpired());
@@ -168,7 +168,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 		assertEquals(7, gridPane.getChildren().size());
 
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
-		assertEquals("This will upgrade your application to Version 1.1.0",
+		assertEquals("This will upgrade your application to Version 1.1-rc.1",
 				((Label) gridPane.getChildren().get(0)).getText());
 
 		assertTrue(gridPane.getChildren().get(6) instanceof HBox);
@@ -193,7 +193,7 @@ public class SoftwareUpdateFileTest extends TestBase {
 
 		assertTrue(gridPaneHistory.getChildren().get(0) instanceof Label);
 		assertTrue(((Label) gridPaneHistory.getChildren().get(0)).getText().contains(
-				"The application was updated to  Version 1.1.0 on "));
+				"The application was updated to  Version 1.1-rc.1 on "));
 
 		assertTrue(gridPaneHistory.getChildren().get(6) instanceof HBox);
 		final var hBoxChildrenHistory = ((HBox) gridPaneHistory.getChildren().get(6)).getChildren();

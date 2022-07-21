@@ -317,7 +317,7 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	public static String getVersionFromFileName(String fileName) {
-		final var split = FilenameUtils.getBaseName(fileName).split("-(?!(alpha|beta))");
+		final var split = FilenameUtils.getBaseName(fileName).split("-(?!(alpha|beta|rc))");
 		if (split.length < 2) {
 			return null;
 		}
@@ -325,9 +325,10 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	public static String fixVersion(final String version) {
-		var fixed = version.replaceAll("(beta|alpha)(\\d+)", "$1.$2");
+		var fixed = version.replaceAll("(beta|alpha|rc)(\\d+)", "$1.$2");
 		fixed = fixed.replace(".alpha", "-alpha");
 		fixed = fixed.replace(".beta", "-beta");
+		fixed = fixed.replace(".rc", "-rc");
 		return new ComparableVersion(fixed).getCanonical();
 	}
 
