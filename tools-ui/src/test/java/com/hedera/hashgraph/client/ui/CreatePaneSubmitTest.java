@@ -65,6 +65,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStoreException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -772,7 +774,8 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 					.setKey(key)
 					.setInitialBalance(new Hbar(1000))
 					.setAccountMemo("account_" + i)
-					.execute(client);
+					.setMaxAttempts(50)
+					.execute(client, Duration.of(5, ChronoUnit.MINUTES));
 
 			final var receipt = transactionResponse.getReceipt(client);
 			final var accountId = Objects.requireNonNull(receipt.accountId);
