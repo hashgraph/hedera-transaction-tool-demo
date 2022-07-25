@@ -60,6 +60,10 @@ public class GithubUpdateProcessor {
 
     boolean doCheck() throws Exception {
 
+        if (!outputDir.exists()) {
+            return false;
+        }
+
         var updates = getUpdates();
 
         if (!keepRunning.get()) {

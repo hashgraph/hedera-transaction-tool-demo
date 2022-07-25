@@ -180,6 +180,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private int countTotalFiles() {
 		var count = 0;
 		final var outs = new LinkedList<>(controller.getOneDriveCredentials().keySet());
+		ensureInternalInputExists();
 		outs.add(DEFAULT_INTERNAL_FILES);
 		for (final var inputLocation : outs) {
 			final var filelist = new File(inputLocation, INPUT_FILES).listFiles();
@@ -220,6 +221,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			final var keyMap = emailMap.keySet();
 			final List<String> inputFolder = new ArrayList<>(keyMap);
 			inputFolder.add("USB");
+			ensureInternalInputExists();
 			inputFolder.add(DEFAULT_INTERNAL_FILES);
 			if (forceUpdate) {
 				remoteFilesMap.clearMap();
@@ -922,6 +924,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 					controller.displaySystemMessage(e.getCause().toString());
 				}
 			}
+		}
+	}
+
+	private void ensureInternalInputExists() {
+		var f = new File(DEFAULT_INTERNAL_FILES, INPUT_FILES);
+		if (f.mkdirs()) {
+			logger.info("created {}", f.getAbsolutePath());
 		}
 	}
 

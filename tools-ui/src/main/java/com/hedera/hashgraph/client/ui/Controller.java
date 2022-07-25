@@ -54,7 +54,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -288,8 +287,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				PopupMessage.display("Hedera Transaction Tool", version, "CONTINUE");
 			}
 		});
-
-		initUpdater(thisVersion);
 	}
 
 	/**
@@ -359,6 +356,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				thisPane = initialStartupPane;
 				initialStartupPane.setVisible(true);
 				initialStartupPaneController.initializeStartupPane();
+				initUpdater();
 				break;
 			case NORMAL_OPERATION_PHASE:
 				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists() && "".equals(
@@ -382,6 +380,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+				initUpdater();
 				break;
 			case TEST_PHASE:
 				properties =
@@ -1122,12 +1121,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return pair;
 	}
 
-	private void initUpdater(String thisVersion) {
+	private void initUpdater() {
 		if (updater != null) {
 			updater.shutdown();
 		}
 
-		updater = new GithubUpdater(thisVersion, new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
+		updater = new GithubUpdater(getVersion(), new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
 				() -> homePaneController.setForceUpdate(true));
 
 		final ChangeListener<Boolean> listener = new ChangeListener<>() {

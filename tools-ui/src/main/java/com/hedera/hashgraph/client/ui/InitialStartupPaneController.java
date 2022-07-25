@@ -360,8 +360,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 			logger.info("Directory already exists");
 		}
 
-		setupDirectory(location, "Accounts", "Files/UserFiles", "Files/.System", "Keys", "History", "logs",
-				"Files/InternalInOut/InputFiles");
+		setupDirectory(location, "Accounts", "Files/UserFiles", "Files/.System", "Keys", "History", "logs");
 	}
 
 
