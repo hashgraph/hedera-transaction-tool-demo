@@ -189,7 +189,8 @@ public class LocalFileServiceAdapter implements FileService {
 			try {
 				attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
 			} catch (final IOException e) {
-				throw new HederaClientException(e);
+				logger.error("Unable to readAttributes() for " + path, e);
+				continue;
 			}
 			final var last = attr.lastModifiedTime().toMillis();
 			if (last > lastMod) {
