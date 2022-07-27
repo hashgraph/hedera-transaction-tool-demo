@@ -299,7 +299,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		n0 = children2.get(0);
 		assertTrue(n0 instanceof Label);
-		assertTrue(((Label) n0).getText().contains("9.4.0"));
+		assertTrue(((Label) n0).getText().contains("9.4"));
 		// Node 2: Label - "Highlights";
 		n0 = children2.get(1);
 		assertTrue(n0 instanceof Label);

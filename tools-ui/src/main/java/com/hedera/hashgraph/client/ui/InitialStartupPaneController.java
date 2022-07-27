@@ -354,7 +354,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param location
 	 * 		location where the transaction tool directory will be built
 	 */
-	private void setupTransactionDirectory(final String location) {
+	public void setupTransactionDirectory(final String location) {
 		final var directory = new File(location);
 		if (!directory.exists() && !directory.mkdirs()) {
 			logger.info("Directory already exists");

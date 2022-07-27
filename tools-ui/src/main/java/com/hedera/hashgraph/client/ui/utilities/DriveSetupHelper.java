@@ -53,6 +53,8 @@ import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
+import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Messages.REMOVE_DRIVE_MESSAGE;
 import static com.hedera.hashgraph.client.ui.popups.PopupMessage.display;
 import static java.lang.Boolean.parseBoolean;
@@ -73,8 +75,6 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			Optional.ofNullable(System.getenv("GITHUB_ACTION")).isPresent();
 	private static final String USER_HOME = System.getProperty("user.home") + File.separator;
 	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath() + File.separator;
-	public static final String INPUT_FILES = "InputFiles";
-	public static final String OUTPUT_FILES = "OutputFiles";
 	public static final String EMAIL_STRING = "email";
 	public static final String DRIVE_STRING = "drive";
 

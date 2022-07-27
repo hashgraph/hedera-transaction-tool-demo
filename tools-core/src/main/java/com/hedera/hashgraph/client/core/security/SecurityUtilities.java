@@ -50,6 +50,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -71,6 +72,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.bouncycastle.openpgp.PGPUtil.getDecoderStream;
 
@@ -372,9 +376,9 @@ public class SecurityUtilities {
 			verify = sig.verify();
 
 			if (verify) {
-				logger.info("signature verified.");
+				logger.debug("signature verified.");
 			} else {
-				logger.info("signature verification failed.");
+				logger.warn("signature verification failed.");
 			}
 			in.close();
 		}
@@ -394,5 +398,23 @@ public class SecurityUtilities {
 		perms.add(PosixFilePermission.OWNER_READ);
 		perms.add(PosixFilePermission.OWNER_WRITE);
 		Files.setPosixFilePermissions(Path.of(path), perms);
+	}
+
+	public static boolean verifySignature(final String filePath) {
+		try {
+			final var signaturePath = filePath + "." + GPG_EXTENSION;
+			if (!new File(signaturePath).exists()) {
+				logger.warn("Cannot find signature file");
+				return false;
+			}
+			if (!new File(DEFAULT_STORAGE + PUBLIC_KEY_LOCATION).exists()) {
+				logger.error("Cannot find gpg public key file");
+				return false;
+			}
+			return SecurityUtilities.verifyFile(filePath, signaturePath, DEFAULT_STORAGE + PUBLIC_KEY_LOCATION);
+		} catch (final Exception e) {
+			logger.error(e);
+			return false;
+		}
 	}
 }

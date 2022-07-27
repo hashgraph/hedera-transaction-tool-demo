@@ -35,7 +35,6 @@ import com.hedera.hashgraph.client.core.remote.RemoteFilesMap;
 import com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
@@ -75,21 +74,24 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.GPG_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_INTERNAL_FILES;
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_COLUMNS;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LOCATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
+import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
+import static com.hedera.hashgraph.client.core.security.SecurityUtilities.verifySignature;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
@@ -97,8 +99,6 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListene
 public class HomePaneController implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
-	private static final String OUTPUT_FILES = "OutputFiles";
-	private static final String INPUT_FILES = "InputFiles";
 	private static final double VBOX_SPACING = 20;
 	private boolean badDrive = false;
 
@@ -179,8 +179,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	private int countTotalFiles() {
 		var count = 0;
-		final var outs = controller.getOneDriveCredentials();
-		for (final var inputLocation : outs.keySet()) {
+		final var outs = new LinkedList<>(controller.getOneDriveCredentials().keySet());
+		ensureInternalInputExists();
+		outs.add(DEFAULT_INTERNAL_FILES);
+		for (final var inputLocation : outs) {
 			final var filelist = new File(inputLocation, INPUT_FILES).listFiles();
 			if (filelist == null) {
 				if (!badDrive) {
@@ -219,6 +221,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			final var keyMap = emailMap.keySet();
 			final List<String> inputFolder = new ArrayList<>(keyMap);
 			inputFolder.add("USB");
+			ensureInternalInputExists();
+			inputFolder.add(DEFAULT_INTERNAL_FILES);
 			if (forceUpdate) {
 				remoteFilesMap.clearMap();
 			}
@@ -258,8 +262,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
 				final var su = (SoftwareUpdateFile) rf;
-				final var currentVersion = controller.getVersion().split(" ");
-				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+				final var currentVersion = getSoftwareVersionFromVersionStr(controller.getVersion());
+				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
 					controller.historyPaneController.removeFromHistory(rf);
 				}
 			}
@@ -361,7 +365,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			return readJsonObject(accounts[0]);
 		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
+			logger.error("readJsonObject failed", e);
 			return null;
 		}
 
@@ -458,7 +462,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				try {
 					sign(rf);
 				} catch (final HederaClientException exception) {
-					logger.error(exception);
+					logger.error("sign failed", exception);
 				}
 			} else {
 				PopupMessage.display("Missing key", "Please select a key to sign the transaction");
@@ -530,7 +534,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.keysPaneController.initializeKeysPane();
 				initializeHomePane();
 			} catch (final IOException | HederaClientException e) {
-				logger.error(e);
+				logger.error("buildAcceptButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 		});
@@ -546,7 +550,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildDeclineButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 			initializeHomePane();
@@ -562,7 +566,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildCancelButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 			initializeHomePane();
@@ -585,7 +589,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				forceUpdate = true;
 				initializeHomePane();
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildUndoButton failed", e);
 				controller.displaySystemMessage(e.getCause().toString());
 			}
 		});
@@ -609,31 +613,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
 				controller.historyPaneController.addToHistory(rf);
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildUpdateButton failed", e);
 			}
 			historyChanged = true;
 
 			runUpdate(rf.getPath());
 		});
 		return button;
-	}
-
-	private boolean verifySignature(final String filePath) {
-		try {
-			final var signaturePath = filePath + "." + GPG_EXTENSION;
-			if (!new File(signaturePath).exists()) {
-				logger.info("Cannot find signature file");
-				return false;
-			}
-			if (!new File(DEFAULT_STORAGE + PUBLIC_KEY_LOCATION).exists()) {
-				logger.error("Cannot find gpg public key file");
-				return false;
-			}
-			return SecurityUtilities.verifyFile(filePath, signaturePath, DEFAULT_STORAGE + PUBLIC_KEY_LOCATION);
-		} catch (final Exception e) {
-			logger.error(e);
-			return false;
-		}
 	}
 
 	private void sign(final RemoteFile rf) throws HederaClientException {
@@ -652,7 +638,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			} catch (final Exception exception) {
 				logger.error("Transaction {} could not be signed with key {}.", rf.getName(),
 						FilenameUtils.getBaseName(pair.getLeft()));
-				logger.error(exception);
+				logger.error("signTransactionAndComment failed", exception);
 			}
 		}
 		historyChanged = true;
@@ -672,11 +658,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
 		} catch (final IOException e) {
-			logger.error(e);
+			logger.error("runUpdate failed", e);
 			PopupMessage.display("Error opening update file",
 					"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 		} catch (final InterruptedException e) {
-			logger.error("Interrupted exception: {}", e.getMessage());
+			logger.error("Interrupted exception", e);
 			// Restore interrupted state
 			Thread.currentThread().interrupt();
 		}
@@ -863,7 +849,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {
-			logger.error(e);
+			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
 
@@ -934,10 +920,17 @@ public class HomePaneController implements GenericFileReadWriteAware {
 							"Could not upload the file to the specified folder. Please check you have the appropriate" +
 									" permissions",
 							"OK");
-					logger.error(e);
+					logger.error("fileService.upload failed", e);
 					controller.displaySystemMessage(e.getCause().toString());
 				}
 			}
+		}
+	}
+
+	private void ensureInternalInputExists() {
+		var f = new File(DEFAULT_INTERNAL_FILES, INPUT_FILES);
+		if (f.mkdirs()) {
+			logger.info("created {}", f.getAbsolutePath());
 		}
 	}
 

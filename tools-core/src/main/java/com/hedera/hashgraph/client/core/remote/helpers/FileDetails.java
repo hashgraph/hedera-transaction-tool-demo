@@ -63,7 +63,7 @@ public class FileDetails {
 	}
 
 	public String getFullPath() {
-		return path + "/" + name;
+		return new File(path, name).getPath();
 	}
 
 	public String getExtension() {
