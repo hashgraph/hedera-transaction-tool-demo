@@ -365,7 +365,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		try {
 			return readJsonObject(accounts[0]);
 		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
+			logger.error("readJsonObject failed", e);
 			return null;
 		}
 
@@ -462,7 +462,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				try {
 					sign(rf);
 				} catch (final HederaClientException exception) {
-					logger.error(exception);
+					logger.error("sign failed", exception);
 				}
 			} else {
 				PopupMessage.display("Missing key", "Please select a key to sign the transaction");
@@ -534,7 +534,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.keysPaneController.initializeKeysPane();
 				initializeHomePane();
 			} catch (final IOException | HederaClientException e) {
-				logger.error(e);
+				logger.error("buildAcceptButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 		});
@@ -550,7 +550,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildDeclineButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 			initializeHomePane();
@@ -566,7 +566,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildCancelButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
 			initializeHomePane();
@@ -589,7 +589,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				forceUpdate = true;
 				initializeHomePane();
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildUndoButton failed", e);
 				controller.displaySystemMessage(e.getCause().toString());
 			}
 		});
@@ -613,7 +613,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
 				controller.historyPaneController.addToHistory(rf);
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				logger.error("buildUpdateButton failed", e);
 			}
 			historyChanged = true;
 
@@ -638,7 +638,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			} catch (final Exception exception) {
 				logger.error("Transaction {} could not be signed with key {}.", rf.getName(),
 						FilenameUtils.getBaseName(pair.getLeft()));
-				logger.error(exception);
+				logger.error("signTransactionAndComment failed", exception);
 			}
 		}
 		historyChanged = true;
@@ -658,11 +658,11 @@ public class HomePaneController implements GenericFileReadWriteAware {
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
 		} catch (final IOException e) {
-			logger.error(e);
+			logger.error("runUpdate failed", e);
 			PopupMessage.display("Error opening update file",
 					"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 		} catch (final InterruptedException e) {
-			logger.error("Interrupted exception: {}", e.getMessage());
+			logger.error("Interrupted exception", e);
 			// Restore interrupted state
 			Thread.currentThread().interrupt();
 		}
@@ -849,7 +849,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			historyChanged = true;
 			initializeHomePane();
 		} catch (final Exception e) {
-			logger.error(e);
+			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
 
@@ -920,7 +920,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 							"Could not upload the file to the specified folder. Please check you have the appropriate" +
 									" permissions",
 							"OK");
-					logger.error(e);
+					logger.error("fileService.upload failed", e);
 					controller.displaySystemMessage(e.getCause().toString());
 				}
 			}
