@@ -370,7 +370,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		label.setWrapText(true);
 		detailsGridPane.add(label, 0, count);
 		detailsGridPane.add(new Label(createTransaction.getStakedNodeId() == null ?	"" :
-				new Identifier(0, 0, createTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
+				createTransaction.getStakedNodeId().toString()), 1, count++);
 
 		label = new Label("Decline Staking Rewards: ");
 		label.setWrapText(true);
@@ -444,8 +444,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			var label = new Label("Staked Node ID: ");
 			label.setWrapText(true);
 			detailsGridPane.add(label, 0, count);
-			detailsGridPane.add(new Label(
-					new Identifier(0, 0, updateTransaction.getStakedNodeId()).toNicknameAndChecksum(nicknames)), 1, count++);
+			detailsGridPane.add(new Label(updateTransaction.getStakedNodeId().toString()), 1, count++);
 		}
 
 		if (updateTransaction.isDeclineStakingRewards() != null) {

@@ -1285,8 +1285,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 		if (stakingInfo != null && stakingInfo.stakedNodeId != null) {
 			gridPane.add(setupBoxLabel("Staked Node ID"), 0, ++cnt);
-			final var stakingNodeIdStr = new Identifier(0, 0, info.stakingInfo.stakedNodeId).toReadableString();
-			gridPane.add(setupBoxTextField(format("%s (%s)", stakingNodeIdStr, AddressChecksums.checksum(stakingNodeIdStr))), 1, cnt);
+			gridPane.add(setupBoxTextField(info.stakingInfo.stakedNodeId.toString()), 1, cnt);
 		}
 
 		if (stakingInfo != null) {
