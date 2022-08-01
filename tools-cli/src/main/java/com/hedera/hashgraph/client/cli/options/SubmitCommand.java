@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,11 +77,11 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private int readyTime = 1;
 
 	@CommandLine.Option(names = { "-threads", "--number-of-threads" }, description =
-			"The number of threads to use to submit transactions. Defaults to 1000. This value can be large because the threads do not"
+			"The number of threads to use to submit transactions. Defaults to 75. This value can be large because the threads do not"
 					+ " do much work other than wait on sockets. We need it to be large because many transactions can require submission"
 					+ " at the same moment and a low number could cause transactions to expire before the tool has a chance to submit"
-					+ " them.")
-	private int numberOfThreads = 1000;
+					+ " them. The main limit is that nodes limit the number of simultaneous connections.")
+	private int numberOfThreads = 75;
 
 	@Override
 	public void execute() throws HederaClientException, InterruptedException {
