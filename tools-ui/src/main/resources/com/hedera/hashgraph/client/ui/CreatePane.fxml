@@ -361,7 +361,7 @@
 						<Label text="Staked node ID"/>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
 							<TextField fx:id="stakedNodeIdField" alignment="CENTER" maxWidth="-Infinity" minWidth="300.0"
-									   promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 									   visible="false">
 								<Image url="@../../../../../icons/greencheck.png"/>

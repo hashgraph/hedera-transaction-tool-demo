@@ -557,8 +557,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		autoCompleteNickname.setOnKeyReleased(
 				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createNewKey));
 
-		formatAccountTextField(stakedAccountIdField, invalidStakedAccountId, stakedNodeIdField);
-		formatAccountTextField(stakedNodeIdField, invalidStakedNodeId, stakedNodeIdField.getParent());
+		formatAccountTextField(stakedAccountIdField, invalidStakedAccountId, stakedAccountIdField.getParent());
+		numericFieldListen(stakedNodeIdField);
 	}
 
 	private void setupUpdateFields() {
@@ -579,8 +579,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateCopyFromAccountHBox.getChildren().clear();
 		updateCopyFromAccountHBox.getChildren().add(updateFromNickName);
 		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate, updateAccountID.getParent());
-		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedNodeIdNew);
-		formatAccountTextField(stakedNodeIdNew, invalidStakedNodeIdUpdate, stakedNodeIdNew.getParent());
+		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedAccountIdNew.getParent());
+		numericFieldListen(stakedNodeIdNew);
 
 		updateAccountID.setOnKeyPressed(keyEvent -> {
 			final var keyCode = keyEvent.getCode();
@@ -902,16 +902,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			} else {
 				invalidStakedNodeId.setText("Invalid node ID");
 				try {
-					final var node = Identifier.parse(stakedNodeIdField.getText(), controller.getCurrentNetwork());
-					final var client = CommonMethods.getClient(controller.getCurrentNetwork());
-					if (client.getNetwork().containsValue(node.asAccount())) {
-						stakedNodeIdField.setText(node.toNicknameAndChecksum(controller.getAccountsList()));
-						invalidStakedNodeId.setVisible(false);
-					} else {
-						invalidStakedNodeId.setVisible(true);
-						displayAndLogInformation("Staked Node ID out of range");
-						flag = false;
-					}
+					// validate node ID? I don't see a way to do that with sdk
+					invalidStakedNodeId.setVisible(false);
 				} catch (final Exception e) {
 					invalidStakedNodeId.setVisible(true);
 					displayAndLogInformation("Staked Node ID cannot be parsed");
@@ -998,16 +990,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			} else {
 				invalidStakedNodeIdUpdate.setText("Invalid node ID");
 				try {
-					final var node = Identifier.parse(stakedNodeIdNew.getText(), controller.getCurrentNetwork());
-					final var client = CommonMethods.getClient(controller.getCurrentNetwork());
-					if (client.getNetwork().containsValue(node.asAccount())) {
-						stakedNodeIdNew.setText(node.toNicknameAndChecksum(controller.getAccountsList()));
-						invalidStakedNodeIdUpdate.setVisible(false);
-					} else {
-						invalidStakedNodeIdUpdate.setVisible(true);
-						displayAndLogInformation("Staked Node ID out of range");
-						flag = false;
-					}
+					// validate node ID? I don't see a way to do that with sdk
+					invalidStakedNodeIdUpdate.setVisible(false);
 				} catch (final Exception e) {
 					invalidStakedNodeIdUpdate.setVisible(true);
 					displayAndLogInformation("Staked Node ID cannot be parsed");
@@ -1072,9 +1056,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					stakedAccountIdOriginal.setPromptText("unset");
 				}
 				if (accountInfo.stakingInfo.stakedNodeId != null) {
-					final var stakedNodeId = new Identifier(0, 0, accountInfo.stakingInfo.stakedNodeId);
-					stakedNodeId.setNetworkName(controller.getCurrentNetwork());
-					stakedNodeIdOriginal.setText(stakedNodeId.toNicknameAndChecksum(controller.getAccountsList()));
+					stakedNodeIdOriginal.setText(accountInfo.stakingInfo.stakedNodeId.toString());
 				} else {
 					stakedNodeIdOriginal.setText("");
 					stakedNodeIdOriginal.setPromptText("unset");
@@ -1836,9 +1818,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (stakedNodeId == null) {
 			stakedNodeIdField.setText("");
 		} else {
-			var stakedNodeIdentifier = new Identifier(0, 0, stakedNodeId);
-			stakedNodeIdentifier.setNetworkName(controller.getCurrentNetwork());
-			stakedNodeIdField.setText(stakedNodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
+			stakedNodeIdField.setText(stakedNodeId.toString());
 		}
 
 		declineStakingRewards.setSelected(transaction.isDeclineStakingRewards());
@@ -1885,9 +1865,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (stakedNodeId == null) {
 			stakedNodeIdNew.setText("");
 		} else {
-			var stakedNodeIdentifier = new Identifier(0, 0, stakedNodeId);
-			stakedNodeIdentifier.setNetworkName(controller.getCurrentNetwork());
-			stakedNodeIdNew.setText(stakedNodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
+			stakedNodeIdNew.setText(stakedNodeId.toString());
 		}
 
 		if (transaction.isDeclineStakingRewards() == null) {
@@ -2137,6 +2115,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 	}
 
+	private void numericFieldListen(final TextField textField) {
+		textField.textProperty().addListener(
+				(observable, oldValue, newValue) -> {
+					if (!newValue.matches("\\d*")) {
+						textField.setText(newValue.replaceAll("\\D", ""));
+					}
+				});
+	}
+
 	private void setMemoByteCounter(final TextField textField, final Label label) {
 		final var text = textField.getText();
 		final var byteSize = text.getBytes(StandardCharsets.UTF_8).length;
@@ -2360,8 +2347,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					Identifier.parse(stakedAccountIdField.getText(), controller.getCurrentNetwork()).asJSON());
 		}
 		if ((stakedNodeIdField.getText() != null) && (!stakedNodeIdField.getText().isEmpty())) {
-			input.addProperty(STAKED_NODE_ID_FIELD_NAME,
-					Identifier.parse(stakedNodeIdField.getText(), controller.getCurrentNetwork()).getAccountNum());
+			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdField.getText()));
 		}
 
 		input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards.isSelected());
@@ -2419,8 +2405,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
 		}
 		if ((stakedNodeIdNew.getText() != null) && (!stakedNodeIdNew.getText().isEmpty())) {
-			input.addProperty(STAKED_NODE_ID_FIELD_NAME,
-					Identifier.parse(stakedNodeIdNew.getText(), controller.getCurrentNetwork()).getAccountNum());
+			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
 		}
 
 		final var originalDeclineStakingRewardsNew = info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
