@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Messages.BUNDLE_TITLE_MESSAGE_FORMAT;
 
@@ -117,7 +118,9 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 					break;
 				case PUB_EXTENSION:
 					final var pubInfoKey = new PubInfoKey(file);
-					publicKeyMap.put(pubInfoKey, file);
+					if (!pubInfoKey.privateKeyExists()) {
+						publicKeyMap.put(pubInfoKey, file);
+					}
 					break;
 				default:
 					logger.error("Unexpected value: {}", name);
@@ -292,6 +295,11 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 
 		public PublicKey getPublicKey() {
 			return publicKey;
+		}
+
+		public boolean privateKeyExists() {
+			return new File(KEYS_FOLDER, getNickname() + "." + PK_EXTENSION).exists()
+					|| new File(KEYS_FOLDER, getOldNickname() + "." + PK_EXTENSION).exists();
 		}
 
 		@Override
