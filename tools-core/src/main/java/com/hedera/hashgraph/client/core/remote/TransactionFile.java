@@ -189,11 +189,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-	@Override
 	public boolean isExpired() {
 		final var now = new Timestamp();
 		return now.getSeconds() > getExpiration().getSeconds();

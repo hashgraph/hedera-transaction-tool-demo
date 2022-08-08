@@ -40,6 +40,7 @@ import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -952,12 +953,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(getDefaultNetworks());
+		networkBoxSetup(comboBox.getItems());
+	}
+	void networkBoxSetup(final ObservableList<Object> items) {
+		items.clear();
+		items.addAll(getDefaultNetworks());
 		final var customNetworks = getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().addAll(customNetworks);
+			items.addAll(customNetworks);
 		}
 	}
 

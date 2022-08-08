@@ -198,7 +198,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	public void bundleBoxesExist_test() {
 		final var newFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren();
 		final var totalBoxes = newFiles.size();
-		assertEquals(21, totalBoxes);
+		assertEquals(20, totalBoxes);
 
 		final var storage = DEFAULT_STORAGE + File.separator + "Accounts";
 		assertEquals(10,

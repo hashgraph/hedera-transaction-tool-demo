@@ -383,11 +383,6 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
-	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();
 		toJson.add("timestamp", timestamp.asJSON());
