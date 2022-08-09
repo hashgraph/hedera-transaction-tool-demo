@@ -55,6 +55,7 @@ import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.CryptoGetInfoResponse;
 
 import javafx.beans.Observable;
@@ -103,6 +104,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.rolling.FileExtension;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
@@ -268,38 +270,45 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void fixAccountFiles() {
-		final var noNetworkFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(
-				(dir, name) -> !name.contains("-") &&
-						(INFO_EXTENSION.equals(FilenameUtils.getExtension(name))));
 
-		final var otherInfoFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(
-				(dir, name) -> name.contains("-") &&
-						(INFO_EXTENSION.equals(FilenameUtils.getExtension(name))));
-
-		final JsonObject nicknames;
 		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			JsonObject nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+
+			final var noNetworkFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(
+					(dir, name) -> !name.contains("-") &&
+							(INFO_EXTENSION.equals(FilenameUtils.getExtension(name))));
 
 			if (noNetworkFiles != null) {
 				for (final var file : noNetworkFiles) {
-					if (!nicknames.has(FilenameUtils.getBaseName(file.getName()))) {
-						continue;
-					}
-					final var name = FilenameUtils.getBaseName(file.getName());
-					final var id = Identifier.parse(name, UNKNOWN_NETWORK_STRING);
-					final var oldPath = file.getAbsolutePath();
-					final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
-					Files.move(Path.of(oldPath), Path.of(newPath));
-					Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
-							Path.of(newPath.replace(INFO_EXTENSION, JSON_EXTENSION)));
-					if (nicknames.has(name)) {
-						final var n = nicknames.get(name);
-						nicknames.remove(name);
-						nicknames.add(id.toReadableAccountAndNetwork(), n);
+					try {
+						if (!nicknames.has(FilenameUtils.getBaseName(file.getName()))) {
+							continue;
+						}
+						final var name = FilenameUtils.getBaseName(file.getName());
+						final var id = Identifier.parse(name, UNKNOWN_NETWORK_STRING);
+						final var oldPath = file.getAbsolutePath();
+						final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
+						Files.move(Path.of(oldPath), Path.of(newPath));
+						Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
+								Path.of(newPath.replace(INFO_EXTENSION, JSON_EXTENSION)));
+						if (nicknames.has(name)) {
+							final var n = nicknames.get(name);
+							nicknames.remove(name);
+							nicknames.add(id.toReadableAccountAndNetwork(), n);
+						}
+					} catch (Exception e) {
+						logger.error("failed to set network on " + file.getAbsolutePath(), e);
 					}
 				}
 				writeJsonObject(ACCOUNTS_MAP_FILE, nicknames);
 			}
+
+			final var otherInfoFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(
+					(dir, name) -> name.contains("-") &&
+							(INFO_EXTENSION.equals(FilenameUtils.getExtension(name))));
+
+			Set<AccountID> accountsWithLedgers = new HashSet<>();
+			Map<File, AccountID> unknownFiles = new HashMap<>();
 
 			if (otherInfoFiles != null) {
 				for (final var file : otherInfoFiles) {
@@ -308,19 +317,53 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						if (!nicknames.has(baseName)) {
 							continue;
 						}
-						var ledger = NetworkEnum.asLedger(baseName.substring(baseName.lastIndexOf("-") + 1));
+						String network = baseName.substring(baseName.lastIndexOf("-") + 1);
+
+						var ledger = NetworkEnum.asLedger(network);
 						var curInfo =
 								CryptoGetInfoResponse.AccountInfo.parseFrom(readBytes(file.getAbsolutePath()));
 
-						if (!ByteString.copyFrom(ledger.toBytes()).equals(curInfo.getLedgerId())) {
+						if (UNKNOWN_NETWORK_STRING.equalsIgnoreCase(network)) {
+							unknownFiles.put(file, curInfo.getAccountID());
+							continue;
+						}
+
+						var ledgerStr = ByteString.copyFrom(ledger.toBytes());
+
+						if (!ledgerStr.equals(curInfo.getLedgerId())) {
+
+							logger.info("fixing ledger id in {}, it was {}, it is now {}", file.getAbsolutePath(),
+									Arrays.toString(curInfo.getLedgerId().toByteArray()), Arrays.toString(ledgerStr.toByteArray()));
+
 							var newInfo = CryptoGetInfoResponse.AccountInfo
 									.newBuilder(curInfo)
-									.setLedgerId(ByteString.copyFrom(ledger.toBytes()))
+									.setLedgerId(ledgerStr)
 									.build();
 							FileUtils.writeByteArrayToFile(file, newInfo.toByteArray());
 						}
+
+						accountsWithLedgers.add(curInfo.getAccountID());
+
 					} catch (Exception e) {
-						logger.error("failed to fix ledgerName", e);
+						logger.error("failed to fix ledgerId on " + file.getAbsolutePath(), e);
+					}
+				}
+			}
+
+			for (final var file : unknownFiles.keySet()) {
+				if (accountsWithLedgers.contains(unknownFiles.get(file))) {
+					var json = new File(file.getParentFile(),
+							FilenameUtils.removeExtension(file.getName()) + "." + JSON_EXTENSION);
+
+					logger.info("deleting files {} and {} because an account with the same ID has a network associated with it.",
+							file.getAbsolutePath(), json.getAbsolutePath());
+
+					if (!file.delete()) {
+						logger.error("failed to delete {}", file.getAbsolutePath());
+					}
+
+					if (!json.delete()) {
+						logger.error("failed to delete {}", json.getAbsolutePath());
 					}
 				}
 			}
@@ -1263,6 +1306,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							.build();
 					FileUtils.writeByteArrayToFile(Path.of(oldFile.getAbsolutePath().replace(oldName, newName)).toFile(),
 							newInfo.toByteArray());
+					if (!oldFile.delete()) {
+						logger.error("failed to delete {}", oldFile.getAbsolutePath());
+					}
 				} else {
 					Files.move(oldFile.toPath(), Path.of(oldFile.getAbsolutePath().replace(oldName, newName)));
 				}
