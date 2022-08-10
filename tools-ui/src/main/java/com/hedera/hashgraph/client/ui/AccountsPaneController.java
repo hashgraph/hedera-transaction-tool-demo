@@ -265,7 +265,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			controller.setAccountInfoMap(accountInfos);
 			updateAccountLineInformation();
 		} catch (final Exception exception) {
-			logger.error(exception);
+			logger.error("setupAccountMaps error", exception);
 		}
 	}
 
@@ -288,6 +288,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						final var id = Identifier.parse(name, UNKNOWN_NETWORK_STRING);
 						final var oldPath = file.getAbsolutePath();
 						final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
+
+						logger.info("renaming file {} to {} to fix it's name", file.getAbsolutePath(), newPath);
+
 						Files.move(Path.of(oldPath), Path.of(newPath));
 						Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
 								Path.of(newPath.replace(INFO_EXTENSION, JSON_EXTENSION)));
@@ -1928,13 +1931,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private String getNetworkFromInfo(final AccountInfo info) {
-		if (info.ledgerId.toString().equals("03")) {
-			return "INTEGRATION";
-		}
 		if ("".equals(info.ledgerId.toString())) {
 			return UNKNOWN_NETWORK_STRING;
 		}
-		return NetworkEnum.asLedger(info.ledgerId.toString()).toString();
+		return NetworkEnum.from(info.ledgerId).toString();
 	}
 
 	/**

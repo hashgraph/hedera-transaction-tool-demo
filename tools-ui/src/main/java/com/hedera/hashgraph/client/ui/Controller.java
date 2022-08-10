@@ -24,6 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -477,8 +478,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private String getLedger(final AccountInfo info, final String baseName) {
 		final var aString = info.ledgerId.toString();
-		return "".equals(aString) || "03".equals(aString) ?
-				baseName.substring(baseName.indexOf("-") + 1) :
+
+		var ledgerString = baseName.contains("-") ? baseName.substring(baseName.indexOf("-") + 1) : "";
+
+		return NetworkEnum.isNetwork(ledgerString) ?
+				ledgerString :
 				aString;
 	}
 
