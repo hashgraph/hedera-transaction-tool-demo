@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.12.0-alpha.3</version>
+		<version>0.12.0-alpha.4</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -87,16 +87,16 @@
 				<artifactId>log4j-api</artifactId>
 				<version>${log4j2.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-slf4j-impl</artifactId>
+				<version>${log4j2.version}</version>
+			</dependency>
 
 			<!-- Slf4j-->
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
 				<version>${slf4j.version}</version>
 			</dependency>
 
