@@ -134,8 +134,8 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			String response;
 			try {
 				response = (String) future.get();
-			} catch (final ExecutionException e) {
-				logger.error(e.getMessage());
+			} catch (final Exception e) {
+				logger.error("Submit Thread Error Result", e);
 				response = "";
 			}
 			if (!"".equals(response)) {
