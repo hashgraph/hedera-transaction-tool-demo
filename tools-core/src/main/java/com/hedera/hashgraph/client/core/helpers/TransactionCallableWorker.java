@@ -24,9 +24,9 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
-import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.Transaction;
+import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransactionResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,19 +85,26 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
 		try {
+			logger.info("Submitting transaction {} to sdk", idString);
+
 			final var response = submit(tx);
 			if (response == null) {
 				throw new HederaClientException("Response is null");
 			}
-			final var status = response.getReceipt(client).status;
+
+			logger.info("Fetching receipt for transaction {} from sdk", idString);
+
+			final var receipt = response.getReceipt(client);
+			final var status = receipt.status;
+
 			logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
-			final var storageLocation = storeResponse(response, idString);
+			final var storageLocation = storeResponse(receipt, idString);
 			if (status.equals(Status.SUCCESS)) {
 				return storageLocation;
 			}
-		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException | HederaClientException e) {
-			logger.info("Worker: Transaction: {}, failed with error: {}", idString, e.getMessage());
+		} catch (final Exception e) {
+			logger.info("Worker: Transaction: " + idString + ", failed with error. ", e);
 		}
 		return "";
 	}
@@ -131,18 +138,12 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		}
 	}
 
-	private String storeResponse(final TransactionResponse response,
+	private String storeResponse(final TransactionReceipt receipt,
 			final String idString) throws HederaClientException {
-		// Store the response in the out folder
-		try {
-			final var receipt = response.getReceipt(client);
-			final var filePath =
-					location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
-			writeBytes(filePath, receipt.toBytes());
-			logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
-			return filePath;
-		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
-			throw new HederaClientException(e);
-		}
+		final var filePath =
+				location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
+		writeBytes(filePath, receipt.toBytes());
+		logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
+		return filePath;
 	}
 }

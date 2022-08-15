@@ -111,7 +111,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			if (tx == null) {
 				throw new HederaClientRuntimeException("Invalid transaction");
 			}
-			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
+			logger.info("Submitting transaction {} to thread pool", Objects.requireNonNull(
 					tx.getTransactionId()));
 			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
 			transactionsFutureTasks[count] = new FutureTask<>(worker);
