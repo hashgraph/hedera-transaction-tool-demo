@@ -110,7 +110,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 				logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk.", ex);
 			}
 
-			long delay = 1000;
+			long retryDelay = 1000;
 			boolean forceRetry = false;
 
 			while (true) {
@@ -149,13 +149,13 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 				if (Status.SUCCESS.equals(status)) {
 					break;
-				} else if (delay > 30000) {
+				} else if (retryDelay > 30000) {
 					logger.warn("Giving up trying to get receipt for {}, current status is {}", idString, status);
 					break;
 				} else {
-					logger.warn("Got status {}, will retry getting receipt for {} in {}ms", status, idString, delay);
-					sleep(delay);
-					delay *= 1.5;
+					logger.warn("Got status {}, will retry getting receipt for {} in {}ms", status, idString, retryDelay);
+					sleep(retryDelay);
+					retryDelay *= 1.5;
 				}
 			}
 

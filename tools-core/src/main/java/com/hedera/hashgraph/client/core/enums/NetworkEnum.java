@@ -20,7 +20,6 @@ package com.hedera.hashgraph.client.core.enums;
 
 import com.hedera.hashgraph.sdk.LedgerId;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.stream.Stream;
 
