@@ -23,7 +23,7 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.12.0-alpha.5</version>
+		<version>0.12.0-alpha.6</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -46,19 +46,19 @@
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-core</artifactId>
-			<version>0.12.0-alpha.5</version>
+			<version>0.12.0-alpha.6</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-ui</artifactId>
-			<version>0.12.0-alpha.5</version>
+			<version>0.12.0-alpha.6</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-cli</artifactId>
-			<version>0.12.0-alpha.5</version>
+			<version>0.12.0-alpha.6</version>
 			<scope>test</scope>
 		</dependency>
 

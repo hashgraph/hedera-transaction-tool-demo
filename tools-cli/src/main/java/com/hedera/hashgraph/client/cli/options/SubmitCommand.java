@@ -44,9 +44,9 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
@@ -89,6 +89,10 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		// Setup client
 		final var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
 		final Client client = CommonMethods.getClient(network);
+
+		// we don't want to backoff for more than a few seconds, we only have 120s to get all transactions through
+		client.setMaxBackoff(Duration.ofSeconds(10));
+		client.setNodeMaxBackoff(Duration.ofSeconds(10));
 
 		// Load transactions
 		final var files = getTransactionPaths();
@@ -143,9 +147,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 		}
 		executorServiceTransactions.shutdown();
-		while (!executorServiceTransactions.isTerminated()) {
-			// wait loop
-		}
+		executorServiceTransactions.awaitTermination(1000000, TimeUnit.DAYS);
 
 		logger.info("Transactions succeeded: {} of {}", transactionResponses.size(), count);
 
