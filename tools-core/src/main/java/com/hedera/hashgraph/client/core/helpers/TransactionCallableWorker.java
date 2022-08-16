@@ -1,7 +1,7 @@
 /*
  * Hedera Transaction Tool
  *
- * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ * Copyright (C) 2018 - 2022 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,26 +22,37 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker.TxnResult;
 import com.hedera.hashgraph.sdk.Client;
-import com.hedera.hashgraph.sdk.PrecheckStatusException;
-import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.Transaction;
-import com.hedera.hashgraph.sdk.TransactionResponse;
+import com.hedera.hashgraph.sdk.TransactionReceipt;
+import com.hedera.hashgraph.sdk.TransactionReceiptQuery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeoutException;
 
 import static java.lang.Thread.sleep;
 
-public class TransactionCallableWorker implements Callable<String>, GenericFileReadWriteAware {
+public class TransactionCallableWorker implements Callable<TxnResult>, GenericFileReadWriteAware {
+
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
+
+	public static class TxnResult {
+		public final String message;
+		public final boolean success;
+
+		public TxnResult(String message, boolean success) {
+			this.message = message;
+			this.success = success;
+		}
+	}
 
 	private final Transaction<?> tx;
 	private final int delay;
@@ -59,7 +70,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	}
 
 	@Override
-	public String call() throws Exception {
+	public TxnResult call() throws Exception {
 		try {
 			return process();
 		} finally {
@@ -67,7 +78,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		}
 	}
 
-	public String process() throws Exception {
+	public TxnResult process() throws Exception {
 		if (tx == null) {
 			throw new HederaClientRuntimeException("Null transaction");
 		}
@@ -84,22 +95,100 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
-		try {
-			final var response = submit(tx);
-			if (response == null) {
-				throw new HederaClientException("Response is null");
-			}
-			final var status = response.getReceipt(client).status;
-			logger.info("Worker: Transaction: {}, final status: {}", idString, status);
+		final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
+				Status.BUSY, Status.FAIL_INVALID);
 
-			final var storageLocation = storeResponse(response, idString);
-			if (status.equals(Status.SUCCESS)) {
-				return storageLocation;
+		try {
+
+			Status status = null;
+			TransactionReceipt receipt = null;
+
+			try {
+				logger.info("Submitting transaction {} to sdk", idString);
+
+				var response = tx.execute(client);
+				if (response == null) {
+					throw new HederaClientException("Response is null");
+				}
+
+				logger.info("Fetching receipt for transaction {} from sdk", idString);
+
+				receipt = response.getReceipt(client);
+
+				if (receipt != null && receipt.status != null) {
+					status = receipt.status;
+					logger.info("got receipt from sdk for {}, with status {}", idString, status);
+				} else {
+					logger.warn("sdk receipt was null or receipt status was null for {}", idString);
+				}
+
+			} catch (final Exception ex) {
+				logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk.", ex);
 			}
-		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException | HederaClientException e) {
-			logger.info("Worker: Transaction: {}, failed with error: {}", idString, e.getMessage());
+
+			long retryDelay = 1000;
+			boolean forceRetry = false;
+
+			while (true) {
+
+				if (forceRetry || receipt == null || status == null || retryStatuses.contains(status)) {
+
+					logger.info("Trying to manually fetch receipt for transaction {}", idString);
+
+					try {
+						var receiptQuery = new TransactionReceiptQuery()
+								.setTransactionId(tx.getTransactionId());
+
+						if (tx.getNodeAccountIds() != null) {
+							receiptQuery.setNodeAccountIds(tx.getNodeAccountIds());
+						}
+
+						logger.info("Submitting manual receipt query for transaction {} to sdk", idString);
+
+						var newReceipt = receiptQuery.execute(client);
+
+						if (newReceipt != null && newReceipt.status != null) {
+							receipt = newReceipt;
+							status = receipt.status;
+							logger.info("got receipt for {}, with status {}", idString, status);
+						} else {
+							logger.warn("receipt or receipt status was null for {}", idString);
+						}
+
+					} catch (final Exception ex) {
+						logger.error("Failed to manually get the transaction receipt for " + idString, ex);
+					}
+
+				}
+
+				forceRetry = true;
+
+				if (receipt != null && status != null && (!retryStatuses.contains(status))) {
+					break;
+				} else if (retryDelay > 30000) {
+					logger.warn("Giving up trying to get receipt for {}, current status is {}", idString, status);
+					break;
+				} else {
+					logger.warn("Got status {}, will retry getting receipt for {} in {}ms", status, idString, retryDelay);
+					sleep(retryDelay);
+					retryDelay *= 1.5;
+				}
+			}
+
+
+			if (receipt != null) {
+
+				logger.info("Worker: Transaction: {}, final status: {}", idString, status);
+
+				storeResponse(receipt, idString);
+				return new TxnResult(idString + " - " + status, Status.SUCCESS.equals(status));
+			} else {
+				throw new HederaClientRuntimeException("could not get receipt for " + idString);
+			}
+		} catch (final Exception e) {
+			logger.error("Worker: Transaction: " + idString + ", failed with error. ", e);
 		}
-		return "";
+		return new TxnResult(idString + " - Threw Exception", false);
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
@@ -122,27 +211,13 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		doneSleeping.countDown();
 	}
 
-	private TransactionResponse submit(final Transaction<?> tx) {
-		// Submit transaction
-		try {
-			return tx.execute(client);
-		} catch (final TimeoutException | PrecheckStatusException e) {
-			throw new HederaClientRuntimeException(e);
-		}
-	}
 
-	private String storeResponse(final TransactionResponse response,
+	private String storeResponse(final TransactionReceipt receipt,
 			final String idString) throws HederaClientException {
-		// Store the response in the out folder
-		try {
-			final var receipt = response.getReceipt(client);
-			final var filePath =
-					location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
-			writeBytes(filePath, receipt.toBytes());
-			logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
-			return filePath;
-		} catch (final TimeoutException | PrecheckStatusException | ReceiptStatusException e) {
-			throw new HederaClientException(e);
-		}
+		final var filePath =
+				location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
+		writeBytes(filePath, receipt.toBytes());
+		logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
+		return filePath;
 	}
 }

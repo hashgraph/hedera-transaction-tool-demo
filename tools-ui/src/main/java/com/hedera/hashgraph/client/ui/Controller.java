@@ -24,6 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -40,6 +41,7 @@ import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -476,8 +478,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private String getLedger(final AccountInfo info, final String baseName) {
 		final var aString = info.ledgerId.toString();
-		return "".equals(aString) || "03".equals(aString) ?
-				baseName.substring(baseName.indexOf("-") + 1) :
+
+		var ledgerString = baseName.contains("-") ? baseName.substring(baseName.indexOf("-") + 1) : "";
+
+		return NetworkEnum.isNetwork(ledgerString) ?
+				ledgerString :
 				aString;
 	}
 
@@ -952,12 +957,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(getDefaultNetworks());
+		networkBoxSetup(comboBox.getItems());
+	}
+	void networkBoxSetup(final ObservableList<Object> items) {
+		items.clear();
+		items.addAll(getDefaultNetworks());
 		final var customNetworks = getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().addAll(customNetworks);
+			items.addAll(customNetworks);
 		}
 	}
 

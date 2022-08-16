@@ -36,6 +36,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Tooltip?>
 <StackPane fx:id="accountsPane" minHeight="400.0" minWidth="800.0" AnchorPane.bottomAnchor="0.0"
 		   AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
 		   xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/"
@@ -155,14 +156,24 @@
 				</panes>
 			</Accordion>
 			<Region HBox.hgrow="ALWAYS"/>
+			<Button fx:id="setUnknownAccountNetworksButton" minWidth="200.0" mnemonicParsing="false"
+					onAction="#setUnknownAccountNetworks"
+					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
+					text="SET UNKNOWN NETWORK" visible="false">
+				<tooltip><Tooltip text="Set network on selected accounts with UNKNOWN Network." /></tooltip>
+			</Button>
 			<Button fx:id="importAccountButton" minWidth="200.0" mnemonicParsing="false"
 					onAction="#importAccountFromFile"
 					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
-					text="IMPORT ACCOUNTS"/>
+					text="IMPORT ACCOUNTS">
+				<tooltip><Tooltip text="Import Accounts" /></tooltip>
+			</Button>
 			<Button fx:id="importFolderButton" layoutX="10.0" layoutY="10.0" minWidth="200.0" mnemonicParsing="false"
 					onAction="#importAccountFromFolder"
 					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
-					text="IMPORT FOLDER"/>
+					text="IMPORT FOLDER">
+				<tooltip><Tooltip text="Import Folder" /></tooltip>
+			</Button>
 		</HBox>
 		<TextField fx:id="hiddenPathAccount" onKeyReleased="#choosePath" style="-fx-font-size: 2;" visible="false"/>
 		<ScrollPane fx:id="accountsScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER"

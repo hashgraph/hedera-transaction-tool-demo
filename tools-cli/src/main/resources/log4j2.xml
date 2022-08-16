@@ -53,7 +53,7 @@
 	<Loggers>
 		<Root level="all">
 			<AppenderRef ref="Console" level="INFO"/>
-			<AppenderRef ref="app.log" level="INFO"/>
+			<AppenderRef ref="app.log" level="TRACE"/>
 			<AppenderRef ref="app.simple.log" level="INFO"/>
 		</Root>
 	</Loggers>
