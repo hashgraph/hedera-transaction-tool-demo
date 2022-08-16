@@ -1,7 +1,7 @@
 /*
  * Hedera Transaction Tool
  *
- * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ * Copyright (C) 2018 - 2022 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker.TxnResult;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -32,14 +33,26 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 
 import static java.lang.Thread.sleep;
 
-public class TransactionCallableWorker implements Callable<String>, GenericFileReadWriteAware {
+public class TransactionCallableWorker implements Callable<TxnResult>, GenericFileReadWriteAware {
+
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
+
+	public static class TxnResult {
+		public final String message;
+		public final boolean success;
+
+		public TxnResult(String message, boolean success) {
+			this.message = message;
+			this.success = success;
+		}
+	}
 
 	private final Transaction<?> tx;
 	private final int delay;
@@ -57,7 +70,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 	}
 
 	@Override
-	public String call() throws Exception {
+	public TxnResult call() throws Exception {
 		try {
 			return process();
 		} finally {
@@ -65,7 +78,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		}
 	}
 
-	public String process() throws Exception {
+	public TxnResult process() throws Exception {
 		if (tx == null) {
 			throw new HederaClientRuntimeException("Null transaction");
 		}
@@ -81,6 +94,9 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 		sleepUntilNeeded();
 
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
+
+		final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
+				Status.BUSY, Status.FAIL_INVALID);
 
 		try {
 
@@ -115,7 +131,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 			while (true) {
 
-				if (forceRetry || receipt == null || (!Status.SUCCESS.equals(status))) {
+				if (forceRetry || receipt == null || status == null || retryStatuses.contains(status)) {
 
 					logger.info("Trying to manually fetch receipt for transaction {}", idString);
 
@@ -147,7 +163,7 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 				forceRetry = true;
 
-				if (Status.SUCCESS.equals(status)) {
+				if (receipt != null && status != null && (!retryStatuses.contains(status))) {
 					break;
 				} else if (retryDelay > 30000) {
 					logger.warn("Giving up trying to get receipt for {}, current status is {}", idString, status);
@@ -164,17 +180,15 @@ public class TransactionCallableWorker implements Callable<String>, GenericFileR
 
 				logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
-				final var storageLocation = storeResponse(receipt, idString);
-				if (Status.SUCCESS.equals(status)) {
-					return storageLocation;
-				}
+				storeResponse(receipt, idString);
+				return new TxnResult(idString + " - " + status, Status.SUCCESS.equals(status));
 			} else {
 				throw new HederaClientRuntimeException("could not get receipt for " + idString);
 			}
 		} catch (final Exception e) {
 			logger.error("Worker: Transaction: " + idString + ", failed with error. ", e);
 		}
-		return "";
+		return new TxnResult(idString + " - Threw Exception", false);
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
