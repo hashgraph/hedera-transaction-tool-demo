@@ -95,9 +95,6 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
-		final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
-				Status.BUSY, Status.FAIL_INVALID);
-
 		try {
 
 			Status status = null;
@@ -113,7 +110,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 				logger.info("Fetching receipt for transaction {} from sdk", idString);
 
-				receipt = response.getReceipt(client);
+				receipt = response.getReceiptQuery().setMaxAttempts(2).execute(client);
 
 				if (receipt != null && receipt.status != null) {
 					status = receipt.status;
@@ -123,8 +120,11 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 				}
 
 			} catch (final Exception ex) {
-				logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk.", ex);
+				logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk. Exception -", ex);
 			}
+
+			final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
+					Status.BUSY, Status.FAIL_INVALID);
 
 			long retryDelay = 1000;
 			boolean forceRetry = false;
@@ -137,7 +137,8 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 					try {
 						var receiptQuery = new TransactionReceiptQuery()
-								.setTransactionId(tx.getTransactionId());
+								.setTransactionId(tx.getTransactionId())
+								.setMaxAttempts(2);
 
 						if (tx.getNodeAccountIds() != null) {
 							receiptQuery.setNodeAccountIds(tx.getNodeAccountIds());
@@ -181,7 +182,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 				logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
 				storeResponse(receipt, idString);
-				return new TxnResult(idString + " - " + status, Status.SUCCESS.equals(status));
+				return new TxnResult("Final status for " + idString + " - " + status, Status.SUCCESS.equals(status));
 			} else {
 				throw new HederaClientRuntimeException("could not get receipt for " + idString);
 			}

@@ -92,7 +92,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		final Client client = CommonMethods.getClient(network);
 
 		// we don't want to backoff for more than a few seconds, we only have 120s to get all transactions through
-		client.setMaxBackoff(Duration.ofSeconds(10));
+		client.setMaxBackoff(Duration.ofSeconds(5));
 		client.setNodeMaxBackoff(Duration.ofSeconds(10));
 
 		// Load transactions
