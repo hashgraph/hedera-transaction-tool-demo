@@ -250,11 +250,6 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return false;
 	}
 
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
-
 	/**
 	 * Add the names (nicknames) of the presented information to the list of messages
 	 *

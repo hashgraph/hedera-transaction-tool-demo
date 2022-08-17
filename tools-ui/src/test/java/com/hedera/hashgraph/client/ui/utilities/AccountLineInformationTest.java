@@ -21,21 +21,17 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.sdk.Hbar;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class AccountLineInformationTest {
-	private static final Logger logger = LogManager.getLogger(AccountLineInformationTest.class);
 
 	@Test
 	public void gettersSetters_test() throws HederaClientException {
 		final var line =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		assertEquals("nickname", line.getNickname());
 		assertEquals(new Identifier(0, 0, 100100), line.getAccount());
@@ -58,14 +54,14 @@ public class AccountLineInformationTest {
 		line.setSigner(true);
 		assertEquals("Yes", line.isSigner());
 
-		assertEquals(new AccountLineInformation("nickname2", new Identifier(1, 2, 3),
+		assertEquals(new AccountLineInformation(null, "nickname2", new Identifier(1, 2, 3),
 				new Hbar(2), 123456987L, true, "MAINNET"), line);
 	}
 
 	@Test
 	public void toString_test() {
 		final var line =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		assertEquals(
 				"AccountLineInformation{nickname='nickname', account='0.0.100100', ledger='MAINNET', balance='159 ℏ'," +
@@ -77,25 +73,25 @@ public class AccountLineInformationTest {
 	@Test
 	public void equals_test() {
 		final var line1 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line2 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line3 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, true, "MAINNET");
 		final var line4 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362100L, false, "MAINNET");
 		final var line5 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(153), 1632923362000L, false, "MAINNET");
 		final var line6 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 10010),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 10010),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line7 =
-				new AccountLineInformation("nick_name", new Identifier(0, 0, 10010),
+				new AccountLineInformation(null, "nick_name", new Identifier(0, 0, 10010),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		assertEquals(line1, line2);
 		assertNotEquals(line1, line3);
@@ -117,25 +113,25 @@ public class AccountLineInformationTest {
 	@Test
 	public void hashCode_test() {
 		final var line1 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line2 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line3 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, true, "MAINNET");
 		final var line4 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362100L, false, "MAINNET");
 		final var line5 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(153), 1632923362000L, false, "MAINNET");
 		final var line6 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 10010),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 10010),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line7 =
-				new AccountLineInformation("nick_name", new Identifier(0, 0, 10010),
+				new AccountLineInformation(null, "nick_name", new Identifier(0, 0, 10010),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		assertEquals(-1792439098, line1.hashCode());
 		assertEquals(-1792439098, line2.hashCode());
@@ -149,16 +145,16 @@ public class AccountLineInformationTest {
 	@Test
 	public void ledger_test() {
 		final var line1 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "MAINNET");
 		final var line2 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "PREVIEWNET");
 		final var line3 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, "TESTNET");
 		final var line4 =
-				new AccountLineInformation("nickname", new Identifier(0, 0, 100100),
+				new AccountLineInformation(null, "nickname", new Identifier(0, 0, 100100),
 						new Hbar(159), 1632923362000L, false, null);
 
 		assertNotEquals(line1, line2);

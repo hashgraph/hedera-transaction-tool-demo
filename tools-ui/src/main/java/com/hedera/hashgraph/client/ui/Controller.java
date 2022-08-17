@@ -24,11 +24,13 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.core.updater.GithubUpdater;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
@@ -37,6 +39,9 @@ import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -93,9 +98,11 @@ import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_INTERNAL_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
@@ -151,6 +158,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	public TextArea systemMessagesTextField;
 	public ButtonBar menuButtonBar;
 
+	private GithubUpdater updater;
 
 	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
 
@@ -281,8 +289,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				PopupMessage.display("Hedera Transaction Tool", version, "CONTINUE");
 			}
 		});
-
-
 	}
 
 	/**
@@ -352,6 +358,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				thisPane = initialStartupPane;
 				initialStartupPane.setVisible(true);
 				initialStartupPaneController.initializeStartupPane();
+				initUpdater();
 				break;
 			case NORMAL_OPERATION_PHASE:
 				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists() && "".equals(
@@ -365,6 +372,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				properties =
 						new UserAccessibleProperties(getPreferredStorageDirectory() + File.separator + USER_PROPERTIES,
 								"");
+				initialStartupPaneController.setupTransactionDirectory(properties.getPreferredStorageDirectory());
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
@@ -374,6 +382,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
+				initUpdater();
 				break;
 			case TEST_PHASE:
 				properties =
@@ -469,8 +478,11 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private String getLedger(final AccountInfo info, final String baseName) {
 		final var aString = info.ledgerId.toString();
-		return "".equals(aString) || "03".equals(aString) ?
-				baseName.substring(baseName.indexOf("-") + 1) :
+
+		var ledgerString = baseName.contains("-") ? baseName.substring(baseName.indexOf("-") + 1) : "";
+
+		return NetworkEnum.isNetwork(ledgerString) ?
+				ledgerString :
 				aString;
 	}
 
@@ -945,12 +957,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	}
 
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
-		comboBox.getItems().clear();
-		comboBox.getItems().addAll(getDefaultNetworks());
+		networkBoxSetup(comboBox.getItems());
+	}
+	void networkBoxSetup(final ObservableList<Object> items) {
+		items.clear();
+		items.addAll(getDefaultNetworks());
 		final var customNetworks = getCustomNetworks();
 		if (!customNetworks.isEmpty()) {
-			comboBox.getItems().add(new Separator());
-			comboBox.getItems().addAll(customNetworks);
+			items.addAll(customNetworks);
 		}
 	}
 
@@ -1112,5 +1126,40 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			throw new HederaClientException(String.format("Invalid keypair in file %s", pemFile.getName()));
 		}
 		return pair;
+	}
+
+	private void initUpdater() {
+		if (updater != null) {
+			updater.shutdown();
+		}
+
+		updater = new GithubUpdater(getVersion(), new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
+				() -> homePaneController.setForceUpdate(true));
+
+		final ChangeListener<Boolean> listener = new ChangeListener<>() {
+			private boolean curValue = false;
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				if (curValue != newValue) {
+					curValue = newValue;
+					if (newValue) {
+						updater.start(false);
+					} else {
+						updater.stop();
+					}
+				}
+			}
+		};
+
+		homePane.sceneProperty().addListener((observableScene, oldScene, newScene) -> {
+			if (newScene != null) {
+				newScene.windowProperty().addListener((observableWindow, oldWindow, newWindow) -> {
+					if (newWindow != null) {
+						listener.changed(null, false, newWindow.isFocused());
+						newWindow.focusedProperty().addListener(listener);
+					}
+				});
+			}
+		});
 	}
 }

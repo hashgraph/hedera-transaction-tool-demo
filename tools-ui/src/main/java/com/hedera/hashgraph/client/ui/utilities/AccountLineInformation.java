@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -37,6 +38,7 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.fromString;
 public class AccountLineInformation implements Comparable<AccountLineInformation> {
 	private static final Logger logger = LogManager.getLogger(AccountLineInformation.class);
 	private final BooleanProperty selected = new SimpleBooleanProperty();
+	private final AccountInfo info;
 	private String nickname;
 	private Identifier account;
 	private StringProperty balance;
@@ -44,8 +46,9 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 	private long date;
 	private String ledgerId;
 
-	public AccountLineInformation(final String nickname, final Identifier account, final Hbar balance, final long date,
+	public AccountLineInformation(final AccountInfo info, final String nickname, final Identifier account, final Hbar balance, final long date,
 			final boolean signer, final String ledgerId) {
+		this.info = info;
 		this.nickname = nickname;
 		this.account = account;
 		this.balance = new SimpleStringProperty(balance.toString());
@@ -155,5 +158,9 @@ public class AccountLineInformation implements Comparable<AccountLineInformation
 
 	public void setLedgerID(final String ledgerID) {
 		this.ledgerId = ledgerID;
+	}
+
+	public AccountInfo getInfo() {
+		return info;
 	}
 }

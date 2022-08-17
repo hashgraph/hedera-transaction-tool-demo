@@ -20,9 +20,10 @@ package com.hedera.hashgraph.client.core.enums;
 
 import com.hedera.hashgraph.sdk.LedgerId;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.stream.Stream;
+
+import org.bouncycastle.util.encoders.Hex;
 
 public enum NetworkEnum {
 	MAINNET("MAINNET"),
@@ -45,13 +46,18 @@ public enum NetworkEnum {
 		if (ledgerId == null) {
 			return UNKNOWN;
 		}
-		switch (new String(ledgerId.toBytes(), StandardCharsets.UTF_8)) {
-			case "0x00":
+		switch (Hex.toHexString(ledgerId.toBytes())) {
+			case "00":
 				return MAINNET;
-			case "0x01":
+			case "01":
 				return TESTNET;
-			case "0x02":
+			case "02":
 				return PREVIEWNET;
+			case "03":
+			case "04":
+				return INTEGRATION;
+			case "05":
+				return CUSTOM;
 			default:
 				return UNKNOWN;
 		}

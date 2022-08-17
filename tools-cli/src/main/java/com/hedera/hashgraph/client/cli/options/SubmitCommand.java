@@ -1,7 +1,7 @@
 /*
  * Hedera Transaction Tool
  *
- * Copyright (C) 2018 - 2021 Hedera Hashgraph, LLC
+ * Copyright (C) 2018 - 2022 Hedera Hashgraph, LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
+import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker.TxnResult;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,17 +45,16 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static java.lang.Thread.sleep;
 
 @CommandLine.Command(name = "submit", aliases = { "sbm" }, description = "Submit transaction(s)")
 public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
-	Logger logger = LogManager.getLogger(SubmitCommand.class);
+	private static final Logger logger = LogManager.getLogger(SubmitCommand.class);
 
 	@CommandLine.Option(names = { "-t", "--file-with-transaction" }, arity = "1..*", description = "The path(s) to " +
 			"the transaction file(s) or directory that contains transaction files", required = true)
@@ -77,12 +77,23 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			"submitted in the future, the app will wait until there are this amount of seconds left before waking up")
 	private int readyTime = 1;
 
+	@CommandLine.Option(names = { "-threads", "--number-of-threads" }, description =
+			"The number of threads to use to submit transactions. Defaults to 500. This value can be large because the threads do not"
+					+ " do much work other than wait on sockets. We need it to be large because many transactions can require submission"
+					+ " at the same moment and a low number could cause transactions to expire before the tool has a chance to submit"
+					+ " them. The main limit is that nodes limit the number of simultaneous connections.")
+	private int numberOfThreads = 500;
+
 	@Override
 	public void execute() throws HederaClientException, InterruptedException {
 
 		// Setup client
 		final var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
 		final Client client = CommonMethods.getClient(network);
+
+		// we don't want to backoff for more than a few seconds, we only have 120s to get all transactions through
+		client.setMaxBackoff(Duration.ofSeconds(5));
+		client.setNodeMaxBackoff(Duration.ofSeconds(10));
 
 		// Load transactions
 		final var files = getTransactionPaths();
@@ -91,8 +102,9 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		// Setup threads
-		final var transactionsFutureTasks = new FutureTask[files.size()];
-		final var executorServiceTransactions = Executors.newFixedThreadPool(Constants.NUMBER_OF_THREADS);
+		final var transactionsFutureTasks = new ArrayList<FutureTask<TxnResult>>(files.size());
+		final var txnId = new String[files.size()];
+		final var executorServiceTransactions = Executors.newFixedThreadPool(this.numberOfThreads);
 
 
 		// Load transactions into the priority queue
@@ -105,11 +117,16 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			if (tx == null) {
 				throw new HederaClientRuntimeException("Invalid transaction");
 			}
-			logger.info("Submitting transaction {} to network", Objects.requireNonNull(
+			logger.info("Submitting transaction {} to thread pool", Objects.requireNonNull(
 					tx.getTransactionId()));
+			txnId[count] = tx.getTransactionId().toString();
 			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
-			transactionsFutureTasks[count] = new FutureTask<>(worker);
-			executorServiceTransactions.submit(transactionsFutureTasks[count]);
+			transactionsFutureTasks.add(new FutureTask<>(worker));
+			executorServiceTransactions.submit(transactionsFutureTasks.get(count));
+
+			// We wait till workers are actually executing to proceed. No need to execute more if they are just going to sleep.
+			worker.doneSleeping.await();
+
 			count++;
 
 		}
@@ -119,25 +136,28 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			throw new HederaClientRuntimeException("No valid transactions found.");
 		}
 
-		final List<String> transactionResponses = new ArrayList<>();
-		for (final var future : transactionsFutureTasks) {
-			String response;
+		final List<TxnResult> transactionResponses = new ArrayList<>();
+		for (int x = 0; x < transactionsFutureTasks.size(); ++x) {
+			TxnResult response;
 			try {
-				response = (String) future.get();
-			} catch (final ExecutionException e) {
-				logger.error(e.getMessage());
-				response = "";
+				response = transactionsFutureTasks.get(x).get();
+			} catch (final Exception e) {
+				logger.error("Submit Thread Error Result", e);
+				response = new TxnResult(txnId[x] + " - Threw Severe Exception", false);
 			}
-			if (!"".equals(response)) {
-				transactionResponses.add(response);
-			}
+			transactionResponses.add(response);
 		}
 		executorServiceTransactions.shutdown();
-		while (!executorServiceTransactions.isTerminated()) {
-			// wait loop
-		}
+		executorServiceTransactions.awaitTermination(1000000, TimeUnit.DAYS);
 
-		logger.info("Transactions succeeded: {} of {}", transactionResponses.size(), count);
+		transactionResponses.forEach(t -> {
+			if (t.success) {
+				logger.debug(t.message);
+			} else {
+				logger.warn(t.message);
+			}
+		});
+		logger.info("Transactions succeeded: {} of {}", transactionResponses.stream().filter(t -> t.success).count(), count);
 
 	}
 

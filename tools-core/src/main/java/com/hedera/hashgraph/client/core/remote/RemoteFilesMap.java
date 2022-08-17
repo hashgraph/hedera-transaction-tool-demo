@@ -34,8 +34,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
+import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getBuildDateSecondsFromVersionStr;
+import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
 import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
@@ -43,7 +46,6 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 public class RemoteFilesMap {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMap.class);
-	private static final int TO_MS = 1000;
 
 	private String version = "";
 	private Map<String, RemoteFile> files;
@@ -117,7 +119,7 @@ public class RemoteFilesMap {
 	 */
 	public RemoteFilesMap fromFile(final FileService fileService) {
 		final String location = fileService.getName().equals("Volumes") || fileService.getName().equals(
-				"TransactionTools") ? "" : "InputFiles";
+				"TransactionTools") ? "" : INPUT_FILES;
 		try {
 			final List<FileDetails> fileDetails = fileService.listFiles(location);
 			return new RemoteFilesMap(getRemoteFiles(fileDetails));
@@ -171,7 +173,7 @@ public class RemoteFilesMap {
 
 		if (jsonObject.has("dateStamp")) {
 			final var dateString = jsonObject.get("dateStamp").getAsString();
-			final var newStamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").parse(dateString).getTime() / TO_MS;
+			final var newStamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").parse(dateString).getTime() / 1000;
 			remoteFile.setNewStamp(newStamp);
 		}
 	}
@@ -197,8 +199,7 @@ public class RemoteFilesMap {
 					}
 				}
 			} catch (final Exception exception) {
-				logger.error("Could not load remote file from {} due to error {}", f.getName(), exception.getMessage());
-				logger.error(exception);
+				logger.error("Could not load remote file from '" + f.getPath() + "/" + f.getName() + "' due to error ", exception);
 			}
 		}
 		return remoteFiles;
@@ -276,18 +277,8 @@ public class RemoteFilesMap {
 	private RemoteFile getSoftwareUpdateFile(final String version, final FileDetails f) throws HederaClientException {
 		final SoftwareUpdateFile remoteFile = new SoftwareUpdateFile(f);
 
-		final var splitVersion = version.split(" ");
-		final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-		final Date dateTime;
-		try {
-			dateTime = formatter.parse(splitVersion[3].replace(",", ""));
-		} catch (final ParseException e) {
-			logger.error(e);
-			throw new HederaClientException(e);
-		}
-
-		remoteFile.setOldVersion(splitVersion[1].replace(",", ""));
-		remoteFile.setOldStamp(dateTime.getTime() / TO_MS);
+		remoteFile.setOldVersion(getSoftwareVersionFromVersionStr(version));
+		remoteFile.setOldStamp(getBuildDateSecondsFromVersionStr(version));
 		return remoteFile;
 	}
 

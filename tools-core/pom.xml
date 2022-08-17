@@ -25,14 +25,14 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.11.0</version>
+		<version>0.12.0-alpha.8</version>
 	</parent>
 
 	<!-- Maven Model Version -->
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-core</artifactId>
-	<version>0.11.0</version>
+	<version>0.12.0-alpha.8</version>
 	<packaging>jar</packaging>
 
 	<dependencyManagement>
@@ -69,13 +69,13 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
+			<artifactId>slf4j-api</artifactId>
 		</dependency>
 
 		<!-- BouncyCastle -->

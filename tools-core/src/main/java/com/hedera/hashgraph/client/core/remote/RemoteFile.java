@@ -231,8 +231,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			this.valid = false;
 		}
 		if (this.type != COMMENT) {
-			final var commentFile = new File(file.getFullPath().replace(FilenameUtils.getExtension(file.getName()),
-					TXT_EXTENSION));
+			final var commentFile = new File(file.getPath(), file.getBaseName() + "." + TXT_EXTENSION);
 			if (commentFile.exists()) {
 				this.hasComments = true;
 				try {

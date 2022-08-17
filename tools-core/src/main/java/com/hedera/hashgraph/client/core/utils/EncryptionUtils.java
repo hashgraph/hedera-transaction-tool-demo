@@ -219,7 +219,7 @@ public class EncryptionUtils {
 		}
 		try {
 			publicKey = PublicKey.fromString(new String(Files.readAllBytes(Path.of(file))));
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			logger.error(e);
 			throw new HederaClientRuntimeException(String.format("Cannot load public key %s", file));
 		}

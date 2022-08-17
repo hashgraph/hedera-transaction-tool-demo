@@ -99,7 +99,6 @@ public class Constants {
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
 	public static final int MAX_NUMBER_OF_NODES = 5;
-	public static final int NUMBER_OF_THREADS = 10;
 	public static final int MAX_TOKEN_AUTOMATIC_ASSOCIATIONS = 1000;
 	public static final int MAX_MEMO_BYTES = 100;
 
@@ -112,6 +111,7 @@ public class Constants {
 	public static final String INITIAL_MAP_LOCATION = DOCUMENTS_FOLDER + "initialMap.json";
 	public static final String USER_PROPERTIES = "Files/user.properties";
 	public static final String DEFAULT_HISTORY = DEFAULT_STORAGE + "History";
+	public static final String DEFAULT_INTERNAL_FILES = DEFAULT_STORAGE + "Files/InternalInOut";
 	public static final String DEFAULT_RECEIPTS = DEFAULT_STORAGE + "Receipts";
 	public static final String DEFAULT_DELETED_ACCOUNTS = DEFAULT_STORAGE + "Deleted/Accounts";
 	public static final String DEFAULT_ACCOUNTS = DEFAULT_STORAGE + "Accounts";

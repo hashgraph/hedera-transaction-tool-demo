@@ -21,24 +21,29 @@
 	<Properties>
 		<Property name="user">${sys:user.home}</Property>
 		<Property name="file.log.path">logs</Property>
+		<Property name="file.log.name">${sys:toolsCliLogFileName:-app}</Property>
 		<Property name="log.level">INFO</Property>
-		<Property name="log.pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p %l{36} - %m%n</Property>
+		<Property name="log.pattern">%d{yyyy-MM-dd HH:mm:ss.SSS} [%5pid] [%t] %-5p %l{36} - %m%n</Property>
+		<Property name="log.pattern.simple">%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p - %m%throwable{short.message}%n</Property>
 		<Property name="log.pattern.console">%d{yyyy-MM-dd HH:mm:ss nnnnnnnnn} %-5p - %m%n</Property>
 	</Properties>
 	<Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
 			<PatternLayout pattern="${log.pattern.console}"/>
 		</Console>
-		<RollingFile name="app.log" fileName="${file.log.path}/app.log" filePattern="${file.log.path}/app.log.%i" immediateFlush="true" append="true">
+		<RollingFile name="app.log" fileName="${file.log.path}/${file.log.name}.debug.log"
+					 filePattern="${file.log.path}/${file.log.name}.debug.log.%i"
+					 immediateFlush="true" append="true">
 			<PatternLayout pattern="${log.pattern}"/>
-			<ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL" />
 			<Policies>
 				<SizeBasedTriggeringPolicy size="100MB"/>
 			</Policies>
 			<DefaultRolloverStrategy max="10"/>
 		</RollingFile>
-		<RollingFile name="app.err" fileName="${file.log.path}/app.err" filePattern="${file.log.path}/app.err.%i" immediateFlush="true" append="true">
-			<PatternLayout pattern="${log.pattern}"/>
+		<RollingFile name="app.simple.log" fileName="${file.log.path}/${file.log.name}.simple.log"
+					 filePattern="${file.log.path}/${file.log.name}.simple.log.%i"
+					 immediateFlush="true" append="true">
+			<PatternLayout pattern="${log.pattern.simple}"/>
 			<Policies>
 				<SizeBasedTriggeringPolicy size="100MB"/>
 			</Policies>
@@ -47,9 +52,9 @@
 	</Appenders>
 	<Loggers>
 		<Root level="all">
-			<AppenderRef ref ="Console" level = "INFO"/>
-			<AppenderRef ref = "app.log" level = "INFO"/>
-			<AppenderRef ref = "app.err" level = "ERROR"/>
+			<AppenderRef ref="Console" level="INFO"/>
+			<AppenderRef ref="app.log" level="TRACE"/>
+			<AppenderRef ref="app.simple.log" level="INFO"/>
 		</Root>
 	</Loggers>
 </Configuration>
