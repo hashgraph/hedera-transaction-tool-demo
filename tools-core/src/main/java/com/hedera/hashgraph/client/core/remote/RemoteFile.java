@@ -442,11 +442,14 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	public void moveToHistory(final Actions action, final String userComment,
 			final String keyName) throws HederaClientException {
 		final var historyFile = new File(DEFAULT_HISTORY + File.separator + name);
-		if (historyFile.exists()) {
-			logger.warn("Replacing existing history file {}", historyFile.getAbsolutePath());
-		}
+		final var current = new File(getPath());
 		try {
-			FileUtils.copyFile(new File(getPath()), historyFile);
+			if (!current.getCanonicalPath().equals(historyFile.getCanonicalPath())) {
+				if (historyFile.exists()) {
+					logger.warn("Replacing existing history file {}", historyFile.getAbsolutePath());
+				}
+				FileUtils.copyFile(current, historyFile);
+			}
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
