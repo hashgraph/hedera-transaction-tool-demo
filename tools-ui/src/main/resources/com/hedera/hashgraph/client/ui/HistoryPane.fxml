@@ -35,7 +35,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="historyPane" minHeight="400.0" minWidth="800.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HistoryPaneController">
+<StackPane fx:id="historyPane" minHeight="400.0" minWidth="800.0" stylesheets="@../../../../../app.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HistoryPaneController">
 	<VBox>
 		<StackPane.margin>
 			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
@@ -57,17 +57,17 @@
 						<RowConstraints minHeight="10.0" valignment="CENTER" />
 						<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
 					</rowConstraints>
-					<TextField fx:id="feePayerTextField" prefWidth="250.0" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="2" />
-					<Button mnemonicParsing="false" onAction="#feePayerFilterAccept" prefWidth="100.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;" text="Filter" GridPane.columnIndex="3">
+					<TextField fx:id="feePayerTextField" prefWidth="250.0" styleClass="roundedTextfield" GridPane.columnIndex="2" />
+					<Button mnemonicParsing="false" onAction="#feePayerFilterAccept" prefWidth="100.0" styleClass="highlightButton" text="Filter" GridPane.columnIndex="3">
 						<GridPane.margin>
 							<Insets left="10.0" />
 						</GridPane.margin>
 					</Button>
-					<Button mnemonicParsing="false" onAction="#resetFeeFilter" prefWidth="100.0" style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+					<Button mnemonicParsing="false" onAction="#resetFeeFilter" prefWidth="100.0" styleClass="highlightButton" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1" />
 					<HBox alignment="CENTER_LEFT">
 						<Label text="Fee payer filter" />
 					</HBox>
-					<Button fx:id="feePayerIDTooltip" mnemonicParsing="false" style="-fx-background-color: transparent; -fx-border-color: transparent;" GridPane.columnIndex="1" GridPane.vgrow="ALWAYS">
+					<Button fx:id="feePayerIDTooltip" mnemonicParsing="false" styleClass="transparentButton" GridPane.columnIndex="1" GridPane.vgrow="ALWAYS">
 						<graphic>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
 								<Image url="@../../../../../icons/helpIcon.png" />
@@ -106,8 +106,8 @@
 					<padding>
 						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 					</padding>
-					<Button mnemonicParsing="false" onAction="#expirationFilterAccept" prefWidth="100.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;" text="Filter" GridPane.columnIndex="3" />
-					<Button mnemonicParsing="false" onAction="#expirationFilterReset" prefWidth="100.0" style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+					<Button mnemonicParsing="false" onAction="#expirationFilterAccept" prefWidth="100.0" styleClass="highlightButton" text="Filter" GridPane.columnIndex="3" />
+					<Button mnemonicParsing="false" onAction="#expirationFilterReset" prefWidth="100.0" styleClass="highlightButton" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="1" />
 					<DatePicker fx:id="expirationStartDatePicker" style="-fx-border-radius: 10;" GridPane.columnIndex="1" />
 					<DatePicker fx:id="expirationEndDatePicker" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 					<Label text="Start date:" />
@@ -132,8 +132,8 @@
 					<padding>
 						<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 					</padding>
-					<Button mnemonicParsing="false" onAction="#actionFilterAccept" prefWidth="100.0" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;" text="Filter" GridPane.columnIndex="3" />
-					<Button mnemonicParsing="false" onAction="#actionFilterReset" prefWidth="100.0" style="-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white; -fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+					<Button mnemonicParsing="false" onAction="#actionFilterAccept" prefWidth="100.0" styleClass="highlightButton" text="Filter" GridPane.columnIndex="3" />
+					<Button mnemonicParsing="false" onAction="#actionFilterReset" prefWidth="100.0" styleClass="highlightButton" text="Reset" GridPane.columnIndex="3" GridPane.rowIndex="2" />
 					<CheckBox fx:id="acceptedCheckBox" mnemonicParsing="false" selected="true" text="Signed / Accepted" GridPane.rowIndex="2" />
 					<CheckBox fx:id="declinedCheckBox" mnemonicParsing="false" selected="true" text="Declined" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 					<Label text="Start date:" />

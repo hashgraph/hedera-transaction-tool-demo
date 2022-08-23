@@ -36,7 +36,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="keysPane" minHeight="400.0" minWidth="800.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.KeysPaneController">
+<StackPane fx:id="keysPane" minHeight="400.0" minWidth="800.0" stylesheets="@../../../../../app.css" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.KeysPaneController">
 	<VBox style="-fx-border-color: #f4f4f4;">
 		<StackPane.margin>
 			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
@@ -76,8 +76,8 @@
                   <Insets />
                </opaqueInsets>
 				</HBox>
-				<HBox style="-fx-border-color: lightgrey white white white; -fx-border-width: 3;" VBox.vgrow="ALWAYS">
-					<VBox fx:id="createKeysVBox" spacing="20.0" style="-fx-background-color: white;" HBox.hgrow="ALWAYS">
+				<HBox styleClass="borderedBox" VBox.vgrow="ALWAYS">
+					<VBox fx:id="createKeysVBox" spacing="20.0" styleClass="brightPane" HBox.hgrow="ALWAYS">
 						<Label text="Create a private and public key pair to sign transactions. The private key should be kept secure, but the public key can be shared. Please assign a descriptive and unique nickname to this key. The nickname will be used to identify your key to other members of the network." wrapText="true" />
 						<GridPane hgap="5.0" vgap="20.0">
 							<columnConstraints>
@@ -90,19 +90,19 @@
 								<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
 							</rowConstraints>
 							<Label text="Key pair nickname " />
-							<TextField fx:id="nicknameTextBox" style="-fx-border-radius: 10; -fx-background-radius: 10" GridPane.columnIndex="1" />
-							<Label fx:id="nicknameErrorLabel" alignment="CENTER" style="-fx-text-fill: red;" text="This nickname already exists." visible="false" GridPane.columnIndex="2" />
+							<TextField fx:id="nicknameTextBox" styleClass="roundedTextfield" GridPane.columnIndex="1" />
+							<Label fx:id="nicknameErrorLabel" alignment="CENTER" styleClass="errorLabel" text="This nickname already exists." visible="false" GridPane.columnIndex="2" />
 							<HBox alignment="CENTER" GridPane.columnIndex="1" GridPane.rowIndex="1">
 								<spacing>20.0</spacing>
-								<Button fx:id="createKeysButton" disable="true" minWidth="200.0" mnemonicParsing="false" onAction="#generateKeysEvent" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;" text="CREATE KEYS" />
-								<Button fx:id="cancelCreationButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeGenerateKeys" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="CANCEL" />
+								<Button fx:id="createKeysButton" disable="true" minWidth="200.0" mnemonicParsing="false" onAction="#generateKeysEvent" styleClass="highlightButton" text="CREATE KEYS" />
+								<Button fx:id="cancelCreationButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeGenerateKeys" styleClass="invertedHighlightButton" text="CANCEL" />
 							</HBox>
 						</GridPane>
 						<padding>
 							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 						</padding>
 					</VBox>
-					<VBox fx:id="reGenerateKeysVBox" alignment="TOP_CENTER" spacing="20.0" style="-fx-background-color: white;" HBox.hgrow="ALWAYS">
+					<VBox fx:id="reGenerateKeysVBox" alignment="TOP_CENTER" spacing="20.0" styleClass="brightPane" HBox.hgrow="ALWAYS">
 						<padding>
 							<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
 						</padding>
@@ -122,16 +122,16 @@
 							</rowConstraints>
 							<Label text="Key pair nickname " GridPane.rowIndex="1" />
 							<Label text="Key pair index" />
-							<TextField fx:id="recoverNicknameField" style="-fx-border-radius: 10; -fx-background-radius: 10;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-							<TextField fx:id="recoverIndexField" style="-fx-background-radius: 10; -fx-border-radius: 10;" GridPane.columnIndex="1" />
-							<Label fx:id="dummy" alignment="CENTER" style="-fx-text-fill: red;" text="This nickname already exists." visible="false" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+							<TextField fx:id="recoverNicknameField" styleClass="roundedTextfield" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+							<TextField fx:id="recoverIndexField" styleClass="roundedTextfield" GridPane.columnIndex="1" />
+							<Label fx:id="dummy" alignment="CENTER" styleClass="errorLabel" text="This nickname already exists." visible="false" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 						</GridPane>
 						<HBox alignment="CENTER" layoutX="10.0" layoutY="141.0" spacing="20.0">
-							<Button fx:id="recoverKeysButton" minWidth="200.0" mnemonicParsing="false" onAction="#recoverKeysEvent" style="-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-background-radius: 10; -fx-border-radius: 10;" text="RECOVER KEY" />
-							<Button fx:id="cancelRecoverKeyButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeRecoverKeys" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="CANCEL" />
+							<Button fx:id="recoverKeysButton" minWidth="200.0" mnemonicParsing="false" onAction="#recoverKeysEvent" styleClass="highlightButton" text="RECOVER KEY" />
+							<Button fx:id="cancelRecoverKeyButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeRecoverKeys" styleClass="invertedHighlightButton" text="CANCEL" />
 						</HBox>
 					</VBox>
-					<VBox fx:id="mnemonicWordsVBox" spacing="5.0" style="-fx-background-color: white;" HBox.hgrow="ALWAYS">
+					<VBox fx:id="mnemonicWordsVBox" spacing="5.0" styleClass="brightPane" HBox.hgrow="ALWAYS">
 						<VBox fx:id="recoveryVBox" minWidth="0.0" spacing="20.0" visible="false">
 							<Label text="This is a unique group of words that will serve as a backup in case you ever need to recover your keys. A copy of this recovery phrase should be kept separately from the application." wrapText="true" />
 							<HBox fx:id="phraseHBox" alignment="CENTER_LEFT">
@@ -143,11 +143,11 @@
 								</padding>
 							</HBox>
 						</VBox>
-						<Label fx:id="phrasePasswordErrorLabel" style="-fx-text-fill: red;" text="Incorrect password, please try again." visible="false" />
+						<Label fx:id="phrasePasswordErrorLabel" styleClass="errorLabel" text="Incorrect password, please try again." visible="false" />
 						<HBox alignment="CENTER_RIGHT" spacing="5.0">
-							<Button fx:id="copyMnemonicToClipboard" minWidth="200.0" mnemonicParsing="false" onAction="#copyPhraseToClipBoard" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="COPY" />
-							<Button fx:id="changePasswordKP" minWidth="200.0" mnemonicParsing="false" onAction="#changePasswordAction" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="CHANGE PASSWORD" />
-							<Button fx:id="cancelEditMnemonicButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeMnemonicBox" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10;" text="CLOSE" />
+							<Button fx:id="copyMnemonicToClipboard" minWidth="200.0" mnemonicParsing="false" onAction="#copyPhraseToClipBoard" styleClass="invertedHighlightButton" text="COPY" />
+							<Button fx:id="changePasswordKP" minWidth="200.0" mnemonicParsing="false" onAction="#changePasswordAction" styleClass="invertedHighlightButton" text="CHANGE PASSWORD" />
+							<Button fx:id="cancelEditMnemonicButton" minWidth="200.0" mnemonicParsing="false" onAction="#closeMnemonicBox" styleClass="invertedHighlightButton" text="CLOSE" />
 						</HBox>
 						<HBox.margin>
 							<Insets />
@@ -157,7 +157,7 @@
 						</padding>
 					</VBox>
 				</HBox>
-				<VBox fx:id="signingKeysVBox" maxWidth="-Infinity" minWidth="-Infinity" spacing="15.0" style="-fx-background-color: white;">
+				<VBox fx:id="signingKeysVBox" maxWidth="-Infinity" minWidth="-Infinity" spacing="15.0" styleClass="brightPane" >
 					<HBox alignment="CENTER">
 						<Label text="Available keys" />
 						<Region HBox.hgrow="ALWAYS" />
@@ -166,7 +166,7 @@
 								<Image url="@../../../../../icons/1GreyKey.png" />
 							</ImageView>
 							<Label text="Public Key" />
-							<Button fx:id="publicKeyToolTip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
+							<Button fx:id="publicKeyToolTip" alignment="TOP_CENTER" mnemonicParsing="false" styleClass="iconButton">
 								<graphic>
 									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
 										<Image url="@../../../../../icons/helpIcon.png" />
@@ -181,7 +181,7 @@
 								<Image url="@../../../../../icons/2GreenKeys.png" />
 							</ImageView>
 							<Label text="Key Pair (linked)" />
-							<Button fx:id="linkedPrivateToolTip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
+							<Button fx:id="linkedPrivateToolTip" alignment="TOP_CENTER" mnemonicParsing="false" styleClass="iconButton">
 								<graphic>
 									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
 										<Image url="@../../../../../icons/helpIcon.png" />
@@ -196,7 +196,7 @@
 								<Image url="@../../../../../icons/2BlueKeys.png" />
 							</ImageView>
 							<Label text="Key Pair (unlinked)" />
-							<Button fx:id="unlinkedPrivateToolTip" alignment="TOP_CENTER" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: white;">
+							<Button fx:id="unlinkedPrivateToolTip" alignment="TOP_CENTER" mnemonicParsing="false" styleClass="iconButton">
 								<graphic>
 									<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true">
 										<Image url="@../../../../../icons/helpIcon.png" />
@@ -208,7 +208,7 @@
 							</Button>
 						</HBox>
 						<Region HBox.hgrow="ALWAYS" />
-						<Button fx:id="btnImportKeys" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#importKeys" prefWidth="200.0" style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: #0b9dfd;" text="IMPORT KEYS" textOverrun="CLIP" />
+						<Button fx:id="btnImportKeys" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#importKeys" prefWidth="200.0" styleClass="invertedHighlightButton" text="IMPORT KEYS" textOverrun="CLIP" />
 					</HBox>
 					<padding>
 						<Insets bottom="15.0" left="30.0" right="30.0" top="15.0" />
