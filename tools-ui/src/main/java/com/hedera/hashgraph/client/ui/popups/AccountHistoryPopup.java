@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.enums.AccountInfoFields;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -59,7 +60,6 @@ import java.util.stream.Collectors;
 import static com.google.gson.JsonParser.parseReader;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class AccountHistoryPopup {
 	private static final Logger logger = LogManager.getLogger(AccountHistoryPopup.class);
@@ -94,7 +94,7 @@ public class AccountHistoryPopup {
 
 
 			final var continueButton = new Button("CLOSE");
-			continueButton.setStyle(WHITE_BUTTON_STYLE);
+			continueButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 			continueButton.setPrefWidth(200);
 			continueButton.setOnAction(event -> window.close());
 			final var layout = new VBox();
@@ -108,8 +108,7 @@ public class AccountHistoryPopup {
 			layout.setMinWidth(500);
 
 			final var scene = new Scene(layout);
-			scene.getStylesheets().add("tools.css");
-
+			Style.addStylesheets(scene);
 			window.setScene(scene);
 
 			window.showAndWait();

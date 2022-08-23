@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -134,8 +135,7 @@ public class ThreeButtonPopup {
 		}
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
-
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 
 		window.showAndWait();

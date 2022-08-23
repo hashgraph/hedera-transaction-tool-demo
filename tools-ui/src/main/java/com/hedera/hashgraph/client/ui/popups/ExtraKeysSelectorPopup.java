@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -53,10 +54,10 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.BLUE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.WHITE_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.ui.Style.HIGHLIGHT_BUTTON_CLASS;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
@@ -123,7 +124,7 @@ public class ExtraKeysSelectorPopup {
 		nonSignersVBox.setVisible(nonSignNumber > 0);
 
 		final var acceptButton = new Button("ACCEPT");
-		acceptButton.setStyle(WHITE_BUTTON_STYLE);
+		acceptButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		acceptButton.setPrefWidth(200);
 		acceptButton.setOnAction(event -> {
 			cancelBoolean.set(false);
@@ -132,7 +133,7 @@ public class ExtraKeysSelectorPopup {
 
 
 		final var cancelButton = new Button("CANCEL");
-		cancelButton.setStyle(BLUE_BUTTON_STYLE);
+		cancelButton.getStyleClass().add(HIGHLIGHT_BUTTON_CLASS);
 		cancelButton.setPrefWidth(200);
 		cancelButton.setOnAction(event -> {
 			cancelBoolean.set(true);
@@ -178,7 +179,7 @@ public class ExtraKeysSelectorPopup {
 		}
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 

@@ -32,6 +32,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
@@ -89,7 +90,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
-import static com.hedera.hashgraph.client.core.constants.Constants.BLUE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
@@ -97,9 +97,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Messages.CONTINUE_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.FILE_HAS_BEEN_DELETED_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.trimTo64;
 
 public class KeyDesignerPopup implements GenericFileReadWriteAware {
@@ -217,7 +217,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		HBox.setHgrow(region, Priority.ALWAYS);
 
 		final var saveButton = new Button("SAVE");
-		saveButton.setStyle(BLUE_BUTTON_STYLE);
+		saveButton.getStyleClass().add(Style.HIGHLIGHT_BUTTON_CLASS);
 		saveButton.setPrefWidth(150);
 		saveButton.setOnAction(actionEvent -> {
 			missingThresholds.clear();
@@ -231,6 +231,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		});
 
 		final var cancelButton = new Button("CANCEL");
+		cancelButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		cancelButton.setStyle(WHITE_BUTTON_STYLE);
 		cancelButton.setPrefWidth(150);
 		cancelButton.setOnAction(actionEvent -> {
@@ -252,7 +253,7 @@ public class KeyDesignerPopup implements GenericFileReadWriteAware {
 		VBox.setVgrow(vBox, Priority.ALWAYS);
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 		return jsonKey;

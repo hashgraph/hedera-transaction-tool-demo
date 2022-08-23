@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -102,7 +103,7 @@ public class MnemonicBox {
 		layout.setStyle("-fx-font-size: 14");
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 
 		window.setScene(scene);
 

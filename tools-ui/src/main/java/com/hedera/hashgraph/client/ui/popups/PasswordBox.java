@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -43,7 +44,8 @@ import java.util.Arrays;
 public class PasswordBox {
 	private static final Logger logger = LogManager.getLogger(PasswordBox.class);
 	private static final String WARNING_MESSAGE =
-			"This process will change your password. You will need to have your recovery phrase at hand to enter it at" +
+			"This process will change your password. You will need to have your recovery phrase at hand to enter it " +
+					"at" +
 					" " +
 					"the prompt. Please be advised that the Keys that were generated and stored with the old password" +
 					" " +
@@ -132,8 +134,7 @@ public class PasswordBox {
 		vBox.setPadding(new Insets(20, 20, 20, 20));
 
 		final var scene = new Scene(vBox);
-		scene.getStylesheets().add("tools.css");
-
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 
 		window.showAndWait();

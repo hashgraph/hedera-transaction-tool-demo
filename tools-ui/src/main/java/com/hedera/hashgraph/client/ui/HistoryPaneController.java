@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui;
 import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -261,7 +262,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.refresh();
 	}
 
-	public void removeFromHistory(final RemoteFile remoteFile){
+	public void removeFromHistory(final RemoteFile remoteFile) {
 		noise = false;
 		final var remove = new HistoryData(remoteFile);
 		tableList.remove(remove);
@@ -464,7 +465,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					private void setupButtonBehavior(final HistoryData historyData) {
 						if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
 							button.setText(historyData.getFileName());
-							button.setStyle("-fx-font-size: 2");
+							button.setStyle(StyleConstants.FONT_SIZE_2_STYLE);
 						}
 
 						button.setVisible(!historyData.isExpired());
@@ -596,7 +597,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var size = typeFilter.size();
 		final var filterTitle = size > 0 ? format("filters (%d)", size) : "filters";
 		final var title = new Label(filterTitle);
-		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
+		title.setStyle(StyleConstants.TITLE_STYLE);
 		title.setPadding(new Insets(5));
 
 		final var toolTipButton = getToolTipButton(FILTER_TOOLTIP_TEXT);
@@ -614,7 +615,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 		typeFilterVBox.getChildren().clear();
 		typeFilterVBox.getChildren().addAll(titleBox, vBox);
-		typeFilterVBox.setStyle("-fx-border-color: gray; -fx-border-radius: 10");
+		typeFilterVBox.setStyle(StyleConstants.TYPE_FILTER_STYLE);
 	}
 
 	private void setupFeePayerFilterBox() {
@@ -783,7 +784,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		imageView.setFitHeight(15);
 		final var toolTipButton = new Button();
 		toolTipButton.setGraphic(imageView);
-		toolTipButton.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
+		toolTipButton.setStyle(StyleConstants.TOOLTIP_BUTTON_STYLE);
 		toolTipButton.setPadding(new Insets(0, 0, 10, 0));
 		toolTipButton.setMinWidth(25);
 

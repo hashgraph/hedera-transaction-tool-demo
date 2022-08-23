@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -42,7 +43,6 @@ import java.io.File;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class NewNetworkPopup implements GenericFileReadWriteAware {
 	private static final UserAccessibleProperties properties =
@@ -124,7 +124,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 		mainBox.getChildren().add(continueBox);
 
 		final var scene = new Scene(mainBox);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 
@@ -216,7 +216,7 @@ public class NewNetworkPopup implements GenericFileReadWriteAware {
 	private static Button formatButton(final String legend) {
 		final var button = new Button(legend);
 		button.setMinWidth(150);
-		button.setStyle(WHITE_BUTTON_STYLE);
+		button.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		return button;
 	}
 

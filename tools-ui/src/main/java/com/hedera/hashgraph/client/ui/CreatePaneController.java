@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -162,7 +163,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTE
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
 import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
 import static com.hedera.hashgraph.client.core.constants.Constants.NODE_ID_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
@@ -172,10 +172,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.REMAINING_TIM
 import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_FREEZE_TYPE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_STRING;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.START_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_DEFAULT;
-import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_ERROR;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_FEE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_VALID_DURATION_PROPERTY;
@@ -213,6 +210,10 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.MENU_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.START_STYLE;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.TEXTFIELD_DEFAULT;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.TEXTFIELD_ERROR;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
@@ -534,7 +535,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
 				));
 		declineStakingRewards.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(
+						Boolean.TRUE.equals(t1) ? "true" : "false"
 				));
 
 		createAccountMemo.textProperty().addListener(
@@ -571,7 +573,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
 		declineStakingRewardsNew.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(
+						Boolean.TRUE.equals(t1) ? "true" : "false"));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -602,7 +605,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				key = originalKey;
 			}
 			final var keyTree = controller.buildKeyTreeView(key);
-			keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
+			keyTree.setStyle(StyleConstants.WHITE_TREEVIEW_STYLE);
 			keyTree.setMinWidth(800);
 			updateNewKey.setContent(keyTree);
 			keyTree.prefWidthProperty().bind(updateNewKey.widthProperty());
@@ -915,7 +918,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		if (flag) {
-			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode, invalidStakedAccountId);
+			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode,
+					invalidStakedAccountId);
 
 		}
 		return flag;
@@ -1167,7 +1171,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void initializeTable(final TableView<AccountAmountStrings> table) {
 		final ObservableList<AccountAmountStrings> data = FXCollections.observableArrayList();
 		table.setFixedCellSize(FIXED_CELL_SIZE);
-		table.setStyle("-fx-font-size: " + FIXED_CELL_SIZE / 2);
+		table.setStyle(StyleConstants.TABLE_STYLE);
 
 		table.setEditable(true);
 
@@ -1230,9 +1234,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 
-		account.setStyle(null);
+		account.setStyle(StyleConstants.NULL_STYLE);
 		account.setStyle(START_STYLE);
-		amount.setStyle(null);
+		amount.setStyle(StyleConstants.NULL_STYLE);
 		amount.setStyle(START_STYLE);
 
 		final AccountAmountStrings newTransaction;
@@ -2070,7 +2074,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void setKeyTreeInBox(final JsonObject key, final ScrollPane keyScrollPane) {
 		final var keyTree = controller.buildKeyTreeView(key);
-		keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
+		keyTree.setStyle(StyleConstants.WHITE_TREEVIEW_STYLE);
 		keyScrollPane.setContent(keyTree);
 		keyTree.setMinWidth(800);
 		keyTree.prefWidthProperty().bind(createNewKey.widthProperty());
@@ -2408,7 +2412,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
 		}
 
-		final var originalDeclineStakingRewardsNew = info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
+		final var originalDeclineStakingRewardsNew =
+				info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
 		if (originalDeclineStakingRewardsNew != declineStakingRewardsNew.isSelected()) {
 			input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
 		}
@@ -2998,7 +3003,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private void setupKeyPane(final TreeView<String> jsonObjectKey, final ScrollPane scrollPane) {
 		jsonObjectKey.prefHeightProperty().bind(scrollPane.heightProperty());
 		jsonObjectKey.prefWidthProperty().bind(scrollPane.widthProperty());
-		jsonObjectKey.setStyle("-fx-border-color: white");
+		jsonObjectKey.setStyle(StyleConstants.WHITE_BORDER_STYLE);
 		jsonObjectKey.setMinWidth(800);
 		scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
 		scrollPane.setContent(jsonObjectKey);
@@ -3152,7 +3157,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
 			invalidNode.setVisible(true);
-			startFieldsSet.reset(1,0,0);
+			startFieldsSet.reset(1, 0, 0);
 			return;
 		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
@@ -3450,8 +3455,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case CRYPTO_UPDATE:
 				final var account =
 						((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
-				final var fields = String.join("\n\t\u2022 ", ((ToolCryptoUpdateTransaction) transaction).getUpdateList());
-				message = String.format("The account update transaction succeeded. The following account properties were updated for %s:\n\t\u2022 %s", account,
+				final var fields = String.join("\n\t\u2022 ",
+						((ToolCryptoUpdateTransaction) transaction).getUpdateList());
+				message = String.format(
+						"The account update transaction succeeded. The following account properties were updated for " +
+								"%s:\n\t\u2022 %s",
+						account,
 						fields);
 				break;
 			case SYSTEM_DELETE_UNDELETE:

@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -74,8 +75,7 @@ public class ProgressPopup {
 		layout.getChildren().addAll(titleLabel, messageLabel, bar, text, cancelButton);
 
 		final var scene = new Scene(layout);
-
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.show();
 		return window;

@@ -18,8 +18,8 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
-import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -61,14 +61,14 @@ public class TransactionPopup {
 		layout.getChildren().add(frame);
 
 		final var continueButton = new Button("SUBMIT");
-		continueButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		continueButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		continueButton.setOnAction(actionEvent -> {
 			logger.info("Transaction accepted");
 			response = true;
 			window.close();
 		});
 		final var cancelButton = new Button(BUTTON_CANCEL);
-		cancelButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		cancelButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		cancelButton.setOnAction(actionEvent -> {
 			logger.info("Transaction rejected");
 			response = false;
@@ -82,7 +82,7 @@ public class TransactionPopup {
 		layout.getChildren().add(buttonBar);
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 		return response;

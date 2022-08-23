@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -72,21 +73,21 @@ public class SigningKeysPopup {
 		layout.getChildren().add(signerTable);
 		layout.getChildren().add(formatLabel(LEGEND_2, 16));
 		final var continueButton = new Button(Constants.BUTTON_CONTINUE);
-		continueButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		continueButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		continueButton.setOnAction(actionEvent -> {
 			logger.info("Keys accepted");
 			answer = Boolean.TRUE;
 			window.close();
 		});
 		final var addButton = new Button(Constants.BUTTON_ADD);
-		addButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		addButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		addButton.setOnAction(actionEvent -> {
 			logger.info("Add more keys");
 			answer = Boolean.FALSE;
 			window.close();
 		});
 		final var cancelButton = new Button(Constants.BUTTON_CANCEL);
-		cancelButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		cancelButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		cancelButton.setOnAction(actionEvent -> {
 			logger.info("Keys rejected");
 			answer = null;
@@ -99,7 +100,7 @@ public class SigningKeysPopup {
 		layout.getChildren().add(buttonBar);
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 		return answer;

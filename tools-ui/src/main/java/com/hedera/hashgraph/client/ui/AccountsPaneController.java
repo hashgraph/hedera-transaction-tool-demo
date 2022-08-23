@@ -22,6 +22,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -54,8 +55,6 @@ import com.hedera.hashgraph.sdk.LedgerId;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
-import com.hedera.hashgraph.sdk.StakingInfo;
-
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -135,7 +134,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSIO
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.ACCOUNTS_FOLDER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.FEE_PAYER_NOT_SET_ERROR_MESSAGE;
@@ -164,12 +162,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String DELETE_ACCOUNT_WARNING_MESSAGE =
 			"This operation will delete the account from your application. Are you sure you would like delete this " +
 					"account?";
-	public static final String BOX_STYLE =
-			"-fx-border-radius: 10; -fx-background-radius: 10; -fx-background-color: white; -fx-border-color: " +
-					"lightgray";
 	public static final String CONTINUE_LABEL = "CONTINUE";
 	public static final String CANCEL_LABEL = "CANCEL";
-	public static final String FX_TEXT_FILL_BLACK = "-fx-text-fill: black; -fx-background-color: white";
 	public static final String ACCOUNT_PROPERTY = "account";
 	public static final String BALANCE_PROPERTY = "balance";
 	public static final String DATE_PROPERTY = "date";
@@ -179,7 +173,6 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	public static final String NO_ACCOUNTS_SELECTED_TITLE = "No accounts selected";
 	public static final String ERROR_TITLE = "Error";
 	public static final String UNKNOWN_NETWORK_STRING = "UNKNOWN";
-	public static final String COLUMN_STYLE_STRING = "-fx-alignment: TOP-CENTER; -fx-padding: 10";
 
 
 	@FXML
@@ -747,7 +740,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					return new SimpleStringProperty(date.format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
 				});
 		dateColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(3));
-		dateColumn.setStyle(COLUMN_STYLE_STRING);
+		dateColumn.setStyle(StyleConstants.COLUMN_STYLE_STRING);
 		return dateColumn;
 	}
 
@@ -802,7 +795,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var networkColumn = new TableColumn<AccountLineInformation, String>("Network");
 		networkColumn.setCellValueFactory(new PropertyValueFactory<>("ledgerId"));
 		networkColumn.prefWidthProperty().bind(table.widthProperty().divide(20).multiply(2));
-		networkColumn.setStyle(COLUMN_STYLE_STRING);
+		networkColumn.setStyle(StyleConstants.COLUMN_STYLE_STRING);
 		networkColumn.setCellFactory(p -> new TableCell<>() {
 			@Override
 			protected void updateItem(final String s, final boolean b) {
@@ -842,7 +835,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 							if (controller.getSetupPhase().equals(SetupPhase.TEST_PHASE)) {
 								final var x = table.getItems().get(getIndex());
 								button.setText(x.getNickname() + "T");
-								button.setStyle("-fx-font-size: 2");
+								button.setStyle(StyleConstants.FONT_SIZE_2);
 							}
 							button.setOnAction(actionEvent -> setAccountTableButtonAction());
 							setGraphic(button);
@@ -882,7 +875,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	@NotNull
 	private TableRowExpanderColumn<AccountLineInformation> getExpanderColumn() {
 		final var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
-		expanderColumn.setStyle(COLUMN_STYLE_STRING);
+		expanderColumn.setStyle(StyleConstants.COLUMN_STYLE_STRING);
 		return expanderColumn;
 	}
 
@@ -933,7 +926,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		imageView.setFitHeight(20);
 		imageView.setPreserveRatio(true);
 		button.setGraphic(imageView);
-		button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
+		button.setStyle(StyleConstants.TRANSPARENT_BUTTON_STYLE);
 		return button;
 	}
 
@@ -948,7 +941,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		imageView.setFitHeight(30);
 		imageView.setPreserveRatio(true);
 		button.setGraphic(imageView);
-		button.setStyle("-fx-background-color: transparent; -fx-border-color: transparent");
+		button.setStyle(StyleConstants.TRANSPARENT_BUTTON_STYLE);
 		return button;
 	}
 
@@ -1070,7 +1063,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var lineInformation = parameter.getValue();
 		final var allBoxes = new VBox();
 
-		allBoxes.setStyle(BOX_STYLE);
+		allBoxes.setStyle(StyleConstants.BOX_STYLE);
 		allBoxes.setPadding(new Insets(10));
 		allBoxes.setSpacing(10);
 		try {
@@ -1110,7 +1103,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			final double height = 28;
 			keyTreeView.setPrefHeight((keyTreeView.expandedItemCountProperty().get() + 1) * height);
 
-			keyTreeView.setStyle("-fx-border-color: white");
+			keyTreeView.setStyle(StyleConstants.WHITE_BORDER_STYLE);
 
 			keyTreeView.setOnMouseClicked(
 					mouseEvent -> displayCompleteKeysPopup(keyTreeView.getSelectionModel().getSelectedItem(),
@@ -1165,7 +1158,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			allBoxes.setPrefHeight(Region.USE_COMPUTED_SIZE);
 			allBoxes.setPrefWidth(Region.USE_COMPUTED_SIZE);
 			final var keyLabel = new Label("Key");
-			keyLabel.setStyle(FX_TEXT_FILL_BLACK);
+			keyLabel.setStyle(StyleConstants.FX_TEXT_FILL_BLACK);
 			allBoxes.getChildren().addAll(returnBox, keyLabel, keyTreeView);
 
 
@@ -1184,9 +1177,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		networkChoiceBox.setPrefWidth(300);
 		networkChoiceBox.setMinWidth(300);
 		networkChoiceBox.setMaxWidth(300);
-		networkChoiceBox.setStyle(
-				"-fx-background-color: white; -fx-border-color: #c2c2c2; -fx-background-radius: 10; " +
-						"-fx-border-radius: 10");
+		networkChoiceBox.setStyle(StyleConstants.CHOICEBOX_STYLE);
 		controller.networkBoxSetup(networkChoiceBox);
 		networkChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
 			if (!noise) {
@@ -1280,7 +1271,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (stakingInfo != null && stakingInfo.stakedAccountId != null) {
 			gridPane.add(setupBoxLabel("Staked Account ID"), 0, ++cnt);
 			final var stakingAccountStr = new Identifier(info.stakingInfo.stakedAccountId).toReadableString();
-			gridPane.add(setupBoxTextField(format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
+			gridPane.add(setupBoxTextField(
+					format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
 		}
 
 		if (stakingInfo != null && stakingInfo.stakedNodeId != null) {
@@ -1423,7 +1415,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private Button setupWhiteButton(final String change) {
 		final var changeNicknameButton = new Button(change);
-		changeNicknameButton.setStyle(WHITE_BUTTON_STYLE);
+		changeNicknameButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		changeNicknameButton.setMinWidth(150);
 		changeNicknameButton.managedProperty().bind(changeNicknameButton.visibleProperty());
 		return changeNicknameButton;
@@ -1455,7 +1447,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 	private Label setupBoxLabel(final String field) {
 		final var fieldLabel = new Label(field);
-		fieldLabel.setStyle(FX_TEXT_FILL_BLACK);
+		fieldLabel.setStyle(StyleConstants.FX_TEXT_FILL_BLACK);
 		fieldLabel.setVisible(true);
 		fieldLabel.setWrapText(true);
 		return fieldLabel;
@@ -1468,9 +1460,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		textField.setMaxWidth(300);
 		textField.setEditable(false);
 		textField.setFocusTraversable(false);
-		textField.setStyle(
-				"-fx-background-color: white; -fx-border-color: #c2c2c2; -fx-background-radius: 10; " +
-						"-fx-border-radius: 10");
+		textField.setStyle(StyleConstants.CHOICEBOX_STYLE);
 		return textField;
 	}
 

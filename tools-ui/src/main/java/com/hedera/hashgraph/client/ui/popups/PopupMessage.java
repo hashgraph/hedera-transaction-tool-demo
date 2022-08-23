@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -77,8 +78,8 @@ public class PopupMessage {
 
 		final var button =
 				(buttonName == null || buttonName.isEmpty() || buttonName.equalsIgnoreCase(BUTTON_CONTINUE)) ?
-				new Button(BUTTON_CONTINUE) :
-				new Button(buttonName.toUpperCase());
+						new Button(BUTTON_CONTINUE) :
+						new Button(buttonName.toUpperCase());
 		button.setStyle(
 				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
 						"10; -fx-background-radius: 10;");
@@ -154,8 +155,7 @@ public class PopupMessage {
 		layout.setStyle("-fx-font-size: 14");
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
-
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 
 		window.showAndWait();

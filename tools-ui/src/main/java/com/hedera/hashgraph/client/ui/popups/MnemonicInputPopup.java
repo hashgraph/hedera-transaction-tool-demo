@@ -19,8 +19,10 @@
 package com.hedera.hashgraph.client.ui.popups;
 
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.MnemonicPhraseHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.BadMnemonicException;
@@ -82,16 +84,16 @@ public class MnemonicInputPopup {
 		final VBox recoverPasswordVBox = new VBox();
 
 		final Button recoverPhraseButton = new Button("RECOVER");
-		recoverPhraseButton.setStyle(Constants.WHITE_BUTTON_STYLE);
+		recoverPhraseButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		recoverPhraseButton.setVisible(false);
 		recoverPhraseButton.managedProperty().bind(recoverPhraseButton.visibleProperty());
 
 		final Button pasteFromClipboard = new Button("PASTE");
-		pasteFromClipboard.setStyle(Constants.WHITE_BUTTON_STYLE);
+		pasteFromClipboard.setStyle(StyleConstants.WHITE_BUTTON_STYLE);
 		pasteFromClipboard.setOnAction(actionEvent -> pastePhraseFromClipBoard());
 
 		final Button cancelButton = new Button(CANCEL);
-		cancelButton.setStyle(Constants.BLUE_BUTTON_STYLE);
+		cancelButton.getStyleClass().add(Style.HIGHLIGHT_BUTTON_CLASS);
 		cancelButton.setOnAction(actionEvent -> window.close());
 
 
@@ -128,7 +130,7 @@ public class MnemonicInputPopup {
 				actionEvent -> recoverEvent(storageDirectory, window, recoverMnemonicErrorMessage));
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 		return answer;

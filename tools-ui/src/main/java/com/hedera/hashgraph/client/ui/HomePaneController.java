@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -90,6 +91,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUBLIC_KEY_LO
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
+import static com.hedera.hashgraph.client.ui.Style.HIGHLIGHT_BUTTON_CLASS;
+import static com.hedera.hashgraph.client.ui.Style.INVERTED_HIGHLIGHT_BUTTON_CLASS;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
@@ -259,7 +262,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
 				final var su = (SoftwareUpdateFile) rf;
 				final var currentVersion = controller.getVersion().split(" ");
-				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+				if (su.compareVersion(currentVersion[1]) > 0 && controller.historyPaneController.isHistory(
+						rf.hashCode())) {
 					controller.historyPaneController.removeFromHistory(rf);
 				}
 			}
@@ -760,7 +764,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	private GridPane formatExtraSignersGridPane(final int columns) {
 		final var extraSignersGridPane = new GridPane();
 		extraSignersGridPane.setVgap(10);
-		extraSignersGridPane.setStyle("-fx-border-color: darkgray; -fx-border-radius: 5");
+		extraSignersGridPane.setStyle(StyleConstants.EXTRA_SIGNER_STYLE);
 		extraSignersGridPane.setPadding(new Insets(5));
 
 		for (var i = 0; i < columns; i++) {
@@ -871,18 +875,14 @@ public class HomePaneController implements GenericFileReadWriteAware {
 
 	private Button buildWhiteButton(final String decline) {
 		final var declineButton = new Button(decline);
-		declineButton.setStyle(
-				"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: " +
-						"10; -fx-background-radius: 10;");
+		declineButton.getStyleClass().add(INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		declineButton.setMinWidth(150);
 		return declineButton;
 	}
 
 	private Button buildBlueButton(final String legend) {
 		final var acceptButton = new Button(legend);
-		acceptButton.setStyle(
-				"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
-						"10; -fx-background-radius: 10;");
+		acceptButton.getStyleClass().add(HIGHLIGHT_BUTTON_CLASS);
 		acceptButton.setMinWidth(150);
 		return acceptButton;
 	}

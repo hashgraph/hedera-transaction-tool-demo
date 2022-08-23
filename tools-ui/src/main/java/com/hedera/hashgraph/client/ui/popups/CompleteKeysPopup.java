@@ -24,6 +24,7 @@ import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -315,8 +316,7 @@ public class CompleteKeysPopup {
 		layout.setStyle("-fx-font-size: 14");
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
-
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 
 		window.showAndWait();

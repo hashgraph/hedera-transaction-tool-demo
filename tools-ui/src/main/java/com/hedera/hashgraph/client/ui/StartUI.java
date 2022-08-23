@@ -37,7 +37,7 @@ public class StartUI extends Application {
 		final Parent root = FXMLLoader.load(getClass().getResource("UserInterface.fxml"));
 		final var scene = new Scene(root, 1200, 950);
 
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		primaryStage.setScene(scene);
 		primaryStage.show();
 	}

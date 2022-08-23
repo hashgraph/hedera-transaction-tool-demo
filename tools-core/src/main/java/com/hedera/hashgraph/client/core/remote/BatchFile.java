@@ -20,7 +20,7 @@ package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
@@ -657,7 +657,7 @@ public class BatchFile extends RemoteFile {
 
 		final var actualFeeLabel = new Label(Hbar.fromTinybars(getTransactionFee()).toString());
 		actualFeeLabel.setWrapText(true);
-		actualFeeLabel.setStyle(Constants.DEBIT);
+		actualFeeLabel.setStyle(StyleConstants.DEBIT);
 		detailsGridPane.add(actualFeeLabel, RIGHT, row++);
 
 		final var firstTransactionLabel = new Label("First transaction date: ");

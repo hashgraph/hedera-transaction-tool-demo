@@ -24,6 +24,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
+import com.hedera.hashgraph.client.core.constants.StyleConstants;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -99,7 +100,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEVELOPMENT;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_INDEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_HIGHLIGHT_COLOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
@@ -108,6 +108,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.MENU_BUTTON_HIGHLIGHT_COLOR;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.INITIAL_SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
@@ -477,7 +478,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	private void resetButtonBackgrounds() {
 		final var buttons = menuButtonBar.getButtons();
 		for (final var button : buttons) {
-			button.setStyle("-fx-background-color: white;");
+			button.setStyle(StyleConstants.WHITE_BACKGROUND_STYLE);
 		}
 	}
 

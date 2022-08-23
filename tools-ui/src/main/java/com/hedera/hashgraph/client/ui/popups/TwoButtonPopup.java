@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui.popups;
 
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.ResponseEnum;
 import com.hedera.hashgraph.client.ui.utilities.ResponseTuple;
 import javafx.geometry.Insets;
@@ -114,8 +115,7 @@ public class TwoButtonPopup {
 		layout.getChildren().addAll(text, answerField, choiceBox);
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
-
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 
 		window.showAndWait();

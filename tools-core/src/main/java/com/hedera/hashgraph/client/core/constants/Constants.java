@@ -131,29 +131,6 @@ public class Constants {
 	public static final String HISTORY_MAP_JSON = "historyMap.json";
 	public static final String HISTORY_MAP = DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
 
-	// endregion
-
-	// region STYLE
-	public static final String MENU_BUTTON_HIGHLIGHT_COLOR =
-			"-fx-background-color:  #f4f4f4; -fx-border-color:  #f4f4f4";
-	public static final String WHITE_BUTTON_STYLE =
-			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
-					"-fx-background-radius: 10;";
-	public static final String DEBIT = "-fx-text-fill:RED";
-	public static final String CREDIT = "-fx-text-fill:GREEN";
-
-	public static final String HISTORY_BOX_STYLE =
-			"-fx-background-color: aliceblue; -fx-border-color: grey; -fx-background-radius: 15; " +
-					"-fx-border-radius: 15; -fx-border-width: 2";
-	public static final String REGULAR_BOX_STYLE =
-			"-fx-background-color: white; -fx-border-color: lightgrey; -fx-background-radius: 15; " +
-					"-fx-border-radius: 15; -fx-border-width: 2";
-	public static final String BLUE_BUTTON_STYLE =
-			"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
-					"10; -fx-background-radius: 10;";
-
-
-	// endregion
 
 	// region Encryption Parameters
 	public static final int GCM_IV_LENGTH = 12;
@@ -177,10 +154,6 @@ public class Constants {
 	public static final String SELECT_STRING = "SELECT";
 	public static final String REGEX = "[^\\d]";
 	public static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
-	public static final String START_STYLE = "-fx-background-radius: 10; -fx-border-radius: 10;";
-	public static final String MENU_BUTTON_STYLE =
-			"-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; " +
-					"-fx-background-radius: 10;";
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
@@ -191,9 +164,6 @@ public class Constants {
 	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
 	public static final String MEMO_PROPERTY = "memo";
 	public static final String TRANSACTION_FEE_PROPERTY = "transactionFee";
-	public static final String TEXTFIELD_ERROR = "-fx-text-fill: red; -fx-background-radius: 10;-fx-border-radius: 10";
-	public static final String TEXTFIELD_DEFAULT =
-			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
 	public static final String SELECT_FREEZE_TYPE = "SELECT FREEZE TYPE";
 	public static final String ACCOUNT_PARSED = "Account {} parsed";
 	public static final String REMAINING_TIME_MESSAGE =

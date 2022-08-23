@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.Style;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.event.Event;
 import javafx.geometry.Insets;
@@ -53,7 +54,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class CompareInfosPopup {
 	public static final String ACCOUNT_ID = "accountID";
@@ -89,7 +89,7 @@ public class CompareInfosPopup {
 		parse(current, old);
 
 		final var continueButton = new Button("CLOSE");
-		continueButton.setStyle(WHITE_BUTTON_STYLE);
+		continueButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		continueButton.setPrefWidth(200);
 		continueButton.setOnAction(event -> window.close());
 		final var layout = new VBox();
@@ -126,7 +126,7 @@ public class CompareInfosPopup {
 		layout.setMinWidth(1600);
 
 		final var scene = new Scene(layout);
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 
 		window.setScene(scene);
 

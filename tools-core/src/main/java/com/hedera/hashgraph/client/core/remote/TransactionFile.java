@@ -79,13 +79,13 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
-import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.CREDIT;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.DEBIT;
+import static com.hedera.hashgraph.client.core.constants.StyleConstants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class TransactionFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -204,7 +204,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var detailsGridPane = super.buildGridPane();
 		handleTransactionCommonFields(detailsGridPane);
 
-		final HBox hbox = FXUtils.buildTransactionIDBox(detailsGridPane, transaction.getTransaction().getTransactionId().toString());
+		final HBox hbox = FXUtils.buildTransactionIDBox(detailsGridPane,
+				transaction.getTransaction().getTransactionId().toString());
 		detailsGridPane.add(hbox, RIGHT, 0);
 
 		final var count = detailsGridPane.getRowCount() + 1;
@@ -369,7 +370,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		label = new Label("Staked Node ID: ");
 		label.setWrapText(true);
 		detailsGridPane.add(label, 0, count);
-		detailsGridPane.add(new Label(createTransaction.getStakedNodeId() == null ?	"" :
+		detailsGridPane.add(new Label(createTransaction.getStakedNodeId() == null ? "" :
 				createTransaction.getStakedNodeId().toString()), 1, count++);
 
 		label = new Label("Decline Staking Rewards: ");
@@ -435,7 +436,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			var label = new Label("Staked account ID: ");
 			label.setWrapText(true);
 			detailsGridPane.add(label, 0, count);
-			final var stakedAccountIdLabel = new Label(CommonMethods.nicknameOrNumber(updateTransaction.getStakedAccountId(), nicknames));
+			final var stakedAccountIdLabel = new Label(
+					CommonMethods.nicknameOrNumber(updateTransaction.getStakedAccountId(), nicknames));
 			stakedAccountIdLabel.setWrapText(true);
 			detailsGridPane.add(stakedAccountIdLabel, 1, count++);
 		}

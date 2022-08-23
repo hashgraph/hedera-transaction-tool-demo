@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui.popups;
 import com.codahale.passpol.BreachDatabase;
 import com.codahale.passpol.PasswordPolicy;
 import com.codahale.passpol.Status;
+import com.hedera.hashgraph.client.ui.Style;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -40,7 +41,6 @@ import java.util.Arrays;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 
 public class NewPasswordPopup {
 	public static final String TITLE_LABEL = "Change your password";
@@ -121,7 +121,7 @@ public class NewPasswordPopup {
 
 
 		final var scene = new Scene(getMainBox(titleLabel, warningLabel, passwordBox, confirmBox, buttonBar));
-		scene.getStylesheets().add("tools.css");
+		Style.addStylesheets(scene);
 		window.setScene(scene);
 		window.showAndWait();
 		return answer;
@@ -190,7 +190,7 @@ public class NewPasswordPopup {
 	private static Button setupButton(final String legend) {
 		final var continueButton = new Button(legend);
 		continueButton.setMinWidth(150);
-		continueButton.setStyle(WHITE_BUTTON_STYLE);
+		continueButton.getStyleClass().add(Style.INVERTED_HIGHLIGHT_BUTTON_CLASS);
 		return continueButton;
 	}
 
