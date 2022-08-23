@@ -17,39 +17,39 @@
  */
 
 * {
-    -highlight-color: #0b9dfd;
-    -error-color: red;
-    -bright-color: white;
-    -box-border-color: lightgrey white white white;
+	-highlight-color: #0b9dfd;
+	-error-color: red;
+	-bright-color: white;
+	-box-border-color: lightgrey white white white;
 }
 
 /*
 Extracted from InitialStatupPane
  */
 #scrollBoxParent {
-    -fx-border-color: transparent;
+	-fx-border-color: transparent;
 }
 
 #resetButton {
-    -fx-background-color: #0b9dfd0b;
+	-fx-background-color: #0b9dfd0b;
 }
 
 #scrollPane {
-    -fx-border-color: transparent;
-    -fx-background-color: transparent;
+	-fx-border-color: transparent;
+	-fx-background-color: transparent;
 }
 
 #hiddenPathInitial {
-    -fx-font-size: 2;
-    -fx-background-color: -highlight-color;
-    -fx-border-radius: 0;
-    -fx-background-radius: 0;
-    -fx-text-fill: -highlight-color;
+	-fx-font-size: 2;
+	-fx-background-color: -highlight-color;
+	-fx-border-radius: 0;
+	-fx-background-radius: 0;
+	-fx-text-fill: -highlight-color;
 }
 
 #headerLabel {
-    -fx-font-size: 18;
-    -fx-font-weight: bold;
+	-fx-font-size: 18;
+	-fx-font-weight: bold;
 }
 
 /*
@@ -57,98 +57,98 @@ extracted Style classes
  */
 
 .sectionHeaderLabel {
-    -fx-font-size: 12;
-    -fx-font-weight: bold;
+	-fx-font-size: 12;
+	-fx-font-weight: bold;
 }
 
 .errorLabel {
-    -fx-text-fill: -error-color;
+	-fx-text-fill: -error-color;
 }
 
 .fontSize14 {
-    -fx-font-size: 14;
+	-fx-font-size: 14;
 }
 
 .fontSize16 {
-    -fx-font-size: 16;
+	-fx-font-size: 16;
 }
 
 .fontSize25 {
-    -fx-font-size: 25;
+	-fx-font-size: 25;
 }
 
 .bright-text {
-    -fx-text-fill: -bright-color;
+	-fx-text-fill: -bright-color;
 }
 
 .boldText {
-    -fx-font-weight: bold;
+	-fx-font-weight: bold;
 }
 
 .transparentButton {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
+	-fx-background-color: transparent;
+	-fx-border-color: transparent;
 }
 
 .transparentPane {
-    -fx-background-color: transparent;
+	-fx-background-color: transparent;
 }
 
 .brightPane {
-    -fx-background-color: -bright-color;
+	-fx-background-color: -bright-color;
 }
 
 .highlightPane {
-    -fx-background-color: -highlight-color;
+	-fx-background-color: -highlight-color;
 }
 
 .highlightButton {
-    -fx-background-color: -highlight-color;
-    -fx-border-color: -highlight-color;
-    -fx-text-fill: -bright-color;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
+	-fx-background-color: -highlight-color;
+	-fx-border-color: -highlight-color;
+	-fx-text-fill: -bright-color;
+	-fx-border-radius: 10;
+	-fx-background-radius: 10;
 }
 
 .invertedHighlightButton {
-    -fx-background-color: -bright-color;
-    -fx-border-color: -highlight-color;
-    -fx-text-fill: -highlight-color;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
+	-fx-background-color: -bright-color;
+	-fx-border-color: -highlight-color;
+	-fx-text-fill: -highlight-color;
+	-fx-border-radius: 10;
+	-fx-background-radius: 10;
 }
 
 .invertedGreyButton {
-    -fx-background-color: -bright-color;
-    -fx-border-color: darkgrey;
-    -fx-background-radius: 5;
-    -fx-border-radius: 5;
+	-fx-background-color: -bright-color;
+	-fx-border-color: darkgrey;
+	-fx-background-radius: 5;
+	-fx-border-radius: 5;
 }
 
 .borderedBox {
-    -fx-background-color: -bright-color;
-    -fx-border-color: lightgrey white white white;
-    -fx-border-width: 3;
+	-fx-background-color: -bright-color;
+	-fx-border-color: lightgrey white white white;
+	-fx-border-width: 3;
 }
 
 .roundedTextfield {
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
+	-fx-border-radius: 10;
+	-fx-background-radius: 10;
 }
 
 .slightlyRoundedTextfield {
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
+	-fx-border-radius: 5;
+	-fx-background-radius: 5;
 }
 
 .iconButton {
-    -fx-background-color: -bright-color;
-    -fx-border-color: -bright-color;
+	-fx-background-color: -bright-color;
+	-fx-border-color: -bright-color;
 }
 
 .choiceBoxStyle {
-    -fx-background-color: -bright-color;
-    -fx-border-color: -highlight-color;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
+	-fx-background-color: -bright-color;
+	-fx-border-color: -highlight-color;
+	-fx-background-radius: 10;
+	-fx-border-radius: 10;
 }

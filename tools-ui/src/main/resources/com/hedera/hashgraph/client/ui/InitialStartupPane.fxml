@@ -35,155 +35,192 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
-
-<StackPane stylesheets="@../../../../../app.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.InitialStartupPaneController">
-	<VBox fx:id="scrollBoxParent" style="-fx-border-color: transparent;" >
+<StackPane stylesheets="@../../../../../app.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1"
+		   fx:controller="com.hedera.hashgraph.client.ui.InitialStartupPaneController">
+	<VBox fx:id="scrollBoxParent" style="-fx-border-color: transparent;">
 		<HBox fx:id="startupHeaderBox" styleClass="highlightPane">
 			<VBox.margin>
-				<Insets />
+				<Insets/>
 			</VBox.margin>
-			<VBox styleClass="highlightPane" alignment="CENTER_LEFT" prefHeight="150.0" spacing="30.0" >
-				<Label style="-fx-font-size: 18;" styleClass="bright-text,boldText" text="SET UP YOUR HEDERA TRANSACTION TOOLS"/>
-				<Label styleClass="bright-text, fontSize14" text="Complete the initial, one-time steps below to set up your application."/>
+			<VBox styleClass="highlightPane" alignment="CENTER_LEFT" prefHeight="150.0" spacing="30.0">
+				<Label style="-fx-font-size: 18;" styleClass="bright-text,boldText"
+					   text="SET UP YOUR HEDERA TRANSACTION TOOLS"/>
+				<Label styleClass="bright-text, fontSize14"
+					   text="Complete the initial, one-time steps below to set up your application."/>
 				<padding>
-					<Insets bottom="30.0" left="25.0" right="5.0" top="30.0" />
+					<Insets bottom="30.0" left="25.0" right="5.0" top="30.0"/>
 				</padding>
 			</VBox>
-			<ImageView fx:id="deleteImageIS" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true" visible="false">
-				<Image url="@../../../../../icons/delete.png" />
+			<ImageView fx:id="deleteImageIS" fitHeight="150.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true"
+					   visible="false">
+				<Image url="@../../../../../icons/delete.png"/>
 			</ImageView>
-			<ImageView fx:id="editImageIS" fitHeight="150.0" fitWidth="200.0" layoutX="495.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true" visible="false">
-				<Image url="@../../../../../icons/edit.png" />
+			<ImageView fx:id="editImageIS" fitHeight="150.0" fitWidth="200.0" layoutX="495.0" layoutY="10.0"
+					   pickOnBounds="true" preserveRatio="true" visible="false">
+				<Image url="@../../../../../icons/edit.png"/>
 			</ImageView>
 		</HBox>
-		<TextField fx:id="hiddenPathInitial" onKeyReleased="#choosePath" />
+		<TextField fx:id="hiddenPathInitial" onKeyReleased="#choosePath"/>
 		<ScrollPane fx:id="scrollPane" fitToWidth="true" maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
 			<VBox fx:id="mainVBox" alignment="CENTER" spacing="30.0">
 				<padding>
-					<Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+					<Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
 				</padding>
 				<VBox fx:id="drivesBox" styleClass="borderedBox" VBox.vgrow="ALWAYS">
 					<padding>
-						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0"/>
 					</padding>
 					<opaqueInsets>
-						<Insets />
+						<Insets/>
 					</opaqueInsets>
 					<GridPane VBox.vgrow="ALWAYS">
 						<columnConstraints>
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-							<ColumnConstraints halignment="RIGHT" hgrow="ALWAYS" minWidth="10.0" />
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
+							<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
+							<ColumnConstraints halignment="RIGHT" hgrow="ALWAYS" minWidth="10.0"/>
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-							<RowConstraints minHeight="-Infinity" vgrow="SOMETIMES" />
-							<RowConstraints minHeight="10.0" valignment="BOTTOM" vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="-Infinity" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="10.0" valignment="BOTTOM" vgrow="SOMETIMES"/>
 						</rowConstraints>
-						<HBox fx:id="showEmailMapHBox" alignment="BOTTOM_LEFT" spacing="20.0" GridPane.columnSpan="3" GridPane.rowIndex="1">
-							<VBox fx:id="transactionFoldersVBoxIS" minHeight="20.0" spacing="5.0" />
-							<Button fx:id="addToEmailMapButton" styleClass="invertedGreyButton" mnemonicParsing="false" onAction="#addToEmailMap" visible="false">
+						<HBox fx:id="showEmailMapHBox" alignment="BOTTOM_LEFT" spacing="20.0" GridPane.columnSpan="3"
+							  GridPane.rowIndex="1">
+							<VBox fx:id="transactionFoldersVBoxIS" minHeight="20.0" spacing="5.0"/>
+							<Button fx:id="addToEmailMapButton" styleClass="invertedGreyButton" mnemonicParsing="false"
+									onAction="#addToEmailMap" visible="false">
 								<graphic>
-									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
-										<Image url="@../../../../../icons/plus.png" />
+									<ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+											   preserveRatio="true">
+										<Image url="@../../../../../icons/plus.png"/>
 									</ImageView>
 								</graphic>
 							</Button>
 						</HBox>
 						<Label styleClass="sectionHeaderLabel" text="Link shared folders"/>
-						<Label fx:id="step1of2" styleClass="sectionHeaderLabel" text="STEP 1 OF 2" GridPane.columnIndex="2"/>
-						<HBox fx:id="addFolderPathHBox" alignment="BOTTOM_LEFT" GridPane.columnSpan="3" GridPane.rowIndex="2">
+						<Label fx:id="step1of2" styleClass="sectionHeaderLabel" text="STEP 1 OF 2"
+							   GridPane.columnIndex="2"/>
+						<HBox fx:id="addFolderPathHBox" alignment="BOTTOM_LEFT" GridPane.columnSpan="3"
+							  GridPane.rowIndex="2">
 							<GridPane fx:id="addPathGridPaneIS" hgap="5.0" vgap="5.0">
 								<columnConstraints>
-									<ColumnConstraints hgrow="ALWAYS" minWidth="10.0" />
-									<ColumnConstraints hgrow="ALWAYS" />
+									<ColumnConstraints hgrow="ALWAYS" minWidth="10.0"/>
+									<ColumnConstraints hgrow="ALWAYS"/>
 								</columnConstraints>
 								<rowConstraints>
-									<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
-									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-									<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-									<RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
-									<RowConstraints valignment="CENTER" vgrow="SOMETIMES" />
+									<RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+									<RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+									<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+									<RowConstraints valignment="CENTER" vgrow="SOMETIMES"/>
+									<RowConstraints valignment="CENTER" vgrow="SOMETIMES"/>
 								</rowConstraints>
 								<padding>
-									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+									<Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
 								</padding>
-								<TextField fx:id="pathTextField" styleClass="roundedTextfield" minHeight="27.0" minWidth="500.0" GridPane.rowIndex="1" />
-								<ImageView fx:id="emailGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3">
-									<Image url="@../../../../../icons/greencheck.png" />
+								<TextField fx:id="pathTextField" styleClass="roundedTextfield" minHeight="27.0"
+										   minWidth="500.0" GridPane.rowIndex="1"/>
+								<ImageView fx:id="emailGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true"
+										   preserveRatio="true" visible="false" GridPane.columnIndex="1"
+										   GridPane.rowIndex="3">
+									<Image url="@../../../../../icons/greencheck.png"/>
 								</ImageView>
 								<HBox alignment="CENTER_LEFT" GridPane.columnIndex="1" GridPane.rowIndex="1">
-									<ImageView fx:id="pathGreenCheck" fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" visible="false">
-										<Image url="@../../../../../icons/greencheck.png" />
+									<ImageView fx:id="pathGreenCheck" fitHeight="20.0" fitWidth="20.0"
+											   pickOnBounds="true" preserveRatio="true" visible="false">
+										<Image url="@../../../../../icons/greencheck.png"/>
 									</ImageView>
-									<Button fx:id="browseNewFolderButton" styleClass="transparentButton" mnemonicParsing="false" onAction="#browseNewFolderAction" >
+									<Button fx:id="browseNewFolderButton" styleClass="transparentButton"
+											mnemonicParsing="false" onAction="#browseNewFolderAction">
 										<graphic>
-											<ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true" rotate="270.0">
-												<Image url="@../../../../../icons/browse.png" />
+											<ImageView fitHeight="30.0" fitWidth="30.0" pickOnBounds="true"
+													   preserveRatio="true" rotate="270.0">
+												<Image url="@../../../../../icons/browse.png"/>
 											</ImageView>
 										</graphic>
 									</Button>
 								</HBox>
-								<TextField fx:id="emailTextField" styleClass="roundedTextfield" disable="true" layoutX="10.0" layoutY="12.0" minWidth="500.0" GridPane.rowIndex="3" />
-								<Label text="Please start by choosing the folder where transactions will be shared:" wrapText="true" />
-								<Label text="Please enter the email associated with the selected shared folder:" wrapText="true" GridPane.rowIndex="2" />
-								<Label fx:id="drivesErrorLabel" styleClass="errorLabel" wrapText="true" GridPane.rowIndex="5" />
+								<TextField fx:id="emailTextField" styleClass="roundedTextfield" disable="true"
+										   layoutX="10.0" layoutY="12.0" minWidth="500.0" GridPane.rowIndex="3"/>
+								<Label text="Please start by choosing the folder where transactions will be shared:"
+									   wrapText="true"/>
+								<Label text="Please enter the email associated with the selected shared folder:"
+									   wrapText="true" GridPane.rowIndex="2"/>
+								<Label fx:id="drivesErrorLabel" styleClass="errorLabel" wrapText="true"
+									   GridPane.rowIndex="5"/>
 							</GridPane>
-							<Region visible="false" HBox.hgrow="ALWAYS" />
+							<Region visible="false" HBox.hgrow="ALWAYS"/>
 							<VBox>
 								<padding>
-									<Insets bottom="10.0" />
+									<Insets bottom="10.0"/>
 								</padding>
-								<Region VBox.vgrow="ALWAYS" />
+								<Region VBox.vgrow="ALWAYS"/>
 								<ButtonBar fx:id="addToEmailMapButtonBar" buttonMinWidth="200.0">
 									<buttons>
-										<Button fx:id="confirmAddFolderButton" styleClass="highlightButton" mnemonicParsing="false" onAction="#addFolderEmailToMapAction" prefWidth="200.0" text="CONFIRM" />
-										<Button fx:id="cancelAddToEmailMapButtonIS" styleClass="invertedHighlightButton" mnemonicParsing="false" onAction="#cancelAddToEmailMap" prefWidth="200.0" text="CANCEL" />
+										<Button fx:id="confirmAddFolderButton" styleClass="highlightButton"
+												mnemonicParsing="false" onAction="#addFolderEmailToMapAction"
+												prefWidth="200.0" text="CONFIRM"/>
+										<Button fx:id="cancelAddToEmailMapButtonIS" styleClass="invertedHighlightButton"
+												mnemonicParsing="false" onAction="#cancelAddToEmailMap"
+												prefWidth="200.0" text="CANCEL"/>
 									</buttons>
 								</ButtonBar>
 							</VBox>
 							<GridPane.margin>
-								<Insets />
+								<Insets/>
 							</GridPane.margin>
 						</HBox>
 					</GridPane>
 				</VBox>
 				<VBox fx:id="passphraseBox" styleClass="borderedBox">
 					<padding>
-						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0"/>
 					</padding>
 					<GridPane fx:id="keysGridPane" vgap="5.0">
 						<columnConstraints>
-							<ColumnConstraints minWidth="10.0" />
-							<ColumnConstraints halignment="RIGHT" minWidth="10.0" />
+							<ColumnConstraints minWidth="10.0"/>
+							<ColumnConstraints halignment="RIGHT" minWidth="10.0"/>
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-							<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-							<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
-							<RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-							<RowConstraints vgrow="SOMETIMES" />
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
+							<RowConstraints minHeight="10.0" vgrow="SOMETIMES"/>
+							<RowConstraints vgrow="SOMETIMES"/>
 						</rowConstraints>
-						<Label styleClass="sectionHeaderLabel" text="GENERATE A RECOVERY PHRASE" GridPane.hgrow="ALWAYS"/>
+						<Label styleClass="sectionHeaderLabel" text="GENERATE A RECOVERY PHRASE"
+							   GridPane.hgrow="ALWAYS"/>
 						<HBox alignment="CENTER_RIGHT" minWidth="430.0" GridPane.columnIndex="1">
 							<Label styleClass="sectionHeaderLabel" text="STEP 2 OF 2"/>
 						</HBox>
-						<Label styleClass="fontSize16" text="Generate a 24 word recovery phrase, in case you lose access to your keys. " wrapText="true" GridPane.rowIndex="1" />
-						<VBox fx:id="phraseBox" alignment="CENTER_LEFT" GridPane.columnSpan="2" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" GridPane.vgrow="NEVER" />
-						<Label styleClass="fontSize14" text="To generate a new recovery phrase, click GENERATE below. If you already have a recovery phrase, enter it in the spaces below and click RECOVER." wrapText="true" GridPane.rowIndex="2">
+						<Label styleClass="fontSize16"
+							   text="Generate a 24 word recovery phrase, in case you lose access to your keys. "
+							   wrapText="true" GridPane.rowIndex="1"/>
+						<VBox fx:id="phraseBox" alignment="CENTER_LEFT" GridPane.columnSpan="2"
+							  GridPane.hgrow="SOMETIMES" GridPane.rowIndex="3" GridPane.vgrow="NEVER"/>
+						<Label styleClass="fontSize14"
+							   text="To generate a new recovery phrase, click GENERATE below. If you already have a recovery phrase, enter it in the spaces below and click RECOVER."
+							   wrapText="true" GridPane.rowIndex="2">
 						</Label>
 						<VBox GridPane.rowIndex="4">
-							<Label fx:id="mnemonicErrorMessage" styleClass="fontSize14, errorLabel" text="The passphrase entered is incorrect. Please check your records and try again" visible="false" wrapText="true"/>
-							<Label fx:id="copyToClipboardLabel" visible="false" />
+							<Label fx:id="mnemonicErrorMessage" styleClass="fontSize14, errorLabel"
+								   text="The passphrase entered is incorrect. Please check your records and try again"
+								   visible="false" wrapText="true"/>
+							<Label fx:id="copyToClipboardLabel" visible="false"/>
 						</VBox>
-						<ButtonBar fx:id="generateKeyPairButtonBar" buttonMinWidth="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="4">
+						<ButtonBar fx:id="generateKeyPairButtonBar" buttonMinWidth="200.0" prefWidth="200.0"
+								   GridPane.columnIndex="1" GridPane.rowIndex="4">
 							<buttons>
-								<Button fx:id="generateKeys" styleClass="highlightButton" mnemonicParsing="false" onAction="#generatePassphraseEvent" prefWidth="200.0" text="GENERATE" />
+								<Button fx:id="generateKeys" styleClass="highlightButton" mnemonicParsing="false"
+										onAction="#generatePassphraseEvent" prefWidth="200.0" text="GENERATE"/>
 								<VBox>
-									<Button fx:id="copyToClipBoardButton" styleClass="invertedHighlightButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#copyPhraseToClipBoard" prefWidth="200.0" text="COPY" visible="false" />
-									<Button fx:id="pasteFromClipBoardButton" styleClass="invertedHighlightButton" minWidth="-Infinity" mnemonicParsing="false" onAction="#pastePhraseFromClipBoard" prefWidth="200.0" text="PASTE" />
+									<Button fx:id="copyToClipBoardButton" styleClass="invertedHighlightButton"
+											minWidth="-Infinity" mnemonicParsing="false"
+											onAction="#copyPhraseToClipBoard" prefWidth="200.0" text="COPY"
+											visible="false"/>
+									<Button fx:id="pasteFromClipBoardButton" styleClass="invertedHighlightButton"
+											minWidth="-Infinity" mnemonicParsing="false"
+											onAction="#pastePhraseFromClipBoard" prefWidth="200.0" text="PASTE"/>
 								</VBox>
 							</buttons>
 						</ButtonBar>
@@ -192,44 +229,51 @@
 				<VBox fx:id="finishBox" styleClass="borderedBox">
 					<GridPane vgap="5.0">
 						<columnConstraints>
-							<ColumnConstraints minWidth="10.0" />
-							<ColumnConstraints halignment="RIGHT" maxWidth="-Infinity" minWidth="10.0" />
+							<ColumnConstraints minWidth="10.0"/>
+							<ColumnConstraints halignment="RIGHT" maxWidth="-Infinity" minWidth="10.0"/>
 						</columnConstraints>
 						<rowConstraints>
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-							<RowConstraints minHeight="10.0" vgrow="ALWAYS" />
-							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+							<RowConstraints minHeight="10.0" vgrow="ALWAYS"/>
+							<RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS"/>
 						</rowConstraints>
-						<ButtonBar buttonMinWidth="200.0" prefWidth="430.0" GridPane.columnIndex="1" GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
+						<ButtonBar buttonMinWidth="200.0" prefWidth="430.0" GridPane.columnIndex="1"
+								   GridPane.hgrow="SOMETIMES" GridPane.rowIndex="2" GridPane.vgrow="ALWAYS">
 							<buttons>
-								<Button fx:id="generateButton" styleClass="highlightButton" disable="true" focusTraversable="false" mnemonicParsing="false" prefWidth="200.0" text="GENERATE" visible="false" />
-								<Button fx:id="finishSetupButton" styleClass="invertedHighlightButton" mnemonicParsing="false" onAction="#finishSetup" text="FINISH" />
+								<Button fx:id="generateButton" styleClass="highlightButton" disable="true"
+										focusTraversable="false" mnemonicParsing="false" prefWidth="200.0"
+										text="GENERATE" visible="false"/>
+								<Button fx:id="finishSetupButton" styleClass="invertedHighlightButton"
+										mnemonicParsing="false" onAction="#finishSetup" text="FINISH"/>
 							</buttons>
 						</ButtonBar>
 						<Label styleClass="sectionHeaderLabel" text="FINISH SETUP"/>
-						<Label styleClass="fontSize14" text="After copying the 24 word passphrase, please click the FINISH button to complete the setup and start using your Hedera Transaction Tools App" wrapText="true" GridPane.rowIndex="1" />
+						<Label styleClass="fontSize14"
+							   text="After copying the 24 word passphrase, please click the FINISH button to complete the setup and start using your Hedera Transaction Tools App"
+							   wrapText="true" GridPane.rowIndex="1"/>
 					</GridPane>
 					<padding>
-						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0" />
+						<Insets bottom="20.0" left="20.0" right="20.0" top="10.0"/>
 					</padding>
 				</VBox>
 			</VBox>
 		</ScrollPane>
 		<StackPane.margin>
-			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0" />
+			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0"/>
 		</StackPane.margin>
 	</VBox>
-	<Button fx:id="resetButton" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#resetSetup" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0" StackPane.alignment="TOP_RIGHT">
+	<Button fx:id="resetButton" alignment="TOP_LEFT" mnemonicParsing="false" onAction="#resetSetup"
+			AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0" StackPane.alignment="TOP_RIGHT">
 		<graphic>
 			<ImageView fitHeight="35.0" pickOnBounds="true" preserveRatio="true">
-				<Image url="@../../../../../icons/reload.png" />
+				<Image url="@../../../../../icons/reload.png"/>
 			</ImageView>
 		</graphic>
 		<StackPane.margin>
-			<Insets top="50.0" />
+			<Insets top="50.0"/>
 		</StackPane.margin>
 		<tooltip>
-			<Tooltip text="Reset" />
+			<Tooltip text="Reset"/>
 		</tooltip>
 	</Button>
 </StackPane>

@@ -16,22 +16,21 @@
  * limitations under the License.
  */
 
-.tab
-{
+.tab {
 	-fx-background-color: #fbfbfb;
 	-fx-border-width: 0 0 1 0;
 	-fx-border-color: #c2c2c2 #c2c2c2 #c2c2c2 #c2c2c2
 }
-.tab:selected
-{
+
+.tab:selected {
 	-fx-background-radius: 0;
 	-fx-background-insets: 0;
 	-fx-background-color: #fbfbfb;
 	-fx-border-width: 0 0 3 0;
 	-fx-border-color: #c2c2c2 #c2c2c2 #add8e6 #c2c2c2
 }
-.tab-pane *.tab-header-background
-{
+
+.tab-pane *.tab-header-background {
 	-fx-background-color: #fbfbfb, #fbfbfb, #fbfbfb;
 	-fx-border-width: 1 0 1 0;
 	-fx-border-color: #c2c2c2 #c2c2c2 #c2c2c2 #c2c2c2

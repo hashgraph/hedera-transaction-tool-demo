@@ -26,35 +26,40 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
-
-<HBox stylesheets="@../../../../../app.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HomePaneController">
+<HBox stylesheets="@../../../../../app.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1"
+	  fx:controller="com.hedera.hashgraph.client.ui.HomePaneController">
 	<AnchorPane styleClass="transparentPane" HBox.hgrow="ALWAYS">
-		<VBox fx:id="defaultViewVBox" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+		<VBox fx:id="defaultViewVBox" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+			  AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 			<padding>
-				<Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+				<Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
 			</padding>
-			<Region VBox.vgrow="ALWAYS" />
+			<Region VBox.vgrow="ALWAYS"/>
 			<VBox spacing="20.0" styleClass="highlightPane">
 				<padding>
-					<Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+					<Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
 				</padding>
-				<Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="bright-text,boldText" text="HEDERA TRANSACTION TOOLS" wrappingWidth="750.0" />
-				<Text layoutX="10.0" layoutY="23.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="bright-text" text="Your Hedera Transaction Tool is ready for you to create and sign transactions.&#10;&#10;If you run into issues or need assistance please contact support@hedera.com." wrappingWidth="750.0" />
+				<Text strokeType="OUTSIDE" strokeWidth="0.0" styleClass="bright-text,boldText"
+					  text="HEDERA TRANSACTION TOOLS" wrappingWidth="750.0"/>
+				<Text layoutX="10.0" layoutY="23.0" strokeType="OUTSIDE" strokeWidth="0.0" styleClass="bright-text"
+					  text="Your Hedera Transaction Tool is ready for you to create and sign transactions.&#10;&#10;If you run into issues or need assistance please contact support@hedera.com."
+					  wrappingWidth="750.0"/>
 			</VBox>
-			<Region VBox.vgrow="ALWAYS" />
+			<Region VBox.vgrow="ALWAYS"/>
 		</VBox>
-		<ScrollPane fx:id="homeFilesScrollPane" fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+		<ScrollPane fx:id="homeFilesScrollPane" fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0"
+					AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 			<VBox spacing="10.0">
 				<VBox>
 					<Label styleClass="fontSize25" text="NEW TASKS">
 						<padding>
-							<Insets bottom="5.0" left="15.0" top="15.0" />
+							<Insets bottom="5.0" left="15.0" top="15.0"/>
 						</padding>
 					</Label>
-					<VBox fx:id="newFilesViewVBox" />
+					<VBox fx:id="newFilesViewVBox"/>
 				</VBox>
 				<padding>
-					<Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+					<Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
 				</padding>
 			</VBox>
 		</ScrollPane>
