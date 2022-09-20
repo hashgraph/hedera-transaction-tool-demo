@@ -1894,7 +1894,11 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		final var fileName = newPath.toFile().getName();
 		final var name = FilenameUtils.getBaseName(
 				fileName) + "_" + attributes.creationTime().toMillis() + "." + FilenameUtils.getExtension(fileName);
-		Files.move(newPath, Path.of(archive.getAbsolutePath(), name));
+		final var newFile = Path.of(archive.getAbsolutePath(), name);
+		if (Files.exists(newFile)) {
+			Files.delete(newFile);
+		}
+		Files.move(newPath, newFile);
 		Files.deleteIfExists(newPath);
 	}
 
