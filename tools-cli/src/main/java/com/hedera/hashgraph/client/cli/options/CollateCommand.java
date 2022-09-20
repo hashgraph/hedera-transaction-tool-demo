@@ -187,9 +187,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	private Map<String, List<String>> verifyTransactions() throws HederaClientException {
 		final Map<String, Set<String>> verifyWithFiles = new HashMap<>();
 
-		final Set<AccountId> requiredIds = new HashSet<>();
 		Set<String> ids = new HashSet<>();
-
 
 		for (final var entry : transactions.entrySet()) {
 			if (verifyWithFiles.containsKey(entry.getKey())) {
@@ -197,23 +195,28 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			final var helper = entry.getValue();
-			requiredIds.addAll(helper.getSigningAccounts());
 
-			ids.addAll(getAccountIds(helper));
-			ids.addAll(getPublicKeyNames(helper));
+			var requiredIds = helper.getSigningAccounts();
 
+			Set<String> curIds = new HashSet<>();
+			curIds.addAll(getAccountIds(helper));
+			curIds.addAll(getPublicKeyNames(helper));
+
+			for (final AccountId requiredId : requiredIds) {
+				final var requiredIdString = requiredId.toString();
+				if (knownIds.contains(requiredId) && !curIds.contains(requiredIdString)) {
+					logger.error("Transaction {} has not been signed by a required account {}", entry.getKey(), requiredIdString);
+					logger.info("Transactions have not been signed by required account {}", requiredIdString);
+					return null;
+				}
+			}
+
+			ids.addAll(curIds);
 			final List<String> sortedIDs = new ArrayList<>(ids);
 			Collections.sort(sortedIDs);
 			verifyWithFiles.put(FilenameUtils.getBaseName(helper.getTransactionFile()), new HashSet<>(sortedIDs));
 		}
 
-		for (final AccountId requiredId : requiredIds) {
-			final var requiredIdString = requiredId.toString();
-			if (knownIds.contains(requiredId) && !ids.contains(requiredIdString)) {
-				logger.info("Transactions have not been signed by required account {}", requiredIdString);
-				return null;
-			}
-		}
 
 		final Map<String, List<String>> verifyTransactions = new HashMap<>();
 		for (final Map.Entry<String, Set<String>> entry : verifyWithFiles.entrySet()) {
