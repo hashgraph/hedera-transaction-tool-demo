@@ -187,13 +187,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	private Map<String, List<String>> verifyTransactions() throws HederaClientException {
 		final Map<String, Set<String>> verifyWithFiles = new HashMap<>();
 
-		Set<String> ids = new HashSet<>();
-
 		for (final var entry : transactions.entrySet()) {
-			if (verifyWithFiles.containsKey(entry.getKey())) {
-				ids = verifyWithFiles.get(entry.getKey());
-			}
-
 			final var helper = entry.getValue();
 
 			var requiredIds = helper.getSigningAccounts();
@@ -211,10 +205,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				}
 			}
 
-			ids.addAll(curIds);
-			final List<String> sortedIDs = new ArrayList<>(ids);
+			final List<String> sortedIDs = new ArrayList<>(curIds);
 			Collections.sort(sortedIDs);
-			verifyWithFiles.put(FilenameUtils.getBaseName(helper.getTransactionFile()), new HashSet<>(sortedIDs));
+			verifyWithFiles.put(entry.getKey(), new HashSet<>(sortedIDs));
 		}
 
 
