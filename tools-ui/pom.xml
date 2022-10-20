@@ -380,8 +380,8 @@
 					</dependency>
 				</dependencies>
 				<configuration>
-					<source>11</source>
-					<target>11</target>
+					<source>16</source>
+					<target>16</target>
 				</configuration>
 			</plugin>
 			<plugin>
