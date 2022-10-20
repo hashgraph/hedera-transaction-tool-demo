@@ -373,10 +373,6 @@
 						<version>7.1</version>
 					</dependency>
 				</dependencies>
-				<configuration>
-					<source>16</source>
-					<target>16</target>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
