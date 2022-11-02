@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.google.gson.JsonArray;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -31,11 +30,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -64,7 +59,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.util.Callback;
 import javafx.util.StringConverter;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
@@ -76,34 +70,21 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
 import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
-import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
-import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
-import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
-import static com.hedera.hashgraph.client.core.enums.FileType.getType;
 import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.nio.file.Files.deleteIfExists;
-import static javafx.beans.binding.Bindings.createObjectBinding;
 
 public class HistoryPaneController implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
@@ -111,13 +92,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	public static final String SENT_ICON = "icons/icons8-sent-100.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 
-	private final Map<Integer, Boolean> historyMap = new HashMap<>();
-	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
-	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
-	private final ObservableList<HistoryData> tableList = FXCollections.observableArrayList();
-	private final FilteredList<HistoryData> filteredList = new FilteredList<>(tableList, p -> true);
-
-	private boolean noise = true;
 
 	public StackPane historyPane;
 	public ScrollPane contentScrollPane;
@@ -140,15 +114,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 
 	public Button rebuild;
 
-	private LocalDate start = LocalDate.now();
-	private LocalDate end = LocalDate.now();
-
-	private final ObservableList<Predicate<HistoryData>> filters = FXCollections.observableArrayList();
-	private Predicate<HistoryData> feePayerPredicate;
-	private Predicate<HistoryData> typePredicate;
-	private Predicate<HistoryData> actionDatePredicate;
-	private Predicate<HistoryData> actionTypePredicate;
-	private Predicate<HistoryData> expirationDatePredicate;
 	private final TableView<HistoryData> tableView = new TableView<>();
 
 	private final String dateFormat = Locale.getDefault().equals(Locale.US) ? "MM/dd/yyyy" : "dd/MM/yyyy";
@@ -156,13 +121,19 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	@FXML
 	private MainController controller;
 
+	private final HistoryPaneModel model = new HistoryPaneModel();
+
 	// region INITIALIZATION
 	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
+	public HistoryPaneModel getModel() {
+		return model;
+	}
+
 	void initializeHistoryPane() {
-		loadHistory();
+		getModel().loadHistory();
 		setupTable();
 		setupPredicates();
 		setupFilterBoxes();
@@ -174,144 +145,25 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		contentScrollPane.setFitToWidth(true);
 	}
 
-
-	/**
-	 * Load history from flat file
-	 */
-	private void loadHistory() {
-		cleanHistory();
-		try {
-			if (!new File(HISTORY_MAP).exists()) {
-				logger.info("Map not found. Parsing history folder");
-				parseHistoryFolder();
-				FXCollections.sort(tableList, Comparator.reverseOrder());
-				return;
-			}
-			final var array = readJsonArray(HISTORY_MAP);
-			for (final var element : array) {
-				final var jsonObject = element.getAsJsonObject();
-				final var message = jsonObject.get("filename").toString();
-				logger.info("Loading element {}", message);
-				final var historyData = new HistoryData(jsonObject);
-				tableList.add(historyData);
-				historyMap.put(historyData.getCode(), historyData.isHistory());
-			}
-			FXCollections.sort(tableList, Comparator.reverseOrder());
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-	}
-
-	/**
-	 * Stores the map to a file
-	 */
-	private void storeHistory() {
-		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
-			logger.info("Creating system folder");
-		}
-		logger.info("Storing map to {}", HISTORY_MAP);
-		final var array = new JsonArray();
-		for (final var entry : tableList) {
-			array.add(entry.asJson());
-		}
-
-		try {
-			writeJsonObject(HISTORY_MAP, array);
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-	}
-
-	/**
-	 * For backwards compatibility: parse the history folder and creates the flat history file
-	 */
-	private void parseHistoryFolder() {
-		final var files = getRemoteFiles();
-		final var jsonArray = new JsonArray();
-		noise = true;
-		for (final var file : files) {
-			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
-				continue;
-			}
-			logger.info("Parsing file {}", file.getName());
-			final var data = new HistoryData(file);
-			data.setHistory(true);
-			jsonArray.add(data.asJson());
-			historyMap.put(data.getCode(), data.isHistory());
-			tableList.add(data);
-		}
-		storeHistory();
-		noise = false;
-	}
-
-	// endregion
-
-	// region GETTER and SETTERS
-
 	/**
 	 * Adds a file to the map
 	 */
 	public void addToHistory(final RemoteFile remoteFile) {
-		noise = false;
-		final var addition = new HistoryData(remoteFile);
-		tableList.remove(addition);
-		addition.setHistory(true);
-		historyMap.put(addition.getCode(), true);
-		tableList.add(0, addition);
+		getModel().addToHistory(remoteFile);
 		tableView.refresh();
 	}
 
 	public void removeFromHistory(final RemoteFile remoteFile) {
-		noise = false;
-		final var remove = new HistoryData(remoteFile);
-		tableList.remove(remove);
-		historyMap.remove(remoteFile.hashCode());
+		getModel().removeFromHistory(remoteFile);
 		tableView.refresh();
 	}
-
-	/**
-	 * Check if the file is in history
-	 *
-	 * @param code
-	 * 		the hashcode of the file
-	 * @return If the code is in the map, and it is marked as history, return true
-	 */
-	public boolean isHistory(final int code) {
-		return historyMap.containsKey(code) && (Boolean.TRUE.equals(historyMap.get(code)));
-	}
-
-	/**
-	 * Cleans all maps and tables
-	 */
-	public void cleanHistory() {
-		noise = false;
-		historyMap.clear();
-		tableList.clear();
-		filteredList.clear();
-	}
-
-	// endregion
-
-	// region TABLE SETUP
 
 	/**
 	 * Set up the main history table
 	 */
 	private void setupTable() {
-		tableList.addListener((ListChangeListener<HistoryData>) change -> {
-			if (noise) {
-				return;
-			}
-			while (change.next()) {
-				if (change.wasRemoved() || change.wasAdded()) {
-					storeHistory();
-					filteredList.sorted();
-				}
-			}
-		});
 		contentScrollPane.setContent(tableView);
 		setupTableBindings();
-
 		tableView.getColumns().clear();
 		tableView.getColumns().add(getExpanderColumn());
 		tableView.getColumns().add(getTypeColumn());
@@ -319,7 +171,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.getColumns().add(getFeePayerColumn());
 		tableView.getColumns().add(getLastActionColumn());
 		tableView.getColumns().add(getButtonColumn(tableView));
-
 		setDataToTable();
 	}
 
@@ -327,7 +178,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * Sets the history data to the table
 	 */
 	private void setDataToTable() {
-		final var sortedList = new SortedList<>(filteredList);
+		final var sortedList = new SortedList<>(getModel().getFilteredList());
 		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
 		tableView.setItems(sortedList);
 		tableView.sort();
@@ -337,19 +188,13 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 * Set up the table bindings and listeners
 	 */
 	private void setupTableBindings() {
-		typeFilter.addListener(this::typeFilterOnChanged);
+		getModel().getTypeFilter().addListener(this::typeFilterOnChanged);
+		getModel().getActionsFilter().addListener(this::actionsFilterOnChanged);
 
-		actionsFilter.addListener(this::actionsFilterOnChanged);
-
-		acceptedCheckBox.selectedProperty().addListener(this::acceptedCheckBoxOnChanged);
-
-		declinedCheckBox.selectedProperty().addListener(this::declinedCheckBoxOnChanged);
+		acceptedCheckBox.selectedProperty().addListener(getModel()::acceptedCheckBoxOnChanged);
+		declinedCheckBox.selectedProperty().addListener(getModel()::declinedCheckBoxOnChanged);
 
 		feePayerTextField.setOnKeyReleased(this::feePayerTextFieldHandle);
-
-		filteredList.predicateProperty().bind(
-				createObjectBinding(() -> filters.stream().reduce(x -> true, Predicate::and), filters));
-
 	}
 
 	/**
@@ -480,24 +325,27 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
-						noise = true;
-						historyMap.put(historyData.getCode(), false);
-						final var row = getRow(historyData);
-						if (row < 0) {
-							return;
+						getModel().setNoise(true);
+						int row;
+						try {
+							getModel().getHistoryMap().put(historyData.getCode(), false);
+							row = getRow(historyData);
+							if (row < 0) {
+								return;
+							}
+							getModel().getTableList().remove(historyData);
+							historyData.setHistory(false);
+						} finally {
+							getModel().setNoise(false);
 						}
-						tableList.remove(historyData);
-						historyData.setHistory(false);
-						noise = false;
-						tableList.add(row, historyData);
+						getModel().getTableList().add(row, historyData);
 						button.setDisable(true);
 						controller.homePaneController.setForceUpdate(true);
 						controller.homePaneController.initializeHomePane();
 					}
 
 					private int getRow(final HistoryData historyData) {
-						return IntStream.range(0, tableList.size()).filter(
-								i -> tableList.get(i).equals(historyData)).findFirst().orElse(-1);
+						return getModel().getRow(historyData);
 					}
 				};
 		actionColumn.setCellFactory(cellFactory);
@@ -637,38 +485,40 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		final var gridPane = new GridPane();
 		gridPane.setHgap(5);
 		gridPane.setVgap(5);
-		noise = true;
+		getModel().setNoise(true);
+		try {
+			final var selectAll = formatButton("icons/icons8-check-all-50.png", 25);
+			selectAll.setText("Select all");
+			final var selectNone = formatButton("icons/icons8-uncheck-all-50.png", 25);
+			selectNone.setText("Select none");
 
-		final var selectAll = formatButton("icons/icons8-check-all-50.png", 25);
-		selectAll.setText("Select all");
-		final var selectNone = formatButton("icons/icons8-uncheck-all-50.png", 25);
-		selectNone.setText("Select none");
+			final List<CheckBox> checkBoxes = new ArrayList<>();
 
-		final List<CheckBox> checkBoxes = new ArrayList<>();
+			EnumSet.allOf(FileType.class).forEach(type -> {
+				final var typeString = type.toKind().toLowerCase();
+				if (!"".equals(typeString)) {
+					checkBoxes.add(getCheckBox(type, typeString));
+				}
+			});
 
-		EnumSet.allOf(FileType.class).forEach(type -> {
-			final var typeString = type.toKind().toLowerCase();
-			if (!"".equals(typeString)) {
-				checkBoxes.add(getCheckBox(type, typeString));
+			selectAll.setOnAction(actionEvent -> checkBoxes.forEach(checkBox -> checkBox.setSelected(true)));
+
+			selectNone.setOnAction(actionEvent -> checkBoxes.forEach(checkBox -> checkBox.setSelected(false)));
+
+			var counter = 0;
+			for (final var checkBox : checkBoxes) {
+				gridPane.add(checkBox, counter % 3, counter / 3);
+				counter++;
 			}
-		});
 
-		selectAll.setOnAction(actionEvent -> checkBoxes.forEach(checkBox -> checkBox.setSelected(true)));
+			gridPane.add(selectAll, 0, counter / 3 + 1);
+			gridPane.add(selectNone, 1, counter / 3 + 1);
 
-		selectNone.setOnAction(actionEvent -> checkBoxes.forEach(checkBox -> checkBox.setSelected(false)));
-
-		var counter = 0;
-		for (final var checkBox : checkBoxes) {
-			gridPane.add(checkBox, counter % 3, counter / 3);
-			counter++;
+			gridPane.setVgap(10);
+			gridPane.setHgap(10);
+		} finally {
+			getModel().setNoise(false);
 		}
-
-		gridPane.add(selectAll, 0, counter / 3 + 1);
-		gridPane.add(selectNone, 1, counter / 3 + 1);
-
-		gridPane.setVgap(10);
-		gridPane.setHgap(10);
-		noise = false;
 		return gridPane;
 	}
 
@@ -728,45 +578,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		return layout;
 	}
 
-	/**
-	 * Loads all the remote files from the history folder.
-	 *
-	 * @return an array of remote files
-	 */
-	private ArrayList<RemoteFile> getRemoteFiles() {
-		final var filenames = new File(DEFAULT_HISTORY).listFiles((dir, name) -> isAllowedFile(name));
-		final var remoteFiles = new ArrayList<RemoteFile>();
-		for (final var filename : filenames) {
-			FileDetails details = null;
-			try {
-				details = FileDetails.parse(filename);
-			} catch (final HederaClientException e) {
-				logger.error(e.getMessage());
-			}
-
-			try {
-				remoteFiles.add(new RemoteFile().getSingleRemoteFile(details));
-			} catch (final HederaClientException e) {
-				logger.error(e.getMessage());
-			}
-		}
-		return remoteFiles;
-	}
-
-	/**
-	 * Only allow files that are allowed by the app
-	 *
-	 * @param name
-	 * 		the name of the file
-	 * @return true if the file type is allowed
-	 */
-	private boolean isAllowedFile(final String name) {
-		try {
-			return !getType(FilenameUtils.getExtension(name)).equals(UNKNOWN);
-		} catch (final HederaClientException e) {
-			return false;
-		}
-	}
 
 	/**
 	 * Set up a tooltip button
@@ -835,53 +646,26 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	@NotNull
 	private CheckBox getCheckBox(final FileType type, final String typeString) {
-		final var checkBox = new CheckBox(format("%s (%d)", typeString, countType(type)));
-		checkBox.setSelected(typeFilter.contains(type));
+		final var checkBox = new CheckBox(format("%s (%d)", typeString, getModel().countType(type)));
+		checkBox.setSelected(getModel().getTypeFilter().contains(type));
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
 			if (Boolean.FALSE.equals(t1)) {
-				typeFilter.remove(type);
+				getModel().getTypeFilter().remove(type);
 			} else {
-				typeFilter.add(type);
+				getModel().getTypeFilter().add(type);
 
 			}
 		});
 		return checkBox;
 	}
 
-	/**
-	 * Counts the number of files with a certain type
-	 *
-	 * @param type
-	 * 		the type needed
-	 * @return an integer
-	 */
-	private int countType(final FileType type) {
-		var count = 0;
-		for (final var value : tableList) {
-			if (type.equals(value.getType())) {
-				count++;
-			}
-		}
-		return count;
-	}
-
-	// endregion
-
-	// region EVENTS
-
-	/**
-	 * Adds the fee filter to the list
-	 */
-	public void feePayerFilterAccept() {
-		filters.add(feePayerPredicate);
-	}
 
 	/**
 	 * Removes the fee filter. Resets the filter box
 	 */
 	public void resetFeeFilter() {
 		feePayerTextField.clear();
-		filters.remove(feePayerPredicate);
+		getModel().resetFeeFilter();
 	}
 
 	/**
@@ -1015,9 +799,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void typeFilterOnChanged(final ListChangeListener.Change<? extends FileType> change) {
 		while (change.next()) {
-			if (!noise && (change.wasAdded() || change.wasRemoved())) {
+			if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
 				typePredicate = statesModel -> {
-					if (!noise && (change.wasAdded() || change.wasRemoved())) {
+					if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
 						return typeFilter.contains(statesModel.getType());
 					}
 					return false;
@@ -1035,55 +819,15 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	private void actionsFilterOnChanged(final ListChangeListener.Change<? extends Actions> change) {
 		while (change.next()) {
-			if (!noise && (change.wasAdded() || change.wasRemoved())) {
+			if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
 				actionTypePredicate = historyData -> {
-					if (!noise && (change.wasAdded() || change.wasRemoved())) {
+					if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
 						return actionsFilter.contains(historyData.getActions());
 					}
 					return false;
 				};
 				filters.add(actionTypePredicate);
 			}
-		}
-	}
-
-	/**
-	 * Action when the accepted checkbox has changed
-	 *
-	 * @param observableValue
-	 * 		observable
-	 * @param aBoolean
-	 * 		boolean
-	 * @param t1
-	 * 		new value
-	 */
-	private void acceptedCheckBoxOnChanged(final ObservableValue<? extends Boolean> observableValue,
-			final Boolean aBoolean,
-			final Boolean t1) {
-		if (Boolean.TRUE.equals(t1)) {
-			actionsFilter.add(Actions.ACCEPT);
-		} else {
-			actionsFilter.remove(Actions.ACCEPT);
-		}
-	}
-
-	/**
-	 * Action when the declined checkbox is selected
-	 *
-	 * @param observableValue
-	 * 		observable
-	 * @param aBoolean
-	 * 		boolean
-	 * @param t1
-	 * 		new value
-	 */
-	private void declinedCheckBoxOnChanged(final ObservableValue<? extends Boolean> observableValue,
-			final Boolean aBoolean,
-			final Boolean t1) {
-		if (Boolean.TRUE.equals(t1)) {
-			actionsFilter.add(Actions.DECLINE);
-		} else {
-			actionsFilter.remove(Actions.DECLINE);
 		}
 	}
 
@@ -1097,7 +841,6 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
 			return;
 		}
-		feePayerFilterAccept();
+		getModel().feePayerFilterAccept();
 	}
-	// endregion
 }

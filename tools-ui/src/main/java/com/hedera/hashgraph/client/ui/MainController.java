@@ -394,7 +394,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 				thisPane = homePane;
 				homePane.setVisible(true);
 				historyPaneController.initializeHistoryPane();
-				historyPaneController.cleanHistory();
+				historyPaneController.getModel().cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
