@@ -392,7 +392,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				thisPane = homePane;
 				homePane.setVisible(true);
 				historyPaneController.initializeHistoryPane();
-				historyPaneController.cleanHistory();
+				historyPaneController.getModel().cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
@@ -959,6 +959,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 	void networkBoxSetup(final ChoiceBox<Object> comboBox) {
 		networkBoxSetup(comboBox.getItems());
 	}
+
 	void networkBoxSetup(final ObservableList<Object> items) {
 		items.clear();
 		items.addAll(getDefaultNetworks());
@@ -1138,6 +1139,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final ChangeListener<Boolean> listener = new ChangeListener<>() {
 			private boolean curValue = false;
+
 			@Override
 			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
 				if (curValue != newValue) {
