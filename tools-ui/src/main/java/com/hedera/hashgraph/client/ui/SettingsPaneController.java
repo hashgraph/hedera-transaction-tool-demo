@@ -42,7 +42,6 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -65,6 +64,8 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.prefs.BackingStoreException;
@@ -86,7 +87,7 @@ import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
 public class SettingsPaneController implements GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
+	private static final Logger LOG = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "\\D";
 	private static final String REGEX1 = "\\d*";
 
@@ -213,9 +214,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
+
 			final Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
 			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
 			nodeIDTextField.setEditable(true);
+
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
 
@@ -230,7 +233,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			// region Events
 			setupNodeIDTextField();
 
-			setupNetworkBox(networkChoicebox);
+			setupNetworkBox();
 
 			setupTxValidDurationTextField();
 
@@ -273,12 +276,13 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			networkTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, networkTooltip,
 					NETWORKS_TOOLTIP_MESSAGES));
 
-			feePayerTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, feePayerTooltip,
-					FEE_PAYER_TOOLTIP_MESSAGES));
+			feePayerTooltip.setOnAction(
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, feePayerTooltip,
+							FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
 		} catch (final Exception e) {
-			logger.error(e.getStackTrace());
+			LOG.error(e.getStackTrace());
 			controller.displaySystemMessage(e);
 		}
 	}
@@ -306,7 +310,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				setupFeePayerChoicebox();
 				controller.accountsPaneController.setupFeePayerChoiceBox();
 			} catch (final Exception e) {
-				logger.error("Cannot parse identifier {}", e.getMessage());
+				LOG.error("Cannot parse identifier {}", e.getMessage());
 				PopupMessage.display("Error", "Cannot parse your input to an account. Please try again.");
 				customFeePayerTextField.requestFocus();
 				customFeePayerTextField.setVisible(true);
@@ -338,26 +342,40 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		});
 	}
 
-	public void setupNetworkBox(final ChoiceBox<Object> comboBox) {
+	private void updateNetworkBox() {
 		noise = true;
-		controller.networkBoxSetup(comboBox);
+		controller.networkBoxSetup(networkChoicebox);
 		noise = false;
-		comboBox.getSelectionModel().select(controller.getCurrentNetwork());
-		comboBox.getSelectionModel().selectedItemProperty().addListener((observableValue, o, t1) -> {
-			if (!noise) {
-				if (t1 instanceof String) {
-					final var selectedNetwork = (String) t1;
-					controller.setCurrentNetwork(selectedNetwork);
-					deleteCustomNetworkButton.setDisable(
-							!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
-					controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
-				}
-				if (t1 instanceof Separator) {
-					comboBox.getSelectionModel().select(o);
-				}
-			}
-		});
+		networkChoicebox.getSelectionModel().select(controller.getCurrentNetwork());
 	}
+
+	private void setupNetworkBox() {
+		networkChoicebox.getSelectionModel().selectedItemProperty().addListener(
+				(observableValue, oldValue, newValue) -> {
+					if (!noise) {
+						try {
+							if (newValue instanceof String) {
+								controller.setCurrentNetwork((String) newValue);
+								deleteCustomNetworkButton.setDisable(
+										!controller.getCustomNetworks().contains(controller.getCurrentNetwork()));
+								controller.setupChoiceBoxFeePayer(feePayerChoicebox, customFeePayerTextField);
+							} else {
+								throw new IllegalStateException(
+										"Only a String should be selected by the network Combobox!");
+							}
+							final String account = calcNodeId(controller.getDefaultNodeID()).toNicknameAndChecksum(
+									controller.getAccountsList());
+							nodeIDTextField.setText(account);
+							checkNodeID();
+						} catch (final Exception e) {
+							LOG.error("Error in network selection", e);
+							networkChoicebox.getSelectionModel().select(oldValue);
+						}
+					}
+				});
+		updateNetworkBox();
+	}
+
 
 	private void setupDefaultTransactionFeeTextField() {
 		defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -380,7 +398,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
+				LOG.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
 				checkTransactionFee();
 			}
 		});
@@ -404,7 +422,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		hoursTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Hours text field changed to: {}", hoursTextField.getText());
+				LOG.info("Hours text field changed to: {}", hoursTextField.getText());
 				checkHours();
 			}
 		});
@@ -425,7 +443,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		minutesTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Minute text field changed to: {}", minutesTextField.getText());
+				LOG.info("Minute text field changed to: {}", minutesTextField.getText());
 				checkMinutes();
 			}
 		});
@@ -446,7 +464,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		secondsTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Second text field changed to: {}", secondsTextField.getText());
+				LOG.info("Second text field changed to: {}", secondsTextField.getText());
 				checkSeconds();
 			}
 		});
@@ -473,7 +491,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		autoRenewPeriodTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Auto renew period text field changed to: {}", autoRenewPeriodTextField.getText());
+				LOG.info("Auto renew period text field changed to: {}", autoRenewPeriodTextField.getText());
 				checkAutoRenewPeriod();
 			}
 		});
@@ -506,7 +524,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		txValidDurationTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Transaction valid duration text field changed to: {}",
+				LOG.info("Transaction valid duration text field changed to: {}",
 						txValidDurationTextField.getText());
 				checkTransactionValidDuration();
 			}
@@ -528,7 +546,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 		nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
-				logger.info("Node ID text field changed to: {}", nodeIDTextField.getText());
 				checkNodeID();
 			}
 		});
@@ -616,24 +633,38 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		defaultTransactionFee.setText(Utilities.setHBarFormat(transactionFee));
 	}
 
+	private Identifier calcNodeId(final String account) {
+		return Optional.ofNullable(networkChoicebox.getValue())
+				.filter(value -> value instanceof String)
+				.map(value -> (String) value)
+				.map(network -> Identifier.parse(account, network))
+				.orElseGet(() -> Identifier.parse(account));
+	}
+
 	private void checkNodeID() {
-		final var account = nodeIDTextField.getText();
-		final Identifier accountID;
+		final String account = nodeIDTextField.getText();
 		try {
-			accountID = Identifier.parse(account);
-			if (accountID.isValid()) {
-				controller.setDefaultNodeID(accountID.toReadableString());
-				nodeIDTextField.clear();
-				final Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
-				final var s = defaultNodeID.toNicknameAndChecksum(controller.getAccountsList());
-				nodeIDTextField.setText(s);
-				settingScrollPane.requestFocus();
+			LOG.info("Node ID text field changed to: {}", account);
+			final Identifier calculatedIdentifier = calcNodeId(controller.getDefaultNodeID());
+			final String calculatedAccount = calculatedIdentifier.toNicknameAndChecksum(controller.getAccountsList());
+			if (Objects.equals(calculatedAccount, account)) {
+				controller.setDefaultNodeID(calculatedIdentifier.toReadableString());
 				accountIDErrorLabel.setVisible(false);
 			} else {
-				accountIDErrorLabel.setVisible(true);
+				final Identifier accountID = calcNodeId(account);
+				if (accountID.isValid()) {
+					controller.setDefaultNodeID(accountID.toReadableString());
+					nodeIDTextField.setText(accountID.toNicknameAndChecksum(controller.getAccountsList()));
+					settingScrollPane.requestFocus();
+					accountIDErrorLabel.setVisible(false);
+				} else {
+					accountIDErrorLabel.setVisible(true);
+					LOG.error("Invalid NodeID: '{}'", account);
+				}
 			}
 		} catch (final Exception e) {
-			// empty catch
+			accountIDErrorLabel.setVisible(true);
+			LOG.error("Invalid NodeID: '" + account + "'", e);
 		}
 	}
 
@@ -664,7 +695,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		FileUtils.moveDirectory(previous, newDir);
 		loadStorageTextField.setText(directory + "/TransactionTools");
 		controller.setPreferredStorageDirectory(loadStorageTextField.getText());
-		logger.info("Storage directory set to: {}", controller.getPreferredStorageDirectory());
+		LOG.info("Storage directory set to: {}", controller.getPreferredStorageDirectory());
 	}
 
 
@@ -725,11 +756,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	public void addCustomNetworkAction() throws IOException {
 		if (new File(CUSTOM_NETWORK_FOLDER).mkdirs()) {
-			logger.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
+			LOG.info("Folder {} created", CUSTOM_NETWORK_FOLDER);
 		}
 		final JsonObject customNetwork = NewNetworkPopup.display();
 		if (!customNetwork.has("nickname") || !customNetwork.has("file")) {
-			logger.info("Invalid custom network");
+			LOG.info("Invalid custom network");
 			return;
 		}
 		final var nickname = customNetwork.get("nickname").getAsString();
@@ -745,7 +776,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			throw new HederaClientRuntimeException("Unrecognized custom network");
 		}
 		controller.setCurrentNetwork(nickname);
-		setupNetworkBox(networkChoicebox);
+		updateNetworkBox();
 	}
 
 	private boolean verifyJsonNetwork(final String location) {
@@ -770,7 +801,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 				}
 			}
 		} catch (final Exception e) {
-			logger.error(e.getMessage());
+			LOG.error(e.getMessage());
 			return false;
 		}
 		return true;
@@ -784,7 +815,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					Path.of(CUSTOM_NETWORK_FOLDER, controller.getCurrentNetwork() + "." + Constants.JSON_EXTENSION));
 		}
 		controller.setCurrentNetwork("MAINNET");
-		setupNetworkBox(networkChoicebox);
+		updateNetworkBox();
 	}
 
 	public void addFeePayerAction() {
