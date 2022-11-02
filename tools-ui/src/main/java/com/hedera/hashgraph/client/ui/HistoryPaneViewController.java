@@ -30,6 +30,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -72,6 +73,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
@@ -79,66 +81,49 @@ import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
 import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
 import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.nio.file.Files.deleteIfExists;
 
-public class HistoryPaneViewController implements GenericFileReadWriteAware {
-	private static final Logger LOG = LogManager.getLogger(HistoryPaneViewController.class);
+public class HistoryPaneController implements GenericFileReadWriteAware {
+	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
+	public static final String RESET_ICON = "icons/sign-back.png";
+	public static final String SENT_ICON = "icons/icons8-sent-100.png";
+	public static final String FILTER_ICON = "icons/filter.png";
 
-	@FXML
+
 	public StackPane historyPane;
-	@FXML
 	public ScrollPane contentScrollPane;
 
-	@FXML
 	public Button feePayerIDTooltip;
-	@FXML
 	public TextField feePayerTextField;
 
-	@FXML
 	public CheckBox acceptedCheckBox;
-	@FXML
 	public CheckBox declinedCheckBox;
 
-	@FXML
 	public VBox typeFilterVBox;
-
-	@FXML
 	public VBox feePayerFilterVBox;
-
-	@FXML
 	public VBox actedDateFilterVBox;
-
-	@FXML
 	public VBox expirationDateFilterVBox;
 
-	@FXML
 	public DatePicker expirationStartDatePicker;
-
-	@FXML
 	public DatePicker expirationEndDatePicker;
-
-	@FXML
 	public DatePicker actionsStartDatePicker;
-
-	@FXML
 	public DatePicker actionsEndDatePicker;
 
-	@FXML
 	public Button rebuild;
-
-	@FXML
-	private MainController controller;
-
 
 	private final TableView<HistoryData> tableView = new TableView<>();
 
 	private final String dateFormat = Locale.getDefault().equals(Locale.US) ? "MM/dd/yyyy" : "dd/MM/yyyy";
 
+	@FXML
+	private Controller controller;
+
 	private final HistoryPaneModel model = new HistoryPaneModel();
 
-	// region INITIALIZATION
-	void injectMainController(final MainController controller) {
+	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
 
@@ -146,45 +131,15 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		return model;
 	}
 
-	void updateHistoryPane() {
+	void initializeHistoryPane() {
 		getModel().loadHistory();
+		setupTable();
+		setupPredicates();
+		setupFilterBoxes();
+		setupBindings();
+	}
 
-		contentScrollPane.setContent(tableView);
-		getModel().getTypeFilter().addListener(getModel()::typeFilterOnChanged);
-		getModel().getActionsFilter().addListener(getModel()::actionsFilterOnChanged);
-		acceptedCheckBox.selectedProperty().addListener(getModel()::acceptedCheckBoxOnChanged);
-		declinedCheckBox.selectedProperty().addListener(getModel()::declinedCheckBoxOnChanged);
-		feePayerTextField.setOnKeyReleased(this::feePayerTextFieldHandle);
-		tableView.getColumns().clear();
-		tableView.getColumns().add(createExpanderColumn());
-		tableView.getColumns().add(createTypeColumn());
-		tableView.getColumns().add(createExpirationColumn());
-		tableView.getColumns().add(createFeePayerColumn());
-		tableView.getColumns().add(createLastActionColumn());
-		tableView.getColumns().add(createButtonColumn(tableView));
-		final var sortedList = new SortedList<>(getModel().getFilteredList());
-		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
-		tableView.setItems(sortedList);
-		tableView.sort();
-
-		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
-				actionsEndDatePicker);
-
-		setupStartEndDates(expirationStartDatePicker, expirationEndDatePicker);
-		setupStartEndDates(actionsStartDatePicker, actionsEndDatePicker);
-
-		getModel().setupFeePayerFilter(feePayerTextField.getText(), controller.getCurrentNetwork(),
-				feePayer -> feePayerTextField.setText(feePayer));
-		getModel().setupExpirationDateFilter();
-		getModel().setupActionDateFilter();
-
-		getModel().getTypeFilter().addAll(EnumSet.allOf(FileType.class));
-		getModel().getActionsFilter().addAll(Actions.ACCEPT, Actions.DECLINE);
-		setupTypeFilterBox();
-		setupFeePayerFilterBox();
-		setupExpirationDateBox();
-		setupActionDateBox();
-
+	private void setupBindings() {
 		rebuild.managedProperty().bind(rebuild.visibleProperty());
 		contentScrollPane.setFitToWidth(true);
 	}
@@ -203,14 +158,53 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	}
 
 	/**
+	 * Set up the main history table
+	 */
+	private void setupTable() {
+		contentScrollPane.setContent(tableView);
+		setupTableBindings();
+		tableView.getColumns().clear();
+		tableView.getColumns().add(getExpanderColumn());
+		tableView.getColumns().add(getTypeColumn());
+		tableView.getColumns().add(getExpirationColumn());
+		tableView.getColumns().add(getFeePayerColumn());
+		tableView.getColumns().add(getLastActionColumn());
+		tableView.getColumns().add(getButtonColumn(tableView));
+		setDataToTable();
+	}
+
+	/**
+	 * Sets the history data to the table
+	 */
+	private void setDataToTable() {
+		final var sortedList = new SortedList<>(getModel().getFilteredList());
+		sortedList.comparatorProperty().bind(tableView.comparatorProperty());
+		tableView.setItems(sortedList);
+		tableView.sort();
+	}
+
+	/**
+	 * Set up the table bindings and listeners
+	 */
+	private void setupTableBindings() {
+		getModel().getTypeFilter().addListener(this::typeFilterOnChanged);
+		getModel().getActionsFilter().addListener(this::actionsFilterOnChanged);
+
+		acceptedCheckBox.selectedProperty().addListener(getModel()::acceptedCheckBoxOnChanged);
+		declinedCheckBox.selectedProperty().addListener(getModel()::declinedCheckBoxOnChanged);
+
+		feePayerTextField.setOnKeyReleased(this::feePayerTextFieldHandle);
+	}
+
+	/**
 	 * Set up the type column
 	 *
 	 * @return a formatted column
 	 */
 	@NotNull
-	private TableColumn<HistoryData, String> createTypeColumn() {
+	private TableColumn<HistoryData, String> getTypeColumn() {
 		final var typeColumn = new TableColumn<HistoryData, String>("");
-		final var typeBox = createTitleBox("Type", typeFilterVBox);
+		final var typeBox = getTitleBox("Type", typeFilterVBox);
 		typeColumn.setGraphic(typeBox);
 		typeColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
 		typeColumn.prefWidthProperty().bind(tableView.widthProperty().divide(32).multiply(9));
@@ -223,13 +217,13 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a formatted column
 	 */
 	@NotNull
-	private TableColumn<HistoryData, String> createFeePayerColumn() {
+	private TableColumn<HistoryData, String> getFeePayerColumn() {
 		final var feePayerColumn = new TableColumn<HistoryData, String>("");
 		feePayerColumn.setCellValueFactory(new PropertyValueFactory<>("feePayer"));
 		feePayerColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
-		feePayerColumn.setCellFactory(historyDataStringTableColumn -> createWrappingCell());
+		feePayerColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
 		feePayerColumn.setCellValueFactory(this::setupFeePayerCell);
-		final var feePayerHBox = createTitleBox("Fee Payer Account", feePayerFilterVBox);
+		final var feePayerHBox = getTitleBox("Fee Payer Account", feePayerFilterVBox);
 		feePayerColumn.setGraphic(feePayerHBox);
 		return feePayerColumn;
 	}
@@ -240,12 +234,12 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a formatted column
 	 */
 	@NotNull
-	private TableColumn<HistoryData, String> createExpirationColumn() {
+	private TableColumn<HistoryData, String> getExpirationColumn() {
 		final var expirationDateColumn = new TableColumn<HistoryData, String>("");
 		expirationDateColumn.setCellValueFactory(new PropertyValueFactory<>("expirationDate"));
 		expirationDateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
-		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> createWrappingCell());
-		final var lastActionBox = createTitleBox("Expiration:", expirationDateFilterVBox);
+		expirationDateColumn.setCellFactory(historyDataStringTableColumn -> setWrapping());
+		final var lastActionBox = getTitleBox("Expiration:", expirationDateFilterVBox);
 		expirationDateColumn.setGraphic(lastActionBox);
 		return expirationDateColumn;
 	}
@@ -256,13 +250,13 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a formatted column
 	 */
 	@NotNull
-	private TableColumn<HistoryData, String> createLastActionColumn() {
+	private TableColumn<HistoryData, String> getLastActionColumn() {
 		final var lastAction = new TableColumn<HistoryData, String>("");
 		lastAction.setCellValueFactory(new PropertyValueFactory<>("lastAction"));
 		lastAction.prefWidthProperty().bind(tableView.widthProperty().divide(5));
-		lastAction.setCellFactory(historyDataStringTableColumn -> createWrappingCell());
+		lastAction.setCellFactory(historyDataStringTableColumn -> setWrapping());
 		lastAction.setSortType(TableColumn.SortType.DESCENDING);
-		final var lastActionBox = createTitleBox("Last acted on:", actedDateFilterVBox);
+		final var lastActionBox = getTitleBox("Last acted on:", actedDateFilterVBox);
 		lastAction.setGraphic(lastActionBox);
 		return lastAction;
 	}
@@ -272,8 +266,8 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 *
 	 * @return a formatted expander column
 	 */
-	private TableRowExpanderColumn<HistoryData> createExpanderColumn() {
-		final var expanderColumn = new TableRowExpanderColumn<>(this::createAccountVBox);
+	private TableRowExpanderColumn<HistoryData> getExpanderColumn() {
+		final var expanderColumn = new TableRowExpanderColumn<>(this::buildAccountVBox);
 		expanderColumn.setStyle("-fx-alignment: TOP-CENTER; -fx-padding: 10");
 		return expanderColumn;
 
@@ -286,12 +280,12 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * 		The table where the button will be added
 	 * @return a TableColumn
 	 */
-	private TableColumn<HistoryData, String> createButtonColumn(final TableView<HistoryData> table) {
+	private TableColumn<HistoryData, String> getButtonColumn(final TableView<HistoryData> table) {
 		final var actionColumn = new TableColumn<HistoryData, String>("");
 		actionColumn.setCellValueFactory(new PropertyValueFactory<>(""));
 		final var cellFactory =
 				(Callback<TableColumn<HistoryData, String>, TableCell<HistoryData, String>>) column -> new TableCell<>() {
-					final Button button = formatButton(StyleConstants.RESET_ICON, 30);
+					final Button button = formatButton(RESET_ICON, 30);
 
 					@Override
 					public void updateItem(final String item, final boolean empty) {
@@ -300,7 +294,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 							final var historyData = table.getItems().get(getIndex());
 							final var succeeded = historyData.transactionSucceeded();
 							if (succeeded != null) {
-								setGraphic(createTwoImages(Boolean.TRUE.equals(succeeded)));
+								setGraphic(twoImages(Boolean.TRUE.equals(succeeded)));
 								return;
 							}
 
@@ -330,32 +324,31 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 					}
 
 					private void setHistoryDataAction(final HistoryData historyData) {
-						onHistoryDataAction(historyData, button);
+						getModel().setNoise(true);
+						int row;
+						try {
+							getModel().getHistoryMap().put(historyData.getCode(), false);
+							row = getRow(historyData);
+							if (row < 0) {
+								return;
+							}
+							getModel().getTableList().remove(historyData);
+							historyData.setHistory(false);
+						} finally {
+							getModel().setNoise(false);
+						}
+						getModel().getTableList().add(row, historyData);
+						button.setDisable(true);
+						controller.homePaneController.setForceUpdate(true);
+						controller.homePaneController.initializeHomePane();
 					}
 
+					private int getRow(final HistoryData historyData) {
+						return getModel().getRow(historyData);
+					}
 				};
 		actionColumn.setCellFactory(cellFactory);
 		return actionColumn;
-	}
-
-	private void onHistoryDataAction(final HistoryData historyData, final Button button) {
-		getModel().setNoise(true);
-		int row;
-		try {
-			getModel().getHistoryMap().put(historyData.getCode(), false);
-			row = getModel().getRow(historyData);
-			if (row < 0) {
-				return;
-			}
-			getModel().getTableList().remove(historyData);
-			historyData.setHistory(false);
-		} finally {
-			getModel().setNoise(false);
-		}
-		getModel().getTableList().add(row, historyData);
-		button.setDisable(true);
-		controller.homePaneController.setForceUpdate(true);
-		controller.homePaneController.initializeHomePane();
 	}
 
 	/**
@@ -365,7 +358,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * 		the tablerow
 	 * @return a VBox
 	 */
-	private VBox createAccountVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
+	private VBox buildAccountVBox(final TableRowExpanderColumn.TableRowDataFeatures<HistoryData> parameter) {
 		final var data = parameter.getValue();
 		final var returnBox = new VBox();
 		try {
@@ -374,7 +367,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 			remoteFile.setHistory(true);
 			return remoteFile.buildDetailsBox();
 		} catch (final HederaClientException e) {
-			LOG.error(e);
+			logger.error(e);
 		}
 		final var l = new Label(data.getFileName());
 		returnBox.getChildren().add(l);
@@ -384,6 +377,43 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	// endregion
 
 	// region FILTERS
+
+	/**
+	 * Set up the predicate filters
+	 */
+	private void setupPredicates() {
+		formatDatePicker(expirationStartDatePicker, expirationEndDatePicker, actionsStartDatePicker,
+				actionsEndDatePicker);
+
+		setupStartEndDates(expirationStartDatePicker, expirationEndDatePicker);
+		setupStartEndDates(actionsStartDatePicker, actionsEndDatePicker);
+
+		feePayerPredicate = historyData -> {
+			final var accounts = parseAccountNumbers(feePayerTextField.getText(), controller.getCurrentNetwork());
+			final var text = join(", ", accounts.stream()
+					.map(account -> Identifier
+							.parse(account.toString(), controller.getCurrentNetwork())
+							.toReadableString())
+					.collect(Collectors.toCollection(ArrayList::new)));
+			feePayerTextField.setText(text);
+			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
+		};
+
+		expirationDatePredicate = historyData -> {
+			final var date = historyData.getExpirationLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+
+		actionDatePredicate = historyData -> {
+			final var date = historyData.getActionLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+
+	}
 
 	private void setupStartEndDates(final DatePicker start, final DatePicker end) {
 		end.disableProperty().bind(start.valueProperty().isNull());
@@ -398,16 +428,25 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		});
 	}
 
+	private void setupFilterBoxes() {
+		typeFilter.addAll(EnumSet.allOf(FileType.class));
+		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+		setupTypeFilterBox();
+		setupFeePayerFilterBox();
+		setupExpirationDateBox();
+		setupActionDateBox();
+	}
+
 	private void setupTypeFilterBox() {
 		typeFilterVBox.managedProperty().bind(typeFilterVBox.visibleProperty());
 		typeFilterVBox.setVisible(false);
-		final var size = getModel().getTypeFilter().size();
+		final var size = typeFilter.size();
 		final var filterTitle = size > 0 ? format("filters (%d)", size) : "filters";
 		final var title = new Label(filterTitle);
 		title.setStyle("-fx-border-color: transparent;-fx-background-color: transparent");
 		title.setPadding(new Insets(5));
 
-		final var toolTipButton = createToolTipButton(FILTER_TOOLTIP_TEXT);
+		final var toolTipButton = getToolTipButton(FILTER_TOOLTIP_TEXT);
 
 		final var titleBox = new HBox();
 		titleBox.getChildren().addAll(title, toolTipButton);
@@ -417,7 +456,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		vBox.setVisible(true);
 
 		vBox.managedProperty().bind(vBox.visibleProperty());
-		final var gridPane = createCheckboxesGridPane();
+		final var gridPane = getCheckboxesGridPane();
 		vBox.getChildren().add(gridPane);
 
 		typeFilterVBox.getChildren().clear();
@@ -441,7 +480,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	}
 
 	@NotNull
-	private GridPane createCheckboxesGridPane() {
+	private GridPane getCheckboxesGridPane() {
 		final var gridPane = new GridPane();
 		gridPane.setHgap(5);
 		gridPane.setVgap(5);
@@ -457,7 +496,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 			EnumSet.allOf(FileType.class).forEach(type -> {
 				final var typeString = type.toKind().toLowerCase();
 				if (!"".equals(typeString)) {
-					checkBoxes.add(createCheckBox(type, typeString));
+					checkBoxes.add(getCheckBox(type, typeString));
 				}
 			});
 
@@ -497,18 +536,18 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * 		the filter box corresponding to the column
 	 * @return an HBox that will be placed as the graphic for the column
 	 */
-	private HBox createTitleBox(final String title, final VBox filterBox) {
+	private HBox getTitleBox(final String title, final VBox filterBox) {
 		final var hBox = new HBox();
 		final var isTest = SetupPhase.TEST_PHASE.equals(controller.getSetupPhase());
 
 		if (!isTest) {
 			hBox.getChildren().add(new Label(title));
-			hBox.getChildren().add(createRegion());
+			hBox.getChildren().add(getRegion());
 		}
 
 		final var button = isTest ?
 				new Button(title + "@@@") :
-				formatButton(StyleConstants.FILTER_ICON, 20);
+				formatButton(FILTER_ICON, 20);
 		button.setOnAction(actionEvent -> {
 			final var b = !filterBox.isVisible();
 			feePayerFilterVBox.setVisible(false);
@@ -522,8 +561,8 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		return hBox;
 	}
 
-	private HBox createTwoImages(final boolean success) {
-		final var sent = new Image(StyleConstants.SENT_ICON);
+	private HBox twoImages(final boolean success) {
+		final var sent = new Image(SENT_ICON);
 		final var check = success ? new Image("icons/greencheck.png") : new Image("icons/icons8-box-important-96.png");
 		final var bottom = new ImageView(sent);
 		bottom.setFitHeight(30);
@@ -547,7 +586,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a formatted button
 	 */
 	@NotNull
-	private Button createToolTipButton(final String text) {
+	private Button getToolTipButton(final String text) {
 		final var image = new Image("icons" + File.separator + "helpIcon.png");
 		final var imageView = new ImageView(image);
 		imageView.setPreserveRatio(true);
@@ -569,7 +608,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a tablecell
 	 */
 	@NotNull
-	private TableCell<HistoryData, String> createWrappingCell() {
+	private TableCell<HistoryData, String> setWrapping() {
 		final var cell = new TableCell<HistoryData, String>();
 		final var text = new Text();
 		cell.setGraphic(text);
@@ -605,7 +644,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a formatted checkbox
 	 */
 	@NotNull
-	private CheckBox createCheckBox(final FileType type, final String typeString) {
+	private CheckBox getCheckBox(final FileType type, final String typeString) {
 		final var checkBox = new CheckBox(format("%s (%d)", typeString, getModel().countType(type)));
 		checkBox.setSelected(getModel().getTypeFilter().contains(type));
 		checkBox.selectedProperty().addListener((observableValue, aBoolean, t1) -> {
@@ -625,17 +664,25 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 */
 	public void resetFeeFilter() {
 		feePayerTextField.clear();
-		getModel().removeFeeFilter();
+		getModel().resetFeeFilter();
 	}
 
 	/**
 	 * Filters the table according to the expiration date column
 	 */
 	public void expirationFilterAccept() {
-		LOG.info("Filtering action dates");
+		logger.info("Filtering action dates");
 		final var startValue = expirationStartDatePicker.getValue();
 		final var endValue = expirationEndDatePicker.getValue();
-		getModel().addExpirationDateFilter(startValue, endValue);
+
+		start = startValue != null ? startValue : LocalDate.now();
+		end = endValue != null ? endValue : LocalDate.now();
+
+		if (start.isAfter(end)) {
+			return;
+		}
+
+		filters.add(expirationDatePredicate);
 	}
 
 	/**
@@ -644,14 +691,14 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	public void expirationFilterReset() {
 		expirationEndDatePicker.getEditor().clear();
 		expirationStartDatePicker.getEditor().clear();
-		getModel().removeExpirationDateFilter();
+		filters.remove(expirationDatePredicate);
 	}
 
 	/**
 	 * Filters the table according to the last action column
 	 */
 	public void actionFilterAccept() {
-		LOG.info("Filtering action dates");
+		logger.info("Filtering action dates");
 		final var startValue = actionsStartDatePicker.getValue();
 		final var endValue = actionsEndDatePicker.getValue();
 
@@ -661,7 +708,8 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		if (startLocalDate.isAfter(endLocalDate)) {
 			return;
 		}
-		getModel().addActionDateFilter();
+
+		filters.add(actionDatePredicate);
 	}
 
 	/**
@@ -672,7 +720,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		acceptedCheckBox.setSelected(true);
 		actionsStartDatePicker.getEditor().clear();
 		actionsEndDatePicker.getEditor().clear();
-		getModel().removeActionDateFilter();
+		filters.remove(actionDatePredicate);
 	}
 
 	/**
@@ -681,7 +729,7 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 * @return a Region
 	 */
 	@NotNull
-	private Region createRegion() {
+	private Region getRegion() {
 		final var region = new Region();
 		HBox.setHgrow(region, Priority.ALWAYS);
 		VBox.setVgrow(region, Priority.ALWAYS);
@@ -737,9 +785,49 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 	 */
 	public void rebuildHistory() throws IOException {
 		deleteIfExists(Path.of(Constants.HISTORY_MAP));
-		updateHistoryPane();
+		initializeHistoryPane();
 		controller.homePaneController.setForceUpdate(true);
 		controller.homePaneController.initializeHomePane();
+	}
+
+	/**
+	 * Action when type filter has changed
+	 *
+	 * @param change
+	 * 		change listener
+	 */
+	private void typeFilterOnChanged(final ListChangeListener.Change<? extends FileType> change) {
+		while (change.next()) {
+			if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
+				typePredicate = statesModel -> {
+					if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
+						return typeFilter.contains(statesModel.getType());
+					}
+					return false;
+				};
+				filters.add(typePredicate);
+			}
+		}
+	}
+
+	/**
+	 * Action when actions filter has changed
+	 *
+	 * @param change
+	 * 		change listener
+	 */
+	private void actionsFilterOnChanged(final ListChangeListener.Change<? extends Actions> change) {
+		while (change.next()) {
+			if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
+				actionTypePredicate = historyData -> {
+					if (!getModel().isNoise() && (change.wasAdded() || change.wasRemoved())) {
+						return actionsFilter.contains(historyData.getActions());
+					}
+					return false;
+				};
+				filters.add(actionTypePredicate);
+			}
+		}
 	}
 
 	/**
@@ -752,14 +840,6 @@ public class HistoryPaneViewController implements GenericFileReadWriteAware {
 		if (event.getCode() != KeyCode.ENTER || event.getCode() != KeyCode.TAB) {
 			return;
 		}
-		getModel().addFeePayerFilter();
-	}
-
-	public boolean isHistory(final int code) {
-		return getModel().isHistory(code);
-	}
-
-	public void addFeePayerFilter() {
-		getModel().addFeePayerFilter();
+		getModel().feePayerFilterAccept();
 	}
 }
