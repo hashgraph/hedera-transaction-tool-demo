@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
@@ -41,7 +42,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
@@ -51,6 +54,8 @@ import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.core.enums.FileType.UNKNOWN;
 import static com.hedera.hashgraph.client.core.enums.FileType.getType;
+import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
+import static java.lang.String.join;
 import static javafx.beans.binding.Bindings.createObjectBinding;
 
 public class HistoryPaneModel implements GenericFileReadWriteAware {
@@ -95,9 +100,6 @@ public class HistoryPaneModel implements GenericFileReadWriteAware {
 				i -> tableList.get(i).equals(historyData)).findFirst().orElse(-1);
 	}
 
-	public void resetFeeFilter() {
-		filters.remove(feePayerPredicate);
-	}
 
 	/**
 	 * Cleans all maps and tables
@@ -150,12 +152,6 @@ public class HistoryPaneModel implements GenericFileReadWriteAware {
 		return count;
 	}
 
-	/**
-	 * Adds the fee filter to the list
-	 */
-	public void feePayerFilterAccept() {
-		filters.add(feePayerPredicate);
-	}
 
 	/**
 	 * Action when the declined checkbox is selected
@@ -253,6 +249,105 @@ public class HistoryPaneModel implements GenericFileReadWriteAware {
 			return !getType(FilenameUtils.getExtension(name)).equals(UNKNOWN);
 		} catch (final HederaClientException e) {
 			return false;
+		}
+	}
+
+	public void setupFeePayerFilter(final String feePayer, String currentNetwork,
+			final Consumer<String> newFeePayerConsumer) {
+		feePayerPredicate = historyData -> {
+			final var accounts = parseAccountNumbers(feePayer, currentNetwork);
+			final var text = join(", ", accounts.stream()
+					.map(account -> Identifier
+							.parse(account.toString(), currentNetwork)
+							.toReadableString())
+					.collect(Collectors.toCollection(ArrayList::new)));
+			newFeePayerConsumer.accept(text);
+			return accounts.isEmpty() || accounts.contains(Identifier.parse(historyData.getFeePayer()).asAccount());
+		};
+	}
+
+	public void setupActionDateFilter() {
+		actionDatePredicate = historyData -> {
+			final var date = historyData.getActionLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+	}
+
+	public void setupExpirationDateFilter() {
+		expirationDatePredicate = historyData -> {
+			final var date = historyData.getExpirationLocalDate();
+			final var b1 = date.isEqual(start) || date.isAfter(start);
+			final var b2 = date.isEqual(end) || date.isBefore(end);
+			return b1 && b2;
+		};
+	}
+
+	public void addExpirationDateFilter(final LocalDate startValue, final LocalDate endValue) {
+		start = startValue != null ? startValue : LocalDate.now();
+		end = endValue != null ? endValue : LocalDate.now();
+		if (start.isAfter(end)) {
+			return;
+		}
+		filters.add(expirationDatePredicate);
+	}
+
+	public void removeExpirationDateFilter() {
+		filters.remove(expirationDatePredicate);
+	}
+
+	public void addActionDateFilter() {
+		filters.add(actionDatePredicate);
+	}
+
+	public void removeActionDateFilter() {
+		filters.remove(actionDatePredicate);
+	}
+
+	/**
+	 * Adds the fee filter to the list
+	 */
+	public void addFeePayerFilter() {
+		filters.add(feePayerPredicate);
+	}
+
+
+	public void removeFeeFilter() {
+		filters.remove(feePayerPredicate);
+	}
+
+	/**
+	 * Action when actions filter has changed
+	 *
+	 * @param change
+	 * 		change listener
+	 */
+	public void actionsFilterOnChanged(final ListChangeListener.Change<? extends Actions> change) {
+		while (change.next()) {
+			if (!isNoise() && (change.wasAdded() || change.wasRemoved())) {
+				actionTypePredicate = historyData -> {
+					if (!isNoise() && (change.wasAdded() || change.wasRemoved())) {
+						return actionsFilter.contains(historyData.getActions());
+					}
+					return false;
+				};
+				filters.add(actionTypePredicate);
+			}
+		}
+	}
+
+	public void typeFilterOnChanged(final ListChangeListener.Change<? extends FileType> change) {
+		while (change.next()) {
+			if (!isNoise() && (change.wasAdded() || change.wasRemoved())) {
+				typePredicate = statesModel -> {
+					if (!isNoise() && (change.wasAdded() || change.wasRemoved())) {
+						return typeFilter.contains(statesModel.getType());
+					}
+					return false;
+				};
+				filters.add(typePredicate);
+			}
 		}
 	}
 

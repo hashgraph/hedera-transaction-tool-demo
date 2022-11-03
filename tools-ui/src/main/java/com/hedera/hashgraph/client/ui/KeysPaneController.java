@@ -171,7 +171,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	public Button changePasswordKP;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 
 	// key: Key name; value: location of the file
 	private final Map<String, String> publicKeysMap = new HashMap<>();
@@ -194,7 +194,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private String currentHashCode = null;
 
 	// region INITIALIZATION
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 

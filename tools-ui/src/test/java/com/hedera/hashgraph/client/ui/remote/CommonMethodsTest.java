@@ -22,7 +22,7 @@ import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.TestUtil;
@@ -31,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxToolkit;
 
@@ -93,7 +92,7 @@ public class CommonMethodsTest extends TestBase {
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

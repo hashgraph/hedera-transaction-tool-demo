@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
@@ -112,7 +112,7 @@ public class NewPasswordPopupTest extends TestBase {
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

@@ -122,7 +122,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		properties.setHash("123456789".toCharArray());
 		properties.setOneDriveCredentials(emailMap);
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

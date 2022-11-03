@@ -124,9 +124,9 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.getSaltBytes;
 import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
 import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
-public class Controller implements Initializable, GenericFileReadWriteAware {
+public class MainController implements Initializable, GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(Controller.class);
+	private static final Logger logger = LogManager.getLogger(MainController.class);
 	public static final String DISCLAIMER =
 			"This software is designed for use solely by the Hedera Council and staff. The software is being " +
 					"released as open source as example code only, and is not intended or suitable for use in " +
@@ -160,7 +160,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 	private GithubUpdater updater;
 
-	private final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
+	private final Preferences preferences = Preferences.userNodeForPackage(MainController.class);
 
 	private UserAccessibleProperties properties;
 
@@ -378,7 +378,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePane.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
-				historyPaneController.initializeHistoryPane();
+				historyPaneController.updateHistoryPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
@@ -391,7 +391,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
-				historyPaneController.initializeHistoryPane();
+				historyPaneController.updateHistoryPane();
 				historyPaneController.getModel().cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
