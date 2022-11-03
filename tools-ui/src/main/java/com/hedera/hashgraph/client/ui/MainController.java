@@ -89,6 +89,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -120,13 +121,14 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.NORMAL_OPERATION
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVERY_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
+import static com.hedera.hashgraph.client.core.remote.RemoteFilesMap.UNKNOWN_VERSION;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.getSaltBytes;
 import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
 import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
 public class MainController implements Initializable, GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(MainController.class);
+	private static final Logger LOG = LogManager.getLogger(MainController.class);
 	public static final String DISCLAIMER =
 			"This software is designed for use solely by the Hedera Council and staff. The software is being " +
 					"released as open source as example code only, and is not intended or suitable for use in " +
@@ -246,7 +248,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			}
 			setSetupPhase(INITIAL_SETUP_PHASE);
 		} else {
-			logger.info("The current storage directory is: {}", getPreferredStorageDirectory());
+			LOG.info("The current storage directory is: {}", getPreferredStorageDirectory());
 		}
 
 
@@ -254,12 +256,12 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		final var updateHelper = new UpdateHelper(properties.getPreferredStorageDirectory());
 
 		if ((getSetupPhase() == TEST_PHASE || getSetupPhase() == NORMAL_OPERATION_PHASE) && !updateHelper.isUpdated()) {
-			logger.info("Application directory needs to be updated");
+			LOG.info("Application directory needs to be updated");
 			try {
 				updateHelper.handleMigration();
 				replacePublicKey();
 			} catch (final HederaClientException | IOException e) {
-				logger.error("Cannot complete migration {}", e.getMessage());
+				LOG.error("Cannot complete migration {}", e.getMessage());
 			}
 		}
 
@@ -316,13 +318,13 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		try {
 			Files.deleteIfExists(Path.of(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION));
 		} catch (final IOException e) {
-			logger.error(e.getMessage());
+			LOG.error(e.getMessage());
 		}
 		// Then replace it with the key provided in the app resources.
 		final var readStream = this.getClass().getClassLoader().getResourceAsStream("gpgPublicKey.asc");
 
 		if (new File(DEFAULT_SYSTEM_FOLDER).mkdirs()) {
-			logger.info("System folder created");
+			LOG.info("System folder created");
 		}
 
 		final var key = new File(DEFAULT_STORAGE, Constants.PUBLIC_KEY_LOCATION);
@@ -333,7 +335,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			}
 			IOUtils.copy(readStream, outputStream);
 		} catch (final IOException exception) {
-			logger.error(exception.getMessage());
+			LOG.error(exception.getMessage());
 		}
 	}
 
@@ -363,7 +365,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			case NORMAL_OPERATION_PHASE:
 				if (new File(getPreferredStorageDirectory(), MNEMONIC_PATH).exists() && "".equals(
 						properties.getHash())) {
-					logger.info("Missing hash in config file: Putting the application in password recovery mode");
+					LOG.info("Missing hash in config file: Putting the application in password recovery mode");
 					PopupMessage.display("Missing Password", Messages.PASSWORD_NOT_FOUND_MESSAGE, "CONTINUE");
 					setSetupPhase(PASSWORD_RECOVERY_PHASE);
 					break;
@@ -408,7 +410,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 
 
 	public void logAndDisplayError(final Exception e) {
-		logger.error(e.getMessage());
+		LOG.error(e.getMessage());
 		displaySystemMessage(e.toString());
 	}
 	//region NAVIGATION
@@ -564,9 +566,9 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 	void resetPreferences() throws BackingStoreException, IOException {
 		final var userProperties = new File(getPreferredStorageDirectory(), USER_PROPERTIES);
 		Files.deleteIfExists(userProperties.toPath());
-		logger.info("User preferences deleted");
+		LOG.info("User preferences deleted");
 		preferences.clear();
-		logger.info("Preferences Reset");
+		LOG.info("Preferences Reset");
 	}
 
 	void resetApp() throws BackingStoreException, IOException {
@@ -575,8 +577,8 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		final var sourceDir = userDefStorageDirectory.equals("") ? new File(
 				defaultStorageDirectory) : new File(userDefStorageDirectory);
 
-		logger.info("Default storage {}", defaultStorageDirectory);
-		logger.info("Before reset storage {}", sourceDir.getPath());
+		LOG.info("Default storage {}", defaultStorageDirectory);
+		LOG.info("Before reset storage {}", sourceDir.getPath());
 		final var secondsToArchive = Instant.now().getEpochSecond();
 		final var resetStorageDirectory =
 				String.format("%s.%s", sourceDir.getPath(), secondsToArchive);
@@ -584,15 +586,15 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		resetPreferences();
 		final var userPreferenceFile = new File(sourceDir.getPath(), USER_PREFERENCE_FILE);
 		if (userPreferenceFile.createNewFile()) {
-			logger.info("New user preference file created");
+			LOG.info("New user preference file created");
 		} else {
-			logger.error("Could not create user preferences file");
+			LOG.error("Could not create user preferences file");
 		}
 		preferences.exportNode(new FileOutputStream(userPreferenceFile, false));
 
 		final var destination = new File(resetStorageDirectory);
 		copyDirectory(sourceDir, destination);
-		logger.info("Transactions Tool storage archived to {}", destination.getPath());
+		LOG.info("Transactions Tool storage archived to {}", destination.getPath());
 
 		preferences.clear();
 		deleteDirectory(sourceDir);
@@ -623,7 +625,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		final var d = new Date();
 		systemMessagesTextField.appendText(
 				d + ": " + exception.toString() + System.getProperty("line.separator"));
-		logger.error(exception.getMessage());
+		LOG.error(exception.getMessage());
 	}
 
 	/**
@@ -632,7 +634,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 	 */
 	public String getVersion() {
 		final var buildProps = new Properties();
-		var version = "";
+		var version = UNKNOWN_VERSION;
 		try {
 			buildProperties(buildProps);
 			final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -643,7 +645,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 					buildProps.get("git.build.version"),
 					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
 		} catch (final Exception ex) {
-			logger.error("Error Printing Version {}", ex.getMessage());
+			LOG.error("Error Printing Version: {}", ex.getMessage());
 			displaySystemMessage(ex);
 		}
 		return version;
@@ -667,7 +669,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			final var cleanName = newVersion.replace(":", "-").replace(".", "-").replace(",", "").replace(" ", "");
 			final var fileName = String.format("%s/OutputFiles/%s/SoftwareUpdated-%s.txt", key, value, cleanName);
 			if (!new File(fileName).getParentFile().exists()) {
-				logger.error("Cannot export version: path {} does not exist", fileName);
+				LOG.error("Cannot export version: path {} does not exist", fileName);
 				return;
 			}
 			try (final var writer = new BufferedWriter(new FileWriter(fileName))) {
@@ -675,7 +677,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 						String.format("Software updated from version %s to version %s on %s", oldVersion, newVersion,
 								new Date()));
 			} catch (final IOException e) {
-				logger.error(e.getMessage());
+				LOG.error(e.getMessage());
 			}
 		}
 	}
@@ -866,7 +868,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		try {
 			object = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
+			LOG.error(e.getMessage());
 		}
 		return object;
 	}
@@ -879,7 +881,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 		try {
 			writeJsonObject(ACCOUNTS_MAP_FILE, jsonObject);
 		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
+			LOG.error(e.getMessage());
 		}
 	}
 
@@ -895,7 +897,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 
 		final var customNetworksFolder = new File(Constants.CUSTOM_NETWORK_FOLDER);
 		if (customNetworksFolder.mkdirs()) {
-			logger.info("Custom networks folder storage created");
+			LOG.info("Custom networks folder storage created");
 		}
 		final var networks = customNetworksFolder.listFiles(
 				(dir, name) -> Constants.JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
@@ -1056,9 +1058,9 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 				final var absolutePath = pubFile.getAbsolutePath();
 				map.put(Hex.toHexString(readBytes(absolutePath)), absolutePath);
 			}
-			logger.debug("pubFiles loaded");
+			LOG.debug("pubFiles loaded");
 		} catch (final Exception ex) {
-			logger.error(ex.getMessage());
+			LOG.error(ex.getMessage());
 		}
 		return map;
 	}
@@ -1134,8 +1136,14 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			updater.shutdown();
 		}
 
-		updater = new GithubUpdater(getVersion(), new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
-				() -> homePaneController.setForceUpdate(true));
+		final var version = getVersion();
+		if (Objects.equals(UNKNOWN_VERSION, version)) {
+			LOG.warn("Will not start GitHub Updater since current version is unknown");
+		} else {
+			updater = new GithubUpdater(version, new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
+					() -> homePaneController.setForceUpdate(true));
+		}
+
 
 		final ChangeListener<Boolean> listener = new ChangeListener<>() {
 			private boolean curValue = false;
@@ -1144,10 +1152,12 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
 				if (curValue != newValue) {
 					curValue = newValue;
-					if (newValue) {
-						updater.start(false);
-					} else {
-						updater.stop();
+					if (updater != null) {
+						if (newValue) {
+							updater.start(false);
+						} else {
+							updater.stop();
+						}
 					}
 				}
 			}
