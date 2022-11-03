@@ -35,7 +35,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <StackPane fx:id="historyPane" minHeight="400.0" minWidth="800.0" xmlns="http://javafx.com/javafx/16"
-		   xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HistoryPaneViewController">
+		   xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HistoryPaneController">
 	<VBox>
 		<StackPane.margin>
 			<Insets bottom="10.0" left="25.0" right="25.0" top="10.0"/>
