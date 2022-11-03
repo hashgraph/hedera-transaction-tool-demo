@@ -82,8 +82,8 @@ import static com.hedera.hashgraph.client.core.utils.FXUtils.formatButton;
 import static java.lang.String.format;
 import static java.nio.file.Files.deleteIfExists;
 
-public class HistoryPaneController implements GenericFileReadWriteAware {
-	private static final Logger LOG = LogManager.getLogger(HistoryPaneController.class);
+public class HistoryPaneViewController implements GenericFileReadWriteAware {
+	private static final Logger LOG = LogManager.getLogger(HistoryPaneViewController.class);
 
 	@FXML
 	public StackPane historyPane;
