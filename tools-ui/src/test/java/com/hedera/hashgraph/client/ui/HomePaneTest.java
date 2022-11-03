@@ -42,7 +42,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -150,7 +149,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

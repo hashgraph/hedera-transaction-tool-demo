@@ -123,7 +123,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 			//setupTransactionDirectory(DEFAULT_STORAGE);
 
-			final Controller controller = new Controller();
+			final MainController controller = new MainController();
 			final var version = controller.getVersion();
 			properties.setVersionString(version);
 

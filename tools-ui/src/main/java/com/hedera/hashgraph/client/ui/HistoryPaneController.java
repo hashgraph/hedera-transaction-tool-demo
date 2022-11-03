@@ -154,10 +154,10 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	private final String dateFormat = Locale.getDefault().equals(Locale.US) ? "MM/dd/yyyy" : "dd/MM/yyyy";
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 
 	// region INITIALIZATION
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
@@ -261,7 +261,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		tableView.refresh();
 	}
 
-	public void removeFromHistory(final RemoteFile remoteFile){
+	public void removeFromHistory(final RemoteFile remoteFile) {
 		noise = false;
 		final var remove = new HistoryData(remoteFile);
 		tableList.remove(remove);

@@ -153,11 +153,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public ChoiceBox<Object> feePayerChoicebox;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 
 	DriveSetupHelper driveSetupHelper;
 
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
@@ -273,8 +273,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			networkTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, networkTooltip,
 					NETWORKS_TOOLTIP_MESSAGES));
 
-			feePayerTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, feePayerTooltip,
-					FEE_PAYER_TOOLTIP_MESSAGES));
+			feePayerTooltip.setOnAction(
+					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, feePayerTooltip,
+							FEE_PAYER_TOOLTIP_MESSAGES));
 			// endregion
 
 		} catch (final Exception e) {

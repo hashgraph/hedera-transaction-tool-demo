@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ControllerTest {
-	private Controller controller;
+	private MainController controller;
 	private static final String CURRENT_RELATIVE_PATH = Paths.get("").toAbsolutePath().toString();
 	private static final Logger logger = LogManager.getLogger(ControllerTest.class);
 	private static final String DEFAULT_STORAGE = System.getProperty(
@@ -57,13 +57,13 @@ class ControllerTest {
 			logger.info("Starting test class: {}", getClass().getSimpleName());
 			TestUtil.buildFolders();
 
-			final Preferences preferences = Preferences.userNodeForPackage(Controller.class);
+			final Preferences preferences = Preferences.userNodeForPackage(MainController.class);
 			preferences.clear();
 			assertEquals(0, preferences.keys().length);
 			final String defaultStorage =
 					Paths.get("").toAbsolutePath() + "/src/test/resources/testDirectory/TransactionTools";
 			preferences.put(PREFERRED_STORAGE_DIRECTORY, defaultStorage);
-			controller = new Controller();
+			controller = new MainController();
 			controller.setProperties(new UserAccessibleProperties(defaultStorage + "/Files/user", ""));
 			controller.resetProperties();
 			controller.setVersionString(controller.getVersion());

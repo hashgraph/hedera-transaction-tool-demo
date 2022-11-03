@@ -118,7 +118,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		final var controller = new Controller();
+		final var controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
