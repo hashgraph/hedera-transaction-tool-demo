@@ -108,7 +108,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	public ImageView editImageIS;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 	//	endregion
 
 
@@ -125,7 +125,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	 * @param controller
 	 * 		main controller
 	 */
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 

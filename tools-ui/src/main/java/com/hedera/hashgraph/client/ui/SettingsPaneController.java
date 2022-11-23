@@ -154,11 +154,11 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	public ChoiceBox<Object> feePayerChoicebox;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 
 	DriveSetupHelper driveSetupHelper;
 
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 

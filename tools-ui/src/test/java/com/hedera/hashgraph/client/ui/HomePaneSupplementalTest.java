@@ -127,7 +127,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final var controller = new Controller();
+		final var controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 
@@ -468,7 +468,8 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 		assertEquals(1, labels.size());
 		assertEquals(
-				"the application was unable to read files from the remote location: src/test/resources/missing. please " +
+				"the application was unable to read files from the remote location: src/test/resources/missing. please" +
+						" " +
 						"make sure that the application is able to read the drive.",
 				labels.get(0));
 

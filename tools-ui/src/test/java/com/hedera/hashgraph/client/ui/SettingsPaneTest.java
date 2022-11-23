@@ -119,7 +119,8 @@ public class SettingsPaneTest extends TestBase {
 		final Map<String, String> emailMap = new HashMap<>();
 
 		emailMap.put(
-				CURRENT_RELATIVE_PATH.toAbsolutePath() + File.separator + "src/test/resources/Transactions - Documents/",
+				CURRENT_RELATIVE_PATH.toAbsolutePath() + File.separator + "src/test/resources/Transactions - " +
+						"Documents/",
 				"test1.council2@hederacouncil.org");
 
 		properties.resetProperties();
@@ -128,7 +129,7 @@ public class SettingsPaneTest extends TestBase {
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 		//setupTransactionDirectory(DEFAULT_STORAGE);
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HomePanePage;
@@ -75,7 +75,8 @@ public class NewPasswordPopupTest extends TestBase {
 			"DIGNITY DOMAIN INVOLVE REPORT SAIL MIDDLE RHYTHM HUSBAND USAGE PRETTY RATE TOWN " +
 					"ACCOUNT SIDE EXTRA OUTER EAGLE EIGHT DESIGN PAGE REGULAR BIRD RACE ANSWER";
 	private final String otherMnemonic =
-			"LUXURY PENALTY STAGE CANCEL ASK TOPIC OPEN SIEGE EMERGE FEED SUDDEN DISCOVER HELMET JEALOUS CULTURE EXIT " +
+			"LUXURY PENALTY STAGE CANCEL ASK TOPIC OPEN SIEGE EMERGE FEED SUDDEN DISCOVER HELMET JEALOUS CULTURE EXIT" +
+					" " +
 					"ROSE DIAGRAM TURKEY TRIAL DISTANCE DYNAMIC FINAL SHIVER";
 	public UserAccessibleProperties properties;
 	private KeysPanePage keysPanePage;
@@ -112,7 +113,7 @@ public class NewPasswordPopupTest extends TestBase {
 
 		properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 
-		final Controller controller = new Controller();
+		final MainController controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

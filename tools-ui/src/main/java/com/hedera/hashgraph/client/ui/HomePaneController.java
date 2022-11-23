@@ -109,7 +109,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public ScrollPane homeFilesScrollPane;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 	// endregion
 
 	private long lastModified = 0;
@@ -124,7 +124,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		forceUpdate = force;
 	}
 
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 

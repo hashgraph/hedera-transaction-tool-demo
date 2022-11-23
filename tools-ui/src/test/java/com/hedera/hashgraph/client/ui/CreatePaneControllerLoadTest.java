@@ -120,7 +120,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
 			//setupTransactionDirectory(DEFAULT_STORAGE);
 
-			final var controller = new Controller();
+			final var controller = new MainController();
 			final var version = controller.getVersion();
 			properties.setVersionString(version);
 
@@ -493,7 +493,8 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assertNotNull(popup2);
 		final var labels2 = TestUtil.getLabels(popup2);
 		assertEquals(
-				"in order to display data regarding account 0.0.10006-pbphp, please download the information from the " +
+				"in order to display data regarding account 0.0.10006-pbphp, please download the information from the" +
+						" " +
 						"network.",
 				labels2.get(0));
 
