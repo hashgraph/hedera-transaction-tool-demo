@@ -142,46 +142,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
-import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
-import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
-import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
-import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.LIMIT;
-import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
-import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
-import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_LENGTH;
-import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_STYLE;
-import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
-import static com.hedera.hashgraph.client.core.constants.Constants.NODE_ID_PROPERTIES;
-import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.REGEX;
-import static com.hedera.hashgraph.client.core.constants.Constants.REMAINING_TIME_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_FREEZE_TYPE;
-import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_STRING;
-import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.START_STYLE;
-import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
-import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_DEFAULT;
-import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_ERROR;
-import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_FEE_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_VALID_DURATION_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.VALID_INCREMENT_PROPERTY;
-import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.*;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
@@ -2329,18 +2290,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
 
 		// Max Auto Token Associations
-		final var text = createMaxTokenAssociations.getText();
-		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, text.isEmpty() ? 0 : Integer.parseInt(text));
+		final var newTokens = createMaxTokenAssociations.getText();
+		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
 
 		// Receiver Sig Required
 		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
-
-		// Account Memo
-		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
-
-		// Max Auto Token Associations
-		final var newTokens = createMaxTokenAssociations.getText();
-		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
 
 		if ((stakedAccountIdField.getText() != null) && (!stakedAccountIdField.getText().isEmpty())) {
 			input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
@@ -2925,20 +2879,20 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		var i = 0;
-		var txFile = new File(tempStorage + File.separator + filenames + ".tx");
+		var txFile = new File(tempStorage + File.separator + filenames + TRANSACTION_EXTENSION);
 		while (txFile.exists()) {
-			txFile = new File(tempStorage + File.separator + filenames + i++ + ".tx");
+			txFile = new File(tempStorage + File.separator + filenames + i++ + TRANSACTION_EXTENSION);
 		}
 
 		try {
 			transaction.store(txFile.getAbsolutePath());
-			userComments.toFile(txFile.getAbsolutePath().replace(".tx", ".txt"));
+			userComments.toFile(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION, COMMENT_EXTENSION));
 		} catch (final HederaClientException e) {
 			logger.error(e);
 			controller.displaySystemMessage(e);
 		}
 
-		final var txtFile = new File(txFile.getAbsolutePath().replace(".tx", ".txt"));
+		final var txtFile = new File(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION, COMMENT_EXTENSION));
 
 		final List<File> files = new ArrayList<>();
 		files.add(txFile);
