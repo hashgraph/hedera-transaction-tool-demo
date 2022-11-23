@@ -31,9 +31,10 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:id="borderPane" maxHeight="1.7976931348623157E308"
 			maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" prefHeight="666.0"
 			prefWidth="1000.0" xmlns="http://javafx.com/javafx/16"
-			fx:controller="com.hedera.hashgraph.client.ui.Controller">
+			fx:controller="com.hedera.hashgraph.client.ui.MainController">
 	<center>
-		<AnchorPane fx:id="centerPane" style="-fx-border-color: #f4f4f4; -fx-font-size: 18;" BorderPane.alignment="CENTER_LEFT">
+		<AnchorPane fx:id="centerPane" style="-fx-border-color: #f4f4f4; -fx-font-size: 18;"
+					BorderPane.alignment="CENTER_LEFT">
 			<fx:include fx:id="initialStartupPane" source="InitialStartupPane.fxml" visible="false"
 						AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
 						AnchorPane.topAnchor="0"/>

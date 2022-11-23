@@ -24,7 +24,7 @@ import com.hedera.hashgraph.client.core.enums.AccountInfoFields;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.event.Event;
 import javafx.geometry.Insets;
@@ -57,11 +57,11 @@ import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_
 
 public class CompareInfosPopup {
 	public static final String ACCOUNT_ID = "accountID";
-	private static Controller controller;
+	private static MainController controller;
 	private static final List<TableLine> lines = new ArrayList<>();
 	private static final JsonObject accounts = readJsonObject();
 
-	public static void setController(final Controller controller) {
+	public static void setController(final MainController controller) {
 		CompareInfosPopup.controller = controller;
 	}
 
@@ -70,7 +70,7 @@ public class CompareInfosPopup {
 	}
 
 	public static void display(final JsonObject current, final JsonObject old,
-			final Controller controller) throws HederaClientException {
+			final MainController controller) throws HederaClientException {
 		final var window = new Stage();
 		lines.clear();
 		setController(controller);
