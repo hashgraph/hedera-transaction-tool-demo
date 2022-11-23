@@ -18,50 +18,22 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
-import com.google.common.graph.Network;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
-import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
-import com.hedera.hashgraph.client.core.interfaces.FileService;
-import com.hedera.hashgraph.client.core.json.Identifier;
-import com.hedera.hashgraph.client.core.json.Timestamp;
-import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.transactions.*;
-import com.hedera.hashgraph.sdk.*;
-import javafx.util.Pair;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_VALIDATE_INPUT_ERROR_MESSAGE;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.*;
-import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CREATED_MESSAGE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 public class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
@@ -69,11 +41,11 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMapTest.class);
 
 	@BeforeAll
-	public void setUp() throws Exception {
+	public static void setUp() throws Exception {
 	}
 
 	@AfterAll
-	public void tearDown() throws Exception {
+	public static void tearDown() throws Exception {
 	}
 
 	@Test
@@ -209,15 +181,16 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 		final var remoteFilesMap2 = new RemoteFilesMap(
 				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
 				fileService2);
-		//The files used in these tests were not expired at the time the test were created, but
-		//since then, have expired. For now, we'll use the numbers it gives (25 not expired, 31 total)
-		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), 25);
-		assertEquals(remoteFilesMap2.getFiles().size(), 31);
+		// The files used in these tests were not expired at the time the test were created, but
+		// since then, have expired. For now, we'll just compare actual sizes.
+		var remoteFilesMapNotExpired = remoteFilesMap.getFilesNotExpired().size();
+		var remoteFilesMap2NotExpired = remoteFilesMap2.getFilesNotExpired().size();
+		var remoteFilesMap2Total = remoteFilesMap2.getFiles().size();
 
-		//remoteFilesMap has 28 unexpired files
 		remoteFilesMap2.addAllNotExpired(remoteFilesMap);
-		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), 53);
-		assertEquals(remoteFilesMap2.getFiles().size(), 59);
-
+		// Make sure that the NotExpired count for the second map increases by the count of NotExpired from the first map
+		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), remoteFilesMap2NotExpired+remoteFilesMapNotExpired);
+		// Then test that the total count in the second map increase by only the count of NotExpired from the first map
+		assertEquals(remoteFilesMap2.getFiles().size(), remoteFilesMap2Total+remoteFilesMapNotExpired);
 	}
 }
