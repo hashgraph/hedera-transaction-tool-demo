@@ -68,8 +68,6 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMapTest.class);
 
-	private static final String TEMP_STORAGE = "";
-
 	@BeforeAll
 	public void setUp() throws Exception {
 	}
