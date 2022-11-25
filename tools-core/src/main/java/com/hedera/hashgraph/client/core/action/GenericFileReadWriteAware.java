@@ -18,36 +18,18 @@
 
 package com.hedera.hashgraph.client.core.action;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import org.apache.commons.io.FilenameUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -74,10 +56,11 @@ public interface GenericFileReadWriteAware {
 	 * @return a byte array
 	 */
 	default byte[] readBytes(final File filePath) throws HederaClientException {
-		if (filePath == null || !filePath.exists()) {
+		Objects.requireNonNull(filePath);
+		if (!filePath.exists()) {
 			throw new HederaClientRuntimeException(
 					String.format("Unable to get input stream from empty source: %s.",
-							Objects.requireNonNull(filePath).getPath()));
+							filePath.getPath()));
 		}
 		try (final var fis = new FileInputStream(filePath)) {
 			return fis.readAllBytes();
