@@ -142,7 +142,47 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.*;
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
+import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
+import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
+import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.LIMIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
+import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
+import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_LENGTH;
+import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
+import static com.hedera.hashgraph.client.core.constants.Constants.NODE_ID_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.REGEX;
+import static com.hedera.hashgraph.client.core.constants.Constants.REMAINING_TIME_MESSAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_FREEZE_TYPE;
+import static com.hedera.hashgraph.client.core.constants.Constants.SELECT_STRING;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.START_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_DEFAULT;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_ERROR;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_FEE_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_VALID_DURATION_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.VALID_INCREMENT_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
@@ -492,11 +532,11 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		copyFromAccountHBox.getChildren().clear();
 		copyFromAccountHBox.getChildren().add(autoCompleteNickname);
 		createSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
+				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? Boolean.TRUE.toString() : Boolean.FALSE.toString()
 				));
 		declineStakingRewards.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(
-						Boolean.TRUE.equals(t1) ? "true" : "false"
+						Boolean.TRUE.equals(t1) ? Boolean.TRUE.toString() : Boolean.FALSE.toString()
 				));
 
 		createAccountMemo.textProperty().addListener(
@@ -531,10 +571,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? Boolean.TRUE.toString() : Boolean.FALSE.toString()));
 		declineStakingRewardsNew.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(
-						Boolean.TRUE.equals(t1) ? "true" : "false"));
+						Boolean.TRUE.equals(t1) ? Boolean.TRUE.toString() : Boolean.FALSE.toString()));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -2904,7 +2944,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		moveToOutput(files, remoteLocation);
 
-		// remove all temporary files from local storage;
+		/* remove all temporary files from local storage */
 		try {
 			if (txFile.exists()) {
 				Files.delete(txFile.toPath());
