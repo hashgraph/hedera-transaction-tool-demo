@@ -75,7 +75,7 @@ public class MainWindowPage {
 	}
 
 	public MainWindowPage clickPopupContinue() {
-		final var nodes = TestUtil.getPopupNodes();
+		final var nodes = driver.getPopupNodes();
 		return this;
 	}
 }

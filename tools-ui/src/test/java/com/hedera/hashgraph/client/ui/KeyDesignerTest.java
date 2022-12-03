@@ -58,10 +58,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.copyCreatePaneKeys;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.countTreeNodes;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findLabelsInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
@@ -85,7 +83,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		try {
 			System.gc();
 			logger.info("Starting test class: {}", getClass().getSimpleName());
-			TestUtil.buildFolders();
+			buildFolders();
 
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -167,7 +165,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 				logger.info("Tools document directory exists.");
 			}
 
-			copyCreatePaneKeys();
+//			copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
 		} catch (final Exception e) {
@@ -394,7 +392,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 		assertTrue((labels.get(0)).getText().toLowerCase(Locale.ROOT).contains(
 				"selected threshold does not have a list of keys associated with it."));
 
-		clickOn(TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), "CONTINUE"));
+		clickOn(TestUtil.findButtonInPopup(getPopupNodes(), "CONTINUE"));
 		createPanePage.closePopup("CANCEL");
 	}
 
@@ -541,7 +539,7 @@ public class KeyDesignerTest extends TestBase implements GenericFileReadWriteAwa
 
 		createPanePage.setThreshold(5);
 
-		final var popupNodes = TestUtil.getPopupNodes();
+		final var popupNodes = getPopupNodes();
 		final var labels = TestUtil.findLabelsInPopup(popupNodes);
 
 		assertFalse(labels.isEmpty());

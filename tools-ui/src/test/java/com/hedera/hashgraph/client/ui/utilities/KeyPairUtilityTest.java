@@ -48,7 +48,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_EXPIRATION_TIME;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
@@ -67,7 +66,7 @@ public class KeyPairUtilityTest extends TestBase {
 	public void setUp() throws Exception {
 		final var currentRelativePath = Paths.get("");
 
-		TestUtil.buildFolders();
+		buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE, KEYS_STRING));

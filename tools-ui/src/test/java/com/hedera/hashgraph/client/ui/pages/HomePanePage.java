@@ -33,6 +33,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,7 +55,7 @@ public class HomePanePage {
 	}
 
 	public HomePanePage enterPasswordInPopup(final String password) {
-		final var popupNodes = TestUtil.getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		for (final var n : popupNodes) {
 			if (n instanceof PasswordField) {
@@ -62,7 +63,7 @@ public class HomePanePage {
 			}
 		}
 		for (final var n :
-				TestUtil.getPopupNodes()) {
+				driver.getPopupNodes()) {
 			if (n instanceof HBox) {
 				for (final var b :
 						((HBox) n).getChildren()) {
@@ -77,7 +78,7 @@ public class HomePanePage {
 	}
 
 	public HomePanePage enterStringInPopup(final String text) {
-		final var textField = (TextField) Objects.requireNonNull(TestUtil.getPopupNodes()).get(1);
+		final var textField = (TextField) Objects.requireNonNull(driver.getPopupNodes()).get(1);
 		textField.setText(text);
 		driver.clickOn(textField).press(KeyCode.ENTER).release(KeyCode.ENTER);
 		return this;
@@ -96,8 +97,13 @@ public class HomePanePage {
 		throw new HederaClientException(String.format("The checkbox with legend %s could not be found", keyName));
 	}
 
+	/**
+	 * Wait for all modal windows/popups to be closed.
+	 *
+	 * @return
+	 */
 	public HomePanePage waitForWindow() {
-		while (!"".equals(TestUtil.getModalWindowTitle())) {
+		while (driver.findModalWindow() != null) {
 			try {
 				sleep(500);
 			} catch (final InterruptedException e) {
@@ -108,7 +114,7 @@ public class HomePanePage {
 	}
 
 	public HomePanePage clickOnPopupButton(final String button) {
-		final var node = TestUtil.findButtonInPopup(TestUtil.getPopupNodes(), button);
+		final var node = TestUtil.findButtonInPopup(driver.getPopupNodes(), button);
 		driver.clickOn(node);
 		return this;
 	}

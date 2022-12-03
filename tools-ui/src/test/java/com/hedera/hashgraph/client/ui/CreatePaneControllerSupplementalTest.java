@@ -117,7 +117,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 		try {
 			System.gc();
 			logger.info("Starting test class: {}", getClass().getSimpleName());
-			TestUtil.buildFolders();
+			buildFolders();
 
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -206,7 +206,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 					CLOUD_OUTPUT_DIRECTORY);
 			FileUtils.cleanDirectory(outputDirectory);
 
-			TestUtil.copyCreatePaneKeys();
+//			TestUtil.copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
 		} catch (final Exception e) {

@@ -21,6 +21,10 @@ package com.hedera.hashgraph.client.ui.pages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.AccountLineInformation;
+import com.hedera.hashgraph.client.ui.utilities.HistoryData;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -36,17 +40,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.CURRENT_ACCOUNT_PANE;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.HIDDEN_ACCOUNT_INFO_TEXTFIELD;
-import static com.hedera.hashgraph.client.ui.JavaFXIDs.IMPORT_ACCOUNT_BUTTON;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findPasswordInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChoiceBoxesFromExpander;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -54,6 +48,11 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings({ "rawtypes", "UnusedReturnValue" })
 public class AccountsPanePage {
+
+	public final static String ACCOUNTS_SCROLL_PANE = "#accountsScrollPane";
+	public final static String CURRENT_ACCOUNT_PANE = "#currentAccountPane";
+	public final static String HIDDEN_ACCOUNT_INFO_TEXTFIELD = "#hiddenPathAccount";
+	public final static String IMPORT_ACCOUNT_BUTTON = "#importAccountButton";
 
 	private final TestBase driver;
 
@@ -66,7 +65,7 @@ public class AccountsPanePage {
 	}
 
 	public AccountsPanePage enterAccountNickName(final String nickName) {
-		final var nodes = getPopupNodes();
+		final var nodes = driver.getPopupNodes();
 		assert nodes != null;
 		final var textField = (TextField) nodes.get(1);
 		textField.setText(nickName);
@@ -74,7 +73,7 @@ public class AccountsPanePage {
 	}
 
 	public AccountsPanePage closeNicknamePopup() {
-		final var nodes = getPopupNodes();
+		final var nodes = driver.getPopupNodes();
 		assert nodes != null;
 		final var hBox = (HBox) nodes.get(2);
 		final var hBox1 = ((HBox) hBox.getChildren().get(1));
@@ -132,7 +131,7 @@ public class AccountsPanePage {
 	}
 
 	public AccountsPanePage enterPasswordInPopup(final String text) throws HederaClientException {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		final var passwords = findPasswordInPopup(Objects.requireNonNull(popupNodes));
 		if (passwords == null) {
 			throw new HederaClientException("Unexpected popup");
@@ -183,7 +182,7 @@ public class AccountsPanePage {
 	}
 
 	public AccountsPanePage pressPopupButton(final String legend) {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		final var button = findButtonInPopup(Objects.requireNonNull(popupNodes), legend);
 		driver.clickOn(button);
 		return this;
@@ -263,7 +262,7 @@ public class AccountsPanePage {
 
 
 	public AccountsPanePage setNetwork(final String network) {
-		final List<ChoiceBox> choiceBoxes = getChoiceBoxesFromExpander(this.driver);
+		final List<ChoiceBox> choiceBoxes = findChoiceBoxes();
 		assertEquals(1, choiceBoxes.size());
 		final var choice = choiceBoxes.get(0);
 		driver.clickOn(choice);
@@ -283,6 +282,13 @@ public class AccountsPanePage {
 	}
 
 	public List<ChoiceBox> findChoiceBoxes() {
-		return getChoiceBoxesFromExpander(this.driver);
+		return TestUtil.findChoiceBoxes(getExpandedBox().getChildren());
+	}
+
+	private VBox getExpandedBox() {
+		final ScrollPane scrollPane = driver.find(ACCOUNTS_SCROLL_PANE);
+		final var tableView = (TableView) scrollPane.getContent();
+		final var tableRowExpanderColumn = (TableRowExpanderColumn) tableView.getColumns().get(0);
+		return  (VBox) tableRowExpanderColumn.getExpandedNode(tableView.getItems().get(0));
 	}
 }

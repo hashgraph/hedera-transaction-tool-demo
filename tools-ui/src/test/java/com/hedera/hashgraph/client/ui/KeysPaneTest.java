@@ -75,7 +75,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PUBLIC_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNING_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -107,7 +106,7 @@ public class KeysPaneTest extends TestBase {
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 

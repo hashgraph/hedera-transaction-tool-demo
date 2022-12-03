@@ -86,7 +86,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -461,7 +461,7 @@ public class HomePaneSupplementalTest extends TestBase implements GenericFileRea
 
 		ObservableList<Node> popupNodes = null;
 		while (popupNodes == null) {
-			popupNodes = TestUtil.getPopupNodes();
+			popupNodes = getPopupNodes();
 		}
 
 		final var labels = TestUtil.getLabels(popupNodes);

@@ -229,7 +229,7 @@ public class InitialStartupPaneControllerTest extends TestBase implements Generi
 
 		initialStartupPage.clickMnemonicPopupButton("OK")
 				.clickOnPopupButton("CANCEL");
-		final var nodes = TestUtil.getPopupNodes();
+		final var nodes = getPopupNodes();
 		assertNotNull(nodes);
 		assertTrue(nodes.get(1) instanceof Label);
 		assertTrue(((Label) nodes.get(1)).getText().toLowerCase(Locale.ROOT).contains("please try again"));

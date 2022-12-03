@@ -91,7 +91,6 @@ import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findCheckBoxesInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getLabels;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

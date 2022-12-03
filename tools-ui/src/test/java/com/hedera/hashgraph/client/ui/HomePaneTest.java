@@ -71,7 +71,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTE
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_JSON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -109,7 +108,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	public void setUp() throws Exception {
 
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));
@@ -491,7 +490,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;
@@ -615,7 +614,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;
@@ -786,7 +785,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		homePanePage.clickOnKeyCheckBox(PRINCIPAL_TESTING_KEY);
 
-		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()), "ACCEPT");
+		final var acceptButton = TestUtil.findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "ACCEPT");
 		clickOn(acceptButton);
 
 		assert sign != null;

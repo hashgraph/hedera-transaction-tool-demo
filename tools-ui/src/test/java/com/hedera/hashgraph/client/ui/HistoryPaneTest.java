@@ -76,7 +76,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original"), new File(DEFAULT_STORAGE));
 		FileUtils.cleanDirectory(new File(DEFAULT_STORAGE + KEYS_STRING));

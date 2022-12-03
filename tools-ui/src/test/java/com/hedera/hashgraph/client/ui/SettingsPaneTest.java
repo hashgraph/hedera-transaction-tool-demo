@@ -90,7 +90,7 @@ public class SettingsPaneTest extends TestBase {
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -299,7 +299,7 @@ public class SettingsPaneTest extends TestBase {
 		assertTrue(node instanceof VBox);
 		settingsPanePage.pressAddFolder()
 				.setPath("src/test/resources");
-		final ObservableList<Node> popupNodes = TestUtil.getPopupNodes();
+		final ObservableList<Node> popupNodes = getPopupNodes();
 		assert popupNodes != null;
 		assertEquals(1, popupNodes.size());
 		assertTrue(popupNodes.get(0) instanceof VBox);
@@ -356,23 +356,23 @@ public class SettingsPaneTest extends TestBase {
 		assertEquals("custom", properties.getCurrentNetwork());
 		clickOn("#addCustomNetworkButton");
 		settingsPanePage.addNetworkNickname("custom");
-		var nodes = TestUtil.getPopupNodes();
+		var nodes = getPopupNodes();
 		assert nodes != null;
 		assertTrue(nodes.get(1).isVisible());
 		assertTrue(nodes.get(1) instanceof Label);
 		assertEquals("The network nickname already exists.", ((Label) nodes.get(1)).getText());
 
 		type(KeyCode.A);
-		nodes = TestUtil.getPopupNodes();
+		nodes = getPopupNodes();
 		assertFalse(nodes.get(1).isVisible());
 		type(KeyCode.ENTER);
-		nodes = TestUtil.getPopupNodes();
+		nodes = getPopupNodes();
 		assertFalse(nodes.get(1).isVisible());
 
 		settingsPanePage.addCustomLocation("src/test/resources/customNetwork_bad.json");
 		settingsPanePage.clickOnButton("CONTINUE");
 
-		final var newNodes = TestUtil.getPopupNodes();
+		final var newNodes = getPopupNodes();
 		assertNotNull(newNodes);
 		assertTrue(newNodes.get(0) instanceof VBox);
 		final var children = ((VBox) newNodes.get(0)).getChildren();
@@ -385,14 +385,14 @@ public class SettingsPaneTest extends TestBase {
 		assertFalse(find("#deleteCustomNetworkButton").isDisabled());
 		clickOn("#deleteCustomNetworkButton");
 
-		final var deleteNetworkNodes = TestUtil.getPopupNodes();
+		final var deleteNetworkNodes = getPopupNodes();
 		clickOn(TestUtil.findButtonInPopup(deleteNetworkNodes, "CONTINUE"));
 
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
 		assertFalse(new File(Constants.CUSTOM_NETWORK_FOLDER, "custom.json").exists());
 
 		settingsPanePage.addNetwork("customb", "src/test/resources/fakeFile.json");
-		nodes = TestUtil.getPopupNodes();
+		nodes = getPopupNodes();
 		assertTrue(nodes.get(1).isVisible());
 		assertTrue(nodes.get(1) instanceof Label);
 		assertEquals("The location specified does not exist. Please try again.", ((Label) nodes.get(1)).getText());

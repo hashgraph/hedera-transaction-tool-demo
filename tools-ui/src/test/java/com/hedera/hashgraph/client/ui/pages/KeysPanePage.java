@@ -55,7 +55,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_RECOVERY_PHRASE_BUTT
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.KEYS_RECOVER_KEYS;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NICKNAME;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -87,7 +86,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage enterPopupPassword(final String password) {
-		final ObservableList<Node> nodes = getPopupNodes();
+		final ObservableList<Node> nodes = driver.getPopupNodes();
 		assert nodes != null;
 		for (final Node n : nodes) {
 			if (n instanceof PasswordField) {
@@ -101,7 +100,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage pressCancelPassword() {
-		final ObservableList<Node> nodes = getPopupNodes();
+		final ObservableList<Node> nodes = driver.getPopupNodes();
 		assert nodes != null;
 		final ObservableList<Node> buttons = ((HBox) nodes.get(3)).getChildren();
 		for (final Node button : buttons) {
@@ -134,7 +133,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage closeOKPopup() {
-		final ObservableList<Node> x = getPopupNodes();
+		final ObservableList<Node> x = driver.getPopupNodes();
 		HBox hBox = null;
 		assert x != null;
 		if (x.get(0) instanceof VBox) {
@@ -203,7 +202,7 @@ public class KeysPanePage {
 	}
 
 	public List<Label> getPopupLabels() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		return getAllLabels(popupNodes);
 	}
@@ -225,7 +224,7 @@ public class KeysPanePage {
 	}
 
 	public List<Button> getPopupButtons() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		return getAllButtons(popupNodes);
 	}
@@ -251,13 +250,13 @@ public class KeysPanePage {
 
 
 	public List<PasswordField> getPopupPasswordFields() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		return getAllPasswordFields(popupNodes);
 	}
 
 	public List<Label> getPopupErrorFields() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		return getAllErrorFields(popupNodes);
 	}
@@ -315,7 +314,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage closePasswordPopup() {
-		final ObservableList<Node> nodes = getPopupNodes();
+		final ObservableList<Node> nodes = driver.getPopupNodes();
 		assert nodes != null;
 		final HBox hBox = (HBox) nodes.get(3);
 		final Button button = (Button) hBox.getChildren().get(0);
@@ -332,7 +331,7 @@ public class KeysPanePage {
 	public KeysPanePage pressContinue() {
 		final ObservableList<Node> popupNodes;
 		final ObservableList<Node> buttons;
-		popupNodes = getPopupNodes();
+		popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		assertEquals(3, popupNodes.size());
 		assertTrue(popupNodes.get(2) instanceof ButtonBar);
@@ -346,7 +345,7 @@ public class KeysPanePage {
 
 	public KeysPanePage pressPopupHyperlink() {
 		final ObservableList<Node> popupNodes;
-		popupNodes = getPopupNodes();
+		popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		popupNodes.stream().filter(popupNode -> popupNode instanceof HBox && ((HBox) popupNode).getChildren().get(
 				0) instanceof Hyperlink).map(popupNode -> (Hyperlink) ((HBox) popupNode).getChildren().get(0)).forEach(
@@ -355,7 +354,7 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage clickOnPopupButton(final String buttonName) {
-		final var button = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), buttonName);
+		final var button = findButtonInPopup(Objects.requireNonNull(driver.getPopupNodes()), buttonName);
 		clickOn(button);
 		return this;
 	}
@@ -373,7 +372,7 @@ public class KeysPanePage {
 	public KeysPanePage setNextWord(final String word) {
 
 		assertNotNull(word);
-		final var nodes = getPopupNodes();
+		final var nodes = driver.getPopupNodes();
 		assert nodes != null;
 		final GridPane fullGrid = (GridPane) ((VBox) nodes.get(1)).getChildren().get(0);
 		final ObservableList<Node> full = fullGrid.getChildren();
@@ -406,11 +405,14 @@ public class KeysPanePage {
 	}
 
 	public KeysPanePage pressHyperlinkPassword(final String message) {
-		final var links = TestUtil.findHyperlinksInPopup();
-		for (final Hyperlink link : links) {
-			if (message.equalsIgnoreCase(link.getText())) {
-				driver.clickOn(link);
-				break;
+		final var popupNodes = driver.getPopupNodes();
+		if (popupNodes != null) {
+			final var links = TestUtil.findHyperlinksInPopup(popupNodes);
+			for (final Hyperlink link : links) {
+				if (message.equalsIgnoreCase(link.getText())) {
+					driver.clickOn(link);
+					break;
+				}
 			}
 		}
 		return this;
@@ -418,17 +420,20 @@ public class KeysPanePage {
 
 	public KeysPanePage enteMnemonicInPopup(final String mnemonic) {
 		final var mnemonicArray = mnemonic.toLowerCase(Locale.ROOT).split(" ");
-		final var grid = TestUtil.findGridpanesInPopup();
-		if (grid.size() == 1) {
-			final var children = grid.get(0).getChildren();
-			if (children.size() != mnemonicArray.length) {
-				return this;
-			}
-			int counter = 0;
-			for (final Node child : children) {
-				if (child instanceof AutoCompleteTextField) {
-					driver.clickOn(child);
-					driver.write(mnemonicArray[counter++]);
+		final var popupNodes = driver.getPopupNodes();
+		if (popupNodes != null) {
+			final var grid = TestUtil.findGridPanesInPopup(popupNodes);
+			if (grid.size() == 1) {
+				final var children = grid.get(0).getChildren();
+				if (children.size() != mnemonicArray.length) {
+					return this;
+				}
+				int counter = 0;
+				for (final Node child : children) {
+					if (child instanceof AutoCompleteTextField) {
+						driver.clickOn(child);
+						driver.write(mnemonicArray[counter++]);
+					}
 				}
 			}
 		}

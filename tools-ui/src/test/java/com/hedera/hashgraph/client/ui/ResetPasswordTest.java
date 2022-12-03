@@ -56,7 +56,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.keyFromPassword;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -93,7 +92,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		final var properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");

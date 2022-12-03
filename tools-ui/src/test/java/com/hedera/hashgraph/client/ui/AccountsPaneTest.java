@@ -78,7 +78,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -104,7 +103,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	@Before
 	public void setUp() throws Exception {
 		logger.info("Starting test class: {}", getClass().getSimpleName());
-		TestUtil.buildFolders();
+		buildFolders();
 
 		if (new File(
 				currentRelativePath + "/src/test/resources/Transactions - Documents/OutputFiles/test1" +

@@ -42,7 +42,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_SECONDS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -155,7 +154,7 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage createPopup() {
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var children = ((VBox) popupNodes.get(0)).getChildren();
 		final var buttons = ((HBox) ((HBox) children.get(1)).getChildren().get(1)).getChildren();
@@ -180,7 +179,7 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage clickOnButton(final String legend) {
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var button = findButtonInPopup(popupNodes, legend);
 		driver.clickOn(button);
@@ -188,7 +187,7 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage addNetworkNickname(final String nickname) {
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var textFields = findTextFieldsInPopup(popupNodes);
 		assert textFields.size() == 2;
@@ -199,7 +198,7 @@ public class SettingsPanePage {
 	}
 
 	public SettingsPanePage addCustomLocation(final String location) {
-		final ObservableList<Node> popupNodes = getPopupNodes();
+		final ObservableList<Node> popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var textFields = findTextFieldsInPopup(popupNodes);
 		driver.clickOn(textFields.get(1));

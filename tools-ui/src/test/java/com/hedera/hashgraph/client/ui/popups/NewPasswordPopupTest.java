@@ -84,7 +84,7 @@ public class NewPasswordPopupTest extends TestBase {
 	@Before
 	public void setUp() throws Exception {
 
-		TestUtil.buildFolders();
+		buildFolders();
 
 		properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -292,7 +292,8 @@ public class NewPasswordPopupTest extends TestBase {
 				.pressPopupButton("RECOVER")
 				.pressPopupButton("CANCEL");
 
-		final var wordsPane = TestUtil.findGridpanesInPopup();
+		final var popupNodes = getPopupNodes();
+		final var wordsPane = TestUtil.findGridPanesInPopup(popupNodes);
 		Assert.assertEquals(1, wordsPane.size());
 
 		final var children = wordsPane.get(0).getChildren();

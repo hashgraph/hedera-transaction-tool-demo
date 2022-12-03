@@ -46,27 +46,6 @@ import com.hedera.hashgraph.sdk.Mnemonic;
 import com.hedera.hashgraph.sdk.SystemDeleteTransaction;
 import com.hedera.hashgraph.sdk.SystemUndeleteTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TreeView;
-import javafx.scene.layout.VBox;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.time.DateUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.bouncycastle.util.encoders.Hex;
-import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.testfx.api.FxToolkit;
-
-import javax.swing.JFileChooser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -91,11 +70,32 @@ import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeView;
+import javafx.scene.layout.VBox;
+import javax.swing.JFileChooser;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.util.encoders.Hex;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.testfx.api.FxToolkit;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_ANCHOR_PANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_AUTO_RENEW;
@@ -157,16 +157,30 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CreatePaneControllerTest extends TestBase implements Supplier<TestBase>, GenericFileReadWriteAware {
 
-	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
+	private static final Logger LOG = LogManager.getLogger(CreatePaneControllerTest.class);
 
 	private static final long THREAD_PAUSE_TIME = 1000;
 	private static final int TENTH_OF_A_SECOND = 100;
 	private static final int AUTO_RENEW_DEFAULT = 7000013;
-	private static final String CLOUD_OUTPUT_DIRECTORY =
-			"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org";
-	private static final String MNEMONIC_PATH = "/Keys/recovery.aes";
+
+	// As Path is immutable, it is safe to use as a constant.
+	private static final Path DOCUMENTS_DIRECTORY = BASE_DIRECTORY.resolve("Transactions - Documents");
+	private static final Path OUTPUT_DIRECTORY = DOCUMENTS_DIRECTORY.resolve(Paths.get("OutputFiles","test1.council2@hederacouncil.org"));
+	private static final Path FILES_DIRECTORY = STORAGE_DIRECTORY.resolve("Files");
+	private static final Path USER_PROPERTIES_FILE = FILES_DIRECTORY.resolve("user.properties");
+	private static final Path MNEMONIC_PATH = KEYS_DIRECTORY.resolve("recovery.aes");
+	private static final Path KEY_PEM_PATH = KEYS_DIRECTORY.resolve("principalTestingKey.pem");
+	private static final Path KEY_PUB_PATH = KEYS_DIRECTORY.resolve("principalTestingKey.pub");
+
+	private static final Path ORIGINAL_ACCOUNTS_DIRECTORY = BASE_DIRECTORY.resolve(Paths.get("TransactionTools-Original_II", ACCOUNTS_STRING));
+	private static final Path ORIGINAL_FILES_DIRECTORY = BASE_DIRECTORY.resolve(Paths.get("TransactionTools-Original_II", "Files"));
+	private static final Path ORIGINAL_MNEMONIC_PATH = BASE_DIRECTORY.resolve("storedMnemonic.txt");
+	private static final Path ORIGINAL_KEY_PEM_PATH = BASE_DIRECTORY.resolve("principalTestingKey.pem");
+	private static final Path ORIGINAL_KEY_PUB_PATH = BASE_DIRECTORY.resolve("principalTestingKey.pub");
+
 	private static final List<String> TEST_WORDS =
 			Arrays.asList("dignity", "domain", "involve", "report",
 					"sail", "middle", "rhythm", "husband",
@@ -175,51 +189,42 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 					"eagle", "eight", "design", "page",
 					"regular", "bird", "race", "answer");
 
-	private final String resources = new File("src/test/resources/Transactions - Documents/").getAbsolutePath().replace(
-			System.getProperty("user.home") + "/", "") + "/";
-	private static final String DEFAULT_STORAGE = System.getProperty(
-			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
-
 	private CreatePanePage createPanePage;
 	private AccountsPanePage accountsPanePage;
 	private MainWindowPage mainWindowPage;
 
-	private final Path currentRelativePath = Paths.get("");
 	public UserAccessibleProperties properties;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		try {
 			System.gc();
-			logger.info("Starting test class: {}", getClass().getSimpleName());
-			TestUtil.buildFolders();
+			LOG.info("Starting test class: {}", getClass().getSimpleName());
 
-			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
+			// TODO
+			buildFolders();
 
-			if (new File(currentRelativePath.toAbsolutePath() + File.separator + CLOUD_OUTPUT_DIRECTORY).mkdirs()) {
-				logger.info("Output path created");
+			properties = new UserAccessibleProperties(USER_PROPERTIES_FILE.toString(), "");
+
+			if (OUTPUT_DIRECTORY.toFile().mkdirs()) {
+				LOG.info("Output path created");
 			}
 
-			FileUtils.cleanDirectory(new File(CLOUD_OUTPUT_DIRECTORY));
+			FileUtils.cleanDirectory(OUTPUT_DIRECTORY.toFile());
 
 			remakeTransactionTools();
 
 			//Copy Accounts folders
-			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original_II/Accounts"),
-					new File(DEFAULT_STORAGE + "/Accounts"));
-			FileUtils.copyDirectory(new File("src/test/resources/TransactionTools-Original_II/Files"),
-					new File(DEFAULT_STORAGE + "/Files"));
+			FileUtils.copyDirectory(ORIGINAL_ACCOUNTS_DIRECTORY.toFile(), ACCOUNTS_DIRECTORY.toFile());
+			FileUtils.copyDirectory(ORIGINAL_FILES_DIRECTORY.toFile(), FILES_DIRECTORY.toFile());
 
 			properties.setSetupPhase(SetupPhase.TEST_PHASE);
 
-			FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
-					new File(DEFAULT_STORAGE + MNEMONIC_PATH));
+			FileUtils.copyFile(ORIGINAL_MNEMONIC_PATH.toFile(), MNEMONIC_PATH.toFile());
 
 			final Map<String, String> emailMap = new HashMap<>();
 
-			emailMap.put(
-					currentRelativePath.toAbsolutePath() + "/src/test/resources/Transactions - Documents/",
-					"test1.council2@hederacouncil.org");
+			emailMap.put(DOCUMENTS_DIRECTORY.toString(), OUTPUT_DIRECTORY.getFileName().toString());
 
 			final var mnemonic = Mnemonic.fromWords(TEST_WORDS);
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
@@ -227,10 +232,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.setLegacy(false);
 			final var salt = Utilities.getSaltBytes(properties);
 			final var passwordBytes = SecurityUtilities.keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
-			toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
+			toEncryptedFile(passwordBytes, MNEMONIC_PATH.toString(),
 					mnemonic.toString());
 
-			TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+			TestBase.fixMissingMnemonicHashCode(STORAGE_DIRECTORY.toString());
 
 			final var objectMapper = new ObjectMapper();
 			final var mapAsString = objectMapper.writeValueAsString(emailMap);
@@ -239,19 +244,17 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.setOneDriveCredentials(emailMap);
 			properties.setHash("123456789".toCharArray());
 
-			properties.setPreferredStorageDirectory(DEFAULT_STORAGE);
+			properties.setPreferredStorageDirectory(STORAGE_DIRECTORY.toString());
 			//setupTransactionDirectory(DEFAULT_STORAGE);
 
 			final var controller = new MainController();
 			final var version = controller.getVersion();
 			properties.setVersionString(version);
 
-			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pem"),
-					new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pem"));
-			FileUtils.copyFile(new File("src/test/resources/principalTestingKey.pub"),
-					new File(DEFAULT_STORAGE + "/Keys/principalTestingKey.pub"));
+			FileUtils.copyFile(ORIGINAL_KEY_PEM_PATH.toFile(), KEY_PEM_PATH.toFile());
+			FileUtils.copyFile(ORIGINAL_KEY_PUB_PATH.toFile(), KEY_PUB_PATH.toFile());
 
-			TestBase.fixMissingMnemonicHashCode(DEFAULT_STORAGE);
+			TestBase.fixMissingMnemonicHashCode(STORAGE_DIRECTORY.toString());
 			FxToolkit.registerPrimaryStage();
 			FxToolkit.setupApplication(StartUI.class);
 			if (createPanePage == null) {
@@ -263,32 +266,71 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			if (accountsPanePage == null) {
 				accountsPanePage = new AccountsPanePage(get());
 			}
-			final var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toString();
-			if (!new File(rootFolder).exists() && new File(rootFolder).mkdirs()) {
-				logger.info("Tools root folder created");
+			final var rootFolder = new JFileChooser().getFileSystemView().getDefaultDirectory();
+			if (!rootFolder.exists() && rootFolder.mkdirs()) {
+				LOG.info("Tools root folder created");
 			} else {
-				logger.info("Tools root directory exists.");
+				LOG.info("Tools root directory exists.");
 			}
-			final var toolsFolder =
-					new JFileChooser().getFileSystemView().getDefaultDirectory().toString() + "/Documents";
-			if (!new File(toolsFolder).exists() && new File(toolsFolder).mkdirs()) {
-				logger.info("Tools document directory created");
+			final var toolsFolder = new JFileChooser().getFileSystemView().getDefaultDirectory().toPath().resolve("Documents").toFile();
+			if (!toolsFolder.exists() && toolsFolder.mkdirs()) {
+				LOG.info("Tools document directory created");
 			} else {
-				logger.info("Tools document directory exists.");
+				LOG.info("Tools document directory exists.");
 			}
 
-			final var outputDirectory = new File(
-					CLOUD_OUTPUT_DIRECTORY);
+			final var outputDirectory = OUTPUT_DIRECTORY.toFile();
 			FileUtils.cleanDirectory(outputDirectory);
 
-			TestUtil.copyCreatePaneKeys();
+			// TODO not sure why this is needed still
+//			TestUtil.copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
 		} catch (final Exception e) {
-			logger.error(e);
+			LOG.error(e);
 			assertNotNull(e);
 		}
+	}
 
+	@AfterEach
+	public void tearDown() throws IOException, TimeoutException {
+		ensureEventQueueComplete();
+		FxToolkit.hideStage();
+		FxToolkit.cleanupStages();
+
+		// Reset the properties file.
+		properties.resetProperties();
+		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
+
+		// Create a list of transaction files from the output directory.
+		final var transactions = OUTPUT_DIRECTORY.toFile().listFiles(
+				pathname -> {
+					final var name = pathname.getName();
+					return name.endsWith(TXT_EXTENSION) ||
+							name.endsWith(TRANSACTION_EXTENSION) ||
+							name.endsWith(SIGNED_TRANSACTION_EXTENSION);
+				});
+
+		// If any transactions exist, remove them.
+		if (transactions != null) {
+			for (final var f : transactions) {
+				if (f.delete()) {
+					LOG.debug(String.format("%s has been deleted", f.getName()));
+				}
+			}
+		}
+
+		// Clear the storage folders
+		deleteFolders();
+	}
+
+	private void startMethodTestLog(String methodName) {
+		final var walker = StackWalker.getInstance();
+		final var methodName2 = walker.walk(frames -> frames
+				.findFirst()
+				.map(StackWalker.StackFrame::getMethodName));
+
+		LOG.info("Starting test method: {}", methodName);
 	}
 
 	@Test
@@ -299,11 +341,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		startMethodTestLog(methodName.get());
 
 		assertNotNull(find(CREATE_ANCHOR_PANE));
 		assertNotNull(find(CREATE_MAIN_CHOICE_BOX));
-		sleep(THREAD_PAUSE_TIME);
+//		why sleep?
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -314,7 +357,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
@@ -334,7 +377,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_MINUTES).isVisible());
 		assertTrue(find(CREATE_SECONDS).isVisible());
 		assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-		sleep(THREAD_PAUSE_TIME);
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -345,7 +388,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertNotNull(find(CREATE_MEMO_FIELD));
 		assertNotNull(find(CREATE_NODE_FIELD));
@@ -365,7 +408,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(find(CREATE_MINUTES).isVisible());
 		assertTrue(find(CREATE_SECONDS).isVisible());
 		assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-		sleep(THREAD_PAUSE_TIME);
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -376,7 +419,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		try {
 			createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 			assertNotNull(find(CREATE_MEMO_FIELD));
@@ -397,9 +440,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			assertTrue(find(CREATE_MINUTES).isVisible());
 			assertTrue(find(CREATE_SECONDS).isVisible());
 			assertTrue(find(CREATE_COMMENTS_AREA).isVisible());
-			sleep(THREAD_PAUSE_TIME);
+//			sleep(THREAD_PAUSE_TIME);
 		} catch (final Exception e) {
-			logger.error(e);
+			LOG.error(e);
 			assertNotNull(e);
 		}
 	}
@@ -412,7 +455,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -438,7 +481,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_LIST).isVisible());
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
-		sleep(THREAD_PAUSE_TIME);
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -449,7 +492,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -478,7 +521,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_LIST).isVisible());
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
-		sleep(THREAD_PAUSE_TIME);
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -489,7 +532,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString());
 		assertTrue(find(CREATE_COMMENTS_BOX).isVisible());
 
@@ -520,7 +563,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find(CREATE_INVALID_TRANSFER_TOTAL).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_ACCOUNT).isVisible());
 
-		sleep(THREAD_PAUSE_TIME);
+//		sleep(THREAD_PAUSE_TIME);
 	}
 
 	@Test
@@ -531,7 +574,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var sdf = new SimpleDateFormat("MM/dd/yyyy");
@@ -593,7 +636,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 
@@ -628,7 +671,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString());
 
@@ -668,7 +711,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
 		datePickerFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -683,7 +726,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.clickOnNowButton();
@@ -736,7 +779,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -757,7 +800,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setNanos("123456789");
 
 		assertTrue(find(CREATE_LOCAL_TIME_LABEL).isVisible());
-		logger.info("CREATE: Local date label =>>> {}", dateLabel.getText());
+		LOG.info("CREATE: Local date label =>>> {}", dateLabel.getText());
 		assertTrue(dateLabel.getText().contains(":00:00"));
 
 		createPanePage.setHours(2)
@@ -776,8 +819,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.doubleClickOnAccountKey("treasury")
 				.saveKey();
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 
 		final var transactions = new File(
@@ -844,7 +887,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -866,7 +909,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		final var utcDate = find(CREATE_LOCAL_TIME_LABEL);
 		assertTrue(utcDate.isVisible());
 		//	assertTrue(dateLabel.getText().contains(sdf.format(date)));
-		logger.info("TRANSFER: Local date label =>>> {}", dateLabel.getText());
+		LOG.info("TRANSFER: Local date label =>>> {}", dateLabel.getText());
 		assertTrue(dateLabel.getText().contains(":00:00"));
 
 		createPanePage.setHours(3)
@@ -893,8 +936,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertEquals("0 ħ", ((Label) find(CREATE_TRANSFER_TOTAL_LABEL)).getText());
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -950,7 +993,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.addDebit(1001, 100000000)
@@ -976,7 +1019,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -1026,8 +1069,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertEquals(18, TestUtil.countTreeNodes(((TreeView<String>) newTree).getRoot()));
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -1087,7 +1130,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -1117,12 +1160,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setNodeAccount(4)
 				.setAutoRenew(AUTO_RENEW_DEFAULT);
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 
-		final var transactions = new File(
-				CLOUD_OUTPUT_DIRECTORY).listFiles(
+		final var transactions = OUTPUT_DIRECTORY.toFile().listFiles(
 				pathname -> {
 					final var name = pathname.getName();
 					return name.endsWith(Constants.TRANSACTION_EXTENSION) || name.endsWith(Constants.TXT_EXTENSION);
@@ -1180,7 +1222,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var date = DateUtils.addDays(new Date(), 2);
 		final var datePickerFormat = new SimpleDateFormat("MM/dd/yyyy");
@@ -1209,9 +1251,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setChunkSize(1000)
 				.setInterval(1000000000);
 
-		logger.info("Exporting to \"{}\"", resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
 
-		createPanePage.createAndExport(resources);
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
@@ -1291,9 +1333,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertEquals("this is a comment that will go with the file update", comment.get("Contents").getAsString());
 		assertTrue(comment.has("Timestamp"));
 
+		// TODO
 		FileUtils.deleteDirectory(new File("src/test/resources/unzipped"));
 		FileUtils.cleanDirectory(
-				new File(CLOUD_OUTPUT_DIRECTORY));
+				OUTPUT_DIRECTORY.toFile());
 	}
 
 	@Test
@@ -1304,7 +1347,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
@@ -1347,8 +1390,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setEntityID(2323)
 				.setExpirationDate(expiration);
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources)
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 
@@ -1406,7 +1449,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1423,8 +1466,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setEntityID(23232)
 				.setExpirationDate(expiration);
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources)
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 
@@ -1483,13 +1526,12 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		var localDateTime = LocalDateTime.now().plusMinutes(1);
 		var expiration = LocalDateTime.now().plusMinutes(5);
 
-		final var outputDirectory = new File(
-				CLOUD_OUTPUT_DIRECTORY);
+		final var outputDirectory = OUTPUT_DIRECTORY.toFile();
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setComment("this is a comment that will go with the system transaction - Contract Delete")
@@ -1501,9 +1543,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setEntityID(23232)
 				.setExpirationDate(expiration);
 
-		logger.info("Exporting to \"{}\"", resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
 
-		createPanePage.createAndExport(resources)
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CANCEL");
 
 
@@ -1517,10 +1559,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		localDateTime = LocalDateTime.now().plusMinutes(30);
 		expiration = LocalDateTime.now().plusMinutes(35);
-		logger.info("Exporting to \"{}\"", resources);
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
 		createPanePage.setStartDate(localDateTime)
 				.setExpirationDate(expiration)
-				.createAndExport(resources);
+				.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		transactions = outputDirectory.listFiles(
 				pathname -> {
@@ -1541,7 +1583,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1555,8 +1597,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFeePayerAccount(3232)
 				.setEntityID(2323);
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources)
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 
@@ -1615,7 +1657,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var transactionValidStart = Date.from(localDateTime.toInstant(OffsetDateTime.now().getOffset()));
@@ -1629,8 +1671,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFeePayerAccount(3232)
 				.setEntityID(23232);
 
-		logger.info("Exporting to \"{}\"", resources);
-		createPanePage.createAndExport(resources)
+		LOG.info("Exporting to \"{}\"", DOCUMENTS_DIRECTORY.toString());
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 
@@ -1688,7 +1730,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
@@ -1697,7 +1739,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
-				.createAndExport(resources);
+				.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		assertTrue(find(CREATE_INVALID_DATE).isVisible());
 		assertTrue(find(CREATE_INVALID_CREATE_NEW_KEY).isVisible());
@@ -1730,7 +1772,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var headless = System.getProperty("headless");
 		if (headless != null && headless.equals("true")) {
@@ -1739,7 +1781,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		}
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
-				.createAndExport(resources);
+				.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
 		assertTrue(find(CREATE_INVALID_DATE).isVisible());
 		assertFalse(find(CREATE_INVALID_UPDATE_NEW_KEY).isVisible());
@@ -1773,7 +1815,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString())
 				.setFeePayerAccount("0.1");
@@ -1789,7 +1831,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
@@ -1805,10 +1847,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setFeePayerAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
 	}
 
@@ -1820,7 +1862,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -1835,7 +1877,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1850,10 +1892,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.CREATE.getTypeString()).setNodeAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
 	}
 
@@ -1865,7 +1907,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString())
 				.setFeePayerAccount("0.1");
@@ -1881,7 +1923,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
@@ -1897,10 +1939,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setFeePayerAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
 	}
 
@@ -1912,7 +1954,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -1927,7 +1969,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -1942,10 +1984,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setNodeAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
 	}
 
@@ -1957,7 +1999,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount("0.66");
 		checkBadChecksum("e.g.");
@@ -1972,7 +2014,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(
 				"0.0.888888-aaaaa");
@@ -1988,10 +2030,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.UPDATE.getTypeString()).setUpdateAccount(123);
-		assertNotNull(TestUtil.getPopupNodes());
+		assertNotNull(getPopupNodes());
 		createPanePage.closePopup("CONTINUE");
 		assertFalse(find("#invalidUpdateAccountToUpdate").isVisible());
 	}
@@ -2004,7 +2046,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString())
 				.setFeePayerAccount("0.1");
@@ -2020,7 +2062,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setFeePayerAccount("0.0" +
 				".1-aaaaa");
@@ -2036,10 +2078,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setFeePayerAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
 	}
 
@@ -2051,7 +2093,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -2066,7 +2108,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount("0.0.1-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -2081,10 +2123,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setNodeAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
 	}
 
@@ -2096,7 +2138,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID("0.66");
 		checkBadChecksum("e.g.");
@@ -2111,7 +2153,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID("0.0.888888-aaaaa");
 		checkBadChecksum("The checksum entered does not correspond to the account.");
@@ -2126,10 +2168,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.SYSTEM.getTypeString()).setEntityID(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidEntity").isVisible());
 
 	}
@@ -2142,7 +2184,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString())
 				.setUpdateFileID("0.3");
@@ -2159,7 +2201,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setUpdateFileID(
 				"0.0.1-aaaaa");
@@ -2176,10 +2218,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setUpdateFileID(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidUpdateFileToUpdate").isVisible());
 	}
 
@@ -2191,7 +2233,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount("0.1");
 		checkBadChecksum("e.g.");
@@ -2207,7 +2249,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount(
 				"0.0.1-aaaaa");
@@ -2224,10 +2266,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setFeePayerAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
 
 	}
@@ -2240,7 +2282,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount("0.3");
 		checkBadChecksum("e.g.");
@@ -2256,7 +2298,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount(
 				"0.0.1-aaaaa");
@@ -2273,10 +2315,10 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.FILE_UPDATE.getTypeString()).setNodeAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
 	}
 
@@ -2288,7 +2330,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount("0.1");
@@ -2305,7 +2347,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount("0.0.1-aaaaa");
@@ -2322,11 +2364,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFeePayerAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidFeePayer").isVisible());
 
 	}
@@ -2339,7 +2381,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount("0.3");
@@ -2356,7 +2398,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount("0.0.1-aaaaa");
@@ -2373,11 +2415,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setNodeAccount(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#invalidNode").isVisible());
 
 	}
@@ -2390,7 +2432,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer("0.33");
@@ -2407,7 +2449,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer("0.0.1-aaaaa");
@@ -2424,11 +2466,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setFromAccountTransfer(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#errorInvalidFromAccount").isVisible());
 
 	}
@@ -2441,7 +2483,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer("0.33");
@@ -2458,7 +2500,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer("0.0.1-aaaaa");
@@ -2475,11 +2517,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		createPanePage.selectTransaction(CreateTransactionType.TRANSFER.getTypeString())
 				.setToAccountTransfer(123);
-		assertNull(TestUtil.getPopupNodes());
+		assertNull(getPopupNodes());
 		assertFalse(find("#errorInvalidToAccount").isVisible());
 	}
 
@@ -2491,7 +2533,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var startTime = LocalDateTime.now().plusMinutes(5);
@@ -2507,7 +2549,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find("#freezeFileVBox").isVisible());
 
 		createPanePage.setFreezeStartDate(startTime)
-				.createAndExport(resources)
+				.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 		final var transactions = new File(
@@ -2540,10 +2582,11 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 
+		// TODO this is using production code enum
 		createPanePage.selectTransaction(CreateTransactionType.FREEZE.getTypeString())
 				.setFreezeType(FreezeType.FREEZE_ABORT)
 				.setComment("this is a comment that will go with the system transaction - Freeze abort")
@@ -2554,7 +2597,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertFalse(find("#freezeStartVBox").isVisible());
 		assertFalse(find("#freezeFileVBox").isVisible());
 
-		createPanePage.createAndExport(resources)
+		createPanePage.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 		final var transactions = new File(
@@ -2585,7 +2628,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusMinutes(1);
 		final var startTime = LocalDateTime.now().plusMinutes(5);
@@ -2609,7 +2652,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFreezeHash("abc123def456");
 		assertFalse(find("#invalidFreezeFileHash").isVisible());
 		createPanePage
-				.createAndExport(resources)
+				.createAndExport(DOCUMENTS_DIRECTORY.toString())
 				.clickOnPopupButton("CONTINUE");
 
 		final var transactions = new File(
@@ -2645,7 +2688,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.map(StackWalker.StackFrame::getMethodName));
 
 		assertTrue(methodName.isPresent());
-		logger.info("Starting test method: {}", methodName.get());
+		LOG.info("Starting test method: {}", methodName.get());
 
 		final var localDateTime = LocalDateTime.now().plusHours(1);
 
@@ -2664,8 +2707,9 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 				.setFreezeHash("abc123def456");
 		assertFalse(find("#invalidFreezeFileHash").isVisible());
 		createPanePage
-				.createAndExport(resources);
+				.createAndExport(DOCUMENTS_DIRECTORY.toString());
 
+		// TODO
 		final var transactions = new File(
 				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
 				(dir, name) -> FilenameUtils.getExtension(name).equals(TRANSACTION_EXTENSION));
@@ -2686,34 +2730,6 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 		assertEquals(new Identifier(0, 0, 111).asFile(), freeezeTransaction.getFileId());
 		assertArrayEquals(Hex.decode("abc123def456"), freeezeTransaction.getFileHash());
-	}
-
-	@After
-	public void tearDown() throws IOException, TimeoutException {
-		ensureEventQueueComplete();
-		FxToolkit.hideStage();
-		FxToolkit.cleanupStages();
-
-		properties.resetProperties();
-		properties.setSetupPhase(SetupPhase.INITIAL_SETUP_PHASE);
-		final var transactions = new File(
-				"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org").listFiles(
-				pathname -> {
-					final var name = pathname.getName();
-					return name.endsWith(Constants.TXT_EXTENSION) ||
-							name.endsWith(Constants.TRANSACTION_EXTENSION) ||
-							name.endsWith(Constants.SIGNED_TRANSACTION_EXTENSION);
-				});
-
-		assert transactions != null;
-		for (final var f : transactions) {
-			if (f.delete()) {
-				logger.debug(String.format("%s has been deleted", f.getName()));
-			}
-		}
-		if (new File(DEFAULT_STORAGE).exists()) {
-			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
-		}
 	}
 
 	private String getUTCString(final LocalDateTime localDateTime, final ZoneId zoneID) {
@@ -2754,8 +2770,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	}
 
 	private void checkBadChecksum(final String s) {
-		final var popupNodes = TestUtil.getPopupNodes();
-		Assert.assertNotNull(popupNodes);
+		final var popupNodes = getPopupNodes();
+		assertNotNull(popupNodes);
 		assertEquals(1, popupNodes.size());
 
 		final var children = ((VBox) popupNodes.get(0)).getChildren();

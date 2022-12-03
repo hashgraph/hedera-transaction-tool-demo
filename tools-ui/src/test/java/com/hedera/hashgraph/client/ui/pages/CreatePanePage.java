@@ -94,9 +94,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TIME_ZONE_HBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.UPDATE_EDIT_KEY;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.ACCOUNTS;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.TitledPaneEnum.PUBLIC_KEYS;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -282,8 +279,8 @@ public class CreatePanePage {
 	}
 
 	public TitledPane getTitledPane(final TitledPaneEnum paneEnum) {
-		var popupNodes = getPopupNodes();
-		while (popupNodes == null) popupNodes = getPopupNodes();
+		var popupNodes = driver.getPopupNodes();
+		while (popupNodes == null) popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
@@ -307,7 +304,7 @@ public class CreatePanePage {
 	}
 
 	public TreeView<String> getTree() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var vBox0 = (VBox) popupNodes.get(1);
 		final var inner0 = vBox0.getChildren();
@@ -324,7 +321,7 @@ public class CreatePanePage {
 
 
 	public Button getDeleteButton() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var vBox0 = (VBox) popupNodes.get(1);
 		final var inner0 = vBox0.getChildren();
@@ -333,7 +330,7 @@ public class CreatePanePage {
 	}
 
 	public Button getVisibleAddButton() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		final var vBox0 = (VBox) popupNodes.get(1);
 		final var inner0 = vBox0.getChildren();
@@ -601,9 +598,9 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage clickOnPopupButton(final String legend) throws InterruptedException {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
-		final var button = findButtonInPopup(popupNodes, legend);
+		final var button = TestUtil.findButtonInPopup(popupNodes, legend);
 		if (button != null) {
 			while (button.isDisable()) {
 				sleep(100);
@@ -682,7 +679,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage saveKey() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
@@ -705,7 +702,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage clickOnKeyDesignerCancel() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		assert popupNodes.size() == 2;
 		assert popupNodes.get(1) instanceof VBox;
@@ -875,11 +872,11 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage setThreshold(final int threshold) {
-		final var nodes = getPopupNodes();
-		final var fields = findTextFieldsInPopup(nodes);
+		final var nodes = driver.getPopupNodes();
+		final var fields = TestUtil.findTextFieldsInPopup(nodes);
 		assertEquals(1, fields.size());
 		fields.get(0).setText(Integer.toString(threshold));
-		final var button = findButtonInPopup(nodes, "ACCEPT");
+		final var button = TestUtil.findButtonInPopup(nodes, "ACCEPT");
 		if (button != null) {
 			driver.clickOn(button);
 		}
@@ -900,8 +897,8 @@ public class CreatePanePage {
 		} catch (InterruptedException e) {
 			logger.error(e.getMessage());
 		}
-		final var popupNodes = getPopupNodes();
-		final var close = findButtonInPopup(popupNodes, legend);
+		final var popupNodes = driver.getPopupNodes();
+		final var close = TestUtil.findButtonInPopup(popupNodes, legend);
 		driver.clickOn(close);
 		return this;
 	}
@@ -954,7 +951,7 @@ public class CreatePanePage {
 	}
 
 	public CreatePanePage signWithPassword(final String testPassword) throws HederaClientException {
-		final var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(TestUtil.getPopupNodes()));
+		final var passwords = TestUtil.findPasswordInPopup(Objects.requireNonNull(driver.getPopupNodes()));
 		if (passwords == null) {
 			throw new HederaClientException("Unexpected popup");
 		}

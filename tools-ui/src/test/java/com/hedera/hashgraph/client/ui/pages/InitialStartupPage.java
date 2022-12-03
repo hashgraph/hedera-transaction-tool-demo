@@ -43,7 +43,6 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.EMAIL_TEXT_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_KEYS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.PASTE_FROM_CLIPBOARD;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
-import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 
 
 @SuppressWarnings("UnusedReturnValue")
@@ -134,13 +133,13 @@ public class InitialStartupPage {
 		passwordFields.get(0).clear();
 		typePassword(password, passwordFields.get(0));
 		typePassword(password, passwordFields.get(1));
-		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), "CONTINUE");
+		final var continueButton = findButtonInPopup(Objects.requireNonNull(driver.getPopupNodes()), "CONTINUE");
 		driver.clickOn(continueButton);
 		return this;
 	}
 
 	public InitialStartupPage clickOnPopupButton(final String text) {
-		final var continueButton = findButtonInPopup(Objects.requireNonNull(getPopupNodes()), text);
+		final var continueButton = findButtonInPopup(Objects.requireNonNull(driver.getPopupNodes()), text);
 		driver.clickOn(continueButton);
 		return this;
 	}
@@ -152,7 +151,7 @@ public class InitialStartupPage {
 	}
 
 	private List<PasswordField> getPopupPasswordFields() {
-		final var popupNodes = getPopupNodes();
+		final var popupNodes = driver.getPopupNodes();
 		assert popupNodes != null;
 		return getAllPasswordFields(popupNodes);
 	}

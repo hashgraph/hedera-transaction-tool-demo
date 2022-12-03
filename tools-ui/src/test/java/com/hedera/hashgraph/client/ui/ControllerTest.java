@@ -55,7 +55,10 @@ class ControllerTest {
 		try {
 			System.gc();
 			logger.info("Starting test class: {}", getClass().getSimpleName());
-			TestUtil.buildFolders();
+
+			// TODO this isn't a subclass of TestBase?
+//			buildFolders();
+
 
 			final Preferences preferences = Preferences.userNodeForPackage(MainController.class);
 			preferences.clear();

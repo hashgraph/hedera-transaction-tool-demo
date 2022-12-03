@@ -81,7 +81,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		try {
 			System.gc();
 			logger.info("Starting test class: {}", getClass().getSimpleName());
-			TestUtil.buildFolders();
+			buildFolders();
 
 			properties = new UserAccessibleProperties(DEFAULT_STORAGE + "/Files/user.properties", "");
 
@@ -159,7 +159,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 					"src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org");
 			FileUtils.cleanDirectory(outputDirectory);
 
-			TestUtil.copyCreatePaneKeys();
+//			TestUtil.copyCreatePaneKeys();
 
 			mainWindowPage.clickOnCreateButton();
 		} catch (final Exception e) {
@@ -352,7 +352,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	public void loadUpdateAccount_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
 
-		final var popup = TestUtil.getPopupNodes();
+		final var popup = getPopupNodes();
 		assertNotNull(popup);
 		final var labels = TestUtil.getLabels(popup);
 		assertEquals(
@@ -413,7 +413,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	public void loadUpdateAccountMakeChanges_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
 
-		final var popup = TestUtil.getPopupNodes();
+		final var popup = getPopupNodes();
 		assertNotNull(popup);
 		final var labels = TestUtil.getLabels(popup);
 		assertEquals(
@@ -478,7 +478,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	public void loadUpdateAccountChangeAccount_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");
 
-		final var popup = TestUtil.getPopupNodes();
+		final var popup = getPopupNodes();
 		assertNotNull(popup);
 		final var labels = TestUtil.getLabels(popup);
 		assertEquals(
@@ -489,7 +489,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		createPanePage.closePopup("CONTINUE")
 				.setUpdateAccount(10006);
 
-		final var popup2 = TestUtil.getPopupNodes();
+		final var popup2 = getPopupNodes();
 		assertNotNull(popup2);
 		final var labels2 = TestUtil.getLabels(popup2);
 		assertEquals(
