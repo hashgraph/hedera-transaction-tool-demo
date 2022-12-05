@@ -20,6 +20,8 @@
 package com.hedera.hashgraph.client.ui.pages;
 
 import com.hedera.hashgraph.client.ui.TestBase;
+import javafx.scene.control.Button;
+import javafx.scene.input.MouseButton;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_BUTTON;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_BUTTON;
@@ -37,45 +39,32 @@ public class MainWindowPage {
 	}
 
 	public MainWindowPage clickOnHomeButton() {
-
 		driver.clickOn(HOME_BUTTON);
-		return new MainWindowPage(driver);
+		return this;
 	}
 
 	public MainWindowPage clickOnAccountsButton() {
-
 		driver.clickOn(ACCOUNTS_BUTTON);
-		return new MainWindowPage(driver);
+		return this;
 	}
 
 	public MainWindowPage clickOnKeysButton() {
-
 		driver.clickOn(KEYS_BUTTON);
-		return new MainWindowPage(driver);
+		return this;
 	}
 
 	public MainWindowPage clickOnCreateButton() {
-
-		driver.find(CREATE_BUTTON);
 		driver.clickOn(CREATE_BUTTON);
-		return new MainWindowPage(driver);
+		return this;
 	}
 
 	public MainWindowPage clickOnSettingsButton() {
-
-		driver.find(SETTINGS_BUTTON);
 		driver.clickOn(SETTINGS_BUTTON);
-		return new MainWindowPage(driver);
+		return this;
 	}
 
 	public MainWindowPage clickOnHistoryButton(){
-		driver.find(HISTORY_BUTTON);
 		driver.clickOn(HISTORY_BUTTON);
-		return new MainWindowPage(driver);
-	}
-
-	public MainWindowPage clickPopupContinue() {
-		final var nodes = driver.getPopupNodes();
 		return this;
 	}
 }
