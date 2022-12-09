@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
 import org.testfx.api.FxToolkit;
@@ -350,7 +351,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 	}
 
 	@Test
-	@Disabled("Currently this test fails in the GitHub action, " +
+	@Ignore("Currently this test fails in the GitHub action, " +
 			"states that the createPanePage is null. Works locally.")
 	public void loadUpdateAccount_test() throws HederaClientException {
 		createPanePage.loadTransaction("src/test/resources/createTransactions/accountUpdate.tx");

@@ -42,6 +42,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.Disabled;
 import org.testfx.api.FxRobotException;
@@ -447,7 +448,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	@Disabled("Currently this test fails to write files to /Transactions - " +
+	@Ignore("Currently this test fails to write files to /Transactions - " +
 			"Documents/OutputFiles/test1.council2@hederacouncil.org/ in the GitHub action, " +
 			"thus failing the transactionFiles.size() test. Works locally.")
 	public void acceptBatchTransaction_Test() throws IOException, HederaClientException {
@@ -656,6 +657,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 				.findFirst()
 				.map(StackWalker.StackFrame::getMethodName));
 
+		assertTrue(methodName.isPresent());
 		assertTrue(methodName.isPresent());
 		logger.info("Starting test method: {}", methodName.get());
 
