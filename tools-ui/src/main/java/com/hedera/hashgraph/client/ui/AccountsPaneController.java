@@ -288,7 +288,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						final var oldPath = file.getAbsolutePath();
 						final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
 
-						logger.info("renaming file {} to {} to fix it's name", file.getAbsolutePath(), newPath);
+						logger.info("renaming file {} to {} to fix its name", file.getAbsolutePath(), newPath);
 
 						Files.move(Path.of(oldPath), Path.of(newPath));
 						Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
