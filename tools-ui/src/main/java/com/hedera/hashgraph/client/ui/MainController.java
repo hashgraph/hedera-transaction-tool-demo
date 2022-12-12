@@ -194,7 +194,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 	@FXML
 	public InitialStartupPaneController initialStartupPaneController;
 	@FXML
-	public HistoryPaneController historyPaneController;
+	public HistoryPaneViewController historyPaneController;
 
 
 	// Utility
@@ -380,7 +380,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 				homePane.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();
-				historyPaneController.initializeHistoryPane();
+				historyPaneController.updateHistoryPane();
 				homePaneController.initializeHomePane();
 				settingsPaneController.initializeSettingsPane();
 				createPaneController.initializeCreatePane();
@@ -393,8 +393,8 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
-				historyPaneController.initializeHistoryPane();
-				historyPaneController.cleanHistory();
+				historyPaneController.updateHistoryPane();
+				historyPaneController.getModel().cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
 				keysPaneController.initializeKeysPane();
 				accountsPaneController.initializeAccountPane();

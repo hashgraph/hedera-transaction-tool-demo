@@ -263,7 +263,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
 				final var su = (SoftwareUpdateFile) rf;
 				final var currentVersion = getSoftwareVersionFromVersionStr(controller.getVersion());
-				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(
+						rf.hashCode())) {
 					controller.historyPaneController.removeFromHistory(rf);
 				}
 			}

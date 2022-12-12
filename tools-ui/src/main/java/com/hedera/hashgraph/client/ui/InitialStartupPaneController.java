@@ -217,7 +217,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 
 		controller.homePaneController.initializeHomePane();
 		controller.accountsPaneController.initializeAccountPane();
-		controller.historyPaneController.initializeHistoryPane();
+		controller.historyPaneController.updateHistoryPane();
 		controller.keysPaneController.initializeKeysPane();
 		controller.createPaneController.initializeCreatePane();
 		controller.settingsPaneController.initializeSettingsPane();
