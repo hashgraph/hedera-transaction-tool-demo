@@ -47,7 +47,7 @@
 		<testfx.version>4.0.16-alpha</testfx.version>
 		<bouncycastle.version>1.69</bouncycastle.version>
 		<passpol.version>0.7.0</passpol.version>
-		<protobuf.version>3.21.1</protobuf.version>
+		<protobuf.version>3.21.7</protobuf.version>
 		<grpc.version>1.44.0</grpc.version>
 		<apache.commons.io.version>2.8.0</apache.commons.io.version>
 		<apache.commons.lang3.version>3.12.0</apache.commons.lang3.version>
