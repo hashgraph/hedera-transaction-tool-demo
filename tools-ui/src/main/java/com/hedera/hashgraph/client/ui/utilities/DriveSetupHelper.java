@@ -23,7 +23,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -64,7 +64,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	public static final String CANCEL_STRING = "CANCEL";
 	public static final String CREATE_STRING = "CREATE";
 	@FXML
-	private Controller controller = null;
+	private MainController controller = null;
 
 	private static final Logger logger = LogManager.getLogger(DriveSetupHelper.class);
 	private static final Pattern VALID_EMAIL_ADDRESS_REGEX =
@@ -640,7 +640,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 	}
 
 	public static final class Builder {
-		private Controller controller;
+		private MainController controller;
 		private ImageView pathGreenCheck;
 		private ImageView emailGreenCheck;
 		private TextField pathTextField;
@@ -666,7 +666,7 @@ public class DriveSetupHelper implements GenericFileReadWriteAware {
 			return new Builder();
 		}
 
-		public Builder withController(final Controller controller) {
+		public Builder withController(final MainController controller) {
 			this.controller = controller;
 			return this;
 		}

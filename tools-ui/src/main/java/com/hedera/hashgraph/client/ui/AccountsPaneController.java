@@ -57,7 +57,6 @@ import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.CryptoGetInfoResponse;
-
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -187,7 +186,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 
 	public StackPane accountsPane;
 	public ScrollPane accountsScrollPane;
@@ -228,7 +227,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	}
 
 	//region INITIALIZATION
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
@@ -271,7 +270,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void fixAccountFiles() {
 
 		try {
-			JsonObject nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			JsonObject nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(
+					ACCOUNTS_MAP_FILE) : new JsonObject();
 
 			final var noNetworkFiles = new File(ACCOUNTS_INFO_FOLDER).listFiles(
 					(dir, name) -> !name.contains("-") &&
@@ -288,7 +288,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						final var oldPath = file.getAbsolutePath();
 						final var newPath = file.getAbsolutePath().replace(name, id.toReadableAccountAndNetwork());
 
-						logger.info("renaming file {} to {} to fix it's name", file.getAbsolutePath(), newPath);
+						logger.info("renaming file {} to {} to fix its name", file.getAbsolutePath(), newPath);
 
 						Files.move(Path.of(oldPath), Path.of(newPath));
 						Files.move(Path.of(oldPath.replace(INFO_EXTENSION, JSON_EXTENSION)),
@@ -335,7 +335,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 						if (!ledgerStr.equals(curInfo.getLedgerId())) {
 
 							logger.info("fixing ledger id in {}, it was {}, it is now {}", file.getAbsolutePath(),
-									Arrays.toString(curInfo.getLedgerId().toByteArray()), Arrays.toString(ledgerStr.toByteArray()));
+									Arrays.toString(curInfo.getLedgerId().toByteArray()),
+									Arrays.toString(ledgerStr.toByteArray()));
 
 							var newInfo = CryptoGetInfoResponse.AccountInfo
 									.newBuilder(curInfo)
@@ -357,7 +358,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 					var json = new File(file.getParentFile(),
 							FilenameUtils.removeExtension(file.getName()) + "." + JSON_EXTENSION);
 
-					logger.info("deleting files {} and {} because an account with the same ID has a network associated with it.",
+					logger.info(
+							"deleting files {} and {} because an account with the same ID has a network associated with" +
+									" it.",
 							file.getAbsolutePath(), json.getAbsolutePath());
 
 					if (!file.delete()) {
@@ -1303,7 +1306,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			try {
 				if (INFO_EXTENSION.equalsIgnoreCase(FilenameUtils.getExtension(oldFile.getName()))) {
 					var newInfo = CryptoGetInfoResponse.AccountInfo
-							.newBuilder(CryptoGetInfoResponse.AccountInfo.parseFrom(readBytes(oldFile.getAbsolutePath())))
+							.newBuilder(
+									CryptoGetInfoResponse.AccountInfo.parseFrom(readBytes(oldFile.getAbsolutePath())))
 							.setLedgerId(ByteString.copyFrom(NetworkEnum.asLedger(t1).toBytes()))
 							.build();
 					FileUtils.writeByteArrayToFile(Path.of(oldFile.getAbsolutePath().replace(oldName, newName)).toFile(),
@@ -1381,7 +1385,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		if (stakingInfo != null && stakingInfo.stakedAccountId != null) {
 			gridPane.add(setupBoxLabel("Staked Account ID"), 0, ++cnt);
 			final var stakingAccountStr = new Identifier(info.stakingInfo.stakedAccountId).toReadableString();
-			gridPane.add(setupBoxTextField(format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
+			gridPane.add(setupBoxTextField(
+					format("%s (%s)", stakingAccountStr, AddressChecksums.checksum(stakingAccountStr))), 1, cnt);
 		}
 
 		if (stakingInfo != null && stakingInfo.stakedNodeId != null) {

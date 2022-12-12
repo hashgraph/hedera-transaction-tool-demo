@@ -21,7 +21,7 @@ package com.hedera.hashgraph.client.ui.utilities;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.StartUI;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.pages.HistoryPanePage;
@@ -58,7 +58,7 @@ public class KeyPairUtilityTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(KeyPairUtility.class);
 
-	private final Controller controller = new Controller();
+	private final MainController controller = new MainController();
 	MainWindowPage mainWindowPage;
 	HomePanePage homePanePage;
 	HistoryPanePage historyWindowPage;

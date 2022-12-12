@@ -109,7 +109,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	public ScrollPane homeFilesScrollPane;
 
 	@FXML
-	private Controller controller;
+	private MainController controller;
 	// endregion
 
 	private long lastModified = 0;
@@ -124,7 +124,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		forceUpdate = force;
 	}
 
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
@@ -263,7 +263,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
 				final var su = (SoftwareUpdateFile) rf;
 				final var currentVersion = getSoftwareVersionFromVersionStr(controller.getVersion());
-				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
+				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(
+						rf.hashCode())) {
 					controller.historyPaneController.removeFromHistory(rf);
 				}
 			}

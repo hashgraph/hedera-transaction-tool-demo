@@ -27,7 +27,7 @@ import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.KeyDesignErrorCodes;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -53,13 +53,13 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private static final String THRESHOLD = "threshold";
 	private static final String KEYS = "keys";
 	private static final String KEY_LIST = "keyList";
-	private final Controller controller;
+	private final MainController controller;
 	// contains all .pub files' content and file name
 	private Map<String, Path> pubFiles = new HashMap<>();
 	// is loaded when the key structure is shown
 	private final Map<TreeItem<String>, JsonObject> keyJsonItems = new HashMap<>();
 
-	public KeyStructureUtility(final Controller controller) {
+	public KeyStructureUtility(final MainController controller) {
 		this.controller = controller;
 		loadPubKeys();
 	}
@@ -291,7 +291,8 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private JsonObject handlePublicKey(final JsonObject keyJson) {
 		final JsonObject cleanKey = new JsonObject();
 		final var ed = keyJson.get(ED_25519).getAsString();
-		final var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(pubFiles.get(ed).toFile().getName()) : ed;
+		final var value = (pubFiles.containsKey(ed)) ? FilenameUtils.getBaseName(
+				pubFiles.get(ed).toFile().getName()) : ed;
 		cleanKey.addProperty(ED_25519, value);
 		return cleanKey;
 	}

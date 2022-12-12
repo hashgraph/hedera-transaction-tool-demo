@@ -250,7 +250,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	File contents = null;
 
 	@FXML
-	public Controller controller;
+	public MainController controller;
 
 	// region FXML
 	public ScrollPane createScrollPane;
@@ -435,7 +435,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	// endregion
 
-	void injectMainController(final Controller controller) {
+	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
 
@@ -534,7 +534,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
 				));
 		declineStakingRewards.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(
+						Boolean.TRUE.equals(t1) ? "true" : "false"
 				));
 
 		createAccountMemo.textProperty().addListener(
@@ -571,7 +572,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
 		declineStakingRewardsNew.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(
+						Boolean.TRUE.equals(t1) ? "true" : "false"));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -915,7 +917,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		if (flag) {
-			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode, invalidStakedAccountId);
+			clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode,
+					invalidStakedAccountId);
 
 		}
 		return flag;
@@ -2408,7 +2411,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
 		}
 
-		final var originalDeclineStakingRewardsNew = info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
+		final var originalDeclineStakingRewardsNew =
+				info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
 		if (originalDeclineStakingRewardsNew != declineStakingRewardsNew.isSelected()) {
 			input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
 		}
@@ -3152,7 +3156,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
 			invalidNode.setVisible(true);
-			startFieldsSet.reset(1,0,0);
+			startFieldsSet.reset(1, 0, 0);
 			return;
 		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
@@ -3450,8 +3454,12 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			case CRYPTO_UPDATE:
 				final var account =
 						((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
-				final var fields = String.join("\n\t\u2022 ", ((ToolCryptoUpdateTransaction) transaction).getUpdateList());
-				message = String.format("The account update transaction succeeded. The following account properties were updated for %s:\n\t\u2022 %s", account,
+				final var fields = String.join("\n\t\u2022 ",
+						((ToolCryptoUpdateTransaction) transaction).getUpdateList());
+				message = String.format(
+						"The account update transaction succeeded. The following account properties were updated for " +
+								"%s:\n\t\u2022 %s",
+						account,
 						fields);
 				break;
 			case SYSTEM_DELETE_UNDELETE:

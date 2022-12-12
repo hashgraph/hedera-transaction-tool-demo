@@ -117,7 +117,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		FileUtils.copyFile(new File("src/test/resources/storedMnemonic.txt"),
 				new File(DEFAULT_STORAGE + MNEMONIC_PATH));
 
-		final var controller = new Controller();
+		final var controller = new MainController();
 		final var version = controller.getVersion();
 		properties.setVersionString(version);
 

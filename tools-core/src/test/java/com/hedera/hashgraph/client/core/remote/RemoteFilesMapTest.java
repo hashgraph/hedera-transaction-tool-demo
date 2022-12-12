@@ -186,10 +186,16 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 		final var remoteFilesMap2 = new RemoteFilesMap(
 				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-19T13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(
 				fileService2);
-		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), remoteFilesMap2.getFiles().size());
+		/* The files used in these tests were not expired at the time the test were created, but
+		  have expired since then. For now, we'll just compare actual sizes. */
+		var remoteFilesMapNotExpired = remoteFilesMap.getFilesNotExpired().size();
+		var remoteFilesMap2NotExpired = remoteFilesMap2.getFilesNotExpired().size();
+		var remoteFilesMap2Total = remoteFilesMap2.getFiles().size();
 
 		remoteFilesMap2.addAllNotExpired(remoteFilesMap);
-		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), remoteFilesMap2.getFiles().size());
-
+		// Make sure that the NotExpired count for the second map increases by the count of NotExpired from the first map
+		assertEquals(remoteFilesMap2.getFilesNotExpired().size(), remoteFilesMap2NotExpired+remoteFilesMapNotExpired);
+		// Then test that the total count in the second map increase by only the count of NotExpired from the first map
+		assertEquals(remoteFilesMap2.getFiles().size(), remoteFilesMap2Total+remoteFilesMapNotExpired);
 	}
 }

@@ -302,7 +302,8 @@ public class SoftwareUpdateFile extends RemoteFile {
 	@Override
 	public int compareTo(@NotNull final RemoteFile otherFile) {
 		if (otherFile instanceof SoftwareUpdateFile) {
-			return new ComparableVersion(version).compareTo(new ComparableVersion(((SoftwareUpdateFile) otherFile).getVersion()));
+			return new ComparableVersion(version).compareTo(
+					new ComparableVersion(((SoftwareUpdateFile) otherFile).getVersion()));
 		} else {
 			return super.compareTo(otherFile);
 		}
@@ -333,7 +334,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	public static String getSoftwareVersionFromVersionStr(final String version) {
-		return fixVersion(version.split(", ")[0].split(" ")[1]);
+		try {
+			return fixVersion(version.split(", ")[0].split(" ")[1]);
+		} catch (final RuntimeException e) {
+			throw new IllegalArgumentException("Can not parse version from String '" + version + "'", e);
+		}
 	}
 
 	public static long getBuildDateSecondsFromVersionStr(final String version) throws HederaClientException {

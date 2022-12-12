@@ -27,7 +27,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Hbar;
@@ -178,7 +178,7 @@ public class Utilities {
 	 * 		otherwise
 	 * 		it shows the complete hex.
 	 */
-	public static List<String> getKeysFromInfo(final AccountInfo info, final Controller controller) {
+	public static List<String> getKeysFromInfo(final AccountInfo info, final MainController controller) {
 		final var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
 		final List<String> knownKeys = new ArrayList<>();
 		for (final var key : flatKey) {

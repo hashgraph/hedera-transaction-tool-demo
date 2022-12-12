@@ -22,7 +22,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.AccountInfoFields;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
-import com.hedera.hashgraph.client.ui.Controller;
+import com.hedera.hashgraph.client.ui.MainController;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -65,17 +65,17 @@ public class AccountHistoryPopup {
 	private static final Logger logger = LogManager.getLogger(AccountHistoryPopup.class);
 	private static final TreeMap<Long, JsonObject> history = new TreeMap<>();
 
-	private static Controller controller;
+	private static MainController controller;
 
 	private AccountHistoryPopup() {
 		throw new IllegalStateException("Popup class");
 	}
 
-	public static void setController(final Controller controller) {
+	public static void setController(final MainController controller) {
 		AccountHistoryPopup.controller = controller;
 	}
 
-	public static void display(final Identifier accountId, final Controller controller) {
+	public static void display(final Identifier accountId, final MainController controller) {
 		history.clear();
 		setController(controller);
 		try {

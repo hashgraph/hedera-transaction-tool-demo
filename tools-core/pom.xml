@@ -33,7 +33,6 @@
 
 	<artifactId>tools-core</artifactId>
 	<version>0.12.2</version>
-	<packaging>jar</packaging>
 
 	<dependencyManagement>
 		<dependencies>
