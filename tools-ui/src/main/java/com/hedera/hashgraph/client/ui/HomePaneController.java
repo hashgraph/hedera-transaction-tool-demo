@@ -37,10 +37,12 @@ import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.TransferTransaction;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
@@ -50,6 +52,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
@@ -105,8 +109,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 	// region FXML
 
 	public VBox defaultViewVBox;
-	public VBox newFilesViewVBox;
-	public ScrollPane homeFilesScrollPane;
+	@FXML
+	public ListView<RemoteFile> taskListView;
 
 	@FXML
 	private MainController controller;
@@ -128,10 +132,10 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
+//	this seems to run after signing, but not just every signing, but for every key pair for each signing (still don't understand the multiple key pair thing),
+//	does it really need to do that? what does this initialize do? does javafx not use a list and cell renderer type thing?
+//	after a singing, it looks like it gets marked as signed, then it should just call for a refresh of the list and be done, since the list isn't listening to changes (if that's possible with property bindings?)
 	public void initializeHomePane() {
-		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
-		newFilesViewVBox.setSpacing(VBOX_SPACING);
-
 		try {
 			// Only refresh if there have been changes in the remotes or the history
 			final var countFiles = countTotalFiles();
@@ -141,23 +145,31 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 			setForceUpdate(true);
 			remoteFilesMap.clearMap();
+//			after each signing it reloads teh map completely,
+//			would probably be best to only load/remove new things, depending on how long it takes to load
 			loadRemoteFilesMap();
 
 			lastCount = countFiles;
+//i need the list to fill the pane
+//the buttons aren't showing
+//sometimes the item is blank (is 'b' true? meaning empty, or is the remotefile just null? or does it have to do with 'history'?)
+//make sure to hide history stuff.
+//make sure colors and symbols properly show
 
-			loadNewFilesBox(remoteFilesMap);
-			newFilesViewVBox.setVisible(true);
-			newFilesViewVBox.setDisable(false);
+			observeFiles(remoteFilesMap);
+//			loadNewFilesBox(remoteFilesMap);
+//			newFilesViewVBox.setVisible(true);
+//			newFilesViewVBox.setDisable(false);
 
 			// Show new transactions
 			if (remoteFilesMap.size() > 0) {
 				defaultViewVBox.setDisable(true);
 				defaultViewVBox.setVisible(false);
-				if (newFilesViewVBox.getChildren().isEmpty()) {
-					final var noTasksLabel = new Label("No new tasks.");
-					noTasksLabel.setPadding(new Insets(15, 0, 5, 15));
-					newFilesViewVBox.getChildren().add(noTasksLabel);
-				}
+//				if (newFilesViewVBox.getChildren().isEmpty()) {
+//					final var noTasksLabel = new Label("No new tasks.");
+//					noTasksLabel.setPadding(new Insets(15, 0, 5, 15));
+//					newFilesViewVBox.getChildren().add(noTasksLabel);
+//				}
 			} else {
 				defaultViewVBox.setDisable(false);
 				defaultViewVBox.setVisible(true);
@@ -171,7 +183,6 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			logger.error("initializeHomePane error", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
-		Platform.runLater(() -> homeFilesScrollPane.setVvalue(0.0));
 		logger.info("Home pane initialized");
 		historyChanged = false;
 		setForceUpdate(false);
@@ -208,6 +219,23 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		if (!newFiles.isEmpty()) {
 			newFilesViewVBox.getChildren().addAll(newFiles);
 		}
+	}
+
+	private void observeFiles(final RemoteFilesMap remoteFilesMap) {
+		taskListView.setItems(remoteFilesMap.getObservableFiles());
+		taskListView.setCellFactory(listView -> new ListCell<>() {
+			@Override
+			protected void updateItem(RemoteFile remoteFile, boolean b) {
+				super.updateItem(remoteFile, b);
+				try {
+					if (remoteFile != null) {
+						setGraphic(remoteFile.buildDetailsBox());
+					}
+				} catch (HederaClientException ex) {
+					logger.error(ex);
+				}
+			}
+		});
 	}
 
 	/**
@@ -643,6 +671,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			}
 		}
 		historyChanged = true;
+//		NOW it should initialize, right? otherwise, historyChanged = true is wasted, right?
 	}
 
 	private void runUpdate(final String localLocation) {

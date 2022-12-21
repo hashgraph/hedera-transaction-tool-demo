@@ -267,8 +267,17 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 
 		// Home pane should load files periodically
 		if (getSetupPhase() == NORMAL_OPERATION_PHASE) {
+			// TODO this should be done with a
+			// WatchService watcher = FileSystems.getDefault().newWatchService();
+			// Path dir = ...;
+			// try {
+			//   WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+			// } catch (IOException ex) {
+			//   LOG.error();
+			// }
+			// type thing
 			final var service = new ReloadFilesService(homePaneController);
-			service.setPeriod(Duration.seconds(RELOAD_PERIOD));
+			service.setPeriod(Duration.minutes(RELOAD_PERIOD));
 			service.start();
 		}
 		initialStartupPaneController.injectMainController(this);

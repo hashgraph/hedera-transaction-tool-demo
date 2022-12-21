@@ -22,8 +22,11 @@ import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -93,6 +96,11 @@ public class RemoteFilesMap {
 			remoteFileList.add(entry.getValue());
 		}
 		return remoteFileList;
+	}
+
+	@NotNull
+	public final ObservableList<RemoteFile> getObservableFiles() {
+		return FXCollections.observableList(getFiles());
 	}
 
 	public RemoteFile get(final String key) {

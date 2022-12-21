@@ -20,14 +20,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.ListView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Text?>
 
-<HBox xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HomePaneController">
+<HBox xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hedera.hashgraph.client.ui.HomePaneController">
 	<AnchorPane style="-fx-border-color: transparent;" HBox.hgrow="ALWAYS">
 		<VBox fx:id="defaultViewVBox" spacing="25.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 			<padding>
@@ -43,20 +43,13 @@
 			</VBox>
 			<Region VBox.vgrow="ALWAYS" />
 		</VBox>
-		<ScrollPane fx:id="homeFilesScrollPane" fitToHeight="true" fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-			<VBox spacing="10.0">
-				<VBox>
-					<Label style="-fx-font-size: 25;" text="NEW TASKS">
-						<padding>
-							<Insets bottom="5.0" left="15.0" top="15.0" />
-						</padding>
-					</Label>
-					<VBox fx:id="newFilesViewVBox" />
-				</VBox>
+		<VBox fx:id="newTasksVBox" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+			<Label style="-fx-font-size: 25;" text="NEW TASKS">
 				<padding>
-					<Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+					<Insets bottom="5.0" left="15.0" top="15.0" />
 				</padding>
-			</VBox>
-		</ScrollPane>
+			</Label>
+			<ListView fx:id="taskListView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+		</VBox>
 	</AnchorPane>
 </HBox>
