@@ -1,0 +1,27 @@
+# Compile, package and deploy the application on pushes to main, if tagged.
+name: compile-deploy
+
+on:
+  # Run for all pushes to main
+  push:
+    branches: [ main ]
+    tags: [ v* ]
+  # Allow the workflow to be run manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup the JDK (17)
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+      - name: Setup Gradle and Build
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build

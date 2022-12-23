@@ -1,0 +1,33 @@
+# Build, test, and post results for all pull requests to develop and main branches
+name: pr-gradle-build
+
+on:
+  # Run for all pull requests to main or develop
+  pull_request:
+    branches: [ main, develop ]
+  # Allow the workflow to be run manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      HEADLESS_MODE: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup the JDK (17)
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'temurin'
+      - name: Setup Gradle and Test
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: build --scan
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: "*/target/surefire-reports/*.xml"
