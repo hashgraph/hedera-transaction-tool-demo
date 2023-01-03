@@ -3,13 +3,14 @@
  */
 
 plugins {
+    application
     id("com.hedera.hashgraph.java-conventions")
     id("org.openjfx.javafxplugin") version "0.0.13"
+    //id("org.beryx.jlink") version "2.26.0"
 }
 
 dependencies {
     implementation(project(":tools-core"))
-    implementation("com.hedera.hashgraph:sdk:2.19.0")
     implementation("org.slf4j:slf4j-api:1.7.30")
     implementation("org.apache.logging.log4j:log4j-api:2.17.1")
     implementation("com.google.code.gson:gson:2.8.9")
@@ -21,9 +22,6 @@ dependencies {
     implementation("net.i2p.crypto:eddsa:0.3.0")
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("org.apache.commons:commons-collections4:4.4")
-//    implementation("org.openjfx:javafx-base:17.0.2")
-//    implementation("org.openjfx:javafx-fxml:17.0.2")
-//    implementation("org.openjfx:javafx-controls:17.0.2")
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
     implementation("org.controlsfx:controlsfx:11.1.0")
@@ -44,9 +42,13 @@ dependencies {
     testImplementation("org.junit.vintage:junit-vintage-engine:5.8.0-M1")
 }
 
+application {
+    mainClass.set("Main.java")
+}
+
 javafx {
     version = "19"
-    modules("javafx.controls", "javafx.base", "javafx.fxml")
+    modules("javafx.controls", "javafx.fxml")
 }
 
 description = "tools-ui"

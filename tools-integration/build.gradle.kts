@@ -30,7 +30,7 @@ dependencies {
 
 javafx {
     version = "19"
-    modules("javafx.controls", "javafx.base", "javafx.fxml")
+    modules("javafx.controls", "javafx.fxml")
 }
 
 description = "tools-integration"

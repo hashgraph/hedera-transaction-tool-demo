@@ -8,7 +8,6 @@ plugins {
 
 dependencies {
     implementation(project(":tools-core"))
-    implementation("com.hedera.hashgraph:sdk:2.19.0")
     implementation("info.picocli:picocli:4.6.1")
     implementation("net.i2p.crypto:eddsa:0.3.0")
     implementation("io.grpc:grpc-core:1.44.0")

@@ -8,7 +8,6 @@ plugins {
 }
 
 dependencies {
-    implementation("com.hedera.hashgraph:sdk:2.17.2")
     implementation("org.apache.logging.log4j:log4j-core:2.17.1")
     implementation("org.apache.logging.log4j:log4j-api:2.17.1")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
@@ -31,10 +30,6 @@ dependencies {
     implementation("org.apache.maven:maven-artifact:3.6.0")
     implementation("org.testfx:openjfx-monocle:jdk-12.0.1+2")
     implementation("pl.pragmatists:JUnitParams:1.1.1")
-//    implementation("org.openjfx:javafx-base:17.0.2")
-//    implementation("org.openjfx:javafx-fxml:17.0.2")
-//    implementation("org.openjfx:javafx-controls:17.0.2")
-//    implementation("org.openjfx:javafx-graphics:17.0.2")
     implementation("com.codahale:passpol:0.7.0")
     implementation("org.jetbrains:annotations:13.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.8.0-M1")
@@ -47,7 +42,7 @@ dependencies {
 
 javafx {
     version = "19"
-    modules("javafx.controls", "javafx.base", "javafx.fxml", "javafx.graphics")
+    modules("javafx.controls", "javafx.fxml")
 }
 
 description = "tools-core"
