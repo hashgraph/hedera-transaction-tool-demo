@@ -5,6 +5,12 @@
 *.obj
 *.class
 
+# Log File
+*.log
+
+# Package Files #
+*.jar
+
 # Compiled Dynamic libraries
 *.so
 *.dylib
@@ -52,9 +58,22 @@ sdk/**/*.csv
 *.pub
 Icon?
 Icon\r
-*.log
 *.pfx
 *.hprof
+
+### Gradle template
+.gradle
+**/build/
+!src/**/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache of project
+.gradletasknamecache
 
 # Maven Files
 target/
@@ -76,6 +95,7 @@ bin/
 *.iml
 *.ipr
 *.iws
+**/.idea/misc.xml
 **/.idea/modules.xml
 **/.idea/saveactions_settings.xml
 **/.idea/workspace.xml
@@ -95,6 +115,9 @@ bin/
 **/.idea/compiler.xml
 **/.idea/encodings.xml
 **/.idea/jarRepositories.xml
+**/.idea/sonarlint*.xml
+**/.idea/sonarlint/
+**/.idea/kotlinc.xml
 *.err
 Release/tools-ui-0.1.0-rc.1.zip
 oldInstaller.sh
@@ -102,6 +125,3 @@ Release/
 .idea/inspectionProfiles/Project_Default.xml
 tools-integration/src/test/resources/TempReceipts
 tools-integration/src/test/resources/TempTransactions
-
-.mvn/**/*.jar
-
