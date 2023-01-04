@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -133,12 +132,12 @@ class UserAccessiblePropertiesTest {
 		properties.addOneDriveCredential("/newPath", "new@email.com");
 		Map<String, String> credentials = properties.getOneDriveCredentials();
 		assertEquals(1, credentials.size());
-		Assertions.assertTrue(properties.findEmail("new@email.com"));
+		assertTrue(properties.findEmail("new@email.com"));
 		properties.addOneDriveCredential("/newPath/Another", "newer@email.com");
 		credentials = properties.getOneDriveCredentials();
 		assertEquals(2, credentials.size());
-		Assertions.assertTrue(properties.credentialsMapCollision("/newPath", "new@email.com"));
-		Assertions.assertTrue(properties.credentialsMapCollision("/newishPath", "new@email.com"));
+		assertTrue(properties.credentialsMapCollision("/newPath", "new@email.com"));
+		assertTrue(properties.credentialsMapCollision("/newishPath", "new@email.com"));
 		assertFalse(properties.credentialsMapCollision("/newestPath", "newest@email.com"));
 
 		assertEquals("new@email.com", properties.getEmailFromMap("/newPath"));
@@ -159,7 +158,7 @@ class UserAccessiblePropertiesTest {
 		final char[] pass = "testPassword".toCharArray();
 		properties.setHash(pass);
 		final PasswordAuthenticator passwordAuthenticator = new PasswordAuthenticator();
-		Assertions.assertTrue(passwordAuthenticator.authenticate(pass, properties.getHash()));
+		assertTrue(passwordAuthenticator.authenticate(pass, properties.getHash()));
 	}
 
 	@Test
@@ -177,31 +176,31 @@ class UserAccessiblePropertiesTest {
 
 		final JsonObject propertiesJson = properties.readProperties();
 
-		Assertions.assertTrue(propertiesJson.has(PREFERRED_STORAGE_DIRECTORY));
+		assertTrue(propertiesJson.has(PREFERRED_STORAGE_DIRECTORY));
 		assertEquals(
 				System.getProperty("user.home") + File.separator + "Documents" + File.separator +
 						"TransactionToolsTest",
 				propertiesJson.get(PREFERRED_STORAGE_DIRECTORY).getAsString());
 
-		Assertions.assertTrue(propertiesJson.has(DEFAULT_TX_FEE));
+		assertTrue(propertiesJson.has(DEFAULT_TX_FEE));
 		assertEquals("100000001", propertiesJson.get(DEFAULT_TX_FEE).getAsString());
 
-		Assertions.assertTrue(propertiesJson.has(DEFAULT_NODE_ID));
+		assertTrue(propertiesJson.has(DEFAULT_NODE_ID));
 		assertEquals("0.0.5", propertiesJson.get(DEFAULT_NODE_ID).getAsString());
 
-		Assertions.assertTrue(propertiesJson.has(TX_VALID_DURATION));
+		assertTrue(propertiesJson.has(TX_VALID_DURATION));
 		assertEquals("123", propertiesJson.get(TX_VALID_DURATION).getAsString());
 
-		Assertions.assertTrue(propertiesJson.has(GENERATE_RECORD));
-		Assertions.assertTrue(propertiesJson.get(GENERATE_RECORD).getAsBoolean());
+		assertTrue(propertiesJson.has(GENERATE_RECORD));
+		assertTrue(propertiesJson.get(GENERATE_RECORD).getAsBoolean());
 
-		Assertions.assertTrue(propertiesJson.has(DEFAULT_HOURS));
+		assertTrue(propertiesJson.has(DEFAULT_HOURS));
 		assertEquals(21, propertiesJson.get(DEFAULT_HOURS).getAsInt());
 
-		Assertions.assertTrue(propertiesJson.has(DEFAULT_MINUTES));
+		assertTrue(propertiesJson.has(DEFAULT_MINUTES));
 		assertEquals(47, propertiesJson.get(DEFAULT_MINUTES).getAsInt());
 
-		Assertions.assertTrue(propertiesJson.has(DEFAULT_SECONDS));
+		assertTrue(propertiesJson.has(DEFAULT_SECONDS));
 		assertEquals(37, propertiesJson.get(DEFAULT_SECONDS).getAsInt());
 
 		properties.resetProperties();
@@ -224,7 +223,7 @@ class UserAccessiblePropertiesTest {
 		assertEquals(100000001, properties.getDefaultTxFee());
 		assertEquals("0.0.5", properties.getDefaultNodeID());
 		assertEquals(123, properties.getTxValidDuration());
-		Assertions.assertTrue(properties.getGenerateRecord());
+		assertTrue(properties.getGenerateRecord());
 		assertEquals(21, properties.getDefaultHours());
 		assertEquals(47, properties.getDefaultMinutes());
 		assertEquals(37, properties.getDefaultSeconds());

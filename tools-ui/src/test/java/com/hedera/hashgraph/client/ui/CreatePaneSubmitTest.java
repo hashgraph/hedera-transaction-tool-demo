@@ -52,10 +52,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -92,12 +92,12 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findCheckBoxesInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getLabels;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore("Currently these tests fail in the GitHub action, " +
+@Disabled("Currently these tests fail in the GitHub action, " +
 		"due to timeout error. Works locally.")
 public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWriteAware {
 	private final static Logger logger = LogManager.getLogger(CreatePaneSubmitTest.class);
@@ -115,7 +115,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	private UserAccessibleProperties properties;
 	private final List<AccountId> accounts = new ArrayList<>();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		final var output = new File(ONE_DRIVE_OUTPUT);
 		if (output.exists()) {
@@ -139,7 +139,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 		mainWindowPage.clickOnCreateButton();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File(DEFAULT_STORAGE).exists()) {
 			try {
@@ -282,7 +282,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	}
 
 	@Test
-	@Ignore("Flaky test")
+	@Disabled("Flaky test")
 	public void submitOneCreate() throws HederaClientException, PrecheckStatusException, TimeoutException {
 		assertFalse(accounts.isEmpty());
 		final var oldHistory = Arrays.asList(new File(DEFAULT_HISTORY).list(
@@ -510,7 +510,7 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 	}
 
 	@Test
-	@Ignore("Postponed until decision made regarding need")
+	@Disabled("Postponed until decision made regarding need")
 	public void submitFileDeleteUndelete() throws PrecheckStatusException, TimeoutException, HederaClientException,
 			ReceiptStatusException, KeyStoreException {
 		final var walker = StackWalker.getInstance();

@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.pages;
 
-import com.hedera.hashgraph.client.ui.JavaFXIDs;
 import com.hedera.hashgraph.client.ui.TestBase;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import javafx.scene.control.ScrollPane;
@@ -27,7 +26,7 @@ import javafx.scene.layout.VBox;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("UnusedReturnValue")
 public class HistoryPanePage {

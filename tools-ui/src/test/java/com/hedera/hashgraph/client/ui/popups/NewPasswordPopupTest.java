@@ -38,11 +38,10 @@ import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -56,12 +55,12 @@ import java.util.Map;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNull;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
@@ -81,7 +80,7 @@ public class NewPasswordPopupTest extends TestBase {
 	public UserAccessibleProperties properties;
 	private KeysPanePage keysPanePage;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		TestUtil.buildFolders();
@@ -140,7 +139,7 @@ public class NewPasswordPopupTest extends TestBase {
 		mainWindowPage.clickOnKeysButton();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		try {
 			final Path currentRelativePath = Paths.get("");
@@ -271,16 +270,16 @@ public class NewPasswordPopupTest extends TestBase {
 	}
 
 	@Test
-	@Ignore("Flaky test")
+	@Disabled("Flaky test")
 	public void forgotMnemonicPasswordCancel_test() {
 		logger.info("forgotMnemonicPasswordCancel_test");
 		keysPanePage.pressRecoveryPhrase()
 				.enterPopupPassword(PASSWORD);
 		final VBox gridPaneVBox = find("#recoveryVBox");
-		Assert.assertNotNull(gridPaneVBox);
-		Assert.assertTrue(gridPaneVBox.isVisible());
+		assertNotNull(gridPaneVBox);
+		assertTrue(gridPaneVBox.isVisible());
 		final var boxChildren = ((HBox) gridPaneVBox.getChildren().get(1)).getChildren();
-		Assert.assertTrue(boxChildren.get(0) instanceof Label);
+		assertTrue(boxChildren.get(0) instanceof Label);
 		final var oldMnemonic = ((Label) boxChildren.get(0)).getText().toUpperCase(Locale.ROOT);
 
 		keysPanePage.pressCloseViewMnemonic()
@@ -293,12 +292,12 @@ public class NewPasswordPopupTest extends TestBase {
 				.pressPopupButton("CANCEL");
 
 		final var wordsPane = TestUtil.findGridpanesInPopup();
-		Assert.assertEquals(1, wordsPane.size());
+		assertEquals(1, wordsPane.size());
 
 		final var children = wordsPane.get(0).getChildren();
 		for (final Node child : children) {
-			Assert.assertTrue(child instanceof AutoCompleteTextField);
-			Assert.assertTrue(storedMnemonic.toLowerCase(Locale.ROOT).contains(
+			assertTrue(child instanceof AutoCompleteTextField);
+			assertTrue(storedMnemonic.toLowerCase(Locale.ROOT).contains(
 					((AutoCompleteTextField) child).getText().toLowerCase(Locale.ROOT)));
 		}
 

@@ -40,9 +40,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.ToggleSwitch;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -66,10 +66,11 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_HOURS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_MINUTES_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TVS_SECONDS_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SettingsPaneTest extends TestBase {
 
@@ -86,7 +87,7 @@ public class SettingsPaneTest extends TestBase {
 	private UserAccessibleProperties properties;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
@@ -159,9 +160,9 @@ public class SettingsPaneTest extends TestBase {
 		FxToolkit.setupApplication(StartUI.class);
 	}
 
-	@Test(expected = FxRobotException.class)
+	@Test
 	public void clickOnBogusItem_Test() {
-		clickOn("#exterminate");
+		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 	}
 
 	@Test
@@ -399,7 +400,7 @@ public class SettingsPaneTest extends TestBase {
 		assertTrue(Objects.requireNonNull(TestUtil.findButtonInPopup(nodes, "CONTINUE")).isDisabled());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws IOException, TimeoutException {
 
 		ensureEventQueueComplete();

@@ -31,9 +31,9 @@ import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -49,8 +49,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_EXPIRATION_TIME;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SuppressWarnings("StatementWithEmptyBody")
 
@@ -63,7 +63,7 @@ public class KeyPairUtilityTest extends TestBase {
 	HomePanePage homePanePage;
 	HistoryPanePage historyWindowPage;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		final var currentRelativePath = Paths.get("");
 
@@ -128,7 +128,7 @@ public class KeyPairUtilityTest extends TestBase {
 		FxToolkit.setupApplication(StartUI.class);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		FileUtils.deleteDirectory(

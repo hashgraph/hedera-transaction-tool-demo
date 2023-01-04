@@ -26,8 +26,8 @@ import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationTest;
 import org.testfx.util.WaitForAsyncUtils;
@@ -51,7 +51,7 @@ public class TestBase extends ApplicationTest {
 	public static final String ACCOUNTS_STRING = "Accounts";
 	private static final Logger logger = LogManager.getLogger(TestBase.class);
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupHeadlessMode() {
 		//Comment this line while testing on local system. All tests on circle ci should run headless.
 		System.setProperty("headless", "true");
@@ -66,9 +66,7 @@ public class TestBase extends ApplicationTest {
 		}
 	}
 
-
-	//@AfterAll
-	@AfterClass
+	@AfterAll
 	public static void afterTest() throws Exception {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

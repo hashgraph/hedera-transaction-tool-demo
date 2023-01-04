@@ -40,10 +40,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Disabled;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -74,10 +73,10 @@ import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP_J
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.MAIN_TRANSACTIONS_SCROLLPANE;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NEW_FILES_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
@@ -107,7 +106,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 	private UserAccessibleProperties properties;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		logger.info("Starting test class: {}", getClass().getSimpleName());
@@ -448,7 +447,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	@Ignore("Currently this test fails to write files to /Transactions - " +
+	@Disabled("Currently this test fails to write files to /Transactions - " +
 			"Documents/OutputFiles/test1.council2@hederacouncil.org/ in the GitHub action, " +
 			"thus failing the transactionFiles.size() test. Works locally.")
 	public void acceptBatchTransaction_Test() throws IOException, HederaClientException {
@@ -1126,7 +1125,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 		return destFile;
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws IOException, TimeoutException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

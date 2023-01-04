@@ -41,11 +41,10 @@ import javafx.scene.control.TextField;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
@@ -62,11 +61,11 @@ import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncryptedFile;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Ignore("Currently these tests fail in the GitHub action, " +
+@Disabled("Currently these tests fail in the GitHub action, " +
 		"states that the createPanePage is null. Works locally.")
 public class CreatePaneControllerLoadTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
@@ -95,7 +94,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 
 	public UserAccessibleProperties properties;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		try {
 			System.gc();
@@ -199,7 +198,7 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws TimeoutException, IOException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

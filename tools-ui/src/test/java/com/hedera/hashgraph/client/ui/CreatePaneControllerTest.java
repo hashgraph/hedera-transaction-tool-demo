@@ -60,10 +60,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
@@ -150,12 +149,12 @@ import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.OperationType.undelete;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.SystemEntity.contract;
 import static com.hedera.hashgraph.client.ui.pages.CreatePanePage.SystemEntity.file;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CreatePaneControllerTest extends TestBase implements Supplier<TestBase>, GenericFileReadWriteAware {
 
@@ -187,7 +186,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 	private final Path currentRelativePath = Paths.get("");
 	public UserAccessibleProperties properties;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		try {
 			System.gc();
@@ -2688,7 +2687,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertArrayEquals(Hex.decode("abc123def456"), freeezeTransaction.getFileHash());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws IOException, TimeoutException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();
@@ -2755,7 +2754,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 
 	private void checkBadChecksum(final String s) {
 		final var popupNodes = TestUtil.getPopupNodes();
-		Assert.assertNotNull(popupNodes);
+		assertNotNull(popupNodes);
 		assertEquals(1, popupNodes.size());
 
 		final var children = ((VBox) popupNodes.get(0)).getChildren();

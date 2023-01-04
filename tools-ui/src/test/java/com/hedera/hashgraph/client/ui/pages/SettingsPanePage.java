@@ -43,8 +43,8 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.TX_VALID_DURATION_TF;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findTextFieldsInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SettingsPanePage {
 	private final TestBase driver;

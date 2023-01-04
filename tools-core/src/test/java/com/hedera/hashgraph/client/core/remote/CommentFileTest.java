@@ -20,14 +20,14 @@ package com.hedera.hashgraph.client.core.remote;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 
-import static junit.framework.TestCase.assertNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class CommentFileTest extends TestBase {
 

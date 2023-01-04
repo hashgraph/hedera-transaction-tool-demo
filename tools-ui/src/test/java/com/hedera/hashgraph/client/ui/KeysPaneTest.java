@@ -38,10 +38,9 @@ import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -76,11 +75,12 @@ import static com.hedera.hashgraph.client.ui.JavaFXIDs.PUBLIC_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.SIGNING_KEYS_VBOX;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.findButtonInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("ALL")
 public class KeysPaneTest extends TestBase {
@@ -103,7 +103,7 @@ public class KeysPaneTest extends TestBase {
 	private UserAccessibleProperties properties;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
@@ -162,10 +162,10 @@ public class KeysPaneTest extends TestBase {
 		mainWindowPage.clickOnKeysButton();
 	}
 
-	@Test(expected = FxRobotException.class)
+	@Test
 	public void clickOnBogusItem_Test() {
 		logger.info("clickOnBogusItem_Test");
-		clickOn("#exterminate");
+		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 	}
 
 	@Test
@@ -184,7 +184,7 @@ public class KeysPaneTest extends TestBase {
 		clickOn(change);
 		var passwordFields = keysPanePage.getPopupPasswordFields();
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
-		Assertions.assertFalse(passwordFields.get(1).isDisable());
+		assertFalse(passwordFields.get(1).isDisable());
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		final var newPopupButtons = keysPanePage.getPopupButtons();
 		clickOn(newPopupButtons.get(0));
@@ -202,7 +202,7 @@ public class KeysPaneTest extends TestBase {
 		clickOn(change);
 		passwordFields = keysPanePage.getPopupPasswordFields();
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(0));
-		Assertions.assertFalse(passwordFields.get(1).isDisable());
+		assertFalse(passwordFields.get(1).isDisable());
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
 		final var newPopupButtons1 = keysPanePage.getPopupButtons();
 		clickOn(newPopupButtons1.get(1));
@@ -621,7 +621,7 @@ public class KeysPaneTest extends TestBase {
 		assertFalse(errorFields.get(0).isVisible());
 		assertFalse(passwordFields.get(1).isDisable());
 
-		Assertions.assertFalse(passwordFields.get(1).isDisable());
+		assertFalse(passwordFields.get(1).isDisable());
 		keysPanePage.typePassword("tempura", passwordFields.get(1));
 		assertTrue(errorFields.get(1).isVisible());
 		keysPanePage.typePassword("tempura sushi", passwordFields.get(1));
@@ -711,7 +711,7 @@ public class KeysPaneTest extends TestBase {
 		logger.info("Done testing hash link to keys");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws TimeoutException, IOException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

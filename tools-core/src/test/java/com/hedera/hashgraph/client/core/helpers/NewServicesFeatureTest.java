@@ -26,7 +26,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -41,7 +40,7 @@ import com.hedera.hashgraph.sdk.proto.Key;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -83,7 +82,7 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
-	@Ignore("Empty test")
+	@Disabled("Empty test")
 	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException, ReceiptStatusException {
 		final var keyStore =

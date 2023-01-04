@@ -44,15 +44,13 @@ import javafx.scene.control.TreeView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import junitparams.JUnitParamsRunner;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -79,13 +77,13 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ACCOUNTS_SCROLL_PANE;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChildren;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("rawtypes")
-@RunWith(JUnitParamsRunner.class)
 public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";
@@ -101,7 +99,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 	private final String currentRelativePath = Paths.get("").toAbsolutePath().toString();
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Starting test class: {}", getClass().getSimpleName());
 		TestUtil.buildFolders();
@@ -170,9 +168,9 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 
 	}
 
-	@Test(expected = FxRobotException.class)
+	@Test
 	public void clickOnBogusItem_Test() {
-		clickOn("#exterminate");
+		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 	}
 
 	@Test
@@ -435,7 +433,7 @@ public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAw
 		clickOn("CONTINUE");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws IOException, BackingStoreException, TimeoutException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

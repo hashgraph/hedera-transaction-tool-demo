@@ -46,9 +46,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import javax.swing.JFileChooser;
@@ -76,10 +76,10 @@ import static com.hedera.hashgraph.client.core.security.SecurityUtilities.toEncr
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_LOCAL_TIME_LABEL;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_NODE_FIELD;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.CREATE_UPDATE_ORIGINAL_KEY;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CreatePaneControllerSupplementalTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CreatePaneControllerTest.class);
@@ -112,7 +112,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 			System.getProperty("user.home") + "/", "") + "/";
 
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		try {
 			System.gc();
@@ -216,7 +216,7 @@ public class CreatePaneControllerSupplementalTest extends TestBase implements Ge
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws IOException, TimeoutException {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();

@@ -48,9 +48,9 @@ import static com.hedera.hashgraph.client.ui.pages.TestUtil.findPasswordInPopup;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getChoiceBoxesFromExpander;
 import static com.hedera.hashgraph.client.ui.pages.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings({ "rawtypes", "UnusedReturnValue" })
 public class AccountsPanePage {

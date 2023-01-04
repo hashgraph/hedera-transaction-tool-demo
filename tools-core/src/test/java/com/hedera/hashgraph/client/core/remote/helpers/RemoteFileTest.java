@@ -26,9 +26,9 @@ import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.TestBase;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 	int receiver = 50;
 	String filename;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		final var testJson = getJsonInputCT(50, sender, receiver, new Timestamp(20).asInstant());
 		writeJsonObject("src/test/resources/Files/testJson.json", testJson);
@@ -57,7 +57,7 @@ public class RemoteFileTest extends TestBase implements GenericFileReadWriteAwar
 		filename = transaction.store("src/test/resources/Files/testTransfer.tx");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		Files.deleteIfExists(Path.of("src/test/resources/Files/testJson.json"));
 		Files.deleteIfExists(Path.of("src/test/resources/Files/testTransfer.tx"));
