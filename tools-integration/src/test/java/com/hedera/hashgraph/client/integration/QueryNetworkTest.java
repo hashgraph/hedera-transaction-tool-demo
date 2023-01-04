@@ -48,9 +48,9 @@ import javafx.scene.control.ButtonBar;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -71,9 +71,9 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertFalse;
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
@@ -92,7 +92,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 			"user.home") + File.separator + "Documents" + File.separator + "TransactionTools" + File.separator;
 	public UserAccessibleProperties properties;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		final var output =
@@ -133,7 +133,7 @@ public class QueryNetworkTest extends TestBase implements GenericFileReadWriteAw
 		mainWindowPage.clickOnAccountsButton();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File(DEFAULT_STORAGE).exists()) {
 			try {

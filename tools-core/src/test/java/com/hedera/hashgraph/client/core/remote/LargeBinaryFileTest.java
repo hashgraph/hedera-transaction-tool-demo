@@ -38,9 +38,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,18 +50,18 @@ import java.security.KeyStoreException;
 import java.util.zip.ZipInputStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
@@ -267,7 +267,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		logger.info("here");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File("src/test/resources/Files/output").exists()) {
 			FileUtils.deleteDirectory(new File("src/test/resources/Files/output"));

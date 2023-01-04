@@ -11,35 +11,28 @@ plugins {
 
 dependencies {
     implementation(project(":tools-core"))
-    implementation("org.slf4j:slf4j-api:1.7.30")
-    implementation("org.apache.logging.log4j:log4j-api:2.17.1")
-    implementation("com.google.code.gson:gson:2.8.9")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation("com.google.protobuf:protobuf-java-util:3.21.7")
-    implementation("org.bouncycastle:bcprov-jdk15on:1.69")
-    implementation("org.bouncycastle:bcpkix-jdk15on:1.69")
-    implementation("org.bouncycastle:bcpg-jdk15on:1.69")
-    implementation("net.i2p.crypto:eddsa:0.3.0")
-    implementation("org.apache.commons:commons-lang3:3.12.0")
-    implementation("org.apache.commons:commons-collections4:4.4")
-    implementation("org.apache.logging.log4j:log4j-core:2.17.1")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.1")
-    implementation("org.controlsfx:controlsfx:11.1.0")
-    implementation("org.testfx:testfx-core:4.0.16-alpha")
-    implementation("org.testfx:testfx-junit5:4.0.16-alpha")
-    implementation("org.testfx:openjfx-monocle:jdk-12.0.1+2")
-    implementation("pl.pragmatists:JUnitParams:1.1.1")
-    implementation("org.zeroturnaround:zt-zip:1.14")
-    implementation("org.json:json:20210307")
-    implementation("org.apache.httpcomponents:httpclient:4.5.13")
-    implementation("commons-io:commons-io:2.8.0")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.3")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.13.3")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
-    implementation("com.codahale:passpol:0.7.0")
-    implementation("org.jetbrains:annotations:13.0")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.0-M1")
-    testImplementation("org.junit.vintage:junit-vintage-engine:5.8.0-M1")
+    implementation(libs.bundles.logging)
+    implementation(libs.bundles.jackson)
+    implementation(libs.bundles.bouncycastle)
+    implementation(libs.gson)
+    implementation(libs.commons.lang3)
+    implementation(libs.protobuf.java.util)
+    implementation(libs.eddsa)
+    implementation(libs.commons.lang3)
+    implementation(libs.commons.collections4)
+    implementation(libs.controlsfx)
+    implementation(libs.zt.zip)
+//    implementation("org.json:json:20210307")
+    implementation(libs.httpclient)
+    implementation(libs.commons.io)
+    implementation(libs.passpol)
+    implementation(libs.jetbrains.annotations)
+    testImplementation(testLibs.junitparams)
+    testImplementation(testLibs.junit.jupiter)
+    testImplementation(testLibs.testfx.core)
+    testImplementation(testLibs.testfx.junit)
+    testRuntimeOnly(testLibs.junit.jupiter.engine)
+    testRuntimeOnly(testLibs.testfx.openjfx.monocle)
 }
 
 application {
@@ -52,3 +45,10 @@ javafx {
 }
 
 description = "tools-ui"
+
+//test {
+//    useJUnitPlatform()
+//    testLogging {
+//        events "passed", "skipped", "failed"
+//    }
+//}

@@ -46,9 +46,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -75,7 +75,8 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class BatchTransactionEndToEndTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
@@ -98,7 +99,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 	MainWindowPage mainWindowPage;
 	HistoryWindowPage historyWindowPage;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		final var output =
@@ -160,7 +161,7 @@ public class BatchTransactionEndToEndTest extends TestBase implements GenericFil
 		setupUI();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));

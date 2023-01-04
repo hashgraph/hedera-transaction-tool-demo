@@ -12,6 +12,138 @@ include(":tools-core")
 include(":tools-integration")
 include(":tools-cli")
 
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("libs") {
+            // Define the approved version numbers
+            // Third-party dependency versions
+            // Logging
+            version("log4j", "2.17.1")
+            version("slf4j", "1.7.30")
+
+            // PicoCLI
+            version("picocli", "4.6.1")
+
+            // Parsers
+            version("jackson", "2.13.3")
+            version("opencsv", "5.6")
+
+            // Apache
+            version("commons-io", "2.11.0")
+            version("commons-codec", "1.15")
+            version("commons-lang3", "3.12.0")
+            version("commons-collections4", "4.4")
+            version("httpclient", "4.5.13")
+            version("maven-artifact", "3.6.0")
+
+            // Serialization
+            version("protobuf", "3.21.7")
+            version("gson", "2.10")
+
+            // Cryptography and Encoding Libraries
+            version("bouncycastle", "1.69")
+            version("eddsa", "0.3.0")
+
+            // Jetbrains
+            version("jetbrains-annotations", "13.0")
+
+            // Zip Utils
+            version("zt-zip", "1.14")
+
+            // Remote Procedure Call
+            version("grpc", "1.44.0")
+
+            // Password Validation
+            version("passpol", "0.7.0")
+
+            // JavaFX
+            version("controlsfx", "11.1.0")
+
+            // Define the individual libraries
+            // Logging
+            library("log4j.api", "org.apache.logging.log4j", "log4j-api").versionRef("log4j")
+            library("log4j.core", "org.apache.logging.log4j", "log4j-core").versionRef("log4j")
+            library("log4j.slf4j.impl", "org.apache.logging.log4j", "log4j-slf4j-impl")
+                .versionRef("log4j")
+            library("slf4j.api", "org.slf4j", "slf4j-api").versionRef("slf4j")
+
+            // PicoCLI
+            library("picocli", "info.picocli", "picocli").versionRef("picocli")
+
+            // Parsers
+            library("jackson.annotations", "com.fasterxml.jackson.core", "jackson-annotations")
+                .versionRef("jackson")
+            library("jackson.core", "com.fasterxml.jackson.core", "jackson-core")
+                .versionRef("jackson")
+            library("jackson.databind", "com.fasterxml.jackson.core", "jackson-databind")
+                .versionRef("jackson")
+            library("opencsv", "com.opencsv", "opencsv").versionRef("opencsv")
+
+            // Apache
+            library("commons.io", "commons-io", "commons-io").versionRef("commons-io")
+            library("commons.codec", "commons-codec", "commons-codec").versionRef("commons-codec")
+            library("commons.lang3", "org.apache.commons", "commons-lang3")
+                .versionRef("commons-lang3")
+            library("commons.collections4", "org.apache.commons", "commons-collections4")
+                .versionRef("commons-collections4")
+            library("httpclient", "org.apache.httpcomponents", "httpclient").versionRef("httpclient")
+            library("maven.artifact", "org.apache.maven", "maven-artifact").versionRef("maven-artifact")
+
+            // Serialization
+            //library("json", "org.json", "json").versionRef("json") 20210307
+            library("gson", "com.google.code.gson", "gson").versionRef("gson")
+            library("protobuf.javalite", "com.google.protobuf", "protobuf-javalite")
+                .versionRef("protobuf")
+            library("protobuf.java.util", "com.google.protobuf", "protobuf-java-util")
+                .versionRef("protobuf")
+
+            // Cryptography and Encoding Libraries
+            library("bcprov", "org.bouncycastle", "bcprov-jdk15on").versionRef("bouncycastle")
+            library("bcpkix", "org.bouncycastle", "bcpkix-jdk15on").versionRef("bouncycastle")
+            library("bcpg", "org.bouncycastle", "bcpg-jdk15on").versionRef("bouncycastle")
+            library("eddsa", "net.i2p.crypto", "eddsa").versionRef("eddsa")
+
+            // Jetbrains
+            library("jetbrains.annotations", "org.jetbrains", "annotations")
+                .versionRef("jetbrains-annotations")
+
+            // Zip Utils
+            library("zt.zip", "org.zeroturnaround", "zt-zip").versionRef("zt-zip")
+
+            // Remote Procedure Call
+            library("grpc.core", "io.grpc", "grpc-core").versionRef("grpc")
+            library("grpc.netty", "io.grpc", "grpc-netty").versionRef("grpc")
+
+            // Password Validation
+            library("passpol", "com.codahale", "passpol").versionRef("passpol")
+
+            // JavaFX
+            library("controlsfx", "org.controlsfx", "controlsfx").versionRef("controlsfx")
+
+            // Bundles
+            bundle("logging", listOf("log4j.api", "log4j.core", "log4j.slf4j.impl", "slf4j.api"))
+            bundle("jackson", listOf("jackson.annotations", "jackson.core", "jackson.databind"))
+            bundle("bouncycastle", listOf("bcprov", "bcpkix", "bcpg"))
+        }
+
+        create("testLibs") {
+            version("junit", "5.8.0-M1")
+            version("testfx", "4.0.16-alpha")
+            version("monocle", "jdk-12.0.1+2")
+            version("junitparams", "1.1.1")
+
+            library("junit.jupiter", "org.junit.jupiter", "junit-jupiter").versionRef("junit")
+            library("junit.jupiter.engine", "org.junit.jupiter", "junit-jupiter-engine")
+                .versionRef("junit")
+            library("testfx.core", "org.testfx", "testfx-core").versionRef("testfx")
+            library("testfx.junit", "org.testfx", "testfx-junit5").versionRef("testfx")
+            library("testfx.openjfx.monocle", "org.testfx", "openjfx-monocle").versionRef("monocle")
+            library("junitparams", "pl.pragmatists", "JUnitParams").versionRef("junitparams")
+//            bundle("testfx", listOf("testfx.core, testfx.junit, testfx.openjfx.monocle"))
+        }
+    }
+}
+
 gradleEnterprise {
     buildScan {
         termsOfServiceUrl = "https://gradle.com/terms-of-service"

@@ -8,24 +8,20 @@ plugins {
 }
 
 dependencies {
-    implementation("org.testfx:openjfx-monocle:jdk-12.0.1+2")
-    implementation("pl.pragmatists:JUnitParams:1.1.1")
+//    implementation("pl.pragmatists:JUnitParams:1.1.1")
     testImplementation(project(":tools-core"))
     testImplementation(project(":tools-ui"))
     testImplementation(project(":tools-cli"))
-    testImplementation("org.junit.jupiter:junit-jupiter:5.8.0-M1")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.0-M1")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.0-M1")
-    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.0-M1")
-    testImplementation("org.junit.vintage:junit-vintage-engine:5.8.0-M1")
-    testImplementation("org.apache.logging.log4j:log4j-api:2.17.1")
-    testImplementation("commons-io:commons-io:2.8.0")
-    testImplementation("com.google.code.gson:gson:2.8.9")
-    testImplementation("org.testfx:testfx-core:4.0.16-alpha")
-    testImplementation("org.testfx:testfx-junit:4.0.16-alpha")
-    testImplementation("org.testfx:testfx-junit5:4.0.16-alpha")
-    testImplementation("org.controlsfx:controlsfx:11.1.0")
-    testImplementation("com.opencsv:opencsv:5.6")
+    testImplementation(libs.bundles.logging)
+    testImplementation(libs.commons.io)
+    testImplementation(libs.gson)
+    testImplementation(libs.controlsfx)
+    testImplementation(libs.opencsv)
+    testImplementation(testLibs.testfx.core)
+    testImplementation(testLibs.testfx.junit)
+    testImplementation(testLibs.junit.jupiter)
+    testRuntimeOnly(testLibs.junit.jupiter.engine)
+    testRuntimeOnly(testLibs.testfx.openjfx.monocle)
 }
 
 javafx {

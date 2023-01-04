@@ -40,8 +40,8 @@ import static com.hedera.hashgraph.client.integration.TestUtil.findCheckBoxInPop
 import static com.hedera.hashgraph.client.integration.TestUtil.findTextFieldInPopup;
 import static com.hedera.hashgraph.client.integration.TestUtil.getPopupNodes;
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AccountsPanePage {
 	private final TestBase driver;
