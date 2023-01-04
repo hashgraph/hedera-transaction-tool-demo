@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.core.json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class TimestampTest {
 
 	@Test

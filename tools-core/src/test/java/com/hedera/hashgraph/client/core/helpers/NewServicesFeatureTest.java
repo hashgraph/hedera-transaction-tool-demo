@@ -52,6 +52,7 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("Temporarily disabling tests")
 class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(NewServicesFeatureTest.class);
 

@@ -27,12 +27,11 @@ dependencies {
     implementation(libs.commons.io)
     implementation(libs.passpol)
     implementation(libs.jetbrains.annotations)
-    testImplementation(testLibs.junitparams)
-    testImplementation(testLibs.junit.jupiter)
+    testImplementation(testLibs.bundles.junit)
     testImplementation(testLibs.testfx.core)
     testImplementation(testLibs.testfx.junit)
-    testRuntimeOnly(testLibs.junit.jupiter.engine)
-    testRuntimeOnly(testLibs.testfx.openjfx.monocle)
+//    testRuntimeOnly(testLibs.junit.jupiter.engine)
+    testImplementation(testLibs.testfx.openjfx.monocle)
 }
 
 application {
@@ -45,10 +44,3 @@ javafx {
 }
 
 description = "tools-ui"
-
-//test {
-//    useJUnitPlatform()
-//    testLogging {
-//        events "passed", "skipped", "failed"
-//    }
-//}

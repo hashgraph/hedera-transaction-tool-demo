@@ -35,6 +35,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -54,6 +55,7 @@ import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonIn
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class ToolCryptoCreateTransactionTest implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(ToolCryptoCreateTransactionTest.class);

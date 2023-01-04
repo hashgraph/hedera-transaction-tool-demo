@@ -18,11 +18,14 @@
 
 package com.hedera.hashgraph.client.core.testHelpers;
 
+import org.junit.jupiter.api.Disabled;
+
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import static java.lang.Boolean.parseBoolean;
 
+@Disabled("Temporarily disabling tests")
 public class TestConstants {
 	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));

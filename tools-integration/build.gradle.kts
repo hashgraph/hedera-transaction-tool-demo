@@ -19,8 +19,8 @@ dependencies {
     testImplementation(libs.opencsv)
     testImplementation(testLibs.testfx.core)
     testImplementation(testLibs.testfx.junit)
-    testImplementation(testLibs.junit.jupiter)
-    testRuntimeOnly(testLibs.junit.jupiter.engine)
+    testImplementation(testLibs.bundles.junit)
+//    testRuntimeOnly(testLibs.junit.jupiter.engine)
     testRuntimeOnly(testLibs.testfx.openjfx.monocle)
 }
 

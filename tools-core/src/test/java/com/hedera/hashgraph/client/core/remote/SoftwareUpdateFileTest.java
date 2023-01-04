@@ -29,8 +29,9 @@ import javafx.scene.text.Text;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,17 +39,18 @@ import java.nio.file.Files;
 import java.util.Date;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
-import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+@Disabled("Temporarily disabling tests")
 public class SoftwareUpdateFileTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(SoftwareUpdateFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");

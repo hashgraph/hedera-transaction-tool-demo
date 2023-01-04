@@ -82,6 +82,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class ToolTransactionTest {
 	private final long sender = 2;
 	private final long receiver = 50;

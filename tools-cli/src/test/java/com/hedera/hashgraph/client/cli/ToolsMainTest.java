@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.cli;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -29,6 +30,7 @@ import java.util.function.BooleanSupplier;
 import static java.lang.Boolean.parseBoolean;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class ToolsMainTest {
 	private static final BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));

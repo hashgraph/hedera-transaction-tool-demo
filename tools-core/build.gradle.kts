@@ -27,8 +27,8 @@ dependencies {
     implementation(libs.jetbrains.annotations)
     testImplementation(testLibs.junitparams)
     testImplementation(testLibs.testfx.junit)
-    testImplementation(testLibs.junit.jupiter)
-    testRuntimeOnly(testLibs.junit.jupiter.engine)
+    testImplementation(testLibs.bundles.junit)
+//    testRuntimeOnly(testLibs.junit.jupiter.engine)
     testRuntimeOnly(testLibs.testfx.openjfx.monocle)
 }
 

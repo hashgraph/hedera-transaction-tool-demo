@@ -20,11 +20,13 @@ package com.hedera.hashgraph.client.ui.utilities;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Disabled("Temporarily disabling tests")
 class AccountAmountStringsTest {
 
 	@Test

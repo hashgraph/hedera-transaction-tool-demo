@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.core.transactions;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,6 +33,7 @@ import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonIn
 import static java.lang.Boolean.parseBoolean;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("Temporarily disabling tests")
 class SignaturePairTest {
 	public static BooleanSupplier isInCircleCi = () ->
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));

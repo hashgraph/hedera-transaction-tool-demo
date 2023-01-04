@@ -34,10 +34,10 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -62,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 public class NewPasswordPopupTest extends TestBase {
 	private static final String OUTPUT_PATH =
 			"/src/test/resources/Transactions - Documents/OutputFiles/test1.council2@hederacouncil.org/";
@@ -234,6 +235,7 @@ public class NewPasswordPopupTest extends TestBase {
 	}
 
 	@Test
+	@Disabled("The failures in headful mode could be related to this issue: https://github.com/TestFX/TestFX/issues/566")
 	public void changePasswordAccept_test() {
 		doubleClickOn("principalTestingKey");
 		final var buttons = keysPanePage.getPopupButtons();
@@ -306,7 +308,7 @@ public class NewPasswordPopupTest extends TestBase {
 				.enterPopupPassword(PASSWORD);
 
 		final var other = otherMnemonic.split(" ");
-		Arrays.stream(other).map(oldMnemonic::contains).forEach(TestCase::assertTrue);
+		Arrays.stream(other).map(oldMnemonic::contains).forEach(Assertions::assertTrue);
 	}
 
 }

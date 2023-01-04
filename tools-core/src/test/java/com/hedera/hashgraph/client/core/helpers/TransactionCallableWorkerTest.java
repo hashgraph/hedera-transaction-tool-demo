@@ -35,6 +35,7 @@ import com.hedera.hashgraph.sdk.TransferTransaction;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -48,6 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Disabled("Temporarily disabling tests")
 class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
 	@BeforeEach

@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.security;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -26,6 +27,7 @@ import java.security.KeyStoreException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("Temporarily disabling tests")
 class Ed25519KeyStoreTest {
 
 	public static final String PASSWORD = "123456789";

@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.File;
 import java.time.Instant;
@@ -47,6 +48,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 
+@Disabled("Temporarily disabling tests")
 public class TestHelpers {
 
 	/**

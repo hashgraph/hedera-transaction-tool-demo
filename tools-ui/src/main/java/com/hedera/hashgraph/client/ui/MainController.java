@@ -635,19 +635,20 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 	public String getVersion() {
 		final var buildProps = new Properties();
 		var version = UNKNOWN_VERSION;
-		try {
-			buildProperties(buildProps);
-			final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-			final var dateTime = formatter.parse(buildProps.get("git.build.time").toString());
-			formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-			final var dateTimeUTC = formatter.format(dateTime);
-			version = String.format("Version: %s, UTC-BUILD-TIME: %s, COMMIT-ID: %s",
-					buildProps.get("git.build.version"),
-					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
-		} catch (final Exception ex) {
-			LOG.error("Error Printing Version: {}", ex.getMessage());
-			displaySystemMessage(ex);
-		}
+		// build.properties file doesn't exist, maybe part of the maven build
+//		try {
+//			buildProperties(buildProps);
+//			final var formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+//			final var dateTime = formatter.parse(buildProps.get("git.build.time").toString());
+//			formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+//			final var dateTimeUTC = formatter.format(dateTime);
+//			version = String.format("Version: %s, UTC-BUILD-TIME: %s, COMMIT-ID: %s",
+//					buildProps.get("git.build.version"),
+//					dateTimeUTC, buildProps.get("git.commit.id.abbrev"));
+//		} catch (final Exception ex) {
+//			LOG.error("Error Printing Version: {}", ex.getMessage());
+//			displaySystemMessage(ex);
+//		}
 		return version;
 	}
 

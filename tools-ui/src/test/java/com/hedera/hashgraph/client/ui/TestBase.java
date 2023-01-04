@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.security.KeyStoreException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
@@ -53,16 +54,17 @@ public class TestBase extends ApplicationTest {
 
 	@BeforeAll
 	public static void setupHeadlessMode() {
-		//Comment this line while testing on local system. All tests on circle ci should run headless.
-		System.setProperty("headless", "true");
+		// If the environment has a headless variable, get that
+		var envVariable = Optional.ofNullable(System.getenv().get("HEADLESS_MODE")).orElse("true");
 
-		if (Boolean.getBoolean("headless")) {
+		// If either the environment variable or the system property is set to headless, proceed
+		if (Boolean.valueOf(envVariable) || Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
 			System.setProperty("testfx.headless", "true");
 			System.setProperty("prism.order", "sw");
 			System.setProperty("prism.text", "t2k");
 			System.setProperty("java.awt.headless", "true");
-			System.setProperty("headless.geometry", "1600x1200-64");
+//			System.setProperty("headless.geometry", "1600x1200-64");
 		}
 	}
 

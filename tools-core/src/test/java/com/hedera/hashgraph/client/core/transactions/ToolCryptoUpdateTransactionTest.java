@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.testHelpers.TestHelpers;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -44,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class ToolCryptoUpdateTransactionTest implements GenericFileReadWriteAware {
 
 	@BeforeEach

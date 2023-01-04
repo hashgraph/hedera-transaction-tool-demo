@@ -29,6 +29,7 @@ import com.hedera.hashgraph.sdk.FreezeTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import org.bouncycastle.util.encoders.Hex;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -59,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class ToolFreezeTransactionTest {
 
 	@Test

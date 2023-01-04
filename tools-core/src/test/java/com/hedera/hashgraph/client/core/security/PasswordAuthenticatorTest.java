@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.security;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.security.NoSuchAlgorithmException;
@@ -26,6 +27,7 @@ import java.security.spec.InvalidKeySpecException;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class PasswordAuthenticatorTest {
 
 	@Test

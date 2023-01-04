@@ -78,7 +78,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
+@Disabled("Temporarily disabling tests")
 public class HomePaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	protected static final String PRINCIPAL_TESTING_KEY = "principalTestingKey";

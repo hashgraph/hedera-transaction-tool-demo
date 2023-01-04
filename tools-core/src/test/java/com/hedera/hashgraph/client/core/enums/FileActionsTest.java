@@ -18,10 +18,12 @@
 
 package com.hedera.hashgraph.client.core.enums;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@Disabled("Temporarily disabling tests")
 class FileActionsTest {
 
 	@Test

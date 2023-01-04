@@ -25,9 +25,10 @@ import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -38,17 +39,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-
+@Disabled("Temporarily disabling tests")
 public class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMapTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 	}

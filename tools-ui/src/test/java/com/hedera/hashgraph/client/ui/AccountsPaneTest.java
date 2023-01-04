@@ -50,6 +50,7 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -84,6 +85,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("rawtypes")
+@Disabled("The failures in headful mode could be related to this issue: https://github.com/TestFX/TestFX/issues/566")
 public class AccountsPaneTest extends TestBase implements GenericFileReadWriteAware {
 
 	public static final String USER_PROPERTIES = "/Files/user.properties";

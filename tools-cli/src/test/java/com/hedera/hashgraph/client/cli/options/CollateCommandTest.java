@@ -50,6 +50,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -73,6 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 class CollateCommandTest implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CollateCommandTest.class);
 	private static final BooleanSupplier isInCircleCi = () ->

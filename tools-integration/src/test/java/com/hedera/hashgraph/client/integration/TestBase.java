@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.security.KeyStoreException;
+import java.util.Optional;
 import java.util.Set;
 
 public class TestBase extends ApplicationTest {
@@ -45,11 +46,11 @@ public class TestBase extends ApplicationTest {
 
 	@BeforeAll
 	public static void setupHeadlessMode() {
-		System.gc();
-		//Comment this line while testing on local system. All tests on circle ci should run headless.
-		System.setProperty("headless", "true");
+		// If the environment has a headless variable, get that
+		var envVariable = Optional.ofNullable(System.getenv().get("HEADLESS_MODE")).orElse("true");
 
-		if (Boolean.getBoolean("headless")) {
+		// If either the environment variable or the system property is set to headless, proceed
+		if (Boolean.valueOf(envVariable) || Boolean.getBoolean("headless")) {
 			System.setProperty("testfx.robot", "glass");
 			System.setProperty("testfx.headless", "true");
 			System.setProperty("prism.order", "sw");

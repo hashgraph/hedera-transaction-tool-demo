@@ -127,19 +127,27 @@ dependencyResolutionManagement {
         }
 
         create("testLibs") {
-            version("junit", "5.8.0-M1")
+            version("junit", "5.9.1")
             version("testfx", "4.0.16-alpha")
             version("monocle", "jdk-12.0.1+2")
             version("junitparams", "1.1.1")
 
-            library("junit.jupiter", "org.junit.jupiter", "junit-jupiter").versionRef("junit")
-            library("junit.jupiter.engine", "org.junit.jupiter", "junit-jupiter-engine")
+            // Define the individual libraries
+            // JUnit Bundle
+            library("junit-jupiter", "org.junit.jupiter", "junit-jupiter").versionRef("junit")
+            library("junit-jupiter-api", "org.junit.jupiter", "junit-jupiter-api")
                 .versionRef("junit")
+            library("junit-jupiter-params", "org.junit.jupiter", "junit-jupiter-params")
+                .versionRef("junit")
+
             library("testfx.core", "org.testfx", "testfx-core").versionRef("testfx")
             library("testfx.junit", "org.testfx", "testfx-junit5").versionRef("testfx")
             library("testfx.openjfx.monocle", "org.testfx", "openjfx-monocle").versionRef("monocle")
             library("junitparams", "pl.pragmatists", "JUnitParams").versionRef("junitparams")
 //            bundle("testfx", listOf("testfx.core, testfx.junit, testfx.openjfx.monocle"))
+
+            // Bundles
+            bundle("junit", listOf("junit-jupiter", "junit-jupiter-api", "junit-jupiter-params"))
         }
     }
 }

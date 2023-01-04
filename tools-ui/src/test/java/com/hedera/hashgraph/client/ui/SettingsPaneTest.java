@@ -42,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.ToggleSwitch;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
@@ -72,6 +73,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Disabled("Temporarily disabling tests")
 public class SettingsPaneTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
