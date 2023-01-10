@@ -64,41 +64,6 @@ public class Utilities {
 		return localDateFormatter.format(ldt);
 	}
 
-//	for these three, I need to know the desired format
-//			sometimes it uses ',' and sometimes ' '
-
-	public static String setCurrencyFormat(final long amount) {
-		final var symbols = new DecimalFormatSymbols();
-		symbols.setGroupingSeparator(' ');
-		final var formatInt = new DecimalFormat("###,###,###,###,###,###", symbols);
-		final var formatFrac = new DecimalFormat("00,000,000", symbols);
-		final var amountHBars = (amount - amount % 100000000) / 100000000d;
-		final var amountTinyBars = (double) (amount % 100000000);
-
-		if (amount % 100000000 == 0) {
-			return formatInt.format(amountHBars).trim();
-		} else {
-			return formatInt.format(amountHBars).trim() + "." + formatFrac.format(amountTinyBars);
-		}
-	}
-
-	public static String stripHBarFormat(final String hBars) {
-		if (hBars.isBlank()) {
-			return "0";
-		}
-
-		final var tiny = (hBars.contains(".")) ? hBars : hBars.concat(".00000000");
-		final var amount = Long.parseLong(tiny.replace(HbarUnit.HBAR.getSymbol(), "")
-				.replace(".", "")
-				.replace(" ", ""));
-		return String.valueOf(amount);
-	}
-
-
-
-
-
-
 	/**
 	 * Parses a String into a list of accounts. Strings may be of the form "1-5, 8, 12-13"
 	 *
