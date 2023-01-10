@@ -22,6 +22,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.components.SigningKeyCheckBoxListener;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
@@ -241,7 +242,7 @@ public class ExtraKeysSelectorPopup {
 	private static CheckBox getCheckBox(final Set<File> selectedSet, final File knownKey) {
 		final var baseName = FilenameUtils.getBaseName(knownKey.getName());
 		final var checkBox = new CheckBox(baseName);
-		Utilities.checkBoxListener(selectedSet, knownKey, baseName, checkBox);
+		checkBox.selectedProperty().addListener(new SigningKeyCheckBoxListener(selectedSet, knownKey, baseName));
 		return checkBox;
 	}
 

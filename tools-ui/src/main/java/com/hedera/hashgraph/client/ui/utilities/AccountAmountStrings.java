@@ -23,6 +23,8 @@ import com.google.gson.JsonElement;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.client.ui.components.HbarCurrencyFormat;
+import com.hedera.hashgraph.sdk.HbarUnit;
 
 import java.util.regex.Pattern;
 
@@ -39,14 +41,15 @@ public class AccountAmountStrings {
 	}
 
 	private String parseAmountString(final String amount) {
-		try {
-			final var temp = amount.replace("-", "").replace(" ", "").replace("\u0127", "").replace(".", "");
-			return (amount.contains("-") ? "- " : "") + Utilities.setHBarFormat(
-					Long.parseLong(temp.substring(0, Math.min(temp.length(), 19))));
-		} catch (final NumberFormatException e) {
-			throw new HederaClientRuntimeException(
-					String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
-		}
+//		try {
+			// making some assumptions here, but only temporarily. I know this is being
+			// used by fields that have validators on them, so the amount should be parsable.
+			// this will change when BalanceTransfer replaces this class.
+			return new HbarCurrencyFormat().format(amount);
+//		} catch (final NumberFormatException e) {
+//			throw new HederaClientRuntimeException(
+//					String.format("Bad amount format: Cannot parse \"%s\" to an hbar amount", amount));
+//		}
 	}
 
 	private String parseAccountString(final String accountID) {
@@ -82,7 +85,7 @@ public class AccountAmountStrings {
 	public long getAmountAsLong() {
 		final var sign = amount.contains("-") ? -1L : 1L;
 		final var temp = amount.contains(".") ? amount : amount + ".00000000";
-		return sign * Long.parseLong(temp.replace("\u0127", "")
+		return sign * Long.parseLong(temp.replace(HbarUnit.HBAR.getSymbol(), "")
 				.replace(" ", "")
 				.replace(".", "")
 				.replace("-", ""));

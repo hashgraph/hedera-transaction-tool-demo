@@ -86,7 +86,7 @@ public class Constants {
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
 	public static final int DRIVE_LIMIT = 32;
-	public static final double RELOAD_PERIOD = 1.0; //One minute
+	public static final double RELOAD_PERIOD = 60.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
 	public static final String TEST_PASSWORD = "123456789";
 	public static final String COMMA_DELIMITER = ",";
@@ -207,4 +207,9 @@ public class Constants {
 	public static final String BUTTON_CANCEL = "CANCEL";
 	public static final String BUTTON_ADD = "ADD MORE";
 
+
+
+	public static final String HBAR_POSITIVE_FORMAT_STRING = "^\\d{0,11}(\\.\\d{0,7})?$";
+	public static final String HBAR_FORMAT_STRING = "^-?\\d{0,11}(\\.\\d{0,7})?$";
+//	public static final String HBAR_STRING = "\u0127";
 }

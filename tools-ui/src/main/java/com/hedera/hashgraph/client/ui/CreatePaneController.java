@@ -48,6 +48,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.ui.components.HbarCurrencyFormat;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -60,6 +61,7 @@ import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.FreezeType;
+import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
@@ -95,6 +97,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
@@ -154,6 +157,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPE
 import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
+import static com.hedera.hashgraph.client.core.constants.Constants.HBAR_FORMAT_STRING;
+import static com.hedera.hashgraph.client.core.constants.Constants.HBAR_POSITIVE_FORMAT_STRING;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
@@ -222,10 +227,6 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDi
 import static com.hedera.hashgraph.client.ui.AccountsPaneController.CANCEL_LABEL;
 import static com.hedera.hashgraph.client.ui.popups.SigningKeysPopup.display;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.RED_BORDER_STYLE;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
 import static java.lang.Thread.sleep;
 
 public class CreatePaneController implements GenericFileReadWriteAware {
@@ -433,6 +434,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private TimeFieldSet systemFieldsSet;
 	private TimeFieldSet freezeFieldsSet;
 
+	private final HbarCurrencyFormat hbarCurrencyFormatNoSymbol = new HbarCurrencyFormat(false);
+
 	// endregion
 
 	void injectMainController(final MainController controller) {
@@ -519,6 +522,15 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
 
 		invalidTransferList.visibleProperty().bind(transferBoolean);
+
+		transferFromAmountTextField.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
+		transferToAmountTextField.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
+
+//		transferFromAmountTextField.textProperty().addListener(event -> {
+//			transferFromAmountTextField.setStyle(RED_BORDER_STYLE);
+//			transferFromAmountTextField.selectAll();
+//			transferFromAmountTextField.requestFocus();
+//		});
 	}
 
 	private void setupCreateFields() {
@@ -560,6 +572,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		formatAccountTextField(stakedAccountIdField, invalidStakedAccountId, stakedAccountIdField.getParent());
 		numericFieldListen(stakedNodeIdField);
+
+		// Set the formatter for the textField.
+		createInitialBalance.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
 	}
 
 	private void setupUpdateFields() {
@@ -1111,6 +1126,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var credits = toTransferTable.getItems();
 		final var debits = fromTransferTable.getItems();
 
+		//this is in tinybars
 		long total = 0;
 		for (final var a : credits) {
 			total += a.getAmountAsLong();
@@ -1119,26 +1135,29 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			total -= a.getAmountAsLong();
 		}
 
-		final var sign = total < 0 ? "-" : "";
-
-		final var totalString = Utilities.setHBarFormat(Math.abs(total));
+		//converting to hbar
+		var hbarTotal = Hbar.fromTinybars(total);
+		final var totalString = new HbarCurrencyFormat().format(hbarTotal);
+		//If more than one amount is entered into from, this doesn't seem to feel right (user exp)
+		//But I'll leave it it for now, as it'll be changed in the future.
 		if (total > 0) {
-			transferFromAmountTextField.setText(totalString);
+			transferFromAmountTextField.setText(hbarTotal.getValue().toPlainString());
 		} else if (total < 0) {
-			transferToAmountTextField.setText(totalString);
+			transferToAmountTextField.setText(hbarTotal.getValue().abs().toPlainString());
 		} else {
 			transferFromAmountTextField.clear();
 			transferToAmountTextField.clear();
 		}
 
-		totalTransferLabel.setText(sign + totalString);
+		//totalTransfer is supposed to be 0, so from and to amounts are supposed to balance.
+		totalTransferLabel.setText(totalString);
 	}
 
 	private boolean checkAndFlagTransferFields() {
 
 		var flag = checkAndFlagCommonFields();
 
-		if (Long.parseLong(totalTransferLabel.getText().replace("\u0127", "")
+		if (Long.parseLong(totalTransferLabel.getText().replace(HbarUnit.HBAR.getSymbol(), "")
 				.replace(" ", "")
 				.replace(".", "")
 				.replace("-", "")) != 0) {
@@ -1239,7 +1258,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		amount.setStyle(START_STYLE);
 
 		final AccountAmountStrings newTransaction;
-		newTransaction = new AccountAmountStrings(account.getText(), stripHBarFormat(amount.getText()));
+		newTransaction = new AccountAmountStrings(account.getText(), amount.getText());
 
 		final var status = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(),
 				newTransaction.getStrippedAccountID()).getStatus();
@@ -1250,12 +1269,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			return;
 		}
 
-		if (isNotLong(stripHBarFormat(amount.getText()))) {
-			amount.setStyle(RED_BORDER_STYLE);
-			amount.selectAll();
-			amount.requestFocus();
-			return;
-		}
+		// TextFormatters prevent unparsable values
+//		try {
+//			Long.valueOf(stripHBarFormat(amount.getText()));
+//		} catch (NumberFormatException ex) {
+//			// If it can't be parsed as a long, it is invalid
+//			amount.setStyle(RED_BORDER_STYLE);
+//			amount.selectAll();
+//			amount.requestFocus();
+//			return;
+//		}
 
 		thisTable.getItems().add(newTransaction);
 
@@ -1275,7 +1298,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		formatAccountTextField(accountIDTextField, errorLabel, amountTextField);
 
-		amountTextField.setOnKeyReleased((KeyEvent event) -> {
+		amountTextField.setOnKeyPressed((KeyEvent event) -> {
 			if (event.getCode() == KeyCode.TAB) {
 				setHBarFormat(amountTextField);
 				acceptButton.requestFocus();
@@ -1670,7 +1693,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
 		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
 		outputObject.addProperty(TRANSACTION_FEE_PROPERTY,
-				Long.parseLong(stripHBarFormat(transactionFee.getText())));
+				hbarCurrencyFormatNoSymbol.parse(transactionFee.getText()).toTinybars());
 		return outputObject;
 	}
 
@@ -1772,7 +1795,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadCommonTransactionFields(final ToolTransaction transaction) {
 		setNowTime(transaction.getTransactionValidStart());
-		transactionFee.setText(Utilities.setCurrencyFormat(transaction.getTransactionFee().toTinybars()));
+		transactionFee.setText(hbarCurrencyFormatNoSymbol.format(transaction.getTransactionFee()));
 		final var nodeID = transaction.getNodeID();
 		nodeID.setNetworkName(controller.getCurrentNetwork());
 		nodeAccountField.setText(nodeID.toNicknameAndChecksum(controller.getAccountsList()));
@@ -1801,7 +1824,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadCryptoCreateToForm(final ToolCryptoCreateTransaction transaction) {
 		cleanAllCreateFields();
-		createInitialBalance.setText(Utilities.setCurrencyFormat(transaction.getInitialBalance().toTinybars()));
+		createInitialBalance.setText(hbarCurrencyFormatNoSymbol.format(transaction.getInitialBalance()));
 		createAutoRenew.setText(String.valueOf(transaction.getAutoRenewDuration().getSeconds()));
 		updateReceiverSignatureRequired.setSelected(transaction.isReceiverSignatureRequired());
 		createNewKey.setVisible(true);
@@ -1929,8 +1952,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			memoField.setText(details.get(MEMO_PROPERTY).getAsString());
 		}
 		if (details.has(TRANSACTION_FEE_PROPERTY)) {
-			transactionFee.setText(
-					Utilities.setCurrencyFormat(details.get(TRANSACTION_FEE_PROPERTY).getAsLong()));
+			transactionFee.setText(hbarCurrencyFormatNoSymbol.format(details.get(TRANSACTION_FEE_PROPERTY).getAsLong(), HbarUnit.TINYBAR));
 		}
 	}
 
@@ -2273,9 +2295,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		// Use default fee for transactions (note: Large binary files might override this)
 		final var feeJson = new JsonObject();
-		final var fee = Utilities.string2Hbar(transactionFee.getText());
+//		final var fee = Utilities.string2Hbar(transactionFee.getText());
 		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, fee.to(HbarUnit.TINYBAR));
+		feeJson.addProperty(TINY_BARS, Hbar.fromString(transactionFee.getText()).to(HbarUnit.TINYBAR));
+//		feeJson.addProperty(TINY_BARS, fee.to(HbarUnit.TINYBAR));
 		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
 
 		// Use default for transaction valid duration
@@ -2315,7 +2338,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!"".equals(createInitialBalance.getText())) {
 			final var balanceJson = new JsonObject();
 			balanceJson.addProperty(H_BARS, 0);
-			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
+			balanceJson.addProperty(TINY_BARS, Hbar.fromString(createInitialBalance.getText()).toTinybars());
 			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
 		}
 		// Auto renew
@@ -2769,6 +2792,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		createCharsLeft.setText(String.format("Characters left: %d", LIMIT));
 
 		resetFormButton.visibleProperty().bind(commentsVBox.visibleProperty());
+
+		// Set the formatter for the textField.
+		transactionFee.setTextFormatter(new TextFormatter<>(change -> change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
 	}
 
 	private void setTextSizeLimit(final TextArea field, final int endIndex, final Number oldValue,
@@ -2862,8 +2888,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (account.contains("(")) {
 			account = account.substring(account.lastIndexOf("(") + 1, account.lastIndexOf(")"));
 		}
-		if (!Utilities.isNotLong(account)) {
-			account = "0.0." + account;
+
+		// If the account is a long, add the "0.0." - maybe not a good idea to default to 0.0.?
+		try {
+			if (Long.valueOf(account) != null) {
+				account = "0.0." + account;
+			}
+		} catch (NumberFormatException ex) {
+			// No issues, no logging needed.
 		}
 
 		final var parsedAddress = parseAddress(NetworkEnum.asLedger(controller.getCurrentNetwork()).toBytes(), account);
@@ -3018,7 +3050,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				Identifier.parse(controller.getDefaultNodeID(), controller.getCurrentNetwork()).toNicknameAndChecksum(
 						controller.getAccountsList());
 		nodeAccountField.setText(defaultNodeID);
-		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
+		transactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee(), HbarUnit.TINYBAR));
 		setupHbarNumberField(transactionFee);
 		memoField.clear();
 		createUTCTimeLabel.setText("");
@@ -3099,10 +3131,16 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	}
 
 	private static void setHBarFormat(final TextField currencyTextField) {
-		final var hBarsLong = Utilities.string2Hbar(currencyTextField.getText()).toTinybars();
-		logger.debug("Currency text field changed to: {}", currencyTextField.getText());
-		final var hBarsString = Utilities.setHBarFormat(hBarsLong);
-		currencyTextField.setText(hBarsString.substring(0, hBarsString.length() - 1));
+		var text = currencyTextField.getText();
+		if (text.isBlank()) {
+			currencyTextField.setText("0");
+		} else {
+			if (text.startsWith(".")) {
+				text = "0" + text;
+			}
+			final var hbar = Hbar.fromString(text);
+			currencyTextField.setText(hbar.getValue().toPlainString());
+		}
 	}
 
 	public void cleanForm() {

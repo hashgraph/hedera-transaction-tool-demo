@@ -198,7 +198,7 @@ public class MnemonicInputPopup {
 		final UserAccessibleProperties properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setLegacy(false);
-		return Utilities.getSaltBytes(properties);
+		return properties.getSaltBytes();
 	}
 
 	private static void setPassword(final char[] password) throws HederaClientException {

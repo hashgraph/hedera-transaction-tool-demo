@@ -38,6 +38,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.ui.components.SigningKeyCheckBoxListener;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.KeyList;
@@ -92,7 +93,6 @@ import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.verifySignature;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored" })
@@ -724,7 +724,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		final var baseName = FilenameUtils.getBaseName(keyFile.getName());
 		final var checkBox = new CheckBox(baseName);
 		checkBox.setSelected(true);
-		checkBoxListener(signersSet, keyFile, baseName, checkBox);
+		checkBox.selectedProperty().addListener(new SigningKeyCheckBoxListener(signersSet, keyFile, baseName));
 		return checkBox;
 	}
 

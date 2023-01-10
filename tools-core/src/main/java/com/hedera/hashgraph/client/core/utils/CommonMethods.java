@@ -370,7 +370,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 
 
 		final var ledger = NetworkEnum.asLedger(accountNumber.getNetworkName());
-
+//nicknames are stored in the app (files/.system/accountmapthing). can a user enter the nickname to pull up the account? if not, what's the point?
+//				if so, are nicknames unique? if not, what's the point, if so, who and where does that happen?
 
 		final var formattedName = String.format("%s-%s", name, AddressChecksums.checksum(ledger.toBytes(), name));
 		if (name.equals(nickname) || "".equals(nickname)) {

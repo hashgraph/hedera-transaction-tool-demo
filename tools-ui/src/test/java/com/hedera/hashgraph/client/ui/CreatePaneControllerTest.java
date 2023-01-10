@@ -226,7 +226,7 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 			properties.setMnemonicHashCode(mnemonic.words.hashCode());
 			properties.setHash(TEST_PASSWORD.toCharArray());
 			properties.setLegacy(false);
-			final var salt = Utilities.getSaltBytes(properties);
+			final var salt = properties.getSaltBytes();
 			final var passwordBytes = SecurityUtilities.keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
 			toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
 					mnemonic.toString());

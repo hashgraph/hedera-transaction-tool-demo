@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.props;
 
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
@@ -26,9 +27,12 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.PasswordAuthenticator;
 import com.hedera.hashgraph.sdk.Hbar;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -48,6 +52,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SECON
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_TX_FEE;
 import static com.hedera.hashgraph.client.core.constants.Constants.GENERATE_RECORD;
 import static com.hedera.hashgraph.client.core.constants.Constants.HASH;
+import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACTIONS_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.LEGACY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
@@ -55,6 +60,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_HASH_CODE;
 import static com.hedera.hashgraph.client.core.constants.Constants.NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.PREFERRED_STORAGE_DIRECTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.SALT_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.TX_VALID_DURATION;
@@ -65,7 +71,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FE
 import static java.util.Collections.unmodifiableSet;
 
 public class UserAccessibleProperties {
-
+	private static final Logger LOG = LogManager.getLogger(UserAccessibleProperties.class);
 	private UserProperties properties;
 	private final String location;
 	private final String message;
@@ -412,6 +418,25 @@ public class UserAccessibleProperties {
 
 	public void setSalt(final boolean salt) {
 		properties.setProperty(SALT_PROPERTY, salt);
+	}
+
+	/**
+	 * Retrieves the salt as a byte array.
+	 *
+	 * @return the salt
+	 */
+	public byte[] getSaltBytes() {
+		if (hasSalt()) {
+			final var token = getHash();
+			final var decoder = Base64.getDecoder();
+
+			final var tokenBytes = decoder.decode(token);
+			if (tokenBytes.length < Constants.SALT_LENGTH + KEY_LENGTH / 8) {
+				LOG.error("Token size check failed");
+			}
+			return Arrays.copyOfRange(tokenBytes, 0, Constants.SALT_LENGTH);
+		}
+		return new byte[SALT_LENGTH];
 	}
 
 	public boolean isLegacy() {

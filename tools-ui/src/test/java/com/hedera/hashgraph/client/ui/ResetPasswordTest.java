@@ -138,7 +138,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		properties.setMnemonicHashCode(mnemonic.words.hashCode());
 		properties.setHash(TEST_PASSWORD.toCharArray());
 		properties.setLegacy(false);
-		final var salt = Utilities.getSaltBytes(properties);
+		final var salt = properties.getSaltBytes();
 		final var passwordBytes = keyFromPassword(TEST_PASSWORD.toCharArray(), salt);
 		toEncryptedFile(passwordBytes, Constants.DEFAULT_STORAGE + File.separator + Constants.MNEMONIC_PATH,
 				mnemonic.toString());

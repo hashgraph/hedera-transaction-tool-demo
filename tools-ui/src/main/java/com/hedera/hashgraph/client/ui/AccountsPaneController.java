@@ -114,6 +114,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,10 +149,8 @@ import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.ACCOUNT
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NETWORKS_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.info2Json;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.getKeysFromInfo;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.instantToLocalTimeDate;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.parseAccountNumbers;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.timestampToString;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 import static java.lang.Thread.sleep;
@@ -1137,7 +1136,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * @return true if any of the private keys in the app corresponds to one of the public keys in the account
 	 */
 	private boolean isSigner(final AccountInfo accountInfo) {
-		final var knownKeys = getKeysFromInfo(accountInfo, controller);
+		final var knownKeys = controller.getKeysFromInfo(accountInfo);
 
 		if (knownKeys.isEmpty()) {
 			return false;
@@ -1426,9 +1425,9 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		Hbar balance;
 		try {
 			balance = query.getBalance();
-			final var now = new Date();
+			final var now = ZonedDateTime.now(ZoneId.of("UTC"));
 			final var accountName = identifier.toReadableString() + "-" + network;
-			updateBalance(accountName, balance, now.getTime());
+			updateBalance(accountName, balance, now.toInstant().toEpochMilli());
 		} catch (final PrecheckStatusException e) {
 			PopupMessage.display("Precheck Error", precheckErrorString(e));
 			logger.error(e.getMessage());
@@ -1598,8 +1597,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		cal.add(Calendar.YEAR, -102);
 		final var past = cal.getTime();
 
-		return d.after(future) || d.before(past) ? "Never" : timestampToString(
-				new Timestamp(accountInfo.expirationTime));
+		return d.after(future) || d.before(past) ? "Never" : instantToLocalTimeDate(
+				new Timestamp(accountInfo.expirationTime).asInstant());
 	}
 
 	// endregion

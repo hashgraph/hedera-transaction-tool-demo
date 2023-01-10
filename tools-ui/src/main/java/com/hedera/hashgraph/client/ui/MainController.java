@@ -31,6 +31,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.updater.GithubUpdater;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
@@ -122,7 +123,6 @@ import static com.hedera.hashgraph.client.core.enums.SetupPhase.PASSWORD_RECOVER
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.TEST_PHASE;
 import static com.hedera.hashgraph.client.core.enums.SetupPhase.fromInt;
 import static com.hedera.hashgraph.client.core.remote.RemoteFilesMap.UNKNOWN_VERSION;
-import static com.hedera.hashgraph.client.ui.utilities.Utilities.getSaltBytes;
 import static org.zeroturnaround.zip.commons.FileUtils.copyDirectory;
 import static org.zeroturnaround.zip.commons.FileUtils.deleteDirectory;
 
@@ -696,7 +696,7 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 
 
 	public byte[] getSalt() {
-		return getSaltBytes(properties);
+		return properties.getSaltBytes();
 	}
 
 	//region PROPERTIES
@@ -846,6 +846,28 @@ public class MainController implements Initializable, GenericFileReadWriteAware 
 
 	public String showKeyString(final ByteString key) {
 		return keyStructureUtility.showKeyString(key);
+	}
+
+	/**
+	 * Given an account info, returns a list of string keys
+	 *
+	 * @param info
+	 * 		the account info
+	 * @return a List of strings: If the controller has information about the public key, it uses the nickname,
+	 * 		otherwise
+	 * 		it shows the complete hex.
+	 */
+	@NotNull
+	public final List<String> getKeysFromInfo(@NotNull final AccountInfo info) {
+		final var flatKey = EncryptionUtils.flatPubKeys(Collections.singletonList(info.key));
+		final var knownKeys = new ArrayList<String>();
+		for (final var key : flatKey) {
+			final var keyName = showKeyString(key);
+			if (keyName.endsWith(PUB_EXTENSION)) {
+				knownKeys.add(keyName);
+			}
+		}
+		return knownKeys;
 	}
 
 	public TreeView<String> buildKeyTreeView(final Key key) {

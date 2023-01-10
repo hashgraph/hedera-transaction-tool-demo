@@ -29,10 +29,12 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.client.ui.components.HbarCurrencyFormat;
 import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import com.hedera.hashgraph.sdk.HbarUnit;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -43,11 +45,13 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,6 +76,7 @@ import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.HBAR_POSITIVE_FORMAT_STRING;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
@@ -158,6 +163,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 	DriveSetupHelper driveSetupHelper;
 
+	private final HbarCurrencyFormat hbarCurrencyFormat = new HbarCurrencyFormat();
+	private final HbarCurrencyFormat hbarCurrencyFormatNoSymbol = new HbarCurrencyFormat(false);
+
 	void injectMainController(final MainController controller) {
 		this.controller = controller;
 	}
@@ -209,8 +217,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					.build();
 
 			loadStorageTextField.setText(controller.getPreferredStorageDirectory());
-			defaultTransactionFee.setText(
-					Utilities.setHBarFormat(controller.getDefaultTxFee()).replace("\u0127", ""));
+			defaultTransactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee(), HbarUnit.TINYBAR).replace(" ", ""));
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
@@ -378,11 +385,12 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 
 
 	private void setupDefaultTransactionFeeTextField() {
-		defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (!newValue.matches(REGEX1)) {
-				defaultTransactionFee.setText(newValue.replaceAll("[^\\d. ]", ""));
-			}
-		});
+//		this looks to be an attempt to limit input
+//		defaultTransactionFee.textProperty().addListener((observable, oldValue, newValue) -> {
+//			if (!newValue.matches(REGEX1)) {
+//				defaultTransactionFee.setText(newValue.replaceAll("[^\\d. ]", ""));
+//			}
+//		});
 
 		defaultTransactionFee.setOnKeyReleased(keyEvent -> {
 			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -396,15 +404,40 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			}
 		});
 
+		//This only does the logging, the validation needs to happen in the textFormatter
 		defaultTransactionFee.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
 			if (Boolean.FALSE.equals(newPropertyValue)) {
 				LOG.info("Transaction fee text field changed to: {}", defaultTransactionFee.getText());
-				checkTransactionFee();
+				checkFee();
 			}
 		});
 
 		maxFeeTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, maxFeeTooltip,
 				TRANSACTION_FEE_TOOLTIP_MESSAGE));
+
+//		this is preventing input, highlight, etc.
+		//the issue is that if the value present doesn't match, it is unchagneable.
+		//the value should never not match, but if there is a bug that saves the wrong value (allows it to be saved)
+		//then everything is broken.
+		defaultTransactionFee.setTextFormatter(new TextFormatter<>(change ->
+				change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
+//		the cursor in the skin is wrong, and as I was typing (426525555555) at some point the value deisplayued was
+//		way off, then it turned into 50 000 000 000 hsdfasdfasdf
+//			h needs a 'show symbol' type of method, as this deosn't want the currentrecny, but other places do'
+//		defaultTransactionFee.setSkin(new HbarFieldSkin(defaultTransactionFee));
+//		defaultTransactionFee.setTextFormatter(new TextFormatter<String>(new StringConverter<String>() {
+//			final HbarCurrencyFormat format = new HbarCurrencyFormat(false);
+//			@Override
+//			public String toString(String object) {
+//				return format.format(object);
+//			}
+//
+//			@Override
+//			public String fromString(String string) {
+//				return format.parse(string).getValue().toPlainString();
+//			}
+//		}, "0", change ->
+//				change.getControlNewText().matches(HBAR_POSITIVE_FORMAT_STRING) ? change : null));
 	}
 
 	private void setupHoursField() {
@@ -562,13 +595,9 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkFee() {
-		var txFee = defaultTransactionFee.getText().replace(" ", "") + "00000000";
-		if (txFee.contains(".")) {
-			txFee = txFee.substring(0, txFee.lastIndexOf(".") + 9).replace(".", "");
-		}
-		final var fee = Long.parseLong(txFee);
+		final var fee = hbarCurrencyFormatNoSymbol.parse(defaultTransactionFee.getText()).toTinybars();
 		controller.setDefaultTxFee(fee);
-		defaultTransactionFee.setText(Utilities.setHBarFormat(controller.getDefaultTxFee()));
+//		defaultTransactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee()).replace(" ", ""));
 	}
 
 	private void checkSeconds() {
@@ -625,12 +654,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 			arpErrorLabel.setVisible(false);
 			settingScrollPane.requestFocus();
 		}
-	}
-
-	private void checkTransactionFee() {
-		final var transactionFee = Long.parseLong(Utilities.stripHBarFormat(defaultTransactionFee.getText()));
-		controller.setDefaultTxFee(transactionFee);
-		defaultTransactionFee.setText(Utilities.setHBarFormat(transactionFee));
 	}
 
 	private Identifier calcNodeId(final String account) {

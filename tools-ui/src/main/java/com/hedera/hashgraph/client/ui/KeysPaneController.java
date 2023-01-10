@@ -541,7 +541,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 	private List<String> getKnownKeysFromAccountInfo(
 			final Path path) throws InvalidProtocolBufferException, HederaClientException {
 		final var info = AccountInfo.fromBytes(readBytes(path.toString()));
-		return Utilities.getKeysFromInfo(info, controller);
+		return controller.getKeysFromInfo(info);
 	}
 
 	private void populatePrivateKeysMap() {
