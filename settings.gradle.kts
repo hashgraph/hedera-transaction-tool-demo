@@ -15,6 +15,9 @@ include(":tools-cli")
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
+            // Hedera
+            version("hedera-sdk", "2.19.0");
+
             // Define the approved version numbers
             // Third-party dependency versions
             // Logging
@@ -60,6 +63,9 @@ dependencyResolutionManagement {
             version("controlsfx", "11.1.0")
 
             // Define the individual libraries
+            //Hedera
+            library("hedera.sdk", "com.hedera.hashgraph", "sdk").versionRef("hedera-sdk")
+
             // Logging
             library("log4j.api", "org.apache.logging.log4j", "log4j-api").versionRef("log4j")
             library("log4j.core", "org.apache.logging.log4j", "log4j-core").versionRef("log4j")

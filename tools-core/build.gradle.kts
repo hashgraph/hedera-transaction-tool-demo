@@ -8,6 +8,7 @@ plugins {
 }
 
 dependencies {
+    implementation(libs.hedera.sdk)
     implementation(libs.bundles.logging)
     implementation(libs.bundles.bouncycastle)
     implementation(libs.jackson.databind)

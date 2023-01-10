@@ -12,6 +12,7 @@ dependencies {
     testImplementation(project(":tools-core"))
     testImplementation(project(":tools-ui"))
     testImplementation(project(":tools-cli"))
+    testImplementation(libs.hedera.sdk)
     testImplementation(libs.bundles.logging)
     testImplementation(libs.commons.io)
     testImplementation(libs.gson)

@@ -23,10 +23,6 @@ repositories {
     }
 }
 
-dependencies {
-    implementation("com.hedera.hashgraph:sdk:2.19.0")
-}
-
 group = "com.hedera.hashgraph"
 version = "0.12.2"
 java.sourceCompatibility = JavaVersion.VERSION_17

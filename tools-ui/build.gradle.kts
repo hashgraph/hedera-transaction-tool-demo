@@ -11,6 +11,7 @@ plugins {
 
 dependencies {
     implementation(project(":tools-core"))
+    implementation(libs.hedera.sdk)
     implementation(libs.bundles.logging)
     implementation(libs.bundles.jackson)
     implementation(libs.bundles.bouncycastle)
