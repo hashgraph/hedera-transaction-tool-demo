@@ -45,12 +45,14 @@ public class SigningKeyCheckBoxListener implements ChangeListener {
 
     @Override
     public void changed(ObservableValue observable, Object oldValue, Object newValue) {
-        if (Boolean.TRUE.equals(newValue)) {
-            LOG.info("Added {} to list of signing keys", baseName);
-            signersSet.add(keyFile);
-        } else {
-            LOG.info("Removed {} from list of signing keys", baseName);
-            signersSet.remove(keyFile);
+        if (newValue instanceof Boolean flag) {
+            if (flag) {
+                LOG.info("Added {} to list of signing keys", baseName);
+                signersSet.add(keyFile);
+            } else {
+                LOG.info("Removed {} from list of signing keys", baseName);
+                signersSet.remove(keyFile);
+            }
         }
     }
 }
