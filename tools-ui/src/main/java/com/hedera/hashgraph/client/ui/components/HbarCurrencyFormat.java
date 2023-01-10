@@ -23,14 +23,20 @@ import com.hedera.hashgraph.sdk.HbarUnit;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class HbarCurrencyFormat {
     private final DecimalFormat hbarFormat;
     private final DecimalFormat tinybarFormat;
     private boolean showSymbol = true;
+
+    public static final String HBAR_CURRENCY_CHARACTERS_STRING = "(tℏ|μℏ|mℏ|ℏ|kℏ|Mℏ|Gℏ)*";
 
     public HbarCurrencyFormat() {
         final var symbols = new DecimalFormatSymbols();
@@ -79,7 +85,7 @@ public class HbarCurrencyFormat {
     }
 
     /**
-     * Format the given amount as an Hbar currency, using the unit to convert into the proper format.
+     * Format the given amount as an Hbar currency, using the {@link HbarUnit} to convert into the proper format.
      *
      * @param bars
      * @param unit
@@ -87,7 +93,7 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(final long bars, @NotNull final HbarUnit unit) {
-        Objects.requireNonNull(unit);
+        Objects.requireNonNull(unit, "Cannot format using a null unit");
         return format(Hbar.from(bars, unit));
     }
 
@@ -110,30 +116,32 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(@NotNull final BigDecimal bars) {
-        Objects.requireNonNull(bars);
+        Objects.requireNonNull(bars, "Cannot format a null value");
         return format(Hbar.from(bars));
     }
 
     /**
      * Format the given string as an Hbar currency.
+     *
      * @param bars
      * @return
      * @throws NumberFormatException
      */
     @NotNull
     public final String format(@NotNull final String bars) throws NumberFormatException {
-        Objects.requireNonNull(bars);
+        Objects.requireNonNull(bars, "Cannot format a null value");
         return format(Hbar.from(new BigDecimal(bars)));
     }
 
     /**
-     * Format the given amount of Hbar as an Hbar currency.
+     * Format the given amount of {@link Hbar} as an Hbar currency.
      *
      * @param bars
      * @return
      */
     @NotNull
     public final String format(@NotNull final Hbar bars) {
+        Objects.requireNonNull(bars, "Cannot format a null value");
         var totalHbars = bars;
         if (totalHbars.compareTo(Hbar.MAX) == 1) {
             totalHbars = Hbar.MAX;
@@ -144,7 +152,6 @@ public class HbarCurrencyFormat {
         final var totalTinybars = totalHbars.toTinybars();
         final var tinybars = (totalTinybars % 100_000_000);
         final var hbars = (totalTinybars - tinybars) / 100_000_000L;
-
         if (tinybars != 0) {
             // If there are tinybars, an extra step is needed
             // if hbars < 0, then the sign is '-'
@@ -157,19 +164,45 @@ public class HbarCurrencyFormat {
         return hbarFormat.format(hbars) + getCurrencySymbol();
     }
 
-    public final Hbar parse(@NotNull final String formattedValue) {
-        // ensure the string is formatted as an HbarCurrencyFormat
-        // strip spaces and currency symbol
-        var strippedValue = formattedValue.replace(HbarUnit.HBAR.getSymbol(), "")
-                .replace(" ", "");
-        try {
-            var value = new BigDecimal(strippedValue);
-            return new Hbar(value);
-        } catch (Exception ex) {
-            // display proper message for exception
+    // Because Hbar doesn't allow for a leading '.', parsing or adjusting the string must be done here.
+    /**
+     * Parses the given String into an {@link Hbar} object.
+     *
+     * @param text
+     * @return
+     * @throws NumberFormatException
+     */
+    @NotNull
+    public final Hbar parse(@NotNull final String text) throws NumberFormatException {
+        Objects.requireNonNull(text, "Cannot parse a null string");
+        var pattern = Pattern.compile(HBAR_CURRENCY_CHARACTERS_STRING);
+        Matcher matcher = pattern.matcher(text);
+        if (matcher.find()) {
+            return parse(text.replaceAll(HBAR_CURRENCY_CHARACTERS_STRING, ""),
+                Stream.of(HbarUnit.values()).filter(unit -> Objects.equals(unit.getSymbol(), matcher.group(1)))
+                        .findFirst().orElse(HbarUnit.HBAR));
         }
+        return parse(text, HbarUnit.HBAR);
+    }
 
-        return Hbar.ZERO;
+    /**
+     * Parses the given String into an {@link Hbar} object for the given {@link HbarUnit} type.
+     *
+     * @param text
+     * @return
+     * @throws NumberFormatException
+     */
+    @NotNull
+    public final Hbar parse(@NotNull final String text, @NotNull final HbarUnit unit) throws NumberFormatException {
+        Objects.requireNonNull(text, "Cannot parse a null string");
+        Objects.requireNonNull(unit, "Cannot format using a null unit");
+        // strip spaces and currency symbol
+        var strippedValue = text.replaceAll("\\s", "");
+        if (strippedValue.isBlank()) {
+            return Hbar.ZERO;
+        }
+        var value = new BigDecimal(strippedValue).setScale(8, RoundingMode.HALF_UP);
+        return Hbar.from(value, unit);
     }
 
     /**

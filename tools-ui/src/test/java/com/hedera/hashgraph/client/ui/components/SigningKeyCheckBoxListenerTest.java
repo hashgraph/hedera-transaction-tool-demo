@@ -55,7 +55,7 @@ class SigningKeyCheckBoxListenerTest {
     // Currently, only newValue is used, so the other two values will only be tested using nulls
     @ParameterizedTest
     @MethodSource("getArguments")
-    void changed(ObservableValue observable, Object oldValue, Object newValue, boolean expectedResult) {
+    void changed(final ObservableValue observable, final Object oldValue, final Object newValue, final boolean expectedResult) {
         listener.changed(observable, oldValue, newValue);
         assertEquals(signersSet.contains(tempFile), expectedResult);
     }

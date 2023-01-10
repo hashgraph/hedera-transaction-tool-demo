@@ -37,20 +37,20 @@ class HbarCurrencyFormatTest {
     static HbarCurrencyFormat hbarCurrencyFormat = new HbarCurrencyFormat();
 
     @ParameterizedTest
-    @MethodSource("getLongArguments")
-    void formatLongTest(final long bars, String expectedResult) {
+    @MethodSource("getFormatLongArguments")
+    void formatLongTest(final long bars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(bars));
     }
 
     @ParameterizedTest
-    @MethodSource("getHbarAndTinybarArguments")
-    void formatHbarAndTinybarTest(final long hbars, final long tinybars, String expectedResult) {
+    @MethodSource("getFormatHbarAndTinybarArguments")
+    void formatHbarAndTinybarTest(final long hbars, final long tinybars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(hbars, tinybars));
     }
 
     @ParameterizedTest
-    @MethodSource("getLongAndHbarUnitArguments")
-    void formatLongWithHbarUnitTest(final long hbars, final HbarUnit unit, String expectedResult) {
+    @MethodSource("getFormatLongAndHbarUnitArguments")
+    void formatLongWithHbarUnitTest(final long hbars, final HbarUnit unit, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(hbars, unit));
     }
 
@@ -60,14 +60,14 @@ class HbarCurrencyFormatTest {
     }
 
     @ParameterizedTest
-    @MethodSource("getDoubleArguments")
-    void formatDoubleTest(final double bars, String expectedResult) {
+    @MethodSource("getFormatDoubleArguments")
+    void formatDoubleTest(final double bars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(bars));
     }
 
     @ParameterizedTest
-    @MethodSource("getBigDecimalArguments")
-    void formatBigDecimalTest(final BigDecimal bars, String expectedResult) {
+    @MethodSource("getFormatBigDecimalArguments")
+    void formatBigDecimalTest(final BigDecimal bars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(bars));
     }
 
@@ -77,25 +77,36 @@ class HbarCurrencyFormatTest {
     }
 
     @ParameterizedTest
-    @MethodSource("getStringArguments")
-    void formatStringTest(final String bars, String expectedResult) {
+    @MethodSource("getFormatStringArguments")
+    void formatStringTest(final String bars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(bars));
     }
 
     @ParameterizedTest
-    @MethodSource("getStringExceptionArguments")
+    @MethodSource("getFormatStringExceptionArguments")
     void formatStringExceptionTest(final String bars) {
         assertThrows(NumberFormatException.class, () -> hbarCurrencyFormat.format(bars));
     }
 
     @ParameterizedTest
-    @MethodSource("getHbarArguments")
-    void formatHbarTest(final Hbar bars, String expectedResult) {
+    @MethodSource("getFormatHbarArguments")
+    void formatHbarTest(final Hbar bars, final String expectedResult) {
         assertEquals(expectedResult, hbarCurrencyFormat.format(bars));
     }
 
+    @ParameterizedTest
+    @MethodSource("getParseStringArguments")
+    void parseStringTest(final String text, final Hbar expectedResult) {
+        assertEquals(expectedResult, hbarCurrencyFormat.parse(text));
+    }
+    @ParameterizedTest
+    @MethodSource("getParseStringForUnitArguments")
+    void parseStringTest(final String text, final HbarUnit unit, final Hbar expectedResult) {
+        assertEquals(expectedResult, hbarCurrencyFormat.parse(text, unit));
+    }
+
     @NotNull
-    private static Stream<Arguments> getLongArguments() {
+    private static Stream<Arguments> getFormatLongArguments() {
         return Stream.of(
                 Arguments.of(0L, "0 ℏ"),
                 Arguments.of(-0L, "0 ℏ"),
@@ -109,7 +120,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getHbarAndTinybarArguments() {
+    private static Stream<Arguments> getFormatHbarAndTinybarArguments() {
         return Stream.of(
                 Arguments.of(0L, 0L, "0 ℏ"),
                 Arguments.of(-0L, 0L, "0 ℏ"),
@@ -128,7 +139,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getLongAndHbarUnitArguments() {
+    private static Stream<Arguments> getFormatLongAndHbarUnitArguments() {
         return Stream.of(
                 Arguments.of(0L, HbarUnit.TINYBAR, "0 ℏ"),
                 Arguments.of(0L, HbarUnit.HBAR, "0 ℏ"),
@@ -151,7 +162,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getDoubleArguments() {
+    private static Stream<Arguments> getFormatDoubleArguments() {
         return Stream.of(
                 Arguments.of(0D, "0 ℏ"),
                 Arguments.of(-0D, "0 ℏ"),
@@ -165,7 +176,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getBigDecimalArguments() {
+    private static Stream<Arguments> getFormatBigDecimalArguments() {
         return Stream.of(
                 Arguments.of(new BigDecimal("0"), "0 ℏ"),
                 Arguments.of(new BigDecimal("-0"), "0 ℏ"),
@@ -179,7 +190,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getStringArguments() {
+    private static Stream<Arguments> getFormatStringArguments() {
         return Stream.of(
                 Arguments.of("0", "0 ℏ"),
                 Arguments.of("-0", "0 ℏ"),
@@ -193,7 +204,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getStringExceptionArguments() {
+    private static Stream<Arguments> getFormatStringExceptionArguments() {
         return Stream.of(
 //                Arguments.of(null),
                 Arguments.of(""),
@@ -204,7 +215,7 @@ class HbarCurrencyFormatTest {
     }
 
     @NotNull
-    private static Stream<Arguments> getHbarArguments() {
+    private static Stream<Arguments> getFormatHbarArguments() {
         return Stream.of(
                 Arguments.of(Hbar.from(0L), "0 ℏ"),
                 Arguments.of(Hbar.from(-0L), "0 ℏ"),
@@ -223,6 +234,50 @@ class HbarCurrencyFormatTest {
                 Arguments.of(Hbar.from(-50_000_000_001L, HbarUnit.HBAR), "-50 000 000 000 ℏ"),
                 Arguments.of(Hbar.from(51L, HbarUnit.GIGABAR), "50 000 000 000 ℏ"),
                 Arguments.of(Hbar.from(-51L, HbarUnit.GIGABAR), "-50 000 000 000 ℏ")
+        );
+    }
+
+    @NotNull
+    private static Stream<Arguments> getParseStringArguments() {
+        return Stream.of(
+                Arguments.of("", Hbar.ZERO),
+                Arguments.of("0", Hbar.ZERO),
+                Arguments.of(".0", Hbar.ZERO),
+                Arguments.of("1", Hbar.from(1L)),
+                Arguments.of("+1", Hbar.from(1L)),
+                Arguments.of("-1", Hbar.from(-1L)),
+                Arguments.of("1.0", Hbar.from(1L)),
+                Arguments.of("1.1", Hbar.from(new BigDecimal("1.1"))),
+                Arguments.of("+1.1", Hbar.from(new BigDecimal("1.1"))),
+                Arguments.of("-1.1", Hbar.from(new BigDecimal("-1.1"))),
+                Arguments.of("1111", Hbar.from(new BigDecimal("1111"))),
+                Arguments.of("+1111", Hbar.from(new BigDecimal("1111"))),
+                Arguments.of("-1111", Hbar.from(new BigDecimal("-1111"))),
+                Arguments.of("1 111", Hbar.from(new BigDecimal("1111"))),
+                Arguments.of("+1 111", Hbar.from(new BigDecimal("1111"))),
+                Arguments.of("-1 111", Hbar.from(new BigDecimal("-1111"))),
+                Arguments.of("1111.1", Hbar.from(new BigDecimal("1111.1"))),
+                Arguments.of("+1111.1", Hbar.from(new BigDecimal("1111.1"))),
+                Arguments.of("-1111.1", Hbar.from(new BigDecimal("-1111.1"))),
+                Arguments.of("1 111.11 11", Hbar.from(new BigDecimal("1111.1111"))),
+                Arguments.of("+1 111.11 11", Hbar.from(new BigDecimal("1111.1111"))),
+                Arguments.of("-1 111.11 11", Hbar.from(new BigDecimal("-1111.1111")))
+        );
+    }
+
+    @NotNull
+    private static Stream<Arguments> getParseStringForUnitArguments() {
+        return Stream.of(
+                Arguments.of("", HbarUnit.HBAR, Hbar.ZERO),
+                Arguments.of("0", HbarUnit.TINYBAR, Hbar.ZERO),
+                Arguments.of(".0", HbarUnit.GIGABAR, Hbar.ZERO),
+                Arguments.of("1", HbarUnit.KILOBAR, Hbar.from(1_000L)),
+                Arguments.of("+1", HbarUnit.MICROBAR, Hbar.fromTinybars(100L)),
+                Arguments.of("-1", HbarUnit.MILLIBAR, Hbar.fromTinybars(-100_000L)),
+                Arguments.of("1.0", HbarUnit.MEGABAR, Hbar.from(1_000_000L)),
+                Arguments.of("1.1", HbarUnit.HBAR, Hbar.from(new BigDecimal("1.1"))),
+                Arguments.of("+1.1", HbarUnit.KILOBAR, Hbar.from(1_100L)),
+                Arguments.of("-1.1", HbarUnit.MILLIBAR, Hbar.fromTinybars(-110_000L))
         );
     }
 }
