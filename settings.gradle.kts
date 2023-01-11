@@ -13,6 +13,7 @@ include(":tools-integration")
 include(":tools-cli")
 
 dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
     versionCatalogs {
         create("libs") {
             // Define the approved version numbers
