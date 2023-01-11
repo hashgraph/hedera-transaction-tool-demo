@@ -22,7 +22,6 @@ dependencies {
     implementation(libs.commons.collections4)
     implementation(libs.controlsfx)
     implementation(libs.zt.zip)
-//    implementation("org.json:json:20210307")
     implementation(libs.httpclient)
     implementation(libs.commons.io)
     implementation(libs.passpol)
