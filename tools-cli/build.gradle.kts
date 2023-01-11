@@ -22,7 +22,6 @@ dependencies {
     implementation(libs.passpol)
     implementation(libs.jetbrains.annotations)
     testImplementation(testLibs.bundles.junit)
-//    testRuntimeOnly(testLibs.junit.jupiter.engine)
 }
 
 description = "tools-cli"
