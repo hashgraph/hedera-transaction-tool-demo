@@ -30,7 +30,6 @@ dependencies {
     testImplementation(testLibs.bundles.junit)
     testImplementation(testLibs.testfx.core)
     testImplementation(testLibs.testfx.junit)
-//    testRuntimeOnly(testLibs.junit.jupiter.engine)
     testImplementation(testLibs.testfx.openjfx.monocle)
 }
 
