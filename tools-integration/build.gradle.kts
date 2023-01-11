@@ -8,7 +8,6 @@ plugins {
 }
 
 dependencies {
-//    implementation("pl.pragmatists:JUnitParams:1.1.1")
     testImplementation(project(":tools-core"))
     testImplementation(project(":tools-ui"))
     testImplementation(project(":tools-cli"))
