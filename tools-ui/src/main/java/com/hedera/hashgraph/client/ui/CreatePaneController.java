@@ -434,7 +434,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 	private TimeFieldSet systemFieldsSet;
 	private TimeFieldSet freezeFieldsSet;
 
-	private final HbarCurrencyFormat hbarCurrencyFormatNoSymbol = new HbarCurrencyFormat(false);
+	private final HbarCurrencyFormat hbarCurrencyFormat = new HbarCurrencyFormat();
 
 	// endregion
 
@@ -1693,7 +1693,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
 		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
 		outputObject.addProperty(TRANSACTION_FEE_PROPERTY,
-				hbarCurrencyFormatNoSymbol.parse(transactionFee.getText()).toTinybars());
+				hbarCurrencyFormat.parse(transactionFee.getText()).toTinybars());
 		return outputObject;
 	}
 
@@ -1795,7 +1795,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadCommonTransactionFields(final ToolTransaction transaction) {
 		setNowTime(transaction.getTransactionValidStart());
-		transactionFee.setText(hbarCurrencyFormatNoSymbol.format(transaction.getTransactionFee()));
+		transactionFee.setText(hbarCurrencyFormat.format(transaction.getTransactionFee(), false));
 		final var nodeID = transaction.getNodeID();
 		nodeID.setNetworkName(controller.getCurrentNetwork());
 		nodeAccountField.setText(nodeID.toNicknameAndChecksum(controller.getAccountsList()));
@@ -1824,7 +1824,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 	private void loadCryptoCreateToForm(final ToolCryptoCreateTransaction transaction) {
 		cleanAllCreateFields();
-		createInitialBalance.setText(hbarCurrencyFormatNoSymbol.format(transaction.getInitialBalance()));
+		createInitialBalance.setText(hbarCurrencyFormat.format(transaction.getInitialBalance(), false));
 		createAutoRenew.setText(String.valueOf(transaction.getAutoRenewDuration().getSeconds()));
 		updateReceiverSignatureRequired.setSelected(transaction.isReceiverSignatureRequired());
 		createNewKey.setVisible(true);
@@ -1952,7 +1952,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			memoField.setText(details.get(MEMO_PROPERTY).getAsString());
 		}
 		if (details.has(TRANSACTION_FEE_PROPERTY)) {
-			transactionFee.setText(hbarCurrencyFormatNoSymbol.format(details.get(TRANSACTION_FEE_PROPERTY).getAsLong(), HbarUnit.TINYBAR));
+			transactionFee.setText(hbarCurrencyFormat.format(details.get(TRANSACTION_FEE_PROPERTY).getAsLong(), HbarUnit.TINYBAR, false));
 		}
 	}
 
@@ -3050,7 +3050,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				Identifier.parse(controller.getDefaultNodeID(), controller.getCurrentNetwork()).toNicknameAndChecksum(
 						controller.getAccountsList());
 		nodeAccountField.setText(defaultNodeID);
-		transactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee(), HbarUnit.TINYBAR));
+		transactionFee.setText(hbarCurrencyFormat.format(controller.getDefaultTxFee(), HbarUnit.TINYBAR, false));
 		setupHbarNumberField(transactionFee);
 		memoField.clear();
 		createUTCTimeLabel.setText("");

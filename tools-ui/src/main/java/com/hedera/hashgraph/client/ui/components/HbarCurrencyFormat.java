@@ -32,31 +32,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class HbarCurrencyFormat {
+    private static final String HBAR_CURRENCY_CHARACTERS_STRING = "(tℏ|μℏ|mℏ|ℏ|kℏ|Mℏ|Gℏ)*";
+
     private final DecimalFormat hbarFormat;
     private final DecimalFormat tinybarFormat;
-    private boolean showSymbol = true;
-
-    public static final String HBAR_CURRENCY_CHARACTERS_STRING = "(tℏ|μℏ|mℏ|ℏ|kℏ|Mℏ|Gℏ)*";
 
     public HbarCurrencyFormat() {
         final var symbols = new DecimalFormatSymbols();
         symbols.setGroupingSeparator(' ');
         hbarFormat = new DecimalFormat("###,###,###,###,###,###", symbols);
         tinybarFormat = new DecimalFormat("00,000,000", symbols);
-    }
-
-//    i think id rather overload the format methods, or i need to do the protected constructor and 'getInstance(withSymbol) or something
-    public HbarCurrencyFormat(boolean showSymbol) {
-        this();
-        this.showSymbol = showSymbol;
-    }
-
-    public final boolean isShowSymbol() {
-        return showSymbol;
-    }
-
-    public final void setShowSymbol(final boolean showSymbol) {
-        this.showSymbol = showSymbol;
     }
 
     /**
@@ -68,7 +53,20 @@ public class HbarCurrencyFormat {
     @NotNull
     public final String format(final long bars) {
         // Convert into an Hbar, for consolidated validation
-        return format(Hbar.from(bars));
+        return format(bars, true);
+    }
+
+    /**
+     * Format the given amount as an Hbar currency. The value is assumed to be in Hbars.
+     *
+     * @param bars
+     * @param showSymbol
+     * @return
+     */
+    @NotNull
+    public final String format(final long bars, boolean showSymbol) {
+        // Convert into an Hbar, for consolidated validation
+        return format(Hbar.from(bars), showSymbol);
     }
 
     /**
@@ -81,7 +79,20 @@ public class HbarCurrencyFormat {
     @NotNull
     public final String format(final long hbar, final long tinybar) {
         // Convert hbar and tinybar into 1 Hbar object, for consolidated validation
-        return format(Hbar.fromTinybars(hbar*100_000_000+tinybar));
+        return format(hbar, tinybar, true);
+    }
+
+    /**
+     * Format the given hbar and tinybar amounts as an Hbar currency.
+     *
+     * @param hbar
+     * @param tinybar
+     * @return
+     */
+    @NotNull
+    public final String format(final long hbar, final long tinybar, boolean showSymbol) {
+        // Convert hbar and tinybar into 1 Hbar object, for consolidated validation
+        return format(Hbar.fromTinybars(hbar*100_000_000+tinybar), showSymbol);
     }
 
     /**
@@ -93,8 +104,20 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(final long bars, @NotNull final HbarUnit unit) {
+        return format(bars, unit, true);
+    }
+
+    /**
+     * Format the given amount as an Hbar currency, using the {@link HbarUnit} to convert into the proper format.
+     *
+     * @param bars
+     * @param unit
+     * @return
+     */
+    @NotNull
+    public final String format(final long bars, @NotNull final HbarUnit unit, boolean showSymbol) {
         Objects.requireNonNull(unit, "Cannot format using a null unit");
-        return format(Hbar.from(bars, unit));
+        return format(Hbar.from(bars, unit), showSymbol);
     }
 
     /**
@@ -105,7 +128,18 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(final double bars) {
-        return format(Hbar.from(BigDecimal.valueOf(bars)));
+        return format(bars, true);
+    }
+
+    /**
+     * Format the given amount as an Hbar currency. The value is assumed to be in Hbars.
+     *
+     * @param bars
+     * @return
+     */
+    @NotNull
+    public final String format(final double bars, boolean showSymbol) {
+        return format(Hbar.from(BigDecimal.valueOf(bars)), showSymbol);
     }
 
     /**
@@ -116,8 +150,19 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(@NotNull final BigDecimal bars) {
+        return format(bars, true);
+    }
+
+    /**
+     * Format the given amount as an Hbar currency. The value is assumed to be in Hbars.
+     *
+     * @param bars
+     * @return
+     */
+    @NotNull
+    public final String format(@NotNull final BigDecimal bars, boolean showSymbol) {
         Objects.requireNonNull(bars, "Cannot format a null value");
-        return format(Hbar.from(bars));
+        return format(Hbar.from(bars), showSymbol);
     }
 
     /**
@@ -129,8 +174,20 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(@NotNull final String bars) throws NumberFormatException {
+        return format(bars, true);
+    }
+
+    /**
+     * Format the given string as an Hbar currency.
+     *
+     * @param bars
+     * @return
+     * @throws NumberFormatException
+     */
+    @NotNull
+    public final String format(@NotNull final String bars, boolean showSymbol) throws NumberFormatException {
         Objects.requireNonNull(bars, "Cannot format a null value");
-        return format(Hbar.from(new BigDecimal(bars)));
+        return format(Hbar.from(new BigDecimal(bars)), showSymbol);
     }
 
     /**
@@ -141,7 +198,20 @@ public class HbarCurrencyFormat {
      */
     @NotNull
     public final String format(@NotNull final Hbar bars) {
+        return format(bars, true);
+    }
+
+    /**
+     * Format the given amount of {@link Hbar} as an Hbar currency.
+     *
+     * @param bars
+     * @return
+     */
+    @NotNull
+    public final String format(@NotNull final Hbar bars, boolean showSymbol) {
         Objects.requireNonNull(bars, "Cannot format a null value");
+
+        // Make sure the Hbar amount isn't greater than or less than the Max/Min
         var totalHbars = bars;
         if (totalHbars.compareTo(Hbar.MAX) == 1) {
             totalHbars = Hbar.MAX;
@@ -149,19 +219,28 @@ public class HbarCurrencyFormat {
             totalHbars = Hbar.MIN;
         }
 
+        // Convert to tiny bars and separate into Hbars and Tinybars
         final var totalTinybars = totalHbars.toTinybars();
         final var tinybars = (totalTinybars % 100_000_000);
         final var hbars = (totalTinybars - tinybars) / 100_000_000L;
+
+        // Determine the sign to display, if applicable
+        final var sign = totalTinybars < 0 ? "-" : "";
+
+        // Start formatting with the Hbar amount
+        var formattedValue = sign + hbarFormat.format(Math.abs(hbars));
+
+        // If there are Tinybars, format them and add them to the string
         if (tinybars != 0) {
-            // If there are tinybars, an extra step is needed
-            // if hbars < 0, then the sign is '-'
-            // otherwise, the sign depends on tinybars
-            var sign = hbars < 0 || tinybars < 0 ? "-" : "";
-            // The sign is being handled separately, so both hbars and tinybars need to be adjusted
-            return sign + hbarFormat.format(Math.abs(hbars)) + "."
-                    + tinybarFormat.format(Math.abs(tinybars)) + getCurrencySymbol();
+            formattedValue += "." + tinybarFormat.format(Math.abs(tinybars));
         }
-        return hbarFormat.format(hbars) + getCurrencySymbol();
+
+        // Show the symbol if requested
+        if (showSymbol) {
+            formattedValue += " " + HbarUnit.HBAR.getSymbol();
+        }
+
+        return formattedValue;
     }
 
     // Because Hbar doesn't allow for a leading '.', parsing or adjusting the string must be done here.
@@ -175,13 +254,19 @@ public class HbarCurrencyFormat {
     @NotNull
     public final Hbar parse(@NotNull final String text) throws NumberFormatException {
         Objects.requireNonNull(text, "Cannot parse a null string");
+
+        // Find the currency symbol, if applicable
         var pattern = Pattern.compile(HBAR_CURRENCY_CHARACTERS_STRING);
         Matcher matcher = pattern.matcher(text);
+
+        // If found, get the HbarUnit and parse the text
         if (matcher.find()) {
             return parse(text.replaceAll(HBAR_CURRENCY_CHARACTERS_STRING, ""),
                 Stream.of(HbarUnit.values()).filter(unit -> Objects.equals(unit.getSymbol(), matcher.group(1)))
                         .findFirst().orElse(HbarUnit.HBAR));
         }
+
+        // If no symbol was found, assume the HbarUnit type is Hbar
         return parse(text, HbarUnit.HBAR);
     }
 
@@ -196,25 +281,19 @@ public class HbarCurrencyFormat {
     public final Hbar parse(@NotNull final String text, @NotNull final HbarUnit unit) throws NumberFormatException {
         Objects.requireNonNull(text, "Cannot parse a null string");
         Objects.requireNonNull(unit, "Cannot format using a null unit");
-        // strip spaces and currency symbol
+
+        // Strip spaces
         var strippedValue = text.replaceAll("\\s", "");
+
+        // If blank, return Hbar(0)
         if (strippedValue.isBlank()) {
             return Hbar.ZERO;
         }
+
+        // Convert the value to a BigDecimal, rounding past the 8th decimal point
         var value = new BigDecimal(strippedValue).setScale(8, RoundingMode.HALF_UP);
+
+        // Convert the BigDecimal to Hbar
         return Hbar.from(value, unit);
     }
-
-    /**
-     * Get the currency symbol (and added space).
-     *
-     * @return
-     */
-    private String getCurrencySymbol() {
-        if (!isShowSymbol()) {
-            return "";
-        }
-        return " " + HbarUnit.HBAR.getSymbol();
-    }
-
 }

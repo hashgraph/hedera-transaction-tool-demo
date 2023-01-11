@@ -164,7 +164,6 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	DriveSetupHelper driveSetupHelper;
 
 	private final HbarCurrencyFormat hbarCurrencyFormat = new HbarCurrencyFormat();
-	private final HbarCurrencyFormat hbarCurrencyFormatNoSymbol = new HbarCurrencyFormat(false);
 
 	void injectMainController(final MainController controller) {
 		this.controller = controller;
@@ -217,7 +216,10 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 					.build();
 
 			loadStorageTextField.setText(controller.getPreferredStorageDirectory());
-			defaultTransactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee(), HbarUnit.TINYBAR).replace(" ", ""));
+			// TODO Temporarily remove the spaces. This, like other fee fields, should have a mask formatter type thing.
+			defaultTransactionFee.setText(hbarCurrencyFormat.format(controller.getDefaultTxFee(),
+																	HbarUnit.TINYBAR, false)
+															.replace(" ", ""));
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
@@ -595,7 +597,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 	}
 
 	private void checkFee() {
-		final var fee = hbarCurrencyFormatNoSymbol.parse(defaultTransactionFee.getText()).toTinybars();
+		final var fee = hbarCurrencyFormat.parse(defaultTransactionFee.getText()).toTinybars();
 		controller.setDefaultTxFee(fee);
 //		defaultTransactionFee.setText(hbarCurrencyFormatNoSymbol.format(controller.getDefaultTxFee()).replace(" ", ""));
 	}
