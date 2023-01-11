@@ -15,7 +15,6 @@ dependencies {
     implementation(libs.eddsa)
     implementation(libs.grpc.core)
     implementation(libs.gson)
-//    implementation(libs.json)
     implementation(libs.zt.zip)
     implementation(libs.httpclient)
     implementation(libs.commons.io)
