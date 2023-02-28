@@ -25,7 +25,7 @@ To run the Hedera Transaction Tool UI locally, complete the following steps:
 * Clone the repository
 
 ```
-git clone https://github.com/hashgraph/hedera-transaction-tool.git
+git clone https://github.com/hashgraph/hedera-transaction-tool-demo.git
 ```
 
 * Open the project with your favorite IDE
