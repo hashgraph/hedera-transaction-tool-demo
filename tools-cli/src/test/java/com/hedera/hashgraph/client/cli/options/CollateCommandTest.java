@@ -26,7 +26,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
-import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -43,6 +42,7 @@ import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -62,6 +62,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
@@ -79,14 +80,14 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 			parseBoolean(Optional.ofNullable(System.getenv("IN_CIRCLE_CI")).orElse("false"));
 	private static final String RESOURCES_DIRECTORY =
 			((isInCircleCi.getAsBoolean()) ? "/repo/tools-cli/" : "") + "src/test/resources/";
-	private Client client = null;
 	private final int threshold = 3;
 	private final int size = 5;
 
 	@BeforeEach
 	void setUp() throws IOException {
-		final var files = new File(RESOURCES_DIRECTORY + "collation_test").listFiles(
-				(dir, name) -> name.contains("_unzipped"));
+		final var files = Objects.requireNonNull(new File(RESOURCES_DIRECTORY + "collation_test").listFiles(
+				(dir, name) -> name.contains("_unzipped")),
+		RESOURCES_DIRECTORY + "collation_test directory does not exist.");
 		for (final var file : files) {
 			if (file.isDirectory()) {
 				FileUtils.deleteDirectory(file);
@@ -224,7 +225,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		// Finally submit and check results
 		final String[] argsSubmit =
 				{ "submit", "-t", location.replace(Constants.TRANSACTION_EXTENSION,
-						Constants.SIGNED_TRANSACTION_EXTENSION), "-n", "INTEGRATION", "-o", "src/test/resources" +
+						Constants.SIGNED_TRANSACTION_EXTENSION), "-n", NetworkEnum.TESTNET.getName(), "-o", "src/test/resources" +
 						"/Integration" };
 		ToolsMain.main(argsSubmit);
 
@@ -297,12 +298,14 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 		return location;
 	}
 
-	private AccountId createAccount(final KeyList keyList) throws KeyStoreException, TimeoutException,
+	private AccountId createAccount(final KeyList keyList) throws TimeoutException,
 			PrecheckStatusException, ReceiptStatusException, HederaClientException {
-		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		final var keyStore =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		client.setOperator(new AccountId(0, 0, 2), PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded()));
+		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
+		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY"));
+
+		final var client = Client.forTestnet();
+		client.setOperator(myAccountId, myPrivateKey);
+
 		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(keyList)
 				.setInitialBalance(new Hbar(10))
