@@ -231,7 +231,9 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
 		}
 		final var transactionBytes = transaction.toBytes();
+		// Write the bytes of the signed transaction to file
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
+		// Return the enclosing directory
 		return output;
 	}
 

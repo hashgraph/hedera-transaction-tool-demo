@@ -38,6 +38,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,6 +75,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			"collated transaction files will be stored")
 	private String out = "";
 
+	@CommandLine.Option(names = { "-p", "--prefix-label" }, description = "The label used as a prefix for the " +
+			"name of the verification.csv file")
+	private String prefix;
+
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
 	private final Map<File, AccountInfo> infos = new HashMap<>();
 	private final Map<File, PublicKey> publicKeys = new HashMap<>();
@@ -90,7 +95,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (!root.exists()) {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
-		// Parse account info files form inputs
+
+		// Parse account info files from inputs
 		loadVerificationFiles(infoFiles, Constants.INFO_EXTENSION);
 
 		// Parse public key files from inputs
@@ -99,10 +105,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// Parse transactions
 		loadTransactions(root);
 
-		for (final var unzip : unzips) {
-			FileUtils.deleteDirectory(unzip);
-		}
-
 		final var verification = verifyTransactions();
 
 		if (verification == null) {
@@ -110,18 +112,34 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			return;
 		}
 
-		writeCSV(out + File.separator + "verification.csv", verification);
+		// If the prefix option is used, add the separator.
+		if (prefix == null) {
+			prefix = "";
+		} else if (!"".equals(prefix)) {
+			prefix = prefix + ".";
+		}
+
+		writeCSV(out + File.separator + prefix + "verification.csv", verification);
 		logger.info("Verification done");
 
 		final Set<String> outputs = new HashSet<>();
+		// For each transaction found in the root folder
 		for (final var entry : transactions.entrySet()) {
+			// Get the helper that will perform the work
 			final var helper = entry.getValue();
+			// Collate all signature key pairs
 			helper.collate();
+			//
 			outputs.add(helper.store(entry.getKey()));
 		}
 		logger.info("Transactions collated and stored");
 
 		moveToOutput(outputs);
+
+		// Clean up all the unzipped directories
+		for (final var unzip : unzips) {
+			FileUtils.deleteDirectory(unzip);
+		}
 
 		logger.info("Collation done");
 	}
@@ -136,14 +154,19 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	 * 		if the file move or deletion fails
 	 */
 	private void moveToOutput(final Set<String> outputs) throws IOException {
+		// For each output directory in outputs
 		for (final var output : outputs) {
+			// Output is a directory, return the list of files
 			final var files = Objects.requireNonNull(new File(output).listFiles());
+			// If more than one file, zip it up, move it to the destination, and continue
+			// This occurs after all the files below are done.
 			if (moreThanOneFile(output, files)) {
 				continue;
 			}
 
-			final var prefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
-			final var destination = new File(out + File.separator + prefix + files[0].getName());
+			// If only a single file, then rename as needed, and move to the new location
+			final var filenamePrefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
+			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
 			if (Files.deleteIfExists(destination.toPath())) {
 				logger.info("Destination file deleted");
@@ -178,7 +201,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		final var zippedOutput = zipFolder(output);
 		if (!rootFolder.equals(out)) {
 			final var destination = new File(out, zippedOutput.getName());
-			FileUtils.moveFile(zippedOutput, destination);
+			FileUtils.moveFile(zippedOutput, destination, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 		}
 		FileUtils.deleteDirectory(new File(output));
 		return true;
