@@ -30,6 +30,7 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,12 +48,16 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PA
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NOT_EMPTY_FIELD_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.OUTPUT_FILE_CREATED_MESSAGE;
 
+/**
+ * This helper class is used to gather all the .tx, .sig, and .txt files into one place
+ * to prepare for collation.
+ */
 public class CollatorHelper implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CollatorHelper.class);
 
 	private final Set<SignaturePair> signaturePairs = new HashSet<>();
 	private ToolTransaction transaction;
-	private String transactionFile = "";
+	private String transactionFileName = "";
 	private final String baseName;
 	private final JsonArray comments = new JsonArray();
 
@@ -60,18 +65,18 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		switch (FilenameUtils.getExtension(file.getName())) {
 			case TRANSACTION_EXTENSION:
 				this.transaction = new ToolTransaction().parseFile(file);
-				this.transactionFile = setFileOutput(file.getAbsolutePath());
+				this.transactionFileName = setFileOutput(file);
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
 				break;
 			case SIGNATURE_EXTENSION:
 				this.transaction = null;
-				this.transactionFile = "";
+				this.transactionFileName = "";
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
 				signaturePairs.add(new SignaturePair(file.getAbsolutePath()));
 				break;
 			case TXT_EXTENSION:
 				this.transaction = null;
-				this.transactionFile = "";
+				this.transactionFileName = "";
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
 				comments.add(readJsonObject(file));
 				break;
@@ -80,18 +85,34 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	private String setFileOutput(final String absolutePath) {
-		if ("".equals(absolutePath)) {
-			return this.transactionFile;
+	private String setFileOutput(final File file) {
+		// If absolutePath is empty, return the transactionFileName (which might also be empty)
+		if (file == null) {
+			return this.transactionFileName;
 		}
-		if ("".equals(this.transactionFile)) {
-			return absolutePath;
+
+		// Ensure that the file is a file (exists and not a directory)
+		if (file.isFile()) {
+			var parent = file.getParentFile();
+			var parentName = parent.getName();
+
+			// If 'Node' is in the name of the transaction AND the node label is not used, this will be an issue
+			// If Node exists, remove it, otherwise find the suffix and remove it (if applicable).
+			if (parentName.contains("Node")) {
+				parentName = parentName.substring(0, parentName.lastIndexOf("_Node"));
+			} else {
+				final var suffix0 = parentName.contains("signatures") ? "_signatures" : "";
+				final var suffix = parentName.contains("transactions") ? "_transactions" : suffix0;
+				parentName = parentName.substring(0, parentName.lastIndexOf(suffix));
+			}
+			// Remove the key name
+			parentName = parentName.substring(0, parentName.lastIndexOf("_"));
+
+			// Return the path of the parent's parent, plus the parentName
+			return parent.getParentFile().getAbsolutePath() + File.separator + parentName;
 		}
-		var lcSubstring = CommonMethods.getLCSubStr(this.transactionFile, absolutePath);
-		if (lcSubstring.endsWith("_") || lcSubstring.endsWith("-")) {
-			lcSubstring = lcSubstring.substring(0, lcSubstring.length() - 1);
-		}
-		return lcSubstring;
+		// Return an empty string
+		return "";
 	}
 
 	public Set<SignaturePair> getSignaturePairs() {
@@ -107,11 +128,11 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	}
 
 	public String getTransactionFile() {
-		return transactionFile;
+		return transactionFileName;
 	}
 
 	public void setTransactionFile(final String transactionFile) {
-		this.transactionFile = transactionFile;
+		this.transactionFileName = transactionFile;
 	}
 
 	public String getBaseName() {
@@ -140,7 +161,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			throw new HederaClientException(CANNOT_PARSE_ERROR_MESSAGE);
 		}
 		this.transaction = new ToolTransaction(file);
-		this.transactionFile = file.getAbsolutePath();
+		this.transactionFileName = setFileOutput(file);
 		addSignature(this.transaction.getTransaction());
 	}
 
@@ -153,7 +174,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		signaturePairs.add(signaturePair);
 	}
 
-	public Transaction<?> collate() {
+	public final Transaction<?> collate() {
 		return transaction.collate(signaturePairs);
 	}
 
@@ -167,6 +188,13 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return object;
 	}
 
+	/**
+	 * Verify that the provided account has the proper amount of signatures on the transaction.
+	 *
+	 * @param info
+	 * @return
+	 * @throws HederaClientException
+	 */
 	public boolean verify(final AccountInfo info) throws HederaClientException {
 		final var signed = transaction;
 		signed.collate(signaturePairs);
@@ -184,7 +212,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	}
 
 	public boolean hasTransaction() {
-		return !transactionFile.equals("");
+		return !transactionFileName.equals("");
 	}
 
 	/**
@@ -201,8 +229,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		if (!this.baseName.equals(helper.baseName)) {
 			throw new HederaClientException("Transactions don't match");
 		}
-		if (this.transactionFile.equals("")) {
-			this.transactionFile = helper.transactionFile;
+		if (this.transactionFileName.equals("")) {
+			this.transactionFileName = helper.transactionFileName;
 			this.transaction = helper.transaction;
 			this.comments.addAll(helper.comments);
 		} else if (helper.hasTransaction()) {
@@ -211,7 +239,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 						helper.getTransactionFile());
 				throw new HederaClientException("Transactions don't match");
 			}
-			this.transactionFile = setFileOutput(helper.transactionFile);
+			this.transactionFileName = setFileOutput(helper.transactionFileName);
 			// If the transactions are the same (only checks memo, maxTransactionFee, validDuration, and nodeAccountId)
 			// then keep the smaller one (will have fewer signatures on it)
 			if (helper.getTransaction().toBytes().length < this.transaction.toBytes().length) {
@@ -222,7 +250,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	}
 
 	public String store(final String key) throws HederaClientException {
-		var output = this.transactionFile;
+		var output = this.transactionFileName;
+
 		final var outFile = new File(output);
 		if (outFile.isFile()) {
 			output = outFile.getParent();
@@ -293,7 +322,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		var hash = 1;
 		hash = (prime * hash) + signaturePairs.hashCode();
 		hash = (prime * hash) + ((transaction != null) ? Arrays.hashCode(transaction.getTransaction().toBytes()) : 0);
-		hash = (prime * hash) + ((!"".equals(transactionFile)) ? transactionFile.hashCode() : 0);
+		hash = (prime * hash) + ((!"".equals(transactionFileName)) ? transactionFileName.hashCode() : 0);
 		hash = (prime * hash) + ((!"".equals(baseName)) ? baseName.hashCode() : 0);
 		hash = (prime * hash) + ((comments.isJsonNull()) ? comments.hashCode() : 0);
 		return hash;

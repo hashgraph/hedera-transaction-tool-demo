@@ -425,6 +425,14 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return verifiedTransaction ? CollateAndVerifyStatus.OVER_SIZE_LIMIT : CollateAndVerifyStatus.NOT_VERIFIABLE;
 	}
 
+	/**
+	 * Verify that the supplied key exists in the transaction signature list.
+	 *
+	 * @param publicKey
+	 * 		a public key
+	 * @return
+	 * @throws HederaClientRuntimeException
+	 */
 	@Override
 	public boolean verify(final PublicKey publicKey) throws HederaClientRuntimeException {
 		final var signatures = transaction.getSignatures();
@@ -436,6 +444,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return false;
 	}
 
+	/**
+	 * Verify that the supplied account's key exists, and passes any
+	 * required thresholds, in the transaction signature list.
+	 *
+	 * @param info
+	 * 		account info of the account to test
+	 * @return
+	 * @throws HederaClientException
+	 */
 	@Override
 	public boolean verify(final AccountInfo info) throws HederaClientException {
 		return verifyWithKey(info.key);

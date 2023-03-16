@@ -350,6 +350,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
+		//TODO Does this include new accounts/keys?
 		final var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;
