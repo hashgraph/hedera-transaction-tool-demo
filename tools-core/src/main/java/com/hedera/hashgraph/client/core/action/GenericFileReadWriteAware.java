@@ -380,15 +380,12 @@ public interface GenericFileReadWriteAware {
 	 * 		a Map<String, List<String>>
 	 */
 	default void writeCSV(final String filePath,
-			final Map<String, List<String>> listOfStrings) throws HederaClientException {
+			final List<List<String>> listOfStrings) throws HederaClientException {
 		final var eol = System.getProperty("line.separator");
 		final var separator = ",";
 		try (final Writer writer = new FileWriter(filePath)) {
-			for (final var entry : listOfStrings.entrySet()) {
-				writer.append(entry.getKey());
-				for (final var s : entry.getValue()) {
-					writer.append(separator).append(s);
-				}
+			for (final var list : listOfStrings) {
+				writer.append(String.join(separator, list));
 				writer.append(eol);
 			}
 		} catch (final IOException ex) {
