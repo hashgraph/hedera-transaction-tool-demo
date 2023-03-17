@@ -622,7 +622,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				new File(System.getProperty("java.io.tmpdir"),
 						LocalDate.now().toString()).getAbsolutePath() + "/Transaction/" + keyName;
 		final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
-				this.getBaseName() + "-" + keyName + ".zip");
+				this.getBaseName() + "_" + keyName + ".zip");
 
 		final var tempTxFile =
 				tempStorage + File.separator + this.getBaseName() + "." + TRANSACTION_EXTENSION;
