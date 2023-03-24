@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.KeyDesignErrorCodes;
@@ -153,13 +154,24 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 
 	}
 
-	public TreeView<String> buildKeyTreeView(final JsonObject keyJson) {
+	/**
+	 * Build the key TreeView based on the json supplied. If the JsonElement is a JsonObject it is a Key object.
+	 * If the JsonElement is a JsonPrimitive, it is just a string representation of the key.
+	 *
+	 * @param keyJson The key
+	 * @return A TreeView representation of the key
+	 */
+	public TreeView<String> buildKeyTreeView(final JsonElement keyJson) {
 		final var keyTreeView = new TreeView<String>();
 		final var root = new TreeItem<String>();
 		final var rootJson = new JsonObject();
 		keyJsonItems.put(root, rootJson);
-		final var keyItem = showKey(keyJson);
-		root.getChildren().add(keyItem);
+		if (keyJson instanceof JsonObject) {
+			final var keyItem = showKey(((JsonObject)keyJson));
+			root.getChildren().add(keyItem);
+		} else if (keyJson instanceof JsonPrimitive) {
+			root.getChildren().add(new TreeItem<>(((JsonPrimitive)keyJson).getAsString()));
+		}
 		keyTreeView.setRoot(root);
 		keyTreeView.setShowRoot(false);
 		return keyTreeView;

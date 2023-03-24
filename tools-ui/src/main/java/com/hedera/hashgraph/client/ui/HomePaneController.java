@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
@@ -332,7 +333,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		}
 
 		JsonObject oldInfo = null;
-		JsonObject oldKey = null;
+		JsonElement oldKey = null;
 		controller.loadPubKeys();
 		var key = new KeyList();
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
@@ -342,7 +343,8 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			final var transaction = (ToolCryptoUpdateTransaction) rf.getTransaction();
 			oldInfo = getOldInfo(transaction.getAccount());
 			if (oldInfo != null) {
-				oldKey = oldInfo.get("key").getAsJsonObject();
+//				if key is a string, as in no threshold, then this breaks
+				oldKey = oldInfo.get("key");
 			}
 			key = transaction.getKey();
 		}
