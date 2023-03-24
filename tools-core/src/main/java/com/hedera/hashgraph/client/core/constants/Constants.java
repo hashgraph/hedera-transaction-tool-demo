@@ -27,6 +27,7 @@ public class Constants {
 		throw new IllegalStateException("Constants class");
 	}
 
+	public static final int MAX_TRANSACTION_LENGTH = 6144;
 	public static final int MIN_PASSWORD_LENGTH = 10;
 	public static final int MAX_PASSWORD_LENGTH = 1024;
 	public static final int MNEMONIC_SIZE = 24;
@@ -36,8 +37,11 @@ public class Constants {
 	public static final String PUB_EXTENSION = "pub";
 	public static final String INFO_EXTENSION = "info";
 	public static final String RECEIPT_EXTENSION = "rcpt";
+	// The file extension for a transaction that has not been signed. Unless submitted?
 	public static final String TRANSACTION_EXTENSION = "tx";
+	// The file extension for the signature.
 	public static final String SIGNATURE_EXTENSION = "sig";
+	// The file extension for a transaction that has been signed.
 	public static final String SIGNED_TRANSACTION_EXTENSION = "txsig";
 	public static final String ZIP_EXTENSION = "zip";
 	public static final String TXT_EXTENSION = "txt";
