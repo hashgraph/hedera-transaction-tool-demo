@@ -124,6 +124,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	 */
 	public void buildBundle(final BatchLine distributionData, final KeyPair keyPair) throws HederaClientException {
 		final var tx = buildTransfer(distributionData);
+
 		final var stx = buildSignature(tx, keyPair);
 		final var signaturePair =
 				new SignaturePair(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()).getPublicKey(), stx);
@@ -265,8 +266,8 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		}
 	}
 
-	private byte[] buildSignature(final ToolTransaction tx, final KeyPair keyPair) {
-		return tx.sign(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()));
+	private byte[] buildSignature(final ToolTransaction tx, final KeyPair keyPair) throws HederaClientRuntimeException {
+		return tx.createSignature(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()));
 	}
 
 	private String getFullTransactionName(final BatchLine distributionData, final String id) {

@@ -178,17 +178,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (o == null || getClass() != o.getClass()) {
-			return false;
-		}
-		return super.equals(o);
-	}
-
-	@Override
 	public boolean isExpired() {
 		final var now = new Timestamp();
 		return now.getSeconds() > getExpiration().getSeconds();
@@ -646,9 +635,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			// Store a copy of the transaction
 			transaction.store(tempTxFile);
 
-			// Sign the transaction;
+			// Sign the transaction
 			final var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
-			final var signaturePair = new SignaturePair(privateKey.getPublicKey(), transaction.sign(privateKey));
+
+			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+					transaction.createSignature(privateKey));
 			signaturePair.write(signatureFile);
 
 			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
