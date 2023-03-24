@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
@@ -26,19 +25,16 @@ import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
-import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
-import io.grpc.internal.ClientStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 
-import javax.swing.border.Border;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -89,10 +85,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
 	private final Map<File, AccountInfo> infos = new HashMap<>();
-	private final Map<File, PublicKey> publicKeys = new HashMap<>();
+	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
 	private final Set<AccountId> knownIds = new HashSet<>();
-
 	@Override
 	public void execute() throws HederaClientException, IOException {
 		if ("".equals(out)) {
@@ -105,8 +100,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		// Parse account info files from inputs
-		//TODO this only grabs stuff in the folders, but what if there is a key missing
-		// from the folder, but exists in the transaction (like account update?)
 		loadVerificationFiles(infoFiles, Constants.INFO_EXTENSION);
 
 		// Parse public key files from inputs
@@ -115,7 +108,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// Parse transactions
 		loadTransactions(root);
 
-		// or something, and filename can have an _ in it
+		// Verify the transactions have the proper signatures,
+		// collate the signature files,
+		// and create the info for the verification.csv,
 		final var verification = verifyTransactions();
 
 		if (verification == null) {
@@ -137,10 +132,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (final var entry : transactions.entrySet()) {
 			// Get the helper that will perform the work
 			final var helper = entry.getValue();
-			// Collate all signature key pairs
-			//TODO this happens in the verify step
-			helper.collate();
-			//
+			// Zip up the files in preparation to be moved
 			outputs.add(helper.store(entry.getKey()));
 		}
 		logger.info("Transactions collated and stored");
@@ -157,6 +149,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (final var unzip : unzips) {
 			FileUtils.deleteDirectory(unzip);
 		}
+		FileUtils.deleteDirectory(new File("./Temp"));
 	}
 
 
@@ -222,14 +215,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		return true;
 	}
 
-	//transaction file nsme, transaction id, all account involved in signing (if they matter),
-	// list of keys used in signing (if they matter) derive key nsmed from pub key file names
-	// put the list in quotes ",,,,"
-
-//	i need to get all accounts and keys that are needed, compare to the ones that exist,
-//	if passes, create the csv, if not, throw an error
 	private List<List<String>> verifyTransactions() throws HederaClientException {
-		// Create the map, the key being the transactionId, the list is all of the fields for the vefification of
+		// Create the map, the key being the transactionId, the list is all the fields for the verification of
 		// that transaction.
 		final Map<String, List<String>> verifyWithFiles = new HashMap<>();
 
@@ -244,11 +231,14 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				continue;
 			}
 
+			// Collate all signatures
+			helper.collate();
+
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
 			// due to transfer, etc.
 			var requiredIds = helper.getSigningAccounts().stream()
-					.map(accountId -> accountId.toString())
+					.map(AccountId::toString)
 					.collect(Collectors.toList());
 			// Get all accounts that have valid signatures
 			// (exist in the info folder AND pass verification which includes threshold checks)
@@ -281,158 +271,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			// Put the list of strings into the map
 			verifyWithFiles.put(transactionId, verificationItemList);
-//
-//			helper.getsigningaccounts returns all accounts needed (be sure to include new keys)
-//			helper.getsignaturepairs only returns sigs collected
-//			getaccountid(helper) gets all accounts that have valid sigs (exist and pass threshold tests)
-//			getpublickeynames(helper) returns names of all keys used to sign if they are needed to sign (be sure to include new keys)
-//
-//			make sure all accounts returned in getsigningaccounts exist in getaccountid list
-//			if that is true, then it is verified, add to the list along with all publickeynames
-//
-//			check if the accountinfo file is present (knownids)? what good does that do? nothing,
-//
-//
-//
-//
-//
-//					the reason it was done all at once was because the requiredids could be the same ids fro multiple transactions
-//					and the ids that passed (present and threshold) could be the same for multiple transactions
-//					so unless I want to specify which trnsaction failed, group them up. but why woulnd't I want to say which transaction
-//		failed? specify transactionfilename, or transactionid, or both probably just filename'
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//			// This should get the accounts needed.
-//			helper.getSigningAccounts();
-//			// This should get the keys used to sign
-//			this is the list of all signatures used, how is this different than publickeynames? its not, other than
-//					publickeynames returns the key names
-//					actually this gets all sigs, where getpublickeynames only gets key names of sigs that are required
-//					so make sure that both getsigningaccounts and getpublickeynames will also return new keys in the case
-//				of accountupdate
-//			helper.getSignaturePairs();
-//
-//			gets all accounts that have valid signatures on the transaction, compare this to the list of
-//			required accounts
-//					this needs to also make sure accountupdate new key stuff is taken into account
-//			getAccountIds(helper);
-//			// Go through all the public keys in the supplied 'public keys' folder,
-//			// add all of the keys that apply (with verify)
-//			gets all keys that signed the transaction, compare this to the list of required signatures?
-//			getPublicKeyNames(helper);
 		}
 		return new ArrayList<>(verifyWithFiles.values());
-//
-//
-//
-////		the idea is verifywithfiles will allow me to group stuff, i just need to be sure to filter out stuff by node
-////		which means transactionid? or filename+id? transactionid, nothing shouldn't have more than one entry per transaction id
-////	    but can i have multiple entries in transaction for the same id that need to be collated? or is that already done?'
-////		by this point it should already be done
-////		I either need a set of verification objects, or a map that I will convert to a list (map.values().aslist)
-////		at the end
-//		// TODO I don't think I fully understand what is going on here, what is verifyWithFiles?
-//
-//// TODO start in here, i need the transaction name/id thing (testCSV_3 copy 2) as first column
-////not sure on the group account stuff yet
-////also, remove all accounts not in requiredids from verification
-//		final Set<AccountId> requiredAccountIds = new HashSet<>();
-//		final Set<ByteString> requiredSigningKeys = new HashSet<>();
-//		Set<String> ids = new HashSet<>();
-//
-////TODO
-////		ok, this needs to go through all the transactions and have an entry for each:
-////		transactionfilename, .txsig filename, list of accounts/keys (not ',' separated?)
-////		I only want this for 1 node, meaning the same data will be present for each node
-////				group by node (meaning I only need full data from 1 node, as all are the same?)
-////		then, for each
-////		in the case of an accountupdate, the new key structure can be different than the one in .info
-////		and if new keys are added, they will be required to be signers
-////		which means that they will get left off IF we don't check the transaction.keystructure (not sure how to do that yet)'
-////		and if I can do that easily enough here, maybe I can do that in the home page stuff so the new user doesn't
-////	    have to manually add their key'
-////should just be in entry.getvalue().gettransaction().getKey()
-//// TODO ids never gets reset? is that right? if verifyWtihFiles contains key, it gets the set, otherwise
-//// it just uses the previous set? doesn't sound right. works if only 1 thing is involved though
-//		//todo
-////		should transactions have an entry for every transaction for every node? or just one for all ndes that gets
-////				copied at the end
-//		for (final var entry : transactions.entrySet()) {
-//			//get the transactionId and use that as the key for the verify
-//			var fileName = entry.getValue().getBaseName();
-//			if (verifyWithFiles.containsKey(fileName)) {
-//				continue;
-//			}
-//
-//			final var helper = entry.getValue();
-////			this is the secret, the account.info has the key structure, so I need the .info in order to
-////					get keys, but in the case of an cryptoyupdatetransaction, I need to get the key list as well
-//			requiredAccountIds.addAll(helper.getSigningAccounts());
-////			which should be in here, in signingkeys, no this is the same kinda thing as signing accounts, I think
-////			i think i need to specifically check for transaction instanceof accountupdate, then get key
-////
-////						but for both types, what about threshold?
-////				does verification even bother with threshold? who does? other than the network
-////
-////						transaction.getsigningkeys for an update should be where the new keys are added to the list
-//			requiredSigningKeys.addAll(helper.getTransaction().getSigningKeys());
-//
-//			// TODO this seems to only pull the keys that match, nothing else
-//			// Go through all the accounts in the supplied 'info' folder,
-//			// add all of the accounts that apply (with verify)
-//			// TODO does verify get all the new keys not already in account.key? for an account update that is
-//			ids.addAll(getAccountIds(helper));
-//			// Go through all the public keys in the supplied 'public keys' folder,
-//			// add all of the keys that apply (with verify)
-//			ids.addAll(getPublicKeyNames(helper));
-//
-//			// TODO it gets sorted every time, and new stuff is added to this set for each different file
-//			// the sorting seems unnecessary as it is done down below before the results are returned
-//			// and I don't see it helping much in the check below
-////			final List<String> sortedIDs = new ArrayList<>(ids);
-////			Collections.sort(sortedIDs);
-////			i think i want the helper.gettransactionfilename to be wihtout node, then add node as a separate field
-////					so the fields would be
-////					txfilename, node, .txsig name without node prefix, list of accounts/keys used to sign (change delimiter?)
-////			except, I don't think they care about node, because it will look the same for all nodes, '
-//			verifyWithFiles.put(fileName, new HashSet<>(ids));
-//		}
-//
-////		it would seem to me that this should be done for each file, not afterwards for all of them, right?
-////		or maybe as it is a group.... no it should be able to collate a bunch of stuff at the same time and this might be
-////		one of the issues they were having.
-//
-////	TODO	try and find an example of a multi signing collate
-//		for (final AccountId requiredId : requiredAccountIds) {
-//			final var requiredIdString = requiredId.toString();
-//			if (knownIds.contains(requiredId) && !ids.contains(requiredIdString)) {
-//				logger.info("Transactions have not been signed by required account {}", requiredIdString);
-//				return null;
-//			}
-//		}
-//
-//		final Map<String, List<String>> verifyTransactions = new HashMap<>();
-//		for (final Map.Entry<String, Set<String>> entry : verifyWithFiles.entrySet()) {
-//			final var key = entry.getKey();
-//			final var value = entry.getValue();
-//			final List<String> sortedIDs = new ArrayList<>(value);
-//			Collections.sort(sortedIDs);
-//			verifyTransactions.put(key, sortedIDs);
-//		}
-//
-////		this should really be a key (transactionfilename), with a list of transactions, each having a list of keys
-////				except, the transactionfilename will always be the same (unless lots of different transactions are all collated at the same time)
-////		so, it's not a map so much as a list of verification items that need to be written'
-////		return verifyTransactions;
-//		return new ArrayList<>();
 	}
 
 	/**
@@ -443,9 +283,14 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	 */
 	private List<String> getPublicKeyNames(final CollatorHelper helper) {
 		final List<String> idList = new ArrayList<>();
-		for (final Map.Entry<File, PublicKey> keyEntry : publicKeys.entrySet()) {
-			if (helper.verify(keyEntry.getValue())) {
-				idList.add(FilenameUtils.getBaseName(keyEntry.getKey().getName()));
+		for (final Map.Entry<PublicKey, String> keyEntry : helper.getPublicKeys().entrySet()) {
+			if (helper.verify(keyEntry.getKey())) {
+				var keyName = publicKeys.get(keyEntry.getKey());
+				if (keyName != null) {
+					idList.add(keyName);
+				} else {
+					idList.add(keyEntry.getValue());
+				}
 			}
 		}
 		return idList;
@@ -570,7 +415,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 						knownIds.add(infos.get(file).accountId);
 						break;
 					case Constants.PUB_EXTENSION:
-						publicKeys.put(file, EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()));
+						publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
+								FilenameUtils.getBaseName(file.getName()));
 						break;
 					default:
 						throw new HederaClientException("Not implemented");
