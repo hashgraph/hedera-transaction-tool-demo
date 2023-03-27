@@ -29,7 +29,6 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -421,10 +420,10 @@ public class RemoteFilesMap {
 	private static boolean validFile(final FileDetails file) {
 		final var extension = file.getExtension();
 
-		for (final var type : FileType.values()) {
-			if (type.getExtension().equals(extension)) {
-				return true;
-			}
+		try {
+			return FileType.getType(extension) != FileType.UNKNOWN;
+		} catch (HederaClientException e) {
+			// No need to log or deal with this exception, the extension is invalid, return false
 		}
 		return false;
 	}
