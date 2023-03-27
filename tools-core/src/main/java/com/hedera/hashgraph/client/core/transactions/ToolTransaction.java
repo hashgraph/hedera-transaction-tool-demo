@@ -108,6 +108,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	NetworkEnum network;
 	String memo;
 
+	private enum CollateAndVerifyStatus {
+		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT;
+	}
+
 	public ToolTransaction() {
 	}
 
@@ -284,7 +288,18 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			transaction.getSignatures().values().forEach(map -> map.keySet().forEach(signatures::remove));
 
 			// Collate and verify the resulting transaction is within size limitations
-			collateAndVerify(keyList, signatures);
+			var result = collateAndVerify(keyList, signatures);
+			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
+			// cannot result in a valid transaction.
+			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
+			if (result == CollateAndVerifyStatus.OVER_SIZE_LIMIT) {
+				transactionSize = transaction.toBytes().length;
+				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
+						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
+			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
+				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction" +
+						"cannot be verified.");
+			}
 		} catch (IOException e) {
 			throw new HederaClientRuntimeException(e);
 		}
@@ -372,7 +387,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	// In order to collate and have a valid signed transaction, verification needs to happen alongside the collating.
 	// This method will ensure that the collating does not result in a transaction that exceeds the maximum
 	// transaction size limit, if possible.
-	private boolean collateAndVerify(final KeyList keyList, Map<PublicKey, byte[]> signatures) throws InvalidProtocolBufferException {
+	private CollateAndVerifyStatus collateAndVerify(final KeyList keyList, Map<PublicKey, byte[]> signatures) throws InvalidProtocolBufferException {
 		// Create a backup of the transaction
 		final var backupTransaction = Transaction.fromBytes(transaction.toBytes());
 
@@ -393,18 +408,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					// Remove the key from the signatures
 					final var signature = signaturesCopy.remove(key);
 					// Try again with the new list of signatures
-					if (collateAndVerify(keyList, signaturesCopy)) {
-						return true;
+					if (collateAndVerify(keyList, signaturesCopy) == CollateAndVerifyStatus.SUCCESSFUL) {
+						return CollateAndVerifyStatus.SUCCESSFUL;
 					}
 					// If it didn't work, put the signature back into the list and loop
 					signaturesCopy.put(key, signature);
 				}
 			} else {
-				return true;
+				return CollateAndVerifyStatus.SUCCESSFUL;
 			}
 		}
 
-		return false;
+		// Return why it failed.
+		// The transaction is now signed, even those it failed, in order to help
+		// with the message to be sent to the user
+		return verifiedTransaction ? CollateAndVerifyStatus.OVER_SIZE_LIMIT : CollateAndVerifyStatus.NOT_VERIFIABLE;
 	}
 
 	@Override
