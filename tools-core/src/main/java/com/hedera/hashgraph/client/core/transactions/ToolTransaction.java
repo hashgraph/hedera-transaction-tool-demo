@@ -58,12 +58,14 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.Arrays;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -105,6 +107,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	Duration transactionValidDuration;
 	NetworkEnum network;
 	String memo;
+
+	private enum CollateAndVerifyStatus {
+		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT;
+	}
 
 	public ToolTransaction() {
 	}
@@ -222,36 +228,201 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return key.signTransaction(transaction);
 	}
 
-	@Override
-	public Transaction<? extends Transaction<?>> collate(
-			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	/**
+	 * Creates the signature for the given key, only. No signature is added
+	 * to the transaction. When a transaction is signed, and only requires one
+	 * signature, then {@link #sign(PrivateKey) signing} should be used. If multiple
+	 * signatures from multiple users will be required, then the transaction should
+	 * not be signed, but a signature should be created.
+	 *
+	 * @param key
+	 * @return
+	 * @throws HederaClientRuntimeException
+	 */
+	//TODO Either this approach, or move the copy concept into the ToolTransaction and save a .txsig with every execute
+	public byte[] createSignature(final PrivateKey key) throws HederaClientRuntimeException {
+		try {
+			var transactionCopy = Transaction.fromBytes(transaction.toBytes());
+			return key.signTransaction(transactionCopy);
+		} catch (InvalidProtocolBufferException e) {
+			throw new HederaClientRuntimeException(e);
+		}
+	}
+
+	/**
+	 * Adds a list of signatures to the transaction. Determines if the resulting
+	 * transaction is valid (within size limitations and contains all necessary signatures).
+	 *
+	 * @param signatures
+	 * 		Signatures to be added to the transaction.
+	 * @return
+	 * 		Boolean indicating if the resulting signed transaction is valid (within size limitations
+	 * 		and contains all necessary signatures).
+	 */
+	private boolean addSignature(final Map<PublicKey, byte[]> signatures) {
+		// Add all signatures to the transaction
 		for (final var entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
 		}
+
+		// Check the size of the transaction, if too large
+		return (transaction.toBytes().length <= Constants.MAX_TRANSACTION_LENGTH);
+	}
+
+	public Transaction<? extends Transaction<?>> collate(final String accountsInfoFolder,
+									 final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+		try {
+			// Before anything happens, make sure the transaction is still within size limitations
+			var transactionSize = transaction.toBytes().length;
+			if (transactionSize > Constants.MAX_TRANSACTION_LENGTH) {
+				throw new HederaClientRuntimeException("Transaction size (" +
+						transactionSize + ") is over the maximum limit.");
+			}
+
+			// Build the list of keys that are required for a valid transaction
+			final var keyList = buildKeyList(accountsInfoFolder, signatures);
+
+			// Remove any keys from the list of signatures to collate that are already present on the transaction.
+			// These keys cannot be removed, and don't need to be re-added, and so don't need to be a part
+			// of this process.
+			transaction.getSignatures().values().forEach(map -> map.keySet().forEach(signatures::remove));
+
+			// Collate and verify the resulting transaction is within size limitations
+			var result = collateAndVerify(keyList, signatures);
+			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
+			// cannot result in a valid transaction.
+			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
+			if (result == CollateAndVerifyStatus.OVER_SIZE_LIMIT) {
+				transactionSize = transaction.toBytes().length;
+				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
+						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
+			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
+				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction" +
+						"cannot be verified.");
+			}
+		} catch (IOException e) {
+			throw new HederaClientRuntimeException(e);
+		}
+
+		// Return the transaction
 		return transaction;
 	}
 
-	@Override
-	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final String accountsInfoFolder,
+								  final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
 		final var signatures = otherTransaction.getSignatures();
 		if (signatures.size() != 1) {
 			throw new HederaClientRuntimeException("Invalid signature map size");
 		}
 		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
-			collate(nodeSignatures);
+			collate(accountsInfoFolder, nodeSignatures);
 		}
 		return transaction;
 	}
 
-	@Override
-	public Transaction<?> collate(final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final String accountsInfoFolder,
+								  final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+		// In order to consolidate similar work, do a bit extra work now and take all pairs and create a map
+		var signatures = new HashMap<PublicKey, byte[]>();
 		for (final var signaturePair : signaturePairs) {
 			final var publicKey = signaturePair.getPublicKey();
 			final var signature = signaturePair.getSignature();
-			transaction.addSignature(publicKey, signature);
+			signatures.put(publicKey, signature);
 		}
-		return transaction;
+
+		return collate(accountsInfoFolder, signatures);
+	}
+
+	@Override
+	public Transaction<? extends Transaction<?>> collate(
+			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+		return collate(Constants.ACCOUNTS_INFO_FOLDER, signatures);
+	}
+
+	@Override
+	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+		return collate(Constants.ACCOUNTS_INFO_FOLDER, otherTransaction);
+	}
+
+	@Override
+	public Transaction<?> collate(final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+		return collate(Constants.ACCOUNTS_INFO_FOLDER, signaturePairs);
+	}
+
+	/**
+	 * Build a keyList of the keys that are a part of the required keyLists. If multiple accounts are
+	 * involved, each of the accounts' keyList will be added to this new list.
+	 *
+	 * @param accountsInfoFolder
+	 * 		The location string of the folder containing the account.info files
+	 * @param signatures
+	 * 		The map of the signatures that are being added to the transaction which are needed in some situations
+	 * @return
+	 * 		The new keyList containing all keys from any required account involved in this transaction.
+	 * @throws IOException
+	 */
+	protected KeyList buildKeyList(final String accountsInfoFolder,
+								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+		// Determine all the accounts that need to be involved in the signing
+		final var accounts = getSigningAccounts();
+		final var fileSet = accounts.stream()
+				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
+				.filter(files -> files != null && files.length == 1)
+				.map(fileArray -> fileArray[0])
+				.collect(Collectors.toSet());
+
+		// Build the list of keys that are required for a valid transaction
+		final var keyList = KeyList.withThreshold(fileSet.size());
+		for (final var file : fileSet) {
+			try (final var fis = new FileInputStream((file))) {
+				keyList.add(AccountInfo.fromBytes(fis.readAllBytes()).key);
+			} catch (IOException e) {
+				throw new HederaClientRuntimeException(e);
+			}
+		}
+		return keyList;
+	}
+
+	// In order to collate and have a valid signed transaction, verification needs to happen alongside the collating.
+	// This method will ensure that the collating does not result in a transaction that exceeds the maximum
+	// transaction size limit, if possible.
+	private CollateAndVerifyStatus collateAndVerify(final KeyList keyList, Map<PublicKey, byte[]> signatures) throws InvalidProtocolBufferException {
+		// Create a backup of the transaction
+		final var backupTransaction = Transaction.fromBytes(transaction.toBytes());
+
+		// First, sign the transaction and determine if the resulting transaction is too large
+		final var transactionTooLarge = !addSignature(signatures);
+		// Second, verify if the transaction, too large or not, is valid after signing
+		final var verifiedTransaction = verifyWithKeyList(keyList);
+		// If the transaction is valid
+		if (verifiedTransaction) {
+			// If signed transaction is too large, remove a signature and try again, otherwise return true
+			if (transactionTooLarge) {
+				// Create the map copy, it will have entries added/removed, and will be used for the next attempt
+				var signaturesCopy = new HashMap<>(signatures);
+				// For every key in newKeys
+				for (final var key : signatures.keySet()) {
+					// Reset the transaction
+					transaction = Transaction.fromBytes(backupTransaction.toBytes());
+					// Remove the key from the signatures
+					final var signature = signaturesCopy.remove(key);
+					// Try again with the new list of signatures
+					if (collateAndVerify(keyList, signaturesCopy) == CollateAndVerifyStatus.SUCCESSFUL) {
+						return CollateAndVerifyStatus.SUCCESSFUL;
+					}
+					// If it didn't work, put the signature back into the list and loop
+					signaturesCopy.put(key, signature);
+				}
+			} else {
+				return CollateAndVerifyStatus.SUCCESSFUL;
+			}
+		}
+
+		// Return why it failed.
+		// The transaction is now signed, even those it failed, in order to help
+		// with the message to be sent to the user
+		return verifiedTransaction ? CollateAndVerifyStatus.OVER_SIZE_LIMIT : CollateAndVerifyStatus.NOT_VERIFIABLE;
 	}
 
 	@Override

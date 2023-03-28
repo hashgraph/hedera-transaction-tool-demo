@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
@@ -127,6 +128,49 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	public Boolean isDeclineStakingRewards() {
 		return declineStakingRewards;
+	}
+
+	@Override
+	protected KeyList buildKeyList(String accountsInfoFolder,
+								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+		// Get the keyList
+		final var keyList = super.buildKeyList(accountsInfoFolder, signatures);
+		// For every key in this.key that isn't in keyList, sign the transaction
+		for (final var k : convertKeyToList(this.key)) {
+			if (!keyListContainsKey(keyList, k)) {
+				transaction.addSignature(k, signatures.get(k));
+			}
+		}
+		// Return the keyList
+		return keyList;
+	}
+
+	private List<PublicKey> convertKeyToList(final KeyList keyList) {
+		final var newList = new ArrayList<PublicKey>();
+		for (final var k : keyList) {
+			if (k instanceof PublicKey) {
+				newList.add((PublicKey)k);
+			} else if (k instanceof KeyList) {
+				newList.addAll(convertKeyToList((KeyList)k));
+			}
+		}
+		return newList;
+	}
+
+	private boolean keyListContainsKey(KeyList keyList, Key key) {
+		// If the keyList contains the key, return true
+		if (keyList.contains(key)) {
+			return true;
+		}
+		// Otherwise, go through each key in the keyList. If it is a keyList,
+		// then recall this method and determine if it contains the key
+		for (final var k : keyList) {
+			if (k instanceof KeyList && keyListContainsKey((KeyList)k, key)) {
+				return true;
+			}
+		}
+		// The key was not found, return false
+		return false;
 	}
 
 	@Override
