@@ -18,17 +18,17 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.hedera.hashgraph.client.ui.HomePaneController;
+import com.hedera.hashgraph.client.ui.SubController;
 import javafx.application.Platform;
 import javafx.concurrent.ScheduledService;
 import javafx.concurrent.Task;
 
 public class ReloadFilesService extends ScheduledService<Void> {
 
-	private final HomePaneController controller;
+	private final SubController controller;
 
-	public ReloadFilesService(final HomePaneController homePaneController) {
-		this.controller = homePaneController;
+	public ReloadFilesService(final SubController subController) {
+		this.controller = subController;
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class ReloadFilesService extends ScheduledService<Void> {
 			@Override
 			protected Void call() {
 				// other auto reloading panes can go here
-				Platform.runLater(controller::initializeHomePane);
+				Platform.runLater(controller::initializePane);
 				return null;
 			}
 		};

@@ -53,7 +53,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -358,7 +358,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkFee(final List<String> csvList) {
 		try {
 			final var feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
-			// If there is no transaction fee line, just use the default;
+			// If there is no transaction fee line, just use the default
 			if (feeLine.length == 0) {
 				this.transactionFee = properties.getDefaultTxFee();
 				return false;
@@ -386,7 +386,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkTransactionValidDuration(final List<String> csvList) {
 		try {
 			final var tvdLine = getStrings(csvList, DURATION, "[,]", true);
-			// If there is no transaction valid duration line, just use the default;
+			// If there is no transaction valid duration line, just use the default
 			if (tvdLine.length == 0) {
 				this.txValidDuration = properties.getTxValidDuration();
 				return false;
@@ -631,7 +631,10 @@ public class BatchFile extends RemoteFile {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
-		return new HashSet<>(Collections.singleton(getSenderAccountID().asAccount()));
+		final var set = new HashSet<AccountId>();
+		set.add(getSenderAccountID().asAccount());
+		set.add(getFeePayerAccountID().asAccount());
+		return set;
 	}
 
 	@Override

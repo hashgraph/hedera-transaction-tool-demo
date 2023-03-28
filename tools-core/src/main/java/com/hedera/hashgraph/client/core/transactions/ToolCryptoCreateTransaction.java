@@ -28,7 +28,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
@@ -58,7 +58,7 @@ import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	private Hbar initialBalance;
-	private KeyList key;
+	private Key key;
 	private Duration autoRenewDuration;
 	private boolean receiverSignatureRequired;
 	private int maxTokenAssociations = MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
@@ -77,7 +77,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	public ToolCryptoCreateTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.initialBalance = ((AccountCreateTransaction) transaction).getInitialBalance();
-		this.key = (KeyList) ((AccountCreateTransaction) transaction).getKey();
+		this.key = ((AccountCreateTransaction) transaction).getKey();
 		this.autoRenewDuration = ((AccountCreateTransaction) transaction).getAutoRenewPeriod();
 		this.receiverSignatureRequired = ((AccountCreateTransaction) transaction).getReceiverSignatureRequired();
 		this.maxTokenAssociations = ((AccountCreateTransaction) transaction).getMaxAutomaticTokenAssociations();
@@ -93,7 +93,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		return initialBalance;
 	}
 
-	public KeyList getKey() {
+	public Key getKey() {
 		return key;
 	}
 

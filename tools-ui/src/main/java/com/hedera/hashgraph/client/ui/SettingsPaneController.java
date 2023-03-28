@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.ui;
 import com.google.common.net.InetAddresses;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.constants.ToolTipMessages;
@@ -84,7 +83,7 @@ import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.VALID_D
 import static javafx.scene.control.Alert.AlertType;
 import static javafx.scene.control.Control.USE_COMPUTED_SIZE;
 
-public class SettingsPaneController implements GenericFileReadWriteAware {
+public class SettingsPaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(SettingsPaneController.class);
 	private static final String REGEX = "\\D";
@@ -161,7 +160,8 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	void initializeSettingsPane() {
+	@Override
+	public void initializePane() {
 		try {
 			settingScrollPane.setFitToWidth(true);
 			// bindings
@@ -812,7 +812,7 @@ public class SettingsPaneController implements GenericFileReadWriteAware {
 		final var zero = Identifier.ZERO;
 		zero.setNetworkName(controller.getCurrentNetwork());
 		controller.setDefaultFeePayer(zero);
-		controller.accountsPaneController.initializeAccountPane();
+		controller.accountsPaneController.initializePane();
 		addFeePayerAction();
 	}
 
