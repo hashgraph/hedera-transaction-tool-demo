@@ -22,7 +22,6 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Chars;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -76,7 +75,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -115,7 +114,7 @@ import static org.apache.commons.io.FileUtils.contentEquals;
 import static org.apache.commons.io.FileUtils.copyFile;
 import static org.apache.commons.io.FileUtils.moveFile;
 
-public class KeysPaneController implements GenericFileReadWriteAware {
+public class KeysPaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(KeysPaneController.class);
 	private static final String MISSING_HASHCODE_MESSAGE =
@@ -198,7 +197,8 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	public void initializeKeysPane() {
+	@Override
+	public void initializePane() {
 		try {
 			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
 
@@ -534,7 +534,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		final var pubKeyAddress = publicKeysMap.get(rowData.getKeyName() + "." + PUB_EXTENSION);
 		final var answer = CompleteKeysPopup.display(pubKeyAddress, rowData.getAccountList(), true);
 		if (Boolean.TRUE.equals(answer)) {
-			initializeKeysPane();
+			initializePane();
 		}
 	}
 
@@ -824,7 +824,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		}
 		populatePublicKeysMap();
 		populatePrivateKeysMap();
-		initializeKeysPane();
+		initializePane();
 		closeGenerateKeys();
 		fill(password, 'x');
 	}
@@ -876,7 +876,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		resetKeyRecoveryBox();
 		populatePrivateKeysMap();
 		initializeIndexMap();
-		initializeKeysPane();
+		initializePane();
 	}
 
 	private boolean createKeyStoreForAccount(final int index, final char[] password) {
@@ -1198,7 +1198,7 @@ public class KeysPaneController implements GenericFileReadWriteAware {
 		counter += handleDuplicates(duplicates);
 
 		if (counter > 0) {
-			initializeKeysPane();
+			initializePane();
 		}
 	}
 

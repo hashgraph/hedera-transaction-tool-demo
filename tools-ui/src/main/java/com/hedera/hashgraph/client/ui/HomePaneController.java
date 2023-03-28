@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -40,7 +39,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
-import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
@@ -96,7 +95,7 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListene
 
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored" })
-public class HomePaneController implements GenericFileReadWriteAware {
+public class HomePaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
 	private static final double VBOX_SPACING = 20;
@@ -128,11 +127,13 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	public void initializeHomePane() {
+	@Override
+	public void initializePane() {
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
 
 		try {
+			// TODO counting files is not a good way to do this, file name changes, or paste & replace operations, etc.
 			// Only refresh if there have been changes in the remotes or the history
 			final var countFiles = countTotalFiles();
 			if (updateNotNeeded(countFiles)) {
@@ -334,7 +335,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 		JsonObject oldInfo = null;
 		JsonObject oldKey = null;
 		controller.loadPubKeys();
-		var key = new KeyList();
+		Key key = null;
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
 		}
@@ -530,9 +531,9 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				controller.historyPaneController.addToHistory(rf);
 				historyChanged = true;
 				controller.loadPubKeys();
-				controller.accountsPaneController.initializeAccountPane();
-				controller.keysPaneController.initializeKeysPane();
-				initializeHomePane();
+				controller.accountsPaneController.initializePane();
+				controller.keysPaneController.initializePane();
+				initializePane();
 			} catch (final IOException | HederaClientException e) {
 				logger.error("buildAcceptButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
@@ -553,7 +554,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				logger.error("buildDeclineButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
-			initializeHomePane();
+			initializePane();
 		});
 		return declineButton;
 	}
@@ -569,7 +570,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				logger.error("buildCancelButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
-			initializeHomePane();
+			initializePane();
 		});
 		return cancelButton;
 	}
@@ -587,7 +588,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 				rf.moveFromHistory();
 				historyChanged = true;
 				forceUpdate = true;
-				initializeHomePane();
+				initializePane();
 			} catch (final HederaClientException e) {
 				logger.error("buildUndoButton failed", e);
 				controller.displaySystemMessage(e.getCause().toString());
@@ -847,7 +848,7 @@ public class HomePaneController implements GenericFileReadWriteAware {
 			rf.setHistory(true);
 			controller.historyPaneController.addToHistory(rf);
 			historyChanged = true;
-			initializeHomePane();
+			initializePane();
 		} catch (final Exception e) {
 			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());
