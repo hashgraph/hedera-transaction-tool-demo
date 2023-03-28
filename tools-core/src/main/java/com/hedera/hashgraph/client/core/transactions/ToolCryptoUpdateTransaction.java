@@ -29,7 +29,7 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
-import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +57,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NO
 public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	private Identifier account;
-	private KeyList key;
+	private Key key;
 	private Duration autoRenewDuration;
 	private Boolean receiverSignatureRequired;
 	private Integer maxTokenAssociations;
@@ -77,7 +77,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	public ToolCryptoUpdateTransaction(final File inputFile) throws HederaClientException {
 		super(inputFile);
 		this.account = new Identifier(((AccountUpdateTransaction) transaction).getAccountId());
-		this.key = (KeyList) ((AccountUpdateTransaction) transaction).getKey();
+		this.key = ((AccountUpdateTransaction) transaction).getKey();
 		this.autoRenewDuration = ((AccountUpdateTransaction) transaction).getAutoRenewPeriod();
 		this.receiverSignatureRequired = ((AccountUpdateTransaction) transaction).getReceiverSignatureRequired();
 		this.maxTokenAssociations = ((AccountUpdateTransaction) transaction).getMaxAutomaticTokenAssociations();
@@ -93,7 +93,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		setTransactionType(TransactionType.CRYPTO_UPDATE);
 	}
 
-	public KeyList getKey() {
+	public Key getKey() {
 		return key;
 	}
 
