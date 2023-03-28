@@ -268,12 +268,19 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				final var outs = new LinkedList<>(getOneDriveCredentials().keySet());
 				outs.add(Constants.DEFAULT_INTERNAL_FILES);
 				for (final var inputLocation : outs) {
-					final var homeWatcher = new ReloadFilesWatcher(Path.of(inputLocation, Constants.INPUT_FILES), homePaneController);
+					final var homeWatcher = new ReloadFilesWatcher(Path.of(inputLocation, Constants.INPUT_FILES),
+							() -> {
+								// if files are being removed, while this is trying to reload everything,
+								// it will throw some errors.
+								homePaneController.setForceUpdate(true);
+								homePaneController.initializePane();
+							});
 					final var homeWatcherThread = new Thread(homeWatcher);
 					homeWatcherThread.setDaemon(true);
 					homeWatcherThread.start();
 				}
-				final var accountsWatcher = new ReloadFilesWatcher(Path.of(Constants.DEFAULT_ACCOUNTS), accountsPaneController);
+				final var accountsWatcher = new ReloadFilesWatcher(Path.of(Constants.DEFAULT_ACCOUNTS),
+						accountsPaneController::initializePane);
 				final var accountsWatcherThread = new Thread(accountsWatcher);
 				accountsWatcherThread.setDaemon(true);
 				accountsWatcherThread.start();

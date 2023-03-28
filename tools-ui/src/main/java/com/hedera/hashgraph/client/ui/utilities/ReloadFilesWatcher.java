@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui.utilities;
 
-import com.hedera.hashgraph.client.ui.SubController;
 import javafx.application.Platform;
 
 import java.io.IOException;
@@ -31,19 +30,19 @@ import java.nio.file.WatchService;
 public class ReloadFilesWatcher implements Runnable {
     private final WatchService watcher;
     private final WatchKey key;
-    private final SubController subController;
+    private final Runnable runnable;
 
 
     /**
      * Creates a WatchService and registers the given directory
      */
-    public ReloadFilesWatcher(Path dir, SubController subController) throws IOException {
+    public ReloadFilesWatcher(Path dir, Runnable method) throws IOException {
         this.watcher = FileSystems.getDefault().newWatchService();
         this.key = dir.register(watcher,
                 StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_DELETE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
-        this.subController = subController;
+        this.runnable = method;
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
@@ -68,7 +67,7 @@ public class ReloadFilesWatcher implements Runnable {
                 // If take happened, this should always be true
                 if (!watchKey.pollEvents().isEmpty()) {
                     // Initialize the pane
-                    Platform.runLater(subController::initializePane);
+                    Platform.runLater(runnable);
                 }
 
                 // Reset key, if it fails, break from the loop

@@ -73,10 +73,8 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
@@ -99,7 +97,6 @@ public class HomePaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(HomePaneController.class);
 	private static final double VBOX_SPACING = 20;
-	private boolean badDrive = false;
 
 	// region FXML
 
@@ -112,7 +109,6 @@ public class HomePaneController implements SubController {
 	// endregion
 
 	private long lastModified = 0;
-	private int lastCount = 0;
 	private boolean historyChanged = false;
 	private boolean forceUpdate = false;
 	private final RemoteFilesMap remoteFilesMap = new RemoteFilesMap();
@@ -133,18 +129,13 @@ public class HomePaneController implements SubController {
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
 
 		try {
-			// TODO counting files is not a good way to do this, file name changes, or paste & replace operations, etc.
-			// Only refresh if there have been changes in the remotes or the history
-			final var countFiles = countTotalFiles();
-			if (updateNotNeeded(countFiles)) {
+			if (!updateNeeded()) {
 				setForceUpdate(false);
 				return;
 			}
 			setForceUpdate(true);
 			remoteFilesMap.clearMap();
 			loadRemoteFilesMap();
-
-			lastCount = countFiles;
 
 			loadNewFilesBox(remoteFilesMap);
 			newFilesViewVBox.setVisible(true);
@@ -178,29 +169,8 @@ public class HomePaneController implements SubController {
 		setForceUpdate(false);
 	}
 
-	private int countTotalFiles() {
-		var count = 0;
-		final var outs = new LinkedList<>(controller.getOneDriveCredentials().keySet());
-		ensureInternalInputExists();
-		outs.add(DEFAULT_INTERNAL_FILES);
-		for (final var inputLocation : outs) {
-			final var filelist = new File(inputLocation, INPUT_FILES).listFiles();
-			if (filelist == null) {
-				if (!badDrive) {
-					badDrive = true;
-					Platform.runLater(() -> PopupMessage.display("Error reading files", String.format(
-							"The application was unable to read files from the remote location: %s. Please make sure " +
-									"that the application is able to read the drive.", inputLocation)));
-				}
-				continue;
-			}
-			count += Objects.requireNonNull(filelist).length;
-		}
-		return count;
-	}
-
-	public boolean updateNotNeeded(final int countFiles) {
-		return (lastCount == countFiles) && !historyChanged && !forceUpdate;
+	public boolean updateNeeded() {
+		return historyChanged || forceUpdate;
 	}
 
 	private void loadNewFilesBox(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
