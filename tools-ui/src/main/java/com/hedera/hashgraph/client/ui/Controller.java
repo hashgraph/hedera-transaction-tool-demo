@@ -34,7 +34,7 @@ import com.hedera.hashgraph.client.core.updater.GithubUpdater;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.KeyPairUtility;
 import com.hedera.hashgraph.client.ui.utilities.KeyStructureUtility;
-import com.hedera.hashgraph.client.ui.utilities.ReloadFilesService;
+import com.hedera.hashgraph.client.ui.utilities.ReloadFilesWatcher;
 import com.hedera.hashgraph.client.ui.utilities.UpdateHelper;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.Key;
@@ -56,7 +56,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -86,6 +85,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -110,7 +110,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_H
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_PATH;
 import static com.hedera.hashgraph.client.core.constants.Constants.PK_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.RELOAD_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_NAME;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PREFERENCE_FILE;
@@ -263,11 +262,24 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			}
 		}
 
-		// Home pane should load files periodically
+		// Home and Accounts panes should reload when changes are made in the directory
 		if (getSetupPhase() == NORMAL_OPERATION_PHASE) {
-			final var service = new ReloadFilesService(homePaneController);
-			service.setPeriod(Duration.seconds(RELOAD_PERIOD));
-			service.start();
+			try {
+				final var outs = new LinkedList<>(getOneDriveCredentials().keySet());
+				outs.add(Constants.DEFAULT_INTERNAL_FILES);
+				for (final var inputLocation : outs) {
+					final var homeWatcher = new ReloadFilesWatcher(Path.of(inputLocation, Constants.INPUT_FILES), homePaneController);
+					final var homeWatcherThread = new Thread(homeWatcher);
+					homeWatcherThread.setDaemon(true);
+					homeWatcherThread.start();
+				}
+				final var accountsWatcher = new ReloadFilesWatcher(Path.of(Constants.DEFAULT_ACCOUNTS), accountsPaneController);
+				final var accountsWatcherThread = new Thread(accountsWatcher);
+				accountsWatcherThread.setDaemon(true);
+				accountsWatcherThread.start();
+			} catch (IOException e) {
+				// Fail Quietly...ish. Should notify the user, but allow for the app to be used
+			}
 		}
 		initialStartupPaneController.injectMainController(this);
 		historyPaneController.injectMainController(this);
@@ -276,7 +288,6 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		createPaneController.injectMainController(this);
 		keysPaneController.injectMainController(this);
 		accountsPaneController.injectMainController(this);
-
 
 		startupPhaseInitialization();
 
@@ -357,7 +368,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				homePane.setVisible(false);
 				thisPane = initialStartupPane;
 				initialStartupPane.setVisible(true);
-				initialStartupPaneController.initializeStartupPane();
+				initialStartupPaneController.initializePane();
 				initUpdater();
 				break;
 			case NORMAL_OPERATION_PHASE:
@@ -376,12 +387,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
-				keysPaneController.initializeKeysPane();
-				accountsPaneController.initializeAccountPane();
-				historyPaneController.initializeHistoryPane();
-				homePaneController.initializeHomePane();
-				settingsPaneController.initializeSettingsPane();
-				createPaneController.initializeCreatePane();
+				keysPaneController.initializePane();
+				accountsPaneController.initializePane();
+				historyPaneController.initializePane();
+				homePaneController.initializePane();
+				settingsPaneController.initializePane();
+				createPaneController.initializePane();
 				initUpdater();
 				break;
 			case TEST_PHASE:
@@ -391,14 +402,14 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				setDisableButtons(false);
 				thisPane = homePane;
 				homePane.setVisible(true);
-				historyPaneController.initializeHistoryPane();
+				historyPaneController.initializePane();
 				historyPaneController.cleanHistory();
 				historyPaneController.rebuild.setVisible(true);
-				keysPaneController.initializeKeysPane();
-				accountsPaneController.initializeAccountPane();
-				homePaneController.initializeHomePane();
-				settingsPaneController.initializeSettingsPane();
-				createPaneController.initializeCreatePane();
+				keysPaneController.initializePane();
+				accountsPaneController.initializePane();
+				homePaneController.initializePane();
+				settingsPaneController.initializePane();
+				createPaneController.initializePane();
 
 				break;
 			default:
@@ -427,22 +438,22 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 				if (drivesChanged) {
 					homePaneController.setForceUpdate(true);
 				}
-				homePaneController.initializeHomePane();
+				homePaneController.initializePane();
 				changeTab(homePane);
 				break;
 			case "createButton":
 				changeTab(createPane);
 				break;
 			case "accountsButton":
-				accountsPaneController.initializeAccountPane();
+				accountsPaneController.initializePane();
 				changeTab(accountsPane);
 				break;
 			case "settingsButton":
-				settingsPaneController.initializeSettingsPane();
+				settingsPaneController.initializePane();
 				changeTab(settingsPane);
 				break;
 			case "keysButton":
-				keysPaneController.initializeKeysPane();
+				keysPaneController.initializePane();
 				changeTab(keysPane);
 				break;
 			case "historyButton":
