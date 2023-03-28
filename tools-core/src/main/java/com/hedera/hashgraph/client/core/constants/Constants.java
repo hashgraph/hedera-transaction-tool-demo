@@ -86,7 +86,6 @@ public class Constants {
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
 	public static final int DRIVE_LIMIT = 32;
-	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
 	public static final String TEST_PASSWORD = "123456789";
 	public static final String COMMA_DELIMITER = ",";
