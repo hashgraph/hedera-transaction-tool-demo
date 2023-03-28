@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.ui;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -850,7 +849,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return keyStructureUtility.buildKeyTreeView(key);
 	}
 
-	public TreeView<String> buildKeyTreeView(final JsonElement key) {
+	public TreeView<String> buildKeyTreeView(final JsonObject key) {
 		return keyStructureUtility.buildKeyTreeView(key);
 	}
 
