@@ -59,10 +59,9 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	public CollatorHelper(final File file) throws HederaClientException {
 		switch (FilenameUtils.getExtension(file.getName())) {
 			case TRANSACTION_EXTENSION:
-				this.transaction = new ToolTransaction(file);
+				this.transaction = new ToolTransaction().parseFile(file);
 				this.transactionFile = setFileOutput(file.getAbsolutePath());
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
-				addSignature(this.transaction.getTransaction());
 				break;
 			case SIGNATURE_EXTENSION:
 				this.transaction = null;
@@ -207,13 +206,17 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			this.transaction = helper.transaction;
 			this.comments.addAll(helper.comments);
 		} else if (helper.hasTransaction()) {
-
 			if (!this.transaction.equals(helper.getTransaction())) {
 				logger.error("Transaction {} does not match transaction {}", this.getTransactionFile(),
 						helper.getTransactionFile());
 				throw new HederaClientException("Transactions don't match");
 			}
 			this.transactionFile = setFileOutput(helper.transactionFile);
+			// If the transactions are the same (only checks memo, maxTransactionFee, validDuration, and nodeAccountId)
+			// then keep the smaller one (will have fewer signatures on it)
+			if (helper.getTransaction().toBytes().length < this.transaction.toBytes().length) {
+				this.transaction = helper.getTransaction();
+			}
 		}
 		signaturePairs.addAll(helper.getSignaturePairs());
 	}
