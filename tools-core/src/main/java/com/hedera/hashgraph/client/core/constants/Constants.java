@@ -45,6 +45,12 @@ public class Constants {
 	public static final String SIGNED_TRANSACTION_EXTENSION = "txsig";
 	public static final String ZIP_EXTENSION = "zip";
 	public static final String TXT_EXTENSION = "txt";
+	// The character used to separator the different groupings used in the naming of a transaction file
+	// For example: Node-nodeId_transactionId_keyName
+	public static final String FILE_NAME_GROUP_SEPARATOR = "_";
+	// The character used to separator the names or descriptions used for each group in the naming of a transaction file
+	// For example: Node-nodeId_transactionId_keyName
+	public static final String FILE_NAME_INTERNAL_SEPARATOR = "-";
 	public static final String METADATA_EXTENSION = "meta";
 	public static final String JSON_EXTENSION = "json";
 	public static final String BATCH_TRANSACTION_EXTENSION = "csv";
