@@ -24,10 +24,12 @@
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
 		<version>0.12.2</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-integration</artifactId>
+	<version>0.12.2</version>
 
 
 	<dependencyManagement>
@@ -95,6 +97,10 @@
 		<dependency>
 			<groupId>pl.pragmatists</groupId>
 			<artifactId>JUnitParams</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.cdimascio</groupId>
+			<artifactId>dotenv-java</artifactId>
 		</dependency>
 	</dependencies>
 

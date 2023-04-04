@@ -50,6 +50,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
@@ -128,11 +129,13 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		final var stx = buildSignature(tx, keyPair);
 		final var signaturePair =
 				new SignaturePair(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()).getPublicKey(), stx);
-		final var transactionsStorage = String.format("%s_transactions", storageLocation);
+		final var transactionsStorage = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
+				"transactions", storageLocation);
 		if (new File(transactionsStorage).mkdirs()) {
 			logger.info("Folder {} created", transactionsStorage);
 		}
-		final var signaturesStorage = String.format("%s_signatures", storageLocation);
+		final var signaturesStorage = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
+				"signatures", storageLocation);
 		if (new File(signaturesStorage).mkdirs()) {
 			logger.info("Folder {} created", signaturesStorage);
 		}
@@ -142,7 +145,8 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 				String.format("%s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION);
 		writeBytes(transactionFilePath, tx.toBytes());
 		logger.info("Writing: {}", transactionFilePath);
-		final var signatureFilePath = String.format("%s_signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION);
+		final var signatureFilePath = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
+				"signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION);
 		signaturePair.write(signatureFilePath);
 		logger.info("Writing: {}", signatureFilePath);
 	}
@@ -211,7 +215,8 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		Collections.sort(files);
 
 		final var summary =
-				new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) + "_summary.csv");
+				new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) +
+						FILE_NAME_GROUP_SEPARATOR + "summary.csv");
 
 		Files.deleteIfExists(summary.toPath());
 		final PrintWriter printWriter;
@@ -271,7 +276,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	}
 
 	private String getFullTransactionName(final BatchLine distributionData, final String id) {
-		return (id + "-" + distributionData.getReceiverAccountID().toReadableString()).replace(".", "_");
+		return (id + FILE_NAME_GROUP_SEPARATOR + distributionData.getReceiverAccountID().toReadableString());
 	}
 
 

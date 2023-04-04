@@ -526,8 +526,8 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/Keys/jsonKey.json"));
-		key.add(genesisKey);
-		key.setThreshold(1);
+//		key.add(genesisKey);
+//		key.setThreshold(1);
 
 		final var originalContents = "text in the file";
 		final var contentsByteString = ByteString.copyFromUtf8(originalContents);
@@ -641,8 +641,8 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/Keys/jsonKey.json"));
-		key.add(genesisKey);
-		key.setThreshold(1);
+//		key.add(genesisKey);
+//		key.setThreshold(1);
 
 		final var originalContents = "text in the file";
 		final var contentsByteString = ByteString.copyFromUtf8(originalContents);

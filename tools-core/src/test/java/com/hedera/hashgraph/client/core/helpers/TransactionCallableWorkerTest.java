@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.security.KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -32,14 +33,18 @@ import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.io.FilenameUtils;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.KeyStoreException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
@@ -50,8 +55,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 
+	private AccountId myAccountId;
+	private PrivateKey myPrivateKey;
+	private Ed25519KeyStore myKeyStore;
 	@BeforeEach
-	void setUp() {
+	void setUp() throws KeyStoreException {
+		myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
+		final var privateKey = Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY");
+		myPrivateKey = PrivateKey.fromString(Dotenv.configure()
+				.directory("../").load().get("MY_PRIVATE_KEY"));
+		myKeyStore = new Ed25519KeyStore.Builder()
+				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
+		myKeyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
+				privateKey.substring(2) : privateKey)));
+
 	}
 
 	@AfterEach
@@ -67,7 +84,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 	@Test
 	void call_test() throws Exception {
 		final var transactionId =
-				new TransactionId(new AccountId(0, 0, 2), Instant.now().plusSeconds(10));
+				new TransactionId(myAccountId, Instant.now().plusSeconds(5));
 
 		final var transferTransaction = new TransferTransaction();
 
@@ -77,19 +94,16 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
 				.setTransactionValidDuration(Duration.ofSeconds(175));
 
-		transferTransaction.addHbarTransfer(new AccountId(0, 0, 2), new Hbar(-1));
+		transferTransaction.addHbarTransfer(myAccountId, new Hbar(-1));
 		transferTransaction.addHbarTransfer(new AccountId(0, 0, 75), new Hbar(1));
 		transferTransaction.freeze();
 
-		final KeyStore keyPairs =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
+		transferTransaction.sign(myPrivateKey);
 
-		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
-
-		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
 
 		final var worker =
-				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
+				new TransactionCallableWorker(transferTransaction, 0, "src/test/resources/Worker_Test", client);
 		final var x = worker.call();
 		worker.doneSleeping.await();
 		final File[] receipts = new File("src/test/resources/Worker_Test").listFiles(
@@ -104,7 +118,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 	@Test
 	void callExpiredTransaction_test() throws Exception {
 		var transactionId =
-				new TransactionId(new AccountId(0, 0, 2), Instant.now().minusSeconds(60));
+				new TransactionId(myAccountId, Instant.now().minusSeconds(60));
 
 		var transferTransaction = new TransferTransaction();
 
@@ -113,16 +127,13 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 				.setTransactionMemo("memo")
 				.setNodeAccountIds(Collections.singletonList(new AccountId(0, 0, 3)))
 				.setTransactionValidDuration(Duration.ofSeconds(175));
-		transferTransaction.addHbarTransfer(new AccountId(0, 0, 2), new Hbar(-1));
+		transferTransaction.addHbarTransfer(myAccountId, new Hbar(-1));
 		transferTransaction.addHbarTransfer(new AccountId(0, 0, 75), new Hbar(1));
 		transferTransaction.freeze();
 
-		final KeyStore keyPairs =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
+		transferTransaction.sign(myPrivateKey);
 
-		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
-
-		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
 
 		final var worker =
 				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);
@@ -150,7 +161,7 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 		transferTransaction.addHbarTransfer(new AccountId(0, 0, 75), new Hbar(1));
 		transferTransaction.freeze();
 
-		transferTransaction.sign(PrivateKey.fromBytes(keyPairs.get(0).getPrivate().getEncoded()));
+		transferTransaction.sign(myPrivateKey);
 
 		final TransactionCallableWorker finalWorker =
 				new TransactionCallableWorker(transferTransaction, 10, "src/test/resources/Worker_Test", client);

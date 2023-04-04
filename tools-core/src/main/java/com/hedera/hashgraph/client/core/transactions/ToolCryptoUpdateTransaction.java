@@ -30,6 +30,8 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
 import com.hedera.hashgraph.sdk.Key;
+import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
@@ -145,13 +147,14 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return keyList;
 	}
 
-	private List<PublicKey> convertKeyToList(final KeyList keyList) {
+	private List<PublicKey> convertKeyToList(final Key key) {
 		final var newList = new ArrayList<PublicKey>();
-		for (final var k : keyList) {
-			if (k instanceof PublicKey) {
-				newList.add((PublicKey)k);
-			} else if (k instanceof KeyList) {
-				newList.addAll(convertKeyToList((KeyList)k));
+		if (key instanceof PublicKey) {
+			newList.add((PublicKey)key);
+		}
+		else {
+			for (final var k : (KeyList)key) {
+				newList.addAll(convertKeyToList(k));
 			}
 		}
 		return newList;
@@ -350,6 +353,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
+		//TODO Does this include new accounts/keys?
 		final var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;

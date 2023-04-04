@@ -25,7 +25,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
-import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
@@ -36,9 +35,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -47,12 +50,19 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PA
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.NOT_EMPTY_FIELD_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.Messages.OUTPUT_FILE_CREATED_MESSAGE;
 
+/**
+ * This helper class is used to gather all the .tx, .sig, and .txt files into one place
+ * to prepare for collation.
+ */
 public class CollatorHelper implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(CollatorHelper.class);
 
 	private final Set<SignaturePair> signaturePairs = new HashSet<>();
+	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private ToolTransaction transaction;
+	// The directory name where the file will be stored
 	private String transactionFile = "";
+	// The actual file name used to store the signed transaction
 	private final String baseName;
 	private final JsonArray comments = new JsonArray();
 
@@ -60,14 +70,18 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		switch (FilenameUtils.getExtension(file.getName())) {
 			case TRANSACTION_EXTENSION:
 				this.transaction = new ToolTransaction().parseFile(file);
-				this.transactionFile = setFileOutput(file.getAbsolutePath());
+				this.transactionFile = getFileOutput(file);
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
 				break;
 			case SIGNATURE_EXTENSION:
 				this.transaction = null;
 				this.transactionFile = "";
 				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
-				signaturePairs.add(new SignaturePair(file.getAbsolutePath()));
+				var pair = new SignaturePair(file.getAbsolutePath());
+				signaturePairs.add(pair);
+				// If the same Public key is used multiple times with different names, this
+				// could be an issue.
+				publicKeys.put(pair.getPublicKey(), getKeyName(file));
 				break;
 			case TXT_EXTENSION:
 				this.transaction = null;
@@ -80,22 +94,63 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		}
 	}
 
-	private String setFileOutput(final String absolutePath) {
-		if ("".equals(absolutePath)) {
+	private String getFileOutput(final File file) {
+		// If file is null, return the transactionFile (which might also be empty)
+		if (file == null) {
 			return this.transactionFile;
 		}
-		if ("".equals(this.transactionFile)) {
-			return absolutePath;
+
+		// Ensure that the file is a file (exists and not a directory)
+		if (file.isFile()) {
+			// Get the parent directory name
+			var parentName = file.getParentFile().getName();
+			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
+			// There should only be 2 to 4 parts, if any more, or less, just return the parentName
+			if (parentNameParts.length >= 2 && parentNameParts.length <= 4) {
+				// Only return the first part, removing key, and anything afterwards
+				return parentNameParts[0];
+			} else if (parentNameParts.length > 4) {
+				// This would be for older versions, but attempt to remove the last 4 and put the rest back
+				final var nameLength = parentNameParts.length-4;
+				final var shortenedArray = Arrays.asList(parentNameParts)
+						.subList(0, nameLength).toArray(new String[nameLength]);
+				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
+			} else {
+				return parentName;
+			}
 		}
-		var lcSubstring = CommonMethods.getLCSubStr(this.transactionFile, absolutePath);
-		if (lcSubstring.endsWith("_") || lcSubstring.endsWith("-")) {
-			lcSubstring = lcSubstring.substring(0, lcSubstring.length() - 1);
+		// Return an empty string
+		return "";
+	}
+
+	private String getKeyName(final File file) {
+		// If file is null, ensure that the file is a file (exists and not a directory)
+		if (file != null && file.isFile()) {
+			// Now, get the keyName used when signed.
+			// Using some assumptions, will work for now.
+			var parentName = file.getParentFile().getName();
+			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
+			// There should only be 2 to 4 parts, if any more, or less, just return an empty string
+			if (parentNameParts.length >= 2 && parentNameParts.length <= 4) {
+				// Only return the second part
+				return parentNameParts[1];
+			} else if (parentNameParts.length > 4) {
+				// This would be for older versions, but attempt to remove the last 4 and put the rest back
+				final var nameLength = parentNameParts.length-4;
+				final var shortenedArray = Arrays.asList(parentNameParts)
+						.subList(0, nameLength).toArray(new String[nameLength]);
+				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
+			}
 		}
-		return lcSubstring;
+		return "";
 	}
 
 	public Set<SignaturePair> getSignaturePairs() {
 		return signaturePairs;
+	}
+
+	public Map<PublicKey, String> getPublicKeys() {
+		return publicKeys;
 	}
 
 	public ToolTransaction getTransaction() {
@@ -139,8 +194,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		if (!TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(file.getName()))) {
 			throw new HederaClientException(CANNOT_PARSE_ERROR_MESSAGE);
 		}
-		this.transaction = new ToolTransaction(file);
-		this.transactionFile = file.getAbsolutePath();
+		this.transaction = new ToolTransaction().parseFile(file);
+		this.transactionFile = getFileOutput(file);
 		addSignature(this.transaction.getTransaction());
 	}
 
@@ -153,8 +208,15 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		signaturePairs.add(signaturePair);
 	}
 
-	public Transaction<?> collate() {
+	public final Transaction<?> collate() {
 		return transaction.collate(signaturePairs);
+	}
+
+	public final Transaction<?> collate(final String folder) {
+		if (folder == null || "".equals(folder)) {
+			return collate();
+		}
+		return transaction.collate(folder, signaturePairs);
 	}
 
 	public void addComments(final File commentFile) throws HederaClientException {
@@ -167,16 +229,19 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return object;
 	}
 
+	/**
+	 * Verify that the provided account has the proper amount of signatures on the transaction.
+	 *
+	 * @param info
+	 * @return
+	 * @throws HederaClientException
+	 */
 	public boolean verify(final AccountInfo info) throws HederaClientException {
-		final var signed = transaction;
-		signed.collate(signaturePairs);
-		return signed.verify(info);
+		return transaction.verify(info);
 	}
 
 	public boolean verify(final PublicKey publicKey) {
-		final var signed = transaction;
-		signed.collate(signaturePairs);
-		return signed.verify(publicKey);
+		return transaction.verify(publicKey);
 	}
 
 	public Set<AccountId> getSigningAccounts() {
@@ -211,7 +276,6 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 						helper.getTransactionFile());
 				throw new HederaClientException("Transactions don't match");
 			}
-			this.transactionFile = setFileOutput(helper.transactionFile);
 			// If the transactions are the same (only checks memo, maxTransactionFee, validDuration, and nodeAccountId)
 			// then keep the smaller one (will have fewer signatures on it)
 			if (helper.getTransaction().toBytes().length < this.transaction.toBytes().length) {
@@ -219,14 +283,18 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			}
 		}
 		signaturePairs.addAll(helper.getSignaturePairs());
+		publicKeys.putAll(helper.publicKeys);
 	}
 
 	public String store(final String key) throws HederaClientException {
-		var output = this.transactionFile;
+		var output = "./Temp/" + this.transactionFile;
+
 		final var outFile = new File(output);
+		// If the output is a file, set the output as the parent
 		if (outFile.isFile()) {
 			output = outFile.getParent();
 		}
+		// If the key contains "Node", get the Node-nodeId, remove the _basename stuff, add to the output
 		if (key.contains("Node")) {
 			output = output + "_" + key.substring(0, key.indexOf("_"));
 		}
