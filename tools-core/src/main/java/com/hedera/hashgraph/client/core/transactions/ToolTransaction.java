@@ -281,6 +281,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 			// Build the list of keys that are required for a valid transaction
 			final var keyList = buildKeyList(accountsInfoFolder, signatures);
+			if (keyList.isEmpty()) {
+				throw new HederaClientRuntimeException("Account information is missing, cannot determine " +
+						"the keys required for signing.");
+			}
 
 			// Remove any keys from the list of signatures to collate that are already present on the transaction.
 			// These keys cannot be removed, and don't need to be re-added, and so don't need to be a part
@@ -297,7 +301,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
 						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
 			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
-				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction" +
+				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction " +
 						"cannot be verified.");
 			}
 		} catch (IOException e) {

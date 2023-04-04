@@ -150,6 +150,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEI
 import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
@@ -1583,6 +1584,7 @@ public class CreatePaneController implements SubController {
 		if (!checkForm()) {
 			return;
 		}
+
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
@@ -1637,7 +1639,8 @@ public class CreatePaneController implements SubController {
 		final var toPack = new File[] { jsonFile, contents };
 
 		final var destZipFile = new File(
-				String.format("%s/%s_%s_%s.%s", TEMP_DIRECTORY, payer.replace(".", "_"), time.getSeconds(),
+				String.format("%s/%s" + FILE_NAME_GROUP_SEPARATOR + "%s" + FILE_NAME_GROUP_SEPARATOR + "%s.%s",
+						TEMP_DIRECTORY, payer, time.getSeconds(),
 						time.getNanos(), LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
 
@@ -2926,8 +2929,10 @@ public class CreatePaneController implements SubController {
 
 		final var accountId = transaction.getFeePayerID();
 		final var seconds = transaction.getTransactionValidStart().getEpochSecond();
-		final var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
-				transaction.hashCode());
+
+		final var filenames = String.format("%d" + FILE_NAME_GROUP_SEPARATOR +
+						"%s" + FILE_NAME_GROUP_SEPARATOR + "%d", seconds, accountId.toReadableString(),
+						transaction.hashCode());
 
 		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		if (new File(tempStorage).mkdirs()) {
@@ -2935,9 +2940,9 @@ public class CreatePaneController implements SubController {
 		}
 
 		var i = 0;
-		var txFile = new File(tempStorage + File.separator + filenames + ".tx");
+		var txFile = new File(tempStorage + File.separator + filenames + "." + TRANSACTION_EXTENSION);
 		while (txFile.exists()) {
-			txFile = new File(tempStorage + File.separator + filenames + i++ + ".tx");
+			txFile = new File(tempStorage + File.separator + filenames + i++ + "." + TRANSACTION_EXTENSION);
 		}
 
 		try {
@@ -3317,8 +3322,7 @@ public class CreatePaneController implements SubController {
 
 		Collections.sort(privateKeys);
 
-		final var transactionName = transaction.getTransaction().getTransactionId().toString().replace(
-				"@", "_").replace(".", "_");
+		final var transactionName = transaction.getTransaction().getTransactionId().toString();
 		final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
 		transaction.store(location);
 		final var rf = new TransactionFile(location);

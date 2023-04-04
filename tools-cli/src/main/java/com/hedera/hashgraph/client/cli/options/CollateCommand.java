@@ -50,6 +50,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 
@@ -64,9 +65,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
-			"the account(s) corresponding to the transaction", split = ",")
-	private String[] infoFiles;
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the folder containing the " +
+			"account info files for the account(s) corresponding to the transaction")
+	private String infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
@@ -100,10 +101,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		// Parse account info files from inputs
-		loadVerificationFiles(infoFiles, Constants.INFO_EXTENSION);
+		loadVerificationFiles(Constants.INFO_EXTENSION, infoFiles);
 
 		// Parse public key files from inputs
-		loadVerificationFiles(keyFiles, Constants.PUB_EXTENSION);
+		loadVerificationFiles(Constants.PUB_EXTENSION, keyFiles);
 
 		// Parse transactions
 		loadTransactions(root);
@@ -113,7 +114,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// and create the info for the verification.csv,
 		final var verification = verifyTransactions();
 
-		if (verification == null) {
+		if (verification.isEmpty()) {
 			logger.info("Transactions not verified. Terminating");
 			cleanup();
 			return;
@@ -132,7 +133,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		for (final var entry : transactions.entrySet()) {
 			// Get the helper that will perform the work
 			final var helper = entry.getValue();
-			// Zip up the files in preparation to be moved
+			// Group up the files in preparation to be moved
 			outputs.add(helper.store(entry.getKey()));
 		}
 		logger.info("Transactions collated and stored");
@@ -173,6 +174,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			// If only a single file, then rename as needed, and move to the new location
+//			this looks wrong - check this out, then give it a go, then give it a go with the new naming scheme
 			final var filenamePrefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
@@ -195,12 +197,16 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	 * @throws HederaClientException
 	 * 		if an incorrect extension is found or the app encounters an IOException
 	 */
-	private void loadVerificationFiles(final String[] files, final String extension) throws HederaClientException {
+	private void loadVerificationFiles(final String extension, final String... files) throws HederaClientException {
 		if (files != null && files.length > 0) {
-			final var infoArray = Arrays.stream(files).map(File::new).toArray(File[]::new);
+			final var infoArray = Arrays.stream(files)
+					.filter(Objects::nonNull)
+					.map(File::new)
+					.toArray(File[]::new);
 			parseFiles(infoArray, extension);
 		}
 	}
+
 
 	private boolean moreThanOneFile(final String output, final File[] files) throws IOException {
 		if (files.length <= 1) {
@@ -215,7 +221,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		return true;
 	}
 
-	private List<List<String>> verifyTransactions() throws HederaClientException {
+	private List<List<String>> verifyTransactions() {
 		// Create the map, the key being the transactionId, the list is all the fields for the verification of
 		// that transaction.
 		final Map<String, List<String>> verifyWithFiles = new HashMap<>();
@@ -231,8 +237,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				continue;
 			}
 
-			// Collate all signatures
-			helper.collate();
+			// Collate all signatures, this process will also verify the signatures,
+			// ensuring the required signatures are present.
+			helper.collate(infoFiles);
 
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
@@ -240,18 +247,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			var requiredIds = helper.getSigningAccounts().stream()
 					.map(AccountId::toString)
 					.collect(Collectors.toList());
-			// Get all accounts that have valid signatures
-			// (exist in the info folder AND pass verification which includes threshold checks)
-			var verifiedIds = getAccountIds(helper);
-
-			// For every required account, ensure that it was verified
-			for (var requiredId : requiredIds) {
-				if (!verifiedIds.contains(requiredId)) {
-					logger.info("Transaction ({}) has not been signed by required account {}",
-							fileName, requiredId);
-					return null;
-				}
-			}
 
 			// Get the list of public key names used to sign the transaction (if the key is a required key)
 			var publicKeyNames = getPublicKeyNames(helper);
@@ -272,7 +267,16 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Put the list of strings into the map
 			verifyWithFiles.put(transactionId, verificationItemList);
 		}
-		return new ArrayList<>(verifyWithFiles.values());
+		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
+		Collections.sort(listOfVerifiedFiles, (list1, list2) -> {
+			if (list1 == null || list1.isEmpty() || list1.get(0) == null) {
+				return 1;
+			} else if (list2 == null || list2.isEmpty() || list2.get(0) == null) {
+				return -1;
+			}
+			return list1.get(0).compareTo(list2.get(0));
+		});
+		return listOfVerifiedFiles;
 	}
 
 	/**
@@ -361,7 +365,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			final var suffix0 = pathName.contains("signatures") ? "_signatures" : "";
 			final var suffix = pathName.contains("transactions") ? "_transactions" : suffix0;
 
-			return pathName.substring(pathName.indexOf("Node"), pathName.indexOf(suffix)) + "_" + baseName;
+			return pathName.substring(pathName.indexOf("Node"), pathName.indexOf(suffix)) +
+					FILE_NAME_GROUP_SEPARATOR + baseName;
 		}
 
 		return baseName;
@@ -369,7 +374,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	private void handleZip(final File file) throws HederaClientException {
-
 		final var destination = file.getAbsolutePath().replace(".zip", "_unzipped");
 		final var unzipped = unZip(file.getAbsolutePath(), destination);
 		loadTransactions(unzipped);

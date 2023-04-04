@@ -81,9 +81,11 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
+import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
@@ -611,7 +613,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				new File(System.getProperty("java.io.tmpdir"),
 						LocalDate.now().toString()).getAbsolutePath() + "/Transaction/" + keyName;
 		final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
-				this.getBaseName() + "_" + keyName + ".zip");
+				this.getBaseName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION);
 
 		final var tempTxFile =
 				tempStorage + File.separator + this.getBaseName() + "." + TRANSACTION_EXTENSION;

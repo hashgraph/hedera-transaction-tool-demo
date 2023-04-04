@@ -216,7 +216,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 	private String storeResponse(final TransactionReceipt receipt,
 			final String idString) throws HederaClientException {
 		final var filePath =
-				location + File.separator + idString.replace(".", "_") + "." + Constants.RECEIPT_EXTENSION;
+				location + File.separator + idString + "." + Constants.RECEIPT_EXTENSION;
 		writeBytes(filePath, receipt.toBytes());
 		logger.info("Worker: TransactionID {} - Receipt stored to {}", idString, filePath);
 		return filePath;

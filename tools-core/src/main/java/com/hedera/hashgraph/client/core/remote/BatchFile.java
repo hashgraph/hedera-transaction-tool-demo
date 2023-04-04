@@ -75,6 +75,8 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_NUMBER_OF_NODES;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_FOLDER_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -773,8 +775,9 @@ public class BatchFile extends RemoteFile {
 
 		for (final var nodeID : getNodeAccountID()) {
 			final var storageLocation =
-					tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
-							pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
+					tempStorage + "/" + getName().replace(".csv", FILE_NAME_GROUP_SEPARATOR) +
+							FilenameUtils.getBaseName(pair.getLeft()) + FILE_NAME_GROUP_SEPARATOR +
+							"Node" + FILE_NAME_INTERNAL_SEPARATOR + nodeID.toReadableString();
 			final var maker = new DistributionMaker(getSenderAccountID().asAccount(),
 					feePayerAccountID.asAccount(),
 					nodeID.asAccount(),

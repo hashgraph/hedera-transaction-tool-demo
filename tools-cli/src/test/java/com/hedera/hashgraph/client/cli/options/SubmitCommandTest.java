@@ -314,8 +314,9 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		transferTransaction.sign(generalPrivateKey);
 
 		final var filePath =
-				TRANSACTIONS + File.separator + transactionId.toString().replace(".", "_").replace("@",
-						"_") + "_" + node + ".txsig";
+				TRANSACTIONS + File.separator + transactionId.toString() +
+						Constants.FILE_NAME_GROUP_SEPARATOR + node +
+						"." + Constants.SIGNED_TRANSACTION_EXTENSION;
 		writeBytes(filePath, transferTransaction.toBytes());
 		return filePath;
 	}
