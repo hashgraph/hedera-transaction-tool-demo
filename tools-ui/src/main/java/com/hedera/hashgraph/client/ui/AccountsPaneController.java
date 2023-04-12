@@ -1848,6 +1848,7 @@ public class AccountsPaneController implements SubController {
 	private void refreshPanes() throws HederaClientException {
 		initializePane();
 		controller.keysPaneController.initializePane();
+		// This needs to be a full refresh, as it can change all boxes and keys required and such
 		controller.homePaneController.setForceUpdate(true);
 		controller.homePaneController.initializePane();
 		getAccountsFromFileSystem(accountInfos, idNickNames);

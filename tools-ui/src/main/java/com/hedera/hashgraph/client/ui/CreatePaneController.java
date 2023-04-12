@@ -3357,7 +3357,6 @@ public class CreatePaneController implements SubController {
 			logger.info(receipt);
 			showReceiptOnPopup(transaction, receipt);
 			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
-			controller.homePaneController.initializePane();
 			initializePane();
 			selectTransactionType.setValue(SELECT_STRING);
 		} catch (final InterruptedException e) {

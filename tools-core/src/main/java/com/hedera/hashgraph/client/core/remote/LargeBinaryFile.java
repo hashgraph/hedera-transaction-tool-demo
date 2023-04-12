@@ -102,6 +102,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private Identifier feePayerAccountId;
 	private Duration transactionValidDuration;
 	private Timestamp transactionValidStart;
+	private Timestamp expiration;
 	private int validIncrement;
 	private Identifier nodeID;
 	private long transactionFee;
@@ -198,6 +199,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
 		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
+
+		expiration = timestamp.plusSeconds(transactionValidDuration.getSeconds())
+				.plusNanos(transactionValidDuration.getNano());
 
 		setShowAdditionalBoxes();
 	}
@@ -376,6 +380,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return transactionValidStart;
 	}
 
+	public Timestamp getExpiration() {
+		return expiration;
+	}
+
 	public int getValidIncrement() {
 		return validIncrement;
 	}
@@ -419,6 +427,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final String output) throws HederaClientException {
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
+			setHistory(true);
 		} catch (final HederaClientException e) {
 			logger.error(e.getMessage());
 		}

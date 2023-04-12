@@ -40,7 +40,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.SECONDS;
 
 
 public class Timestamp implements Comparable<Timestamp> {
-
+	public static Timestamp MAX = new Timestamp(Instant.MAX);
 	@JsonProperty(required = true)
 	private long seconds;
 

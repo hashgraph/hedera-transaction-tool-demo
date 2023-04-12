@@ -124,7 +124,7 @@ public class RemoteFilesMap {
 			return new RemoteFilesMap(getRemoteFiles(fileDetails));
 		} catch (final HederaClientException | ParseException e) {
 			logger.info("Files folder not found in FileService {}", fileService.getName());
-			return new RemoteFilesMap();
+			return new RemoteFilesMap(version);
 		}
 	}
 
@@ -401,7 +401,6 @@ public class RemoteFilesMap {
 		}
 
 	}
-
 
 	public int countType(final FileType type) {
 		var counter = 0;

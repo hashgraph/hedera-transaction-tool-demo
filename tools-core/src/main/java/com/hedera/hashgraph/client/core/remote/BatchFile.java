@@ -833,6 +833,10 @@ public class BatchFile extends RemoteFile {
 		return getFirstTransactionTimeStamp().asCalendar().before(Calendar.getInstance());
 	}
 
+	public Timestamp getExpiration() {
+		return getFirstTransactionTimeStamp();
+	}
+
 	@Override
 	public JsonObject toJson() {
 		final var toJson = super.toJson();

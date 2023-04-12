@@ -110,6 +110,12 @@ public class HistoryPaneController implements SubController {
 	public static final String SENT_ICON = "icons/icons8-sent-100.png";
 	public static final String FILTER_ICON = "icons/filter.png";
 
+	// Maps the HistoryData object to a hashcode, allowing for
+	// a quick way to determine if a HistoryData object exists.
+	// This enables access to the HistoryData status even if only
+	// the RemoteFile object is obtainable (as a RemoteFile's
+	// hashcode is stored in the HistoryData). Furthermore, if HistoryData
+	// exists in the tableList, it needs to have an entry in the historyMap
 	private final Map<Integer, Boolean> historyMap = new HashMap<>();
 	private final ObservableList<FileType> typeFilter = FXCollections.observableArrayList();
 	private final ObservableList<Actions> actionsFilter = FXCollections.observableArrayList();
@@ -264,6 +270,10 @@ public class HistoryPaneController implements SubController {
 	public void removeFromHistory(final RemoteFile remoteFile){
 		noise = false;
 		final var remove = new HistoryData(remoteFile);
+		// HistoryData is stored as JSON in the HISTORY_MAP, the actual files in History
+		// are separate from this. The HistoryData found in the tableList when the history is
+		// saved is all that is saved, so removing HistoryData from the table will delete it from
+		// the file
 		tableList.remove(remove);
 		historyMap.remove(remoteFile.hashCode());
 		tableView.refresh();
@@ -486,13 +496,13 @@ public class HistoryPaneController implements SubController {
 						if (row < 0) {
 							return;
 						}
+						// Removes and re-adds item to refresh the view and save the change
 						tableList.remove(historyData);
 						historyData.setHistory(false);
 						noise = false;
 						tableList.add(row, historyData);
 						button.setDisable(true);
-						controller.homePaneController.setForceUpdate(true);
-						controller.homePaneController.initializePane();
+						controller.homePaneController.addFile(historyData.getRemoteFilePath(), false);
 					}
 
 					private int getRow(final HistoryData historyData) {

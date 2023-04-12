@@ -65,6 +65,7 @@
 		<hedera.hashgraph.sdk.version>2.17.2</hedera.hashgraph.sdk.version>
 		<org.jetbrains.version>24.0.0</org.jetbrains.version>
 		<dotenv.version>2.3.2</dotenv.version>
+		<caffeine.version>3.1.6</caffeine.version>
 		<maven.artifact>3.9.0</maven.artifact>
 	</properties>
 
@@ -293,6 +294,12 @@
 				<groupId>org.apache.httpcomponents</groupId>
 				<artifactId>httpclient</artifactId>
 				<version>${apache.httpclient.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.ben-manes.caffeine</groupId>
+				<artifactId>caffeine</artifactId>
+				<version>${caffeine.version}</version>
 			</dependency>
 
 			<!-- Picocli -->

@@ -67,6 +67,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -401,6 +402,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	public boolean isExpired() {
 		return false;
+	}
+
+	public Timestamp getExpiration() {
+		return Timestamp.MAX;
 	}
 
 	public void setComments(final boolean b) {
@@ -955,14 +960,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	@Override
 	public int hashCode() {
-		final var file = new File(parentPath, name);
-		var bytes = new byte[0];
-		try {
-			bytes = Files.readAllBytes(file.toPath());
-		} catch (final IOException e) {
-			logger.error(e.getMessage());
-		}
-		return Arrays.hashCode(bytes);
+		return Objects.hash(name, date);
 	}
 
 	@Override
