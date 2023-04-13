@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Messages;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -58,7 +57,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.INITIAL_MAP_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 
-public class InitialStartupPaneController implements GenericFileReadWriteAware {
+public class InitialStartupPaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(InitialStartupPaneController.class);
 
@@ -132,7 +131,8 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 	/**
 	 * Pane initialization
 	 */
-	void initializeStartupPane() {
+	@Override
+	public void initializePane() {
 		properties =
 				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
@@ -215,12 +215,12 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 		controller.homePane.setVisible(true);
 		controller.setDisableButtons(false);
 
-		controller.homePaneController.initializeHomePane();
-		controller.accountsPaneController.initializeAccountPane();
-		controller.historyPaneController.initializeHistoryPane();
-		controller.keysPaneController.initializeKeysPane();
-		controller.createPaneController.initializeCreatePane();
-		controller.settingsPaneController.initializeSettingsPane();
+		controller.homePaneController.initializePane();
+		controller.accountsPaneController.initializePane();
+		controller.historyPaneController.initializePane();
+		controller.keysPaneController.initializePane();
+		controller.createPaneController.initializePane();
+		controller.settingsPaneController.initializePane();
 
 		try {
 			Files.deleteIfExists(Path.of(INITIAL_MAP_LOCATION));
@@ -241,7 +241,7 @@ public class InitialStartupPaneController implements GenericFileReadWriteAware {
 				PopupMessage.display("Confirm", Messages.INITIAL_SETUP_RESET_MESSAGE, true, "Yes", "No"))) {
 			FileUtils.deleteDirectory(new File(controller.getPreferredStorageDirectory()));
 			controller.resetProperties();
-			initializeStartupPane();
+			initializePane();
 		}
 	}
 

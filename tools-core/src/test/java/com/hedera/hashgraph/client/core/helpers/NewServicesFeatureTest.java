@@ -21,9 +21,11 @@ package com.hedera.hashgraph.client.core.helpers;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
@@ -38,10 +40,12 @@ import com.hedera.hashgraph.sdk.ReceiptStatusException;
 import com.hedera.hashgraph.sdk.proto.AccountID;
 import com.hedera.hashgraph.sdk.proto.CryptoGetInfoResponse;
 import com.hedera.hashgraph.sdk.proto.Key;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -52,6 +56,7 @@ import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(NewServicesFeatureTest.class);
@@ -83,18 +88,21 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	}
 
 	@Test
-	@Ignore("Empty test")
 	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException, ReceiptStatusException {
-		final var keyStore =
-				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
+		final var privateKey = Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY");
+		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure()
+				.directory("../").load().get("MY_PRIVATE_KEY"));
+		final var keyStore = new Ed25519KeyStore.Builder()
+				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
+		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
+				privateKey.substring(2) : privateKey)));
 
-
-		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
+		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
 		logger.info(client.getNetwork());
+		client.setOperator(myAccountId, myPrivateKey);
 
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 		final var key = EncryptionUtils.jsonToKey(readJsonObject("src/test/resources/KeyFiles/jsonKeyList.json"));
 		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)
@@ -103,7 +111,8 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 				.execute(client);
 
 		final var receipt = transactionResponse.getReceipt(client);
-		final var payerId = Objects.requireNonNull(receipt.accountId);
+		assertNotNull(receipt.accountId);
+		final var payerId = receipt.accountId;
 		logger.info("Payer Id: {}", payerId.toString());
 
 
@@ -124,10 +133,7 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	@Test
 	void checkOldInfo_test() throws HederaClientException, InvalidProtocolBufferException {
 		final var oldInfo = AccountInfo.fromBytes(readBytes("src/test/resources/infos/0.0.2.info"));
-
-		if (oldInfo.ledgerId != null) {
-			logger.info(Hex.toHexString(oldInfo.ledgerId.toBytes()));
-		}
-
+		assertNotNull(oldInfo.ledgerId);
+		logger.info(Hex.toHexString(oldInfo.ledgerId.toBytes()));
 	}
 }

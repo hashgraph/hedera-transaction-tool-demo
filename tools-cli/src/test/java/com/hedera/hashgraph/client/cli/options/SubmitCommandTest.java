@@ -24,8 +24,6 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
-import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
-import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountBalanceQuery;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -40,6 +38,7 @@ import com.hedera.hashgraph.sdk.TransactionId;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransactionResponse;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +50,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.KeyStoreException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,7 +60,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -79,16 +76,15 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 	private static final Map<AccountId, TransactionReceipt> receipts = new HashMap<>();
 
 	@BeforeAll
-	static void beforeAll() throws ReceiptStatusException, KeyStoreException, IOException {
-		final var keyStore =
-				Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+	static void beforeAll() throws ReceiptStatusException, IOException {
+		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
+		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY"));
 
+		client = Client.forTestnet();
+		client.setOperator(myAccountId, myPrivateKey);
 
-		generalPrivateKey = PrivateKey.generate();
+		generalPrivateKey = PrivateKey.generateED25519();
 		final PublicKey generalPublicKey = generalPrivateKey.getPublicKey();
-		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 
 		for (int i = 0; i < 2; i++) {
 			final TransactionResponse transactionResponse;
@@ -142,7 +138,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
 		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
 		final String transactionLocation =
-				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now());
 
 		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
@@ -151,7 +147,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 		logger.info("Submitting {}", transactionLocation);
 		final String[] args =
-				{ "submit", "-t", transactionLocation, "-n", "INTEGRATION", "-o", RECEIPTS };
+				{ "submit", "-t", transactionLocation, "-n", NetworkEnum.TESTNET.getName(), "-o", RECEIPTS };
 		ToolsMain.main(args);
 
 		final File[] receipts = new File(RECEIPTS).listFiles(
@@ -178,7 +174,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final Map.Entry<AccountId, TransactionReceipt> sender = iterator.next();
 		final Map.Entry<AccountId, TransactionReceipt> receiver = iterator.next();
 		final String transactionLocation =
-				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now().plusSeconds(30));
+				createTransfer(3, sender.getKey(), receiver.getKey(), Instant.now());
 		final Hbar initialBalance = new AccountBalanceQuery()
 				.setAccountId(receiver.getKey())
 				.execute(client)
@@ -187,7 +183,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		final var wildcardName = FilenameUtils.getBaseName(transactionLocation).substring(0, 5) + "*";
 		logger.info("Submitting {}", wildcardName);
 		final String[] args =
-				{ "submit", "-t", TRANSACTIONS + File.separator + wildcardName, "-n", "INTEGRATION", "-o", RECEIPTS };
+				{ "submit", "-t", TRANSACTIONS + File.separator + wildcardName, "-n", NetworkEnum.TESTNET.getName(), "-o", RECEIPTS };
 		ToolsMain.main(args);
 
 		final File[] receipts = new File(RECEIPTS).listFiles(
@@ -207,7 +203,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 	@Test
 	void submitMultipleTransactions_test() throws Exception {
-		int count = 5;
+		int count = 3;
 		final Random rand = new Random();
 		final var iterator = receipts.entrySet().iterator();
 		final List<String> transactions = new ArrayList<>();
@@ -228,11 +224,11 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				}
 			}
 
-			count += rand.nextInt(5) + 1;
+			count += rand.nextInt(3) + 1;
 		}
 
 		final String[] args =
-				{ "submit", "-t", TRANSACTIONS, "-n", "INTEGRATION", "-o", RECEIPTS };
+				{ "submit", "-t", TRANSACTIONS, "-n", NetworkEnum.TESTNET.getName(), "-o", RECEIPTS };
 		ToolsMain.main(args);
 
 		final File[] receipts = new File(RECEIPTS).listFiles(
@@ -272,7 +268,7 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 				.execute(client)
 				.hbars;
 
-		final var transactionValidStart = Instant.now().plusSeconds(30);
+		final var transactionValidStart = Instant.now();
 		final String transactionLocation0 = createTransfer(3, sender.getKey(), receiver.getKey(),
 				transactionValidStart);
 		final String transactionLocation1 = createTransfer(4, sender.getKey(), receiver.getKey(),
@@ -281,12 +277,11 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		logger.info("Submitting transactions");
 
 		final String[] args0 =
-				{ "submit", "-t", transactionLocation0, "-n", "INTEGRATION", "-o", RECEIPTS };
+				{ "submit", "-t", transactionLocation0, "-n", NetworkEnum.TESTNET.getName(), "-o", RECEIPTS };
 		ToolsMain.main(args0);
 
-		sleep(1000);
 		final String[] args1 =
-				{ "submit", "-t", transactionLocation1, "-n", "INTEGRATION", "-o", RECEIPTS };
+				{ "submit", "-t", transactionLocation1, "-n", NetworkEnum.TESTNET.getName(), "-o", RECEIPTS };
 		ToolsMain.main(args1);
 		logger.info("Transactions submitted");
 
@@ -319,8 +314,9 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 		transferTransaction.sign(generalPrivateKey);
 
 		final var filePath =
-				TRANSACTIONS + File.separator + transactionId.toString().replace(".", "_").replace("@",
-						"_") + "_" + node + ".txsig";
+				TRANSACTIONS + File.separator + transactionId.toString() +
+						Constants.FILE_NAME_GROUP_SEPARATOR + node +
+						"." + Constants.SIGNED_TRANSACTION_EXTENSION;
 		writeBytes(filePath, transferTransaction.toBytes());
 		return filePath;
 	}

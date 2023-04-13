@@ -134,7 +134,7 @@ public class TestHelpers {
 		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(10).asRFCString());
 
 		testJson.add(NODE_ID_FIELD_NAME, node);
-		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());
+		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.TESTNET.toString());
 
 		final JsonArray jsonArray = new JsonArray();
 		final JsonObject from = new JsonObject();

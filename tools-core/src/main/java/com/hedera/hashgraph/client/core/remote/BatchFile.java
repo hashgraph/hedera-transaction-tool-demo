@@ -53,7 +53,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -75,6 +75,8 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_NUMBER_OF_NODES;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_FOLDER_LOCATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
@@ -358,7 +360,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkFee(final List<String> csvList) {
 		try {
 			final var feeLine = getStrings(csvList, TRANSACTION_FEE, "[,]", true);
-			// If there is no transaction fee line, just use the default;
+			// If there is no transaction fee line, just use the default
 			if (feeLine.length == 0) {
 				this.transactionFee = properties.getDefaultTxFee();
 				return false;
@@ -386,7 +388,7 @@ public class BatchFile extends RemoteFile {
 	private boolean checkTransactionValidDuration(final List<String> csvList) {
 		try {
 			final var tvdLine = getStrings(csvList, DURATION, "[,]", true);
-			// If there is no transaction valid duration line, just use the default;
+			// If there is no transaction valid duration line, just use the default
 			if (tvdLine.length == 0) {
 				this.txValidDuration = properties.getTxValidDuration();
 				return false;
@@ -631,7 +633,10 @@ public class BatchFile extends RemoteFile {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
-		return new HashSet<>(Collections.singleton(getSenderAccountID().asAccount()));
+		final var set = new HashSet<AccountId>();
+		set.add(getSenderAccountID().asAccount());
+		set.add(getFeePayerAccountID().asAccount());
+		return set;
 	}
 
 	@Override
@@ -770,8 +775,9 @@ public class BatchFile extends RemoteFile {
 
 		for (final var nodeID : getNodeAccountID()) {
 			final var storageLocation =
-					tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
-							pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
+					tempStorage + "/" + getName().replace(".csv", FILE_NAME_GROUP_SEPARATOR) +
+							FilenameUtils.getBaseName(pair.getLeft()) + FILE_NAME_GROUP_SEPARATOR +
+							"Node" + FILE_NAME_INTERNAL_SEPARATOR + nodeID.toReadableString();
 			final var maker = new DistributionMaker(getSenderAccountID().asAccount(),
 					feePayerAccountID.asAccount(),
 					nodeID.asAccount(),

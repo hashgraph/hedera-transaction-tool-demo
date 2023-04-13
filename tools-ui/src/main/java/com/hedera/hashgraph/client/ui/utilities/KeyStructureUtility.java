@@ -56,8 +56,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	private final Controller controller;
 	// contains all .pub files' content and file name
 	private Map<String, Path> pubFiles = new HashMap<>();
-	// is loaded when the key structure is shown
-	private final Map<TreeItem<String>, JsonObject> keyJsonItems = new HashMap<>();
 
 	public KeyStructureUtility(final Controller controller) {
 		this.controller = controller;
@@ -142,7 +140,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 		} else {
 			node = showSimpleKey(keyJson);
 		}
-		keyJsonItems.put(node, keyJson);
 		return node;
 	}
 
@@ -156,8 +153,6 @@ public class KeyStructureUtility implements GenericFileReadWriteAware {
 	public TreeView<String> buildKeyTreeView(final JsonObject keyJson) {
 		final var keyTreeView = new TreeView<String>();
 		final var root = new TreeItem<String>();
-		final var rootJson = new JsonObject();
-		keyJsonItems.put(root, rootJson);
 		final var keyItem = showKey(keyJson);
 		root.getChildren().add(keyItem);
 		keyTreeView.setRoot(root);
