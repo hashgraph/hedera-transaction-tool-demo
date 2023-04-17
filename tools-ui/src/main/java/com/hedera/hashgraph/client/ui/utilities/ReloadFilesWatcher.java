@@ -39,7 +39,7 @@ public class ReloadFilesWatcher implements Runnable {
     private final WatchKey key;
     private final BiConsumer<String, WatcherType> method;
 
-    public enum WatcherType { ADD, REMOVE, MODIFIED}
+    public enum WatcherType { ADD, REMOVE, MODIFY}
 
     /**
      * Creates a WatchService and registers the given directory
@@ -51,14 +51,6 @@ public class ReloadFilesWatcher implements Runnable {
                 StandardWatchEventKinds.ENTRY_DELETE,
                 StandardWatchEventKinds.ENTRY_MODIFY);
         this.method = method;
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            try {
-                this.watcher.close();
-            } catch (IOException e) {
-                // Not concerned with an exception at this point.
-            }
-        }));
     }
 
     public void run() {
@@ -66,25 +58,16 @@ public class ReloadFilesWatcher implements Runnable {
             var keepTrying = true;
             while (keepTrying) {
                 // Wait for key to be signalled
-                //TODO watcher was null when I closed the app?
                 final var watchKey = watcher.take();
 
                 if (this.key != watchKey) {
                     continue;
                 }
 
-//                if instead of this, it sends teh poll events into another thread,
-//                that thread would go through each and build a list of paths
-//                for (WatchEvent<?> event : wk.pollEvents()) {
-//                    //we only register "ENTRY_MODIFY" so the context is always a Path.
-//                    final Path changed = (Path) event.context();
-//                    then send that list to the runnable, which can then just be a function instead of a runnable
-
                 // If 'take' happened, this should always be true
                 final var events = watchKey.pollEvents();
                 if (!events.isEmpty()) {
-                    // Initialize the pane
-//                    Platform.runLater(runnable);
+                    // Setup events to be processed later
                     Platform.runLater(() -> processEvents(watchKey, events));
                 }
 
@@ -100,6 +83,7 @@ public class ReloadFilesWatcher implements Runnable {
     public void processEvents(final WatchKey key, final List<WatchEvent<?>> events) {
         final var dir = (Path)key.watchable();
         events.forEach(e -> {
+            // Get the actual path of the event (file path)
             final var path = dir.resolve((Path)e.context()).toAbsolutePath();
             // When a directory is created inside the watched directory, it doesn't think it is a directory
             // at this point, so it will pass through
@@ -114,7 +98,7 @@ public class ReloadFilesWatcher implements Runnable {
                     var watchType = WatcherType.ADD;
                     final var kind = e.kind().name();
                     if (StandardWatchEventKinds.ENTRY_MODIFY.name().equals(kind)) {
-                        watchType = WatcherType.MODIFIED;
+                        watchType = WatcherType.MODIFY;
                     } else if (StandardWatchEventKinds.ENTRY_DELETE.name().equals(kind)) {
                         watchType = WatcherType.REMOVE;
                     }

@@ -1618,7 +1618,6 @@ public class CreatePaneController implements SubController {
 			logger.error("Json file could not be deleted");
 		}
 
-		controller.homePaneController.setForceUpdate(true);
 		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
@@ -2982,8 +2981,6 @@ public class CreatePaneController implements SubController {
 			throw new HederaClientException("Error while deleting temporary files");
 		}
 
-		//reload the home pane, to show the transaction
-		controller.homePaneController.initializePane();
 		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}

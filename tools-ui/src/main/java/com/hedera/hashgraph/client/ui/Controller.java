@@ -444,12 +444,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final var button = (Button) event.getSource();
 		button.setStyle(MENU_BUTTON_HIGHLIGHT_COLOR);
-		homePaneController.setForceUpdate(false);
 		switch (button.getId()) {
 			case "homeButton":
 				if (drivesChanged) {
-					homePaneController.setForceUpdate(true);
-					homePaneController.initializePane();
+					homePaneController.populatePane();
 				}
 				changeTab(homePane);
 				break;
@@ -1157,7 +1155,10 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		}
 
 		updater = new GithubUpdater(getVersion(), new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
-				() -> homePaneController.setForceUpdate(true));
+				() -> {
+			//Does this need to repopulate the homePane?
+//					homePaneController.setForceUpdate(true);
+				});
 
 		final ChangeListener<Boolean> listener = new ChangeListener<>() {
 			private boolean curValue = false;

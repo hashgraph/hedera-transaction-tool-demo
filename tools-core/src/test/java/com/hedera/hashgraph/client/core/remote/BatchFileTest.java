@@ -156,16 +156,17 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 3)));
 		assertTrue(batchFile.getNodeAccountID().contains(new Identifier(0, 0, 4)));
 
-		assertEquals(100000000, batchFile.getTransactionFee());
-		assertEquals(180, batchFile.getTxValidDuration());
+		final UserAccessibleProperties properties =
+				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
+
+		assertEquals(properties.getDefaultTxFee(), batchFile.getTransactionFee());
+		assertEquals(properties.getTxValidDuration(), batchFile.getTxValidDuration());
 
 		assertEquals(22, batchFile.getTransfers().size());
 		assertEquals(LocalDate.of(2029, 9, 17), batchFile.getFirstTransaction());
 
 		assertEquals("", batchFile.getMemo());
 
-		final UserAccessibleProperties properties =
-				new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 		properties.setDefaultTxFee(123456789);
 		properties.setTxValidDuration(123);
 

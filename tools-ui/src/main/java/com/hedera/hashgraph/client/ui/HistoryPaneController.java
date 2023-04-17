@@ -1013,8 +1013,7 @@ public class HistoryPaneController implements SubController {
 	public void rebuildHistory() throws IOException {
 		deleteIfExists(Path.of(Constants.HISTORY_MAP));
 		initializePane();
-		controller.homePaneController.setForceUpdate(true);
-		controller.homePaneController.initializePane();
+		controller.homePaneController.populatePane();
 	}
 
 	/**

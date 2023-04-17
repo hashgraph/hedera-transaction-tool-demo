@@ -791,12 +791,17 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				region.setMinHeight(10);
 				VBox.setVgrow(txComments, Priority.ALWAYS);
 				commentsVBox.getChildren().addAll(txComments, region);
+//				commentsVBox.getChildren().addAll(txComments);
 			}
 		}
 	}
 
 	private VBox setupCommentsArea() throws HederaClientException {
 		final var commentsVBox = new VBox();
+		// When there are a large amount of files displayed, scrolling can be very slow.
+		// This appeared to only happen after at least 5 csv files were added to the list (among the 50+ other items).
+		// But if I were to remove either of these comment boxes, it's much faster.
+		// Or, if BatchFile were to remove just a couple of lines (the taller the area that BatchFile creates, the worse it is).
 		showCreatorComments(commentsVBox);
 		HBox.setHgrow(commentsVBox, Priority.ALWAYS);
 		setupUserComments(commentsVBox);
@@ -962,6 +967,21 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	public int hashCode() {
 		return Objects.hash(name, date);
 	}
+
+	// This helps to ensure that a file isn't copied and re added to the home pane
+	// but, as the history map is mutable (though it is somewhat hidden), this doesn't make it
+	// fool-proof. If the history map is changed, or the history file the map points to is moved, this breaks
+//	@Override
+//	public int hashCode() {
+//		final var file = new File(parentPath, name);
+//		var bytes = new byte[0];
+//		try {
+//			bytes = Files.readAllBytes(file.toPath());
+//		} catch (final IOException e) {
+//			logger.error(e.getMessage());
+//		}
+//		return Arrays.hashCode(bytes);
+//	}
 
 	@Override
 	public int compareTo(@NotNull final RemoteFile o) {
