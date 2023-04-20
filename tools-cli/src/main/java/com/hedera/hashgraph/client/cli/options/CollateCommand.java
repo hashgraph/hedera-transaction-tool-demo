@@ -122,7 +122,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		// If the prefix option is used, add the separator.
 		if (!"".equals(prefix)) {
-			prefix = prefix + ".";
+			prefix = prefix + FILE_NAME_GROUP_SEPARATOR;
 		}
 
 		writeCSV(out + File.separator + prefix + "verification.csv", verification);
