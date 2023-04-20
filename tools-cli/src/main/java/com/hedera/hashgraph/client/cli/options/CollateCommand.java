@@ -88,7 +88,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	private final Map<File, AccountInfo> infos = new HashMap<>();
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
-	private final Set<AccountId> knownIds = new HashSet<>();
 	@Override
 	public void execute() throws HederaClientException, IOException {
 		if ("".equals(out)) {
@@ -301,23 +300,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		return idList;
 	}
 
-	/**
-	 * Return a list of accountIds that have signatures on the transaction.
-	 *
-	 * @param helper
-	 * @return
-	 * @throws HederaClientException
-	 */
-	private List<String> getAccountIds(final CollatorHelper helper) throws HederaClientException {
-		final List<String> idList = new ArrayList<>();
-		for (final var info : infos.entrySet()) {
-			if (helper.verify(info.getValue())) {
-				idList.add(info.getValue().accountId.toString());
-			}
-		}
-		return idList;
-	}
-
 	private void loadTransactions(final File root) throws HederaClientException {
 		if (root.isFile()) {
 			handle(root);
@@ -417,7 +399,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				switch (extension) {
 					case Constants.INFO_EXTENSION:
 						infos.put(file, AccountInfo.fromBytes(readBytes(file)));
-						knownIds.add(infos.get(file).accountId);
 						break;
 					case Constants.PUB_EXTENSION:
 						publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
