@@ -174,8 +174,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			// If only a single file, then rename as needed, and move to the new location
-//			this looks wrong - check this out, then give it a go, then give it a go with the new naming scheme
-			final var filenamePrefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
+			final var filenamePrefix = (output.contains("Node")) ? 
+					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1) 
+							+ FILE_NAME_GROUP_SEPARATOR : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
 			if (Files.deleteIfExists(destination.toPath())) {
