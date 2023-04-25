@@ -120,10 +120,14 @@ public class SoftwareUpdateFile extends RemoteFile {
 
 	@Override
 	public boolean isExpired() {
-		if (oldVersion.equals(version)) {
+		// jpackage doesn't allow a version starting with 0, but the build version starts with 0.
+		// Strip the leading "0." if it exists.
+		var formattedOldVersion = oldVersion.startsWith("0.") ? oldVersion.substring(2) : oldVersion;
+		var formattedVersion = version.startsWith("0.") ? version.substring(2) : version;
+		if (formattedOldVersion.equals(formattedVersion)) {
 			return newStamp <= oldStamp;
 		} else {
-			return new ComparableVersion(version).compareTo(new ComparableVersion(oldVersion)) < 0;
+			return new ComparableVersion(formattedVersion).compareTo(new ComparableVersion(formattedOldVersion)) < 0;
 		}
 	}
 
@@ -302,14 +306,16 @@ public class SoftwareUpdateFile extends RemoteFile {
 	@Override
 	public int compareTo(@NotNull final RemoteFile otherFile) {
 		if (otherFile instanceof SoftwareUpdateFile) {
-			return new ComparableVersion(version).compareTo(new ComparableVersion(((SoftwareUpdateFile) otherFile).getVersion()));
+			return new ComparableVersion(version).compareTo(
+					new ComparableVersion(((SoftwareUpdateFile) otherFile).getVersion()));
 		} else {
 			return super.compareTo(otherFile);
 		}
 	}
 
 	private String calculateDigest() {
-		final var digestString = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
+		final var digestString = EncryptionUtils.getFileDigest(
+				new File(getParentPath() + File.separator + getName()));
 		if ("".equals(digestString)) {
 			return "";
 		}
@@ -333,7 +339,11 @@ public class SoftwareUpdateFile extends RemoteFile {
 	}
 
 	public static String getSoftwareVersionFromVersionStr(final String version) {
-		return fixVersion(version.split(", ")[0].split(" ")[1]);
+		try {
+			return fixVersion(version.split(", ")[0].split(" ")[1]);
+		} catch (final RuntimeException e) {
+			throw new IllegalArgumentException("Can not parse version from String '" + version + "'", e);
+		}
 	}
 
 	public static long getBuildDateSecondsFromVersionStr(final String version) throws HederaClientException {

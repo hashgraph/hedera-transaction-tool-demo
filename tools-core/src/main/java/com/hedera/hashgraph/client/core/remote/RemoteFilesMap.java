@@ -26,12 +26,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
@@ -44,11 +47,11 @@ import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class RemoteFilesMap {
 
-	private static final Logger logger = LogManager.getLogger(RemoteFilesMap.class);
+	private static final Logger LOG = LogManager.getLogger(RemoteFilesMap.class);
 
-	private String version = "";
-	private Map<String, RemoteFile> files;
-
+	public static final String UNKNOWN_VERSION = "UNKNOWN";
+	private final String version;
+	private final Map<String, RemoteFile> files = new HashMap<>();
 	/**
 	 * Constructor
 	 *
@@ -56,22 +59,24 @@ public class RemoteFilesMap {
 	 * 		a list of remote files
 	 */
 	public RemoteFilesMap(final List<RemoteFile> fileList) {
-		if (fileList == null) {
-			return;
-		}
-		files = new HashMap<>();
-		for (final var remoteFile : fileList) {
-			files.put(remoteFile.getName(), remoteFile);
-		}
+		this(UNKNOWN_VERSION);
+		Optional.ofNullable(fileList).ifPresent(list -> {
+			for (final var remoteFile : list) {
+				files.put(remoteFile.getName(), remoteFile);
+			}
+		});
 	}
 
 	public RemoteFilesMap() {
-		files = new HashMap<>();
+		this(UNKNOWN_VERSION);
 	}
 
 	public RemoteFilesMap(final String version) {
-		this.version = version;
-		this.files = new HashMap<>();
+		if (version == null || version.isBlank()) {
+			this.version = UNKNOWN_VERSION;
+		} else {
+			this.version = version;
+		}
 	}
 
 	/**
@@ -123,7 +128,7 @@ public class RemoteFilesMap {
 			final List<FileDetails> fileDetails = fileService.listFiles(location);
 			return new RemoteFilesMap(getRemoteFiles(fileDetails));
 		} catch (final HederaClientException | ParseException e) {
-			logger.info("Files folder not found in FileService {}", fileService.getName());
+			LOG.info("Files folder not found in FileService {}", fileService.getName());
 			return new RemoteFilesMap(version);
 		}
 	}
@@ -196,9 +201,11 @@ public class RemoteFilesMap {
 						validRemoteAction(remoteFile.getType(), remoteFile, remoteLocation);
 						remoteFiles.add(remoteFile);
 					}
+				} else {
+					LOG.info("File will be ignored: " + f.getFullPath());
 				}
 			} catch (final Exception exception) {
-				logger.error("Could not load remote file from '" + f.getPath() + "/" + f.getName() + "' due to error ", exception);
+				LOG.error("Could not load remote file from '" + f.getPath() + "/" + f.getName() + "' due to error ", exception);
 			}
 		}
 		return remoteFiles;
@@ -238,13 +245,15 @@ public class RemoteFilesMap {
 				break;
 			case SOFTWARE_UPDATE:
 			case CONFIG:
-				remoteFile = getSoftwareUpdateFile(version, fileDetails);
+				remoteFile = getSoftwareUpdateFile(fileDetails);
 				break;
 			case METADATA:
 				remoteFile = new MetadataFile(fileDetails);
 				break;
 			default:
-				throw new HederaClientException(String.format("Unrecognized type %s", type));
+				throw new HederaClientException(
+						String.format("Unrecognized type '%s' for file '%s'", type,
+								fileDetails.getPath() + "/" + fileDetails.getName()));
 		}
 		return remoteFile;
 	}
@@ -267,13 +276,15 @@ public class RemoteFilesMap {
 					}
 				}
 			} catch (final HederaClientException e) {
-				logger.error(e);
+				LOG.error(e);
 			}
 			remoteFile.setSignDateInSecs(lastDate);
 		}
 	}
-
-	private RemoteFile getSoftwareUpdateFile(final String version, final FileDetails f) throws HederaClientException {
+	private RemoteFile getSoftwareUpdateFile(final FileDetails f) throws HederaClientException {
+		if (Objects.equals(UNKNOWN_VERSION, version)) {
+			throw new IllegalStateException("Can not create SoftwareUpdateFile since current version is unknown");
+		}
 		final SoftwareUpdateFile remoteFile = new SoftwareUpdateFile(f);
 
 		remoteFile.setOldVersion(getSoftwareVersionFromVersionStr(version));
@@ -301,7 +312,7 @@ public class RemoteFilesMap {
 		for (final var entry : files.entrySet()) {
 			final var value = entry.getValue();
 			if (value.isExpired()) {
-				logger.info("Transaction {} is expired", value.getBaseName());
+				LOG.info("Transaction {} is expired", value.getBaseName());
 				continue;
 			}
 			remoteFileList.add(value);
@@ -340,7 +351,7 @@ public class RemoteFilesMap {
 	public boolean remove(final String name) {
 		if (exists(name)) {
 			final var removedFile = files.remove(name);
-			logger.info("File {} removed from map", removedFile.getName());
+			LOG.info("File {} removed from map", removedFile.getName());
 			return true;
 		}
 		return false;
@@ -357,7 +368,7 @@ public class RemoteFilesMap {
 		if (!this.files.containsKey(remoteFile.getName())) {
 			this.files.put(remoteFile.getName(), remoteFile);
 		} else {
-			logger.info("Duplicated file: Ignored");
+			LOG.info("Duplicated file: Ignored");
 		}
 	}
 
@@ -413,10 +424,13 @@ public class RemoteFilesMap {
 	}
 
 	public void clearMap() {
-		files = new HashMap<>();
+		files.clear();
 	}
 
 	private static boolean validFile(final FileDetails file) {
+		if (Paths.get(file.getFullPath()).toFile().isDirectory()) {
+			return false;
+		}
 		final var extension = file.getExtension();
 
 		try {

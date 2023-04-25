@@ -35,16 +35,10 @@
 
 	<artifactId>tools-ui</artifactId>
 	<version>0.12.3</version>
-	<packaging>jar</packaging>
 
 	<!-- Project Properties -->
 	<properties>
-		<!-- Maven and Java Configuration -->
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>10</maven.compiler.source>
-		<maven.compiler.target>10</maven.compiler.target>
 		<project.jarId>transactiontools</project.jarId>
-		<maven-assembly-plugin.version>3.1.1</maven-assembly-plugin.version>
 	</properties>
 
 	<dependencyManagement>
@@ -390,10 +384,6 @@
 						<version>7.1</version>
 					</dependency>
 				</dependencies>
-				<configuration>
-					<source>11</source>
-					<target>11</target>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

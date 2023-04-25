@@ -52,7 +52,7 @@ public class FileAdapterFactory {
 					return new LocalFileServiceAdapter(path);
 				}
 			} catch (final InvalidPathException e) {
-				throw new HederaClientException("No FileService is created.");
+				throw new HederaClientException("No FileService is created.", e);
 			}
 		} else {
 			throw new HederaClientException("Path cannot be null");
