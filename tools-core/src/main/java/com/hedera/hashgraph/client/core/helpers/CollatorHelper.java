@@ -212,11 +212,11 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return transaction.collate(signaturePairs);
 	}
 
-	public final Transaction<?> collate(final String folder) {
-		if (folder == null || "".equals(folder)) {
+	public final Transaction<?> collate(final String... folders) {
+		if (folders == null || folders.length == 0) {
 			return collate();
 		}
-		return transaction.collate(folder, signaturePairs);
+		return transaction.collate(signaturePairs, folders);
 	}
 
 	public void addComments(final File commentFile) throws HederaClientException {

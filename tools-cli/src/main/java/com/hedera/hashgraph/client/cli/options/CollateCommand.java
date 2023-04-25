@@ -65,9 +65,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the folder containing the " +
-			"account info files for the account(s) corresponding to the transaction")
-	private String infoFiles;
+
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
+			"the account(s) corresponding to the transaction", split = ",")
+	private String[] infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
@@ -85,10 +86,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	// This is a best guess approach, for a quick fix, as the key is deduced based on the
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
-	private final Map<File, AccountInfo> infos = new HashMap<>();
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
-	private final Set<AccountId> knownIds = new HashSet<>();
 	@Override
 	public void execute() throws HederaClientException, IOException {
 		if ("".equals(out)) {
@@ -99,9 +98,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (!root.exists()) {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
-
-		// Parse account info files from inputs
-		loadVerificationFiles(Constants.INFO_EXTENSION, infoFiles);
 
 		// Parse public key files from inputs
 		loadVerificationFiles(Constants.PUB_EXTENSION, keyFiles);
@@ -122,7 +118,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 		// If the prefix option is used, add the separator.
 		if (!"".equals(prefix)) {
-			prefix = prefix + ".";
+			prefix = prefix + FILE_NAME_GROUP_SEPARATOR;
 		}
 
 		writeCSV(out + File.separator + prefix + "verification.csv", verification);
@@ -174,8 +170,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			// If only a single file, then rename as needed, and move to the new location
-//			this looks wrong - check this out, then give it a go, then give it a go with the new naming scheme
-			final var filenamePrefix = (output.contains("Node")) ? output.substring(output.lastIndexOf("_") + 1) + "_" : "";
+			final var filenamePrefix = (output.contains("Node")) ?
+					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1)
+							+ FILE_NAME_GROUP_SEPARATOR : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
 			if (Files.deleteIfExists(destination.toPath())) {
@@ -300,23 +297,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		return idList;
 	}
 
-	/**
-	 * Return a list of accountIds that have signatures on the transaction.
-	 *
-	 * @param helper
-	 * @return
-	 * @throws HederaClientException
-	 */
-	private List<String> getAccountIds(final CollatorHelper helper) throws HederaClientException {
-		final List<String> idList = new ArrayList<>();
-		for (final var info : infos.entrySet()) {
-			if (helper.verify(info.getValue())) {
-				idList.add(info.getValue().accountId.toString());
-			}
-		}
-		return idList;
-	}
-
 	private void loadTransactions(final File root) throws HederaClientException {
 		if (root.isFile()) {
 			handle(root);
@@ -412,23 +392,13 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				parseFiles(inner, extension);
 				return;
 			}
-			try {
-				switch (extension) {
-					case Constants.INFO_EXTENSION:
-						infos.put(file, AccountInfo.fromBytes(readBytes(file)));
-						knownIds.add(infos.get(file).accountId);
-						break;
-					case Constants.PUB_EXTENSION:
-						publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
-								FilenameUtils.getBaseName(file.getName()));
-						break;
-					default:
-						throw new HederaClientException("Not implemented");
-				}
-
-			} catch (final InvalidProtocolBufferException e) {
-				logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, file.getName());
-				throw new HederaClientException(e);
+			switch (extension) {
+				case Constants.PUB_EXTENSION:
+					publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
+							FilenameUtils.getBaseName(file.getName()));
+					break;
+				default:
+					throw new HederaClientException("Not implemented");
 			}
 		}
 	}

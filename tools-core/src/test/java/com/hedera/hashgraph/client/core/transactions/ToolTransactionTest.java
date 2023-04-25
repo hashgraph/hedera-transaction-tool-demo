@@ -598,7 +598,7 @@ class ToolTransactionTest {
 
 		final var transfer = new ToolTransferTransaction(testJson);
 
-		transfer.collate("src/test/resources/infos", pairs);
+		transfer.collate(pairs, "src/test/resources/infos");
 		assertTrue(transfer.verify(info));
 
 		final var receipt = transfer.submit();

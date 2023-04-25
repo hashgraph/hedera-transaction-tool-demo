@@ -269,8 +269,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction.toBytes().length <= Constants.MAX_TRANSACTION_LENGTH);
 	}
 
-	public Transaction<? extends Transaction<?>> collate(final String accountsInfoFolder,
-									 final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(final Map<PublicKey, byte[]> signatures,
+										 final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		try {
 			// Before anything happens, make sure the transaction is still within size limitations
 			var transactionSize = transaction.toBytes().length;
@@ -280,7 +280,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			}
 
 			// Build the list of keys that are required for a valid transaction
-			final var keyList = buildKeyList(accountsInfoFolder, signatures);
+			final var keyList = buildKeyList(accountsInfoFolders, signatures);
 			if (keyList.isEmpty()) {
 				throw new HederaClientRuntimeException("Account information is missing, cannot determine " +
 						"the keys required for signing.");
@@ -312,21 +312,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transaction;
 	}
 
-	public Transaction<?> collate(final String accountsInfoFolder,
-								  final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final Transaction<?> otherTransaction,
+								  final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		final var signatures = otherTransaction.getSignatures();
 		if (signatures.size() != 1) {
 			throw new HederaClientRuntimeException("Invalid signature map size");
 		}
 		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
-			collate(accountsInfoFolder, nodeSignatures);
+			collate(nodeSignatures, accountsInfoFolders);
 		}
 		return transaction;
 	}
 
-	public Transaction<?> collate(final String accountsInfoFolder,
-								  final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final Set<SignaturePair> signaturePairs,
+								  final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		// In order to consolidate similar work, do a bit extra work now and take all pairs and create a map
 		var signatures = new HashMap<PublicKey, byte[]>();
 		for (final var signaturePair : signaturePairs) {
@@ -335,43 +335,45 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			signatures.put(publicKey, signature);
 		}
 
-		return collate(accountsInfoFolder, signatures);
+		return collate(signatures, accountsInfoFolders);
 	}
 
 	@Override
 	public Transaction<? extends Transaction<?>> collate(
 			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, signatures);
+		return collate(signatures, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	@Override
 	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, otherTransaction);
+		return collate(otherTransaction, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	@Override
 	public Transaction<?> collate(final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, signaturePairs);
+		return collate(signaturePairs, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	/**
 	 * Build a keyList of the keys that are a part of the required keyLists. If multiple accounts are
-	 * involved, each of the accounts' keyList will be added to this new list.
+	 * involved, each of the accounts' keyList will be added to this new list. This differs from
+	 * getSigningKeys in that this returns a KeyList, while getSigningKeys returns a list of all keys in byte form.
 	 *
-	 * @param accountsInfoFolder
-	 * 		The location string of the folder containing the account.info files
+	 * @param accountsInfoFolders
+	 * 		The location string(s) of the folder(s) containing the account.info files
 	 * @param signatures
 	 * 		The map of the signatures that are being added to the transaction which are needed in some situations
 	 * @return
 	 * 		The new keyList containing all keys from any required account involved in this transaction.
 	 * @throws IOException
 	 */
-	protected KeyList buildKeyList(final String accountsInfoFolder,
+	protected KeyList buildKeyList(final String[] accountsInfoFolders,
 								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		// Determine all the accounts that need to be involved in the signing
 		final var accounts = getSigningAccounts();
 		final var fileSet = accounts.stream()
-				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
+				.flatMap(account -> java.util.Arrays.stream(accountsInfoFolders)
+							.map(a -> CommonMethods.getInfoFiles(a, account)))
 				.filter(files -> files != null && files.length == 1)
 				.map(fileArray -> fileArray[0])
 				.collect(Collectors.toSet());
