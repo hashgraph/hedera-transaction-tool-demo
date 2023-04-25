@@ -68,8 +68,8 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS
 
 public class DistributionMaker implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(DistributionMaker.class);
-	public static final String TRANSACTIONS_SUFFIX = "_transactions";
-	public static final String SIGNATURES_SUFFIX = "_signatures";
+	public static final String TRANSACTIONS_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "transactions";
+	public static final String SIGNATURES_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "signatures";
 	private final AccountId sender;
 	private final AccountId feePayer;
 	private final AccountId node;
@@ -129,24 +129,22 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		final var stx = buildSignature(tx, keyPair);
 		final var signaturePair =
 				new SignaturePair(PrivateKey.fromBytes(keyPair.getPrivate().getEncoded()).getPublicKey(), stx);
-		final var transactionsStorage = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
-				"transactions", storageLocation);
+		final var transactionsStorage = String.format("%s%s", storageLocation, TRANSACTIONS_SUFFIX);
 		if (new File(transactionsStorage).mkdirs()) {
 			logger.info("Folder {} created", transactionsStorage);
 		}
-		final var signaturesStorage = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
-				"signatures", storageLocation);
+		final var signaturesStorage = String.format("%s%s", storageLocation, SIGNATURES_SUFFIX);
 		if (new File(signaturesStorage).mkdirs()) {
 			logger.info("Folder {} created", signaturesStorage);
 		}
 
 		final var name = getFullTransactionName(distributionData, tx.getTransactionId().toString());
 		final var transactionFilePath =
-				String.format("%s_transactions/%s.%s", storageLocation, name, TRANSACTION_EXTENSION);
+				String.format("%s%s/%s.%s", storageLocation, TRANSACTIONS_SUFFIX, name, TRANSACTION_EXTENSION);
 		writeBytes(transactionFilePath, tx.toBytes());
 		logger.info("Writing: {}", transactionFilePath);
-		final var signatureFilePath = String.format("%s" + FILE_NAME_GROUP_SEPARATOR +
-				"signatures/%s.%s", storageLocation, name, SIGNATURE_EXTENSION);
+		final var signatureFilePath = String.format("%s%s/%s.%s", storageLocation,
+				SIGNATURES_SUFFIX, name, SIGNATURE_EXTENSION);
 		signaturePair.write(signatureFilePath);
 		logger.info("Writing: {}", signatureFilePath);
 	}
@@ -278,6 +276,4 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 	private String getFullTransactionName(final BatchLine distributionData, final String id) {
 		return (id + FILE_NAME_GROUP_SEPARATOR + distributionData.getReceiverAccountID().toReadableString());
 	}
-
-
 }
