@@ -345,7 +345,6 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
 		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
 				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
-//		assertEquals(originalKey.size(), transferKey.size());
 	}
 
 	@Test
@@ -406,7 +405,6 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
 		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
 				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
-//		assertEquals(originalKey.size(), transferKey.size());
 	}
 
 	@Test
@@ -470,8 +468,6 @@ public class CreatePaneControllerLoadTest extends TestBase implements GenericFil
 		assert toolTransaction.getTransaction().getMaxTransactionFee() != null;
 		assertEquals(original.getTransaction().getMaxTransactionFee().toTinybars(),
 				toolTransaction.getTransaction().getMaxTransactionFee().toTinybars());
-//		assertEquals(originalKey.size(), transferKey.size());
-
 	}
 
 	@Test
