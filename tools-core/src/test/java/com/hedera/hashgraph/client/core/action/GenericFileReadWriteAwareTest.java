@@ -312,8 +312,6 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 			final String key = record.get(0);
 			list.remove(key);
 			final var value = new HashSet<>(list);
-//			assertTrue(testMap.containsKey(key));
-//			assertEquals(new HashSet<>(testMap.get(key)), value);
 		}
 		csvFile.deleteOnExit();
 	}
