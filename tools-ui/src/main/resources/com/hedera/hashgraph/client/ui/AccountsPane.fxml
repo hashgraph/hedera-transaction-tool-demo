@@ -159,7 +159,7 @@
 			<Button fx:id="setUnknownAccountNetworksButton" minWidth="200.0" mnemonicParsing="false"
 					onAction="#setUnknownAccountNetworks"
 					style="-fx-background-color: white; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-color: #0b9dfd;"
-					text="SET UNKNOWN NETWORK" visible="false">
+					text="SET UNKNOWN NETWORK" visible="false" managed="false">
 				<tooltip><Tooltip text="Set network on selected accounts with UNKNOWN Network." /></tooltip>
 			</Button>
 			<Button fx:id="importAccountButton" minWidth="200.0" mnemonicParsing="false"
