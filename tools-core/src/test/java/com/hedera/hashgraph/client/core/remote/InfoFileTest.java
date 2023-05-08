@@ -217,10 +217,10 @@ class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 	}
 
 	private String createAccountInfo(final String filePath) throws Exception {
-		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-		final var privateKey = Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY");
-		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure()
-				.directory("../").load().get("MY_PRIVATE_KEY"));
+		final var dotenv = Dotenv.configure().directory("../").load();
+		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
+		final var privateKey = dotenv.get("TEST_PRIVATE_KEY");
+		final var myPrivateKey = PrivateKey.fromString(privateKey);
 		final var keyStore = new Ed25519KeyStore.Builder()
 				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
 		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
