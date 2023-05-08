@@ -10,6 +10,8 @@ jobs:
     timeout-minutes: 180
     env:
       MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress
+      TEST_ACCOUNT_ID: ${{ secrets.TEST_ACCOUNT_ID }}
+      TEST_PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v2
         with:
