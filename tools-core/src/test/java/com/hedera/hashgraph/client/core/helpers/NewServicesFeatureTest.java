@@ -90,8 +90,8 @@ class NewServicesFeatureTest implements GenericFileReadWriteAware {
 	@Test
 	void networkField_test() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			HederaClientException, ReceiptStatusException {
-		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-		final var privateKey = Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY");
+		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("TEST_ACCOUNT_ID"));
+		final var privateKey = Dotenv.configure().directory("../").load().get("TEST_PRIVATE_KEY");
 		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure()
 				.directory("../").load().get("MY_PRIVATE_KEY"));
 		final var keyStore = new Ed25519KeyStore.Builder()
