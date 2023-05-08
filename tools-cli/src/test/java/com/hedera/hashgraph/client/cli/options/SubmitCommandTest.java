@@ -77,8 +77,8 @@ class SubmitCommandTest implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws ReceiptStatusException, IOException {
-		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY"));
+		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("TEST_ACCOUNT_ID"));
+		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("TEST_PRIVATE_KEY"));
 
 		client = Client.forTestnet();
 		client.setOperator(myAccountId, myPrivateKey);
