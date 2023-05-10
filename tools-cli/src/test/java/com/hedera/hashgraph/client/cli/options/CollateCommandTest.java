@@ -308,7 +308,7 @@ class CollateCommandTest implements GenericFileReadWriteAware {
 
 	private AccountId createAccount(final KeyList keyList) throws TimeoutException,
 			PrecheckStatusException, ReceiptStatusException, HederaClientException {
-		var dotenv = Dotenv.configure().directory("../").load();
+		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var myPrivateKey = PrivateKey.fromString(dotenv.get("TEST_PRIVATE_KEY"));
 
