@@ -643,7 +643,7 @@ class ToolTransactionTest {
 	private AccountInfo createAccount(
 			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
 			ReceiptStatusException, InterruptedException {
-		var dotenv = Dotenv.configure().directory("../").load();
+		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var privateKeyString = dotenv.get("TEST_PRIVATE_KEY");
 		final var privateKey = PrivateKey.fromString(privateKeyString);
