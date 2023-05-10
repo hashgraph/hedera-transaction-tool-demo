@@ -94,7 +94,7 @@ class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws KeyStoreException {
-		var dotenv = Dotenv.configure().directory("../").load();
+		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var myPrivateKey = PrivateKey.fromString(dotenv.get("TEST_PRIVATE_KEY"));
 
