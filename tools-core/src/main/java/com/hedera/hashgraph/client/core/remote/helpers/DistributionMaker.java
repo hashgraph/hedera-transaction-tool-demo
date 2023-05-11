@@ -213,7 +213,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		Collections.sort(files);
 
 		final var summary =
-				new File(output + File.separator + FilenameUtils.getBaseName(storageLocation) +
+				new File(output + File.separator + FilenameUtils.getName(storageLocation) +
 						FILE_NAME_GROUP_SEPARATOR + "summary.csv");
 
 		Files.deleteIfExists(summary.toPath());
