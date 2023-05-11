@@ -963,25 +963,24 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		return name.equals(that.name) && date == that.getDate();
 	}
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(name, date);
-	}
-
 	// This helps to ensure that a file isn't copied and re added to the home pane
 	// but, as the history map is mutable (though it is somewhat hidden), this doesn't make it
 	// fool-proof. If the history map is changed, or the history file the map points to is moved, this breaks
-//	@Override
-//	public int hashCode() {
-//		final var file = new File(parentPath, name);
-//		var bytes = new byte[0];
-//		try {
-//			bytes = Files.readAllBytes(file.toPath());
-//		} catch (final IOException e) {
-//			logger.error(e.getMessage());
-//		}
-//		return Arrays.hashCode(bytes);
-//	}
+	private Integer hashCode = null;
+	@Override
+	public int hashCode() {
+		if (hashCode == null) {
+			final var file = new File(parentPath, name);
+			var bytes = new byte[0];
+			try {
+				bytes = Files.readAllBytes(file.toPath());
+			} catch (final IOException e) {
+				logger.error(e.getMessage());
+			}
+			hashCode = Arrays.hashCode(bytes);
+		}
+		return hashCode;
+	}
 
 	@Override
 	public int compareTo(@NotNull final RemoteFile o) {
