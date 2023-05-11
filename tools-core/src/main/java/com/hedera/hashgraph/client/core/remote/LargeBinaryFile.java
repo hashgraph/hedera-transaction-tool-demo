@@ -380,8 +380,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return transactionValidStart;
 	}
 
+	@Override
 	public Timestamp getExpiration() {
 		return expiration;
+	}
+
+	@Override
+	public boolean isExpired() {
+		final var now = new Timestamp();
+		return now.getSeconds() > getExpiration().getSeconds();
 	}
 
 	public int getValidIncrement() {
