@@ -20,7 +20,8 @@ package com.hedera.hashgraph.client.core.enums;
 
 public enum Actions {
 	ACCEPT("ACCEPT"),
-	DECLINE("DECLINE");
+	DECLINE("DECLINE"),
+	EXPIRE("EXPIRE");
 
 	private final String action;
 
@@ -39,6 +40,9 @@ public enum Actions {
 		}
 		if (this == Actions.DECLINE) {
 			return "declined";
+		}
+		if (this == Actions.EXPIRE) {
+			return "expired";
 		}
 		return super.toString();
 	}

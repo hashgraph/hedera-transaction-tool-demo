@@ -593,7 +593,7 @@ public class HistoryPaneController implements SubController {
 
 	private void setupFilterBoxes() {
 		typeFilter.addAll(EnumSet.allOf(FileType.class));
-		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE);
+		actionsFilter.addAll(Actions.ACCEPT, Actions.DECLINE, Actions.EXPIRE);
 		setupTypeFilterBox();
 		setupFeePayerFilterBox();
 		setupExpirationDateBox();

@@ -25,6 +25,7 @@ import com.github.benmanes.caffeine.cache.Scheduler;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -125,7 +126,7 @@ public class HomePaneController implements SubController {
 
 	// The cache tracking the expiration of the transactions.
 	// Upon expiry, the files will no longer be displayed in this pane.
-	private Cache<String, RemoteFile> remoteFiles;
+	private Cache<String, RemoteFile> remoteFilesCache;
 	private String output = "";
 	private String user = "";
 
@@ -145,7 +146,7 @@ public class HomePaneController implements SubController {
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
 		noTasksLabel.setPadding(new Insets(15, 0, 5, 15));
 		// Recreate the cache, this also only needs to be done once
-		remoteFiles = Caffeine.newBuilder()
+		remoteFilesCache = Caffeine.newBuilder()
 				.scheduler(Scheduler.systemScheduler())
 				.expireAfter(new Expiry<String, RemoteFile>() {
 					@Override
@@ -187,7 +188,7 @@ public class HomePaneController implements SubController {
 						Platform.runLater(() -> {
 							// Move the file to history
 							try {
-								value.moveToHistory();
+								value.moveToHistory(Actions.EXPIRE, "", "");
 								controller.historyPaneController.addToHistory(value);
 							} catch (final HederaClientException e) {
 								logger.error("moving expired transaction failed", e);
@@ -210,15 +211,17 @@ public class HomePaneController implements SubController {
 			// Clear the list of RemoteFiles to be displayed
 			newFilesViewVBox.getChildren().clear();
 			// Invalidate and clean up the cache
-			remoteFiles.invalidateAll();
-			remoteFiles.cleanUp();
+			remoteFilesCache.invalidateAll();
+			remoteFilesCache.cleanUp();
+			// Remove all files from the fileBoxes
+			fileBoxes.clear();
 
 			// Load the RemoteFiles from disk
 			loadRemoteFilesMap();
 
 			// Remove any RemoteFiles that have been invalidated
-			remoteFiles.cleanUp();
-			if (remoteFiles.estimatedSize() > 0) {
+			remoteFilesCache.cleanUp();
+			if (remoteFilesCache.estimatedSize() > 0) {
 				// Show new transactions by hiding the defaultViewBox
 				defaultViewVBox.setDisable(true);
 				defaultViewVBox.setVisible(false);
@@ -231,8 +234,6 @@ public class HomePaneController implements SubController {
 			logger.error("initializeHomePane error", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
-		// Scroll to the top
-		Platform.runLater(() -> homeFilesScrollPane.setVvalue(0.0));
 		logger.info("Home pane initialized");
 	}
 
@@ -265,9 +266,9 @@ public class HomePaneController implements SubController {
 		for (final var s : inputFolder) {
 			final var fileService = FileAdapterFactory.getAdapter(s);
 			if (fileService != null && fileService.exists()) {
-				final var remoteFiles = new RemoteFilesMap(version).fromFile(fileService);
+				final var remoteFilesMap = new RemoteFilesMap(version).fromFile(fileService);
 
-				for (final var file : remoteFiles.getFiles()) {
+				for (final var file : remoteFilesMap.getFiles()) {
 					if (shouldCreateBox(file)) {
 						// Do an extra check if the file is history (as the RemoteFile.isHistory isn't saved to disk
 						// and therefore can be false here). If it is history, set it on the RemoteFile, otherwise
@@ -348,6 +349,8 @@ public class HomePaneController implements SubController {
 			// Always keep the software updates on top
 			if (file1 instanceof SoftwareUpdateFile) {
 				return -1;
+			} else if (file2 instanceof SoftwareUpdateFile) {
+				return 1;
 			}
 			// Sort the files, soonest to expire on top
 			return file1.getExpiration().compareTo(file2.getExpiration());
@@ -357,7 +360,7 @@ public class HomePaneController implements SubController {
 
 	public void removeFile(final String filePath) {
 		// The file (on disk) has already been moved, but the RemoteFile object still exists
-		final var remoteFile = remoteFiles.getIfPresent(filePath);
+		final var remoteFile = remoteFilesCache.getIfPresent(filePath);
 		if (remoteFile != null) {
 			// Remove it from the list
 			removeFile(remoteFile);
@@ -368,7 +371,7 @@ public class HomePaneController implements SubController {
 		// Remove the VBox from the map of fileBoxes
 		final var box = fileBoxes.remove(file);
 		// Invalidate the RemoteFile from the cache, to allow it to be removed
-		remoteFiles.invalidate(file.getPath());
+		remoteFilesCache.invalidate(file.getPath());
 		// If a box was found
 		if (box != null) {
 			// Request focus on the newFilesViewBox to prevent scrolling to the top
@@ -384,7 +387,22 @@ public class HomePaneController implements SubController {
 
 	private void buildAndAddBox(final RemoteFile file) throws HederaClientException {
 		// First check if the fileBox exists already for the file.
+		// If it does contain the fileBox, check the actions of the file.
+		// If the action count is not 4, just re-add the file to the remoteFiles.
+		// Otherwise, recreate the fileBox and then add it.
 		if (fileBoxes.containsKey(file)) {
+			final var actions = file.getActions();
+			switch (actions.size()) {
+			case 0,1,2:
+					remoteFilesCache.put(file.getPath(), file);
+					return;
+				case 4:
+					break;
+				default:
+					logger.error("Unexpected value for number of actions");
+					return;
+			}
+
 			return;
 		}
 
@@ -429,7 +447,7 @@ public class HomePaneController implements SubController {
 		}
 		// Add the file to the cache and map
 		fileBoxes.put(file, fileBox);
-		remoteFiles.put(file.getPath(), file);
+		remoteFilesCache.put(file.getPath(), file);
 	}
 
 	private void setupKeyTree(final TransactionFile rf) {
@@ -927,8 +945,7 @@ public class HomePaneController implements SubController {
 
 	private void signTransactionAndComment(final RemoteFile rf, final Pair<String, KeyPair> pair) {
 		switch (rf.getType()) {
-			case TRANSACTION:
-			case LARGE_BINARY:
+		case TRANSACTION, LARGE_BINARY:
 				createSignedTransaction(rf, pair);
 				break;
 			case BATCH:

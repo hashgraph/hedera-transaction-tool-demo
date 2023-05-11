@@ -139,9 +139,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	public String getLastAction() {
-		final var actionString = Actions.ACCEPT == lastAction.getActions() ?
-				getLastActionString() :
-				"Declined";
+		final var actionString = getLastActionString();
 		final var stamp = lastAction.getTimeStamp().asDate();
 		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy hh:mm:ss aa" : "dd/MM/yyyy HH:mm:ss";
 		final var sdf = new SimpleDateFormat(format);
@@ -152,8 +150,12 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 
 	@NotNull
 	private String getLastActionString() {
-		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
-				getType()) ? "Signed" : "Accepted";
+		return switch (lastAction.getActions()) {
+			case ACCEPT -> TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
+					getType()) ? "Signed" : "Accepted";
+			case DECLINE -> "Declined";
+			case EXPIRE -> "Expired";
+		};
 	}
 
 	public String getFileName() {
