@@ -761,9 +761,6 @@ public class CreatePaneSubmitTest extends TestBase implements GenericFileReadWri
 				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
 		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
 
-//		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-//		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY"));
-
 		client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
 		client.setOperator(new AccountId(0, 0, 2), genesisKey);
 	}

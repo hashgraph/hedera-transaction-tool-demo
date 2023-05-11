@@ -37,7 +37,9 @@ import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import io.github.cdimascio.dotenv.Dotenv;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -96,11 +98,12 @@ class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws KeyStoreException {
-//		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-//		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY"));
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
+		final var myPrivateKey = PrivateKey.fromString(dotenv.get("TEST_PRIVATE_KEY"));
 
 		client = Client.forTestnet();
-//		client.setOperator(myAccountId, myPrivateKey);
+		client.setOperator(myAccountId, myPrivateKey);
 	}
 
 	@BeforeEach

@@ -643,17 +643,17 @@ class ToolTransactionTest {
 	private AccountInfo createAccount(
 			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
 			ReceiptStatusException, InterruptedException {
-		final var myAccountId = AccountId.fromString(Dotenv.configure().directory("../").load().get("MY_ACCOUNT_ID"));
-		final var privateKey = Dotenv.configure().directory("../").load().get("MY_PRIVATE_KEY");
-		final var myPrivateKey = PrivateKey.fromString(Dotenv.configure()
-				.directory("../").load().get("MY_PRIVATE_KEY"));
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
+		final var privateKeyString = dotenv.get("TEST_PRIVATE_KEY");
+		final var privateKey = PrivateKey.fromString(privateKeyString);
 		final var keyStore = new Ed25519KeyStore.Builder()
 				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
-		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
-				privateKey.substring(2) : privateKey)));
+		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKeyString.startsWith("0x") ?
+				privateKeyString.substring(2) : privateKeyString)));
 
 		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
-		client.setOperator(myAccountId, myPrivateKey);
+		client.setOperator(myAccountId, privateKey);
 
 		final TransactionResponse response = new AccountCreateTransaction()
 				.setKey(keys)

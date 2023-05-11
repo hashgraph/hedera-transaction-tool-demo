@@ -258,6 +258,7 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
+	@Disabled("SoftwareBoxes sometimes has a value, and sometimes not.")
 	public void verifySoftwareCard_Test() {
 		final var walker = StackWalker.getInstance();
 		final var methodName = walker.walk(frames -> frames

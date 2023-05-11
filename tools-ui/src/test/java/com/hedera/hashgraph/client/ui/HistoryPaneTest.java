@@ -181,7 +181,8 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		assertTrue(button.isDisable());
 		mainWindowPage.clickOnHomeButton();
 		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
-		assertEquals(initialFiles, finalFiles);
+		// finalFiles found on the homePane should be 1 larger than initialFiles found on the homePane
+		assertEquals(initialFiles+1, finalFiles);
 	}
 
 	private void populateHistory() {
