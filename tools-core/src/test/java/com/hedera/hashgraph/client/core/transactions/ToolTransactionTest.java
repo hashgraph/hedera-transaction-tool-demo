@@ -190,7 +190,7 @@ class ToolTransactionTest {
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transaction.getTransactionValidStart());
 		assertEquals(sender, transaction.getFeePayerID().getAccountNum());
 		assertEquals(new Identifier(0, 0, 3, "Mainnet"), transaction.getNodeID());
-		assertEquals(NetworkEnum.INTEGRATION, transaction.getNetwork());
+		assertEquals(NetworkEnum.TESTNET, transaction.getNetwork());
 	}
 
 	@Test
@@ -209,7 +209,7 @@ class ToolTransactionTest {
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transfer.getTransactionValidStart());
 		assertEquals(sender, transfer.getFeePayerID().getAccountNum());
 		assertEquals(new Identifier(0, 0, 3, "mainnet"), transfer.getNodeID());
-		assertEquals(NetworkEnum.INTEGRATION, transfer.getNetwork());
+		assertEquals(NetworkEnum.TESTNET, transfer.getNetwork());
 
 		final var actualTransfer = transfer.getTransaction();
 		assertTrue(actualTransfer instanceof TransferTransaction);
