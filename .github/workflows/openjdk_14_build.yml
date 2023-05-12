@@ -7,7 +7,7 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 480
+    timeout-minutes: 180
     env:
       MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress
       TEST_ACCOUNT_ID: ${{ secrets.TEST_ACCOUNT_ID }}
