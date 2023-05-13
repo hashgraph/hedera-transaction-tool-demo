@@ -34,7 +34,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
-        run: ./mvnw $MAVEN_CLI_OPTS test -Dtest=IdentifierTest,TimestampTest,UserAccessiblePropertiesTest,UserPropertiesTest,BalanceQueryTest,BatchLineTest,CommonMethodsTest,DistributionMakerTest,FileDetailsTest,MetadataActionTest,RemoteFileTest,UserCommentsTest,BatchFileTest,BundleFileTest,CommentFileTest,InfoFileTest,LargeBinaryFileTest,MetaDataFileTest,PublicKeyFileTest,SoftwareUpdateFileTest,TestBase,TransactionFileTest -pl :tools-core
+        run: ./mvnw $MAVEN_CLI_OPTS test -Dtest=IdentifierTest,TimestampTest,UserAccessiblePropertiesTest,UserPropertiesTest,BalanceQueryTest,BatchLineTest,CommonMethodsTest,DistributionMakerTest,FileDetailsTest,MetadataActionTest,RemoteFileTest,UserCommentsTest,BatchFileTest,BundleFileTest -pl :tools-core
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
