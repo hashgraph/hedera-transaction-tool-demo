@@ -39,9 +39,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -65,7 +65,7 @@ import static org.junit.Assert.assertTrue;
 public class TransactionFileTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		// delete tools folders if it exists
@@ -106,7 +106,7 @@ public class TransactionFileTest extends TestBase implements GenericFileReadWrit
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		final var output = new File("src/test/resources/Files/output");
 		if (output.exists()) {
