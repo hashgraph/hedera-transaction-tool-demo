@@ -23,7 +23,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.client.core.utils.JsonUtils;
+import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.AccountInfoQuery;
@@ -34,7 +34,6 @@ import io.grpc.StatusRuntimeException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import picocli.CommandLine;
 
 import java.io.File;
@@ -105,7 +104,7 @@ public class GetAccountInfoCommand implements ToolCommand {
 				}
 				final var id = Identifier.parse(account).asAccount();
 				final AccountInfo accountInfo = getAccountInfo(client, id);
-				writeJsonObject(String.format("%s/%s.json", directory, id), JsonUtils.accountInfoToJson(accountInfo));
+				writeJsonObject(String.format("%s/%s.json", directory, id), EncryptionUtils.info2Json(accountInfo));
 				writeBytes(String.format("%s/%s.info", directory, id), accountInfo.toBytes());
 
 				logger.info("Account information for account {} has been written to file {}/{}.info", id, directory,

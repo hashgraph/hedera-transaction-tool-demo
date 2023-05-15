@@ -176,33 +176,28 @@ public class EncryptionUtils {
 	}
 
 	/**
-	 * Converts a json object to a com.hedera.hashgraph.sdk.KeyList object
+	 * Converts a json object to a com.hedera.hashgraph.sdk.Key object
 	 *
 	 * @param jsonObject
 	 * 		a json object representing a key
 	 * @return the key represented by the json object
 	 */
-	public static KeyList jsonToKey(final JsonObject jsonObject) {
-
-		var keyList = new KeyList();
+	public static Key jsonToKey(final JsonObject jsonObject) {
 		if (jsonObject.has(ED_25519)) {
 			final var ed = jsonObject.get(ED_25519).getAsString();
-			final var publicKey = PublicKey.fromString(ed);
-			keyList = new KeyList();
-			keyList.add(publicKey);
+			return PublicKey.fromString(ed);
 		} else if (jsonObject.has("key")) {
 			final var pubKeyFile = jsonObject.get("key").getAsString();
-			final var publicKey = publicKeyFromFile(pubKeyFile);
-			keyList = new KeyList();
-			keyList.add(publicKey);
+			return publicKeyFromFile(pubKeyFile);
 		} else if (jsonObject.has(KEY_LIST)) {
 			if (jsonObject.get(KEY_LIST) instanceof JsonArray) {
-				keyList = jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray(KEY_LIST));
+				return jsonKeyListToSDKKeyList(jsonObject.getAsJsonArray(KEY_LIST));
 			}
 		} else if (jsonObject.has(THRESHOLD_KEY)) {
-			keyList = (KeyList) jsonThresholdKeyToSDKKeyList(jsonObject.get(THRESHOLD_KEY).getAsJsonObject());
+			return jsonThresholdKeyToSDKKeyList(jsonObject.get(THRESHOLD_KEY).getAsJsonObject());
 		}
-		return keyList;
+		// If nothing worked, return an empty key
+		return new KeyList();
 	}
 
 	/**

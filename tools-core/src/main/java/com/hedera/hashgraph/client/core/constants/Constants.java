@@ -27,6 +27,7 @@ public class Constants {
 		throw new IllegalStateException("Constants class");
 	}
 
+	public static final int MAX_TRANSACTION_LENGTH = 6144;
 	public static final int MIN_PASSWORD_LENGTH = 10;
 	public static final int MAX_PASSWORD_LENGTH = 1024;
 	public static final int MNEMONIC_SIZE = 24;
@@ -36,11 +37,20 @@ public class Constants {
 	public static final String PUB_EXTENSION = "pub";
 	public static final String INFO_EXTENSION = "info";
 	public static final String RECEIPT_EXTENSION = "rcpt";
+	// The file extension for a transaction that has not been signed. Unless submitted?
 	public static final String TRANSACTION_EXTENSION = "tx";
+	// The file extension for the signature.
 	public static final String SIGNATURE_EXTENSION = "sig";
+	// The file extension for a transaction that has been signed.
 	public static final String SIGNED_TRANSACTION_EXTENSION = "txsig";
 	public static final String ZIP_EXTENSION = "zip";
 	public static final String TXT_EXTENSION = "txt";
+	// The character used to separator the different groupings used in the naming of a transaction file
+	// For example: Node-nodeId_transactionId_keyName
+	public static final String FILE_NAME_GROUP_SEPARATOR = "_";
+	// The character used to separator the names or descriptions used for each group in the naming of a transaction file
+	// For example: Node-nodeId_transactionId_keyName
+	public static final String FILE_NAME_INTERNAL_SEPARATOR = "-";
 	public static final String METADATA_EXTENSION = "meta";
 	public static final String JSON_EXTENSION = "json";
 	public static final String BATCH_TRANSACTION_EXTENSION = "csv";
@@ -86,7 +96,6 @@ public class Constants {
 	// region APP DEFAULTS
 	public static final boolean DEVELOPMENT = false;
 	public static final int DRIVE_LIMIT = 32;
-	public static final double RELOAD_PERIOD = 1.0; //One minute
 	public static final int KEYS_COLUMNS = 5;
 	public static final String TEST_PASSWORD = "123456789";
 	public static final String COMMA_DELIMITER = ",";

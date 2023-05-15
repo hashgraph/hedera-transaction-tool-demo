@@ -25,9 +25,10 @@ import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,22 +40,22 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
-public class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
+class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(RemoteFilesMapTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 	}
 
 	@Test
-	public void constructor_test() throws Exception {
+	void constructor_test() throws Exception {
 		final var fileService =
 				FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assertNotNull(fileService);
@@ -105,7 +106,7 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	}
 
 	@Test
-	public void utils_test() throws HederaClientException {
+	void utils_test() throws HederaClientException {
 		final var fileService1 =
 				FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assert fileService1 != null;
@@ -170,7 +171,8 @@ public class RemoteFilesMapTest extends TestBase implements GenericFileReadWrite
 	}
 
 	@Test
-	public void addAllNotExpired_test() throws HederaClientException {
+	@Disabled("Need to recreate files as these have expired")
+	void addAllNotExpired_test() throws HederaClientException {
 		final var fileService1 =
 				FileAdapterFactory.getAdapter("src/test/resources/Files/RemoteFilesMapTests/TestCouncil1/");
 		assert fileService1 != null;

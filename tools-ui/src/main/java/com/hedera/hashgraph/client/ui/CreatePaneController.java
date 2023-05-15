@@ -21,7 +21,6 @@ package com.hedera.hashgraph.client.ui;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.JsonConstants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
@@ -151,6 +150,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEI
 import static com.hedera.hashgraph.client.core.constants.Constants.FEE_PAYER_ACCOUNT_ID_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_ID_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
@@ -228,7 +228,7 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
 import static java.lang.Thread.sleep;
 
-public class CreatePaneController implements GenericFileReadWriteAware {
+public class CreatePaneController implements SubController {
 
 	// private fields
 	private static final Logger logger = LogManager.getLogger(CreatePaneController.class);
@@ -439,7 +439,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	void initializeCreatePane() {
+	@Override
+	public void initializePane() {
 		setupOutputDirectoriesList();
 
 		loadAccountNicknames();
@@ -531,11 +532,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		copyFromAccountHBox.getChildren().clear();
 		copyFromAccountHBox.getChildren().add(autoCompleteNickname);
 		createSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> createRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
-				));
+				(observableValue, aBoolean, t1) -> createRSRLabel.setText(String.valueOf(t1)));
 		declineStakingRewards.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"
-				));
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(String.valueOf(t1)));
 
 		createAccountMemo.textProperty().addListener(
 				(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
@@ -569,9 +568,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 						REGEX));
 
 		updateReceiverSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(String.valueOf(t1)));
 		declineStakingRewardsNew.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(Boolean.TRUE.equals(t1) ? "true" : "false"));
+				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(String.valueOf(t1)));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -584,7 +583,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		updateAccountID.setOnKeyPressed(keyEvent -> {
 			final var keyCode = keyEvent.getCode();
-			if (keyCode.equals(KeyCode.TAB) || keyCode.equals(KeyCode.ENTER)) {
+			if (keyCode.equals(KeyCode.ENTER)) {
+				findAccountInfoAndPreloadFields();
+			}
+		});
+
+		updateAccountID.focusedProperty().addListener((obs, oldValue, newValue) -> {
+			// If newValue is false (focus is lost) AND the field isn't empty, try to preload the files
+			if (Boolean.FALSE.equals(newValue) && !"".equals(updateAccountID.getText())) {
 				findAccountInfoAndPreloadFields();
 			}
 		});
@@ -1011,8 +1017,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
 		updateReceiverSignatureRequired.setSelected(false);
 		updateARPOriginal.clear();
-		updateRSROriginal.setText("???");
+		updateRSROriginal.setText("unknown");
 		declineStakingRewardsOriginal.setText("unknown");
+		declineStakingRewardsNew.setSelected(false);
 		stakedAccountIdOriginal.setPromptText("unknown");
 		stakedNodeIdOriginal.setPromptText("unknown");
 		updateOriginalKey.setContent(new HBox());
@@ -1039,6 +1046,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			final var accountInfo = accountsInfoMap.get(account);
 			updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
 			updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
+			// Set the new value to be the same as the original
+			updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
 			controller.loadPubKeys();
 			final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
 			originalKey = EncryptionUtils.keyToJson(accountInfo.key);
@@ -1062,6 +1071,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 					stakedNodeIdOriginal.setPromptText("unset");
 				}
 				declineStakingRewardsOriginal.setText(String.valueOf(accountInfo.stakingInfo.declineStakingReward));
+				// Set the new value to be the same as the original
+				declineStakingRewardsNew.setSelected(accountInfo.stakingInfo.declineStakingReward);
 			} else {
 				stakedAccountIdOriginal.setText("");
 				stakedNodeIdOriginal.setText("");
@@ -1573,6 +1584,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		if (!checkForm()) {
 			return;
 		}
+
 		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
 				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
 
@@ -1607,7 +1619,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		controller.homePaneController.setForceUpdate(true);
-		initializeCreatePane();
+		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
 
@@ -1627,7 +1639,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		final var toPack = new File[] { jsonFile, contents };
 
 		final var destZipFile = new File(
-				String.format("%s/%s_%s_%s.%s", TEMP_DIRECTORY, payer.replace(".", "_"), time.getSeconds(),
+				String.format("%s/%s" + FILE_NAME_GROUP_SEPARATOR + "%s" + FILE_NAME_GROUP_SEPARATOR + "%s.%s",
+						TEMP_DIRECTORY, payer, time.getSeconds(),
 						time.getNanos(), LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
 
@@ -2370,14 +2383,14 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		// Auto renew
-		final var originalARP = info != null ? info.autoRenewPeriod.getSeconds() : 0;
+		final var originalARP = (info != null ? info.autoRenewPeriod.getSeconds() : 0);
 		final var newARP = Long.parseLong(updateAutoRenew.getText());
 		if (originalARP != newARP) {
 			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
 		}
 
 		// Receiver Sig Required
-		final var originalSigRequired = info != null && info.isReceiverSignatureRequired;
+		final var originalSigRequired = (info != null && info.isReceiverSignatureRequired);
 		final var newSigRequired = updateReceiverSignatureRequired.isSelected();
 		if (originalSigRequired != newSigRequired) {
 			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
@@ -2408,7 +2421,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
 		}
 
-		final var originalDeclineStakingRewardsNew = info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward;
+		final var originalDeclineStakingRewardsNew = (info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward);
 		if (originalDeclineStakingRewardsNew != declineStakingRewardsNew.isSelected()) {
 			input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
 		}
@@ -2916,8 +2929,10 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		final var accountId = transaction.getFeePayerID();
 		final var seconds = transaction.getTransactionValidStart().getEpochSecond();
-		final var filenames = String.format("%d-%s-%d", seconds, accountId.toReadableString().replace(".", "_"),
-				transaction.hashCode());
+
+		final var filenames = String.format("%d" + FILE_NAME_GROUP_SEPARATOR +
+						"%s" + FILE_NAME_GROUP_SEPARATOR + "%d", seconds, accountId.toReadableString(),
+						transaction.hashCode());
 
 		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		if (new File(tempStorage).mkdirs()) {
@@ -2925,9 +2940,9 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		var i = 0;
-		var txFile = new File(tempStorage + File.separator + filenames + ".tx");
+		var txFile = new File(tempStorage + File.separator + filenames + "." + TRANSACTION_EXTENSION);
 		while (txFile.exists()) {
-			txFile = new File(tempStorage + File.separator + filenames + i++ + ".tx");
+			txFile = new File(tempStorage + File.separator + filenames + i++ + "." + TRANSACTION_EXTENSION);
 		}
 
 		try {
@@ -2946,7 +2961,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		moveToOutput(files, remoteLocation);
 
-		// remove all temporary files from local storage;
+		// Remove all temporary files from local storage
 		try {
 			if (txFile.exists()) {
 				Files.delete(txFile.toPath());
@@ -2968,8 +2983,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 		}
 
 		//reload the home pane, to show the transaction
-		controller.homePaneController.initializeHomePane();
-		initializeCreatePane();
+		controller.homePaneController.initializePane();
+		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
 
@@ -3127,7 +3142,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 				logger.error("Unknown transaction");
 		}
 
-		initializeCreatePane();
+		initializePane();
 		selectTransactionType.setValue(type);
 	}
 
@@ -3241,7 +3256,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			}
 			PopupMessage.display("Update succeeded",
 					String.format("Contents update for file %s succeeded", updateFileID.getText()));
-			initializeCreatePane();
+			initializePane();
 		});
 
 		task.setOnCancelled(workerStateEvent -> {
@@ -3257,7 +3272,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			PopupMessage.display("Update failed",
 					String.format("File update failed with error %s. Please review the transaction and try again.",
 							errorMessage));
-			initializeCreatePane();
+			initializePane();
 		});
 
 		task.setOnFailed(workerStateEvent -> {
@@ -3307,8 +3322,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 		Collections.sort(privateKeys);
 
-		final var transactionName = transaction.getTransaction().getTransactionId().toString().replace(
-				"@", "_").replace(".", "_");
+		final var transactionName = transaction.getTransaction().getTransactionId().toString();
 		final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
 		transaction.store(location);
 		final var rf = new TransactionFile(location);
@@ -3343,8 +3357,8 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 			logger.info(receipt);
 			showReceiptOnPopup(transaction, receipt);
 			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
-			controller.homePaneController.initializeHomePane();
-			initializeCreatePane();
+			controller.homePaneController.initializePane();
+			initializePane();
 			selectTransactionType.setValue(SELECT_STRING);
 		} catch (final InterruptedException e) {
 			logger.error(e.getMessage());
@@ -3371,7 +3385,7 @@ public class CreatePaneController implements GenericFileReadWriteAware {
 
 
 	private TreeView<String> getKeyTree(final TransactionFile transactionFile) {
-		final KeyList key;
+		final Key key;
 		switch (transactionFile.getTransaction().getTransactionType()) {
 			case CRYPTO_CREATE:
 				key = ((ToolCryptoCreateTransaction) transactionFile.getTransaction()).getKey();

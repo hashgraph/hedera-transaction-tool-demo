@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
@@ -34,14 +35,17 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import io.github.cdimascio.dotenv.Dotenv;
 import javafx.scene.control.Label;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.bouncycastle.util.encoders.Hex;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,15 +60,15 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTO
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEST_PASSWORD;
 import static com.hedera.hashgraph.client.core.utils.EncryptionUtils.publicKeyFromFile;
-import static junit.framework.TestCase.assertNotNull;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
+class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
@@ -79,7 +83,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void constructor_test() throws IOException, HederaClientException {
+	void constructor_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 
@@ -100,7 +104,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void buildGridPane_test() throws IOException, HederaClientException {
+	void buildGridPane_test() throws IOException, HederaClientException {
 		final var file = new File("src/test/resources/Files/0.0.2.info");
 		final var info = FileDetails.parse(file);
 
@@ -138,13 +142,13 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		Files.delete(new File(DEFAULT_HISTORY + File.separator + "0.0.2.meta").toPath());
 	}
 
 	@Test
-	public void canSignThreshold_test() throws Exception {
+	void canSignThreshold_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -166,7 +170,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void canSignList_test() throws Exception {
+	void canSignList_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeyList.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -188,7 +192,7 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 	}
 
 	@Test
-	public void canSignSingle_test() throws Exception {
+	void canSignSingle_test() throws Exception {
 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySingle.json");
 
 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
@@ -212,15 +216,18 @@ public class InfoFileTest extends TestBase implements GenericFileReadWriteAware 
 		logger.info("Deleted {}", infoFile);
 	}
 
-
 	private String createAccountInfo(final String filePath) throws Exception {
-		final var keyStore =
-				Ed25519KeyStore.read(TEST_PASSWORD.toCharArray(), "src/test/resources/Keys/genesis.pem");
-		final var genesisKey = PrivateKey.fromBytes(keyStore.get(0).getPrivate().getEncoded());
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
+		final var privateKey = dotenv.get("TEST_PRIVATE_KEY");
+		final var myPrivateKey = PrivateKey.fromString(privateKey);
+//		final var keyStore = new Ed25519KeyStore.Builder()
+//				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
+//		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
+//				privateKey.substring(2) : privateKey)));
 
-
-		final var client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
+		client.setOperator(myAccountId, myPrivateKey);
 		final var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
 		final var transactionResponse = new AccountCreateTransaction()
 				.setKey(key)

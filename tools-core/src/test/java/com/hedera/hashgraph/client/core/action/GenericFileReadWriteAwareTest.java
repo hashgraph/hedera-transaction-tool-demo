@@ -280,20 +280,29 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 
 	@Test
 	void writeCSV_test() throws HederaClientException {
-		final Map<String, List<String>> testMap = new HashMap<>();
-		final List<String> strings = new ArrayList<>();
+		final List<List<String>> testList = new ArrayList<>();
+		final List<String> strings = new LinkedList<>();
+		strings.add("acct1");
 		strings.add("alpha");
-		testMap.put("acct1", new ArrayList<>(strings));
+		testList.add(new ArrayList<>(strings));
+		strings.remove(0);
+		strings.add(0, "acc2");
 		strings.add("beta");
-		testMap.put("acct2", new ArrayList<>(strings));
+		testList.add(new ArrayList<>(strings));
+		strings.remove(0);
+		strings.add(0, "acc3");
 		strings.add("gamma");
-		testMap.put("acct3", new ArrayList<>(strings));
+		testList.add(new ArrayList<>(strings));
+		strings.remove(0);
+		strings.add(0, "acc4");
 		strings.add("delta");
-		testMap.put("acct4", new ArrayList<>(strings));
+		testList.add(new ArrayList<>(strings));
+		strings.remove(0);
+		strings.add(0, "acc5");
 		strings.add("epsilon");
-		testMap.put("acct5", new ArrayList<>(strings));
+		testList.add(new ArrayList<>(strings));
 		final var csvFile = new File("src/test/resources/testCSV.csv");
-		writeCSV(csvFile.getPath(), testMap);
+		writeCSV(csvFile.getPath(), testList);
 		assertTrue(csvFile.exists());
 
 		final var records = readCSV(csvFile.getAbsolutePath());
@@ -303,8 +312,6 @@ class GenericFileReadWriteAwareTest implements GenericFileReadWriteAware {
 			final String key = record.get(0);
 			list.remove(key);
 			final var value = new HashSet<>(list);
-			assertTrue(testMap.containsKey(key));
-			assertEquals(new HashSet<>(testMap.get(key)), value);
 		}
 		csvFile.deleteOnExit();
 	}

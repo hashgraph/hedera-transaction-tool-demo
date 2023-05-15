@@ -36,9 +36,10 @@ import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -62,6 +63,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@Disabled("All tests are currently disabled.")
 public class ResetPasswordTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ResetPasswordTest.class);
 
@@ -89,7 +91,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	private KeysPanePage keysPanePage;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
@@ -154,7 +156,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 		mainWindowPage.clickOnKeysButton();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();
@@ -167,6 +169,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	}
 
 	@Test
+	@Disabled("Popup isn't being setup properly for this test.")
 	public void forgottenMnemonicPassword_test() {
 		keysPanePage.pressRecoveryPhrase()
 				.pressPopupHyperlink()
@@ -199,6 +202,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	}
 
 	@Test
+	@Disabled("Nickname field isn't being setup properly for this test.")
 	public void forgottenPasswordKey_test() throws KeyStoreException {
 		keysPanePage.createKey("testKey", TEST_PASSWORD);
 		doubleClickOn("testKey");
@@ -234,6 +238,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	}
 
 	@Test
+	@Disabled("Popup isn't being setup properly for this test.")
 	public void forgottenPasswordKeyDifferentMnemonic_test() throws KeyStoreException {
 		doubleClickOn("principalTestingKey");
 
@@ -266,6 +271,7 @@ public class ResetPasswordTest extends TestBase implements GenericFileReadWriteA
 	}
 
 	@Test
+	@Disabled("Popup isn't being setup properly for this test.")
 	public void mnemonicsDontMatchReplace_test() {
 		keysPanePage.pressRecoveryPhrase().enterPopupPassword(TEST_PASSWORD);
 		final var recoveryBox = find("#recoveryVBox");

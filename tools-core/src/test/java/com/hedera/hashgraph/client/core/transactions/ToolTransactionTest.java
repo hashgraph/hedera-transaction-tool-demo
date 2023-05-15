@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
+import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
@@ -44,8 +45,11 @@ import com.hedera.hashgraph.sdk.SystemDeleteTransaction;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransactionResponse;
 import com.hedera.hashgraph.sdk.TransferTransaction;
+import io.github.cdimascio.dotenv.Dotenv;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -186,7 +190,7 @@ class ToolTransactionTest {
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transaction.getTransactionValidStart());
 		assertEquals(sender, transaction.getFeePayerID().getAccountNum());
 		assertEquals(new Identifier(0, 0, 3, "Mainnet"), transaction.getNodeID());
-		assertEquals(NetworkEnum.INTEGRATION, transaction.getNetwork());
+		assertEquals(NetworkEnum.TESTNET, transaction.getNetwork());
 	}
 
 	@Test
@@ -205,7 +209,7 @@ class ToolTransactionTest {
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transfer.getTransactionValidStart());
 		assertEquals(sender, transfer.getFeePayerID().getAccountNum());
 		assertEquals(new Identifier(0, 0, 3, "mainnet"), transfer.getNodeID());
-		assertEquals(NetworkEnum.INTEGRATION, transfer.getNetwork());
+		assertEquals(NetworkEnum.TESTNET, transfer.getNetwork());
 
 		final var actualTransfer = transfer.getTransaction();
 		assertTrue(actualTransfer instanceof TransferTransaction);
@@ -383,6 +387,7 @@ class ToolTransactionTest {
 	}
 
 	@Test
+	@Disabled("Currently, account.info files are required in order to collate. v2 of the tool will accept files, or Objects.")
 	void collate_test() throws KeyStoreException, HederaClientException {
 		final var startTime = new Timestamp(20).asInstant();
 		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
@@ -430,6 +435,7 @@ class ToolTransactionTest {
 	}
 
 	@Test
+	@Disabled("Currently, account.info files are required in order to collate. v2 of the tool will accept files, or Objects.")
 	void collateTransactions_test() throws KeyStoreException, HederaClientException {
 		final var startTime = new Timestamp(20).asInstant();
 		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
@@ -461,6 +467,7 @@ class ToolTransactionTest {
 	}
 
 	@Test
+	@Disabled("Currently, account.info files are required in order to collate. v2 of the tool will accept files, or Objects.")
 	void collateSignaturePairs_test() throws KeyStoreException, HederaClientException {
 		final var startTime = new Timestamp(20).asInstant();
 		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
@@ -506,6 +513,7 @@ class ToolTransactionTest {
 	}
 
 	@Test
+	@Disabled("Currently, account.info files are required in order to collate. v2 of the tool will accept files, or Objects.")
 	void verify_test() throws KeyStoreException, HederaClientException {
 		final var startTime = new Timestamp(20).asInstant();
 		final var testJson = getJsonInputCT(50, sender, receiver, startTime);
@@ -547,6 +555,7 @@ class ToolTransactionTest {
 	}
 
 	@Test
+	@Disabled("Currently, account.info files are required in order to collate. v2 of the tool will accept files, or Objects.")
 	void verifyWithInfoAndSubmit() throws KeyStoreException, PrecheckStatusException, TimeoutException,
 			ReceiptStatusException, HederaClientException, InterruptedException {
 		final List<PublicKey> publicKeys = new ArrayList<>();
@@ -589,7 +598,7 @@ class ToolTransactionTest {
 
 		final var transfer = new ToolTransferTransaction(testJson);
 
-		transfer.collate(pairs);
+		transfer.collate("src/test/resources/infos", pairs);
 		assertTrue(transfer.verify(info));
 
 		final var receipt = transfer.submit();
@@ -634,12 +643,18 @@ class ToolTransactionTest {
 	private AccountInfo createAccount(
 			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
 			ReceiptStatusException, InterruptedException {
-		final Client client = CommonMethods.getClient(NetworkEnum.INTEGRATION);
-		final PrivateKey genesisKey = PrivateKey.fromBytes(Ed25519KeyStore.read(Constants.TEST_PASSWORD.toCharArray(),
-				"src/test/resources/Keys/genesis.pem").get(0).getPrivate().getEncoded());
-		client.setOperator(new AccountId(0, 0, 2), genesisKey);
+		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
+		final var privateKeyString = dotenv.get("TEST_PRIVATE_KEY");
+		final var privateKey = PrivateKey.fromString(privateKeyString);
+		final var keyStore = new Ed25519KeyStore.Builder()
+				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
+		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKeyString.startsWith("0x") ?
+				privateKeyString.substring(2) : privateKeyString)));
 
-		sleep(500);
+		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
+		client.setOperator(myAccountId, privateKey);
+
 		final TransactionResponse response = new AccountCreateTransaction()
 				.setKey(keys)
 				.setInitialBalance(Hbar.fromTinybars(1000000))

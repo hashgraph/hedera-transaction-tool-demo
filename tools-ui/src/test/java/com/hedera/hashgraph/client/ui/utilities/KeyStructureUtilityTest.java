@@ -27,10 +27,9 @@ import com.hedera.hashgraph.sdk.Mnemonic;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +48,7 @@ public class KeyStructureUtilityTest {
 	private static final String keyName = "src/test/resources/TempKeys/testKey-";
 	private static KeyStructureUtility utility;
 
-	@BeforeClass
+	@BeforeAll
 	public static void beforeClass() {
 		final var mnemonic = Mnemonic.generate24();
 		if (new File("src/test/resources/TempKeys/").mkdirs()) {
@@ -79,7 +78,7 @@ public class KeyStructureUtilityTest {
 
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void afterClass() throws Exception {
 		FileUtils.deleteDirectory(new File("src/test/resources/TempKeys/"));
 	}

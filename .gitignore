@@ -39,6 +39,9 @@
 *.avi
 *.mpeg
 
+# Environment Variables
+*.env
+
 # Mac OS X
 .DS_Store
 __MACOSX

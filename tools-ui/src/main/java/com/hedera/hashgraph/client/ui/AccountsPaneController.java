@@ -22,7 +22,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -158,7 +157,7 @@ import static java.lang.String.valueOf;
 import static java.lang.Thread.sleep;
 
 
-public class AccountsPaneController implements GenericFileReadWriteAware {
+public class AccountsPaneController implements SubController {
 
 	private static final Logger logger = LogManager.getLogger(AccountsPaneController.class);
 	public static final String PATH_NAME_EXTENSION = "%s%s.%s";
@@ -232,7 +231,8 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	void initializeAccountPane() {
+	@Override
+	public void initializePane() {
 		hiddenPathAccount.clear();
 
 		fixAccountFiles();
@@ -1112,7 +1112,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		} catch (final HederaClientException e) {
 			logger.error("IO Error during zip process");
 		}
-		controller.createPaneController.initializeCreatePane();
+		controller.createPaneController.initializePane();
 	}
 
 	private void removeDefaultFeePayer() {
@@ -1121,7 +1121,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 			return;
 		}
 		controller.removeDefaultFeePayer((String) network);
-		controller.settingsPaneController.initializeSettingsPane();
+		controller.settingsPaneController.initializePane();
 		setupFeePayerChoiceBox();
 		controller.settingsPaneController.setupFeePayerChoicebox();
 	}
@@ -1331,7 +1331,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	private void handleNetworkStringFinish() {
 		setupFeePayers();
 		setupFeePayerChoiceBox();
-		initializeAccountPane();
+		initializePane();
 	}
 
 	private void updateNicknamesFile(
@@ -1521,7 +1521,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 				CompleteKeysPopup.display(controller.keysPaneController.getPublicKeysMap().get(item.getValue()),
 						true);
 		if (displayPopup.equals(true)) {
-			controller.keysPaneController.initializeKeysPane();
+			controller.keysPaneController.initializePane();
 		}
 	}
 
@@ -1846,10 +1846,10 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 	 * 		if there is an InvalidProtocolException thrown
 	 */
 	private void refreshPanes() throws HederaClientException {
-		initializeAccountPane();
-		controller.keysPaneController.initializeKeysPane();
+		initializePane();
+		controller.keysPaneController.initializePane();
 		controller.homePaneController.setForceUpdate(true);
-		controller.homePaneController.initializeHomePane();
+		controller.homePaneController.initializePane();
 		getAccountsFromFileSystem(accountInfos, idNickNames);
 		controller.setAccountInfoMap(accountInfos);
 		try {
@@ -1882,7 +1882,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		} catch (final IOException e) {
 			throw new HederaClientException(e);
 		}
-		controller.createPaneController.initializeCreatePane();
+		controller.createPaneController.initializePane();
 	}
 
 	private void archiveOldInfoFile(final Path newPath) throws IOException {
@@ -1972,7 +1972,7 @@ public class AccountsPaneController implements GenericFileReadWriteAware {
 		accountInfos.put(nickname,
 				format(PATH_NAME_EXTENSION, ACCOUNTS_INFO_FOLDER, newAccountID, INFO_EXTENSION));
 		storeAccount(nickname, file.getAbsolutePath());
-		controller.createPaneController.initializeCreatePane();
+		controller.createPaneController.initializePane();
 	}
 
 	/**

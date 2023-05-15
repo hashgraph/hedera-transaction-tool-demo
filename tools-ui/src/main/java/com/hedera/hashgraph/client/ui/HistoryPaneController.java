@@ -19,7 +19,6 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonArray;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
@@ -105,7 +104,7 @@ import static java.lang.String.join;
 import static java.nio.file.Files.deleteIfExists;
 import static javafx.beans.binding.Bindings.createObjectBinding;
 
-public class HistoryPaneController implements GenericFileReadWriteAware {
+public class HistoryPaneController implements SubController {
 	private static final Logger logger = LogManager.getLogger(HistoryPaneController.class);
 	public static final String RESET_ICON = "icons/sign-back.png";
 	public static final String SENT_ICON = "icons/icons8-sent-100.png";
@@ -161,7 +160,8 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 		this.controller = controller;
 	}
 
-	void initializeHistoryPane() {
+	@Override
+	public void initializePane() {
 		loadHistory();
 		setupTable();
 		setupPredicates();
@@ -492,7 +492,7 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 						tableList.add(row, historyData);
 						button.setDisable(true);
 						controller.homePaneController.setForceUpdate(true);
-						controller.homePaneController.initializeHomePane();
+						controller.homePaneController.initializePane();
 					}
 
 					private int getRow(final HistoryData historyData) {
@@ -1002,9 +1002,9 @@ public class HistoryPaneController implements GenericFileReadWriteAware {
 	 */
 	public void rebuildHistory() throws IOException {
 		deleteIfExists(Path.of(Constants.HISTORY_MAP));
-		initializeHistoryPane();
+		initializePane();
 		controller.homePaneController.setForceUpdate(true);
-		controller.homePaneController.initializeHomePane();
+		controller.homePaneController.initializePane();
 	}
 
 	/**
