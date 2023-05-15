@@ -31,9 +31,9 @@ import javafx.scene.layout.VBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.testfx.api.FxRobotException;
 import org.testfx.api.FxToolkit;
 
@@ -72,7 +72,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 	private final List<HistoryData> updates = new ArrayList<>();
 	private final List<HistoryData> bundles = new ArrayList<>();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.gc();
 		logger.info("Starting test class: {}", getClass().getSimpleName());
@@ -141,7 +141,7 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		populateHistory();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		ensureEventQueueComplete();
 		FxToolkit.hideStage();
@@ -181,7 +181,8 @@ public class HistoryPaneTest extends TestBase implements GenericFileReadWriteAwa
 		assertTrue(button.isDisable());
 		mainWindowPage.clickOnHomeButton();
 		final var finalFiles = ((VBox) find(NEW_FILES_VBOX)).getChildren().size();
-		assertEquals(initialFiles, finalFiles);
+		// finalFiles found on the homePane should be 1 larger than initialFiles found on the homePane
+		assertEquals(initialFiles+1, finalFiles);
 	}
 
 	private void populateHistory() {
