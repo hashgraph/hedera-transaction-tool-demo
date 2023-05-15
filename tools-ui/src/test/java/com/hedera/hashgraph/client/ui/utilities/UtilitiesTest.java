@@ -22,8 +22,7 @@ import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.sdk.Hbar;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
