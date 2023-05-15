@@ -20,7 +20,7 @@ package com.hedera.hashgraph.client.core.remote;
 
 // import com.google.common.collect.ImmutableSet;
 // import com.google.common.collect.Iterables;
-import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
+// import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 // import com.hedera.hashgraph.client.core.constants.Constants;
 // import com.hedera.hashgraph.client.core.enums.FileActions;
 // import com.hedera.hashgraph.client.core.enums.NetworkEnum;
@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 // import static org.junit.jupiter.api.Assertions.assertNotNull;
 // import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
+public class InfoFileTest {//extends TestBase implements GenericFileReadWriteAware {
 // 	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
 
 // 	@BeforeEach
@@ -148,7 +148,7 @@ class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 // 	}
 
 	@Test
-	void canSignThreshold_test() throws Exception {
+	void canSignThreshold_test() {// throws Exception {
 // 		final var infoFile = createAccountInfo("src/test/resources/KeyFiles/jsonKeySimpleThreshold.json");
 
 // 		final var file = new InfoFile(FileDetails.parse(new File(infoFile)));
