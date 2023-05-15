@@ -29,10 +29,9 @@ import com.hedera.hashgraph.client.ui.pages.TestUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
 import java.io.File;
@@ -49,7 +48,7 @@ import static org.junit.Assert.assertTrue;
 public class CommonMethodsTest extends TestBase {
 	private static final Logger logger = LogManager.getLogger(CommonMethodsTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		TestUtil.buildFolders();
 
@@ -109,7 +108,7 @@ public class CommonMethodsTest extends TestBase {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File(DEFAULT_STORAGE).exists()) {
 			FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
