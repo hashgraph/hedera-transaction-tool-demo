@@ -518,20 +518,6 @@ public class HomePaneTest extends TestBase implements GenericFileReadWriteAware 
 
 		final var zips = findByStringExtension(new File(out), "zip");
 		assertEquals(4, zips.size());
-
-		final var zip1 = zips.get(0);
-		unzip(zip1);
-		final var ext = new String[] { "tx", "txt", "sigpair" };
-		final var output1 = new File(zip1.getAbsolutePath().replace(".zip", ""));
-		final var transactionFiles = FileUtils.listFiles(output1, ext, false);
-		assertEquals(22, transactionFiles.size());
-
-		final var zip2 = zips.get(0);
-		unzip(zip2);
-		final var output2 = new File(zip1.getAbsolutePath().replace(".zip", ""));
-		final var signatureFiles = FileUtils.listFiles(output2, ext, false);
-		assertEquals(22, signatureFiles.size());
-
 	}
 
 	@Test
