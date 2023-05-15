@@ -20,8 +20,8 @@ package com.hedera.hashgraph.client.core.remote;
 
 import javafx.scene.Node;
 import javafx.stage.Stage;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.testfx.api.FxToolkit;
 import org.testfx.framework.junit5.ApplicationTest;
 
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeoutException;
 
 public class TestBase extends ApplicationTest {
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupHeadlessMode() throws TimeoutException {
 		System.setProperty("testfx.robot", "glass");
 		System.setProperty("testfx.headless", "true");
@@ -42,7 +42,7 @@ public class TestBase extends ApplicationTest {
 
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void afterTest() {
 	}
 
