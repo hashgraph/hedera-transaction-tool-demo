@@ -222,14 +222,15 @@ class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var privateKey = dotenv.get("TEST_PRIVATE_KEY");
 		final var myPrivateKey = PrivateKey.fromString(privateKey);
-		final var keyStore = new Ed25519KeyStore.Builder()
-				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
-		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
-				privateKey.substring(2) : privateKey)));
+// 		final var keyStore = new Ed25519KeyStore.Builder()
+// 				.withPassword(Constants.TEST_PASSWORD.toCharArray()).build();
+// 		keyStore.insertNewKeyPair(Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ?
+// 				privateKey.substring(2) : privateKey)));
 
-		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
-		client.setOperator(myAccountId, myPrivateKey);
-		final var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
+// 		final var client = CommonMethods.getClient(NetworkEnum.TESTNET);
+// 		client.setOperator(myAccountId, myPrivateKey);
+// 		final var key = EncryptionUtils.jsonToKey(readJsonObject(filePath));
+		
 // 		final var transactionResponse = new AccountCreateTransaction()
 // 				.setKey(key)
 // 				.setInitialBalance(new Hbar(1))
