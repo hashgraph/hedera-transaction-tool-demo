@@ -38,9 +38,9 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -61,7 +61,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
@@ -267,7 +267,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		logger.info("here");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File("src/test/resources/Files/output").exists()) {
 			FileUtils.deleteDirectory(new File("src/test/resources/Files/output"));

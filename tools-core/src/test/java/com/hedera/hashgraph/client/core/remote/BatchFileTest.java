@@ -30,10 +30,10 @@ import javafx.scene.control.Label;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +52,7 @@ import static org.junit.Assert.assertTrue;
 public class BatchFileTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(BatchFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
@@ -360,11 +360,11 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 	}
 
 	@Test
-	@Ignore("Execute method must be tested using the UI. See HomePaneTests class")
+	@Disabled("Execute method must be tested using the UI. See HomePaneTests class")
 	public void execute_test() {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (new File("src/test/resources/Files/output").exists()) {
 			FileUtils.deleteDirectory(new File("src/test/resources/Files/output"));

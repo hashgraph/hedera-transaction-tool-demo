@@ -24,16 +24,15 @@ import javafx.scene.control.CheckBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -47,7 +46,7 @@ import static org.junit.Assert.assertTrue;
 public class BundleFileTest extends TestBase {
 	private static final Logger logger = LogManager.getLogger(BundleFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
@@ -76,7 +75,7 @@ public class BundleFileTest extends TestBase {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 	}
