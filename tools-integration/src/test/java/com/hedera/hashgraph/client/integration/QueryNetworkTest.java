@@ -37,7 +37,9 @@ import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
+import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.ReceiptStatusException;
+import io.github.cdimascio.dotenv.Dotenv;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
@@ -48,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testfx.api.FxToolkit;
 
@@ -73,6 +76,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
+@Disabled("Uses Integration network, needs to be updated to Testnet")
 class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(BatchTransactionEndToEndTest.class);
@@ -94,7 +98,7 @@ class QueryNetworkTest extends TestBase implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws KeyStoreException {
-		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var myPrivateKey = PrivateKey.fromString(dotenv.get("TEST_PRIVATE_KEY"));
 
