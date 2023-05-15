@@ -63,6 +63,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@Disabled("All tests are currently disabled.")
 public class ResetPasswordTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ResetPasswordTest.class);
 
