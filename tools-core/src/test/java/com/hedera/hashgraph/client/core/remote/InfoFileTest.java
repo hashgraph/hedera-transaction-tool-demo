@@ -66,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 // import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
-	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
+// 	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
 
 // 	@BeforeEach
 // 	public void setUp() throws Exception {
