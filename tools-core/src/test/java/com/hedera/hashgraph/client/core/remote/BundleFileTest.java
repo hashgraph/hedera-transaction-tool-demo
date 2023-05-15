@@ -24,9 +24,9 @@ import javafx.scene.control.CheckBox;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,7 +46,7 @@ import static org.junit.Assert.assertTrue;
 public class BundleFileTest extends TestBase {
 	private static final Logger logger = LogManager.getLogger(BundleFileTest.class);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
@@ -75,7 +75,7 @@ public class BundleFileTest extends TestBase {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(new File(DEFAULT_STORAGE));
 	}
