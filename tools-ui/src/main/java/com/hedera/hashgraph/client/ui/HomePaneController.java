@@ -76,6 +76,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -135,9 +136,6 @@ public class HomePaneController implements SubController {
 	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
-
-	//TODO
-	// then comments and tests
 
 	@Override
 	public void initializePane() {
