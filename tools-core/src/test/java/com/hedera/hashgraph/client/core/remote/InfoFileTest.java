@@ -65,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class InfoFileTest implements GenericFileReadWriteAware {
+class InfoFileTest extends TestBase implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(InfoFileTest.class);
 
 	@BeforeEach
@@ -236,7 +236,9 @@ class InfoFileTest implements GenericFileReadWriteAware {
 				.execute(client);
 
 		final var account = transactionResponse.getReceipt(client).accountId;
-		
+
+
+		sleep(500);
 		final var accountInfo = new AccountInfoQuery()
 				.setAccountId(account)
 				.execute(client);
