@@ -113,10 +113,6 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		keyListJson.add("keyList", jsonArray);
 		final var keyList = EncryptionUtils.jsonToKey(keyListJson);
 
-//		for (final var key : keyList) {
-//			assertEquals(1, ((KeyList) key).size());
-//		}
-
 		final var newJson = EncryptionUtils.keyToJson(keyList);
 		assertTrue(newJson.has("keyList"));
 		final var newListJson = newJson.getAsJsonArray("keyList");
@@ -152,8 +148,6 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 		thresholdKeyJson.add("thresholdKey", thresholdJson);
 		final var keyList = EncryptionUtils.jsonToKey(thresholdKeyJson);
 
-//		assertEquals(10, keyList.size());
-
 		final var newJson = EncryptionUtils.keyToJson(keyList);
 		assertTrue(newJson.has("thresholdKey"));
 		final var newThresholdKeyJson = newJson.get("thresholdKey").getAsJsonObject();
@@ -182,20 +176,6 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 
 		final var complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
 
-//		assertEquals(3, complexKey.size());
-//
-//		for (final var key : complexKey) {
-//			if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() == null) {
-//				assertEquals(5, ((KeyList) key).size());
-//			} else if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() != null) {
-//				assertEquals(4, ((KeyList) key).size());
-//				assertEquals(2, ((KeyList) key).getThreshold());
-//			} else {
-//				assertTrue(key.toString().contains(
-//						new String(Files.readAllBytes(Path.of(String.format("%s0.pub", keyName))))));
-//			}
-//		}
-
 		assertEquals(complexKeyJson, EncryptionUtils.keyToJson(complexKey));
 		logger.info("Finished complex key test");
 	}
@@ -204,19 +184,6 @@ class EncryptionUtilsTest implements GenericFileReadWriteAware {
 	void jsonToKeyAndKeyToJson_complexKeyFromFiles_test() throws IOException {
 		final var complexKeyJson = complexKeyFromFiles();
 		final var complexKey = EncryptionUtils.jsonToKey(complexKeyJson);
-//		assertEquals(3, complexKey.size());
-//
-//		for (final var key : complexKey) {
-//			if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() == null) {
-//				assertEquals(5, ((KeyList) key).size());
-//			} else if (((KeyList) key).size() > 1 && ((KeyList) key).getThreshold() != null) {
-//				assertEquals(4, ((KeyList) key).size());
-//				assertEquals(2, ((KeyList) key).getThreshold());
-//			} else {
-//				assertTrue(key.toString().contains(
-//						new String(Files.readAllBytes(Path.of(String.format("%s0.pub", keyName))))));
-//			}
-//		}
 
 		assertEquals(complexKeyFromBytes(0), EncryptionUtils.keyToJson(complexKey));
 		logger.info("Finished complex key test");

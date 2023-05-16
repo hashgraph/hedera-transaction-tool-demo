@@ -139,6 +139,7 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		final var keyList = super.buildKeyList(accountsInfoFolders, signatures);
 		// For every key in this.key that isn't in keyList, sign the transaction. Any key that wasn't
 		// in the keyList is a new key to the account and is required to sign the transaction
+
 		for (final var k : convertKeyToList(this.key)) {
 			if (!keyListContainsKey(keyList, k)) {
 				transaction.addSignature(k, signatures.get(k));

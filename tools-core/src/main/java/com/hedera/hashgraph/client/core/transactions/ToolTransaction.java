@@ -239,7 +239,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * @return
 	 * @throws HederaClientRuntimeException
 	 */
-	//TODO Either this approach, or move the copy concept into the ToolTransaction and save a .txsig with every execute
 	public byte[] createSignature(final PrivateKey key) throws HederaClientRuntimeException {
 		try {
 			var transactionCopy = Transaction.fromBytes(transaction.toBytes());
@@ -324,6 +323,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
 			collate(nodeSignatures, accountsInfoFolders);
+
 		}
 		return transaction;
 	}

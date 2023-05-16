@@ -31,7 +31,6 @@
 	<artifactId>tools-integration</artifactId>
 	<version>0.12.3</version>
 
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

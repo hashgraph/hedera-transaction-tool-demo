@@ -62,7 +62,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-
 	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
 			"the account(s) corresponding to the transaction", split = ",")
 	private String[] infoFiles;
@@ -83,6 +82,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	// This is a best guess approach, for a quick fix, as the key is deduced based on the
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
+
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
 	@Override
