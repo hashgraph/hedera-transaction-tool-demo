@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.TimeZone;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
@@ -88,7 +89,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 		this.remoteFilePath = remoteFile.getPath();
 		this.actions.addAll(remoteFile.getSigningHistory());
 		this.feePayer = getFeePayerIdentifier(remoteFile);
-		this.expirationDate = getExpirationTimestamp(remoteFile);
+		this.expirationDate = remoteFile.getExpiration();
 		this.lastAction = !actions.isEmpty() ? Collections.max(actions) : new MetadataAction();
 		this.expired = remoteFile.isExpired();
 	}
@@ -138,9 +139,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 	}
 
 	public String getLastAction() {
-		final var actionString = Actions.ACCEPT == lastAction.getActions() ?
-				getLastActionString() :
-				"Declined";
+		final var actionString = getLastActionString();
 		final var stamp = lastAction.getTimeStamp().asDate();
 		final var format = Locale.US.equals(Locale.getDefault()) ? "MM/dd/yyyy hh:mm:ss aa" : "dd/MM/yyyy HH:mm:ss";
 		final var sdf = new SimpleDateFormat(format);
@@ -151,8 +150,12 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 
 	@NotNull
 	private String getLastActionString() {
-		return TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
-				getType()) ? "Signed" : "Accepted";
+		return switch (lastAction.getActions()) {
+			case ACCEPT -> TRANSACTION.equals(getType()) || BATCH.equals(getType()) || LARGE_BINARY.equals(
+					getType()) ? "Signed" : "Accepted";
+			case DECLINE -> "Declined";
+			case EXPIRE -> "Expired";
+		};
 	}
 
 	public String getFileName() {
@@ -258,9 +261,7 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 
 	@Override
 	public int hashCode() {
-		return this.fileName.hashCode() +
-				this.remoteFilePath.hashCode() +
-				this.code;
+		return Objects.hash(fileName, remoteFilePath, code);
 	}
 
 	@Override
@@ -274,24 +275,6 @@ public class HistoryData implements Comparable<HistoryData>, GenericFileReadWrit
 
 	public LocalDate getActionLocalDate() {
 		return lastAction.getTimeStamp().asInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-	}
-
-	private Timestamp getExpirationTimestamp(final RemoteFile remoteFile) {
-		final Timestamp timestamp;
-		switch (remoteFile.getType()) {
-			case TRANSACTION:
-				timestamp = ((TransactionFile) remoteFile).getExpiration();
-				break;
-			case BATCH:
-				timestamp = ((BatchFile) remoteFile).getFirstTransactionTimeStamp();
-				break;
-			case LARGE_BINARY:
-				timestamp = ((LargeBinaryFile) remoteFile).getTransactionValidStart();
-				break;
-			default:
-				timestamp = new Timestamp(0, 0);
-		}
-		return timestamp;
 	}
 
 	private Identifier getFeePayerIdentifier(final RemoteFile remoteFile) {

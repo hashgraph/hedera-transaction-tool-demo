@@ -64,6 +64,9 @@ class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
 				fileService);
 		final var files = remoteFilesMap.getFiles();
 		assertNotNull(files);
+		// If dmg is used instead of pkg, then this should still expect 30 because a dmg
+		// should be added to the resources (be sure to remove the pkg or it still breaks in
+		// odd ways)
 		assertEquals(30, files.size());
 		assertEquals(30, remoteFilesMap.size());
 		assertEquals(1, remoteFilesMap.countType(FileType.SOFTWARE_UPDATE));

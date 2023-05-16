@@ -598,7 +598,7 @@ class ToolTransactionTest {
 
 		final var transfer = new ToolTransferTransaction(testJson);
 
-		transfer.collate("src/test/resources/infos", pairs);
+		transfer.collate(pairs, "src/test/resources/infos");
 		assertTrue(transfer.verify(info));
 
 		final var receipt = transfer.submit();
@@ -643,7 +643,7 @@ class ToolTransactionTest {
 	private AccountInfo createAccount(
 			final KeyList keys) throws KeyStoreException, TimeoutException, PrecheckStatusException,
 			ReceiptStatusException, InterruptedException {
-		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		final var myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var privateKeyString = dotenv.get("TEST_PRIVATE_KEY");
 		final var privateKey = PrivateKey.fromString(privateKeyString);

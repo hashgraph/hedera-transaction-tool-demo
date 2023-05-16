@@ -28,12 +28,14 @@ import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.zeroturnaround.zip.ZipUtil;
 
 import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -52,26 +54,16 @@ class UpdateHelperTest {
 	public static final String NEW_STYLE_TOOLS_FOLDER =
 			"src/test/resources/UpdateTestResources/TransactionTools_new_Large";
 
+	@TempDir
+	private File workingDirectory;
+
 	@BeforeEach
 	void setUp() throws IOException {
-		final var testDir = new File(DOCUMENTS, TRANSACTION_TOOLS + "_test");
-		if (testDir.exists()) {
-			FileUtils.deleteDirectory(testDir);
-		}
-		if (new File(DOCUMENTS, TRANSACTION_TOOLS).exists()) {
-			FileUtils.moveDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS), testDir);
-		}
-		FileUtils.copyDirectory(new File(OLD_TOOLS_FOLDER), new File(DOCUMENTS, TRANSACTION_TOOLS));
+		FileUtils.copyDirectory(new File(OLD_TOOLS_FOLDER), new File(workingDirectory, TRANSACTION_TOOLS));
 	}
 
 	@AfterEach
-	void tearDown() throws IOException {
-		FileUtils.deleteDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS));
-		if (new File(DOCUMENTS, TRANSACTION_TOOLS + "_test").exists()) {
-			FileUtils.moveDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS + "_test"),
-					new File(DOCUMENTS, TRANSACTION_TOOLS));
-		}
-	}
+	void tearDown() {}
 
 	@Test
 	void isValid() throws IOException {
@@ -79,20 +71,20 @@ class UpdateHelperTest {
 		assertFalse(helper.isValid());
 		assertFalse(helper.isUpdated());
 
-		helper = new UpdateHelper(DOCUMENTS);
+		helper = new UpdateHelper(workingDirectory.getPath());
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 
-		helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		helper = new UpdateHelper(workingDirectory.getPath(), TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 
-		FileUtils.deleteDirectory(new File(DOCUMENTS, TRANSACTION_TOOLS));
+		FileUtils.deleteDirectory(new File(workingDirectory, TRANSACTION_TOOLS));
 		if (new File(NEW_STYLE_TOOLS_FOLDER).exists()) {
-			FileUtils.copyDirectory(new File(NEW_STYLE_TOOLS_FOLDER), new File(DOCUMENTS, TRANSACTION_TOOLS));
+			FileUtils.copyDirectory(new File(NEW_STYLE_TOOLS_FOLDER), new File(workingDirectory, TRANSACTION_TOOLS));
 		}
 
-		helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		helper = new UpdateHelper(workingDirectory.getPath(), TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertTrue(helper.isUpdated());
 
@@ -100,16 +92,16 @@ class UpdateHelperTest {
 
 	@Test
 	void handleAccounts_test() throws HederaClientException, IOException {
-		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(workingDirectory.getPath(), TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
 
-		final var accountsFolder = DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Accounts";
+		final var accountsFolder = workingDirectory.getPath() + File.separator + TRANSACTION_TOOLS + File.separator + "Accounts";
 		final var accountFolders =
 				new File(accountsFolder).listFiles((dir, name) -> dir.isDirectory() && name.contains("."));
 		assert accountFolders != null;
 		final var keysBefore =
-				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
+				new File(workingDirectory.getPath() + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
 						File::isFile);
 		assert keysBefore != null;
 
@@ -118,7 +110,7 @@ class UpdateHelperTest {
 		final var infoFiles = new File(accountsFolder).listFiles(File::isFile);
 		assert infoFiles != null;
 		final var keysAfter =
-				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
+				new File(workingDirectory.getPath() + File.separator + TRANSACTION_TOOLS + File.separator + "Keys").listFiles(
 						File::isFile);
 		assert keysAfter != null;
 
@@ -134,30 +126,30 @@ class UpdateHelperTest {
 
 	@Test
 	void handleKeys_test() throws IOException {
-		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(workingDirectory.getPath(), TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
-		assertTrue(new File(DOCUMENTS, TRANSACTION_TOOLS + File.separator + "Keys/recovery.aes").exists());
-		assertFalse(new File(DOCUMENTS, TRANSACTION_TOOLS + File.separator + Constants.MNEMONIC_PATH).exists());
+		assertTrue(new File(workingDirectory, TRANSACTION_TOOLS + File.separator + "Keys/recovery.aes").exists());
+		assertFalse(new File(workingDirectory, TRANSACTION_TOOLS + File.separator + Constants.MNEMONIC_PATH).exists());
 
 		helper.handleKeys();
 
-		assertFalse(new File(DOCUMENTS, TRANSACTION_TOOLS + File.separator + "Keys/recovery.aes").exists());
-		assertTrue(new File(DOCUMENTS, TRANSACTION_TOOLS + File.separator + Constants.MNEMONIC_PATH).exists());
+		assertFalse(new File(workingDirectory, TRANSACTION_TOOLS + File.separator + "Keys/recovery.aes").exists());
+		assertTrue(new File(workingDirectory, TRANSACTION_TOOLS + File.separator + Constants.MNEMONIC_PATH).exists());
 
 	}
 
 	@Test
 	void handleHistory_test() throws Exception {
-		final UpdateHelper helper = new UpdateHelper(DOCUMENTS, TRANSACTION_TOOLS);
+		final UpdateHelper helper = new UpdateHelper(workingDirectory.getPath(), TRANSACTION_TOOLS);
 		assertTrue(helper.isValid());
 		assertFalse(helper.isUpdated());
-		final var accountsFolder = DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "History";
+		final var accountsFolder = workingDirectory.getPath() + File.separator + TRANSACTION_TOOLS + File.separator + "History";
 		final File[] history = new File(accountsFolder).listFiles(
 				(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		helper.handleHistory();
 		final var archive =
-				new File(DOCUMENTS + File.separator + TRANSACTION_TOOLS + File.separator + "Files/History_Archive.zip");
+				new File(workingDirectory.getPath() + File.separator + TRANSACTION_TOOLS + File.separator + "Files/History_Archive.zip");
 		assertTrue(archive.exists());
 		final File[] history2 = new File(accountsFolder).listFiles(
 				(dir, name) -> TRANSACTION_EXTENSION.equals(FilenameUtils.getExtension(name)));

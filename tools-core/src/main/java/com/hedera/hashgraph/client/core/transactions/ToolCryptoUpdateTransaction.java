@@ -133,11 +133,13 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	protected KeyList buildKeyList(String accountsInfoFolder,
+	protected KeyList buildKeyList(String[] accountsInfoFolders,
 								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		// Get the keyList
-		final var keyList = super.buildKeyList(accountsInfoFolder, signatures);
-		// For every key in this.key that isn't in keyList, sign the transaction
+		final var keyList = super.buildKeyList(accountsInfoFolders, signatures);
+		// For every key in this.key that isn't in keyList, sign the transaction. Any key that wasn't
+		// in the keyList is a new key to the account and is required to sign the transaction
+
 		for (final var k : convertKeyToList(this.key)) {
 			if (!keyListContainsKey(keyList, k)) {
 				transaction.addSignature(k, signatures.get(k));
@@ -353,6 +355,8 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	@Override
 	public Set<AccountId> getSigningAccounts() {
+		// This will return the Fee Payer account and the account to be updated, no new signatures
+		// will be referenced at this point.
 		final var accountsSet = super.getSigningAccounts();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;

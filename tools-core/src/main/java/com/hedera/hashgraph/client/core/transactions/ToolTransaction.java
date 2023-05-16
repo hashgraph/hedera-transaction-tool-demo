@@ -109,7 +109,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	String memo;
 
 	private enum CollateAndVerifyStatus {
-		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT;
+		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT
 	}
 
 	public ToolTransaction() {
@@ -258,7 +258,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * 		Boolean indicating if the resulting signed transaction is valid (within size limitations
 	 * 		and contains all necessary signatures).
 	 */
-	private boolean addSignature(final Map<PublicKey, byte[]> signatures) {
+	private boolean addSignatures(final Map<PublicKey, byte[]> signatures) {
 		// Add all signatures to the transaction
 		for (final var entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
@@ -268,8 +268,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction.toBytes().length <= Constants.MAX_TRANSACTION_LENGTH);
 	}
 
-	public Transaction<? extends Transaction<?>> collate(final String accountsInfoFolder,
-									 final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	public Transaction<? extends Transaction<?>> collate(final Map<PublicKey, byte[]> signatures,
+										 final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		try {
 			// Before anything happens, make sure the transaction is still within size limitations
 			var transactionSize = transaction.toBytes().length;
@@ -278,20 +278,23 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 						transactionSize + ") is over the maximum limit.");
 			}
 
-			// Build the list of keys that are required for a valid transaction
-			final var keyList = buildKeyList(accountsInfoFolder, signatures);
-			if (keyList.isEmpty()) {
-				throw new HederaClientRuntimeException("Account information is missing, cannot determine " +
-						"the keys required for signing.");
-			}
-
 			// Remove any keys from the list of signatures to collate that are already present on the transaction.
 			// These keys cannot be removed, and don't need to be re-added, and so don't need to be a part
 			// of this process.
 			transaction.getSignatures().values().forEach(map -> map.keySet().forEach(signatures::remove));
 
-			// Collate and verify the resulting transaction is within size limitations
-			var result = collateAndVerify(keyList, signatures);
+			// Build the list of keys that are required for a valid transaction
+			final var keyList = buildKeyList(accountsInfoFolders, signatures);
+			CollateAndVerifyStatus result;
+			if (keyList.isEmpty()) {
+				// Not verifiable, just collate the signatures and check the size of the result
+				result = addSignatures(signatures) ?
+						CollateAndVerifyStatus.SUCCESSFUL : CollateAndVerifyStatus.OVER_SIZE_LIMIT;
+			} else {
+				// Collate and verify the resulting transaction is within size limitations
+				result = collateAndVerify(keyList, signatures);
+			}
+
 			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
 			// cannot result in a valid transaction.
 			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
@@ -300,7 +303,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
 						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
 			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
-				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction " +
+				throw new HederaClientRuntimeException("Required signatures are missing and the transaction " +
 						"cannot be verified.");
 			}
 		} catch (IOException e) {
@@ -311,21 +314,22 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transaction;
 	}
 
-	public Transaction<?> collate(final String accountsInfoFolder,
-								  final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final Transaction<?> otherTransaction,
+								  final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		final var signatures = otherTransaction.getSignatures();
 		if (signatures.size() != 1) {
 			throw new HederaClientRuntimeException("Invalid signature map size");
 		}
 		for (final var entry : signatures.entrySet()) {
 			final var nodeSignatures = entry.getValue();
-			collate(accountsInfoFolder, nodeSignatures);
+			collate(nodeSignatures, accountsInfoFolders);
+
 		}
 		return transaction;
 	}
 
-	public Transaction<?> collate(final String accountsInfoFolder,
-								  final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
+	public Transaction<?> collate(final Set<SignaturePair> signaturePairs,
+								  final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		// In order to consolidate similar work, do a bit extra work now and take all pairs and create a map
 		var signatures = new HashMap<PublicKey, byte[]>();
 		for (final var signaturePair : signaturePairs) {
@@ -334,43 +338,45 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			signatures.put(publicKey, signature);
 		}
 
-		return collate(accountsInfoFolder, signatures);
+		return collate(signatures, accountsInfoFolders);
 	}
 
 	@Override
 	public Transaction<? extends Transaction<?>> collate(
 			final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, signatures);
+		return collate(signatures, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	@Override
 	public Transaction<?> collate(final Transaction<?> otherTransaction) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, otherTransaction);
+		return collate(otherTransaction, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	@Override
 	public Transaction<?> collate(final Set<SignaturePair> signaturePairs) throws HederaClientRuntimeException {
-		return collate(Constants.ACCOUNTS_INFO_FOLDER, signaturePairs);
+		return collate(signaturePairs, Constants.ACCOUNTS_INFO_FOLDER);
 	}
 
 	/**
 	 * Build a keyList of the keys that are a part of the required keyLists. If multiple accounts are
-	 * involved, each of the accounts' keyList will be added to this new list.
+	 * involved, each of the accounts' keyList will be added to this new list. This differs from
+	 * getSigningKeys in that this returns a KeyList, while getSigningKeys returns a list of all keys in byte form.
 	 *
-	 * @param accountsInfoFolder
-	 * 		The location string of the folder containing the account.info files
+	 * @param accountsInfoFolders
+	 * 		The location string(s) of the folder(s) containing the account.info files
 	 * @param signatures
 	 * 		The map of the signatures that are being added to the transaction which are needed in some situations
 	 * @return
 	 * 		The new keyList containing all keys from any required account involved in this transaction.
-	 * @throws IOException
+	 * @throws HederaClientRuntimeException
 	 */
-	protected KeyList buildKeyList(final String accountsInfoFolder,
+	protected KeyList buildKeyList(final String[] accountsInfoFolders,
 								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
 		// Determine all the accounts that need to be involved in the signing
 		final var accounts = getSigningAccounts();
 		final var fileSet = accounts.stream()
-				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
+				.flatMap(account -> java.util.Arrays.stream(accountsInfoFolders)
+							.map(a -> CommonMethods.getInfoFiles(a, account)))
 				.filter(files -> files != null && files.length == 1)
 				.map(fileArray -> fileArray[0])
 				.collect(Collectors.toSet());
@@ -395,7 +401,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		final var backupTransaction = Transaction.fromBytes(transaction.toBytes());
 
 		// First, sign the transaction and determine if the resulting transaction is too large
-		final var transactionTooLarge = !addSignature(signatures);
+		final var transactionTooLarge = !addSignatures(signatures);
 		// Second, verify if the transaction, too large or not, is valid after signing
 		final var verifiedTransaction = verifyWithKeyList(keyList);
 		// If the transaction is valid

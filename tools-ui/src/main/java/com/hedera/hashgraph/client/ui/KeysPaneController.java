@@ -250,9 +250,6 @@ public class KeysPaneController implements SubController {
 			unlinkedPrivateToolTip.setOnAction(
 					actionEvent -> CommonMethods.showTooltip(controller.settingsPane, unlinkedPrivateToolTip,
 							Messages.UNLINKED_PK_TOOLTIP_TEXT));
-
-			controller.homePaneController.setForceUpdate(true);
-
 			//endregion
 		} catch (final HederaClientException e) {
 			logger.error(e);
@@ -535,6 +532,7 @@ public class KeysPaneController implements SubController {
 		final var answer = CompleteKeysPopup.display(pubKeyAddress, rowData.getAccountList(), true);
 		if (Boolean.TRUE.equals(answer)) {
 			initializePane();
+			controller.homePaneController.populatePane();
 		}
 	}
 
@@ -825,6 +823,7 @@ public class KeysPaneController implements SubController {
 		populatePublicKeysMap();
 		populatePrivateKeysMap();
 		initializePane();
+		controller.homePaneController.populatePane();
 		closeGenerateKeys();
 		fill(password, 'x');
 	}
@@ -1199,6 +1198,7 @@ public class KeysPaneController implements SubController {
 
 		if (counter > 0) {
 			initializePane();
+			controller.homePaneController.populatePane();
 		}
 	}
 

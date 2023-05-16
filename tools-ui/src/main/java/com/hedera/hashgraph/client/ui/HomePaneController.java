@@ -18,13 +18,21 @@
 
 package com.hedera.hashgraph.client.ui;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import com.github.benmanes.caffeine.cache.Scheduler;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonObject;
+import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.fileservices.FileAdapterFactory;
 import com.hedera.hashgraph.client.core.json.Identifier;
+import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
@@ -33,6 +41,7 @@ import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFilesMap;
 import com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
+import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
@@ -42,6 +51,7 @@ import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.Key;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -63,13 +73,17 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -87,7 +101,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
-import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
 import static com.hedera.hashgraph.client.core.security.SecurityUtilities.verifySignature;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
@@ -103,21 +116,22 @@ public class HomePaneController implements SubController {
 	public VBox defaultViewVBox;
 	public VBox newFilesViewVBox;
 	public ScrollPane homeFilesScrollPane;
+	// A Bi-directional Map. Sorting is done by comparing the RemoteFiles behind the VBox (which is actually what
+	// gets sorted). Removing items from this map, however, is done by providing the RemoteFile.
+	// Thus, the relationship is two-way.
+	private final BiMap<RemoteFile, VBox> fileBoxes = HashBiMap.create();
 
 	@FXML
 	private Controller controller;
 	// endregion
 
-	private long lastModified = 0;
-	private boolean historyChanged = false;
-	private boolean forceUpdate = false;
-	private final RemoteFilesMap remoteFilesMap = new RemoteFilesMap();
+	// The cache tracking the expiration of the transactions.
+	// Upon expiry, the files will no longer be displayed in this pane.
+	private Cache<String, RemoteFile> remoteFilesCache;
 	private String output = "";
 	private String user = "";
 
-	public void setForceUpdate(final boolean force) {
-		forceUpdate = force;
-	}
+	private final Label noTasksLabel = new Label("No new tasks.");
 
 	void injectMainController(final Controller controller) {
 		this.controller = controller;
@@ -125,67 +139,106 @@ public class HomePaneController implements SubController {
 
 	@Override
 	public void initializePane() {
+		// Configure the components
 		newFilesViewVBox.prefWidthProperty().bind(homeFilesScrollPane.widthProperty());
 		newFilesViewVBox.setSpacing(VBOX_SPACING);
+		noTasksLabel.setPadding(new Insets(15, 0, 5, 15));
+		// Recreate the cache, this also only needs to be done once
+		remoteFilesCache = Caffeine.newBuilder()
+				.scheduler(Scheduler.systemScheduler())
+				.expireAfter(new Expiry<String, RemoteFile>() {
+					@Override
+					public long expireAfterCreate(
+							String key, RemoteFile value, long currentTime) {
+						// Get the expiration of the RemoteFile
+						final var expiration = value.getExpiration();
+						// If it is 'MAX', it should never expire, return the non-expiring
+						// value of Long.MAX_VALUE
+						if (expiration.equals(Timestamp.MAX)) {
+							return Long.MAX_VALUE;
+						}
+						// Get the duration until the file expires
+						final var diff = Duration.between(Instant.now(), value.getExpiration().asInstant());
+						// This should never happen, but if it does, return 0 to immediately expire
+						if (diff.isNegative()) {
+							return 0;
+						}
+						logger.info("{} will expire in: {} seconds", value.getName(), diff.toSeconds());
+						// Return the time until expires as nanos
+						return diff.toNanos();
+					}
+					@Override
+					public long expireAfterUpdate(
+							String key, RemoteFile value, long currentTime, long currentDuration) {
+						// return currentDuration to signify to not modify the expiration time
+						return currentDuration;
+					}
+					@Override
+					public long expireAfterRead(
+							String key, RemoteFile value, long currentTime, long currentDuration) {
+						// return currentDuration to signify to not modify the expiration time
+						return currentDuration;
+					}
+				})
+				.removalListener((key, value, cause) -> {
+					// If the cause indicates this RemoteFile was evicted due to expiry
+					if (cause.wasEvicted()) {
+						Platform.runLater(() -> {
+							// Move the file to history
+							try {
+								value.moveToHistory(Actions.EXPIRE, "", "");
+								controller.historyPaneController.addToHistory(value);
+							} catch (final HederaClientException e) {
+								logger.error("moving expired transaction failed", e);
+								controller.displaySystemMessage(e.getMessage());
+							}
+							removeFile(value);
+						});
+					}
+				})
+				.build();
 
+		newFilesViewVBox.setVisible(true);
+		newFilesViewVBox.setDisable(false);
+
+		populatePane();
+	}
+
+	public void populatePane() {
 		try {
-			if (!updateNeeded()) {
-				setForceUpdate(false);
-				return;
-			}
-			setForceUpdate(true);
-			remoteFilesMap.clearMap();
+			// Clear the list of RemoteFiles to be displayed
+			newFilesViewVBox.getChildren().clear();
+			// Invalidate and clean up the cache
+			remoteFilesCache.invalidateAll();
+			remoteFilesCache.cleanUp();
+			// Remove all files from the fileBoxes
+			fileBoxes.clear();
+
+			// Load the RemoteFiles from disk
 			loadRemoteFilesMap();
 
-			loadNewFilesBox(remoteFilesMap);
-			newFilesViewVBox.setVisible(true);
-			newFilesViewVBox.setDisable(false);
-
-			// Show new transactions
-			if (remoteFilesMap.size() > 0) {
+			// Remove any RemoteFiles that have been invalidated
+			remoteFilesCache.cleanUp();
+			if (remoteFilesCache.estimatedSize() > 0) {
+				// Show new transactions by hiding the defaultViewBox
 				defaultViewVBox.setDisable(true);
 				defaultViewVBox.setVisible(false);
-				if (newFilesViewVBox.getChildren().isEmpty()) {
-					final var noTasksLabel = new Label("No new tasks.");
-					noTasksLabel.setPadding(new Insets(15, 0, 5, 15));
-					newFilesViewVBox.getChildren().add(noTasksLabel);
-				}
 			} else {
 				defaultViewVBox.setDisable(false);
 				defaultViewVBox.setVisible(true);
+				newFilesViewVBox.getChildren().add(noTasksLabel);
 			}
-
-			if (remoteFilesMap.size() > 0) {
-				defaultViewVBox.setVisible(false);
-			}
-
 		} catch (final HederaClientException e) {
 			logger.error("initializeHomePane error", e);
 			controller.displaySystemMessage(e.getCause().toString());
 		}
-		Platform.runLater(() -> homeFilesScrollPane.setVvalue(0.0));
 		logger.info("Home pane initialized");
-		historyChanged = false;
-		setForceUpdate(false);
-	}
-
-	public boolean updateNeeded() {
-		return historyChanged || forceUpdate;
-	}
-
-	private void loadNewFilesBox(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
-		newFilesViewVBox.getChildren().clear();
-		final var newFiles = displayFiles(remoteFilesMap);
-		if (!newFiles.isEmpty()) {
-			newFilesViewVBox.getChildren().addAll(newFiles);
-		}
 	}
 
 	/**
 	 * Load all remote files into the map
 	 */
 	private void loadRemoteFilesMap() throws HederaClientException {
-
 		if (controller.getOneDriveCredentials() != null && !controller.getOneDriveCredentials().isEmpty()) {
 			// Load remote files
 			final var emailMap = controller.getOneDriveCredentials();
@@ -194,17 +247,11 @@ public class HomePaneController implements SubController {
 			inputFolder.add("USB");
 			ensureInternalInputExists();
 			inputFolder.add(DEFAULT_INTERNAL_FILES);
-			if (forceUpdate) {
-				remoteFilesMap.clearMap();
-			}
 			loadInputFolderIntoMap(inputFolder);
-
-			// before showing the transactions need to check the history
-			removeHistoryFiles();
+			sortFiles();
 		}
 		logger.debug("Done loading remote files");
 	}
-
 
 	/**
 	 * Load the not expired files from input from the input folder into the Remote Files Map
@@ -215,84 +262,190 @@ public class HomePaneController implements SubController {
 	private void loadInputFolderIntoMap(final List<String> inputFolder) throws HederaClientException {
 		final var version = controller.getVersion();
 		for (final var s : inputFolder) {
-			final var count = remoteFilesMap.size();
 			final var fileService = FileAdapterFactory.getAdapter(s);
-			if (fileService != null && fileService.exists() && (fileService.lastModified() > lastModified || forceUpdate)) {
-				final var remoteFiles = new RemoteFilesMap(version).fromFile(fileService);
-				this.remoteFilesMap.addAllNotExpired(remoteFiles);
-				lastModified = fileService.lastModified();
-				logger.info("{} Files loaded from {}", this.remoteFilesMap.size() - count, s);
-			}
-		}
-	}
+			if (fileService != null && fileService.exists()) {
+				final var remoteFilesMap = new RemoteFilesMap(version).fromFile(fileService);
 
-	/**
-	 * Remove the files from the map that are also in the history
-	 */
-	private void removeHistoryFiles() {
-		for (final RemoteFile rf : remoteFilesMap.getFiles()) {
-			if (rf.getType().equals(FileType.SOFTWARE_UPDATE)) {
-				final var su = (SoftwareUpdateFile) rf;
-				final var currentVersion = getSoftwareVersionFromVersionStr(controller.getVersion());
-				if (su.compareVersion(currentVersion) > 0 && controller.historyPaneController.isHistory(rf.hashCode())) {
-					controller.historyPaneController.removeFromHistory(rf);
+				for (final var file : remoteFilesMap.getFiles()) {
+					if (shouldCreateBox(file)) {
+						// Do an extra check if the file is history (as the RemoteFile.isHistory isn't saved to disk
+						// and therefore can be false here). If it is history, set it on the RemoteFile, otherwise
+						// finish building the box.
+						if (controller.historyPaneController.isHistory(file.hashCode())) {
+							file.setHistory(true);
+						} else {
+							if (file instanceof TransactionFile) {
+								setupKeyTree((TransactionFile) file);
+							}
+							buildAndAddBox(file);
+						}
+					}
 				}
 			}
-			if (controller.historyPaneController.isHistory(rf.hashCode())) {
-				logger.info("Removing {}", rf.getName());
-				remoteFilesMap.remove(rf.getName());
-			}
 		}
-		logger.info("Done removing history");
 	}
 
-
-	private List<VBox> displayFiles(final RemoteFilesMap remoteFilesMap) throws HederaClientException {
-
-		// Filter all but the last software update
-		final List<RemoteFile> files = new ArrayList<>();
-
-		var sFile = new SoftwareUpdateFile();
-		for (final var file : remoteFilesMap.getFiles()) {
-			if (!file.getType().equals(FileType.SOFTWARE_UPDATE)) {
-				files.add(file);
-				continue;
-			}
-			if (file.compareTo(sFile) > 0) {
-				sFile = (SoftwareUpdateFile) file;
-			}
-		}
-		if (sFile.isValid()) {
-			files.add(sFile);
-		}
-		Collections.sort(files);
-		return getFileBoxes(files);
+	private boolean shouldCreateBox(RemoteFile file) {
+		// if software update, update.getTimestamp() != null was checked previously,
+		// when would it be null? and does that matter?
+		return file.isValid() && !file.isExpired() &&
+				!file.getType().equals(FileType.METADATA) &&
+				!file.getType().equals(FileType.COMMENT) &&
+				!file.isHistory();
 	}
 
-	private List<VBox> getFileBoxes(final List<RemoteFile> fileList) throws HederaClientException {
-		final List<VBox> boxes = new ArrayList<>();
-		Collections.sort(fileList);
-		for (final var rf : fileList) {
-			if (rf.getType().equals(FileType.METADATA) ||
-					rf.getType().equals(FileType.COMMENT) ||
-					controller.historyPaneController.isHistory(rf.hashCode())) {
-				continue;
-			}
+	public void addFile(final String filePath) {
+		try {
+			// Create a RemoteFile by filePath and add it to the list
+			addFile(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(filePath))));
+		} catch (HederaClientException e) {
+			logger.error("adding file error: ", e);
+			controller.displaySystemMessage(e.getMessage());
+		}
+	}
 
-			if (rf instanceof TransactionFile) {
-				setupKeyTree((TransactionFile) rf);
-			}
+	public void addFile(final String filePath, final boolean history) {
+		try {
+			// Create the RemoteFile
+			final var remoteFile = new RemoteFile().getSingleRemoteFile(
+					FileDetails.parse(new File(filePath)));
+			// Set its history property - even those RemoteFile.history never gets saved, currently.
+			remoteFile.setHistory(history);
+			// Add it to the list
+			addFile(remoteFile);
+		} catch (HederaClientException e) {
+			logger.error("adding file error: ", e);
+			controller.displaySystemMessage(e.getMessage());
+		}
+	}
 
-			final var fileBox = rf.buildDetailsBox();
-			final var buttonsBox = getButtonsBox(rf);
-			if (buttonsBox != null) {
-				fileBox.getChildren().add(buttonsBox);
+	public void addFile(final RemoteFile file) {
+		try {
+			// Check if the box should be created
+			if (shouldCreateBox(file)) {
+				// If so, build the box and add it to the list of files
+				buildAndAddBox(file);
+				// Sort the list of files
+				sortFiles();
 			}
-			if (fileBox != null && !fileBox.getChildren().isEmpty()) {
-				boxes.add(fileBox);
+		} catch (HederaClientException e) {
+			logger.error("adding file error: ", e);
+			controller.displaySystemMessage(e.getCause().toString());
+		}
+	}
+
+	private void sortFiles() {
+		FXCollections.sort(newFilesViewVBox.getChildren(), (t1,t2) -> {
+			final var file1 = fileBoxes.inverse().get((VBox) t1);
+			final var file2 = fileBoxes.inverse().get((VBox) t2);
+			// Should never be null
+			if (file1 == null || file1.getExpiration() == null) {
+				return -1;
+			} else if (file2 == null) {
+				return 1;
+			}
+			// Always keep the software updates on top
+			if (file1 instanceof SoftwareUpdateFile) {
+				return -1;
+			} else if (file2 instanceof SoftwareUpdateFile) {
+				return 1;
+			}
+			// Sort the files, soonest to expire on top
+			return file1.getExpiration().compareTo(file2.getExpiration());
+		});
+
+	}
+
+	public void removeFile(final String filePath) {
+		// The file (on disk) has already been moved, but the RemoteFile object still exists
+		final var remoteFile = remoteFilesCache.getIfPresent(filePath);
+		if (remoteFile != null) {
+			// Remove it from the list
+			removeFile(remoteFile);
+		}
+	}
+
+	private void removeFile(@NotNull final RemoteFile file) {
+		// Remove the VBox from the map of fileBoxes
+		final var box = fileBoxes.remove(file);
+		// Invalidate the RemoteFile from the cache, to allow it to be removed
+		remoteFilesCache.invalidate(file.getPath());
+		// If a box was found
+		if (box != null) {
+			// Request focus on the newFilesViewBox to prevent scrolling to the top
+			newFilesViewVBox.requestFocus();
+			// Remove the box for the RemoteFile from the newFilesViewBox
+			newFilesViewVBox.getChildren().remove(box);
+			// If the newFilesViewBox is now empty, add the noTasksLabel
+			if (newFilesViewVBox.getChildren().isEmpty()) {
+				newFilesViewVBox.getChildren().add(noTasksLabel);
 			}
 		}
-		return boxes;
+	}
+
+	private void buildAndAddBox(final RemoteFile file) throws HederaClientException {
+		// First check if the fileBox exists already for the file.
+		// If it does contain the fileBox, check the actions of the file.
+		// If the action count is not 4, just re-add the file to the remoteFiles.
+		// Otherwise, recreate the fileBox and then add it.
+		if (fileBoxes.containsKey(file)) {
+			final var actions = file.getActions();
+			switch (actions.size()) {
+			case 0,1,2:
+					remoteFilesCache.put(file.getPath(), file);
+					return;
+				case 4:
+					break;
+				default:
+					logger.error("Unexpected value for number of actions");
+					return;
+			}
+
+			return;
+		}
+
+		// Build the details box for the RemoteFile
+		final var fileBox = file.buildDetailsBox();
+		// Should throw an error if the fileBox is null
+		if (fileBox == null) return;
+		// Build the buttons box for the RemoteFile
+		final var buttonsBox = getButtonsBox(file);
+		if (buttonsBox != null) {
+			// Add it to the fileBox
+			fileBox.getChildren().add(buttonsBox);
+		}
+
+		// If anything was added to the fileBox, display it
+		if (!fileBox.getChildren().isEmpty()) {
+			addFileBox(file, fileBox);
+		}
+	}
+
+	private void addFileBox(final RemoteFile file, final VBox fileBox) {
+		final var children = newFilesViewVBox.getChildren();
+		children.remove(noTasksLabel);
+		// Keep SoftwareUpdateFiles on top, this needs to be done as SoftwareUpdateFiles are
+		// added, in order to ensure only the newest SoftwareUpdateFiles are kept in the list
+		if (file instanceof SoftwareUpdateFile) {
+			if (!fileBoxes.isEmpty() && !children.isEmpty() &&
+					fileBoxes.inverse().get(children.get(0)) instanceof SoftwareUpdateFile) {
+				final var currentUpdate = fileBoxes.inverse().get(children.get(0));
+				// The first file is a SoftwareUpdateFile, compare it to the new file, keep the most up-to-date
+				// SoftwareUpdateFile
+				if (file.compareTo(currentUpdate) > 0) {
+					children.set(0, fileBox);
+				}
+			} else {
+				// Otherwise just add the SoftwareUpdateFile to the beginning of the list
+				children.add(0, fileBox);
+			}
+		} else {
+			// Add the fileBox to the newFilesViewVBox
+			children.add(fileBox);
+		}
+		// Add the file to the cache and map
+		fileBoxes.put(file, fileBox);
+		remoteFilesCache.put(file.getPath(), file);
 	}
 
 	private void setupKeyTree(final TransactionFile rf) {
@@ -499,11 +652,10 @@ public class HomePaneController implements SubController {
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(ACCEPT, rf.getCommentArea().getText(), "");
 				controller.historyPaneController.addToHistory(rf);
-				historyChanged = true;
 				controller.loadPubKeys();
 				controller.accountsPaneController.initializePane();
 				controller.keysPaneController.initializePane();
-				initializePane();
+				removeFile(rf);
 			} catch (final IOException | HederaClientException e) {
 				logger.error("buildAcceptButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
@@ -519,12 +671,11 @@ public class HomePaneController implements SubController {
 				exportComments(rf, rf.getCommentArea(), rf.getName());
 				rf.moveToHistory(DECLINE, rf.getCommentArea().getText(), "");
 				controller.historyPaneController.addToHistory(rf);
-				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error("buildDeclineButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
-			initializePane();
+			removeFile(rf);
 		});
 		return declineButton;
 	}
@@ -535,12 +686,11 @@ public class HomePaneController implements SubController {
 			try {
 				rf.moveToHistory();
 				controller.historyPaneController.addToHistory(rf);
-				historyChanged = true;
 			} catch (final HederaClientException e) {
 				logger.error("buildCancelButton failed", e);
 				controller.displaySystemMessage(e.getMessage());
 			}
-			initializePane();
+			removeFile(rf);
 		});
 		return cancelButton;
 	}
@@ -556,9 +706,8 @@ public class HomePaneController implements SubController {
 		undoButton.setOnAction(actionEvent -> {
 			try {
 				rf.moveFromHistory();
-				historyChanged = true;
-				forceUpdate = true;
-				initializePane();
+				controller.historyPaneController.removeFromHistory(rf);
+				addFile(rf);
 			} catch (final HederaClientException e) {
 				logger.error("buildUndoButton failed", e);
 				controller.displaySystemMessage(e.getCause().toString());
@@ -586,7 +735,6 @@ public class HomePaneController implements SubController {
 			} catch (final HederaClientException e) {
 				logger.error("buildUpdateButton failed", e);
 			}
-			historyChanged = true;
 
 			runUpdate(rf.getPath());
 		});
@@ -612,7 +760,6 @@ public class HomePaneController implements SubController {
 				logger.error("signTransactionAndComment failed", exception);
 			}
 		}
-		historyChanged = true;
 	}
 
 	private void runUpdate(final String localLocation) {
@@ -796,8 +943,7 @@ public class HomePaneController implements SubController {
 
 	private void signTransactionAndComment(final RemoteFile rf, final Pair<String, KeyPair> pair) {
 		switch (rf.getType()) {
-			case TRANSACTION:
-			case LARGE_BINARY:
+		case TRANSACTION, LARGE_BINARY:
 				createSignedTransaction(rf, pair);
 				break;
 			case BATCH:
@@ -813,12 +959,11 @@ public class HomePaneController implements SubController {
 
 	private void createSignedTransaction(final RemoteFile rf, final Pair<String, KeyPair> pair) {
 		try {
+			//When a RemoteFile executes, it will moveToHistory and setHistory
 			rf.execute(pair, user, output);
 			exportComments(rf, rf.getCommentArea(), rf.getName());
-			rf.setHistory(true);
 			controller.historyPaneController.addToHistory(rf);
-			historyChanged = true;
-			initializePane();
+			removeFile(rf);
 		} catch (final Exception e) {
 			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());

@@ -18,16 +18,13 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -65,9 +62,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the folder containing the " +
-			"account info files for the account(s) corresponding to the transaction")
-	private String infoFiles;
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
+			"the account(s) corresponding to the transaction", split = ",")
+	private String[] infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
@@ -85,7 +82,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	// This is a best guess approach, for a quick fix, as the key is deduced based on the
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
-	private final Map<File, AccountInfo> infos = new HashMap<>();
+
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
 	@Override
@@ -98,9 +95,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (!root.exists()) {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
-
-		// Parse account info files from inputs
-		loadVerificationFiles(Constants.INFO_EXTENSION, infoFiles);
 
 		// Parse public key files from inputs
 		loadVerificationFiles(Constants.PUB_EXTENSION, keyFiles);
@@ -173,8 +167,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			// If only a single file, then rename as needed, and move to the new location
-			final var filenamePrefix = (output.contains("Node")) ? 
-					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1) 
+			final var filenamePrefix = (output.contains("Node")) ?
+					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1)
 							+ FILE_NAME_GROUP_SEPARATOR : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
@@ -226,7 +220,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// that transaction.
 		final Map<String, List<String>> verifyWithFiles = new HashMap<>();
 
-		for (final var entry : transactions.entrySet()) {
+		final var iterator = transactions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			final var entry = iterator.next();
 			var helper = entry.getValue();
 			// Get the transactionId and use that as the key for the verification map
 			var transactionId = helper.getBaseName();
@@ -239,7 +235,21 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			// Collate all signatures, this process will also verify the signatures,
 			// ensuring the required signatures are present.
-			helper.collate(infoFiles);
+			try {
+				helper.collate(infoFiles);
+			} catch (HederaClientRuntimeException e) {
+				// If collating failed, add an item to the verification list
+				var verificationItemList = new ArrayList<String>();
+				verificationItemList.add(fileName);
+				verificationItemList.add(transactionId);
+				verificationItemList.add("Verification failed.");
+				verifyWithFiles.put(transactionId, verificationItemList);
+				logger.info("Collate and Verification of " + transactionId
+						+ " failed due to the following error: "
+						+ e.getMessage().replace("Hedera Client Runtime: ", ""));
+				iterator.remove();
+				continue;
+			}
 
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
@@ -263,10 +273,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			verificationItemList.add("\"" + String.join(",", requiredIds) + "\"");
 			verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
 
-
 			// Put the list of strings into the map
 			verifyWithFiles.put(transactionId, verificationItemList);
 		}
+
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
 		Collections.sort(listOfVerifiedFiles, (list1, list2) -> {
 			if (list1 == null || list1.isEmpty() || list1.get(0) == null) {
@@ -395,22 +405,13 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				parseFiles(inner, extension);
 				return;
 			}
-			try {
-				switch (extension) {
-					case Constants.INFO_EXTENSION:
-						infos.put(file, AccountInfo.fromBytes(readBytes(file)));
-						break;
-					case Constants.PUB_EXTENSION:
-						publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
-								FilenameUtils.getBaseName(file.getName()));
-						break;
-					default:
-						throw new HederaClientException("Not implemented");
-				}
-
-			} catch (final InvalidProtocolBufferException e) {
-				logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, file.getName());
-				throw new HederaClientException(e);
+			switch (extension) {
+				case Constants.PUB_EXTENSION:
+					publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
+							FilenameUtils.getBaseName(file.getName()));
+					break;
+				default:
+					throw new HederaClientException("Not implemented");
 			}
 		}
 	}

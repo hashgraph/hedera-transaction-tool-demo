@@ -820,7 +820,6 @@ public class AccountsPaneController implements SubController {
 			}
 		});
 
-
 		return nicknameColumn;
 	}
 
@@ -952,8 +951,8 @@ public class AccountsPaneController implements SubController {
 							controller.removeAccount(key);
 							feePayers.remove(accountLineInformation1.getAccount());
 							setupFeePayerChoiceBox();
-							controller.homePaneController.setForceUpdate(true);
 							controller.settingsPaneController.setupFeePayerChoicebox();
+							controller.homePaneController.populatePane();
 						}
 					}
 				};
@@ -1848,8 +1847,8 @@ public class AccountsPaneController implements SubController {
 	private void refreshPanes() throws HederaClientException {
 		initializePane();
 		controller.keysPaneController.initializePane();
-		controller.homePaneController.setForceUpdate(true);
-		controller.homePaneController.initializePane();
+		// This needs to be a full refresh, as it can change all boxes and keys required and such
+		controller.homePaneController.populatePane();
 		getAccountsFromFileSystem(accountInfos, idNickNames);
 		controller.setAccountInfoMap(accountInfos);
 		try {

@@ -895,11 +895,6 @@ public class CreatePanePage {
 
 	@VisibleForTesting
 	public CreatePanePage closePopup(final String legend) {
-		try {
-			sleep(500);
-		} catch (InterruptedException e) {
-			logger.error(e.getMessage());
-		}
 		final var popupNodes = getPopupNodes();
 		final var close = findButtonInPopup(popupNodes, legend);
 		driver.clickOn(close);
