@@ -18,16 +18,13 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -223,7 +220,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// that transaction.
 		final Map<String, List<String>> verifyWithFiles = new HashMap<>();
 
-		for (final var entry : transactions.entrySet()) {
+		final var iterator = transactions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			final var entry = iterator.next();
 			var helper = entry.getValue();
 			// Get the transactionId and use that as the key for the verification map
 			var transactionId = helper.getBaseName();
@@ -236,7 +235,21 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 			// Collate all signatures, this process will also verify the signatures,
 			// ensuring the required signatures are present.
-			helper.collate(infoFiles);
+			try {
+				helper.collate(infoFiles);
+			} catch (HederaClientRuntimeException e) {
+				// If collating failed, add an item to the verification list
+				var verificationItemList = new ArrayList<String>();
+				verificationItemList.add(fileName);
+				verificationItemList.add(transactionId);
+				verificationItemList.add("Verification failed.");
+				verifyWithFiles.put(transactionId, verificationItemList);
+				logger.info("Collate and Verification of " + transactionId
+						+ " failed due to the following error: "
+						+ e.getMessage().replace("Hedera Client Runtime: ", ""));
+				iterator.remove();
+				continue;
+			}
 
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
@@ -260,10 +273,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			verificationItemList.add("\"" + String.join(",", requiredIds) + "\"");
 			verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
 
-
 			// Put the list of strings into the map
 			verifyWithFiles.put(transactionId, verificationItemList);
 		}
+
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
 		Collections.sort(listOfVerifiedFiles, (list1, list2) -> {
 			if (list1 == null || list1.isEmpty() || list1.get(0) == null) {

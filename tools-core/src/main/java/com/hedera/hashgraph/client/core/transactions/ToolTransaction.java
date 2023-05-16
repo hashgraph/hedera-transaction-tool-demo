@@ -109,7 +109,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	String memo;
 
 	private enum CollateAndVerifyStatus {
-		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT;
+		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT
 	}
 
 	public ToolTransaction() {
@@ -259,7 +259,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * 		Boolean indicating if the resulting signed transaction is valid (within size limitations
 	 * 		and contains all necessary signatures).
 	 */
-	private boolean addSignature(final Map<PublicKey, byte[]> signatures) {
+	private boolean addSignatures(final Map<PublicKey, byte[]> signatures) {
 		// Add all signatures to the transaction
 		for (final var entry : signatures.entrySet()) {
 			transaction.addSignature(entry.getKey(), entry.getValue());
@@ -279,20 +279,23 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 						transactionSize + ") is over the maximum limit.");
 			}
 
-			// Build the list of keys that are required for a valid transaction
-			final var keyList = buildKeyList(accountsInfoFolders, signatures);
-			if (keyList.isEmpty()) {
-				throw new HederaClientRuntimeException("Account information is missing, cannot determine " +
-						"the keys required for signing.");
-			}
-
 			// Remove any keys from the list of signatures to collate that are already present on the transaction.
 			// These keys cannot be removed, and don't need to be re-added, and so don't need to be a part
 			// of this process.
 			transaction.getSignatures().values().forEach(map -> map.keySet().forEach(signatures::remove));
 
-			// Collate and verify the resulting transaction is within size limitations
-			var result = collateAndVerify(keyList, signatures);
+			// Build the list of keys that are required for a valid transaction
+			final var keyList = buildKeyList(accountsInfoFolders, signatures);
+			CollateAndVerifyStatus result;
+			if (keyList.isEmpty()) {
+				// Not verifiable, just collate the signatures and check the size of the result
+				result = addSignatures(signatures) ?
+						CollateAndVerifyStatus.SUCCESSFUL : CollateAndVerifyStatus.OVER_SIZE_LIMIT;
+			} else {
+				// Collate and verify the resulting transaction is within size limitations
+				result = collateAndVerify(keyList, signatures);
+			}
+
 			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
 			// cannot result in a valid transaction.
 			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
@@ -301,7 +304,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
 						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
 			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
-				throw new HederaClientRuntimeException("Required signatures are still missing and the transaction " +
+				throw new HederaClientRuntimeException("Required signatures are missing and the transaction " +
 						"cannot be verified.");
 			}
 		} catch (IOException e) {
@@ -365,7 +368,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * 		The map of the signatures that are being added to the transaction which are needed in some situations
 	 * @return
 	 * 		The new keyList containing all keys from any required account involved in this transaction.
-	 * @throws IOException
+	 * @throws HederaClientRuntimeException
 	 */
 	protected KeyList buildKeyList(final String[] accountsInfoFolders,
 								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
@@ -398,7 +401,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		final var backupTransaction = Transaction.fromBytes(transaction.toBytes());
 
 		// First, sign the transaction and determine if the resulting transaction is too large
-		final var transactionTooLarge = !addSignature(signatures);
+		final var transactionTooLarge = !addSignatures(signatures);
 		// Second, verify if the transaction, too large or not, is valid after signing
 		final var verifiedTransaction = verifyWithKeyList(keyList);
 		// If the transaction is valid
