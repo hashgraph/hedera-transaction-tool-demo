@@ -311,21 +311,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				result = collateAndVerify(requiredKeyList, signatures);
 			}
 
-//			except i think the concept is, add any keys that don't have account info, then try to add more?
-//		or, at least, is there a way to determine if an account info is missing? '
-//			if (keyList.isEmpty()) {
-//				// Not verifiable, just collate the signatures and check the size of the result
-//				result = addSignatures(signatures) ?
-//						CollateAndVerifyStatus.SUCCESSFUL : CollateAndVerifyStatus.OVER_SIZE_LIMIT;
-//			} else {
-//				what if the list is only partial, so if result is not verifiable, then I should just try
-//				addsignatures directly, not do the above, do it below instead
-//						also, teh buildkyelist stuff, I want access to the accounts there, meaning collatecommand needs
-//						to do the same thing so it knows which accounts to add to column 3
-//				// Collate and verify the resulting transaction is within size limitations
-//				result = collateAndVerify(keyList, signatures);
-//			}
-
 			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
 			// cannot result in a valid transaction.
 			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
