@@ -30,8 +30,6 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
 import com.hedera.hashgraph.sdk.Key;
-import com.hedera.hashgraph.sdk.KeyList;
-import com.hedera.hashgraph.sdk.PublicKey;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
@@ -130,52 +127,6 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	public Boolean isDeclineStakingRewards() {
 		return declineStakingRewards;
-	}
-
-	@Override
-	protected KeyList buildKeyList(String[] accountsInfoFolders,
-								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
-		// Get the keyList
-		final var keyList = super.buildKeyList(accountsInfoFolders, signatures);
-		// For every key in this.key that isn't in keyList, sign the transaction. Any key that wasn't
-		// in the keyList is a new key to the account and is required to sign the transaction
-
-		for (final var k : convertKeyToList(this.key)) {
-			if (!keyListContainsKey(keyList, k)) {
-				transaction.addSignature(k, signatures.get(k));
-			}
-		}
-		// Return the keyList
-		return keyList;
-	}
-
-	private List<PublicKey> convertKeyToList(final Key key) {
-		final var newList = new ArrayList<PublicKey>();
-		if (key instanceof PublicKey) {
-			newList.add((PublicKey)key);
-		}
-		else {
-			for (final var k : (KeyList)key) {
-				newList.addAll(convertKeyToList(k));
-			}
-		}
-		return newList;
-	}
-
-	private boolean keyListContainsKey(KeyList keyList, Key key) {
-		// If the keyList contains the key, return true
-		if (keyList.contains(key)) {
-			return true;
-		}
-		// Otherwise, go through each key in the keyList. If it is a keyList,
-		// then recall this method and determine if it contains the key
-		for (final var k : keyList) {
-			if (k instanceof KeyList && keyListContainsKey((KeyList)k, key)) {
-				return true;
-			}
-		}
-		// The key was not found, return false
-		return false;
 	}
 
 	@Override

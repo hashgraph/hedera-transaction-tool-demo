@@ -271,29 +271,60 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public Transaction<? extends Transaction<?>> collate(final Map<PublicKey, byte[]> signatures,
 										 final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		try {
-			// Before anything happens, make sure the transaction is still within size limitations
+			// Before anything happens, make sure the transaction is within size limitations
 			var transactionSize = transaction.toBytes().length;
 			if (transactionSize > Constants.MAX_TRANSACTION_LENGTH) {
 				throw new HederaClientRuntimeException("Transaction size (" +
 						transactionSize + ") is over the maximum limit.");
 			}
 
-			// Remove any keys from the list of signatures to collate that are already present on the transaction.
-			// These keys cannot be removed, and don't need to be re-added, and so don't need to be a part
-			// of this process.
-			transaction.getSignatures().values().forEach(map -> map.keySet().forEach(signatures::remove));
-
 			// Build the list of keys that are required for a valid transaction
-			final var keyList = buildKeyList(accountsInfoFolders, signatures);
+			final var requiredKeyList = buildKeyList(accountsInfoFolders);
+
+			// For every key in this.key that isn't in requiredKeyList, sign the transaction.
+			// This could be because the account info is missing, or outdated,
+			// or is being updated, or it could be due to extra unneeded keys.
+			// In all cases, the user will need to manually verify the keys in use.
+			signatures.entrySet().forEach(entry -> {
+				if (!keyListContainsKey(requiredKeyList, entry.getKey())) {
+					transaction.addSignature(entry.getKey(), entry.getValue());
+				}
+			});
+
+			// Remove any keys from the list of signatures to collate that are already present on the transaction.
+			// These keys cannot be removed, don't need to be re-added, and so don't need to be a part
+			// of this process.
+			final var currentSignatures = transaction.getSignatures().values();
+			if (currentSignatures.isEmpty() && signatures.isEmpty()) {
+				throw new HederaClientRuntimeException("No signatures were supplied for this transaction.");
+			}
+			currentSignatures.forEach(map -> map.keySet().forEach(signatures::remove));
+
 			CollateAndVerifyStatus result;
-			if (keyList.isEmpty()) {
-				// Not verifiable, just collate the signatures and check the size of the result
-				result = addSignatures(signatures) ?
+			// Now check if the requiredKeyList is empty. If empty, then all signatures supplied are already added to
+			// the transaction, no additional verification is possible. Check the size of the transaction.
+			// Otherwise, proceed with the smart collate.
+			if (requiredKeyList.isEmpty()) {
+				result = (transaction.toBytes().length <= Constants.MAX_TRANSACTION_LENGTH) ?
 						CollateAndVerifyStatus.SUCCESSFUL : CollateAndVerifyStatus.OVER_SIZE_LIMIT;
 			} else {
-				// Collate and verify the resulting transaction is within size limitations
-				result = collateAndVerify(keyList, signatures);
+				result = collateAndVerify(requiredKeyList, signatures);
 			}
+
+//			except i think the concept is, add any keys that don't have account info, then try to add more?
+//		or, at least, is there a way to determine if an account info is missing? '
+//			if (keyList.isEmpty()) {
+//				// Not verifiable, just collate the signatures and check the size of the result
+//				result = addSignatures(signatures) ?
+//						CollateAndVerifyStatus.SUCCESSFUL : CollateAndVerifyStatus.OVER_SIZE_LIMIT;
+//			} else {
+//				what if the list is only partial, so if result is not verifiable, then I should just try
+//				addsignatures directly, not do the above, do it below instead
+//						also, teh buildkyelist stuff, I want access to the accounts there, meaning collatecommand needs
+//						to do the same thing so it knows which accounts to add to column 3
+//				// Collate and verify the resulting transaction is within size limitations
+//				result = collateAndVerify(keyList, signatures);
+//			}
 
 			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
 			// cannot result in a valid transaction.
@@ -364,16 +395,30 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 *
 	 * @param accountsInfoFolders
 	 * 		The location string(s) of the folder(s) containing the account.info files
-	 * @param signatures
-	 * 		The map of the signatures that are being added to the transaction which are needed in some situations
 	 * @return
 	 * 		The new keyList containing all keys from any required account involved in this transaction.
 	 * @throws HederaClientRuntimeException
 	 */
-	protected KeyList buildKeyList(final String[] accountsInfoFolders,
-								   final Map<PublicKey, byte[]> signatures) throws HederaClientRuntimeException {
+	private KeyList buildKeyList(final String[] accountsInfoFolders) throws HederaClientRuntimeException {
 		// Determine all the accounts that need to be involved in the signing
 		final var accounts = getSigningAccounts();
+//		here, i want to see which accounts i have info for, and which i do not
+//			then, if I have account infos, i can at least verify that much
+//				if not, just add sigs to transaction and check size
+//				maybe -> do something similar, but any sigs NOT found in an account, add to the transaction right away
+//				and assume that they need to be tehre, IF in accounts and NOT in infofiles. wait, how would a sig know
+//				if it is in accounts or not?
+//		update does something similar,
+//				it really needs to check teh transaction itself for the keylist as update has the keylist
+//				so what do I do about this one? if I don't have accountinfo, i don't know if a sig belongs to the account
+//				or not, so I can't do the above. so i have to assume that IF any accounts are missing info, then all sigs
+//		found should be included, but if no accounts are missing info, then all 'stray' sigs can be ignored? or should
+//				the only time that could be an issue is if a 'stray' sig is only stray becuase the account info is outdated
+//
+//				i think the answer is stray sigs get added first, no matter what, then smart collate the rest, if that fails
+//				then it can return 'failure', otherwise the verification csv will be manually used to show sig issues?
+//		except when the amount of 'stray' sigs is so many that it can't find a valid path, then the error will state whatever, which might
+//	not indicate it's an issue with stray sigs?
 		final var fileSet = accounts.stream()
 				.flatMap(account -> java.util.Arrays.stream(accountsInfoFolders)
 							.map(a -> CommonMethods.getInfoFiles(a, account)))
@@ -390,7 +435,25 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				throw new HederaClientRuntimeException(e);
 			}
 		}
+
+		// Return the keyList
 		return keyList;
+	}
+
+	private boolean keyListContainsKey(KeyList keyList, Key key) {
+		// If the keyList contains the key, return true
+		if (keyList.contains(key)) {
+			return true;
+		}
+		// Otherwise, go through each key in the keyList. If it is a keyList,
+		// then recall this method and determine if it contains the key
+		for (final var k : keyList) {
+			if (k instanceof KeyList && keyListContainsKey((KeyList)k, key)) {
+				return true;
+			}
+		}
+		// The key was not found, return false
+		return false;
 	}
 
 	// In order to collate and have a valid signed transaction, verification needs to happen alongside the collating.
