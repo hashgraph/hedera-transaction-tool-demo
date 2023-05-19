@@ -23,6 +23,7 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.PublicKey;
@@ -229,52 +230,54 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			var fileName = helper.getTransactionFile();
 			// Make sure this transaction isn't already in the map
 			// (Multi-node submission will have duplicate transactionId entries)
-			if (verifyWithFiles.containsKey(transactionId)) {
-				continue;
-			}
+			if (!verifyWithFiles.containsKey(transactionId)) {
+				// Collate all signatures, this process will also verify the signatures,
+				// ensuring the required signatures are present.
+				try {
+					helper.collate(infoFiles);
+				} catch (HederaClientRuntimeException e) {
+					// If collating failed, add an item to the verification list
+					var verificationItemList = new ArrayList<String>();
+					verificationItemList.add(fileName);
+					verificationItemList.add(transactionId);
+					verifyWithFiles.put(transactionId, verificationItemList);
+					logger.info("Collation and Verification of " + transactionId
+							+ " failed due to the following error: "
+							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
+					iterator.remove();
+					continue;
+				}
 
-			// Collate all signatures, this process will also verify the signatures,
-			// ensuring the required signatures are present.
-			try {
-				helper.collate(infoFiles);
-			} catch (HederaClientRuntimeException e) {
-				// If collating failed, add an item to the verification list
+				// Get the accounts associated with the transaction. This would include
+				// the fee payer, and accounts to be updated, or accounts with balances changing
+				// due to transfer, etc.
+				final var accounts = helper.getSigningAccounts();
+				final var requiredIdsInUse = accounts.stream()
+						.filter(account -> !java.util.Arrays.stream(infoFiles)
+								.filter(a -> CommonMethods.getInfoFiles(a, account).length > 0)
+								.collect(Collectors.toList())
+								.isEmpty())
+						.map(AccountId::toString)
+						.collect(Collectors.toList());
+
+				// Get the list of public key names used to sign the transaction (if the key is a required key)
+				var publicKeyNames = getPublicKeyNames(helper);
+				// Sort the list of ids
+				Collections.sort(requiredIdsInUse);
+				// Sort the list of public keys
+				Collections.sort(publicKeyNames);
+
+				// Now put everything into the list for the csv
+				// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
 				var verificationItemList = new ArrayList<String>();
 				verificationItemList.add(fileName);
 				verificationItemList.add(transactionId);
-				verificationItemList.add("Verification failed.");
+				verificationItemList.add("\"" + String.join(",", requiredIdsInUse) + "\"");
+				verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
+
+				// Put the list of strings into the map
 				verifyWithFiles.put(transactionId, verificationItemList);
-				logger.info("Collate and Verification of " + transactionId
-						+ " failed due to the following error: "
-						+ e.getMessage().replace("Hedera Client Runtime: ", ""));
-				iterator.remove();
-				continue;
 			}
-
-			// Get the accounts associated with the transaction. This would include
-			// the fee payer, and accounts to be updated, or accounts with balances changing
-			// due to transfer, etc.
-			var requiredIds = helper.getSigningAccounts().stream()
-					.map(AccountId::toString)
-					.collect(Collectors.toList());
-
-			// Get the list of public key names used to sign the transaction (if the key is a required key)
-			var publicKeyNames = getPublicKeyNames(helper);
-			// Sort the list of ids
-			Collections.sort(requiredIds);
-			// Sort the list of public keys
-			Collections.sort(publicKeyNames);
-
-			// Now put everything into the list for the csv
-			// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
-			var verificationItemList = new ArrayList<String>();
-			verificationItemList.add(fileName);
-			verificationItemList.add(transactionId);
-			verificationItemList.add("\"" + String.join(",", requiredIds) + "\"");
-			verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
-
-			// Put the list of strings into the map
-			verifyWithFiles.put(transactionId, verificationItemList);
 		}
 
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
@@ -405,13 +408,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				parseFiles(inner, extension);
 				return;
 			}
-			switch (extension) {
-				case Constants.PUB_EXTENSION:
-					publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
-							FilenameUtils.getBaseName(file.getName()));
-					break;
-				default:
-					throw new HederaClientException("Not implemented");
+			if (Constants.PUB_EXTENSION.equals(extension)) {
+				publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
+						FilenameUtils.getBaseName(file.getName()));
+			} else {
+				throw new HederaClientException("Not implemented");
 			}
 		}
 	}
