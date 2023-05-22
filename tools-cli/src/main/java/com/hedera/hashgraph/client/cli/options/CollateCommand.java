@@ -228,15 +228,15 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Get the transactionId and use that as the key for the verification map
 			var transactionId = helper.getBaseName();
 			var fileName = helper.getTransactionFile();
-			// Make sure this transaction isn't already in the map
-			// (Multi-node submission will have duplicate transactionId entries)
-			if (!verifyWithFiles.containsKey(transactionId)) {
-				// Collate all signatures, this process will also verify the signatures,
-				// ensuring the required signatures are present.
-				try {
-					helper.collate(infoFiles);
-				} catch (HederaClientRuntimeException e) {
-					// If collating failed, add an item to the verification list
+			// Collate all signatures, this process will also verify the signatures,
+			// ensuring the required signatures are present.
+			try {
+				helper.collate(infoFiles);
+			} catch (HederaClientRuntimeException e) {
+				// If collating failed, add an item to the verification list
+				// Make sure this transaction isn't already in the map
+				// (Multi-node submission will have duplicate transactionId entries)
+				if (!verifyWithFiles.containsKey(transactionId)) {
 					var verificationItemList = new ArrayList<String>();
 					verificationItemList.add(fileName);
 					verificationItemList.add(transactionId);
@@ -244,31 +244,35 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 					logger.info("Collation and Verification of " + transactionId
 							+ " failed due to the following error: "
 							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
-					iterator.remove();
-					continue;
 				}
+				iterator.remove();
+				continue;
+			}
 
-				// Get the accounts associated with the transaction. This would include
-				// the fee payer, and accounts to be updated, or accounts with balances changing
-				// due to transfer, etc.
-				final var accounts = helper.getSigningAccounts();
-				final var requiredIdsInUse = accounts.stream()
-						.filter(account -> !java.util.Arrays.stream(infoFiles)
-								.filter(a -> CommonMethods.getInfoFiles(a, account).length > 0)
-								.collect(Collectors.toList())
-								.isEmpty())
-						.map(AccountId::toString)
-						.collect(Collectors.toList());
+			// Get the accounts associated with the transaction. This would include
+			// the fee payer, and accounts to be updated, or accounts with balances changing
+			// due to transfer, etc.
+			final var accounts = helper.getSigningAccounts();
+			final var requiredIdsInUse = accounts.stream()
+					.filter(account -> !java.util.Arrays.stream(infoFiles)
+							.filter(a -> CommonMethods.getInfoFiles(a, account).length > 0)
+							.collect(Collectors.toList())
+							.isEmpty())
+					.map(AccountId::toString)
+					.collect(Collectors.toList());
 
-				// Get the list of public key names used to sign the transaction (if the key is a required key)
-				var publicKeyNames = getPublicKeyNames(helper);
-				// Sort the list of ids
-				Collections.sort(requiredIdsInUse);
-				// Sort the list of public keys
-				Collections.sort(publicKeyNames);
+			// Get the list of public key names used to sign the transaction (if the key is a required key)
+			var publicKeyNames = getPublicKeyNames(helper);
+			// Sort the list of ids
+			Collections.sort(requiredIdsInUse);
+			// Sort the list of public keys
+			Collections.sort(publicKeyNames);
 
-				// Now put everything into the list for the csv
-				// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
+			// Now put everything into the list for the csv
+			// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
+			// Make sure this transaction isn't already in the map
+			// (Multi-node submission will have duplicate transactionId entries)
+			if (!verifyWithFiles.containsKey(transactionId)) {
 				var verificationItemList = new ArrayList<String>();
 				verificationItemList.add(fileName);
 				verificationItemList.add(transactionId);
@@ -306,7 +310,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				if (keyName != null) {
 					idList.add(keyName);
 				} else {
-					idList.add(keyEntry.getValue());
+					idList.add("unknown-key");
 				}
 			}
 		}
