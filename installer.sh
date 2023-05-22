@@ -78,8 +78,6 @@ if [[ "${CI}" == true || "${CIRCLECI}" == true ]]; then
   LICENSE_FILE="../../../../../tools-ui/src/main/resources/license.txt"
 fi
 
-codesign -vvv --options runtime --deep --force --sign "Developer ID Application: $SIGNING_KEY_USER_NAME" transactiontools.jar
-
 TOOL_NAME="TransactionTools"
 jpackage \
       --type pkg \
