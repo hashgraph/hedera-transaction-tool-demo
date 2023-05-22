@@ -237,15 +237,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				// If collating failed, add an item to the verification list
 				// Make sure this transaction isn't already in the map
 				// (Multi-node submission will have duplicate transactionId entries)
-				verifyWithFiles.computeIfAbsent(transactionId, s -> {
-					var list = createVerificationItemList(
-							fileName,
-							transactionId);
+				if (addItemListToVerification(verifyWithFiles, fileName, transactionId)) {
 					logger.warn("Collation and Verification of " + transactionId
 							+ " failed due to the following error: "
 							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
-					return list;
-				});
+				}
 				iterator.remove();
 				continue;
 			}
@@ -273,12 +269,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
 			// Make sure this transaction isn't already in the map
 			// (Multi-node submission will have duplicate transactionId entries)
-			verifyWithFiles.computeIfAbsent(transactionId, s -> createVerificationItemList(
-														fileName,
-														transactionId,
-														"\"" + String.join(",", requiredIdsInUse) + "\"",
-														"\"" + String.join(",", publicKeyNames) + "\"")
-			);
+			addItemListToVerification(verifyWithFiles, fileName, transactionId,
+									"\"" + String.join(",", requiredIdsInUse) + "\"",
+									"\"" + String.join(",", publicKeyNames) + "\"");
 		}
 
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
@@ -315,10 +308,19 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	}
 
 	@NotNull
-	private List<String> createVerificationItemList(@NotNull String... details) {
+	private boolean addItemListToVerification(@NotNull Map<String, List<String>> map,
+			@NotNull String fileName,
+			@NotNull String transactionId,
+			@NotNull String... details) {
+		if (!map.containsKey(transactionId)) {
 			var verificationItemList = new ArrayList<String>();
+			verificationItemList.add(fileName);
+			verificationItemList.add(transactionId);
 			verificationItemList.addAll(Arrays.stream(details).collect(Collectors.toList()));
-			return verificationItemList;
+			map.put(transactionId, verificationItemList);
+			return true;
+		}
+		return false;
 	}
 
 	private void loadTransactions(final File root) throws HederaClientException {
