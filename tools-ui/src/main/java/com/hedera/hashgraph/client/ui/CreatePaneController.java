@@ -1021,7 +1021,9 @@ public class CreatePaneController implements SubController {
 		declineStakingRewardsOriginal.setText("unknown");
 		declineStakingRewardsNew.setSelected(false);
 		stakedAccountIdOriginal.setPromptText("unknown");
+		stakedAccountIdNew.setText("");
 		stakedNodeIdOriginal.setPromptText("unknown");
+		stakedNodeIdNew.setText("");
 		updateOriginalKey.setContent(new HBox());
 		updateNewKey.setContent(new HBox());
 		updateNewKey.setVisible(false);
@@ -1618,7 +1620,6 @@ public class CreatePaneController implements SubController {
 			logger.error("Json file could not be deleted");
 		}
 
-		controller.homePaneController.setForceUpdate(true);
 		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
@@ -1843,7 +1844,9 @@ public class CreatePaneController implements SubController {
 		final var account = transaction.getAccount();
 		account.setNetworkName(controller.getCurrentNetwork());
 		updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
+
 		findAccountInfoAndPreloadFields();
+
 		final var autoRenewDuration = transaction.getAutoRenewDuration();
 		if (autoRenewDuration != null) {
 			updateAutoRenew.setText(String.valueOf(autoRenewDuration.getSeconds()));
@@ -1867,24 +1870,17 @@ public class CreatePaneController implements SubController {
 		}
 
 		final var stakedAccountId = transaction.getStakedAccountId();
-		if (stakedAccountId == null) {
-			stakedAccountIdNew.setText("");
-		} else {
+		if (stakedAccountId != null) {
 			stakedAccountId.setNetworkName(controller.getCurrentNetwork());
 			stakedAccountIdNew.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
 		}
 
 		final var stakedNodeId = transaction.getStakedNodeId();
-		if (stakedNodeId == null) {
-			stakedNodeIdNew.setText("");
-		} else {
+		if (stakedNodeId != null) {
 			stakedNodeIdNew.setText(stakedNodeId.toString());
 		}
 
-		if (transaction.isDeclineStakingRewards() == null) {
-			declineStakingRewardsNew.setSelected(false);
-			declineStakingRewardsLabelUpdate.setText(String.valueOf(false));
-		} else {
+		if (transaction.isDeclineStakingRewards() != null) {
 			declineStakingRewardsNew.setSelected(transaction.isDeclineStakingRewards());
 			declineStakingRewardsLabelUpdate.setText(String.valueOf(transaction.isDeclineStakingRewards()));
 		}
@@ -2982,8 +2978,6 @@ public class CreatePaneController implements SubController {
 			throw new HederaClientException("Error while deleting temporary files");
 		}
 
-		//reload the home pane, to show the transaction
-		controller.homePaneController.initializePane();
 		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
@@ -3357,7 +3351,6 @@ public class CreatePaneController implements SubController {
 			logger.info(receipt);
 			showReceiptOnPopup(transaction, receipt);
 			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
-			controller.homePaneController.initializePane();
 			initializePane();
 			selectTransactionType.setValue(SELECT_STRING);
 		} catch (final InterruptedException e) {

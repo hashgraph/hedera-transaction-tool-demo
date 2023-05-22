@@ -20,6 +20,7 @@
 
 export PACKAGE_DIR="tools-ui/target/package/macosx"
 export JAVA_HOME
+source ".env"
 
 if ! command -v realpath > /dev/null 2>&1; then
   if command -v brew > /dev/null 2>&1; then
@@ -28,16 +29,6 @@ if ! command -v realpath > /dev/null 2>&1; then
     echo "[FATAL] The realpath command is not available and unable to install the necessary coreutils package via Homebrew!"
     exit 72
   fi
-fi
-
-JPACKAGE="${1}"
-
-echo "Java 14 jpackage path: ${JPACKAGE}";
-
-if [[ ! -x "${JPACKAGE}" ]]
-then
-    echo "'$JPACKAGE' is not executable and/or found"
-    exit 71
 fi
 
 if [[ -z "${JAVA_HOME}" ]]; then
@@ -61,8 +52,6 @@ pushd "${PACKAGE_DIR}" > /dev/null 2>&1 || echo "Failed to change directory: ${P
 file="$(basename "$(realpath ../../tools-ui-*.zip)")"
 echo "Located release package archive: $file"
 
-
-
 cp -f ../../"${file}" ./ || exit 1
 echo "Copied release archive '${file}' to '$(pwd)'"
 
@@ -73,7 +62,7 @@ extracted_folder=${file%.zip}
 echo "Using unpacked release at: ${extracted_folder}"
 cd "${extracted_folder}" || exit 1
 
-version=$(echo "${extracted_folder}" | perl -e 'chop ($ver = <STDIN>); if ($ver =~ /tools-ui-(([0-9]+\.[0-9]+\.[0-9]+){1}(-[A-Za-z0-9.]+)?){1}/i) { print "$1"; } else { print "ERROR"; }')
+version=$(echo "${extracted_folder}" | perl -e 'chop ($ver = <STDIN>); if ($ver =~ /tools-ui-(([0-9]+\.[0-9]+\.[0-9]+){1}(-[A-Za-z0-9.]+)?){1}/i) { print "$1"; } else { print "ERROR"; }' | sed 's/^[0.]*//')
 echo "Determined package version: ${version}"
 
 mv TransactionTools.icns ../TransactionTools-volume.icns
@@ -89,51 +78,30 @@ if [[ "${CI}" == true || "${CIRCLECI}" == true ]]; then
   LICENSE_FILE="../../../../../tools-ui/src/main/resources/license.txt"
 fi
 
-$JPACKAGE \
+TOOL_NAME="TransactionTools"
+jpackage \
+      --type pkg \
       --input ./ \
-      --name TransactionTools \
+      --name ${TOOL_NAME} \
       --main-jar transactiontools.jar \
       --main-class com.hedera.hashgraph.client.ui.Main \
-      --type pkg \
       --icon ../TransactionTools-volume.icns \
-      --app-version "${version}" \
+      --app-version ${version} \
       --vendor "Hedera Hashgraph LLC." \
       --dest ../../../../../Release \
+      --module-path $JAVA_HOME/../javafx-jmods-20.0.1 \
+      --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
       --license-file ${LICENSE_FILE} \
       --verbose \
-      --resource-dir ${RESOURCE_DIR}
-
-# old options for javapackager
-#$JDK_V10/bin/javapackager \
-#    -deploy \
-#    -native pkg \
-#    -outdir ../../../../../Release \
-#    -outfile "TransactionTools.app" \
-#    -srcdir ./ \
-#    -appclass com.hedera.hashgraph.client.ui.Main \
-#    -argument -Xverify:none \
-#    -name TransactionTools \
-#    -title "Transaction Tools" \
-#    -vendor "Hedera Hashgraph LLC." \
-#    -nosign \
-#    -Bicon="../TransactionTools-volume.icns" \
-#    -BappVersion="$version" \
-#    -Bmac.CFBundleVersion="$version" \
-#    -v
+      --resource-dir ${RESOURCE_DIR} \
+      --mac-sign \
+      --mac-signing-key-user-name "$SIGNING_KEY_USER_NAME"
 
 popd > /dev/null 2>&1 || echo "Failed to revert to previous directory path"
 
 cd Release
 
-for i in *.zip; do
-  gpg -v --batch --yes --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
-done;
-for i in *.pkg; do
-  gpg -v --batch --yes --local-user BE58C1FF5793639F181E7FD8D9D77EEEFF9B659C --armor --detach-sig "$i";
-done;
-
+xcrun notarytool submit "${TOOL_NAME}-${version}.pkg" --wait --keychain-profile $KEYCHAIN_PROFILE
+xcrun stapler staple "${TOOL_NAME}-${version}.pkg"
 
 echo "Build complete."
-
-
-

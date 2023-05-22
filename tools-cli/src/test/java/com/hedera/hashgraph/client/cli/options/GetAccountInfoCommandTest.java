@@ -70,7 +70,7 @@ class GetAccountInfoCommandTest implements GenericFileReadWriteAware {
 
 	@BeforeAll
 	static void beforeAll() throws KeyStoreException {
-		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var privateKey = dotenv.get("TEST_PRIVATE_KEY");
 		final var myPrivateKey = Ed25519PrivateKey.fromBytes(Hex.decode(privateKey.startsWith("0x") ? privateKey.substring(2) : privateKey));

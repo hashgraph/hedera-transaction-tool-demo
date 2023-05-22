@@ -18,21 +18,20 @@
 
 package com.hedera.hashgraph.client.cli.options;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
-import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
+import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -65,9 +64,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			required = true)
 	private String rootFolder;
 
-	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the folder containing the " +
-			"account info files for the account(s) corresponding to the transaction")
-	private String infoFiles;
+	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
+			"the account(s) corresponding to the transaction", split = ",")
+	private String[] infoFiles;
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
@@ -85,7 +84,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	// This is a best guess approach, for a quick fix, as the key is deduced based on the
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
-	private final Map<File, AccountInfo> infos = new HashMap<>();
+
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private final List<File> unzips = new ArrayList<>();
 	@Override
@@ -98,9 +97,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		if (!root.exists()) {
 			throw new HederaClientException("Cannot find the transactions root folder");
 		}
-
-		// Parse account info files from inputs
-		loadVerificationFiles(Constants.INFO_EXTENSION, infoFiles);
 
 		// Parse public key files from inputs
 		loadVerificationFiles(Constants.PUB_EXTENSION, keyFiles);
@@ -173,8 +169,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 
 			// If only a single file, then rename as needed, and move to the new location
-			final var filenamePrefix = (output.contains("Node")) ? 
-					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1) 
+			final var filenamePrefix = (output.contains("Node")) ?
+					output.substring(output.lastIndexOf(FILE_NAME_GROUP_SEPARATOR) + 1)
 							+ FILE_NAME_GROUP_SEPARATOR : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
@@ -226,47 +222,58 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// that transaction.
 		final Map<String, List<String>> verifyWithFiles = new HashMap<>();
 
-		for (final var entry : transactions.entrySet()) {
+		final var iterator = transactions.entrySet().iterator();
+		while (iterator.hasNext()) {
+			final var entry = iterator.next();
 			var helper = entry.getValue();
 			// Get the transactionId and use that as the key for the verification map
 			var transactionId = helper.getBaseName();
 			var fileName = helper.getTransactionFile();
-			// Make sure this transaction isn't already in the map
-			// (Multi-node submission will have duplicate transactionId entries)
-			if (verifyWithFiles.containsKey(transactionId)) {
-				continue;
-			}
-
 			// Collate all signatures, this process will also verify the signatures,
 			// ensuring the required signatures are present.
-			helper.collate(infoFiles);
+			try {
+				helper.collate(infoFiles);
+			} catch (HederaClientRuntimeException e) {
+				// If collating failed, add an item to the verification list
+				// Make sure this transaction isn't already in the map
+				// (Multi-node submission will have duplicate transactionId entries)
+				if (addItemListToVerification(verifyWithFiles, fileName, transactionId)) {
+					logger.warn("Collation and Verification of " + transactionId
+							+ " failed due to the following error: "
+							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
+				}
+				iterator.remove();
+				continue;
+			}
 
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
 			// due to transfer, etc.
-			var requiredIds = helper.getSigningAccounts().stream()
+			final var accounts = helper.getSigningAccounts();
+			final var requiredIdsInUse = accounts.stream()
+					.filter(account -> !java.util.Arrays.stream(infoFiles)
+							.filter(a -> CommonMethods.getInfoFiles(a, account).length > 0)
+							.collect(Collectors.toList())
+							.isEmpty())
 					.map(AccountId::toString)
 					.collect(Collectors.toList());
 
 			// Get the list of public key names used to sign the transaction (if the key is a required key)
 			var publicKeyNames = getPublicKeyNames(helper);
 			// Sort the list of ids
-			Collections.sort(requiredIds);
+			Collections.sort(requiredIdsInUse);
 			// Sort the list of public keys
 			Collections.sort(publicKeyNames);
 
 			// Now put everything into the list for the csv
 			// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
-			var verificationItemList = new ArrayList<String>();
-			verificationItemList.add(fileName);
-			verificationItemList.add(transactionId);
-			verificationItemList.add("\"" + String.join(",", requiredIds) + "\"");
-			verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
-
-
-			// Put the list of strings into the map
-			verifyWithFiles.put(transactionId, verificationItemList);
+			// Make sure this transaction isn't already in the map
+			// (Multi-node submission will have duplicate transactionId entries)
+			addItemListToVerification(verifyWithFiles, fileName, transactionId,
+									"\"" + String.join(",", requiredIdsInUse) + "\"",
+									"\"" + String.join(",", publicKeyNames) + "\"");
 		}
+
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
 		Collections.sort(listOfVerifiedFiles, (list1, list2) -> {
 			if (list1 == null || list1.isEmpty() || list1.get(0) == null) {
@@ -293,11 +300,27 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				if (keyName != null) {
 					idList.add(keyName);
 				} else {
-					idList.add(keyEntry.getValue());
+					idList.add("unknown-key");
 				}
 			}
 		}
 		return idList;
+	}
+
+	@NotNull
+	private boolean addItemListToVerification(@NotNull Map<String, List<String>> map,
+			@NotNull String fileName,
+			@NotNull String transactionId,
+			@NotNull String... details) {
+		if (!map.containsKey(transactionId)) {
+			var verificationItemList = new ArrayList<String>();
+			verificationItemList.add(fileName);
+			verificationItemList.add(transactionId);
+			verificationItemList.addAll(Arrays.stream(details).collect(Collectors.toList()));
+			map.put(transactionId, verificationItemList);
+			return true;
+		}
+		return false;
 	}
 
 	private void loadTransactions(final File root) throws HederaClientException {
@@ -395,22 +418,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				parseFiles(inner, extension);
 				return;
 			}
-			try {
-				switch (extension) {
-					case Constants.INFO_EXTENSION:
-						infos.put(file, AccountInfo.fromBytes(readBytes(file)));
-						break;
-					case Constants.PUB_EXTENSION:
-						publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
-								FilenameUtils.getBaseName(file.getName()));
-						break;
-					default:
-						throw new HederaClientException("Not implemented");
-				}
-
-			} catch (final InvalidProtocolBufferException e) {
-				logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, file.getName());
-				throw new HederaClientException(e);
+			if (Constants.PUB_EXTENSION.equals(extension)) {
+				publicKeys.put(EncryptionUtils.publicKeyFromFile(file.getAbsolutePath()),
+						FilenameUtils.getBaseName(file.getName()));
+			} else {
+				throw new HederaClientException("Not implemented");
 			}
 		}
 	}

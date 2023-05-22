@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.12.2</version>
+		<version>0.13.0</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -62,9 +62,10 @@
 		<pragmatists.version>1.1.1</pragmatists.version>
 		<google.code.gson.version>2.10.1</google.code.gson.version>
 		<opencsv.version>5.7.1</opencsv.version>
-		<hedera.hashgraph.sdk.version>2.17.2</hedera.hashgraph.sdk.version>
+		<hedera.hashgraph.sdk.version>2.24.1</hedera.hashgraph.sdk.version>
 		<org.jetbrains.version>24.0.0</org.jetbrains.version>
 		<dotenv.version>2.3.2</dotenv.version>
+		<caffeine.version>3.1.6</caffeine.version>
 		<maven.artifact>3.9.0</maven.artifact>
 	</properties>
 
@@ -293,6 +294,12 @@
 				<groupId>org.apache.httpcomponents</groupId>
 				<artifactId>httpclient</artifactId>
 				<version>${apache.httpclient.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.ben-manes.caffeine</groupId>
+				<artifactId>caffeine</artifactId>
+				<version>${caffeine.version}</version>
 			</dependency>
 
 			<!-- Picocli -->

@@ -208,15 +208,15 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		signaturePairs.add(signaturePair);
 	}
 
-	public final Transaction<?> collate() {
+	public final Transaction<?> collate() throws HederaClientRuntimeException {
 		return transaction.collate(signaturePairs);
 	}
 
-	public final Transaction<?> collate(final String folder) {
-		if (folder == null || "".equals(folder)) {
+	public final Transaction<?> collate(final String... folders) throws HederaClientRuntimeException {
+		if (folders == null || folders.length == 0) {
 			return collate();
 		}
-		return transaction.collate(folder, signaturePairs);
+		return transaction.collate(signaturePairs, folders);
 	}
 
 	public void addComments(final File commentFile) throws HederaClientException {

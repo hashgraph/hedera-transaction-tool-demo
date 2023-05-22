@@ -59,8 +59,8 @@ class TransactionCallableWorkerTest implements GenericFileReadWriteAware {
 	private PrivateKey myPrivateKey;
 	private Ed25519KeyStore myKeyStore;
 	@BeforeEach
-	void setUp() throws KeyStoreException {		
-		var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
+	void setUp() throws KeyStoreException {
+		final var dotenv = Dotenv.configure().directory("../").ignoreIfMissing().load();
 		myAccountId = AccountId.fromString(dotenv.get("TEST_ACCOUNT_ID"));
 		final var privateKey = dotenv.get("TEST_PRIVATE_KEY");
 		myPrivateKey = PrivateKey.fromString(privateKey);
