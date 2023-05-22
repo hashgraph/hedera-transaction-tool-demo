@@ -24,8 +24,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Ignore;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,7 +33,6 @@ import javax.swing.filechooser.FileSystemView;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
@@ -61,9 +58,6 @@ class UpdateHelperTest {
 	void setUp() throws IOException {
 		FileUtils.copyDirectory(new File(OLD_TOOLS_FOLDER), new File(workingDirectory, TRANSACTION_TOOLS));
 	}
-
-	@AfterEach
-	void tearDown() {}
 
 	@Test
 	void isValid() throws IOException {

@@ -31,6 +31,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -236,15 +237,15 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				// If collating failed, add an item to the verification list
 				// Make sure this transaction isn't already in the map
 				// (Multi-node submission will have duplicate transactionId entries)
-				if (!verifyWithFiles.containsKey(transactionId)) {
-					var verificationItemList = new ArrayList<String>();
-					verificationItemList.add(fileName);
-					verificationItemList.add(transactionId);
-					verifyWithFiles.put(transactionId, verificationItemList);
-					logger.info("Collation and Verification of " + transactionId
+				verifyWithFiles.computeIfAbsent(transactionId, s -> {
+					var list = createVerificationItemList(
+							fileName,
+							transactionId);
+					logger.warn("Collation and Verification of " + transactionId
 							+ " failed due to the following error: "
 							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
-				}
+					return list;
+				});
 				iterator.remove();
 				continue;
 			}
@@ -272,16 +273,12 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// transactionFileName, transactionId, list of accounts (requiredIds), list of keys used (getPublicKeyNames)
 			// Make sure this transaction isn't already in the map
 			// (Multi-node submission will have duplicate transactionId entries)
-			if (!verifyWithFiles.containsKey(transactionId)) {
-				var verificationItemList = new ArrayList<String>();
-				verificationItemList.add(fileName);
-				verificationItemList.add(transactionId);
-				verificationItemList.add("\"" + String.join(",", requiredIdsInUse) + "\"");
-				verificationItemList.add("\"" + String.join(",", publicKeyNames) + "\"");
-
-				// Put the list of strings into the map
-				verifyWithFiles.put(transactionId, verificationItemList);
-			}
+			verifyWithFiles.computeIfAbsent(transactionId, s -> createVerificationItemList(
+														fileName,
+														transactionId,
+														"\"" + String.join(",", requiredIdsInUse) + "\"",
+														"\"" + String.join(",", publicKeyNames) + "\"")
+			);
 		}
 
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
@@ -315,6 +312,13 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			}
 		}
 		return idList;
+	}
+
+	@NotNull
+	private List<String> createVerificationItemList(@NotNull String... details) {
+			var verificationItemList = new ArrayList<String>();
+			verificationItemList.addAll(Arrays.stream(details).collect(Collectors.toList()));
+			return verificationItemList;
 	}
 
 	private void loadTransactions(final File root) throws HederaClientException {
