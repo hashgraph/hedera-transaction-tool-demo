@@ -387,23 +387,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	private KeyList buildKeyList(final String[] accountsInfoFolders) throws HederaClientRuntimeException {
 		// Determine all the accounts that need to be involved in the signing
 		final var accounts = getSigningAccounts();
-//		here, i want to see which accounts i have info for, and which i do not
-//			then, if I have account infos, i can at least verify that much
-//				if not, just add sigs to transaction and check size
-//				maybe -> do something similar, but any sigs NOT found in an account, add to the transaction right away
-//				and assume that they need to be tehre, IF in accounts and NOT in infofiles. wait, how would a sig know
-//				if it is in accounts or not?
-//		update does something similar,
-//				it really needs to check teh transaction itself for the keylist as update has the keylist
-//				so what do I do about this one? if I don't have accountinfo, i don't know if a sig belongs to the account
-//				or not, so I can't do the above. so i have to assume that IF any accounts are missing info, then all sigs
-//		found should be included, but if no accounts are missing info, then all 'stray' sigs can be ignored? or should
-//				the only time that could be an issue is if a 'stray' sig is only stray becuase the account info is outdated
-//
-//				i think the answer is stray sigs get added first, no matter what, then smart collate the rest, if that fails
-//				then it can return 'failure', otherwise the verification csv will be manually used to show sig issues?
-//		except when the amount of 'stray' sigs is so many that it can't find a valid path, then the error will state whatever, which might
-//	not indicate it's an issue with stray sigs?
 		final var fileSet = accounts.stream()
 				.flatMap(account -> java.util.Arrays.stream(accountsInfoFolders)
 							.map(a -> CommonMethods.getInfoFiles(a, account)))
