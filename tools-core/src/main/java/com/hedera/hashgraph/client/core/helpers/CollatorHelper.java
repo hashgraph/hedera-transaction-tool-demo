@@ -61,7 +61,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private ToolTransaction transaction;
 	// The directory name where the file will be stored
-	private String transactionFile = "";
+	private String transactionFile;
 	// The actual file name used to store the signed transaction
 	private final String baseName;
 	private final JsonArray comments = new JsonArray();
@@ -112,8 +112,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			} else if (parentNameParts.length > 4) {
 				// This would be for older versions, but attempt to remove the last 4 and put the rest back
 				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.asList(parentNameParts)
-						.subList(0, nameLength).toArray(new String[nameLength]);
+				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
 			} else {
 				return parentName;
@@ -137,8 +136,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			} else if (parentNameParts.length > 4) {
 				// This would be for older versions, but attempt to remove the last 4 and put the rest back
 				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.asList(parentNameParts)
-						.subList(0, nameLength).toArray(new String[nameLength]);
+				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
 			}
 		}
@@ -287,7 +285,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	}
 
 	public String store(final String key) throws HederaClientException {
-		var output = "./Temp/" + this.transactionFile;
+		var output = this.transactionFile;
 
 		final var outFile = new File(output);
 		// If the output is a file, set the output as the parent
@@ -302,6 +300,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
 		}
 		final var transactionBytes = transaction.toBytes();
+		// Add the temporary directory prefix
+		output = "./Temp/" + output;
 		// Write the bytes of the signed transaction to file
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
 		// Return the enclosing directory

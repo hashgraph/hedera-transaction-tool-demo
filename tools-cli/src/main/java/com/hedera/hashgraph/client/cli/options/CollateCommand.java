@@ -109,8 +109,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		// and create the info for the verification.csv,
 		final var verification = verifyTransactions();
 
-		if (verification.isEmpty()) {
-			logger.info("Transactions not verified. Terminating");
+		if (verification.isEmpty() || transactions.isEmpty()) {
+			logger.error("All transactions failed verification. Terminating");
 			cleanup();
 			return;
 		}
@@ -131,6 +131,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Group up the files in preparation to be moved
 			outputs.add(helper.store(entry.getKey()));
 		}
+
 		logger.info("Transactions collated and stored");
 
 		moveToOutput(outputs);
@@ -140,7 +141,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		logger.info("Collation done");
 	}
 
-	private final void cleanup() throws IOException {
+	private void cleanup() throws IOException {
 		// Clean up all the unzipped directories
 		for (final var unzip : unzips) {
 			FileUtils.deleteDirectory(unzip);
@@ -174,11 +175,10 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 							+ FILE_NAME_GROUP_SEPARATOR : "";
 			final var destination = new File(out + File.separator + filenamePrefix + files[0].getName());
 
-			if (Files.deleteIfExists(destination.toPath())) {
-				logger.info("Destination file deleted");
-			}
-
+			// Overwriting the file, if it exists
+			Files.deleteIfExists(destination.toPath());
 			FileUtils.moveFile(files[0], destination);
+			// Delete the temporary output
 			FileUtils.deleteDirectory(new File(output));
 		}
 	}
@@ -238,7 +238,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 				// Make sure this transaction isn't already in the map
 				// (Multi-node submission will have duplicate transactionId entries)
 				if (addItemListToVerification(verifyWithFiles, fileName, transactionId)) {
-					logger.warn("Collation and Verification of " + transactionId
+					logger.error("Collation and Verification of " + transactionId
 							+ " failed due to the following error: "
 							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
 				}
@@ -270,8 +270,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Make sure this transaction isn't already in the map
 			// (Multi-node submission will have duplicate transactionId entries)
 			addItemListToVerification(verifyWithFiles, fileName, transactionId,
-									"\"" + String.join(",", requiredIdsInUse) + "\"",
-									"\"" + String.join(",", publicKeyNames) + "\"");
+					"\"" + String.join(",", requiredIdsInUse) + "\"",
+					"\"" + String.join(",", publicKeyNames) + "\"");
 		}
 
 		final var listOfVerifiedFiles =  new ArrayList<>(verifyWithFiles.values());
@@ -309,9 +309,9 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	@NotNull
 	private boolean addItemListToVerification(@NotNull Map<String, List<String>> map,
-			@NotNull String fileName,
-			@NotNull String transactionId,
-			@NotNull String... details) {
+											  @NotNull String fileName,
+											  @NotNull String transactionId,
+											  @NotNull String... details) {
 		if (!map.containsKey(transactionId)) {
 			var verificationItemList = new ArrayList<String>();
 			verificationItemList.add(fileName);
