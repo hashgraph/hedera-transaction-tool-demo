@@ -365,14 +365,27 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	private String buildBaseName(final File file) {
 		final var pathName = file.getAbsolutePath();
-		final var baseName = FilenameUtils.getBaseName(pathName);
+		var baseName = FilenameUtils.getBaseName(pathName);
+
+		// First, determine if the naming convention is the new or old version
+		// Old convention does not use '.'
+		if (!baseName.contains(".")) {
+			// Now change the string to follow current convention
+			// First, replace all '_' with a '.'
+			baseName = baseName.replace("_", ".");
+			// Then, replace all '-' with '_'
+			baseName = baseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
+		}
 
 		if (pathName.contains("Node")) {
 			final var suffix0 = pathName.contains("signatures") ? "_signatures" : "";
 			final var suffix = pathName.contains("transactions") ? "_transactions" : suffix0;
 
-			return pathName.substring(pathName.indexOf("Node"), pathName.indexOf(suffix)) +
-					FILE_NAME_GROUP_SEPARATOR + baseName;
+			// This won't affect the new naming convention, only the old version
+			final var nodeNumber = pathName.substring(pathName.indexOf("Node")+5, pathName.indexOf(suffix));
+			final var nodeName = "Node-" + nodeNumber.replace("-", ".");
+
+			return nodeName + FILE_NAME_GROUP_SEPARATOR + baseName;
 		}
 
 		return baseName;

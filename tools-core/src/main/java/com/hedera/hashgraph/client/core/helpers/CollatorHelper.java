@@ -71,12 +71,12 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			case TRANSACTION_EXTENSION:
 				this.transaction = new ToolTransaction().parseFile(file);
 				this.transactionFile = getFileOutput(file);
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				break;
 			case SIGNATURE_EXTENSION:
 				this.transaction = null;
 				this.transactionFile = "";
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				var pair = new SignaturePair(file.getAbsolutePath());
 				signaturePairs.add(pair);
 				// If the same Public key is used multiple times with different names, this
@@ -86,7 +86,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			case TXT_EXTENSION:
 				this.transaction = null;
 				this.transactionFile = "";
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				comments.add(readJsonObject(file));
 				break;
 			default:
@@ -169,6 +169,21 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 	public String getBaseName() {
 		return baseName;
+	}
+
+	private String buildBaseName(final File file) {
+		final var pathName = file.getAbsolutePath();
+		var fileBaseName = FilenameUtils.getBaseName(pathName);
+
+		// First, determine if the naming convention is the new or old version
+		// Old convention does not use '.'
+		if (!fileBaseName.contains(".")) {
+			// Now change the string to follow current convention
+			fileBaseName = fileBaseName.replace("_", ".");
+			fileBaseName = fileBaseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
+		}
+
+		return fileBaseName;
 	}
 
 	public void addSignature(final Transaction<?> transaction) {
