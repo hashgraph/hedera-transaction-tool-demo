@@ -48,22 +48,23 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 
 	@AfterEach
 	void tearDown() throws IOException {
-		Files.deleteIfExists(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.txsig").toPath());
+		Files.deleteIfExists(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.txsig").toPath());
 	}
 
+//	now that i rename this stuff, what should it do? these names are just wrong
 	@Test
 	void constructor_test() throws HederaClientException {
-		var helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
+		var helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
 		assertNull(helper.getTransaction()); // empty transaction
-		assertEquals("0-0-2_1678312256-0", helper.getBaseName());
+		assertEquals("0.0.2_1678312256.0", helper.getBaseName());
 		assertEquals("", helper.getTransactionFile());
 		assertEquals(1, helper.getSignaturePairs().size());
 		assertEquals(new JsonArray(), helper.getComments().get("comments").getAsJsonArray());
 
-		helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.tx"));
+		helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.tx"));
 		assertNotNull(helper.getTransaction().getTransaction());
-		assertEquals("0-0-2_1678312256-0", helper.getBaseName());
-		assertEquals("CollatorHelperFiles/0-0-2_1678312256-0.tx",
+		assertEquals("0.0.2_1678312256.0", helper.getBaseName());
+		assertEquals("CollatorHelperFiles/0.0.2_1678312256.0.tx",
 				helper.getTransactionFile() + File.separator + helper.getBaseName() +
 						"." + Constants.TRANSACTION_EXTENSION);
 		assertEquals(0, helper.getSignaturePairs().size());
@@ -88,27 +89,27 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 	@Test
 	void add_test() throws HederaClientException {
 		final var helper1 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
 		assertNull(helper1.getTransaction()); // empty transaction
 		assertFalse(helper1.hasTransaction());
 
-		helper1.addTransaction(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.tx"));
+		helper1.addTransaction(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.tx"));
 		assertTrue(helper1.hasTransaction());
 		assertNotNull(helper1.getTransaction().getTransaction());
-		assertEquals("CollatorHelperFiles/0-0-2_1678312256-0.tx",
+		assertEquals("CollatorHelperFiles/0.0.2_1678312256.0.tx",
 				helper1.getTransactionFile() + File.separator + helper1.getBaseName() +
 						"." + Constants.TRANSACTION_EXTENSION);
 		assertEquals(1, helper1.getSignaturePairs().size());
 		assertEquals(new JsonArray(), helper1.getComments().get("comments").getAsJsonArray());
 
-		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0" +
+		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0" +
 				".tx"));
 		assertNotNull(helper2.getTransaction()); // empty transaction
 
-		final var signaturePair = new SignaturePair("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig");
+		final var signaturePair = new SignaturePair("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig");
 		helper2.addSignature(signaturePair.getPublicKey(), signaturePair.getSignature());
 		assertNotNull(helper2.getTransaction().getTransaction());
-		assertEquals("CollatorHelperFiles/0-0-2_1678312256-0.tx",
+		assertEquals("CollatorHelperFiles/0.0.2_1678312256.0.tx",
 				helper2.getTransactionFile() + File.separator + helper2.getBaseName() +
 						"." + Constants.TRANSACTION_EXTENSION);
 		assertEquals(1, helper2.getSignaturePairs().size());
@@ -116,8 +117,8 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 
 		assertEquals(helper1, helper2);
 
-		helper1.addComments(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.txt"));
-		helper2.addComments(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.txt"));
+		helper1.addComments(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.txt"));
+		helper2.addComments(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.txt"));
 
 		assertEquals(helper1, helper2);
 
@@ -129,8 +130,8 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 		final var info = AccountInfo.fromBytes(readBytes("src/test/resources/infos/0.0.2.info"));
 
 		final var helper1 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
-		helper1.addTransaction(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.tx"));
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
+		helper1.addTransaction(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.tx"));
 		var tx = helper1.collate();
 		assertEquals(1, tx.getSignatures().size());
 		var node3 = tx.getSignatures().get(new AccountId(0, 0, 3));
@@ -154,8 +155,8 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 	@Test
 	void addHelper_test() throws HederaClientException {
 		final var helper1 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
-		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0" +
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
+		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0" +
 				".tx"));
 
 		assertNull(helper1.getTransaction()); // empty transaction
@@ -186,8 +187,8 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 	@Test
 	void addAllSignatures_test() throws HederaClientException {
 		final var helper1 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
-		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0" +
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
+		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0" +
 				".tx"));
 
 		helper1.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/main_signer.sig"));
@@ -204,8 +205,8 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 	@Test
 	@Disabled("0.0.2.info missing key information")
 	void store_test() throws HederaClientException, InvalidProtocolBufferException {
-		final var helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.tx"));
-		helper.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
+		final var helper = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.tx"));
+		helper.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
 		helper.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/main_signer.sig"));
 		helper.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/signer1.sig"));
 		helper.addSignature(new SignaturePair("src/test/resources/CollatorHelperFiles/signer2.sig"));
@@ -214,7 +215,7 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 		assertTrue(signed.exists());
 
 		Transaction<?> transaction =
-				Transaction.fromBytes(readBytes(signed + File.separator + "0-0-2_1678312256-0.txsig"));
+				Transaction.fromBytes(readBytes(signed + File.separator + "0.0.2_1678312256.0.txsig"));
 		assertNotNull(transaction);
 		assertTrue(transaction instanceof TransferTransaction);
 		assertTrue(transaction.getSignatures().isEmpty());
@@ -226,7 +227,7 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 		signed = new File(helper.store("key"));
 		assertTrue(signed.exists());
 		transaction =
-				Transaction.fromBytes(readBytes(signed + File.separator + "0-0-2_1678312256-0.txsig"));
+				Transaction.fromBytes(readBytes(signed + File.separator + "0.0.2_1678312256.0.txsig"));
 		assertNotNull(transaction);
 		assertTrue(transaction instanceof TransferTransaction);
 		signatures = transaction.getSignatures().get(new AccountId(0, 0, 3));
@@ -239,13 +240,13 @@ class CollatorHelperTest implements GenericFileReadWriteAware {
 	@Test
 	void hashCode_test() throws HederaClientException {
 		final var helper1 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
-		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0" +
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
+		final var helper2 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0" +
 				".tx"));
 
 		final var helper3 =
-				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0.sig"));
-		final var helper4 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0-0-2_1678312256-0" +
+				new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0.sig"));
+		final var helper4 = new CollatorHelper(new File("src/test/resources/CollatorHelperFiles/0.0.2_1678312256.0" +
 				".tx"));
 
 		assertEquals(helper1.hashCode(), helper3.hashCode());
