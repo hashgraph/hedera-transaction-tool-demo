@@ -1167,14 +1167,22 @@ public class CreatePaneController implements SubController {
 		return flag;
 	}
 
+	// There are issues re-initializing the tables.
+	// First, it is unnecessary.
+	// Second, if the columns get removed and recreated and re-added to the same table,
+	// then row data is not always displayed upon reuse. This is a quick way to resolve the matter.
+	boolean initializeTables = true;
 	private void cleanAllTransferFields() {
 		cleanCommonFields();
 		toTransferTable.getItems().clear();
 		fromTransferTable.getItems().clear();
 		transferCurrencyVBox.setVisible(false);
 		clearErrorMessages(invalidDate, invalidFeePayer, invalidNode);
-		initializeTable(fromTransferTable);
-		initializeTable(toTransferTable);
+		if (initializeTables) {
+			initializeTable(fromTransferTable);
+			initializeTable(toTransferTable);
+			initializeTables = false;
+		}
 	}
 
 	private void initializeTable(final TableView<AccountAmountStrings> table) {
