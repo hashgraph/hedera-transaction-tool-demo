@@ -20,7 +20,6 @@
 
 #sudo chown root:wheel "/Applications"
 
-
 echo "Moving application out of containing folder."
 [[ -e "/Applications/TransactionTools.localized/TransactionTools.app" ]] && mv -f /Applications/TransactionTools.localized/TransactionTools.app /Applications/TransactionTools.app
 

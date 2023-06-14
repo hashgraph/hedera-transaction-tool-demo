@@ -24,6 +24,7 @@ then
 fi
 
 echo "Removing old application if it exists"
+[[ -e "/Applications/TransactionTool.app" ]] && sudo rm -rf /Applications/TransactionTool.app
 [[ -e "/Applications/TransactionTools.app" ]] && sudo rm -rf /Applications/TransactionTools.app
 
 exit 0
