@@ -45,7 +45,7 @@
 		<junit.version>5.9.2</junit.version>
 		<ztzip.version>1.15</ztzip.version>
 		<testfx.version>4.0.16-alpha</testfx.version>
-		<bouncycastle.version>1.72</bouncycastle.version>
+		<bouncycastle.version>1.74</bouncycastle.version>
 		<passpol.version>0.7.0</passpol.version>
 		<protobuf.version>3.22.0</protobuf.version>
 		<grpc.version>1.53.0</grpc.version>
