@@ -66,7 +66,6 @@ version=$(echo "${extracted_folder}" | perl -e 'chop ($ver = <STDIN>); if ($ver 
 echo "Determined package version: ${version}"
 
 mv TransactionTools.icns ../TransactionTools-volume.icns
-#mv logo.png ../TransactionTools-background.png
 mv resources/TransactionTools-dmg-setup.scpt  ../TransactionTools-dmg-setup.scpt
 
 
@@ -79,6 +78,7 @@ if [[ "${CI}" == true || "${CIRCLECI}" == true ]]; then
 fi
 
 TOOL_NAME="TransactionTools"
+JAVAFX_VERSION="javafx-jmods-20.0.1-aarch64"
 jpackage \
       --type pkg \
       --input ./ \
@@ -86,11 +86,11 @@ jpackage \
       --main-jar transactiontools.jar \
       --main-class com.hedera.hashgraph.client.ui.Main \
       --icon ../TransactionTools-volume.icns \
+      --module-path $JAVA_HOME/jmods:$JAVA_HOME/../${JAVAFX_VERSION} \
+      --add-modules java.base,java.prefs,java.desktop,java.logging,javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
       --app-version ${version} \
       --vendor "Hedera Hashgraph LLC." \
       --dest ../../../../../Release \
-      --module-path $JAVA_HOME/../javafx-jmods-20.0.1 \
-      --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
       --license-file ${LICENSE_FILE} \
       --verbose \
       --resource-dir ${RESOURCE_DIR} \

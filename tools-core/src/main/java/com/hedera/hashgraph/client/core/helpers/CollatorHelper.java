@@ -61,7 +61,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	private final Map<PublicKey, String> publicKeys = new HashMap<>();
 	private ToolTransaction transaction;
 	// The directory name where the file will be stored
-	private String transactionFile = "";
+	private String transactionFile;
 	// The actual file name used to store the signed transaction
 	private final String baseName;
 	private final JsonArray comments = new JsonArray();
@@ -71,12 +71,12 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			case TRANSACTION_EXTENSION:
 				this.transaction = new ToolTransaction().parseFile(file);
 				this.transactionFile = getFileOutput(file);
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				break;
 			case SIGNATURE_EXTENSION:
 				this.transaction = null;
 				this.transactionFile = "";
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				var pair = new SignaturePair(file.getAbsolutePath());
 				signaturePairs.add(pair);
 				// If the same Public key is used multiple times with different names, this
@@ -86,7 +86,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			case TXT_EXTENSION:
 				this.transaction = null;
 				this.transactionFile = "";
-				this.baseName = FilenameUtils.getBaseName(file.getAbsolutePath());
+				this.baseName = buildBaseName(file);
 				comments.add(readJsonObject(file));
 				break;
 			default:
@@ -112,8 +112,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			} else if (parentNameParts.length > 4) {
 				// This would be for older versions, but attempt to remove the last 4 and put the rest back
 				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.asList(parentNameParts)
-						.subList(0, nameLength).toArray(new String[nameLength]);
+				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
 			} else {
 				return parentName;
@@ -137,8 +136,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			} else if (parentNameParts.length > 4) {
 				// This would be for older versions, but attempt to remove the last 4 and put the rest back
 				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.asList(parentNameParts)
-						.subList(0, nameLength).toArray(new String[nameLength]);
+				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
 			}
 		}
@@ -171,6 +169,21 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 	public String getBaseName() {
 		return baseName;
+	}
+
+	private String buildBaseName(final File file) {
+		final var pathName = file.getAbsolutePath();
+		var fileBaseName = FilenameUtils.getBaseName(pathName);
+
+		// First, determine if the naming convention is the new or old version
+		// Old convention does not use '.'
+		if (!fileBaseName.contains(".")) {
+			// Now change the string to follow current convention
+			fileBaseName = fileBaseName.replace("_", ".");
+			fileBaseName = fileBaseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
+		}
+
+		return fileBaseName;
 	}
 
 	public void addSignature(final Transaction<?> transaction) {
@@ -287,7 +300,7 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	}
 
 	public String store(final String key) throws HederaClientException {
-		var output = "./Temp/" + this.transactionFile;
+		var output = this.transactionFile;
 
 		final var outFile = new File(output);
 		// If the output is a file, set the output as the parent
@@ -302,6 +315,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
 		}
 		final var transactionBytes = transaction.toBytes();
+		// Add the temporary directory prefix
+		output = "./Temp/" + output;
 		// Write the bytes of the signed transaction to file
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
 		// Return the enclosing directory
