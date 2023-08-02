@@ -235,6 +235,9 @@ public class CreatePaneController implements SubController {
 	public static final String STATUS = "Status";
 	public static final String TRANSACTION_FAILED_ERROR_MESSAGE =
 			"Transaction failed with error %s. Please review the transaction and try again.";
+	private static final String STAKED_NODE_ID_ERROR = "Staked Node ID cannot be set when Staked Account ID is set";
+	private static final String UNKNOWN = "unknown";
+	private static final String UNSET = "unset";
 
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
@@ -857,15 +860,17 @@ public class CreatePaneController implements SubController {
 
 	private void cleanAllCreateFields() {
 		cleanCommonFields();
-		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		createSignatureRequired.setSelected(false);
-		declineStakingRewards.setSelected(false);
 		createInitialBalance.setText("0");
-		stakedAccountIdField.setText("");
-		stakedNodeIdField.setText("");
 		newKeyJSON = emptyKeyObject();
 		createNewKey.setContent(new HBox());
 		createNewKey.setVisible(false);
+		createAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		createAccountMemo.setText("");
+		createMaxTokenAssociations.setText("0");
+		createSignatureRequired.setSelected(false);
+		stakedAccountIdField.setText("");
+		stakedNodeIdField.setText("");
+		declineStakingRewards.setSelected(false);
 		clearErrorMessages(invalidCreateAutoRenew, invalidDate, invalidFeePayer, invalidCreateNewKey, invalidNode,
 				invalidStakedAccountId, invalidStakedNodeId);
 	}
@@ -902,8 +907,8 @@ public class CreatePaneController implements SubController {
 
 			if ((stakedAccountIdField.getText() != null) && (!stakedAccountIdField.getText().isEmpty())) {
 				invalidStakedNodeId.setVisible(true);
-				invalidStakedNodeId.setText("Staked Node ID cannot be set when Staked Account ID is set");
-				displayAndLogInformation("Staked Node ID cannot be set when Staked Account ID is set");
+				invalidStakedNodeId.setText(STAKED_NODE_ID_ERROR);
+				displayAndLogInformation(STAKED_NODE_ID_ERROR);
 				flag = false;
 			} else {
 				invalidStakedNodeId.setText("Invalid node ID");
@@ -990,8 +995,8 @@ public class CreatePaneController implements SubController {
 
 			if ((stakedAccountIdNew.getText() != null) && (!stakedAccountIdNew.getText().isEmpty())) {
 				invalidStakedNodeIdUpdate.setVisible(true);
-				invalidStakedNodeIdUpdate.setText("Staked Node ID cannot be set when Staked Account ID is set");
-				displayAndLogInformation("Staked Node ID cannot be set when Staked Account ID is set");
+				invalidStakedNodeIdUpdate.setText(STAKED_NODE_ID_ERROR);
+				displayAndLogInformation(STAKED_NODE_ID_ERROR);
 				flag = false;
 			} else {
 				invalidStakedNodeIdUpdate.setText("Invalid node ID");
@@ -1014,20 +1019,23 @@ public class CreatePaneController implements SubController {
 	private void cleanAllUpdateFields() {
 		cleanCommonFields();
 		updateAccountID.clear();
-		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
-		updateReceiverSignatureRequired.setSelected(false);
-		updateARPOriginal.clear();
-		updateRSROriginal.setText("unknown");
-		declineStakingRewardsOriginal.setText("unknown");
-		declineStakingRewardsNew.setSelected(false);
-		stakedAccountIdOriginal.setPromptText("unknown");
-		stakedAccountIdNew.setText("");
-		stakedNodeIdOriginal.setPromptText("unknown");
-		stakedNodeIdNew.setText("");
 		updateOriginalKey.setContent(new HBox());
 		updateNewKey.setContent(new HBox());
 		updateNewKey.setVisible(false);
-
+		updateARPOriginal.clear();
+		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		updateAccountMemoOriginal.setText(UNKNOWN);
+		updateAccountMemoNew.setText("");
+		updateMaxTokensOriginal.setText(UNKNOWN);
+		updateMaxTokensNew.setText("");
+		updateRSROriginal.setText(UNKNOWN);
+		updateReceiverSignatureRequired.setSelected(false);
+		stakedAccountIdOriginal.setPromptText(UNKNOWN);
+		stakedAccountIdNew.setText("");
+		stakedNodeIdOriginal.setPromptText(UNKNOWN);
+		stakedNodeIdNew.setText("");
+		declineStakingRewardsOriginal.setText(UNKNOWN);
+		declineStakingRewardsNew.setSelected(false);
 		clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey, invalidNode,
 				invalidUpdateAccountToUpdate, invalidStakedAccountId, invalidStakedNodeId);
 
@@ -1064,13 +1072,13 @@ public class CreatePaneController implements SubController {
 					stakedAccountIdOriginal.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
 				} else {
 					stakedAccountIdOriginal.setText("");
-					stakedAccountIdOriginal.setPromptText("unset");
+					stakedAccountIdOriginal.setPromptText(UNSET);
 				}
 				if (accountInfo.stakingInfo.stakedNodeId != null) {
 					stakedNodeIdOriginal.setText(accountInfo.stakingInfo.stakedNodeId.toString());
 				} else {
 					stakedNodeIdOriginal.setText("");
-					stakedNodeIdOriginal.setPromptText("unset");
+					stakedNodeIdOriginal.setPromptText(UNSET);
 				}
 				declineStakingRewardsOriginal.setText(String.valueOf(accountInfo.stakingInfo.declineStakingReward));
 				// Set the new value to be the same as the original
@@ -1078,9 +1086,9 @@ public class CreatePaneController implements SubController {
 			} else {
 				stakedAccountIdOriginal.setText("");
 				stakedNodeIdOriginal.setText("");
-				declineStakingRewardsOriginal.setText("unset");
-				stakedAccountIdOriginal.setPromptText("unset");
-				stakedNodeIdOriginal.setPromptText("unset");
+				declineStakingRewardsOriginal.setText(UNSET);
+				stakedAccountIdOriginal.setPromptText(UNSET);
+				stakedNodeIdOriginal.setPromptText(UNSET);
 			}
 			if (!fromFile) {
 				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
