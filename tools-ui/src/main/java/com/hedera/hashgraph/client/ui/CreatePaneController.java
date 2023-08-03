@@ -967,8 +967,9 @@ public class CreatePaneController implements SubController {
 			flag = false;
 		}
 
-		if ("".equals(updateAutoRenew.getText()) || Long.parseLong(updateAutoRenew.getText()) <= 0L || Long.parseLong(
-				updateAutoRenew.getText()) > 7776000L) {
+		if (!"".equals(updateAutoRenew.getText()) &&
+				(Long.parseLong(updateAutoRenew.getText()) <= 0L
+						|| Long.parseLong(updateAutoRenew.getText()) > 7776000L)) {
 			invalidUpdatedAutoRenew.setVisible(true);
 			controller.displaySystemMessage("Error: auto renew field not in range");
 			flag = false;
@@ -1023,7 +1024,7 @@ public class CreatePaneController implements SubController {
 		updateNewKey.setContent(new HBox());
 		updateNewKey.setVisible(false);
 		updateARPOriginal.clear();
-		updateAutoRenew.setText(String.valueOf(controller.getAutoRenewPeriod()));
+		updateAutoRenew.setText("");
 		updateAccountMemoOriginal.setText(UNKNOWN);
 		updateAccountMemoNew.setText("");
 		updateMaxTokensOriginal.setText(UNKNOWN);
@@ -1054,7 +1055,7 @@ public class CreatePaneController implements SubController {
 				return;
 			}
 			final var accountInfo = accountsInfoMap.get(account);
-			updateARPOriginal.setText(String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()));
+			updateARPOriginal.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
 			updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
 			// Set the new value to be the same as the original
 			updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
@@ -1091,11 +1092,7 @@ public class CreatePaneController implements SubController {
 				stakedNodeIdOriginal.setPromptText(UNSET);
 			}
 			if (!fromFile) {
-				updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
-				updateAutoRenew.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
-				newKeyJSON = EncryptionUtils.keyToJson(accountInfo.key);
-				updateAccountMemoOriginal.setText("");
-				updateMaxTokensOriginal.setText("0");
+				newKeyJSON = originalKey;
 
 				final var newKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
 				setupKeyPane(newKeyTreeView, updateNewKey);
@@ -2395,10 +2392,32 @@ public class CreatePaneController implements SubController {
 		}
 
 		// Auto renew
-		final var originalARP = (info != null ? info.autoRenewPeriod.getSeconds() : 0);
-		final var newARP = Long.parseLong(updateAutoRenew.getText());
-		if (originalARP != newARP) {
-			input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
+		if (!"".equals(updateAutoRenew.getText())) {
+			final var originalARP = (info != null ? info.autoRenewPeriod.getSeconds() : 0);
+			final var newARP = Long.parseLong(updateAutoRenew.getText());
+			if (originalARP != newARP) {
+				input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
+			}
+		}
+
+		// Account Memo
+		if (!"".equals(updateAccountMemoNew.getText()) &&
+				!updateAccountMemoNew.getText().equals(updateAccountMemoOriginal.getText())) {
+			input.addProperty(ACCOUNT_MEMO_FIELD_NAME, updateAccountMemoNew.getText());
+		}
+
+		// Max Auto Token Associations
+		if (!"".equals(updateMaxTokensNew.getText())) {
+			final var oldTokens = updateMaxTokensOriginal.getText();
+			final var newTokens = updateMaxTokensNew.getText();
+			try {
+				if (Integer.parseInt(oldTokens) != Integer.parseInt(newTokens)) {
+					input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
+							newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
+				}
+			} catch (final NumberFormatException e) {
+				logger.error("Cannot parse string: {}", e.getMessage());
+			}
 		}
 
 		// Receiver Sig Required
@@ -2408,28 +2427,11 @@ public class CreatePaneController implements SubController {
 			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
 		}
 
-		// Account Memo
-		if (!updateAccountMemoNew.getText().equals(updateAccountMemoOriginal.getText())) {
-			input.addProperty(ACCOUNT_MEMO_FIELD_NAME, updateAccountMemoNew.getText());
-		}
-
-		// Max Auto Token Associations
-		final var oldTokens = updateMaxTokensOriginal.getText();
-		final var newTokens = updateMaxTokensNew.getText();
-		try {
-			if (Integer.parseInt(oldTokens) != Integer.parseInt(newTokens)) {
-				input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
-						newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
-			}
-		} catch (final NumberFormatException e) {
-			logger.error("Cannot parse string: {}", e.getMessage());
-		}
-
-		if ((stakedAccountIdNew.getText() != null) && (!stakedAccountIdNew.getText().isEmpty())) {
+		if (!"".equals(stakedAccountIdNew.getText())) {
 			input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
 					Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
 		}
-		if ((stakedNodeIdNew.getText() != null) && (!stakedNodeIdNew.getText().isEmpty())) {
+		if (!"".equals(stakedNodeIdNew.getText())) {
 			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
 		}
 
@@ -2893,10 +2895,11 @@ public class CreatePaneController implements SubController {
 				textField.setStyle(TEXTFIELD_ERROR);
 				errorLabel.setVisible(true);
 				PopupMessage.display("Account format error",
-						"The account format cannot be parsed. Acceptable formats are:\n" +
-								" \u2022 XX (e.g. 12345),\n" +
-								" \u2022 XX.XX.XX (e.g. 1.2.345), or\n" +
-								" \u2022 XX.XX.XX-CCCCC (e.g. 1.2.345-abcde)");
+						"""
+							The account format cannot be parsed. Acceptable formats are:
+							\u2022 XX (e.g. 12345),
+							\u2022 XX.XX.XX (e.g. 1.2.345), or
+							\u2022 XX.XX.XX-CCCCC (e.g. 1.2.345-abcde)""");
 				errorLabel.requestFocus();
 				break;
 			case BAD_CHECKSUM:
