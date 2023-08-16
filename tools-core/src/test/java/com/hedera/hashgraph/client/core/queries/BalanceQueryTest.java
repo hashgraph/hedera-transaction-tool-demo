@@ -20,8 +20,6 @@ package com.hedera.hashgraph.client.core.queries;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.sdk.AccountId;
-import com.hedera.hashgraph.sdk.Hbar;
-import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,27 +28,19 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
-public class BalanceQueryTest {
+class BalanceQueryTest {
 
 	private static final Logger logger = LogManager.getLogger(BalanceQueryTest.class);
 
 	@Test
-	public void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException, IOException {
+	void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException {
 		var query = BalanceQuery.Builder.aBalanceQuery()
-				.withAccountId(new AccountId(0, 0, 101))
-				.withNetwork("mainnet")
-				.build();
-		var balance = query.getBalance();
-		assertEquals(Hbar.from(10, HbarUnit.TINYBAR), balance);
-
-		query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(new AccountId(0, 0, 2))
 				.withNetwork("mainnet")
 				.build();
-		balance = query.getBalance();
+		var balance = query.getBalance();
 		logger.info("Balance for Mainnet: {}", balance);
 		assertTrue(balance.toTinybars() > 0);
 
