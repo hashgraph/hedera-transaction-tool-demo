@@ -61,6 +61,7 @@ public class Constants {
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
 	public static final String BUNDLE_EXTENSION = "zip";
+	public static final String ACCOUNT_LIST_EXTENSION = "csva";
 	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
@@ -160,7 +161,8 @@ public class Constants {
 	public static final String BLUE_BUTTON_STYLE =
 			"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
 					"10; -fx-background-radius: 10;";
-
+	public static final int LIST_CELL_HEIGHT = 30;
+	public static final int LIST_HEIGHT_SPACER = 2;
 
 	// endregion
 
@@ -203,6 +205,8 @@ public class Constants {
 	public static final String TEXTFIELD_ERROR = "-fx-text-fill: red; -fx-background-radius: 10;-fx-border-radius: 10";
 	public static final String TEXTFIELD_DEFAULT =
 			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
+	public static final String TEXTFIELD_WITH_LIST_DEFAULT =
+			"-fx-text-fill: black; -fx-background-radius: 10 10 0 0; -fx-border-radius: 10 10 0 0;";
 	public static final String SELECT_FREEZE_TYPE = "SELECT FREEZE TYPE";
 	public static final String ACCOUNT_PARSED = "Account {} parsed";
 	public static final String REMAINING_TIME_MESSAGE =
