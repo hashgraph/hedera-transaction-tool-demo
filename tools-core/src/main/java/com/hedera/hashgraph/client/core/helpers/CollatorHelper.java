@@ -171,21 +171,6 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return baseName;
 	}
 
-	private String buildBaseName(final File file) {
-		final var pathName = file.getAbsolutePath();
-		var fileBaseName = FilenameUtils.getBaseName(pathName);
-
-		// First, determine if the naming convention is the new or old version
-		// Old convention does not use '.'
-		if (!fileBaseName.contains(".")) {
-			// Now change the string to follow current convention
-			fileBaseName = fileBaseName.replace("_", ".");
-			fileBaseName = fileBaseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
-		}
-
-		return fileBaseName;
-	}
-
 	public void addSignature(final Transaction<?> transaction) {
 		final var signatures = transaction.getSignatures();
 		if (signatures.size() > 1) {
@@ -380,5 +365,24 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		hash = (prime * hash) + ((!"".equals(baseName)) ? baseName.hashCode() : 0);
 		hash = (prime * hash) + ((comments.isJsonNull()) ? comments.hashCode() : 0);
 		return hash;
+	}
+
+	public static String buildBaseName(final File file) {
+		final var pathName = file.getAbsolutePath();
+		var fileBaseName = FilenameUtils.getBaseName(pathName);
+
+		// First, determine if the naming convention is the new or old version
+		// Old convention does not use '.'
+		if (!fileBaseName.contains(".")) {
+			// Now change the string to follow current convention
+			fileBaseName = fileBaseName.replace("_", ".");
+			fileBaseName = fileBaseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
+		} else {
+			// If using the newer version, there is a change that some trailing 0s might be present
+			// at the end of the transactionId's timestamp portion. Those will be replaced here.
+			fileBaseName = fileBaseName.replaceAll("\\.0{0,9}(?=_)", ".0");
+		}
+
+		return fileBaseName;
 	}
 }
