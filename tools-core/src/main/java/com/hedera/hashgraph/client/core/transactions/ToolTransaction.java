@@ -73,6 +73,8 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_LIST_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
@@ -82,6 +84,7 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_VA
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
@@ -91,9 +94,10 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.setupClient;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 import static java.lang.Thread.sleep;
 
-
 public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolTransaction.class);
+	private static final String NODES_STRING = "nodes";
+	private static final String INPUT_STRING = "input";
 	JsonObject input;
 	Transaction<? extends Transaction<?>> transaction;
 
@@ -107,6 +111,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	Duration transactionValidDuration;
 	NetworkEnum network;
 	String memo;
+	String nodeInput;
 
 	private enum CollateAndVerifyStatus {
 		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT
@@ -140,6 +145,17 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					this.transactionValidStart = Objects.requireNonNull(transaction.getTransactionId().validStart);
 					this.transactionValidDuration = transaction.getTransactionValidDuration();
 					this.memo = transaction.getTransactionMemo();
+					final var accountListFile = Path.of(inputFile.getAbsolutePath()
+							.replace(TRANSACTION_EXTENSION, ACCOUNT_LIST_EXTENSION));
+					if (Files.exists(accountListFile)) {
+						var contents = readJsonObject(accountListFile.toString());
+						if (contents.has(NODES_STRING)) {
+							contents = contents.get(NODES_STRING).getAsJsonObject();
+							if (contents.has(INPUT_STRING)) {
+								nodeInput = contents.get(INPUT_STRING).getAsString();
+							}
+						}
+					}
 				} catch (final InvalidProtocolBufferException e) {
 					logger.error(e);
 					throw new HederaClientException(CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE);
@@ -189,6 +205,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	public Identifier getNodeID() {
 		return nodeID;
+	}
+
+	public String getNodeInput() {
+		return nodeInput;
 	}
 
 	public Hbar getTransactionFee() {
@@ -278,7 +298,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 						transactionSize + ") is over the maximum limit.");
 			}
 
-			// Build the list of keys that are required for a valid transaction
+			// Build the list of keys that are required for a valid transaction, any additional keys
+			// used/needed will not be present in this keyList, but will still be required in the signing.
+			// This canNOT include the new keys in the key list because all new keys are required but the
+			// key list would allow for thresholds to bypass this requirement.
 			final var requiredKeyList = buildKeyList(accountsInfoFolders);
 
 			// For every key in this.key that isn't in requiredKeyList, sign the transaction.
@@ -377,6 +400,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * Build a keyList of the keys that are a part of the required keyLists. If multiple accounts are
 	 * involved, each of the accounts' keyList will be added to this new list. This differs from
 	 * getSigningKeys in that this returns a KeyList, while getSigningKeys returns a list of all keys in byte form.
+	 * In addition, getSigningKeys will include the new keys in the case of a CryptoUpdateTransaction, whereas
+	 * buildKeyList is strictly the key structure that is currently required.
 	 *
 	 * @param accountsInfoFolders
 	 * 		The location string(s) of the folder(s) containing the account.info files
@@ -575,6 +600,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 
 		try {
+			if (input.has(NODE_FIELD_INPUT)) {
+				nodeInput = input.get(NODE_FIELD_INPUT).getAsString();
+			}
+		} catch (final Exception ex) {
+			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NODE_FIELD_INPUT);
+			answer = false;
+		}
+
+		try {
 			final var element = input.get(TRANSACTION_FEE_FIELD_NAME);
 			transactionFee =
 					(element.isJsonPrimitive()) ? Hbar.from(element.getAsLong(), HbarUnit.TINYBAR) : jsonToHBars(
@@ -619,15 +653,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction != null) ? transaction.getTransactionId() : null;
 	}
 
+	public String buildFileName() {
+		final var accountId = getFeePayerID();
+		final var seconds = getTransactionValidStart().getEpochSecond();
+
+		return String.join(FILE_NAME_GROUP_SEPARATOR, seconds+"",
+				accountId.toReadableString(), transaction.hashCode()+"");
+	}
+
 	@Override
 	public String store(final String location) throws HederaClientException {
 		final var transactionBytes = transaction.toBytes();
-		final var name = Objects.requireNonNull(transaction.getTransactionId()).toString().replace("@",
-				"_").replace(".", "-");
 
 		final String filePath;
 		if (new File(location).isDirectory()) {
-			filePath = location + File.separator + name + "." + TRANSACTION_EXTENSION;
+			filePath = location + File.separator + buildFileName() + "." + TRANSACTION_EXTENSION;
 		} else {
 			filePath = location;
 		}
@@ -664,6 +704,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 		if (nodeID != null) {
 			jsonTransaction.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
+		}
+		if (nodeInput != null) {
+			jsonTransaction.addProperty(NODE_FIELD_INPUT, nodeInput);
 		}
 		if (transactionFee != null) {
 			jsonTransaction.addProperty(TRANSACTION_FEE_FIELD_NAME, transactionFee.toTinybars());
