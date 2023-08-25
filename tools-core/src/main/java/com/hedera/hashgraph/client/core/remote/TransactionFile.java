@@ -254,10 +254,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		if (!"".equals(transaction.getMemo())) {
 			detailsGridPane.add(new Label("Memo: "), LEFT, ++count);
-			detailsGridPane.add(new Label(transaction.getMemo()), RIGHT, count);
+			var memo = new Label(transaction.getMemo());
+			memo.setWrapText(true);
+			detailsGridPane.add(memo, RIGHT, count);
 		}
-
-
 	}
 
 	/**
