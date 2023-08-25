@@ -406,7 +406,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		if (updateTransaction.getAccountMemo() != null) {
-			handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
+			count = handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
 		}
 
 		try {
@@ -488,9 +488,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return count;
 	}
 
-	private void handleAccountMemo(final GridPane detailsGridPane, final int count,
-			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
-		detailsGridPane.add(new Label("Account memo"), 0, count);
+	private int handleAccountMemo(final GridPane detailsGridPane, int count,
+								  final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
+		detailsGridPane.add(new Label("Account memo: "), 0, count);
 		final var newValue = updateTransaction.getAccountMemo();
 		final var labelString = (hasOldInfo && oldInfo.has(ACCOUNT_MEMO_FIELD_NAME)) ?
 				String.format("%s (updated from %s)", newValue,
@@ -498,7 +498,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				String.format("%s", newValue);
 		final var label = new Label(labelString);
 		label.setWrapText(true);
-		detailsGridPane.add(label, 1, count);
+		detailsGridPane.add(label, 1, count++);
+		return count;
 	}
 
 	/**
