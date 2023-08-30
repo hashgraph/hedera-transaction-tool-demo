@@ -219,11 +219,11 @@
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
 							<TextArea fx:id="memoField" maxWidth="600.0" minWidth="600.0" prefRowCount="1"
 									  prefWidth="600.0" wrapText="true"/>
+							<Label fx:id="transactionMemoByteCount" text="Bytes remaining: 100"/>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 									   visible="false">
 								<Image url="@../../../../../icons/greencheck.png"/>
 							</ImageView>
-							<Label text="Label" visible="false"/>
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">

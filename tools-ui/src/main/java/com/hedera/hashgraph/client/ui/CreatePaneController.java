@@ -94,6 +94,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
@@ -160,7 +161,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_
 import static com.hedera.hashgraph.client.core.constants.Constants.LIMIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
-import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MENU_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.NINE_ZEROS;
@@ -362,6 +362,7 @@ public class CreatePaneController implements SubController {
 	public DatePicker freezeDatePicker;
 
 	// Labels
+	public Label transactionMemoByteCount;
 	public Label totalTransferLabel;
 	public Label updateBytesRemaining;
 	public Label createMemoByteCount;
@@ -2150,7 +2151,7 @@ public class CreatePaneController implements SubController {
 				});
 	}
 
-	private void setMemoByteCounter(final TextField textField, final Label label) {
+	private void setMemoByteCounter(final TextInputControl textField, final Label label) {
 		final var text = textField.getText();
 		final var byteSize = text.getBytes(StandardCharsets.UTF_8).length;
 		if (byteSize > MAX_MEMO_BYTES) {
@@ -2764,8 +2765,8 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void setupCommonFieldsEvents() {
-		memoField.lengthProperty().addListener((observable, oldValue, newValue) -> setTextSizeLimit(memoField,
-				MEMO_LENGTH, oldValue, newValue));
+		memoField.textProperty().addListener(
+				(observableValue, s, t1) -> setMemoByteCounter(memoField, transactionMemoByteCount));
 
 		nodeAccountField.setText(controller.getDefaultNodeID());
 

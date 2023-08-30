@@ -171,6 +171,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return transactionType;
 	}
 
+	@Override
 	public Timestamp getExpiration() {
 		return expiration;
 	}
@@ -329,6 +330,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		detailsGridPane.add(new Label("Account memo: "), 0, count);
 		final var accountMemo = new Label(createTransaction.getAccountMemo());
+		accountMemo.setWrapText(true);
 		detailsGridPane.add(accountMemo, 1, count++);
 
 		final var sigReqLabel = new Label("Receiver signature required: ");
@@ -362,7 +364,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		label.setWrapText(true);
 		detailsGridPane.add(label, 0, count);
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isDeclineStakingRewards())), 1,
-				count++);
+				count);
 	}
 
 	/**
@@ -438,7 +440,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			label.setWrapText(true);
 			detailsGridPane.add(label, 0, count);
 			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isDeclineStakingRewards())), 1,
-					count++);
+					count);
 		}
 	}
 
