@@ -19,16 +19,22 @@
 package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
+import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
+import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
+import com.hedera.hashgraph.sdk.Key;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -69,6 +75,7 @@ import org.apache.logging.log4j.Logger;
 import org.controlsfx.control.table.TableRowExpanderColumn;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -85,11 +92,14 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_ACCOUNTS;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_SYSTEM_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.HISTORY_MAP;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FILTER_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.enums.FileType.ACCOUNT_INFO;
+import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION_CREATION_METADATA;
 import static com.hedera.hashgraph.client.core.enums.FileType.BUNDLE;
 import static com.hedera.hashgraph.client.core.enums.FileType.COMMENT;
 import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
@@ -236,7 +246,8 @@ public class HistoryPaneController implements SubController {
 		final var jsonArray = new JsonArray();
 		noise = true;
 		for (final var file : files) {
-			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())) {
+			if (METADATA.equals(file.getType()) || COMMENT.equals(file.getType())
+					|| TRANSACTION_CREATION_METADATA.equals(file.getType())) {
 				continue;
 			}
 			logger.info("Parsing file {}", file.getName());
@@ -528,6 +539,9 @@ public class HistoryPaneController implements SubController {
 			final var remoteFile =
 					new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(data.getRemoteFilePath())));
 			remoteFile.setHistory(true);
+			if (remoteFile instanceof TransactionFile) {
+				setupKeyTree((TransactionFile) remoteFile);
+			}
 			return remoteFile.buildDetailsBox();
 		} catch (final HederaClientException e) {
 			logger.error(e);
@@ -535,6 +549,62 @@ public class HistoryPaneController implements SubController {
 		final var l = new Label(data.getFileName());
 		returnBox.getChildren().add(l);
 		return returnBox;
+	}
+
+	private void setupKeyTree(final TransactionFile rf) {
+		final var transactionType = rf.getTransaction().getTransactionType();
+		if (transactionType == null) {
+			// old style transaction
+			return;
+		}
+
+		JsonObject oldInfo = null;
+		JsonObject oldKey = null;
+		controller.loadPubKeys();
+		Key key = null;
+		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
+			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
+		}
+		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
+			final var transaction = (ToolCryptoUpdateTransaction) rf.getTransaction();
+			oldInfo = getOldInfo(transaction.getAccount());
+			if (oldInfo != null) {
+				oldKey = oldInfo.get("key").getAsJsonObject();
+			}
+			key = transaction.getKey();
+		}
+		if (key != null) {
+			rf.setTreeView(controller.buildKeyTreeView(key));
+		}
+		if (oldKey != null) {
+			rf.setOldInfo(oldInfo);
+			rf.setOldKey(controller.buildKeyTreeView(oldKey));
+		}
+	}
+
+	private JsonObject getOldInfo(final Identifier account) {
+		final File[] accounts = getFiles(account);
+		if (accounts.length != 1) {
+			logger.error("Cannot determine old account");
+			return null;
+		}
+
+		try {
+			return readJsonObject(accounts[0]);
+		} catch (final HederaClientException e) {
+			logger.error("readJsonObject failed", e);
+			return null;
+		}
+
+	}
+
+	@Nullable
+	private File[] getFiles(final Identifier account) {
+		return new File(DEFAULT_ACCOUNTS).listFiles((dir, name) -> {
+			final var stringAccount = account.toReadableString();
+			return JSON_EXTENSION.equals(FilenameUtils.getExtension(name)) && (name.contains(
+					stringAccount + ".") || name.contains(stringAccount + "-"));
+		});
 	}
 
 	// endregion
