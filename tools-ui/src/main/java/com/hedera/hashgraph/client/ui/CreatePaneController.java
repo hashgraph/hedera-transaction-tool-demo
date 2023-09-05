@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.core.interfaces.FileService;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
+import com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
@@ -47,6 +48,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.JsonUtils;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -55,11 +57,12 @@ import com.hedera.hashgraph.client.ui.popups.TransactionPopup;
 import com.hedera.hashgraph.client.ui.utilities.AccountAmountStrings;
 import com.hedera.hashgraph.client.ui.utilities.AutoCompleteNickname;
 import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
+import com.hedera.hashgraph.client.ui.utilities.ProgressTask;
+import com.hedera.hashgraph.client.ui.utilities.SubmitTask;
 import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.FreezeType;
-import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
@@ -72,6 +75,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -80,11 +84,15 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Control;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
@@ -120,6 +128,7 @@ import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -145,6 +154,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
 import static com.hedera.hashgraph.client.core.constants.Constants.CHUNK_SIZE_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_HISTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_RECEIPTS;
@@ -159,6 +169,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSIO
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.LIMIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.LIST_CELL_HEIGHT;
+import static com.hedera.hashgraph.client.core.constants.Constants.LIST_HEIGHT_SPACER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
 import static com.hedera.hashgraph.client.core.constants.Constants.MEMO_PROPERTY;
@@ -176,6 +188,8 @@ import static com.hedera.hashgraph.client.core.constants.Constants.START_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_DEFAULT;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_ERROR;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_WITH_LIST_DEFAULT;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_FEE_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_VALID_DURATION_PROPERTY;
@@ -185,6 +199,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
@@ -197,17 +212,16 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_FI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_FILE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_START_TIME_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_TYPE_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
@@ -229,12 +243,12 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat
 import static java.lang.Thread.sleep;
 
 public class CreatePaneController implements SubController {
-
 	// private fields
 	private static final Logger logger = LogManager.getLogger(CreatePaneController.class);
-	public static final String STATUS = "Status";
-	public static final String TRANSACTION_FAILED_ERROR_MESSAGE =
+	private static final String STATUS = "Status";
+	private static final String TRANSACTION_FAILED_ERROR_MESSAGE =
 			"Transaction failed with error %s. Please review the transaction and try again.";
+	private static final String MIXED = "multiple values";
 	private static final String STAKED_NODE_ID_ERROR = "Staked Node ID cannot be set when Staked Account ID is set";
 	private static final String UNKNOWN = "unknown";
 	private static final String UNSET = "unset";
@@ -308,6 +322,7 @@ public class CreatePaneController implements SubController {
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
+	public CheckBox isUpdateAccountFeePayerCheckBox;
 	public TextField stakedAccountIdField;
 	public TextField stakedNodeIdField;
 	public TextField stakedAccountIdOriginal;
@@ -315,6 +330,7 @@ public class CreatePaneController implements SubController {
 	public TextField stakedNodeIdOriginal;
 	public TextField stakedNodeIdNew;
 	public TextField nodeAccountField;
+	public ListView<Identifier> nodeAccountList;
 	public TextField createInitialBalance;
 	public TextField entityID;
 	public TextField hourField;
@@ -331,6 +347,7 @@ public class CreatePaneController implements SubController {
 	public TextField transferFromAccountIDTextField;
 	public TextField transferFromAmountTextField;
 	public TextField updateAccountID;
+	public ListView<Identifier> updateAccountList;
 	public TextField updateAutoRenew;
 	public TextField updateARPOriginal;
 	public TextField intervalTextField;
@@ -460,7 +477,7 @@ public class CreatePaneController implements SubController {
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
 				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
 				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
-				invalidFreezeFileHash, updateMTAerrorLabel);
+				invalidFreezeFileHash, updateMTAerrorLabel, isUpdateAccountFeePayerCheckBox);
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
@@ -482,7 +499,6 @@ public class CreatePaneController implements SubController {
 		setupTooltips();
 
 		setupSelectTransaction();
-
 	}
 
 	private void setupSelectTransaction() {
@@ -500,6 +516,7 @@ public class CreatePaneController implements SubController {
 		updateAccountVBox.setVisible(false);
 		transferCurrencyVBox.setVisible(false);
 		accountIDToUpdateVBox.setVisible(false);
+		isUpdateAccountFeePayerCheckBox.setVisible(false);
 		storeOrSubmitGridPane.setVisible(false);
 		systemDeleteUndeleteVBox.setVisible(false);
 		fileContentsUpdateVBox.setVisible(false);
@@ -570,7 +587,6 @@ public class CreatePaneController implements SubController {
 		updateAutoRenew.textProperty().addListener(
 				(observable, oldValue, newValue) -> fixNumericTextField(updateAutoRenew, newValue, "\\d*",
 						REGEX));
-
 		updateReceiverSignatureRequired.selectedProperty().addListener(
 				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(String.valueOf(t1)));
 		declineStakingRewardsNew.selectedProperty().addListener(
@@ -581,7 +597,7 @@ public class CreatePaneController implements SubController {
 		updateFromNickName.managedProperty().bind(updateFromNickName.visibleProperty());
 		updateCopyFromAccountHBox.getChildren().clear();
 		updateCopyFromAccountHBox.getChildren().add(updateFromNickName);
-		formatAccountTextField(updateAccountID, invalidUpdateAccountToUpdate, updateAccountID.getParent());
+		formatAccountRangeTextField(updateAccountID, updateAccountList, invalidUpdateAccountToUpdate, updateAccountID.getParent());
 		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedAccountIdNew.getParent());
 		numericFieldListen(stakedNodeIdNew);
 
@@ -596,6 +612,12 @@ public class CreatePaneController implements SubController {
 			// If newValue is false (focus is lost) AND the field isn't empty, try to preload the files
 			if (Boolean.FALSE.equals(newValue) && !"".equals(updateAccountID.getText())) {
 				findAccountInfoAndPreloadFields();
+			}
+		});
+
+		isUpdateAccountFeePayerCheckBox.setOnAction(event -> {
+			if (event.getSource() instanceof CheckBox) {
+				updateFeePayer();
 			}
 		});
 
@@ -626,6 +648,15 @@ public class CreatePaneController implements SubController {
 				keyEvent -> getKeyFromNickname(updateFromNickName, keyEvent.getCode(), updateNewKey));
 
 		setupTokenAssociationsFields(updateMTAerrorLabel, updateMaxTokensNew);
+
+		bindUpdateFieldDisableProperty(updateAutoRenew, updateAccountMemoNew, updateMaxTokensNew,
+				updateReceiverSignatureRequired, stakedAccountIdNew, stakedNodeIdNew, declineStakingRewardsNew);
+	}
+
+	private void bindUpdateFieldDisableProperty(Control... controls) {
+		for (var control : controls) {
+			control.disableProperty().bind(Bindings.size(updateAccountList.getItems()).greaterThan(1));
+		}
 	}
 
 	private void setupFileContentsFields() {
@@ -959,8 +990,7 @@ public class CreatePaneController implements SubController {
 			if ("".equals(updateAccountID.getText())) {
 				invalidUpdateAccountToUpdate.setVisible(true);
 			} else {
-				final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
-				updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
+				parseAccountId(updateAccountID, updateAccountList, invalidUpdateAccountToUpdate);
 			}
 		} catch (final Exception e) {
 			invalidUpdateAccountToUpdate.setVisible(true);
@@ -1033,6 +1063,8 @@ public class CreatePaneController implements SubController {
 		updateMaxTokensOriginal.setPromptText(UNKNOWN);
 		updateMaxTokensNew.setText("");
 		updateRSROriginal.setText(UNKNOWN);
+		updateAccountList.getItems().clear();
+		isUpdateAccountFeePayerCheckBox.setSelected(false);
 		updateReceiverSignatureRequired.setSelected(false);
 		stakedAccountIdOriginal.setText("");
 		stakedAccountIdOriginal.setPromptText(UNKNOWN);
@@ -1047,48 +1079,140 @@ public class CreatePaneController implements SubController {
 
 	}
 
+	private <T> T compareValues(final T oldValue, final T newValue, final T defaultValue) {
+		if (Objects.equals(oldValue, newValue)) {
+			return newValue;
+		}
+		return defaultValue;
+	}
+
 	private void findAccountInfoAndPreloadFields() {
+		// Get all the currently loaded account infos
 		final var accountsInfoMap = controller.getAccountInfoMap();
 		try {
-			final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
-			if (!accountsInfoMap.containsKey(account)) {
+			// Go through the list of identifiers, determine if the account infos
+			// are loaded for each one
+			var missingAccounts = updateAccountList.getItems().stream()
+					.filter(id -> !accountsInfoMap.containsKey(id))
+					.map(Identifier::toReadableStringAndChecksum)
+					.collect(Collectors.toList());
+			// If the list contains any identifiers, let the user know which account infos are missing,
+			// clear the list and return
+			if (!missingAccounts.isEmpty()) {
 				PopupMessage.display("Missing account information",
 						String.format(
-								"In order to display data regarding account %s, please download the information from " +
-										"the network.",
-								account.toReadableStringAndChecksum()));
+								"In order to display data regarding %s %s, " +
+										"please download the information from the network.",
+								missingAccounts.size() > 1 ? "accounts" : "account",
+								String.join(",", missingAccounts)));
+				nodeAccountList.getItems().clear();
 				return;
 			}
-			final var accountInfo = accountsInfoMap.get(account);
-			updateARPOriginal.setText(String.format("%d", accountInfo.autoRenewPeriod.getSeconds()));
-			updateRSROriginal.setText(String.valueOf(accountInfo.isReceiverSignatureRequired));
-			// Set the new value to be the same as the original
-			updateReceiverSignatureRequired.setSelected(accountInfo.isReceiverSignatureRequired);
+			// Load public keys before creating any key TreeViews
 			controller.loadPubKeys();
-			final var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
-			originalKey = EncryptionUtils.keyToJson(accountInfo.key);
-			final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
-			setupKeyPane(oldKeyTreeView, updateOriginalKey);
-			updateAccountMemoOriginal.setText(accountInfo.accountMemo);
-			updateMaxTokensOriginal.setText(String.valueOf(accountInfo.maxAutomaticTokenAssociations));
+			final var accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(0));
+			boolean isStakedInfoNull = true;
+			// Create objects used to determine if the values for an account are the same among all the
+			// accounts to be updated
+			var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
+			var autoRenewPeriodString = String.format("%d s", accountInfo.autoRenewPeriod.getSeconds());
+			var isReceiverSignatureRequiredString = String.valueOf(accountInfo.isReceiverSignatureRequired);
+			var accountMemoString = accountInfo.accountMemo;
+			var maxAutomaticTokenAssociationsString = String.valueOf(accountInfo.maxAutomaticTokenAssociations);
+			String stakedAccountIdString = null;
+			String stakedNodeIdString = null;
+			String declineStakingRewardsString = null;
 			if (accountInfo.stakingInfo != null) {
+				isStakedInfoNull = false;
 				if (accountInfo.stakingInfo.stakedAccountId != null) {
 					final var stakedAccountId = new Identifier(accountInfo.stakingInfo.stakedAccountId);
 					stakedAccountId.setNetworkName(controller.getCurrentNetwork());
-					stakedAccountIdOriginal.setText(stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()));
+					stakedAccountIdString = stakedAccountId.toNicknameAndChecksum(controller.getAccountsList());
+				}
+				if (accountInfo.stakingInfo.stakedNodeId != null) {
+					stakedNodeIdString = accountInfo.stakingInfo.stakedNodeId.toString();
+				}
+				declineStakingRewardsString = String.valueOf(accountInfo.stakingInfo.declineStakingReward);
+			}
+
+			// Go through each account, determine the values to be displayed
+			for (int i = 1, max = updateAccountList.getItems().size(); i < max; i++) {
+				accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(i));
+				autoRenewPeriodString = compareValues(autoRenewPeriodString,
+						String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()), MIXED);
+				isReceiverSignatureRequiredString = compareValues(isReceiverSignatureRequiredString,
+						String.valueOf(accountInfo.isReceiverSignatureRequired), MIXED);
+				// If the keys are different, just show the first key found
+				jsonObjectKey = compareValues(jsonObjectKey, EncryptionUtils.keyToJson(accountInfo.key), jsonObjectKey);
+				accountMemoString = compareValues(accountMemoString, accountInfo.accountMemo, MIXED);
+				maxAutomaticTokenAssociationsString = compareValues(maxAutomaticTokenAssociationsString,
+						String.valueOf(accountInfo.maxAutomaticTokenAssociations), MIXED);
+
+				if (accountInfo.stakingInfo != null) {
+					isStakedInfoNull = false;
+					if (accountInfo.stakingInfo.stakedAccountId != null) {
+						final var stakedAccountId = new Identifier(accountInfo.stakingInfo.stakedAccountId);
+						stakedAccountId.setNetworkName(controller.getCurrentNetwork());
+						stakedAccountIdString = compareValues(stakedAccountIdString,
+								stakedAccountId.toNicknameAndChecksum(controller.getAccountsList()), MIXED);
+					} else {
+						stakedAccountIdString = compareValues(stakedAccountIdString,
+								null, MIXED);
+					}
+					if (accountInfo.stakingInfo.stakedNodeId != null) {
+						stakedNodeIdString = compareValues(stakedNodeIdString,
+								accountInfo.stakingInfo.stakedNodeId.toString(), MIXED);
+					} else {
+						stakedNodeIdString = compareValues(stakedNodeIdString,
+								null, MIXED);
+					}
+					declineStakingRewardsString = compareValues(declineStakingRewardsString,
+							String.valueOf(accountInfo.stakingInfo.declineStakingReward), MIXED);
+				} else {
+					stakedAccountIdString = compareValues(stakedAccountIdString,
+							null, MIXED);
+					stakedNodeIdString = compareValues(stakedNodeIdString,
+							null, MIXED);
+					declineStakingRewardsString = compareValues(declineStakingRewardsString,
+							null, MIXED);
+				}
+			}
+
+			updateARPOriginal.setText(autoRenewPeriodString);
+			updateRSROriginal.setText(isReceiverSignatureRequiredString);
+			// Set the new value to be the same as the original, unless it is a mixed value
+			if (MIXED.equals(isReceiverSignatureRequiredString)) {
+				updateReceiverSignatureRequired.setSelected(false);
+				updateRSRLabel.setText("");
+			} else {
+				updateReceiverSignatureRequired.setSelected(Boolean.valueOf(isReceiverSignatureRequiredString));
+			}
+			originalKey = jsonObjectKey;
+			final var oldKeyTreeView = controller.buildKeyTreeView(jsonObjectKey);
+			setupKeyPane(oldKeyTreeView, updateOriginalKey);
+			updateAccountMemoOriginal.setText(accountMemoString);
+			updateMaxTokensOriginal.setText(maxAutomaticTokenAssociationsString);
+			if (!isStakedInfoNull) {
+				if (stakedAccountIdString != null) {
+					stakedAccountIdOriginal.setText(stakedAccountIdString);
 				} else {
 					stakedAccountIdOriginal.setText("");
 					stakedAccountIdOriginal.setPromptText(UNSET);
 				}
-				if (accountInfo.stakingInfo.stakedNodeId != null) {
-					stakedNodeIdOriginal.setText(accountInfo.stakingInfo.stakedNodeId.toString());
+				if (stakedNodeIdString != null) {
+					stakedNodeIdOriginal.setText(stakedNodeIdString);
 				} else {
 					stakedNodeIdOriginal.setText("");
 					stakedNodeIdOriginal.setPromptText(UNSET);
 				}
-				declineStakingRewardsOriginal.setText(String.valueOf(accountInfo.stakingInfo.declineStakingReward));
-				// Set the new value to be the same as the original
-				declineStakingRewardsNew.setSelected(accountInfo.stakingInfo.declineStakingReward);
+				declineStakingRewardsOriginal.setText(declineStakingRewardsString);
+				// Set the new value to be the same as the original, unless it is a mixed value
+				if (MIXED.equals(declineStakingRewardsString)) {
+					declineStakingRewardsNew.setSelected(false);
+					declineStakingRewardsLabelUpdate.setText("");
+				} else {
+					declineStakingRewardsNew.setSelected(Boolean.parseBoolean(declineStakingRewardsString));
+				}
 			} else {
 				stakedAccountIdOriginal.setText("");
 				stakedNodeIdOriginal.setText("");
@@ -1105,13 +1229,11 @@ public class CreatePaneController implements SubController {
 			// in case they were visible before
 			clearErrorMessages(invalidUpdatedAutoRenew, invalidDate, invalidFeePayer, invalidUpdateNewKey,
 					invalidNode, invalidUpdateAccountToUpdate, invalidStakedAccountIdUpdate, invalidStakedNodeIdUpdate);
-
 		} catch (final Exception e) {
 			logger.info("Not an account ID");
 			invalidUpdateAccountToUpdate.setVisible(true);
 		}
 	}
-
 	// endregion
 
 	// region TRANSFER
@@ -1182,6 +1304,7 @@ public class CreatePaneController implements SubController {
 	// Second, if the columns get removed and recreated and re-added to the same table,
 	// then row data is not always displayed upon reuse. This is a quick way to resolve the matter.
 	boolean initializeTables = true;
+
 	private void cleanAllTransferFields() {
 		cleanCommonFields();
 		toTransferTable.getItems().clear();
@@ -1192,6 +1315,16 @@ public class CreatePaneController implements SubController {
 			initializeTable(fromTransferTable);
 			initializeTable(toTransferTable);
 			initializeTables = false;
+		}
+	}
+
+	private void updateFeePayer() {
+		if (isUpdateAccountFeePayerCheckBox.isSelected()) {
+			if (updateAccountList.getItems().isEmpty()) {
+				feePayerAccountField.setText("");
+			} else {
+				feePayerAccountField.setText(updateAccountList.getItems().get(0).toReadableString());
+			}
 		}
 	}
 
@@ -1251,7 +1384,7 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void addAccountAmountToTable(final TextField account, final TextField amount,
-			final TableView<AccountAmountStrings> thisTable) {
+										 final TableView<AccountAmountStrings> thisTable) {
 		if ("".equals(account.getText())) {
 			PopupMessage.display("Empty account", "Missing account ID");
 			return;
@@ -1488,6 +1621,8 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
+	//TODO it allowed me to create a create account txn with no date selected, it auto put in 1 am (it is 12:25). check that out
+
 	// endregion
 
 	// region FILES
@@ -1597,8 +1732,7 @@ public class CreatePaneController implements SubController {
 	/**
 	 * Prepare all files necessary for the App to create the transactions through the Home Pane
 	 *
-	 * @param remoteLocation
-	 * 		the location to store the zip
+	 * @param remoteLocation the location to store the zip
 	 */
 	private void prepareZipAndComment(final FileService remoteLocation) throws HederaClientException {
 		if (!checkForm()) {
@@ -1620,6 +1754,7 @@ public class CreatePaneController implements SubController {
 		final List<File> files = new ArrayList<>();
 		files.add(new File(lfuFile));
 		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)));
+		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION)));
 		moveToOutput(files, remoteLocation);
 
 		for (final var file : files) {
@@ -1662,6 +1797,7 @@ public class CreatePaneController implements SubController {
 						TEMP_DIRECTORY, payer, time.getSeconds(),
 						time.getNanos(), LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
+		final var destTcmFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
 
 		try {
 			Files.deleteIfExists(destZipFile.toPath());
@@ -1676,6 +1812,15 @@ public class CreatePaneController implements SubController {
 				.build();
 
 		userComments.toFile(destTxtFile.getAbsolutePath());
+
+		final var tcmFile = new TransactionCreationMetadataFile.Builder()
+				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
+						.map(Identifier::toReadableString).toList())
+				.build();
+
+		if (tcmFile != null) {
+			tcmFile.toFile(destTcmFile.getAbsolutePath());
+		}
 		displayAndLogInformation("File update contents transaction created");
 		return destZipFile.getAbsolutePath();
 	}
@@ -1689,8 +1834,7 @@ public class CreatePaneController implements SubController {
 				Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork()).asJSON());
 		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
 				Identifier.parse(feePayerAccountField.getText(), controller.getCurrentNetwork()).asJSON());
-		outputObject.add(NODE_ID_PROPERTIES,
-				Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork()).asJSON());
+		outputObject.addProperty(NODE_ID_PROPERTIES, nodeAccountField.getText());
 		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
 
 		final var date = startFieldsSet.getDate();
@@ -1802,9 +1946,13 @@ public class CreatePaneController implements SubController {
 	private void loadCommonTransactionFields(final ToolTransaction transaction) {
 		setNowTime(transaction.getTransactionValidStart());
 		transactionFee.setText(Utilities.setCurrencyFormat(transaction.getTransactionFee().toTinybars()));
-		final var nodeID = transaction.getNodeID();
-		nodeID.setNetworkName(controller.getCurrentNetwork());
-		nodeAccountField.setText(nodeID.toNicknameAndChecksum(controller.getAccountsList()));
+		if (transaction.getNodeInput() != null) {
+			nodeAccountField.setText(transaction.getNodeInput());
+		} else {
+			final var nodeID = transaction.getNodeID();
+			nodeID.setNetworkName(controller.getCurrentNetwork());
+			nodeAccountField.setText(nodeID.toNicknameAndChecksum(controller.getAccountsList()));
+		}
 		final var feePayerID = transaction.getFeePayerID();
 		feePayerID.setNetworkName(controller.getCurrentNetwork());
 		feePayerAccountField.setText(feePayerID.toNicknameAndChecksum(controller.getAccountsList()));
@@ -1859,11 +2007,18 @@ public class CreatePaneController implements SubController {
 
 	private void loadCryptoUpdateToForm(final ToolCryptoUpdateTransaction transaction) {
 		cleanAllUpdateFields();
-		final var account = transaction.getAccount();
-		account.setNetworkName(controller.getCurrentNetwork());
-		updateAccountID.setText(account.toNicknameAndChecksum(controller.getAccountsList()));
+		if (transaction.getAccountInput() != null) {
+			updateAccountID.setText(transaction.getAccountInput());
+		} else {
+			final var account = transaction.getAccount();
+			account.setNetworkName(controller.getCurrentNetwork());
+			updateAccountID.setText(account.toReadableString());
+			updateAccountList.getItems().add(account);
+		}
 
 		findAccountInfoAndPreloadFields();
+
+		isUpdateAccountFeePayerCheckBox.setSelected(transaction.isUpdateAccountFeePayer());
 
 		final var autoRenewDuration = transaction.getAutoRenewDuration();
 		if (autoRenewDuration != null) {
@@ -1935,6 +2090,8 @@ public class CreatePaneController implements SubController {
 							controller.getAccountsList()));
 		}
 		if (details.has(NODE_ID_PROPERTIES)) {
+			//TODO will need to get all the nodeidproperties from file and put them in the field, hmmm, this means that it would
+			// need to create the string based on the stuff it pulls, unless we save hte string, too
 			final var nodeIdentifier = Identifier.parse(details.get(NODE_ID_PROPERTIES).getAsJsonObject());
 			nodeIdentifier.setNetworkName(controller.getCurrentNetwork());
 			nodeAccountField.setText(nodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
@@ -2127,7 +2284,7 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void mtaChangeListener(final String oldValue, final String newValue, final TextField textField,
-			final Label error) {
+								   final Label error) {
 		if (Objects.equals(newValue, "")) {
 			return;
 		}
@@ -2215,6 +2372,7 @@ public class CreatePaneController implements SubController {
 				break;
 			case UPDATE:
 				accountIDToUpdateVBox.setVisible(true);
+				isUpdateAccountFeePayerCheckBox.setVisible(true);
 				updateAccountVBox.setVisible(true);
 				signAndSubmitButton.setDisable(false);
 				break;
@@ -2296,18 +2454,15 @@ public class CreatePaneController implements SubController {
 		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, feePayerID.asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
-		final var feeJson = new JsonObject();
 		final var fee = Utilities.string2Hbar(transactionFee.getText());
-		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, fee.to(HbarUnit.TINYBAR));
-		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+		input.add(TRANSACTION_FEE_FIELD_NAME, JsonUtils.hBarsToJsonObject(fee));
 
 		// Use default for transaction valid duration
 		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, controller.getTxValidDuration());
 
 		// Node ID
-		input.add(NODE_ID_FIELD_NAME,
-				Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork()).asJSON());
+		input.add(NODE_ID_FIELD_NAME, nodeAccountList.getItems().get(0).asJSON());
+		input.addProperty(NODE_FIELD_INPUT, nodeAccountField.getText());
 
 		// Network
 		input.addProperty(NETWORK_FIELD_NAME, controller.getCurrentNetwork());
@@ -2337,10 +2492,8 @@ public class CreatePaneController implements SubController {
 	private void addCryptoCreateElements(final JsonObject input) {
 		// Balance
 		if (!"".equals(createInitialBalance.getText())) {
-			final var balanceJson = new JsonObject();
-			balanceJson.addProperty(H_BARS, 0);
-			balanceJson.addProperty(TINY_BARS, string2Hbar(createInitialBalance.getText()).toTinybars());
-			input.add(INITIAL_BALANCE_FIELD_NAME, balanceJson);
+			input.add(INITIAL_BALANCE_FIELD_NAME,
+					JsonUtils.hBarsToJsonObject(string2Hbar(createInitialBalance.getText())));
 		}
 		// Auto renew
 		if (!"".equals(createAutoRenew.getText())) {
@@ -2384,11 +2537,9 @@ public class CreatePaneController implements SubController {
 	private void addCryptoUpdateElements(final JsonObject input) {
 		// Account ID
 		if (!"".equals(updateAccountID.getText())) {
-			input.add(ACCOUNT_TO_UPDATE,
-					Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork()).asJSON());
+			input.add(ACCOUNT_TO_UPDATE, updateAccountList.getItems().get(0).asJSON());
+			input.addProperty(ACCOUNT_TO_UPDATE_INPUT, updateAccountID.getText());
 		}
-		final var account = Identifier.parse(updateAccountID.getText(), controller.getCurrentNetwork());
-		final var info = controller.getAccountInfoMap().getOrDefault(account, null);
 
 		// Key
 		if (!newKeyJSON.isJsonNull() && newKeyJSON.size() != 0 && !newKeyJSON.equals(originalKey) && !newKeyJSON.equals(
@@ -2396,53 +2547,61 @@ public class CreatePaneController implements SubController {
 			input.add(NEW_KEY_FIELD_NAME, newKeyJSON);
 		}
 
-		// Auto renew
-		if (!"".equals(updateAutoRenew.getText())) {
-			final var originalARP = (info != null ? info.autoRenewPeriod.getSeconds() : 0);
-			final var newARP = Long.parseLong(updateAutoRenew.getText());
-			if (originalARP != newARP) {
-				input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, newARP);
-			}
-		}
-
-		// Account Memo
-		if (!"".equals(updateAccountMemoNew.getText()) &&
-				!updateAccountMemoNew.getText().equals(updateAccountMemoOriginal.getText())) {
-			input.addProperty(ACCOUNT_MEMO_FIELD_NAME, updateAccountMemoNew.getText());
-		}
-
-		// Max Auto Token Associations
-		if (!"".equals(updateMaxTokensNew.getText())) {
-			final var oldTokens = updateMaxTokensOriginal.getText();
-			final var newTokens = updateMaxTokensNew.getText();
-			try {
-				if (Integer.parseInt(oldTokens) != Integer.parseInt(newTokens)) {
-					input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
-							newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
+		if (updateAccountList.getItems().size() == 1) {
+			// Auto renew
+			if (!"".equals(updateAutoRenew.getText())) {
+				final var oldARP = updateARPOriginal.getText();
+				final var newARP = updateAutoRenew.getText();
+				try {
+					if (Long.parseLong(oldARP) != Long.parseLong(newARP)) {
+						input.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, Long.parseLong(newARP));
+					}
+				} catch (final NumberFormatException e) {
+					logger.error("Cannot parse string: {}", e.getMessage());
 				}
-			} catch (final NumberFormatException e) {
-				logger.error("Cannot parse string: {}", e.getMessage());
 			}
-		}
-
-		// Receiver Sig Required
-		final var originalSigRequired = (info != null && info.isReceiverSignatureRequired);
-		final var newSigRequired = updateReceiverSignatureRequired.isSelected();
-		if (originalSigRequired != newSigRequired) {
-			input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
-		}
-
-		if (!"".equals(stakedAccountIdNew.getText())) {
-			input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
-					Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
-		}
-		if (!"".equals(stakedNodeIdNew.getText())) {
-			input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
-		}
-
-		final var originalDeclineStakingRewardsNew = (info != null && info.stakingInfo != null && info.stakingInfo.declineStakingReward);
-		if (originalDeclineStakingRewardsNew != declineStakingRewardsNew.isSelected()) {
-			input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
+	
+			// Account Memo
+			if (!"".equals(updateAccountMemoNew.getText()) &&
+					!updateAccountMemoNew.getText().equals(updateAccountMemoOriginal.getText())) {
+				input.addProperty(ACCOUNT_MEMO_FIELD_NAME, updateAccountMemoNew.getText());
+			}
+	
+			// Max Auto Token Associations
+			if (!"".equals(updateMaxTokensNew.getText())) {
+				final var oldTokens = updateMaxTokensOriginal.getText();
+				final var newTokens = updateMaxTokensNew.getText();
+				try {
+					if (Integer.parseInt(oldTokens) != Integer.parseInt(newTokens)) {
+						input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME,
+								newTokens.isEmpty() ? 0 : Integer.parseInt(newTokens));
+					}
+				} catch (final NumberFormatException e) {
+					logger.error("Cannot parse string: {}", e.getMessage());
+				}
+			}
+	
+			// Receiver Sig Required
+			final var originalSigRequired = updateRSROriginal.getText();
+			final var newSigRequired = updateReceiverSignatureRequired.isSelected();
+			if (Boolean.parseBoolean(originalSigRequired) != newSigRequired) {
+				input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
+			}
+			
+			//TODO shoudln't this check it against old?
+			if (!"".equals(stakedAccountIdNew.getText())) {
+				input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
+						Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
+			}
+			//TODO this too?
+			if (!"".equals(stakedNodeIdNew.getText())) {
+				input.addProperty(STAKED_NODE_ID_FIELD_NAME, Long.parseLong(stakedNodeIdNew.getText()));
+			}
+	
+			final var originalDeclineStakingRewardsNew = declineStakingRewardsOriginal.getText();
+			if (Boolean.parseBoolean(originalDeclineStakingRewardsNew) != declineStakingRewardsNew.isSelected()) {
+				input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewardsNew.isSelected());
+			}
 		}
 	}
 
@@ -2507,8 +2666,7 @@ public class CreatePaneController implements SubController {
 	/**
 	 * Pairs the created transaction with the comments the user might have left
 	 *
-	 * @param tx
-	 * 		the created transaction
+	 * @param tx the created transaction
 	 * @return a pair with user comments and the transaction
 	 */
 	private Pair<UserComments, ToolTransaction> getUserCommentsTransactionPair(final ToolTransaction tx) {
@@ -2519,7 +2677,6 @@ public class CreatePaneController implements SubController {
 		logger.info(creatorComments);
 
 		controller.displaySystemMessage(String.format("With comments: %s", creatorComments));
-
 
 		return new Pair<>(creatorComments, tx);
 	}
@@ -2581,15 +2738,16 @@ public class CreatePaneController implements SubController {
 
 		// Check and flag the node
 		try {
-			final var node = Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork());
+			invalidNode.setVisible(false);
+			parseAccountId(nodeAccountField, nodeAccountList, invalidNode);
 			final var client = CommonMethods.getClient(controller.getCurrentNetwork());
-			if (client.getNetwork().containsValue(node.asAccount())) {
-				nodeAccountField.setText(node.toNicknameAndChecksum(accounts));
-				invalidNode.setVisible(false);
-			} else {
-				invalidNode.setVisible(true);
-				displayAndLogInformation("Node ID out of range");
-				flag = false;
+			for (var node : nodeAccountList.getItems()) {
+				if (!client.getNetwork().containsValue(node.asAccount())) {
+					invalidNode.setVisible(true);
+					displayAndLogInformation("Node ID out of range");
+					flag = false;
+					break;
+				}
 			}
 		} catch (final Exception e) {
 			invalidNode.setVisible(true);
@@ -2658,10 +2816,8 @@ public class CreatePaneController implements SubController {
 	/**
 	 * Store a transaction and comments to one of the standard outputs
 	 *
-	 * @param type
-	 * 		the transaction type
-	 * @param fileService
-	 * 		the file service that will be used to store the transaction
+	 * @param type        the transaction type
+	 * @param fileService the file service that will be used to store the transaction
 	 */
 	private void storeToOutput(final CreateTransactionType type, final FileService fileService) {
 		fromFile = false;
@@ -2690,8 +2846,7 @@ public class CreatePaneController implements SubController {
 	/**
 	 * Browse to a folder and store the transaction and comment
 	 *
-	 * @param type
-	 * 		the transaction type
+	 * @param type the transaction type
 	 */
 	private void storeOutputToBrowsedOutput(final CreateTransactionType type) {
 		final var s = BrowserUtilities.browseDirectories(controller.getLastTransactionsDirectory(), createAnchorPane);
@@ -2775,8 +2930,9 @@ public class CreatePaneController implements SubController {
 		startFieldsSet.configureDateTime(LocalDateTime.now());
 
 		// endregion
-		formatAccountTextField(nodeAccountField, invalidNode, feePayerAccountField);
+		formatAccountRangeTextField(nodeAccountField, nodeAccountList, invalidNode, feePayerAccountField);
 		formatAccountTextField(feePayerAccountField, invalidFeePayer, feePayerAccountField.getParent());
+		feePayerAccountField.disableProperty().bind(isUpdateAccountFeePayerCheckBox.selectedProperty());
 
 		createCommentsTextArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
 			setTextSizeLimit(createCommentsTextArea, LIMIT, oldValue, newValue);
@@ -2866,6 +3022,119 @@ public class CreatePaneController implements SubController {
 		return flag;
 	}
 
+	private void formatAccountRangeTextField(final TextField textField, final ListView<Identifier> listView,
+											 final Label errorLabel, final Node nextNode) {
+		textField.setOnAction(e -> {
+			parseAccountId(textField, listView, errorLabel);
+			nextNode.requestFocus();
+		});
+		textField.focusedProperty().addListener(((observableValue, oldValue, newValue) -> {
+			if (Boolean.FALSE.equals(newValue)) {
+				parseAccountId(textField, listView, errorLabel);
+			}
+		}));
+		textField.styleProperty().bind(
+				Bindings.when(new SimpleListProperty<>(listView.getItems()).emptyProperty())
+						.then(TEXTFIELD_DEFAULT).otherwise(TEXTFIELD_WITH_LIST_DEFAULT));
+		//TODO Need both min and max heights bound or the grid pane doesn't properly resize
+		listView.minHeightProperty().bind(
+				Bindings.min(new SimpleListProperty<>(listView.getItems()).sizeProperty(), 4)
+						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
+//		listView.maxHeightProperty().bind(
+//				Bindings.min(new SimpleListProperty<>(nodeAccountList.getItems()).sizeProperty(), 4)
+//						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
+		listView.visibleProperty().bind(Bindings.isEmpty(listView.getItems()).not());
+		listView.setCellFactory((view) -> new ListCell<>() {
+			{
+				prefWidthProperty().bind(listView.widthProperty().subtract(4));
+				setMaxWidth(Control.USE_PREF_SIZE);
+			}
+
+			@Override
+			protected void updateItem(Identifier id, boolean b) {
+				super.updateItem(id, b);
+				if (id != null && !b) {
+					setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+				}
+			}
+		});
+		parseAccountId(textField, listView, errorLabel);
+	}
+
+	private void parseAccountId(final TextField textField, final ListView listView, final Label errorLabel) {
+		listView.getItems().clear();
+		errorLabel.setVisible(false);
+		final var text = textField.getText();
+		if (text.isBlank()) {
+			//In case the String is not actually empty
+			textField.setText("");
+			updateFeePayer();
+			return;
+		}
+		try {
+			logger.info("Node ID text field changed to: {}", text);
+			final var accounts = text.split(",");
+			for (String account : accounts) {
+				final var accountRange = account.split("-(?=\\s*\\d)");
+				if (accountRange.length > 2) {
+					throw new Exception("Invalid Range value");
+				} else if (accountRange.length == 2) {
+					final Identifier rangeStartId = Identifier.parse(accountRange[0].strip(), controller.getCurrentNetwork());
+					final Identifier rangeEndId = Identifier.parse(accountRange[1].strip(), controller.getCurrentNetwork());
+
+					if (!rangeStartId.isValid()) {
+						throw new Exception(String.format("Invalid Id: %s" + accountRange[0]));
+					}
+					if (!rangeEndId.isValid()) {
+						throw new Exception(String.format("Invalid Id: %s" + accountRange[1]));
+					}
+					final String networkName = rangeStartId.getNetworkName();
+					final long rangeShardNum = rangeStartId.getShardNum();
+					final long rangeRealmNum = rangeStartId.getRealmNum();
+					if (rangeShardNum != rangeEndId.getShardNum() ||
+							rangeRealmNum != rangeEndId.getRealmNum()) {
+						throw new Exception(String.format("Invalid Ranges, Shards and Realms must match: %s",
+								account));
+					}
+					final long rangeStartNum = rangeStartId.getAccountNum();
+					final long rangeEndNum = rangeEndId.getAccountNum();
+					if (rangeStartNum > rangeEndNum) {
+						throw new Exception(String.format("Invalid Range Format: %s", account));
+					}
+					for (long i = rangeStartNum; i <= rangeEndNum; i++) {
+						final var accountId = new Identifier(rangeShardNum, rangeRealmNum, i, networkName);
+						if (accountId.isValid()) {
+							addNodeToList(listView, accountId);
+						}
+					}
+				} else {
+					final var accountId = Identifier.parse(account.strip(), controller.getCurrentNetwork());
+
+					if (accountId.isValid()) {
+						addNodeToList(listView, accountId);
+					} else {
+						throw new Exception(String.format("Invalid Id: %s" + account));
+					}
+				}
+			}
+			updateFeePayer();
+		} catch (final Exception e) {
+			nodeAccountList.getItems().clear();
+			errorLabel.setVisible(true);
+			logger.error("Invalid Node ID(s): '" + text + "'", e);
+		}
+	}
+
+	private void addNodeToList(final ListView listView, final Identifier accountId) throws Exception {
+		if (!Objects.requireNonNull(accountId, "Node ID cannot be null").isValid()) {
+			throw new Exception(String.format("Node ID is Invalid: %s", accountId.toReadableString()));
+		}
+		if (listView.getItems().size() == 100) {
+			throw new Exception("Too many nodes. Max Node count allowed is 100");
+		}
+		listView.getItems().add(accountId);
+	}
+
 	private void formatAccountTextField(final TextField textField, final Label errorLabel, final Node nextNode) {
 		textField.setOnKeyReleased((KeyEvent event) -> {
 			textField.setStyle(TEXTFIELD_DEFAULT);
@@ -2947,17 +3216,20 @@ public class CreatePaneController implements SubController {
 		final var transaction = pair.getValue();
 		final var userComments = pair.getKey();
 
-		final var accountId = transaction.getFeePayerID();
-		final var seconds = transaction.getTransactionValidStart().getEpochSecond();
-
-		final var filenames = String.format("%d" + FILE_NAME_GROUP_SEPARATOR +
-						"%s" + FILE_NAME_GROUP_SEPARATOR + "%d", seconds, accountId.toReadableString(),
-						transaction.hashCode());
+		final var filenames = transaction.buildFileName();
 
 		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		if (new File(tempStorage).mkdirs()) {
 			logger.info("Temporary folder created");
 		}
+
+		final var tcm = new TransactionCreationMetadataFile.Builder()
+				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
+						.map(Identifier::toReadableString).toList())
+				.withAccounts(updateAccountID.getText(), updateAccountList.getItems().stream()
+						.map(Identifier::toReadableString).toList())
+				.withIsUpdateAccountFeePayer(isUpdateAccountFeePayerCheckBox.isSelected())
+				.build();
 
 		var i = 0;
 		var txFile = new File(tempStorage + File.separator + filenames + "." + TRANSACTION_EXTENSION);
@@ -2965,19 +3237,25 @@ public class CreatePaneController implements SubController {
 			txFile = new File(tempStorage + File.separator + filenames + i++ + "." + TRANSACTION_EXTENSION);
 		}
 
-		try {
-			transaction.store(txFile.getAbsolutePath());
-			userComments.toFile(txFile.getAbsolutePath().replace(".tx", ".txt"));
-		} catch (final HederaClientException e) {
-			logger.error(e);
-			controller.displaySystemMessage(e);
-		}
-
-		final var txtFile = new File(txFile.getAbsolutePath().replace(".tx", ".txt"));
+		final var txtFile = new File(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION, COMMENT_EXTENSION));
+		final var tcmFile = new File(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION,
+				TRANSACTION_CREATION_METADATA_EXTENSION));
 
 		final List<File> files = new ArrayList<>();
 		files.add(txFile);
 		files.add(txtFile);
+
+		try {
+			transaction.store(txFile.getAbsolutePath());
+			userComments.toFile(txtFile.getAbsolutePath());
+			if (tcm != null) {
+				tcm.toFile(tcmFile.getAbsolutePath());
+				files.add(tcmFile);
+			}
+		} catch (final HederaClientException e) {
+			logger.error(e);
+			controller.displaySystemMessage(e);
+		}
 
 		moveToOutput(files, remoteLocation);
 
@@ -2991,6 +3269,11 @@ public class CreatePaneController implements SubController {
 			if (txtFile.exists()) {
 				Files.delete(txtFile.toPath());
 				logger.info("File {} deleted", txtFile.getName());
+			}
+
+			if (tcmFile.exists()) {
+				Files.delete(tcmFile.toPath());
+				logger.info("File {} deleted", tcmFile.getName());
 			}
 
 			FileUtils.deleteDirectory(new File(tempStorage));
@@ -3043,10 +3326,8 @@ public class CreatePaneController implements SubController {
 				controller.getDefaultSeconds());
 		feePayerAccountField.clear();
 		createCommentsTextArea.clear();
-		final var defaultNodeID =
-				Identifier.parse(controller.getDefaultNodeID(), controller.getCurrentNetwork()).toNicknameAndChecksum(
-						controller.getAccountsList());
-		nodeAccountField.setText(defaultNodeID);
+		nodeAccountField.setText(controller.getDefaultNodeID());
+		parseAccountId(nodeAccountField, nodeAccountList, invalidNode);
 		transactionFee.setText(setCurrencyFormat(controller.getDefaultTxFee()));
 		setupHbarNumberField(transactionFee);
 		memoField.clear();
@@ -3185,7 +3466,7 @@ public class CreatePaneController implements SubController {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
 			invalidNode.setVisible(true);
-			startFieldsSet.reset(1,0,0);
+			startFieldsSet.reset(1, 0, 0);
 			return;
 		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
@@ -3303,14 +3584,19 @@ public class CreatePaneController implements SubController {
 	}
 
 	private boolean checkNode() {
-		final Identifier node;
+		if (nodeAccountList.getItems().isEmpty()) return false;
+
+		final var client = CommonMethods.getClient(controller.getCurrentNetwork());
 		try {
-			node = Identifier.parse(nodeAccountField.getText(), controller.getCurrentNetwork());
+			for (var node : nodeAccountList.getItems()) {
+				if (!client.getNetwork().containsValue(node.asAccount())) {
+					return false;
+				}
+			}
 		} catch (final Exception e) {
 			return false;
 		}
-		final var client = CommonMethods.getClient(controller.getCurrentNetwork());
-		return client.getNetwork().containsValue(node.asAccount());
+		return true;
 	}
 
 	private void moveToHistory(final LargeBinaryFile largeBinaryFile, final List<File> privateKeyFiles) {
@@ -3331,68 +3617,102 @@ public class CreatePaneController implements SubController {
 		if (pair == null) {
 			return;
 		}
+		final var mainTransaction = pair.getValue();
 
-		final var transaction = pair.getValue();
-		final var privateKeys = getPrivateKeys(transaction);
-		if (privateKeys.isEmpty()) {
-			return;
+		for (final var nodeId : nodeAccountList.getItems()) {
+			final var transactionJson = mainTransaction.asJson();
+			transactionJson.add(NODE_ID_FIELD_NAME, nodeId.asJSON());
+			var transactions = new ArrayList<ToolTransaction>();
+			try {
+				if (mainTransaction.getTransactionType() == TransactionType.CRYPTO_UPDATE) {
+					final var validStartTimestamp = new Timestamp(transactionJson.get(TRANSACTION_VALID_START_FIELD_NAME));
+					var count = 0;
+					for (var accountId : updateAccountList.getItems()) {
+						final var accountIdJson = accountId.asJSON();
+						transactionJson.add(ACCOUNT_TO_UPDATE, accountIdJson);
+						var incrementedTime = new Timestamp(validStartTimestamp.asDuration()
+								.plusNanos(10l * count++));
+						transactionJson.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+						if (isUpdateAccountFeePayerCheckBox.isSelected()) {
+							transactionJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, accountIdJson);
+						}
+						transactions.add(getTransaction(mainTransaction.getClass(), transactionJson));
+					}
+				} else {
+					transactions.add(getTransaction(mainTransaction.getClass(), transactionJson));
+				}
+			} catch (Exception e) {
+				logger.error(e);
+			}
+			final var taskList = createSubmitTaskList(transactions);
+			if (!taskList.isEmpty()) {
+				final var rf = TransactionFile.wrapToolTransaction(mainTransaction);
+				final var tcm = new TransactionCreationMetadataFile.Builder()
+						.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
+								.map(Identifier::toReadableString).toList())
+						.withAccounts(updateAccountID.getText(), updateAccountList.getItems().stream()
+								.map(Identifier::toReadableString).toList())
+						.withIsUpdateAccountFeePayer(isUpdateAccountFeePayerCheckBox.isSelected())
+						.build();
+				rf.setTransactionCreationMetadata(tcm);
+				final var keyTree = getKeyTree(rf);
+				if (keyTree.getRoot() != null) {
+					rf.setTreeView(keyTree);
+				}
+				final var oldKeyTree = getOldKey(rf);
+				if (oldKeyTree.getRoot() != null) {
+					rf.setOldKey(oldKeyTree);
+				}
+
+				final var submit = TransactionPopup.display(rf);
+				if (!submit) {
+					return;
+				}
+
+				// If the results are null, then this was canceled.
+				var results = (List<SubmitTask>)ProgressPopup.showProgressPopup(taskList, "Submit to Ledger",
+						"Transactions are being submitted");
+				if (showResults(results)) {
+					final var transactionName = getTransactionName(mainTransaction);
+					final var location = DEFAULT_HISTORY + File.separator + transactionName
+							+ "." + TRANSACTION_CREATION_METADATA_EXTENSION;
+					if (tcm != null) {
+						tcm.toFile(location);
+						final var file = new File(location);
+						tcm.setParentPath(file.getParent());
+						tcm.setName(file.getName());
+						//To piggyback on the current system, just create the file and 'move' it to history
+						try {
+							tcm.moveToHistory(Actions.ACCEPT, "", "");
+						} catch (HederaClientException ex) {
+							logger.error(ex.getMessage());
+						}
+					}
+
+					initializePane();
+					selectTransactionType.setValue(SELECT_STRING);
+					break;
+				}
+			}
 		}
-
-		Collections.sort(privateKeys);
-
-		final var transactionName = transaction.getTransaction().getTransactionId().toString();
-		final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
-		transaction.store(location);
-		final var rf = new TransactionFile(location);
-		final var comments = createCommentsTextArea.getText();
-
-		for (final var privateKeyFile : privateKeys) {
-			final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
-			logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
-			transaction.sign(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
-			rf.moveToHistory(Actions.ACCEPT, comments, FilenameUtils.getBaseName(privateKeyFile.getName()));
-		}
-
-		final var keyTree = getKeyTree(rf);
-		if (keyTree.getRoot() != null) {
-			rf.setTreeView(keyTree);
-		}
-		final var oldKeyTree = getOldKey(rf);
-		if (oldKeyTree.getRoot() != null) {
-			rf.setOldKey(oldKeyTree);
-		}
-		rf.setHistory(false);
-
-		final var submit = TransactionPopup.display(rf);
-		if (!submit) {
-			return;
-		}
-
-		rf.setHistory(true);
-
-		try {
-			final var receipt = transaction.submit();
-			logger.info(receipt);
-			showReceiptOnPopup(transaction, receipt);
-			storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
-			initializePane();
-			selectTransactionType.setValue(SELECT_STRING);
-		} catch (final InterruptedException e) {
-			logger.error(e.getMessage());
-			logger.error("Thread interrupted");
-			Thread.currentThread().interrupt();
-		} catch (final ReceiptStatusException e) {
-			logger.error(e.getMessage());
-			storeReceipt(e.receipt, transactionName, rf.getTransactionType().toString());
-			PopupMessage.display(STATUS,
-					String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.receipt.status)));
-		} catch (final PrecheckStatusException e) {
-			logger.error(e.getMessage());
-			storeReceipt(e.status, transactionName);
-			PopupMessage.display(STATUS, String.format(TRANSACTION_FAILED_ERROR_MESSAGE, getErrorMessage(e.status)));
-		}
-		controller.historyPaneController.addToHistory(rf);
 	}
+
+	private ToolTransaction getTransaction(final Class<? extends ToolTransaction> transactionClass, final Object obj)
+			throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+		final var c = transactionClass.getConstructor(obj.getClass());
+		return c.newInstance(obj);
+	}
+
+	private String getTransactionName(final ToolTransaction transaction) {
+		final var transactionName = transaction.getTransaction().getTransactionId().toString();
+		if (transaction.getTransactionType() == TransactionType.CRYPTO_UPDATE) {
+			var suffixIdentifier = ((ToolCryptoUpdateTransaction) transaction)
+					.getAccount().toReadableString();
+			return String.join(FILE_NAME_GROUP_SEPARATOR, transactionName, suffixIdentifier);
+		}
+		return transactionName;
+	}
+
 
 	private TreeView<String> getOldKey(final TransactionFile transactionFile) {
 		return TransactionType.CRYPTO_UPDATE.equals(transactionFile.getTransaction().getTransactionType()) ?
@@ -3415,7 +3735,14 @@ public class CreatePaneController implements SubController {
 		}
 		return controller.buildKeyTreeView(key);
 	}
+//TODO cancel button isn't working in popup, it should cancel teh nested loop and the submit stuff
+// also, hitting hte x on teh popup should cancel the loop
+// also, it takes forever to submit, testnet issue?
 
+
+	//TODO this should be redoen to batch together all hte answers
+//	or here, maybe I need to wrap the receipt... then call 'get message' which will have hte pass/fail, or in the case
+//	of update, pass and/or fail wiht a list of things - also it would display the node id?
 	private void showReceiptOnPopup(final ToolTransaction transaction, final TransactionReceipt receipt) {
 		switch (receipt.status) {
 			case OK:
@@ -3430,17 +3757,191 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-	@NotNull
-	private List<File> getPrivateKeys(final ToolTransaction transaction) {
-		final var knownSigners = controller.accountsPaneController.getFeePayers();
-		final var signers = transaction.getSigningAccounts();
-		final var privateKeys = new HashSet<>(controller.extractRequiredKeys(transaction.getSigningKeys()));
 
+	//	i need to create all the transactions
+//	then get all the keys for each transaction
+//	then determine unknown keys (including prompt)
+//	and prompt showing all keys being used for all transactions
+//	then store tx and create rf and continue on?
+	private ArrayList<ProgressTask> createSubmitTaskList(final List<ToolTransaction> transactions) throws HederaClientException {
+		final var taskList = new ArrayList<ProgressTask>();
+		final var allPrivateKeys = new HashSet<File>();
+		final var unknownSigners = new HashSet<Identifier>();
+		final var privateKeyMap = new HashMap<ToolTransaction, List<File>>();
+		for (final var transaction : transactions) {
+			final var privateKeys = new ArrayList<File>();
+			privateKeys.addAll(controller.extractRequiredKeys(transaction.getSigningKeys()));
+			privateKeyMap.put(transaction, privateKeys);
+			allPrivateKeys.addAll(privateKeys);
+			unknownSigners.addAll(getUnknownSigners(transaction));
+		}
+		displayUnknownSigners(unknownSigners);
+		final var verifiedPrivateKeys = verifyPrivateKeys(allPrivateKeys);
+		final var comments = createCommentsTextArea.getText();
+		for (final var transaction : transactions) {
+			var acceptedKeys = privateKeyMap.get(transaction).stream()
+					.filter(key -> verifiedPrivateKeys.contains(key))
+					.collect(Collectors.toCollection(ArrayList::new));
+
+			if (acceptedKeys.isEmpty()) {
+				continue;
+			}
+			Collections.sort(acceptedKeys);
+			final var transactionName = getTransactionName(transaction);
+			final var location = DEFAULT_HISTORY + File.separator + transactionName + "." + TRANSACTION_EXTENSION;
+			transaction.store(location);
+			final var rf = new TransactionFile(location);
+
+			for (final var privateKeyFile : acceptedKeys) {
+				final var nameKeyPair = controller.getAccountKeyPair(privateKeyFile);
+				logger.info("Signing transaction with key: {}", nameKeyPair.getKey());
+				transaction.sign(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
+				rf.moveToHistory(Actions.ACCEPT, comments, FilenameUtils.getBaseName(nameKeyPair.getKey()));
+			}
+
+			rf.setHistory(false);
+			taskList.add(createSubmitTask(transaction, rf));
+		}
+		return taskList;
+	}
+
+	private Set<Identifier> getUnknownSigners(final ToolTransaction transaction) {
+		final var knownSigners = controller.accountsPaneController.getFeePayers();
 		final Set<Identifier> unknownSigners = new HashSet<>();
+		final var signers = transaction.getSigningAccounts();
+
 		for (final var signer : signers) {
 			final var identifier = new Identifier(signer, controller.getCurrentNetwork());
 			if (!knownSigners.contains(identifier)) {
 				unknownSigners.add(identifier);
+			}
+		}
+		return unknownSigners;
+	}
+
+	private void displayUnknownSigners(final Set<Identifier> unknownSigners) {
+		if (!unknownSigners.isEmpty()) {
+			final var ids = unknownSigners.stream().sorted().map(Identifier::toReadableAccountAndNetwork).collect(
+					Collectors.joining(", "));
+			final var message = unknownSigners.size() > 1 ?
+					String.format("accounts: %n%s%nare", ids) :
+					String.format("account %s is", ids);
+			PopupMessage.display("Unknown keys", String.format(
+					"The keys for %s unknown. You will be required to select signing keys as an extra step.", message));
+		}
+	}
+
+	private List<File> verifyPrivateKeys(final Set<File> privateKeys) {
+		var verifiedPrivateKeys = new HashSet<>(privateKeys);
+		var response = display(verifiedPrivateKeys);
+		while (!Boolean.TRUE.equals(response)) {
+			if (response == null) {
+				return new ArrayList<>();
+			}
+			final var list = ExtraKeysSelectorPopup.display(new HashSet<>(verifiedPrivateKeys));
+			verifiedPrivateKeys.clear();
+			verifiedPrivateKeys.addAll(list);
+			response = display(verifiedPrivateKeys);
+		}
+		return new ArrayList<>(verifiedPrivateKeys);
+	}
+
+	private SubmitTask createSubmitTask(final ToolTransaction transaction,
+										  final TransactionFile rf) {
+		return new SubmitTask(transaction) {
+			@Override
+			protected Object call() throws Exception {
+				final var transactionName = getTransactionName(transaction);
+				try {
+					final var receipt = transaction.submit();
+					logger.info(receipt);
+					storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
+					setResult(receipt);
+					setSuccessful(true);
+				} catch (final InterruptedException e) {
+					logger.error(e.getMessage());
+					logger.error("Thread interrupted");
+					Thread.currentThread().interrupt();
+					setResult(e.getMessage());
+					setSuccessful(false);
+				} catch (final ReceiptStatusException e) {
+					logger.error(e.getMessage());
+					storeReceipt(e.receipt, transactionName, rf.getTransactionType().toString());
+					setResult(getErrorMessage(e.receipt.status));
+					setSuccessful(false);
+				} catch (final PrecheckStatusException e) {
+					logger.error(e.getMessage());
+					storeReceipt(e.status, transactionName);
+					setResult(getErrorMessage(e.status));
+					setSuccessful(false);
+				}
+
+				rf.setHistory(true);
+
+				controller.historyPaneController.addToHistory(rf);
+				return this;
+			}
+		};
+	}
+
+	private boolean showResults(final List<SubmitTask> results) {
+		if (results == null || results.isEmpty()) return false;
+		if (results.size() == 1) {
+			var task = results.get(0);
+			if (task.isSuccessful()) {
+				showReceiptOnPopup(task.getTransaction(), (TransactionReceipt) task.getResult());
+			} else {
+				PopupMessage.display(STATUS,
+						String.format(TRANSACTION_FAILED_ERROR_MESSAGE, task.getResult()));
+			}
+		} else {
+			Map<Boolean, List<SubmitTask>> partitions = results.stream()
+					.collect(Collectors.partitioningBy(result -> result.isSuccessful()));
+			var successfulList = partitions.get(true);
+			var failedList = partitions.get(false);
+			if (!successfulList.isEmpty()) {
+				var task = successfulList.get(0);
+				var accountListString = getAccountListString(successfulList);
+				var transaction = task.getTransaction();
+				final var fields = String.join("\n\t\u2022 ",
+						((ToolCryptoUpdateTransaction) transaction).getUpdateList());
+				var message = String.format("The account update transaction succeeded. " +
+								"The following account properties were updated for %s:\n\t\u2022 %s", accountListString,
+						fields);
+				PopupMessage.display("Final status", message);
+			}
+			if (!failedList.isEmpty()) {
+				var accountListString = getAccountListString(failedList);
+				var message = String.format("The transaction failed for accounts: %n%s%n " +
+								"Please review and try again.", accountListString);
+				PopupMessage.display("Final status", message);
+			}
+		}
+		return true;
+	}
+
+	private String getAccountListString(final List<SubmitTask> tasks) {
+		var accountList = tasks.stream().map(t -> {
+			var transaction = t.getTransaction();
+			return ((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
+		}).collect(Collectors.toList());
+		return String.join(", ", accountList);
+	}
+
+	@NotNull
+	private List<File> getPrivateKeys(final ToolTransaction... transactions) {
+		final var knownSigners = controller.accountsPaneController.getFeePayers();
+		final Set<Identifier> unknownSigners = new HashSet<>();
+		final var privateKeys = new HashSet<File>();
+		for (final var transaction : transactions) {
+			final var signers = transaction.getSigningAccounts();
+			privateKeys.addAll(controller.extractRequiredKeys(transaction.getSigningKeys()));
+
+			for (final var signer : signers) {
+				final var identifier = new Identifier(signer, controller.getCurrentNetwork());
+				if (!knownSigners.contains(identifier)) {
+					unknownSigners.add(identifier);
+				}
 			}
 		}
 
@@ -3464,18 +3965,20 @@ public class CreatePaneController implements SubController {
 			privateKeys.addAll(list);
 			response = display(privateKeys);
 		}
+
 		return new ArrayList<>(privateKeys);
 	}
 
+	//	in the case of account update, this would need to take a list of receipts, and show the pass/fail
 	private String getPopupMessage(final ToolTransaction transaction, final TransactionReceipt receipt) {
 		var message = "";
 		switch (transaction.getTransactionType()) {
 			case CRYPTO_TRANSFER:
 				final var amount = ((ToolTransferTransaction) transaction).getHbarsTransferred();
-				message = String.format("The transfer transaction suceeded. %s were transferred.", amount.toString());
+				message = String.format("The transfer transaction succeeded. %s were transferred.", amount.toString());
 				break;
 			case CRYPTO_CREATE:
-				message = String.format("The crypto create transaction suceeded. Account created with account id %s",
+				message = String.format("The crypto create transaction succeeded. Account created with account id %s",
 						receipt.accountId.toString());
 				break;
 			case CRYPTO_UPDATE:
@@ -3494,14 +3997,14 @@ public class CreatePaneController implements SubController {
 				break;
 			case FILE_UPDATE:
 				final var file = ((ToolFileUpdateTransaction) transaction).getFile().toReadableString();
-				message = String.format("The file update transaction suceeded. File %s was updated", file);
+				message = String.format("The file update transaction succeeded. File %s was updated", file);
 				break;
 			case FILE_APPEND:
 				final var append = ((ToolFileAppendTransaction) transaction).getFile().toReadableString();
-				message = String.format("The file append transaction suceeded. File %s was updated", append);
+				message = String.format("The file append transaction succeeded. File %s was updated", append);
 				break;
 			case FREEZE:
-				message = "The freeze transaction suceeded";
+				message = "The freeze transaction succeeded";
 				break;
 			default:
 				message = "Unknown transaction type";
