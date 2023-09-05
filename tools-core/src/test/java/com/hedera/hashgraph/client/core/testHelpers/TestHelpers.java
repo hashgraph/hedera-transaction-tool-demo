@@ -38,6 +38,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.REALM_NUMBER;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.SHARD_NUMBER;
@@ -134,6 +135,7 @@ public class TestHelpers {
 		testJson.addProperty(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(10).asRFCString());
 
 		testJson.add(NODE_ID_FIELD_NAME, node);
+		testJson.addProperty(NODE_FIELD_INPUT, "0.0.3");
 		testJson.addProperty(NETWORK_FIELD_NAME, NetworkEnum.TESTNET.toString());
 
 		final JsonArray jsonArray = new JsonArray();
