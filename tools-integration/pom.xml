@@ -23,13 +23,13 @@
 	<parent>
 		<artifactId>hedera-transaction-tool</artifactId>
 		<groupId>com.hedera.hashgraph</groupId>
-		<version>0.13.0</version>
+		<version>0.14.0-beta.1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>tools-integration</artifactId>
-	<version>0.13.0</version>
+	<version>0.14.0-beta.1</version>
 
 	<dependencyManagement>
 		<dependencies>
@@ -47,19 +47,19 @@
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-core</artifactId>
-			<version>0.13.0</version>
+			<version>0.14.0-beta.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-ui</artifactId>
-			<version>0.13.0</version>
+			<version>0.14.0-beta.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.hedera.hashgraph</groupId>
 			<artifactId>tools-cli</artifactId>
-			<version>0.13.0</version>
+			<version>0.14.0-beta.1</version>
 			<scope>test</scope>
 		</dependency>
 
