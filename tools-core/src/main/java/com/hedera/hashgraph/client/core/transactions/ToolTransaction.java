@@ -33,6 +33,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.JsonUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -73,9 +74,9 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_LIST_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
@@ -90,14 +91,14 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile.NODES_STRING;
+import static com.hedera.hashgraph.client.core.remote.helpers.AccountList.INPUT_STRING;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.setupClient;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 import static java.lang.Thread.sleep;
 
 public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolTransaction.class);
-	private static final String NODES_STRING = "nodes";
-	private static final String INPUT_STRING = "input";
 	JsonObject input;
 	Transaction<? extends Transaction<?>> transaction;
 
@@ -145,10 +146,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					this.transactionValidStart = Objects.requireNonNull(transaction.getTransactionId().validStart);
 					this.transactionValidDuration = transaction.getTransactionValidDuration();
 					this.memo = transaction.getTransactionMemo();
-					final var accountListFile = Path.of(inputFile.getAbsolutePath()
-							.replace(TRANSACTION_EXTENSION, ACCOUNT_LIST_EXTENSION));
-					if (Files.exists(accountListFile)) {
-						var contents = readJsonObject(accountListFile.toString());
+					final var tcm = new File(inputFile.getAbsolutePath()
+							.replace(TRANSACTION_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
+					if (tcm.exists()) {
+						var contents = readJsonObject(tcm.getPath());
 						if (contents.has(NODES_STRING)) {
 							contents = contents.get(NODES_STRING).getAsJsonObject();
 							if (contents.has(INPUT_STRING)) {
@@ -709,18 +710,17 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			jsonTransaction.addProperty(NODE_FIELD_INPUT, nodeInput);
 		}
 		if (transactionFee != null) {
-			jsonTransaction.addProperty(TRANSACTION_FEE_FIELD_NAME, transactionFee.toTinybars());
-		}
-		if (transactionFee != null) {
-			jsonTransaction.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(transactionValidStart).asJSON());
+			jsonTransaction.add(TRANSACTION_FEE_FIELD_NAME, JsonUtils.hBarsToJsonObject(transactionFee));
 		}
 		if (transactionValidStart != null) {
+			jsonTransaction.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(transactionValidStart).asJSON());
 			jsonTransaction.addProperty(TRANSACTION_VALID_START_READABLE_FIELD_NAME,
 					new Timestamp(transactionValidStart).asRFCString());
 		}
 		if (transactionValidDuration != null) {
 			jsonTransaction.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
 		}
+		jsonTransaction.addProperty(NETWORK_FIELD_NAME, network.getName());
 		jsonTransaction.addProperty(MEMO_FIELD_NAME, memo);
 		return jsonTransaction;
 	}
