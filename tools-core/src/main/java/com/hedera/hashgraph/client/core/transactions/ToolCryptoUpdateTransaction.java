@@ -43,9 +43,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
@@ -53,6 +57,9 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_F
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile.ACCOUNTS_STRING;
+import static com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile.IS_UPDATE_ACCOUNT_FEE_PAYER;
+import static com.hedera.hashgraph.client.core.remote.helpers.AccountList.INPUT_STRING;
 
 public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
@@ -66,6 +73,8 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	private Identifier stakedAccountId;
 	private Long stakedNodeId;
 	private Boolean declineStakingRewards;
+	private String accountInput;
+	private boolean isUpdateAccountFeePayer = false;
 
 	private static final Logger logger = LogManager.getLogger(ToolCryptoUpdateTransaction.class);
 
@@ -90,6 +99,20 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		} catch (NullPointerException npe) {
 			this.declineStakingRewards = null;
 		}
+		final var tcm = new File(inputFile.getAbsolutePath()
+				.replace(TRANSACTION_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
+		if (tcm.exists()) {
+			var contents = readJsonObject(tcm.getPath());
+			if (contents.has(ACCOUNTS_STRING)) {
+				contents = contents.get(ACCOUNTS_STRING).getAsJsonObject();
+				if (contents.has(INPUT_STRING)) {
+					accountInput = contents.get(INPUT_STRING).getAsString();
+				}
+			}
+			if (contents.has(IS_UPDATE_ACCOUNT_FEE_PAYER)) {
+				isUpdateAccountFeePayer = contents.get(IS_UPDATE_ACCOUNT_FEE_PAYER).getAsBoolean();
+			}
+		}
 		setTransactionType(TransactionType.CRYPTO_UPDATE);
 	}
 
@@ -107,6 +130,14 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 
 	public Identifier getAccount() {
 		return account;
+	}
+
+	public String getAccountInput() {
+		return accountInput;
+	}
+
+	public boolean isUpdateAccountFeePayer() {
+		return isUpdateAccountFeePayer;
 	}
 
 	public Integer getMaxTokenAssociations() {
@@ -149,6 +180,24 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 			account = Identifier.parse(accountIdJson);
 		} catch (final HederaClientException | ClassCastException e) {
 			logger.error(CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE, ACCOUNT_TO_UPDATE);
+			answer = false;
+		}
+
+		try {
+			if (input.has(ACCOUNT_TO_UPDATE_INPUT)) {
+				accountInput = input.get(ACCOUNT_TO_UPDATE_INPUT).getAsString();
+			}
+		} catch (final Exception ex) {
+			logger.error(CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_TO_UPDATE_INPUT);
+			answer = false;
+		}
+
+		try {
+			if (input.has(IS_UPDATE_ACCOUNT_FEE_PAYER)) {
+				isUpdateAccountFeePayer = input.get(IS_UPDATE_ACCOUNT_FEE_PAYER).getAsBoolean();
+			}
+		} catch (final Exception ex) {
+			logger.error(CANNOT_PARSE_ERROR_MESSAGE, ACCOUNT_TO_UPDATE_INPUT);
 			answer = false;
 		}
 
@@ -326,14 +375,29 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	@Override
 	public JsonObject asJson() {
 		final var asJson = super.asJson();
+		if (account != null) {
+			asJson.add(ACCOUNT_TO_UPDATE, account.asJSON());
+		}
+		if (accountInput != null) {
+			asJson.addProperty(ACCOUNT_TO_UPDATE_INPUT, accountInput);
+		}
+		if (isUpdateAccountFeePayer) {
+			asJson.addProperty(IS_UPDATE_ACCOUNT_FEE_PAYER, isUpdateAccountFeePayer);
+		}
 		if (key != null) {
-			asJson.add("key", EncryptionUtils.keyToJson(key));
+			asJson.add(NEW_KEY_FIELD_NAME, EncryptionUtils.keyToJson(key));
+		}
+		if (accountMemo != null) {
+			asJson.addProperty(ACCOUNT_MEMO_FIELD_NAME, accountMemo);
+		}
+		if (maxTokenAssociations != null) {
+			asJson.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, maxTokenAssociations);
 		}
 		if (autoRenewDuration != null) {
-			asJson.addProperty("autoRenewDuration", autoRenewDuration.getSeconds());
+			asJson.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, autoRenewDuration.getSeconds());
 		}
 		if (receiverSignatureRequired != null) {
-			asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+			asJson.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, receiverSignatureRequired);
 		}
 		if (stakedAccountId != null) {
 			asJson.add(STAKED_ACCOUNT_ID_FIELD_NAME, stakedAccountId.asJSON());
