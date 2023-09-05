@@ -86,6 +86,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
@@ -272,13 +273,16 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			nLabel.setWrapText(true);
 			detailsGridPane.add(nLabel, LEFT, ++count);
 
-			final var nodesString = new StringBuilder();
-			for (final var n : getTransactionCreationMetadata().getNodes().getList()) {
-				var id = Identifier.parse(n, network);
-				nodesString.append(id.toNicknameAndChecksum(nicknames)).append("\n");
-			}
+			final var nodesString = getTransactionCreationMetadata().getNodes().getList().stream()
+					.map(n -> Identifier.parse(n, network).toNicknameAndChecksum(nicknames))
+					.collect(Collectors.joining("\n"));
 
-			detailsGridPane.add(new Label(nodesString.toString()), RIGHT, count);
+			final var scrollPane = new ScrollPane();
+			scrollPane.setFitToWidth(true);
+			final var label = new Label(nodesString);
+			scrollPane.setMaxHeight(100);
+			scrollPane.setContent(label);
+			detailsGridPane.add(scrollPane, RIGHT, count);
 		} else {
 			detailsGridPane.add(new Label("Node:"), LEFT, ++count);
 			detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), RIGHT, count);
@@ -421,13 +425,16 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				nicknames = new JsonObject();
 			}
 
-			final var accountsString = new StringBuilder();
-			for (final var n : getTransactionCreationMetadata().getAccounts().getList()) {
-				var id = Identifier.parse(n, network);
-				accountsString.append(id.toNicknameAndChecksum(nicknames)).append("\n");
-			}
+			final var accountsString = getTransactionCreationMetadata().getAccounts().getList().stream()
+					.map(n -> Identifier.parse(n, network).toNicknameAndChecksum(nicknames))
+					.collect(Collectors.joining("\n"));
 
-			detailsGridPane.add(new Label(accountsString.toString()), RIGHT, count++);
+			final var scrollPane = new ScrollPane();
+			scrollPane.setFitToWidth(true);
+			final var label = new Label(accountsString);
+			scrollPane.setMaxHeight(100);
+			scrollPane.setContent(label);
+			detailsGridPane.add(scrollPane, RIGHT, count++);
 		} else {
 			detailsGridPane.add(new Label("Account to update: "), LEFT, count);
 			final var account = updateTransaction.getAccount();
@@ -842,7 +849,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final String user;
 		final String output;
 		final int max;
-		long currentCount = 0l;
+		long currentCount = 0L;
 
 		public ExecuteGroupedTask(final String keyName, final PrivateKey privateKey,
 								  final String user, final String output) {
@@ -907,7 +914,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		private String processTransactionForNode(final JsonObject jsonObject, final Timestamp validStartTimestamp)
 				throws Exception {
 			var result = "";
-			long count = 0l;
+			long count = 0L;
 			if (getTransactionCreationMetadata().getAccounts() != null) {
 				var isUpdateAccountFeePayer = getTransactionCreationMetadata().isUpdateAccountFeePayer();
 				// This is specific to account updates
