@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -66,6 +67,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
@@ -431,7 +433,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
-			final String output) throws HederaClientException {
+						  final String output, final Runnable onSucceed) throws HederaClientException {
 		try {
 			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
 			setHistory(true);
@@ -512,10 +514,15 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final var outputFile = new File(output + File.separator + user, finalZip.getName());
 			Files.deleteIfExists(outputFile.toPath());
 			FileUtils.moveFile(finalZip, outputFile);
+
+			onSucceed.run();
+
 			return outputFile.getAbsolutePath();
 		} catch (final IOException e) {
 			logger.error(e.getMessage());
 			throw new HederaClientException(e);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -537,24 +544,38 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		var incrementedTime = transactionValidStart;
 
 		final List<ToolTransaction> transactions = new ArrayList<>();
-		final var input = getJsonInput();
 
+		List<JsonElement> nodeList;
+		if (getTransactionCreationMetadata() != null) {
+			// It appears LargeBinaryFile does not store the network, it assumes the network to be the default.
+			// For now, this will also assume the same.
+			nodeList = getTransactionCreationMetadata().getNodes().getList().stream()
+					.map(string -> Identifier.parse(string, "").asJSON()).collect(Collectors.toList());
+		} else {
+			nodeList = new ArrayList<>();
+			nodeList.add(nodeID.asJSON());
+		}
 		try (final var fileInputStream = new FileInputStream(content)) {
 			final var buffer = new byte[chunkSize];
 			var count = 0;
 			var inputStream = fileInputStream.read(buffer);
 			while (inputStream > 0) {
-				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
 				writeBytes(TEMP_LOCATION, trimmed);
-				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
-				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+				for (var nodeId : nodeList) {
+					// AS ToolTransaction saves the reference to input, this should not be reused.
+					var input = getJsonInput();
+					input.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
+					// The other transactions are appends
+					incrementedTime =
+							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
-				final var transaction = (count == 0) ?
-						new ToolFileUpdateTransaction(input) :
-						new ToolFileAppendTransaction(input);
-				transactions.add(transaction);
+					final var transaction = (count == 0) ?
+							new ToolFileUpdateTransaction(input) :
+							new ToolFileAppendTransaction(input);
+					transactions.add(transaction);
+				}
 				count++;
 				inputStream = fileInputStream.read(buffer);
 			}
@@ -570,29 +591,48 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var id = new TransactionId(feePayerAccountId.asAccount(), transactionValidStart.asInstant());
 		detailsGridPane.add(FXUtils.buildTransactionIDBox(detailsGridPane, id.toString()), RIGHT, 0);
 
+		JsonObject nicknames;
 		try {
-			final var map =
-					(new File(ACCOUNTS_MAP_FILE).exists()) ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-			final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, map));
-			feePayerLabel.setWrapText(true);
-			detailsGridPane.add(feePayerLabel, RIGHT, 1);
+			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
 		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
+			logger.error(e);
+			nicknames = new JsonObject();
 		}
 
+		final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, nicknames));
+		feePayerLabel.setWrapText(true);
+		detailsGridPane.add(feePayerLabel, RIGHT, 1);
 
 		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
-		detailsGridPane.add(text, 1, 2);
+		detailsGridPane.add(text, RIGHT, 2);
 
 		final var timeLabel = getTimeLabel(transactionValidStart, true);
 		timeLabel.setWrapText(true);
-		detailsGridPane.add(timeLabel, 1, 3);
+		detailsGridPane.add(timeLabel, RIGHT, 3);
+
+		if (getTransactionCreationMetadata() != null && !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
+			final var nLabel = new Label("Transactions will be submitted to nodes: ");
+			nLabel.setWrapText(true);
+			detailsGridPane.add(nLabel, LEFT,4);
+
+			final var nodesString = new StringBuilder();
+			for (final var n : getTransactionCreationMetadata().getNodes().getList()) {
+//				need the network name, or something, or maybe I need to store the full identifier... or both?
+				var identifier = Identifier.parse(n, "");
+				nodesString.append(identifier.toNicknameAndChecksum(nicknames)).append("\n");
+			}
+
+			detailsGridPane.add(new Label(nodesString.toString()), RIGHT, 4);
+		} else {
+			detailsGridPane.add(new Label("Node:"), LEFT, 4);
+			detailsGridPane.add(new Label(nodeID.toNicknameAndChecksum(nicknames)), RIGHT, 4);
+		}
 
 		if (!"".equals(memo)) {
-			detailsGridPane.add(new Label("Memo: "), 0, 4);
-			detailsGridPane.add(new Label(memo), 1, 4);
+			detailsGridPane.add(new Label("Memo: "), LEFT, 5);
+			detailsGridPane.add(new Label(memo), RIGHT, 5);
 		}
 
 
@@ -611,35 +651,35 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		});
 
 
-		detailsGridPane.add(new Label("File contents"), 0, 5);
-		detailsGridPane.add(fileLink, 1, 5);
+		detailsGridPane.add(new Label("File contents"), LEFT, 6);
+		detailsGridPane.add(fileLink, RIGHT, 6);
 
-		detailsGridPane.add(new Label("File Hash"), 0, 6);
+		detailsGridPane.add(new Label("File Hash"), LEFT, 7);
 		final var checksum = new Text(getChecksum());
 		checksum.setFont(Font.font("Courier New", 16));
-		detailsGridPane.add(checksum, 1, 6);
+		detailsGridPane.add(checksum, RIGHT, 7);
 
-		detailsGridPane.add(new Label("File size"), 0, 7);
+		detailsGridPane.add(new Label("File size"), LEFT, 8);
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
-		detailsGridPane.add(new Label(formattedContentSize), 1, 7);
+		detailsGridPane.add(new Label(formattedContentSize), RIGHT, 8);
 
 		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
-			detailsGridPane.add(new Label("Chunk size"), 0, 8);
+			detailsGridPane.add(new Label("Chunk size"), LEFT, 9);
 			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
-			detailsGridPane.add(new Label(formattedChunkSize), 1, 8);
+			detailsGridPane.add(new Label(formattedChunkSize), RIGHT, 9);
 
-			detailsGridPane.add(new Label("Number of transactions"), 0, 9);
+			detailsGridPane.add(new Label("Number of transactions"), LEFT, 10);
 			final var formattedChunkNumber = String.format("%d", chunks);
-			detailsGridPane.add(new Label(formattedChunkNumber), 1, 9);
+			detailsGridPane.add(new Label(formattedChunkNumber), RIGHT, 10);
 
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
-			detailsGridPane.add(interval, 0, 10);
+			detailsGridPane.add(interval, LEFT, 11);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
-			detailsGridPane.add(new Label(formattedIntervalLength), 1, 10);
+			detailsGridPane.add(new Label(formattedIntervalLength), RIGHT, 11);
 		}
 
 		return detailsGridPane;
