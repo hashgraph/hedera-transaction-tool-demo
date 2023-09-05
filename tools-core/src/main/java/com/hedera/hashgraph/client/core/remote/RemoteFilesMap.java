@@ -38,6 +38,7 @@ import java.util.Optional;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getBuildDateSecondsFromVersionStr;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
@@ -144,13 +145,18 @@ public class RemoteFilesMap {
 		final List<RemoteFile> remoteFiles = getRemoteFileList(fileDetails);
 
 		for (final RemoteFile rf : remoteFiles) {
-			if (rf.getType().equals(FileType.COMMENT)) {
+			if (rf.getType().equals(FileType.COMMENT) || rf.getType().equals(FileType.TRANSACTION_CREATION_METADATA)) {
 				continue;
 			}
 
-			final var linkedComments = findFile(remoteFiles, getBaseName(rf.getName()) + "." + TXT_EXTENSION);
+			final var linkedComments = findFile(remoteFiles,
+					getBaseName(rf.getName()) + "." + TXT_EXTENSION);
 			rf.setComments((linkedComments != null));
 			rf.setCommentsFile(rf.hasComments() ? linkedComments : null);
+
+			final var accountListFile = (TransactionCreationMetadataFile) findFile(remoteFiles,
+					getBaseName(rf.getName()) + "." + TRANSACTION_CREATION_METADATA_EXTENSION);
+			rf.setTransactionCreationMetadata(accountListFile);
 
 			// Handle the software update
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE) && rf.hasComments()) {
@@ -249,6 +255,9 @@ public class RemoteFilesMap {
 				break;
 			case METADATA:
 				remoteFile = new MetadataFile(fileDetails);
+				break;
+			case TRANSACTION_CREATION_METADATA:
+				remoteFile = new TransactionCreationMetadataFile(fileDetails);
 				break;
 			default:
 				throw new HederaClientException(
@@ -441,10 +450,10 @@ public class RemoteFilesMap {
 		return false;
 	}
 
-	private static RemoteFile findFile(final List<RemoteFile> remoteFiles, final String commentName) {
+	private static RemoteFile findFile(final List<RemoteFile> remoteFiles, final String fileName) {
 		for (final var rf :
 				remoteFiles) {
-			if (commentName.equals(rf.getName())) {
+			if (fileName.equals(rf.getName())) {
 				return rf;
 			}
 		}
