@@ -228,7 +228,10 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		keyStore0.insertNewKeyPair();
 
 		final var pair = Pair.of("testPem", keyStore0.get(0));
-		final var execute = largeBinary.execute(pair, "test_user", "src/test/resources/Files/output");
+		final var execute = largeBinary.execute(pair, "test_user",
+				"src/test/resources/Files/output", () -> {
+			logger.info("Transfer executed successfully");
+		});
 		final var outputZip = new File(execute);
 		assertTrue(outputZip.exists());
 
