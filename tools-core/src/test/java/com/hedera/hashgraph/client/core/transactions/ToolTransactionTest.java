@@ -70,6 +70,7 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
@@ -120,25 +121,30 @@ class ToolTransactionTest {
 		final Exception e2 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNodeId));
 		assertEquals("Hedera Client: Cannot validate input", e2.getMessage());
 
+		final var badNodeInputId = getJsonInputCT(50, sender, receiver, startTime);
+		badNodeInputId.addProperty(NODE_FIELD_INPUT, "bad-range");
+		final Exception e3 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNodeId));
+		assertEquals("Hedera Client: Cannot validate input", e3.getMessage());
+
 		final var badFee = getJsonInputCT(50, sender, receiver, startTime);
 		badFee.addProperty(TRANSACTION_FEE_FIELD_NAME, "bad");
-		final Exception e3 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badFee));
-		assertEquals("Hedera Client: Cannot validate input", e3.getMessage());
+		final Exception e4 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badFee));
+		assertEquals("Hedera Client: Cannot validate input", e4.getMessage());
 
 		final var badNetwork = getJsonInputCT(50, sender, receiver, startTime);
 		badNetwork.addProperty(NETWORK_FIELD_NAME, "bad");
-		final Exception e4 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNetwork));
-		assertEquals("Hedera Client: Cannot validate input", e4.getMessage());
+		final Exception e5 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badNetwork));
+		assertEquals("Hedera Client: Cannot validate input", e5.getMessage());
 
 		final var badStart = getJsonInputCT(50, sender, receiver, startTime);
 		badStart.addProperty(TRANSACTION_VALID_START_FIELD_NAME, "bad");
-		final Exception e5 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badStart));
-		assertEquals("Hedera Client: Cannot validate input", e5.getMessage());
+		final Exception e6 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badStart));
+		assertEquals("Hedera Client: Cannot validate input", e6.getMessage());
 
 		final var badDuration = getJsonInputCT(50, sender, receiver, startTime);
 		badDuration.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, "bad");
-		final Exception e6 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badDuration));
-		assertEquals("Hedera Client: Cannot validate input", e6.getMessage());
+		final Exception e7 = assertThrows(HederaClientException.class, () -> new ToolTransaction(badDuration));
+		assertEquals("Hedera Client: Cannot validate input", e7.getMessage());
 
 	}
 
@@ -174,6 +180,7 @@ class ToolTransactionTest {
 		assertNull(emptyTransaction.getTransactionValidStart());
 		assertNull(emptyTransaction.getFeePayerID());
 		assertNull(emptyTransaction.getNodeID());
+		assertNull(emptyTransaction.getNodeInput());
 		assertNull(emptyTransaction.getNetwork());
 
 		final var testJsonBad = getJsonInputCT(50, sender, receiver, startTime);
@@ -190,6 +197,7 @@ class ToolTransactionTest {
 		assertEquals(startTime.truncatedTo(ChronoUnit.SECONDS), transaction.getTransactionValidStart());
 		assertEquals(sender, transaction.getFeePayerID().getAccountNum());
 		assertEquals(new Identifier(0, 0, 3, "Mainnet"), transaction.getNodeID());
+		assertEquals("0.0.3", transaction.getNodeInput());
 		assertEquals(NetworkEnum.TESTNET, transaction.getNetwork());
 	}
 
