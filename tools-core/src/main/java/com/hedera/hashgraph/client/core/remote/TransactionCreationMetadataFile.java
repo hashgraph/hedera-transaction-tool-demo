@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class TransactionCreationMetadataFile extends RemoteFile {
 	private static final Logger logger = LogManager.getLogger(TransactionCreationMetadataFile.class);
@@ -101,6 +102,17 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 				.append(ACCOUNTS_STRING, accounts)
 				.append(IS_UPDATE_ACCOUNT_FEE_PAYER, isUpdateAccountFeePayer)
 				.toString();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof TransactionCreationMetadataFile) {
+			return Objects.equals(((TransactionCreationMetadataFile) o).accounts, accounts)
+					&& Objects.equals(((TransactionCreationMetadataFile) o).nodes, nodes)
+					&& Objects.equals(((TransactionCreationMetadataFile) o).isUpdateAccountFeePayer,
+					isUpdateAccountFeePayer);
+		}
+		return false;
 	}
 
 	public static final class Builder {
