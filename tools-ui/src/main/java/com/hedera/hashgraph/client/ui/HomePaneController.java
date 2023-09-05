@@ -76,7 +76,6 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -291,6 +290,7 @@ public class HomePaneController implements SubController {
 		return file.isValid() && !file.isExpired() &&
 				!file.getType().equals(FileType.METADATA) &&
 				!file.getType().equals(FileType.COMMENT) &&
+				!file.getType().equals(FileType.TRANSACTION_CREATION_METADATA) &&
 				!file.isHistory();
 	}
 
@@ -336,8 +336,8 @@ public class HomePaneController implements SubController {
 
 	private void sortFiles() {
 		FXCollections.sort(newFilesViewVBox.getChildren(), (t1,t2) -> {
-			final var file1 = fileBoxes.inverse().get((VBox) t1);
-			final var file2 = fileBoxes.inverse().get((VBox) t2);
+			final var file1 = fileBoxes.inverse().get(t1);
+			final var file2 = fileBoxes.inverse().get(t2);
 			// Should never be null
 			if (file1 == null || file1.getExpiration() == null) {
 				return -1;
@@ -960,10 +960,16 @@ public class HomePaneController implements SubController {
 	private void createSignedTransaction(final RemoteFile rf, final Pair<String, KeyPair> pair) {
 		try {
 			//When a RemoteFile executes, it will moveToHistory and setHistory
-			rf.execute(pair, user, output);
-			exportComments(rf, rf.getCommentArea(), rf.getName());
-			controller.historyPaneController.addToHistory(rf);
-			removeFile(rf);
+			rf.execute(pair, user, output, () -> {
+				controller.historyPaneController.addToHistory(rf);
+				removeFile(rf);
+				try {
+					exportComments(rf, rf.getCommentArea(), rf.getName());
+				} catch (HederaClientException e) {
+					logger.error("exporting comments failed", e);
+					controller.displaySystemMessage(e.getCause().toString());
+				}
+			});
 		} catch (final Exception e) {
 			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());
