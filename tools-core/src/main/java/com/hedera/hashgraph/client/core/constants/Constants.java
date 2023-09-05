@@ -61,7 +61,7 @@ public class Constants {
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
 	public static final String BUNDLE_EXTENSION = "zip";
-	public static final String ACCOUNT_LIST_EXTENSION = "csva";
+	public static final String TRANSACTION_CREATION_METADATA_EXTENSION = "csva";
 	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
