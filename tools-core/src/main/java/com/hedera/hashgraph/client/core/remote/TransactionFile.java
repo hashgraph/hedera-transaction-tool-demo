@@ -30,6 +30,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.remote.helpers.ProgressPopup;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
@@ -40,12 +41,17 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.FXUtils;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.opencsv.CSVWriter;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.GridPane;
@@ -68,11 +74,15 @@ import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -82,12 +92,17 @@ import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_
 import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 
 public class TransactionFile extends RemoteFile implements GenericFileReadWriteAware {
@@ -95,6 +110,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 	private static final String UNBREAKABLE_SPACE = "\u00A0";
 	private static final Font COURIER_FONT = Font.font("Courier New", 17);
+	private static final int NANO_INCREMENT = 10;
 
 	private ToolTransaction transaction;
 	private TransactionType transactionType;
@@ -171,6 +187,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return transactionType;
 	}
 
+	@Override
 	public Timestamp getExpiration() {
 		return expiration;
 	}
@@ -249,15 +266,30 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, RIGHT, ++count);
 
-		detailsGridPane.add(new Label("Node:"), LEFT, ++count);
-		detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), RIGHT, count);
+		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
+			final var nLabel = new Label("Transactions will be submitted to nodes: ");
+			nLabel.setWrapText(true);
+			detailsGridPane.add(nLabel, LEFT, ++count);
+
+			final var nodesString = new StringBuilder();
+			for (final var n : getTransactionCreationMetadata().getNodes().getList()) {
+				var id = Identifier.parse(n, network);
+				nodesString.append(id.toNicknameAndChecksum(nicknames)).append("\n");
+			}
+
+			detailsGridPane.add(new Label(nodesString.toString()), RIGHT, count);
+		} else {
+			detailsGridPane.add(new Label("Node:"), LEFT, ++count);
+			detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), RIGHT, count);
+		}
 
 		if (!"".equals(transaction.getMemo())) {
 			detailsGridPane.add(new Label("Memo: "), LEFT, ++count);
-			detailsGridPane.add(new Label(transaction.getMemo()), RIGHT, count);
+			var memo = new Label(transaction.getMemo());
+			memo.setWrapText(true);
+			detailsGridPane.add(memo, RIGHT, count);
 		}
-
-
 	}
 
 	/**
@@ -362,7 +394,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		label.setWrapText(true);
 		detailsGridPane.add(label, 0, count);
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isDeclineStakingRewards())), 1,
-				count++);
+				count);
 	}
 
 	/**
@@ -377,10 +409,31 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		final var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
 
-		detailsGridPane.add(new Label("Account to update"), 0, count);
-		final var account = updateTransaction.getAccount();
-		account.setNetworkName(network);
-		detailsGridPane.add(new Label(account.toNicknameAndChecksum(nicknames)), 1, count++);
+		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& !getTransactionCreationMetadata().getAccounts().getList().isEmpty()) {
+			final var nLabel = new Label("Accounts to update: ");
+			detailsGridPane.add(nLabel, LEFT, count);
+
+			try {
+				nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+			} catch (final HederaClientException e) {
+				logger.error(e);
+				nicknames = new JsonObject();
+			}
+
+			final var accountsString = new StringBuilder();
+			for (final var n : getTransactionCreationMetadata().getAccounts().getList()) {
+				var id = Identifier.parse(n, network);
+				accountsString.append(id.toNicknameAndChecksum(nicknames)).append("\n");
+			}
+
+			detailsGridPane.add(new Label(accountsString.toString()), RIGHT, count++);
+		} else {
+			detailsGridPane.add(new Label("Account to update: "), LEFT, count);
+			final var account = updateTransaction.getAccount();
+			account.setNetworkName(network);
+			detailsGridPane.add(new Label(account.toNicknameAndChecksum(nicknames)), RIGHT, count++);
+		}
 
 		final var sigReqLabel = new Label("Receiver signature required: ");
 		sigReqLabel.setWrapText(true);
@@ -388,9 +441,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var hasOldInfo = oldInfo != null;
 		final var keysLink = new Hyperlink("Click for more details");
 		if (updateTransaction.getKey() != null) {
-			detailsGridPane.add(new Label("Key: "), 0, count);
+			detailsGridPane.add(new Label("Key: "), LEFT, count);
 			keysLink.setOnAction(actionEvent -> displayKey(treeView, oldKey));
-			detailsGridPane.add(keysLink, 1, count++);
+			detailsGridPane.add(keysLink, RIGHT, count++);
 		}
 
 		if (updateTransaction.getAutoRenewDuration() != null) {
@@ -406,7 +459,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		if (updateTransaction.getAccountMemo() != null) {
-			handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
+			count = handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
 		}
 
 		try {
@@ -416,29 +469,28 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			nicknames = new JsonObject();
 		}
 
-
 		if (updateTransaction.getStakedAccountId() != null) {
 			var label = new Label("Staked account ID: ");
 			label.setWrapText(true);
-			detailsGridPane.add(label, 0, count);
+			detailsGridPane.add(label, LEFT, count);
 			final var stakedAccountIdLabel = new Label(CommonMethods.nicknameOrNumber(updateTransaction.getStakedAccountId(), nicknames));
 			stakedAccountIdLabel.setWrapText(true);
-			detailsGridPane.add(stakedAccountIdLabel, 1, count++);
+			detailsGridPane.add(stakedAccountIdLabel, RIGHT, count++);
 		}
 
 		if (updateTransaction.getStakedNodeId() != null) {
 			var label = new Label("Staked Node ID: ");
 			label.setWrapText(true);
-			detailsGridPane.add(label, 0, count);
-			detailsGridPane.add(new Label(updateTransaction.getStakedNodeId().toString()), 1, count++);
+			detailsGridPane.add(label, LEFT, count);
+			detailsGridPane.add(new Label(updateTransaction.getStakedNodeId().toString()), RIGHT, count++);
 		}
 
 		if (updateTransaction.isDeclineStakingRewards() != null) {
 			var label = new Label("Decline Staking Rewards: ");
 			label.setWrapText(true);
-			detailsGridPane.add(label, 0, count);
-			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isDeclineStakingRewards())), 1,
-					count++);
+			detailsGridPane.add(label, LEFT, count);
+			detailsGridPane.add(new Label(String.format("%s", updateTransaction.isDeclineStakingRewards())), RIGHT,
+					count);
 		}
 	}
 
@@ -474,7 +526,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private int handleMaxTokenAssociations(final GridPane detailsGridPane, int count,
 			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
-		final var labelMAT = new Label("Maximum automatic token associations");
+		final var labelMAT = new Label("Maximum automatic token associations: ");
 		labelMAT.setWrapText(true);
 		detailsGridPane.add(labelMAT, 0, count);
 		final var newValue = updateTransaction.getMaxTokenAssociations();
@@ -488,9 +540,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return count;
 	}
 
-	private void handleAccountMemo(final GridPane detailsGridPane, final int count,
+	private int handleAccountMemo(final GridPane detailsGridPane, int count,
 			final ToolCryptoUpdateTransaction updateTransaction, final boolean hasOldInfo) {
-		detailsGridPane.add(new Label("Account memo"), 0, count);
+		detailsGridPane.add(new Label("Account memo: "), 0, count);
 		final var newValue = updateTransaction.getAccountMemo();
 		final var labelString = (hasOldInfo && oldInfo.has(ACCOUNT_MEMO_FIELD_NAME)) ?
 				String.format("%s (updated from %s)", newValue,
@@ -498,7 +550,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				String.format("%s", newValue);
 		final var label = new Label(labelString);
 		label.setWrapText(true);
-		detailsGridPane.add(label, 1, count);
+		detailsGridPane.add(label, 1, count++);
+		return count;
 	}
 
 	/**
@@ -600,76 +653,65 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
-			final String output) throws HederaClientException {
-		try {
-			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
-			setHistory(true);
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
-
+						  final String output, final Runnable onSucceed) throws HederaClientException {
 		final var keyName = FilenameUtils.getBaseName(pair.getLeft());
-		final var tempStorage =
-				new File(System.getProperty("java.io.tmpdir"),
-						LocalDate.now().toString()).getAbsolutePath() + "/Transaction/" + keyName;
-		final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
-				this.getBaseName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION);
 
-		final var tempTxFile =
-				tempStorage + File.separator + this.getBaseName() + "." + TRANSACTION_EXTENSION;
-		final var signatureFile =
-				tempStorage + File.separator + this.getBaseName() + "." + SIGNATURE_EXTENSION;
-
-		try {
-			final var value = pair.getValue();
-			if (value == null || !isValid()) {
-				return "";
-			}
-
-			if (new File(tempStorage).exists()) {
-				FileUtils.cleanDirectory(new File(tempStorage));
-			}
-
-			if (new File(tempStorage).mkdirs()) {
-				logger.info("Created temp folder {}", tempStorage);
-			}
-
-			// Store a copy of the transaction
-			transaction.store(tempTxFile);
-
-			// Sign the transaction
-			final var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
-
-			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
-					transaction.createSignature(privateKey));
-			signaturePair.write(signatureFile);
-
-			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
-
-			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
-				throw new HederaClientRuntimeException("Invalid file in file list");
-			});
-
-			final var packed = Arrays.toString(toPack);
-			logger.info("Packing {} to {}.zip", packed, tempStorage);
-			ZipUtil.packEntries(toPack, finalZip);
-
-			for (final var file : toPack) {
-				Files.deleteIfExists(file.toPath());
-				logger.info("Delete {}", file.getName());
-			}
-
-			FileUtils.deleteDirectory(new File(tempStorage));
-
-			final var outputFile = new File(output + File.separator + user, finalZip.getName());
-			Files.deleteIfExists(outputFile.toPath());
-			FileUtils.moveFile(finalZip, outputFile);
-			return outputFile.getAbsolutePath();
-		} catch (final IOException e) {
-			logger.error(e);
-			throw new HederaClientException(e);
+		final var value = pair.getValue();
+		if (value == null || !isValid()) {
+			return "";
 		}
 
+		final var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
+
+		final DoubleProperty progress = new SimpleDoubleProperty(1);
+
+		final var transactionsProgressBar = new ProgressBar();
+		transactionsProgressBar.progressProperty().bind(progress);
+		transactionsProgressBar.setVisible(true);
+		final var compressingProgressBar = new ProgressBar();
+		compressingProgressBar.setProgress(-1);
+
+		final var cancelButton = new Button("CANCEL");
+		final var window =
+				ProgressPopup.setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
+
+		cancelButton.visibleProperty().bind(transactionsProgressBar.progressProperty().lessThan(1));
+
+		//TODO need to handle exceptions from the task
+		var task = new ExecuteGroupedTask(keyName, privateKey, user, output);
+
+		transactionsProgressBar.progressProperty().bind(task.progressProperty());
+		new Thread(task).start();
+
+		task.setOnSucceeded(workerStateEvent -> {
+			try {
+				moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
+				setHistory(true);
+			} catch (final HederaClientException e) {
+				logger.error(e);
+			}
+			try {
+				onSucceed.run();
+			} catch (Exception e) {
+				throw new HederaClientRuntimeException(e);
+			}
+			window.close();
+		});
+
+		cancelButton.setOnAction(actionEvent -> task.cancel());
+
+		task.setOnCancelled(workerStateEvent -> {
+			logger.info("Task interrupted");
+			window.close();
+		});
+
+		task.setOnFailed(workerStateEvent -> {
+			//TODO this should be very visible to the user, so they don't think it passed
+			logger.info("Task failed");
+			window.close();
+		});
+
+		return "";
 	}
 
 	@Override
@@ -769,8 +811,271 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return keyBox;
 	}
 
-
 	public void setOldInfo(final JsonObject oldInfo) {
 		this.oldInfo = oldInfo;
+	}
+
+	/**
+	 * Wrap a ToolTransaction in a simple TransactionFile in order to gain the UI functionality.
+	 * @param transaction
+	 * @return
+	 */
+	public static TransactionFile wrapToolTransaction(final ToolTransaction transaction) {
+		var file = new TransactionFile();
+		file.transaction = transaction;
+		file.transactionType = transaction.getTransactionType();
+
+		final var tvs = transaction.getTransactionValidStart();
+		final var tvd = transaction.getTransactionValidDuration();
+
+		file.expiration = new Timestamp(tvs.getEpochSecond() + tvd.getSeconds(), tvs.getNano() + tvd.getNano());
+		file.setShowAdditionalBoxes();
+		return file;
+	}
+
+	private class ExecuteGroupedTask extends Task<String> {
+		static final String TRANSACTIONS_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "transactions";
+		static final String SIGNATURES_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "signatures";
+		final String keyName;
+		final PrivateKey privateKey;
+		final String tempStorage;
+		final String user;
+		final String output;
+		final int max;
+		long currentCount = 0l;
+
+		public ExecuteGroupedTask(final String keyName, final PrivateKey privateKey,
+								  final String user, final String output) {
+			this.privateKey = privateKey;
+			this.keyName = keyName;
+			tempStorage =
+					new File(System.getProperty("java.io.tmpdir"), keyName + File.separator +
+							LocalDate.now()).getAbsolutePath() + File.separator + "Transaction";
+			try {
+				if (new File(tempStorage).exists()) {
+					FileUtils.cleanDirectory(new File(tempStorage));
+				}
+
+				if (new File(tempStorage).mkdirs()) {
+					logger.info("Created temp folder {}", tempStorage);
+				}
+			} catch (IOException e) {
+				logger.info(String.format("Failed to clean directory: %s", tempStorage));
+			}
+			this.output = output;
+			this.user = user;
+			if (getTransactionCreationMetadata() == null) {
+				this.max = 1;
+			} else {
+				final var nodeListSize = getTransactionCreationMetadata().getNodes() == null ? 1
+						: getTransactionCreationMetadata().getNodes().getList().size();
+				final var accountListSize = getTransactionCreationMetadata().getAccounts() == null ? 1
+						: getTransactionCreationMetadata().getAccounts().getList().size();
+				this.max = nodeListSize * accountListSize;
+			}
+		}
+
+		@Override
+		protected String call() throws Exception {
+			var result = "";
+			if (getTransactionCreationMetadata() == null) {
+				result = processSingleTransaction();
+			} else {
+				final var transactionJson = transaction.asJson();
+				var validStartTimestamp = new Timestamp(transactionJson.get(TRANSACTION_VALID_START_FIELD_NAME));
+				if (getTransactionCreationMetadata().getNodes() != null) {
+					for (final var nodeId : getTransactionCreationMetadata().getNodes().getList()) {
+						transactionJson.add(NODE_ID_FIELD_NAME,
+								Identifier.parse(nodeId, network).asJSON());
+						var tempResult = processTransactionForNode(transactionJson, validStartTimestamp);
+						if ("".equals(result)) {
+							result = tempResult;
+						}
+					}
+				} else {
+					result = processTransactionForNode(transactionJson, validStartTimestamp);
+				}
+			}
+			try {
+				FileUtils.deleteDirectory(new File(tempStorage));
+			} catch (IOException e) {
+				logger.info(String.format("Directory could not be deleted: %s",tempStorage));
+			}
+			return result;
+		}
+
+		private String processTransactionForNode(final JsonObject jsonObject, final Timestamp validStartTimestamp)
+				throws Exception {
+			var result = "";
+			long count = 0l;
+			if (getTransactionCreationMetadata().getAccounts() != null) {
+				var isUpdateAccountFeePayer = getTransactionCreationMetadata().isUpdateAccountFeePayer();
+				// This is specific to account updates
+				for (final var accountId : getTransactionCreationMetadata().getAccounts().getList()) {
+					final var accountJson = Identifier.parse(accountId, network).asJSON();
+					jsonObject.add(ACCOUNT_TO_UPDATE, accountJson);
+					var incrementedTime = new Timestamp(validStartTimestamp.asDuration()
+							.plusNanos( count++ * NANO_INCREMENT));
+					jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+					if (isUpdateAccountFeePayer) {
+						jsonObject.add(FEE_PAYER_ACCOUNT_FIELD_NAME, accountJson);
+					}
+					var tempResult = processTransactionForAccount(jsonObject);
+					// The first processed transaction will be the result
+					if ("".equals(result)) {
+						result = tempResult;
+					}
+				}
+			} else {
+				result = processTransactionForAccount(jsonObject);
+			}
+			pack(Identifier.parse(jsonObject.getAsJsonObject(NODE_ID_FIELD_NAME)).toReadableString());
+			return result;
+		}
+
+		private String processTransactionForAccount(final JsonObject jsonObject)
+				throws Exception {
+			final var t = getTransaction(jsonObject);
+
+			final var result = processTransaction(t);
+			updateProgress(++currentCount, (long) max - 1);
+			return result;
+		}
+
+		private String processTransaction(final ToolTransaction transaction) throws HederaClientException {
+			final String tempTxFile = transaction.store(Path.of(tempStorage, getFileName(transaction)).toString());
+			final String signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
+
+			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+					transaction.createSignature(privateKey));
+			signaturePair.write(signatureFile);
+
+			return tempTxFile;
+		}
+
+		private String processSingleTransaction() throws HederaClientException, IOException {
+			final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
+					transaction.buildFileName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION);
+			final String tempTxFile = transaction.store(tempStorage);
+			final String signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
+
+			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+					transaction.createSignature(privateKey));
+			signaturePair.write(signatureFile);
+
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
+
+			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
+				throw new HederaClientRuntimeException("Invalid file in file list");
+			});
+
+			final var packed = Arrays.toString(toPack);
+			logger.info("Packing {} to {}.zip", packed, tempStorage);
+			ZipUtil.packEntries(toPack, finalZip);
+
+			for (final var file : toPack) {
+				Files.deleteIfExists(file.toPath());
+				logger.info("Delete {}", file.getName());
+			}
+			final var outputFile = Path.of(output, user, finalZip.getName());
+			Files.deleteIfExists(outputFile);
+			FileUtils.moveFile(finalZip, outputFile.toFile());
+
+			return outputFile.toAbsolutePath().toString();
+		}
+
+		public void pack(String nodeId) throws HederaClientException {
+			final var baseName = getZipFileBaseName(nodeId);
+			try {
+				summarizeTransactions(baseName);
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+			zipMessages(String.format("%s%s.%s", baseName, TRANSACTIONS_SUFFIX, ZIP_EXTENSION),
+					TRANSACTION_EXTENSION);
+			zipMessages(String.format("%s%s.%s", baseName, SIGNATURES_SUFFIX, ZIP_EXTENSION),
+					SIGNATURE_EXTENSION);
+		}
+
+		private void summarizeTransactions(final String baseName) throws HederaClientException, IOException {
+			final var transactions =
+					new File(tempStorage).listFiles((dir, name) -> name.endsWith(TRANSACTION_EXTENSION));
+			if (transactions == null) {
+				throw new HederaClientRuntimeException("Unable to read transactions list");
+			}
+			final var files = Arrays.asList(transactions);
+			Collections.sort(files);
+
+			final var summary = Path.of(output, user, baseName +
+					FILE_NAME_GROUP_SEPARATOR + "summary.csv");
+
+			Files.deleteIfExists(summary);
+			try (final var printWriter = new PrintWriter(summary.toFile());
+				 final var writer = new CSVWriter(printWriter)) {
+				final var header = new String[] { "Filename", "Transaction Json" };
+				writer.writeNext(header);
+				for (final var file : files) {
+					final List<String> dataList = new ArrayList<>();
+					final var t = getTransaction(file);
+					dataList.add(file.getName());
+					dataList.add(t.asJson().toString().replace(",", ";"));
+					var data = new String[2];
+					data = dataList.toArray(data);
+					writer.writeNext(data);
+				}
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			} catch (NoSuchMethodException | InvocationTargetException | InstantiationException |
+					 IllegalAccessException e) {
+				throw new HederaClientRuntimeException(e);
+			}
+		}
+
+		private void zipMessages(final String messages, final String ext) throws HederaClientException {
+			try {
+				final var txToPack = new File(tempStorage).listFiles((dir, name) -> name.endsWith(ext));
+				if (txToPack == null) {
+					throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
+				}
+				final var zipFile = Path.of(output, user, messages).toFile();
+
+				if (new File(tempStorage).exists()) {
+					Files.deleteIfExists(zipFile.toPath());
+					ZipUtil.packEntries(txToPack, zipFile);
+				}
+
+				// Delete transactions that have now been zipped
+				for (final File file : txToPack) {
+					Files.deleteIfExists(file.toPath());
+				}
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+		}
+
+		private String getZipFileBaseName(final String nodeAccount) {
+			// filename(seconds_feepayer_transaction.hash)_keyname_node
+			return String.join(FILE_NAME_GROUP_SEPARATOR,
+					transaction.buildFileName(),
+					keyName,
+					String.format("%s%s%s", "Node", FILE_NAME_INTERNAL_SEPARATOR, nodeAccount));
+		}
+
+		private String getFileName(final ToolTransaction txn) {
+			// transaction-id_account-to-update-id.[tx,sig]
+			// or if no account, it will just be transaction-id.[tx,sig]
+			if (txn.getTransactionType() == TransactionType.CRYPTO_UPDATE) {
+				var suffixIdentifier = ((ToolCryptoUpdateTransaction)txn).getAccount().toReadableString();
+				return String.format("%s%s%s.%s", txn.getTransactionId().toString(),
+						FILE_NAME_GROUP_SEPARATOR, suffixIdentifier, TRANSACTION_EXTENSION);
+			}
+			return String.format("%s.%s", txn.getTransactionId().toString(), TRANSACTION_EXTENSION);
+		}
+
+		private ToolTransaction getTransaction(final Object obj) throws NoSuchMethodException,
+				InvocationTargetException, InstantiationException, IllegalAccessException {
+			final var c = transaction.getClass().getConstructor(obj.getClass());
+			return c.newInstance(obj);
+		}
 	}
 }
