@@ -20,7 +20,7 @@ package com.hedera.hashgraph.client.core.enums;
 
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_LIST_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_EXTENSION;
@@ -43,7 +43,7 @@ public enum FileType {
 	CONFIG(CONFIGURATION_EXTENSION),
 	METADATA(METADATA_EXTENSION),
 	BUNDLE(BUNDLE_EXTENSION),
-	ACCOUNT_LIST(ACCOUNT_LIST_EXTENSION),
+	TRANSACTION_CREATION_METADATA(TRANSACTION_CREATION_METADATA_EXTENSION),
 	UNKNOWN("");
 
 	private final String extension;
@@ -89,8 +89,8 @@ public enum FileType {
 				return "File Contents Update";
 			case BUNDLE:
 				return "Information Bundle";
-			case ACCOUNT_LIST:
-				return "Account List";
+			case TRANSACTION_CREATION_METADATA:
+				return "Transaction Creation Metadata";
 			case METADATA:
 			case UNKNOWN:
 				break;
