@@ -102,8 +102,15 @@
 					</VBox.margin>
 					<Label text="Account to update"/>
 					<HBox alignment="CENTER_LEFT" spacing="20.0">
-						<TextField fx:id="updateAccountID" alignment="CENTER" maxWidth="-Infinity" minWidth="300.0"
-								   promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						<VBox HBox.hgrow="ALWAYS">
+							<TextField fx:id="updateAccountID" alignment="CENTER"
+									   maxWidth="-Infinity" minWidth="300.0" promptText="X.X.XXXX, X, X-X"
+									   style="-fx-border-radius: 10 10 0 0; -fx-background-radius: 10 10 0 0;" />
+							<ListView fx:id="updateAccountList" focusTraversable="false"
+									  maxWidth="-Infinity" minWidth="300.0"
+									  minHeight="-Infinity" maxHeight="122"
+									  style="-fx-background-radius: 0 0 10 10; -fx-border-radius: 0 0 10 10;" />
+						</VBox>
 						<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 								   visible="false">
 							<Image url="@../../../../../icons/greencheck.png"/>
@@ -229,9 +236,11 @@
 					<VBox spacing="10.0">
 						<Label text="Payer account"/>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="feePayerAccountField" alignment="CENTER" maxWidth="1.7976931348623157E308"
+							<TextField fx:id="feePayerAccountField" alignment="CENTER" maxWidth="-Infinity"
 									   minWidth="300.0" promptText="X.X.XXXX"
 									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<CheckBox fx:id="isUpdateAccountFeePayerCheckBox" maxWidth="-Infinity"
+									  text="Fee to be paid by updated Account"/>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 									   visible="false">
 								<Image url="@../../../../../icons/greencheck.png"/>
@@ -241,10 +250,17 @@
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0">
-						<Label text="Submit to node"/>
+						<Label text="Submit to node with account"/>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="nodeAccountField" alignment="CENTER" maxWidth="-Infinity" minWidth="300.0"
-									   promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<VBox HBox.hgrow="ALWAYS">
+								<TextField fx:id="nodeAccountField" alignment="CENTER"
+										   maxWidth="-Infinity" minWidth="300.0" promptText="X.X.XXXX, X, X-X"
+										   style="-fx-border-radius: 10 10 0 0; -fx-background-radius: 10 10 0 0;" />
+								<ListView fx:id="nodeAccountList" focusTraversable="false"
+										  maxWidth="-Infinity" minWidth="300.0"
+										  minHeight="-Infinity" maxHeight="122"
+										  style="-fx-background-radius: 0 0 10 10; -fx-border-radius: 0 0 10 10;" />
+							</VBox>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 									   visible="false">
 								<Image url="@../../../../../icons/greencheck.png"/>
