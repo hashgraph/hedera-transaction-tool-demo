@@ -334,25 +334,23 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @return true if all the fields exist
 	 */
 	public static boolean verifyFieldExist(final JsonObject input, final String... fields) {
-		var count = 0;
+		var missingFields = false;
 		for (final var field : fields) {
 			if (!input.has(field)) {
-				count++;
 				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
+				missingFields = true;
 			}
 		}
-		return (count == 0);
+		return !missingFields;
 	}
 
 	public static boolean verifyOneOfExists(final JsonObject input, final String... fields) {
-		var count = 0;
 		for (final var field : fields) {
 			if (input.has(field)) {
-				count++;
-				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
+				return true;
 			}
 		}
-		return (count > 0);
+		return false;
 	}
 
 	/**
