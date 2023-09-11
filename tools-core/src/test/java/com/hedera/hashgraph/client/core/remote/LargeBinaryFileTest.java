@@ -57,7 +57,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-public class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
+class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFileTest.class);
 
@@ -70,7 +70,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void constructor_test() throws IOException, HederaClientException {
+	void constructor_test() throws IOException, HederaClientException {
 		final var emptyFile = new LargeBinaryFile();
 		assertFalse(emptyFile.isValid());
 
@@ -154,14 +154,14 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPane_test() throws HederaClientException {
+	void buildGridPane_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);
 		final var gridPane = largeBinary.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(22, gridPane.getChildren().size());
+		assertEquals(24, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(5);
@@ -170,33 +170,33 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		var text = (Text) gridPane.getChildren().get(6);
 		assertEquals("190000000 ℏ", text.getText());
 
-		label = (Label) gridPane.getChildren().get(9);
+		label = (Label) gridPane.getChildren().get(11);
 		assertEquals("a memo included", label.getText());
 
-		assertTrue(gridPane.getChildren().get(11) instanceof Hyperlink);
+		assertTrue(gridPane.getChildren().get(13) instanceof Hyperlink);
 
 		label = (Label) gridPane.getChildren().get(7);
 		assertTrue(label.getText().contains("2022-09-03 01:00:00 UTC"));
 
-		text = (Text) gridPane.getChildren().get(13);
+		text = (Text) gridPane.getChildren().get(15);
 		assertTrue(text.getText().contains("9242 b8c9 5482 e9b7 237d 7ecc"));
 
-		label = (Label) gridPane.getChildren().get(15);
+		label = (Label) gridPane.getChildren().get(17);
 		assertEquals("18651636 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(17);
+		label = (Label) gridPane.getChildren().get(19);
 		assertEquals("1023 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(19);
+		label = (Label) gridPane.getChildren().get(21);
 		assertEquals("18233", label.getText());
 
-		label = (Label) gridPane.getChildren().get(21);
+		label = (Label) gridPane.getChildren().get(23);
 		assertEquals("100 nanoseconds", label.getText());
 
 	}
 
 	@Test
-	public void getters_test() throws HederaClientException {
+	void getters_test() throws HederaClientException {
 
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
@@ -217,7 +217,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void execute_test() throws IOException, HederaClientException, KeyStoreException {
+	void execute_test() throws IOException, HederaClientException, KeyStoreException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
 
@@ -301,7 +301,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void chunkTooLarge_test() throws HederaClientException {
+	void chunkTooLarge_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.lfu");
 		final var info = FileDetails.parse(file);
 		final Exception exception = assertThrows(HederaClientException.class, () -> new LargeBinaryFile(info));

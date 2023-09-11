@@ -146,6 +146,7 @@ public class JavaFXIDs {
 	public final static String ONEDRIVE_PATH_TF = "#pathTextFieldSP";
 	public final static String ONEDRIVE_EMAIL_TF = "#emailTextFieldSP";
 	public final static String NODE_ID_TF = "#nodeIDTextField";
+	public final static String NODE_ACCOUNT_LV = "#nodeAccountList";
 	public final static String TX_VALID_DURATION_TF = "#txValidDurationTextField";
 	public final static String AUTO_RENEW_PERIOD_TF = "#autoRenewPeriodTextField";
 	public final static String TVS_HOURS_TF = "#hoursTextField";

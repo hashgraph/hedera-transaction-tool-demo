@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
 import com.hedera.hashgraph.client.core.security.Ed25519PrivateKey;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
+import com.hedera.hashgraph.client.core.utils.JsonUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -344,7 +345,8 @@ class ToolTransactionTest {
 		assertEquals(new Identifier(0, 0, 76).asJSON(),
 				jsonTransaction.get(FEE_PAYER_ACCOUNT_FIELD_NAME).getAsJsonObject());
 		assertEquals(new Identifier(0, 0, 3).asJSON(), jsonTransaction.get(NODE_ID_FIELD_NAME));
-		assertEquals(100000000L, jsonTransaction.get(TRANSACTION_FEE_FIELD_NAME).getAsLong());
+		assertEquals(100000000L,
+				JsonUtils.jsonToHBars(jsonTransaction.get(TRANSACTION_FEE_FIELD_NAME).getAsJsonObject()).toTinybars());
 		assertEquals(new Timestamp(transaction.transactionValidStart).asJSON(),
 				jsonTransaction.get(TRANSACTION_VALID_START_FIELD_NAME));
 		assertEquals(new Timestamp(transaction.transactionValidStart).asRFCString(),

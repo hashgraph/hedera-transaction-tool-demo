@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.ui;
 
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.constants.Constants;
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.SetupPhase;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -32,6 +33,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
@@ -59,6 +61,7 @@ import java.util.concurrent.TimeoutException;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.AUTO_RENEW_PERIOD_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.GENERATE_RECORD_SLIDER;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.LOAD_STORAGE_TF;
+import static com.hedera.hashgraph.client.ui.JavaFXIDs.NODE_ACCOUNT_LV;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.NODE_ID_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ONEDRIVE_EMAIL_TF;
 import static com.hedera.hashgraph.client.ui.JavaFXIDs.ONEDRIVE_PATH_TF;
@@ -73,7 +76,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-public class SettingsPaneTest extends TestBase {
+class SettingsPaneTest extends TestBase {
 
 	private static final Logger logger = LogManager.getLogger(HomePanePage.class);
 
@@ -161,12 +164,12 @@ public class SettingsPaneTest extends TestBase {
 	}
 
 	@Test
-	public void clickOnBogusItem_Test() {
+	void clickOnBogusItem_Test() {
 		assertThrows(FxRobotException.class, () -> clickOn("#exterminate"));
 	}
 
 	@Test
-	public void checkAllFieldsHaveValues_Test() {
+	void checkAllFieldsHaveValues_Test() {
 		try {
 			assertFalse(((TextField) find(LOAD_STORAGE_TF)).getText().isEmpty());
 			assertTrue(((TextField) find(ONEDRIVE_PATH_TF)).getText().isEmpty());
@@ -181,8 +184,9 @@ public class SettingsPaneTest extends TestBase {
 
 			assertEquals(properties.getPreferredStorageDirectory(), ((TextField) find(LOAD_STORAGE_TF)).getText());
 			final var defaultNodeID =
-					Identifier.parse(properties.getDefaultNodeID()).toNicknameAndChecksum(new JsonObject());
-			assertEquals(defaultNodeID, ((TextField) find(NODE_ID_TF)).getText());
+					Identifier.parse(properties.getDefaultNodeID(), NetworkEnum.MAINNET.getName());
+			assertEquals(defaultNodeID.toReadableString(), ((TextField) find(NODE_ID_TF)).getText());
+			assertEquals(defaultNodeID, ((ListView) find(NODE_ACCOUNT_LV)).getItems().get(0));
 			assertEquals(properties.getTxValidDuration(),
 					Integer.parseInt(((TextField) find(TX_VALID_DURATION_TF)).getText().replaceAll(" ", "")));
 			assertEquals(properties.getAutoRenewPeriod(), Long.parseLong(
@@ -205,7 +209,7 @@ public class SettingsPaneTest extends TestBase {
 	}
 
 	@Test
-	public void changeValuesAndCheckPreferences_Test() {
+	void changeValuesAndCheckPreferences_Test() {
 		try {
 			settingsPanePage.setNodeID("5")
 					.setAutoRenewPeriod("7500000")
@@ -246,7 +250,7 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	@Disabled("FxRobot issues in headless mode using JUnit 5")
-	public void cancelAddFolder_Tests() {
+	void cancelAddFolder_Tests() {
 		Node node = find("#transactionFoldersVBoxSP");
 
 		assertTrue(node instanceof VBox);
@@ -297,7 +301,7 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	@Disabled("FxRobot issues in headless mode using JUnit 5")
-	public void addFolderNoStructureCancel_Tests() {
+	void addFolderNoStructureCancel_Tests() {
 		final Node node = find("#transactionFoldersVBoxSP");
 		assertTrue(node instanceof VBox);
 		settingsPanePage.pressAddFolder()
@@ -327,7 +331,7 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	@Disabled("FxRobot issues in headless mode using JUnit 5")
-	public void addFolderNoStructureCreate_Tests() {
+	void addFolderNoStructureCreate_Tests() {
 		final Node node = find("#transactionFoldersVBoxSP");
 		assertTrue(node instanceof VBox);
 		settingsPanePage.pressAddFolder()
@@ -344,7 +348,7 @@ public class SettingsPaneTest extends TestBase {
 	}
 
 	@Test
-	public void defaultNetworks_Test() {
+	void defaultNetworks_Test() {
 		settingsPanePage.openNetworksCombobox("TESTNET");
 		assertTrue(find("#deleteCustomNetworkButton").isDisabled());
 		assertEquals("TESTNET", properties.getCurrentNetwork());
@@ -355,7 +359,7 @@ public class SettingsPaneTest extends TestBase {
 
 	@Test
 	@Disabled("FxRobot issues in headless mode using JUnit 5")
-	public void addCustomNetwork_test() {
+	void addCustomNetwork_test() {
 		settingsPanePage.addNetwork("custom", "src/test/resources/customNetwork.json");
 		assertFalse(find("#deleteCustomNetworkButton").isDisabled());
 		assertEquals("custom", properties.getCurrentNetwork());
