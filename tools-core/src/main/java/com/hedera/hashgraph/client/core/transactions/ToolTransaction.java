@@ -132,7 +132,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	public void setNetwork(final String networkName) {
 		this.network = NetworkEnum.valueOf(networkName);
-		input.addProperty(NETWORK_FIELD_NAME, networkName);
+		if (input != null) {
+			input.addProperty(NETWORK_FIELD_NAME, networkName);
+		}
 	}
 
 	public ToolTransaction(final File inputFile) throws HederaClientException {
@@ -720,7 +722,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (transactionValidDuration != null) {
 			jsonTransaction.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
 		}
-		jsonTransaction.addProperty(NETWORK_FIELD_NAME, network.getName());
+		if (network != null) {
+			jsonTransaction.addProperty(NETWORK_FIELD_NAME, network.getName());
+		}
 		jsonTransaction.addProperty(MEMO_FIELD_NAME, memo);
 		return jsonTransaction;
 	}

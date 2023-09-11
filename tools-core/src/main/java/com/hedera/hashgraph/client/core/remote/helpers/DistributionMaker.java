@@ -226,6 +226,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			for (final var file : files) {
 				final List<String> dataList = new ArrayList<>();
 				final var transaction = new ToolTransferTransaction(file);
+				transaction.setNetwork(String.valueOf(NetworkEnum.MAINNET));
 				dataList.add(file.getName());
 				dataList.add(transaction.asJson().toString().replace(",", ";"));
 				var data = new String[2];

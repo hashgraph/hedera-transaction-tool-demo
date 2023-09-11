@@ -69,7 +69,7 @@ public class JsonUtils {
 		final var jsonObject = new JsonObject();
 		final var decimal = hbar.getValue();
 		jsonObject.addProperty(H_BARS, decimal.longValue());
-		jsonObject.addProperty(TINY_BARS, (decimal.remainder(BigDecimal.ONE)).multiply(new BigDecimal(100000000L)));
+		jsonObject.addProperty(TINY_BARS, (decimal.remainder(BigDecimal.ONE)).multiply(new BigDecimal(100000000L)).setScale(0));
 		return jsonObject;
 	}
 

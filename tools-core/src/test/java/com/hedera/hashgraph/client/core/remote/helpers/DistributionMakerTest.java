@@ -154,7 +154,7 @@ class DistributionMakerTest implements GenericFileReadWriteAware {
 			assertTrue(jsonString.contains("1639280700")); // start time in seconds
 			assertTrue(jsonString.contains("2021-12-12T03:45:00")); // start date time
 			assertTrue(jsonString.contains(
-					"\"accountID\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":1001},\"amount\":-123654}"));
+					"\"account\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":1001},\"amount\":-123654}"));
 			// the transfer from sender
 			assertTrue(jsonString.contains(
 					"\"feePayerAccount\":{\"realmNum\":0,\"shardNum\":0,\"accountNum\":1007},")); //fee payer
