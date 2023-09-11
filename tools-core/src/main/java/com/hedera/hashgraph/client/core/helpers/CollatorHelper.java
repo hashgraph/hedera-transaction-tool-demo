@@ -296,12 +296,12 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		if (key.contains("Node")) {
 			output = output + "_" + key.substring(0, key.indexOf("_"));
 		}
-		if (new File(output).mkdirs()) {
-			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
-		}
 		final var transactionBytes = transaction.toBytes();
 		// Add the temporary directory prefix
 		output = "./Temp/" + output;
+		if (new File(output).mkdirs()) {
+			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
+		}
 		// Write the bytes of the signed transaction to file
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
 		// Return the enclosing directory
