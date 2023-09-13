@@ -1110,7 +1110,7 @@ public class CreatePaneController implements SubController {
 			}
 			// Load public keys before creating any key TreeViews
 			controller.loadPubKeys();
-			final var accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(0));
+			var accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(0));
 			boolean isStakedInfoNull = true;
 			// Create objects used to determine if the values for an account are the same among all the
 			// accounts to be updated
@@ -3670,7 +3670,7 @@ public class CreatePaneController implements SubController {
 				}
 
 				// If the results are null, then this was canceled.
-				var results = (List<SubmitTask>)ProgressPopup.showProgressPopup(taskList, "Submit to Ledger",
+				final var results = (List<SubmitTask>)ProgressPopup.showProgressPopup(taskList, "Submit to Ledger",
 						"Transactions are being submitted");
 				if (showResults(results)) {
 					final var transactionName = getTransactionName(mainTransaction);
@@ -3735,14 +3735,7 @@ public class CreatePaneController implements SubController {
 		}
 		return controller.buildKeyTreeView(key);
 	}
-//TODO cancel button isn't working in popup, it should cancel teh nested loop and the submit stuff
-// also, hitting hte x on teh popup should cancel the loop
-// also, it takes forever to submit, testnet issue?
 
-
-	//TODO this should be redoen to batch together all hte answers
-//	or here, maybe I need to wrap the receipt... then call 'get message' which will have hte pass/fail, or in the case
-//	of update, pass and/or fail wiht a list of things - also it would display the node id?
 	private void showReceiptOnPopup(final ToolTransaction transaction, final TransactionReceipt receipt) {
 		switch (receipt.status) {
 			case OK:
@@ -3775,6 +3768,7 @@ public class CreatePaneController implements SubController {
 			allPrivateKeys.addAll(privateKeys);
 			unknownSigners.addAll(getUnknownSigners(transaction));
 		}
+
 		displayUnknownSigners(unknownSigners);
 		final var verifiedPrivateKeys = verifyPrivateKeys(allPrivateKeys);
 		final var comments = createCommentsTextArea.getText();
@@ -3851,6 +3845,8 @@ public class CreatePaneController implements SubController {
 		return new SubmitTask(transaction) {
 			@Override
 			protected Object call() throws Exception {
+				//TODO this isn't displaying properly
+				updateProgress(1L,2L);
 				final var transactionName = getTransactionName(transaction);
 				try {
 					final var receipt = transaction.submit();
@@ -3879,6 +3875,7 @@ public class CreatePaneController implements SubController {
 				rf.setHistory(true);
 
 				controller.historyPaneController.addToHistory(rf);
+				updateProgress(2L,2L);
 				return this;
 			}
 		};
@@ -3893,6 +3890,7 @@ public class CreatePaneController implements SubController {
 			} else {
 				PopupMessage.display(STATUS,
 						String.format(TRANSACTION_FAILED_ERROR_MESSAGE, task.getResult()));
+				return false;
 			}
 		} else {
 			Map<Boolean, List<SubmitTask>> partitions = results.stream()
@@ -3912,9 +3910,12 @@ public class CreatePaneController implements SubController {
 			}
 			if (!failedList.isEmpty()) {
 				var accountListString = getAccountListString(failedList);
+				var errorMessageListString = getErrorMessageListString(failedList);
 				var message = String.format("The transaction failed for accounts: %n%s%n " +
-								"Please review and try again.", accountListString);
+								"Please review the errors and try again. %n%s",
+						accountListString, errorMessageListString);
 				PopupMessage.display("Final status", message);
+				return false;
 			}
 		}
 		return true;
@@ -3926,6 +3927,12 @@ public class CreatePaneController implements SubController {
 			return ((ToolCryptoUpdateTransaction) transaction).getAccount().toReadableAccountAndNetwork();
 		}).collect(Collectors.toList());
 		return String.join(", ", accountList);
+	}
+
+	private String getErrorMessageListString(final List<SubmitTask> tasks) {
+		var errorMessageList = tasks.stream().map(task ->
+				task.getResult().toString()).collect(Collectors.toList());
+		return String.join("\n", errorMessageList);
 	}
 
 	@NotNull
@@ -4034,7 +4041,7 @@ public class CreatePaneController implements SubController {
 			jsonObject.addProperty(JsonConstants.RECEIPT_PROPERTY, receipt.toString());
 			jsonObject.add(JsonConstants.TIMESTAMP_PROPERTY, new Timestamp().asJSON());
 			jsonObject.addProperty(JsonConstants.TYPE_PROPERTY, type);
-			if ("Create New Account Transaction".equals(type)) {
+			if ("Create New Account Transaction".equals(type) && receipt.status == Status.SUCCESS) {
 				jsonObject.addProperty(JsonConstants.ENTITY_PROPERTY, receipt.accountId.toString());
 			}
 
