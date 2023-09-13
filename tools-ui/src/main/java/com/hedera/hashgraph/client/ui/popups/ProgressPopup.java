@@ -24,7 +24,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -37,12 +36,15 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class ProgressPopup extends Stage {
+	private static final Logger LOG = LogManager.getLogger(ProgressPopup.class);
 	private static final Object LOCK = new Object();
 	private final ProgressBar bar;
 	private final Button cancelButton;
@@ -155,9 +157,11 @@ public class ProgressPopup extends Stage {
 			}
 		};
 
+		TaskStatusListener.reset();
+
 		for (final var task : tasks) {
 			task.stateProperty().addListener(new TaskStatusListener(task, this, taskCount));
-			progressBinding.add(task.progressProperty().divide(taskCount));
+			progressBinding.add(task.progressProperty().divide(taskCount*2));
 			new Thread(task).start();
 		}
 
@@ -167,11 +171,11 @@ public class ProgressPopup extends Stage {
 	private static class TaskStatusListener implements ChangeListener<Worker.State> {
 		private static int doneCount = 0;
 		private static List<Object> results = new ArrayList<>();
-		private Task task;
+		private ProgressTask task;
 		private ProgressPopup window;
 		private int taskCount;
 
-		public TaskStatusListener(final Task task, final ProgressPopup window, final int taskCount) {
+		public TaskStatusListener(final ProgressTask task, final ProgressPopup window, final int taskCount) {
 			this.task = task;
 			this.window = window;
 			this.taskCount = taskCount;
@@ -184,16 +188,21 @@ public class ProgressPopup extends Stage {
 					case CANCELLED, FAILED, SUCCEEDED:
 						incrementDoneCount();
 						addResult(task.get());
-						if (doneCount == taskCount) {
-							window.close();
-							Platform.exitNestedEventLoop(LOCK, results);
-						}
 				}
 			} catch (InterruptedException ex) {
-				ex.printStackTrace();
+				LOG.error(ex.getMessage());
+				task.setResult(ex);
+				addResult(task);
 				Thread.currentThread().interrupt();
 			} catch (ExecutionException ex) {
-				ex.printStackTrace();
+				LOG.error(ex.getMessage());
+				task.setResult(ex);
+				addResult(task);
+			}
+
+			if (doneCount == taskCount) {
+				window.close();
+				Platform.exitNestedEventLoop(LOCK, results);
 			}
 		}
 
@@ -203,6 +212,11 @@ public class ProgressPopup extends Stage {
 
 		private static synchronized void addResult(final Object result) {
 			results.add(result);
+		}
+
+		private static synchronized void reset() {
+			doneCount = 0;
+			results = new ArrayList<>();
 		}
 	}
 }

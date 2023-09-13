@@ -28,10 +28,12 @@ public abstract class SubmitTask<T> extends ProgressTask<T> {
         this.successful = successful;
     }
 
+    @Override
     public Object getResult() {
         return result;
     }
 
+    @Override
     public void setResult(final Object result) {
         this.result = result;
     }
