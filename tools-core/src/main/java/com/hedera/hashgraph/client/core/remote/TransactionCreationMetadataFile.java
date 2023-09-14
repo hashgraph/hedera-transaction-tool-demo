@@ -152,7 +152,7 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 			// If 0 or 1 node, AND 0 or 1 accounts, AND fee payer is NOT the updated account
 			// return null as no AccountListFile will be created.
 			if ((nodes == null || nodes.getList().size() == 1)
-					&& (accounts == null || accounts.getList().size() == 1)
+					&& (accounts == null || accounts.getList().size() <= 1)
 					&& !isUpdateAccountFeePayer) return null;
 			final var tcm = new TransactionCreationMetadataFile();
 			tcm.setParentPath(parentPath);
