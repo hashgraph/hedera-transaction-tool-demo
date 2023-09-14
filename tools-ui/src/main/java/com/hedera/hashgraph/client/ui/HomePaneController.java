@@ -203,6 +203,10 @@ public class HomePaneController implements SubController {
 		populatePane();
 	}
 
+	/**
+	 * Populating the Pane is a full refresh. This can be slow. Some changes do require a full refresh in
+	 * order to rebuild the RemoteFile gridPanes. An example would be account key changes.
+	 */
 	public void populatePane() {
 		try {
 			// Clear the list of RemoteFiles to be displayed

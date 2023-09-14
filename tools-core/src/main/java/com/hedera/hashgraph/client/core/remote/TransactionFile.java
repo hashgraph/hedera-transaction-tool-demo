@@ -962,8 +962,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		private String processSingleTransaction() throws HederaClientException, IOException {
-			final var finalZip = new File(new File(System.getProperty("java.io.tmpdir"), LocalDate.now().toString()),
-					transaction.buildFileName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION);
 			final String tempTxFile = transaction.store(tempStorage);
 			final String signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
 
@@ -977,19 +975,21 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				throw new HederaClientRuntimeException("Invalid file in file list");
 			});
 
+			final var zipName = transaction.buildFileName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION;
+			final var finalZip = Path.of(output, user, zipName).toFile();
+
 			final var packed = Arrays.toString(toPack);
 			logger.info("Packing {} to {}.zip", packed, tempStorage);
+
+			Files.deleteIfExists(finalZip.toPath());
 			ZipUtil.packEntries(toPack, finalZip);
 
 			for (final var file : toPack) {
 				Files.deleteIfExists(file.toPath());
 				logger.info("Delete {}", file.getName());
 			}
-			final var outputFile = Path.of(output, user, finalZip.getName());
-			Files.deleteIfExists(outputFile);
-			FileUtils.moveFile(finalZip, outputFile.toFile());
 
-			return outputFile.toAbsolutePath().toString();
+			return finalZip.getAbsolutePath();
 		}
 
 		public void pack(String nodeId) throws HederaClientException {
