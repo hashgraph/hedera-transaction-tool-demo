@@ -372,8 +372,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			final var suffix = pathName.contains("transactions") ? "_transactions" : suffix0;
 
 			// This won't affect the new naming convention, only the old version
-			final var nodeNumber = pathName.substring(pathName.indexOf("Node")+5, pathName.indexOf(suffix));
-			final var nodeName = "Node-" + nodeNumber.replace("-", ".");
+			final var nodeName = pathName.substring(pathName.indexOf("Node"), pathName.indexOf(suffix))
+					.replaceAll("(?<=0)-",".");
 
 			return nodeName + FILE_NAME_GROUP_SEPARATOR + baseName;
 		}

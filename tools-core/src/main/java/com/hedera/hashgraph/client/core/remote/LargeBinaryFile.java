@@ -27,6 +27,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
@@ -69,7 +70,8 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
@@ -484,12 +486,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					final var transaction = (count == 0) ?
 							new ToolFileUpdateTransaction(input) :
 							new ToolFileAppendTransaction(input);
-					transaction.sign(privateKey);
+
 					final var filePath =
-							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
-									SIGNED_TRANSACTION_EXTENSION);
-					writeBytes(filePath, transaction.getTransaction().toBytes());
-					toPack.add(new File(filePath));
+							String.format("%s%s-%05d.", tempStorage, FilenameUtils.getBaseName(filename), count);
+
+					transaction.store(filePath+TRANSACTION_EXTENSION);
+					final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+							transaction.createSignature(privateKey));
+					signaturePair.write(filePath+SIGNATURE_EXTENSION);
+
+					toPack.add(new File(filePath+TRANSACTION_EXTENSION));
+					toPack.add(new File(filePath+SIGNATURE_EXTENSION));
 					count++;
 					inputStream = fileInputStream.read(buffer);
 				}
@@ -599,11 +606,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var fileLink = new Hyperlink("Click for more details");
 		fileLink.setOnAction(actionEvent -> {
 			try {
-				final var copyName =
-						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + CONTENT_EXTENSION;
-				FileUtils.copyFile(getContent(), new File(copyName));
+				//TODO if this is done from Finder by pressing the space bar on a file, it has more options like
+				// 'uncompress'. qlmanage does not appear to do that by default.
 				final var r = Runtime.getRuntime();
-				final var command = String.format("open -e %s", copyName);
+				final var command = String.format("qlmanage -p %s", getContent().getAbsoluteFile());
 				r.exec(command);
 			} catch (final IOException e) {
 				logger.error(e.getMessage());
