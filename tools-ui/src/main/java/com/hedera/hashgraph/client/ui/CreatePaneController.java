@@ -141,6 +141,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNT_PARSED;
@@ -155,6 +157,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GRO
 import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FIXED_CELL_SIZE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FREEZE_AND_UPGRADE;
+import static com.hedera.hashgraph.client.core.constants.Constants.IS_ZIP_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.KEYS_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.LARGE_BINARY_EXTENSION;
@@ -251,6 +254,7 @@ public class CreatePaneController implements SubController {
 	private JsonObject originalKey = new JsonObject();
 
 	File contents = null;
+	private boolean isZip = false;
 
 	@FXML
 	public Controller controller;
@@ -644,6 +648,8 @@ public class CreatePaneController implements SubController {
 
 		formatAccountTextField(updateFileID, invalidUpdateFileToUpdate, updateFileID.getParent());
 
+		//TODO this never gets deleted after viewing? another issue that could be resolved if temp_directory/txntool is used
+		// and cleaned up on closing the app or something
 		contentsLink.setOnAction(actionEvent -> {
 			final var destFile =
 					new File(TEMP_DIRECTORY, contents.getName().replace(" ", "_"));
@@ -1605,16 +1611,6 @@ public class CreatePaneController implements SubController {
 			return;
 		}
 
-		final var jsonName = String.format("%s/%s", TEMP_DIRECTORY,
-				contents.getName().replace(FilenameUtils.getExtension(contents.getName()), "json"));
-
-		final var jsonPath = Path.of(jsonName);
-		try {
-			Files.deleteIfExists(jsonPath);
-		} catch (final IOException e) {
-			throw new HederaClientException(e);
-		}
-
 		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();
@@ -1631,13 +1627,6 @@ public class CreatePaneController implements SubController {
 			}
 		}
 
-		try {
-			Files.deleteIfExists(jsonPath);
-			logger.info("Json file deleted");
-		} catch (final IOException e) {
-			logger.error("Json file could not be deleted");
-		}
-
 		initializePane();
 		selectTransactionType.setValue(SELECT_STRING);
 	}
@@ -1647,27 +1636,43 @@ public class CreatePaneController implements SubController {
 		final var payer = Identifier.parse(outputObject.get("feePayerAccountId").getAsJsonObject()).toReadableString();
 		final var time = new Timestamp(outputObject.get("firsTransactionValidStart").getAsJsonObject());
 
-		final var name = contents.getName();
-		final var extension = FilenameUtils.getExtension(name);
-		final var location = String.format("%s/%s", TEMP_DIRECTORY, extension.equals("") ?
-				name + "." + JSON_EXTENSION :
-				name.replace(extension, JSON_EXTENSION));
+		final var name = FilenameUtils.removeExtension(contents.getName());
+		final var jsonFile = new File(TEMP_DIRECTORY, String.format("%s.%s", name, JSON_EXTENSION));
 
-		writeJsonObject(location, outputObject);
-		final var jsonFile = new File(location);
-		final var toPack = new File[] { jsonFile, contents };
+		try {
+			Files.deleteIfExists(jsonFile.toPath());
+		} catch (final IOException e) {
+			throw new HederaClientException(e);
+		}
 
-		final var destZipFile = new File(
-				String.format("%s/%s" + FILE_NAME_GROUP_SEPARATOR + "%s" + FILE_NAME_GROUP_SEPARATOR + "%s.%s",
-						TEMP_DIRECTORY, payer, time.getSeconds(),
-						time.getNanos(), LARGE_BINARY_EXTENSION));
+		writeJsonObject(jsonFile.getPath(), outputObject);
+		var zippedContents = contents;
+		if (!isZip) {
+			zippedContents = new File(TEMP_DIRECTORY, String.format("%s.%s", name, CONTENT_EXTENSION));
+			ZipUtil.packEntry(contents, zippedContents);
+		}
+		final var toPack = new File[] { jsonFile, zippedContents };
+
+		final var destZipFile = new File(TEMP_DIRECTORY, String.format("%s.%s", String.join(FILE_NAME_GROUP_SEPARATOR,
+				payer, "" + time.getSeconds(), "" + time.getNanos()), LARGE_BINARY_EXTENSION));
 		final var destTxtFile = new File(destZipFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION));
 
 		try {
 			Files.deleteIfExists(destZipFile.toPath());
+			Files.deleteIfExists(destTxtFile.toPath());
 			ZipUtil.packEntries(toPack, destZipFile);
 		} catch (final Exception e) {
 			throw new HederaClientException(e);
+		}
+
+		try {
+			Files.deleteIfExists(jsonFile.toPath());
+			logger.info("Json file deleted");
+			if (!isZip) {
+				Files.deleteIfExists(zippedContents.toPath());
+			}
+		} catch (final IOException e) {
+			logger.error("Json file could not be deleted");
 		}
 
 		final var userComments = new UserComments.Builder()
@@ -1685,6 +1690,7 @@ public class CreatePaneController implements SubController {
 		// setup json file
 		final var outputObject = new JsonObject();
 		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
+		outputObject.addProperty(IS_ZIP_PROPERTY, isZip);
 		outputObject.add(FILE_ID_PROPERTIES,
 				Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork()).asJSON());
 		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
@@ -1713,8 +1719,8 @@ public class CreatePaneController implements SubController {
 	 */
 	@FXML
 	private void browseToContentsFile() {
-		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane, "Content",
-				CONTENT_EXTENSION);
+		contents = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(),
+				createAnchorPane, "Content");
 		if (contents == null) {
 			return;
 		}
@@ -1731,6 +1737,14 @@ public class CreatePaneController implements SubController {
 			contentsTextField.setVisible(false);
 			contentsLink.setVisible(true);
 			shaTextFlow.setVisible(true);
+			try {
+				new ZipFile(contents);
+				isZip = true;
+			} catch (ZipException e) {
+				isZip = false;
+			} catch (IOException e) {
+				logger.error(e.getMessage());
+			}
 		} else {
 			contentsFilePathError.setVisible(true);
 			contents = null;
