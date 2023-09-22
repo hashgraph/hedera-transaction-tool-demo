@@ -169,7 +169,8 @@ public class TimeFieldSet {
 		final var transactionValidStart = getDate().asDate();
 
 		final var tvsInstant = transactionValidStart.toInstant();
-		final var nowInstant = Instant.now();
+		// The timestamp isn't invalid until the valid window is over
+		final var nowInstant = Instant.now().plusSeconds(-3*60L);
 
 		final var beforeNow = tvsInstant.isBefore(nowInstant);
 
