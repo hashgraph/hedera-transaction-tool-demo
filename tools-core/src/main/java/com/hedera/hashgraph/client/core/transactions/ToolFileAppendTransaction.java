@@ -32,6 +32,7 @@ import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.util.Collections;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
@@ -48,6 +49,14 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 	public ToolFileAppendTransaction(final JsonObject input) throws HederaClientException {
 		super(input);
 		this.transactionType = TransactionType.FILE_APPEND;
+	}
+
+	public ToolFileAppendTransaction(final File inputFile) throws HederaClientException {
+		super(inputFile);
+		this.file = new Identifier(((FileAppendTransaction) transaction).getFileId(), "");
+		this.bytes = ((FileAppendTransaction) transaction).getContents().toByteArray();
+//		this.fileMemo = ((FileUpdateTransaction) transaction).getFileMemo();
+		setTransactionType(TransactionType.FILE_APPEND);
 	}
 
 	@Override

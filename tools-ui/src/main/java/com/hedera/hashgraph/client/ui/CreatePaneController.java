@@ -58,6 +58,7 @@ import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
+import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -1805,9 +1806,23 @@ public class CreatePaneController implements SubController {
 				selectTransactionType.setValue("Network Freeze and Update");
 				loadFreezeTransactionToForm((ToolFreezeTransaction) transaction);
 				break;
+			case FILE_UPDATE:
+				//TODO Both Update and Append are not currently supported. Some issues to deal with:
+				// The content bytes would need to be displayed for the user. The contentsTextField
+				// can be used for this, but it would need to be able to display the whole ByteString,
+				// and make it non editable, only allowing the 'browse button' to be used. Then the
+				// resulting transaction would need to know it was reading bytes, not a location.
+				// Also, in many situations, the bytes of the entire file may not be present in the
+				// selected transaction. If the bytes.length < max and transaction type = FileUpdate,
+				// no issues, otherwise the user can be warned that not all data for the entire update
+				// is available.
+				//selectTransactionType.setValue(CreateTransactionType.FILE_UPDATE.getTypeString());
+				//loadLargeFileUpdateToForm((ToolFileUpdateTransaction) transaction);
+				//break;
+			case FILE_APPEND:
 			default:
 				PopupMessage.display("Unsupported transaction", "The transaction is not yet supported by the tool.");
-				break;
+				return;
 		}
 		loadCommonTransactionFields(transaction);
 		checkForm();
@@ -2046,6 +2061,18 @@ public class CreatePaneController implements SubController {
 				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
 	}
+
+	private void loadLargeFileUpdateToForm(final ToolFileUpdateTransaction transaction) {
+		final var fileID = transaction.getFile();
+		fileID.setNetworkName(controller.getCurrentNetwork());
+		updateFileID.setText(fileID.toNicknameAndChecksum(controller.getAccountsList()));
+
+		contentsTextField.setText(((FileUpdateTransaction)transaction.getTransaction()).getContents().toString());
+
+		setupIntNumberField(chunkSizeTextField, 1025);
+		setupIntNumberField(intervalTextField, Integer.MAX_VALUE);
+	}
+
 
 	public void loadFormFromTransactionTest(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.ENTER)) {

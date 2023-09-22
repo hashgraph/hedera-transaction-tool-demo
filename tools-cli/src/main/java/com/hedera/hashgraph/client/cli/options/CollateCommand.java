@@ -66,11 +66,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
 			"the account(s) corresponding to the transaction", split = ",")
-	private String[] infoFiles;
+	private String[] infoFiles = new String[]{};
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
-	private String[] keyFiles;
+	private String[] keyFiles = new String[]{};
 
 	@CommandLine.Option(names = { "-o", "--output-directory" }, description = "The path to the folder where the " +
 			"collated transaction files will be stored")
