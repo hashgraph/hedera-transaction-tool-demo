@@ -58,7 +58,6 @@ import com.hedera.hashgraph.client.ui.utilities.CreateTransactionType;
 import com.hedera.hashgraph.client.ui.utilities.TimeFieldSet;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
 import com.hedera.hashgraph.sdk.AccountInfo;
-import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.FreezeType;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
@@ -3210,10 +3209,6 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-	//TODO i need to use this more
-//	File tempFile = File.createTempFile("prefix-", "-suffix");
-////File tempFile = File.createTempFile("MyAppName-", ".tmp");
-//tempFile.deleteOnExit();
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
