@@ -255,7 +255,7 @@ public class CreatePaneController implements SubController {
 	private JsonObject originalKey = new JsonObject();
 
 	File contents = null;
-	private boolean isZip = false;
+	private boolean shouldZip = false;
 
 	@FXML
 	public Controller controller;
@@ -1648,7 +1648,7 @@ public class CreatePaneController implements SubController {
 
 		writeJsonObject(jsonFile.getPath(), outputObject);
 		var zippedContents = contents;
-		if (!isZip) {
+		if (shouldZip) {
 			zippedContents = new File(TEMP_DIRECTORY, String.format("%s.%s", name, CONTENT_EXTENSION));
 			ZipUtil.packEntry(contents, zippedContents);
 		}
@@ -1669,7 +1669,7 @@ public class CreatePaneController implements SubController {
 		try {
 			Files.deleteIfExists(jsonFile.toPath());
 			logger.info("Json file deleted");
-			if (!isZip) {
+			if (shouldZip) {
 				Files.deleteIfExists(zippedContents.toPath());
 			}
 		} catch (final IOException e) {
@@ -1691,7 +1691,7 @@ public class CreatePaneController implements SubController {
 		// setup json file
 		final var outputObject = new JsonObject();
 		outputObject.addProperty(FILENAME_PROPERTY, contents.getName());
-		outputObject.addProperty(IS_ZIP_PROPERTY, isZip);
+		outputObject.addProperty(IS_ZIP_PROPERTY, !shouldZip);
 		outputObject.add(FILE_ID_PROPERTIES,
 				Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork()).asJSON());
 		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
@@ -1738,11 +1738,10 @@ public class CreatePaneController implements SubController {
 			contentsTextField.setVisible(false);
 			contentsLink.setVisible(true);
 			shaTextFlow.setVisible(true);
-			try {
-				new ZipFile(contents);
-				isZip = true;
+			try (var zip = new ZipFile(contents)) {
+				shouldZip = false;
 			} catch (ZipException e) {
-				isZip = false;
+				shouldZip = true;
 			} catch (IOException e) {
 				logger.error(e.getMessage());
 			}
@@ -2061,18 +2060,6 @@ public class CreatePaneController implements SubController {
 				throw new IllegalStateException("Unexpected value: " + freezeType);
 		}
 	}
-
-	private void loadLargeFileUpdateToForm(final ToolFileUpdateTransaction transaction) {
-		final var fileID = transaction.getFile();
-		fileID.setNetworkName(controller.getCurrentNetwork());
-		updateFileID.setText(fileID.toNicknameAndChecksum(controller.getAccountsList()));
-
-		contentsTextField.setText(((FileUpdateTransaction)transaction.getTransaction()).getContents().toString());
-
-		setupIntNumberField(chunkSizeTextField, 1025);
-		setupIntNumberField(intervalTextField, Integer.MAX_VALUE);
-	}
-
 
 	public void loadFormFromTransactionTest(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
@@ -2896,7 +2883,8 @@ public class CreatePaneController implements SubController {
 
 			final var transactionValidStart = Date.from(localDateTime.atZone(zoneId).toInstant().plusNanos(nanos));
 
-			if (transactionValidStart.before(new Date())) {
+			// The timestamp isn't invalid until the valid window is over
+			if (transactionValidStart.before(new Timestamp().plusSeconds(-3*60L).asDate())) {
 				displayAndLogInformation("Transaction valid start in the past");
 				flag = false;
 			}
@@ -3222,6 +3210,10 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
+	//TODO i need to use this more
+//	File tempFile = File.createTempFile("prefix-", "-suffix");
+////File tempFile = File.createTempFile("MyAppName-", ".tmp");
+//tempFile.deleteOnExit();
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
@@ -3230,8 +3222,16 @@ public class CreatePaneController implements SubController {
 			return;
 		}
 		final var largeUpdateFile = new File(createLargeFileUpdateFiles());
+		largeUpdateFile.deleteOnExit();
+		new File(largeUpdateFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)).deleteOnExit();
 		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
 		final var transactions = largeBinaryFile.createTransactionList();
+		if (transactions.isEmpty()) {
+			logger.error("No data found in the selected file.");
+			PopupMessage.display("No Data Found",
+					String.format("No data found in the selected file."));
+			return;
+		}
 		logger.info("Transactions created");
 
 		final var privateKeyFiles = getPrivateKeys(transactions.get(0));
@@ -3331,7 +3331,6 @@ public class CreatePaneController implements SubController {
 			PopupMessage.display("Update failed",
 					String.format("File update failed with error %s. Please review the transaction and try again.",
 							errorMessage));
-			initializePane();
 		});
 
 		task.setOnFailed(workerStateEvent -> {

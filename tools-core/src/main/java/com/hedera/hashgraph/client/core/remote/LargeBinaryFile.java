@@ -58,6 +58,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -114,6 +115,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private String memo;
 	private File content = null;
 	private boolean isZip;
+	private String checksum;
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
@@ -158,6 +160,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		if (checkFiles(jsons, bins)) {
 			return;
 		}
+
+		jsons[0].deleteOnExit();
+		bins[0].deleteOnExit();
+		new File(destination).deleteOnExit();
 
 		final JsonObject details;
 		try {
@@ -430,31 +436,49 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return unZippedContent;
 	}
 
-	//TODO this checksum is not the same as the contents' checksum shown when the transaction is being created
-	public String getChecksum() {
-		final var digest = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
-		if ("".equals(digest)) {
-			return "";
+	private File getUnzippedContent() throws HederaClientException {
+		// Recreate the contents. This is done here as the contents is pointing to a temporary copy that may have been
+		// altered.
+		final var destination = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
+
+		//TODO this occurs for each key used to sign, which is a lot of extra work. But it will do for now.
+		unZip(new File(getParentPath(), getName()).getAbsolutePath(), destination);
+
+		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
+
+		if (bins == null || bins.length != 1) {
+			throw new HederaClientException("The contents of the transaction file (.lfu) has been corrupted. " +
+					"It will need to be recreated.");
 		}
-		return CommonMethods.splitStringDigest(digest, 6);
+
+		// If the contents weren't originally zipped, unzip them.
+		if (!isZip) {
+			final var c = new File(getUnzippedContentDirectory(), filename);
+			c.deleteOnExit();
+			return c;
+		}
+		bins[0].deleteOnExit();
+		return bins[0];
 	}
 
-	//TODO see above.
-//	public String getChecksum(boolean flag) {
-//		final var tempLocation = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
-//		var digest = EncryptionUtils.getFileDigest(new File(tempLocation, content.getName()));
-//		// If the contents was not originally a zip, get the checksum of the content in the zip.
-//		if (!isZip) {
-//			var unZippedContent = new File(tempLocation, FilenameUtils.removeExtension(content.getName()));
-//			ZipUtil.unpack(content, unZippedContent);
-//			digest = EncryptionUtils.getFileDigest(
-//					Path.of(tempLocation, FilenameUtils.removeExtension(content.getName()), getFilename()).toFile());
-//		}
-//		if ("".equals(digest)) {
-//			return "";
-//		}
-//		return CommonMethods.splitStringDigest(digest, 6);
-//	}
+	public String getChecksum() {
+		if (checksum == null) {
+			final var tempLocation = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
+			var digest = EncryptionUtils.getFileDigest(new File(tempLocation, content.getName()));
+			// If the contents was not originally a zip, get the checksum of the content in the zip.
+			if (!isZip) {
+				var unZippedContent = new File(tempLocation, FilenameUtils.removeExtension(content.getName()));
+				ZipUtil.unpack(content, unZippedContent);
+				digest = EncryptionUtils.getFileDigest(
+						Path.of(tempLocation, FilenameUtils.removeExtension(content.getName()), getFilename()).toFile());
+			}
+			if ("".equals(digest)) {
+				return "";
+			}
+			checksum = CommonMethods.splitStringDigest(digest, 6);
+		}
+		return checksum;
+	}
 
 	@Override
 	public List<FileActions> getActions() {
@@ -479,25 +503,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		final List<File> toPack = new ArrayList<>();
 
-		// Recreate the contents. This is done here as the contents is pointing to a temporary copy that may have been
-		// altered.
-		final var destination = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
-
-		//TODO this occurs for each key used to sign, which is a lot of extra work. But it will do for now.
-		unZip(new File(getParentPath(), getName()).getAbsolutePath(), destination);
-
-		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
-
-		if (bins == null || bins.length != 1) {
-			throw new HederaClientException("The contents of the transaction file (.lfu) has been corrupted. " +
-					"It will need to be recreated.");
-		}
-
-		var actualContent = bins[0];
-		// If the contents weren't originally zipped, unzip them.
-		if (!isZip) {
-			actualContent = new File (getUnzippedContentDirectory(), filename);
-		}
+		final var actualContent = getUnzippedContent();
 
 		// Now that there is a fresh copy of the contents, create the transaction
 		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
@@ -604,7 +610,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final List<ToolTransaction> transactions = new ArrayList<>();
 		final var input = getJsonInput();
 
-		try (final var fileInputStream = new FileInputStream(content)) {
+		try (final var fileInputStream = new FileInputStream(getUnzippedContent())) {
 			final var buffer = new byte[chunkSize];
 			var count = 0;
 			var inputStream = fileInputStream.read(buffer);
@@ -664,42 +670,48 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		fileLink.setOnAction(actionEvent -> {
 			try {
 				if (Desktop.isDesktopSupported()) {
-					Desktop.getDesktop().open(getUnzippedContentDirectory().getAbsoluteFile());
+					final var c = getUnzippedContentDirectory();
+					c.deleteOnExit();
+					Desktop.getDesktop().open(c.getAbsoluteFile());
 				}
 			} catch (final IOException e) {
 				logger.error(e.getMessage());
 			}
 		});
 
-		detailsGridPane.add(new Label("File contents"), 0, 5);
-		detailsGridPane.add(fileLink, 1, 5);
 
-		detailsGridPane.add(new Label("File Hash"), 0, 6);
-		final var checksum = new Text(getChecksum());
-		checksum.setFont(Font.font("Courier New", 16));
-		detailsGridPane.add(checksum, 1, 6);
+		detailsGridPane.add(new Label("File Id"), LEFT, 5);
+		detailsGridPane.add(new Label(fileID.toReadableString()), RIGHT, 5);
 
-		detailsGridPane.add(new Label("File size"), 0, 7);
+		detailsGridPane.add(new Label("File contents"), 0, 6);
+		detailsGridPane.add(fileLink, 1, 6);
+
+		detailsGridPane.add(new Label("File Hash"), 0, 7);
+		final var checksumField = new Text(getChecksum());
+		checksumField.setFont(Font.font("Courier New", 16));
+		detailsGridPane.add(checksumField, 1, 7);
+
+		detailsGridPane.add(new Label("File size"), 0, 8);
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
-		detailsGridPane.add(new Label(formattedContentSize), 1, 7);
+		detailsGridPane.add(new Label(formattedContentSize), 1, 8);
 
 		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
-			detailsGridPane.add(new Label("Chunk size"), 0, 8);
+			detailsGridPane.add(new Label("Chunk size"), 0, 9);
 			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
-			detailsGridPane.add(new Label(formattedChunkSize), 1, 8);
+			detailsGridPane.add(new Label(formattedChunkSize), 1, 9);
 
-			detailsGridPane.add(new Label("Number of transactions"), 0, 9);
+			detailsGridPane.add(new Label("Number of transactions"), 0, 10);
 			final var formattedChunkNumber = String.format("%d", chunks);
-			detailsGridPane.add(new Label(formattedChunkNumber), 1, 9);
+			detailsGridPane.add(new Label(formattedChunkNumber), 1, 10);
 
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
-			detailsGridPane.add(interval, 0, 10);
+			detailsGridPane.add(interval, 0, 11);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
-			detailsGridPane.add(new Label(formattedIntervalLength), 1, 10);
+			detailsGridPane.add(new Label(formattedIntervalLength), 1, 11);
 		}
 
 		return detailsGridPane;
