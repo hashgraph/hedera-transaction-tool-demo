@@ -37,7 +37,6 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -164,7 +163,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Output is a directory, return the list of files
 			final var files = Objects.requireNonNull(new File(output).listFiles());
 			// If more than one file, zip it up, move it to the destination, and continue
-			// This occurs after all the files below are done.
 			if (moreThanOneFile(output, files)) {
 				continue;
 			}
@@ -209,10 +207,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			return false;
 		}
 		final var zippedOutput = zipFolder(output);
-		if (!rootFolder.equals(out)) {
-			final var destination = new File(out, zippedOutput.getName());
-			Files.move(zippedOutput.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}
+
+		final var destination = new File(out, zippedOutput.getName());
+		// Overwriting the file, if it exists
+		Files.deleteIfExists(destination.toPath());
+		FileUtils.moveFile(zippedOutput, destination);
 		FileUtils.deleteDirectory(new File(output));
 		return true;
 	}

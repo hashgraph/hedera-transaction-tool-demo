@@ -26,6 +26,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
@@ -72,12 +73,14 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.IS_ZIP_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
@@ -101,6 +104,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public static final String FILE_ID_PROPERTY = "fileID";
 	public static final String NODE_ID_PROPERTY = "nodeID";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
+
+	private final UserAccessibleProperties properties =
+			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
 	private String filename;
 	private Identifier fileID;
@@ -211,8 +217,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.validIncrement =
 				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
-		this.transactionFee =
-				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
+				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
 		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
 		// For backwards compatibility, if the zip property is not there, set it to true to indicate that the user
@@ -652,7 +658,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 
-		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
+		final var text = new Text(Hbar.fromTinybars(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, 1, 2);
