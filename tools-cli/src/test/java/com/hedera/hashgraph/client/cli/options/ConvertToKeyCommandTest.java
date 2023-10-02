@@ -62,12 +62,6 @@ class ConvertToKeyCommandTest implements GenericFileReadWriteAware {
 		final Exception e2 = assertThrows(HederaClientException.class, () -> ToolsMain.main(args2));
 		assertEquals("Hedera Client: Cannot find private key", e2.getMessage());
 		assertFalse(new File("src/test/resources/Keys/badJsonKey1.pem").exists());
-
-		final String[] args3 = { "convert-key", "-k", "src/test/resources/Keys/badJsonKey2.json", "-p" };
-		final Exception e3 = assertThrows(HederaClientException.class, () -> ToolsMain.main(args3));
-		assertEquals("Hedera Client: Cannot find public key", e3.getMessage());
-		assertFalse(new File("src/test/resources/Keys/badJsonKey1.pem").exists());
-
 	}
 
 	@AfterEach

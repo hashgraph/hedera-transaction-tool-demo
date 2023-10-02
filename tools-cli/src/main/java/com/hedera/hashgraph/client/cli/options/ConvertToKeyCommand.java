@@ -66,10 +66,6 @@ public class ConvertToKeyCommand implements ToolCommand {
 			throw new HederaClientException("Cannot find private key");
 		}
 
-		if (!operator.has("publicKey")) {
-			throw new HederaClientException("Cannot find public key");
-		}
-
 		var password =
 				readPasswordFromStdIn("Enter new password for the new encrypted file (more than 10 characters long)");
 
@@ -98,9 +94,13 @@ public class ConvertToKeyCommand implements ToolCommand {
 		final var operatorKey = PrivateKey.fromBytes(Hex.decode(privateKey));
 		final var publicKey = operatorKey.getPublicKey();
 
-		final var publicKeyString = operator.get("publicKey").getAsString();
-		if (publicKeyString.equals(publicKey.toString())) {
-			logger.info("Public Keys match");
+		if (operator.has("publicKey")) {
+			final var publicKeyString = operator.get("publicKey").getAsString();
+			if (publicKeyString.equals(publicKey.toString())) {
+				logger.info("Public Keys match");
+			} else {
+				logger.info("Public Keys do not match, saving the reconstructed Public Key");
+			}
 		}
 
 		final var pemName = new File(key).getParent() + File.separator + FilenameUtils.getBaseName(

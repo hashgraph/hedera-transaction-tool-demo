@@ -32,9 +32,16 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.zeroturnaround.zip.ZipUtil;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipFile;
 
 import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
@@ -211,37 +219,45 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	private Set<String> getTransactionPaths() {
 		final Set<String> files = new HashSet<>();
-		final Set<File> directories = new HashSet<>();
 		for (final var fileInput : transactionFiles) {
 			// wildcards first
 			if (fileInput.contains("*")) {
-				handleWildCards(files, directories, fileInput);
+				handleWildCards(files, fileInput);
 				continue;
 			}
 			final var file = new File(fileInput);
-			if (file.isDirectory()) {
-				directories.add(file);
-			} else if (isTransaction(file) && file.exists()) {
-				files.add(file.getAbsolutePath());
+			try {
+				files.addAll(buildFileList(file));
+			} catch (IOException e) {
+				logger.error(e);
 			}
-		}
-		if (!directories.isEmpty()) {
-			handleDirectories(files, directories);
 		}
 		return files;
 	}
 
-	private void handleDirectories(final Set<String> files, final Set<File> directories) {
-		for (final var directory : directories) {
-			final var transactions = directory.listFiles(this::isTransaction);
-			if (transactions == null) {
-				continue;
+	private Set<String> buildFileList(File file) throws IOException {
+		Set<String> fileList = new HashSet<>();
+		Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
+			@Override
+			public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) {
+				var f = path.toFile();
+				try (var zip = new ZipFile(f)) {
+					final var temp = Files.createTempDirectory("TransactionToolSubmit").toFile();
+					temp.deleteOnExit();
+					ZipUtil.unpack(f, temp);
+					fileList.addAll(buildFileList(temp));
+				} catch (IOException e) {
+					if (isTransaction(f) && f.exists()) {
+						fileList.add(f.getAbsolutePath());
+					}
+				}
+				return FileVisitResult.CONTINUE;
 			}
-			Arrays.stream(transactions).map(File::getAbsolutePath).forEach(files::add);
-		}
+		});
+		return fileList;
 	}
 
-	private void handleWildCards(final Set<String> files, final Set<File> directories, final String fileInput) {
+	private void handleWildCards(final Set<String> files, final String fileInput) {
 		final var dir = fileInput.substring(0, fileInput.lastIndexOf("/"));
 		final var currentDirectory = new File(dir);
 		final var fileList = currentDirectory.list(
@@ -251,12 +267,10 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 		Arrays.stream(fileList).map(fileName -> new File(dir, fileName)).filter(file -> !file.isHidden()).forEach(
 				file -> {
-					if (file.isDirectory()) {
-						directories.add(file);
-						return;
-					}
-					if (isTransaction(file) && file.exists()) {
-						files.add(file.getAbsolutePath());
+					try {
+						files.addAll(buildFileList(file));
+					} catch (IOException e) {
+						logger.error(e);
 					}
 				});
 	}
