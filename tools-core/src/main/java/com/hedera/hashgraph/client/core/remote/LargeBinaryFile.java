@@ -27,7 +27,9 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
+import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
@@ -53,10 +55,12 @@ import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -71,7 +75,14 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
-import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.IS_ZIP_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
@@ -86,9 +97,7 @@ import static com.hedera.hashgraph.client.core.utils.CommonMethods.getTimeLabel;
 public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFile.class);
 
-	private static final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
 	private static final String TEMP_LOCATION = TEMP_DIRECTORY + File.separator + "content." + CONTENT_EXTENSION;
-	public static final String FILENAME_PROPERTY = "filename";
 	public static final String CHUNK_SIZE_PROPERTY = "chunkSize";
 	public static final String VALID_DURATION_PROPERTY = "validDuration";
 	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
@@ -97,6 +106,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public static final String FILE_ID_PROPERTY = "fileID";
 	public static final String NODE_ID_PROPERTY = "nodeID";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
+
+	private final UserAccessibleProperties properties =
+			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
 	private String filename;
 	private Identifier fileID;
@@ -110,6 +122,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private long transactionFee;
 	private String memo;
 	private File content = null;
+	private boolean isZip;
+	private String checksum;
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
@@ -141,10 +155,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 
 		// Check input
-		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(".json"));
+		final var jsons = new File(destination).listFiles((dir, name) -> name.endsWith(JSON_EXTENSION));
 		if (jsons == null) {
 			throw new HederaClientRuntimeException("Unable to read json files");
 		}
+
 		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
 		if (bins == null) {
 			throw new HederaClientRuntimeException("Unable to read binary files");
@@ -154,6 +169,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
+		jsons[0].deleteOnExit();
+		bins[0].deleteOnExit();
+		new File(destination).deleteOnExit();
+
 		final JsonObject details;
 		try {
 			details = readJsonObject(jsons[0].getPath());
@@ -162,7 +181,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		if (!details.get(FILENAME_PROPERTY).getAsString().equals(bins[0].getName())) {
+		this.filename = details.get(FILENAME_PROPERTY).getAsString();
+
+		// Check the filename sans extension, compared to the actual file name.  The fileName property could have
+		// any extension, but the content will always be a zip.
+		if (!FilenameUtils.removeExtension(filename).equals(FilenameUtils.removeExtension(bins[0].getName()))) {
 			handleError("The binary file does not correspond to the file specified in the details");
 			return;
 		}
@@ -183,7 +206,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return;
 		}
 
-		this.filename = details.get(FILENAME_PROPERTY).getAsString();
 		this.fileID = fileIdentifier;
 		this.chunkSize = details.has(CHUNK_SIZE_PROPERTY) ? details.get(CHUNK_SIZE_PROPERTY).getAsInt() : 1024;
 		if (getChunkSize() > 1024) {
@@ -197,10 +219,13 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.validIncrement =
 				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
 		this.nodeID = nodeIdentifier;
-		this.transactionFee =
-				details.has(TRANSACTION_FEE_PROPERTY) ? details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : 200000000;
+		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
+				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
 		this.memo = details.has(MEMO_PROPERTY) ? details.get(MEMO_PROPERTY).getAsString() : "";
 		this.content = bins[0];
+		// For backwards compatibility, if the zip property is not there, set it to true to indicate that the user
+		// did manually zip the files beforehand as this tool only allowed zip files previously.
+		this.isZip = details.has(IS_ZIP_PROPERTY) ? details.get(IS_ZIP_PROPERTY).getAsBoolean() : true;
 
 		expiration = timestamp.plusSeconds(transactionValidDuration.getSeconds())
 				.plusNanos(transactionValidDuration.getNano());
@@ -413,12 +438,54 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return content;
 	}
 
-	public String getChecksum() {
-		final var digest = EncryptionUtils.getFileDigest(new File(getParentPath() + File.separator + getName()));
-		if ("".equals(digest)) {
-			return "";
+	private File getUnzippedContentDirectory() {
+		var unZippedContent = new File(content.getParent(), FilenameUtils.removeExtension(content.getName()));
+		ZipUtil.unpack(content, unZippedContent);
+		return unZippedContent;
+	}
+
+	private File getUnzippedContent() throws HederaClientException {
+		// Recreate the contents. This is done here as the contents is pointing to a temporary copy that may have been
+		// altered.
+		final var destination = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
+
+		//TODO this occurs for each key used to sign, which is a lot of extra work. But it will do for now.
+		unZip(new File(getParentPath(), getName()).getAbsolutePath(), destination);
+
+		final var bins = new File(destination).listFiles((dir, name) -> name.endsWith(CONTENT_EXTENSION));
+
+		if (bins == null || bins.length != 1) {
+			throw new HederaClientException("The contents of the transaction file (.lfu) has been corrupted. " +
+					"It will need to be recreated.");
 		}
-		return CommonMethods.splitStringDigest(digest, 6);
+
+		// If the contents weren't originally zipped, unzip them.
+		if (!isZip) {
+			final var c = new File(getUnzippedContentDirectory(), filename);
+			c.deleteOnExit();
+			return c;
+		}
+		bins[0].deleteOnExit();
+		return bins[0];
+	}
+
+	public String getChecksum() {
+		if (checksum == null) {
+			final var tempLocation = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
+			var digest = EncryptionUtils.getFileDigest(new File(tempLocation, content.getName()));
+			// If the contents was not originally a zip, get the checksum of the content in the zip.
+			if (!isZip) {
+				var unZippedContent = new File(tempLocation, FilenameUtils.removeExtension(content.getName()));
+				ZipUtil.unpack(content, unZippedContent);
+				digest = EncryptionUtils.getFileDigest(
+						Path.of(tempLocation, FilenameUtils.removeExtension(content.getName()), getFilename()).toFile());
+			}
+			if ("".equals(digest)) {
+				return "";
+			}
+			checksum = CommonMethods.splitStringDigest(digest, 6);
+		}
+		return checksum;
 	}
 
 	@Override
@@ -431,6 +498,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return new HashSet<>(Collections.singleton(feePayerAccountId.asAccount()));
 	}
 
+			//TODO temp directory should have an added /transactiontool or something, then clear that when the app closes
+			// and maybe also clear individual temp stuff as things get signed?
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 						  final String output, final Runnable onSucceed) throws HederaClientException {
@@ -442,6 +511,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		final List<File> toPack = new ArrayList<>();
 
+		final var actualContent = getUnzippedContent();
+
+		// Now that there is a fresh copy of the contents, create the transaction
 		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
 		final var tempStorage =
 				new File(TEMP_DIRECTORY, LocalDate.now().toString()).getAbsolutePath() + File.separator + "LargeBinary"
@@ -451,7 +523,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				pair.getKey().replace(".pem", ""));
 		final var finalZip = new File(pathname);
 
-		if (pair.getValue() == null || !isValid() || content == null) {
+		if (pair.getValue() == null || !isValid() || actualContent == null) {
 			return null;
 		}
 
@@ -464,7 +536,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				logger.info("Created temp folder {}", tempStorage);
 			}
 
-			try (final var fileInputStream = new FileInputStream(content)) {
+			try (final var fileInputStream = new FileInputStream(actualContent)) {
 				final var buffer = new byte[chunkSize];
 				var count = 0;
 				var inputStream = fileInputStream.read(buffer);
@@ -486,12 +558,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					final var transaction = (count == 0) ?
 							new ToolFileUpdateTransaction(input) :
 							new ToolFileAppendTransaction(input);
-					transaction.sign(privateKey);
+
 					final var filePath =
-							String.format("%s%s-%05d.%s", tempStorage, FilenameUtils.getBaseName(filename), count,
-									SIGNED_TRANSACTION_EXTENSION);
-					writeBytes(filePath, transaction.getTransaction().toBytes());
-					toPack.add(new File(filePath));
+							String.format("%s%s-%05d.", tempStorage, FilenameUtils.getBaseName(filename), count);
+
+					transaction.store(filePath+TRANSACTION_EXTENSION);
+					final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+							transaction.createSignature(privateKey));
+					signaturePair.write(filePath+SIGNATURE_EXTENSION);
+
+					toPack.add(new File(filePath+TRANSACTION_EXTENSION));
+					toPack.add(new File(filePath+SIGNATURE_EXTENSION));
 					count++;
 					inputStream = fileInputStream.read(buffer);
 				}
@@ -555,11 +632,12 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			nodeList = new ArrayList<>();
 			nodeList.add(nodeID.asJSON());
 		}
-		try (final var fileInputStream = new FileInputStream(content)) {
+		try (final var fileInputStream = new FileInputStream(getUnzippedContent())) {
 			final var buffer = new byte[chunkSize];
 			var count = 0;
 			var inputStream = fileInputStream.read(buffer);
 			while (inputStream > 0) {
+				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
 				writeBytes(TEMP_LOCATION, trimmed);
 				for (var nodeId : nodeList) {
@@ -603,7 +681,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		feePayerLabel.setWrapText(true);
 		detailsGridPane.add(feePayerLabel, RIGHT, 1);
 
-		final var text = new Text(new Hbar(transactionFee).toString().replace(" ", "\u00A0"));
+		final var text = new Text(Hbar.fromTinybars(transactionFee).toString().replace(" ", "\u00A0"));
 		text.setFont(Font.font("Courier New", 17));
 		text.setFill(Color.RED);
 		detailsGridPane.add(text, RIGHT, 2);
@@ -635,51 +713,52 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(new Label(memo), RIGHT, 5);
 		}
 
-
 		final var fileLink = new Hyperlink("Click for more details");
 		fileLink.setOnAction(actionEvent -> {
 			try {
-				final var copyName =
-						FilenameUtils.getBaseName(getContent().getName()) + "-copy." + CONTENT_EXTENSION;
-				FileUtils.copyFile(getContent(), new File(copyName));
-				final var r = Runtime.getRuntime();
-				final var command = String.format("open -e %s", copyName);
-				r.exec(command);
+				if (Desktop.isDesktopSupported()) {
+					final var c = getUnzippedContentDirectory();
+					c.deleteOnExit();
+					Desktop.getDesktop().open(c.getAbsoluteFile());
+				}
 			} catch (final IOException e) {
 				logger.error(e.getMessage());
 			}
 		});
 
 
-		detailsGridPane.add(new Label("File contents"), LEFT, 6);
-		detailsGridPane.add(fileLink, RIGHT, 6);
+		detailsGridPane.add(new Label("File Id"), LEFT, 6);
+		detailsGridPane.add(new Label(fileID.toReadableString()), RIGHT, 6);
 
-		detailsGridPane.add(new Label("File Hash"), LEFT, 7);
-		final var checksum = new Text(getChecksum());
-		checksum.setFont(Font.font("Courier New", 16));
-		detailsGridPane.add(checksum, RIGHT, 7);
+		detailsGridPane.add(new Label("File contents"), LEFT, 7);
+		detailsGridPane.add(fileLink, RIGHT, 7);
 
-		detailsGridPane.add(new Label("File size"), LEFT, 8);
+		detailsGridPane.add(new Label("File Hash"), LEFT, 8);
+		final var checksumField = new Text(getChecksum());
+		checksumField.setFont(Font.font("Courier New", 16));
+		detailsGridPane.add(checksumField, RIGHT, 8);
+
+		detailsGridPane.add(new Label("File size"), LEFT, 9);
 		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
-		detailsGridPane.add(new Label(formattedContentSize), RIGHT, 8);
+		detailsGridPane.add(new Label(formattedContentSize), RIGHT, 9);
 
 		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
-			detailsGridPane.add(new Label("Chunk size"), LEFT, 9);
+			detailsGridPane.add(new Label("Chunk size"), LEFT, 10);
 			final var formattedChunkSize = String.format("%d bytes", getChunkSize());
-			detailsGridPane.add(new Label(formattedChunkSize), RIGHT, 9);
+			detailsGridPane.add(new Label(formattedChunkSize), RIGHT, 10);
 
-			detailsGridPane.add(new Label("Number of transactions"), LEFT, 10);
+			detailsGridPane.add(new Label("Number of transactions"), LEFT, 11);
 			final var formattedChunkNumber = String.format("%d", chunks);
-			detailsGridPane.add(new Label(formattedChunkNumber), RIGHT, 10);
+			detailsGridPane.add(new Label(formattedChunkNumber), RIGHT, 11);
 
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
-			detailsGridPane.add(interval, LEFT, 11);
+			detailsGridPane.add(interval, LEFT, 12);
 			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
-			detailsGridPane.add(new Label(formattedIntervalLength), RIGHT, 11);
+			detailsGridPane.add(new Label(formattedIntervalLength), RIGHT, 12);
 		}
 
 		return detailsGridPane;

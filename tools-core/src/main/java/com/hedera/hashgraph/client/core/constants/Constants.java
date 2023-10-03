@@ -140,7 +140,6 @@ public class Constants {
 	public static final String TEMP_FOLDER_LOCATION = System.getProperty("java.io.tmpdir");
 	public static final String HISTORY_MAP_JSON = "historyMap.json";
 	public static final String HISTORY_MAP = DEFAULT_SYSTEM_FOLDER + File.separator + HISTORY_MAP_JSON;
-
 	// endregion
 
 	// region STYLE
@@ -194,6 +193,7 @@ public class Constants {
 					"-fx-background-radius: 10;";
 	public static final String FILE_ID_PROPERTIES = "fileID";
 	public static final String FILENAME_PROPERTY = "filename";
+	public static final String IS_ZIP_PROPERTY = "isZip";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 	public static final String NODE_ID_PROPERTIES = "nodeID";
 	public static final String CHUNK_SIZE_PROPERTIES = "chunkSize";

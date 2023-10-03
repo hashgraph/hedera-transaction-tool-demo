@@ -32,6 +32,7 @@ import com.hedera.hashgraph.sdk.Transaction;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -103,19 +104,21 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		// Ensure that the file is a file (exists and not a directory)
 		if (file.isFile()) {
 			// Get the parent directory name
-			var parentName = file.getParentFile().getName();
+			var parentName = formatName(file.getParentFile().getName());
 			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
-			// There should only be 2 to 4 parts, if any more, or less, just return the parentName
-			if (parentNameParts.length >= 2 && parentNameParts.length <= 4) {
-				// Only return the first part, removing key, and anything afterwards
-				return parentNameParts[0];
-			} else if (parentNameParts.length > 4) {
-				// This would be for older versions, but attempt to remove the last 4 and put the rest back
-				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
-				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
+			// All files to be collated should be zipped. These files will now have been unzipped into a directory
+			// that ends in _unzipped. Whenever the submission node is included in the naming (due to multiple
+			// submission nodes), then both node and a suffix is included. This means that in all currently supported
+			// options, there should only be 5 or 7 parts. In both cases, only the first 3 are needed.
+
+			if (parentNameParts.length < 3) {
+				// If there are fewer parts than 3, which should not happen, then
+				// combine what is there as a new name, and return it.
+				return String.join(FILE_NAME_INTERNAL_SEPARATOR, parentNameParts);
 			} else {
-				return parentName;
+				// Get the first three parts and recombine it into a standard name.
+				parentNameParts = Arrays.copyOf(parentNameParts, 3);
+				return String.join(FILE_NAME_GROUP_SEPARATOR, parentNameParts);
 			}
 		}
 		// Return an empty string
@@ -125,19 +128,21 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 	private String getKeyName(final File file) {
 		// If file is null, ensure that the file is a file (exists and not a directory)
 		if (file != null && file.isFile()) {
-			// Now, get the keyName used when signed.
-			// Using some assumptions, will work for now.
-			var parentName = file.getParentFile().getName();
+			// Get the parent directory name
+			var parentName = formatName(file.getParentFile().getName());
 			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
-			// There should only be 2 to 4 parts, if any more, or less, just return an empty string
-			if (parentNameParts.length >= 2 && parentNameParts.length <= 4) {
-				// Only return the second part
-				return parentNameParts[1];
-			} else if (parentNameParts.length > 4) {
-				// This would be for older versions, but attempt to remove the last 4 and put the rest back
-				final var nameLength = parentNameParts.length-4;
-				final var shortenedArray = Arrays.copyOf(parentNameParts, nameLength);
-				return String.join(FILE_NAME_INTERNAL_SEPARATOR, shortenedArray);
+			// All files to be collated should be zipped. These files will now have been unzipped into a directory
+			// that ends in _unzipped. Whenever the submission node is included in the naming (due to multiple
+			// submission nodes), then both node and a suffix is included. This means that in all currently supported
+			// options, there should only be 5 or 7 parts. In both cases, only the first 3 are needed.
+
+			if (parentNameParts.length < 3) {
+				// If there are fewer parts than 3, which should not happen, then
+				// combine what is there as a new name, and return it.
+				return String.join(FILE_NAME_INTERNAL_SEPARATOR, parentNameParts);
+			} else {
+				// Return the 4th item, which is the keyName
+				return parentNameParts[3];
 			}
 		}
 		return "";
@@ -286,7 +291,6 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 
 	public String store(final String key) throws HederaClientException {
 		var output = this.transactionFile;
-
 		final var outFile = new File(output);
 		// If the output is a file, set the output as the parent
 		if (outFile.isFile()) {
@@ -296,12 +300,12 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		if (key.contains("Node")) {
 			output = output + "_" + key.substring(0, key.indexOf("_"));
 		}
-		final var transactionBytes = transaction.toBytes();
 		// Add the temporary directory prefix
 		output = "./Temp/" + output;
 		if (new File(output).mkdirs()) {
 			logger.info(OUTPUT_FILE_CREATED_MESSAGE, output);
 		}
+		final var transactionBytes = transaction.toBytes();
 		// Write the bytes of the signed transaction to file
 		writeBytes(output + File.separator + this.baseName + "." + SIGNED_TRANSACTION_EXTENSION, transactionBytes);
 		// Return the enclosing directory
@@ -371,18 +375,24 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		final var pathName = file.getAbsolutePath();
 		var fileBaseName = FilenameUtils.getBaseName(pathName);
 
+		return formatName(fileBaseName);
+	}
+
+	private static String formatName(@NotNull String name) {
 		// First, determine if the naming convention is the new or old version
 		// Old convention does not use '.'
-		if (!fileBaseName.contains(".")) {
-			// Now change the string to follow current convention
-			fileBaseName = fileBaseName.replace("_", ".");
-			fileBaseName = fileBaseName.replace("-", FILE_NAME_GROUP_SEPARATOR);
+		if (!name.contains(".")) {
+			// Replace '_' with a '.' for any account/node id, if applicable
+			name = name.replace("0_0_", "0.0.");
+			// Replace any '-' with the FILE_NAME_GROUP_SEPARATOR, as long as it isn't followed by a second '-'
+			// If the hash is negative, retain the negative sign
+			name = name.replaceAll("(?<!-)-", FILE_NAME_GROUP_SEPARATOR);
 		} else {
-			// If using the newer version, there is a change that some trailing 0s might be present
+			// If using the newer version, there is a chance that some trailing 0s might be present
 			// at the end of the transactionId's timestamp portion. Those will be replaced here.
-			fileBaseName = fileBaseName.replaceAll("\\.0{0,9}(?=_)", ".0");
+			name = name.replaceAll("\\.0{0,9}(?=_)", ".0");
 		}
 
-		return fileBaseName;
+		return name;
 	}
 }

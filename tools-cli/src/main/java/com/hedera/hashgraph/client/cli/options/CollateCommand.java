@@ -37,7 +37,6 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,11 +65,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	@CommandLine.Option(names = { "-a", "--account-info" }, description = "The path to the account info files for " +
 			"the account(s) corresponding to the transaction", split = ",")
-	private String[] infoFiles;
+	private String[] infoFiles = new String[]{};
 
 	@CommandLine.Option(names = { "-k", "--public-key" }, description = "The path to the public key files that " +
 			"correspond with the transaction's required signatures", split = ",")
-	private String[] keyFiles;
+	private String[] keyFiles = new String[]{};
 
 	@CommandLine.Option(names = { "-o", "--output-directory" }, description = "The path to the folder where the " +
 			"collated transaction files will be stored")
@@ -164,7 +163,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Output is a directory, return the list of files
 			final var files = Objects.requireNonNull(new File(output).listFiles());
 			// If more than one file, zip it up, move it to the destination, and continue
-			// This occurs after all the files below are done.
 			if (moreThanOneFile(output, files)) {
 				continue;
 			}
@@ -209,10 +207,11 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			return false;
 		}
 		final var zippedOutput = zipFolder(output);
-		if (!rootFolder.equals(out)) {
-			final var destination = new File(out, zippedOutput.getName());
-			Files.move(zippedOutput.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}
+
+		final var destination = new File(out, zippedOutput.getName());
+		// Overwriting the file, if it exists
+		Files.deleteIfExists(destination.toPath());
+		FileUtils.moveFile(zippedOutput, destination);
 		FileUtils.deleteDirectory(new File(output));
 		return true;
 	}
@@ -372,8 +371,8 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			final var suffix = pathName.contains("transactions") ? "_transactions" : suffix0;
 
 			// This won't affect the new naming convention, only the old version
-			final var nodeNumber = pathName.substring(pathName.indexOf("Node")+5, pathName.indexOf(suffix));
-			final var nodeName = "Node-" + nodeNumber.replace("-", ".");
+			final var nodeName = pathName.substring(pathName.indexOf("Node"), pathName.indexOf(suffix))
+					.replaceAll("(?<=0)-",".");
 
 			return nodeName + FILE_NAME_GROUP_SEPARATOR + baseName;
 		}
