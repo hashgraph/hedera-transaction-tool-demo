@@ -1400,7 +1400,7 @@ public class KeysPaneController implements SubController {
 		return "";
 	}
 
-	private void recoverIndexFieldListenerAction(final ObservableValue<String> observable,
+	private void recoverIndexFieldListenerAction(final ObservableValue<? extends String> observable,
 			final String oldValue,
 			final String newValue) {
 		if (!newValue.matches("\\d*")) {
@@ -1408,7 +1408,7 @@ public class KeysPaneController implements SubController {
 		}
 	}
 
-	private void recoverIndexFieldFocusedAction(final ObservableValue<Boolean> observable,
+	private void recoverIndexFieldFocusedAction(final ObservableValue<? extends Boolean> observable,
 			final Boolean oldValue,
 			final Boolean newValue) {
 		if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
@@ -1428,7 +1428,7 @@ public class KeysPaneController implements SubController {
 		}
 	}
 
-	private void recoverNickNameFieldFocusedAction(final ObservableValue<Boolean> observable,
+	private void recoverNickNameFieldFocusedAction(final ObservableValue<? extends Boolean> observable,
 			final Boolean oldValue,
 			final Boolean newValue) {
 		if (Boolean.FALSE.equals(newValue) &&
