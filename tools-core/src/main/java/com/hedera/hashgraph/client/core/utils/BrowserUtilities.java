@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.swing.JFileChooser;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 public class BrowserUtilities {
@@ -108,12 +109,17 @@ public class BrowserUtilities {
 
 		final var fileChooser = new FileChooser();
 
-
+		// Create the multi filter
+		final var formattedExt = Arrays.stream(ext).map(e -> String.format("*.%s", e)).toArray(String[]::new);
+		if (formattedExt.length > 0) {
+			fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(type , formattedExt));
+		}
+		// Create individual filters
 		for (final var e : ext) {
 			fileChooser.getExtensionFilters().add(
 					new FileChooser.ExtensionFilter(String.format("%s [*.%s]", type, e), String.format("*.%s", e)));
 		}
-
+		// Create the all filter
 		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("All Files", "*.*"));
 
 		final var initialPathFile = new File(initialPath);

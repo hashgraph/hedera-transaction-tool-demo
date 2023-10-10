@@ -80,6 +80,7 @@ public class Constants {
 	public static final String HASH = "hash";
 	public static final String VERSION = "version";
 	public static final String MNEMONIC_HASH_CODE = "hashCode";
+	public static final String MNEMONIC_CHECKSUM = "mnemonicChecksum";
 	public static final String ACCOUNT_INFO_MAP = "accountInfoMap";
 	public static final String USER_NAME = "userName";
 	public static final String SETUP_PHASE = "setupPhase";

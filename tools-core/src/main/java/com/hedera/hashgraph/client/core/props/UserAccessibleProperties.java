@@ -52,6 +52,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACT
 import static com.hedera.hashgraph.client.core.constants.Constants.LEGACY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_CHECKSUM;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_HASH_CODE;
 import static com.hedera.hashgraph.client.core.constants.Constants.NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.PREFERRED_STORAGE_DIRECTORY;
@@ -290,6 +291,14 @@ public class UserAccessibleProperties {
 
 	public int getMnemonicHashCode() {
 		return properties.getIntProperty(MNEMONIC_HASH_CODE, 0);
+	}
+
+	public void setMnemonicChecksum(final String checksum) {
+		properties.setProperty(MNEMONIC_CHECKSUM, checksum);
+	}
+
+	public String getMnemonicChecksum() {
+		return properties.getProperty(MNEMONIC_CHECKSUM, "");
 	}
 
 	// region Credential map operations

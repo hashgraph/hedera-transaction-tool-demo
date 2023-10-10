@@ -18,7 +18,6 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
@@ -29,6 +28,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
+import com.hedera.hashgraph.client.core.remote.helpers.ProgressPopup;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
@@ -40,8 +40,15 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.TransactionId;
+import com.opencsv.CSVWriter;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.concurrent.Task;
+import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -59,6 +66,7 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
@@ -73,16 +81,18 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CONTENT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORAGE;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.IS_ZIP_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TEMP_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.USER_PROPERTIES;
+import static com.hedera.hashgraph.client.core.constants.Constants.ZIP_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
@@ -225,7 +235,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 		// For backwards compatibility, if the zip property is not there, set it to true to indicate that the user
 		// did manually zip the files beforehand as this tool only allowed zip files previously.
-		this.isZip = details.has(IS_ZIP_PROPERTY) ? details.get(IS_ZIP_PROPERTY).getAsBoolean() : true;
+		this.isZip = details.has(IS_ZIP_PROPERTY) && details.get(IS_ZIP_PROPERTY).getAsBoolean();
 
 		expiration = timestamp.plusSeconds(transactionValidDuration.getSeconds())
 				.plusNanos(transactionValidDuration.getNano());
@@ -498,109 +508,67 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return new HashSet<>(Collections.singleton(feePayerAccountId.asAccount()));
 	}
 
-			//TODO temp directory should have an added /transactiontool or something, then clear that when the app closes
-			// and maybe also clear individual temp stuff as things get signed?
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 						  final String output, final Runnable onSucceed) throws HederaClientException {
-		try {
-			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
-			setHistory(true);
-		} catch (final HederaClientException e) {
-			logger.error(e.getMessage());
-		}
-		final List<File> toPack = new ArrayList<>();
+		final var keyName = FilenameUtils.getBaseName(pair.getLeft());
 
-		final var actualContent = getUnzippedContent();
-
-		// Now that there is a fresh copy of the contents, create the transaction
-		final var privateKey = PrivateKey.fromBytes(pair.getValue().getPrivate().getEncoded());
-		final var tempStorage =
-				new File(TEMP_DIRECTORY, LocalDate.now().toString()).getAbsolutePath() + File.separator + "LargeBinary"
-						+ File.separator + FilenameUtils.getBaseName(pair.getLeft()) + File.separator;
-
-		final var pathname = String.format("%s%s_%s.zip", tempStorage, FilenameUtils.getBaseName(this.getName()),
-				pair.getKey().replace(".pem", ""));
-		final var finalZip = new File(pathname);
-
-		if (pair.getValue() == null || !isValid() || actualContent == null) {
-			return null;
+		final var value = pair.getValue();
+		if (value == null || !isValid()) {
+			return "";
 		}
 
-		try {
-			if (new File(tempStorage).exists()) {
-				org.apache.commons.io.FileUtils.cleanDirectory(new File(tempStorage));
+		final var privateKey = PrivateKey.fromBytes(value.getPrivate().getEncoded());
+
+		final DoubleProperty progress = new SimpleDoubleProperty(1);
+
+		final var transactionsProgressBar = new ProgressBar();
+		transactionsProgressBar.progressProperty().bind(progress);
+		transactionsProgressBar.setVisible(true);
+		final var compressingProgressBar = new ProgressBar();
+		compressingProgressBar.setProgress(-1);
+
+		final var cancelButton = new Button("CANCEL");
+		final var window =
+				ProgressPopup.setupProgressPopup(transactionsProgressBar, compressingProgressBar, cancelButton);
+
+		cancelButton.visibleProperty().bind(transactionsProgressBar.progressProperty().lessThan(1));
+
+		//TODO need to handle exceptions from the task
+		var task = new ExecuteGroupedTask(keyName, privateKey, user, output);
+
+		transactionsProgressBar.progressProperty().bind(task.progressProperty());
+		new Thread(task).start();
+
+		task.setOnSucceeded(workerStateEvent -> {
+			try {
+				moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
+				setHistory(true);
+			} catch (final HederaClientException e) {
+				logger.error(e);
 			}
-
-			if (new File(tempStorage).mkdirs()) {
-				logger.info("Created temp folder {}", tempStorage);
+			try {
+				onSucceed.run();
+			} catch (Exception e) {
+				throw new HederaClientRuntimeException(e);
 			}
+			window.close();
+		});
 
-			try (final var fileInputStream = new FileInputStream(actualContent)) {
-				final var buffer = new byte[chunkSize];
-				var count = 0;
-				var inputStream = fileInputStream.read(buffer);
+		cancelButton.setOnAction(actionEvent -> task.cancel());
 
-				final var input = getJsonInput();
+		task.setOnCancelled(workerStateEvent -> {
+			logger.info("Task interrupted");
+			window.close();
+		});
 
-				var incrementedTime = transactionValidStart;
+		task.setOnFailed(workerStateEvent -> {
+			//TODO this should be very visible to the user, so they don't think it passed
+			logger.info("Task failed");
+			window.close();
+		});
 
-				while (inputStream > 0) {
-
-					// The other transactions are appends
-					final var trimmed = Arrays.copyOf(buffer, inputStream);
-					writeBytes(TEMP_LOCATION, trimmed);
-
-					incrementedTime =
-							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
-					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
-
-					final var transaction = (count == 0) ?
-							new ToolFileUpdateTransaction(input) :
-							new ToolFileAppendTransaction(input);
-
-					final var filePath =
-							String.format("%s%s-%05d.", tempStorage, FilenameUtils.getBaseName(filename), count);
-
-					transaction.store(filePath+TRANSACTION_EXTENSION);
-					final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
-							transaction.createSignature(privateKey));
-					signaturePair.write(filePath+SIGNATURE_EXTENSION);
-
-					toPack.add(new File(filePath+TRANSACTION_EXTENSION));
-					toPack.add(new File(filePath+SIGNATURE_EXTENSION));
-					count++;
-					inputStream = fileInputStream.read(buffer);
-				}
-			}
-			// Zip transactions
-
-			var toPackArray = new File[toPack.size()];
-			toPackArray = toPack.toArray(toPackArray);
-			ZipUtil.packEntries(toPackArray, finalZip);
-			toPack.forEach(file -> {
-				try {
-					if (Files.deleteIfExists(file.toPath())) {
-						logger.info("{} deleted", file.getAbsolutePath());
-					}
-				} catch (final IOException e) {
-					logger.error(e);
-				}
-			});
-
-			final var outputFile = new File(output + File.separator + user, finalZip.getName());
-			Files.deleteIfExists(outputFile.toPath());
-			FileUtils.moveFile(finalZip, outputFile);
-
-			onSucceed.run();
-
-			return outputFile.getAbsolutePath();
-		} catch (final IOException e) {
-			logger.error(e.getMessage());
-			throw new HederaClientException(e);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		return "";
 	}
 
 	@NotNull
@@ -622,16 +590,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		final List<ToolTransaction> transactions = new ArrayList<>();
 
-		List<JsonElement> nodeList;
-		if (getTransactionCreationMetadata() != null) {
-			// It appears LargeBinaryFile does not store the network, it assumes the network to be the default.
-			// For now, this will also assume the same.
-			nodeList = getTransactionCreationMetadata().getNodes().getList().stream()
-					.map(string -> Identifier.parse(string, "").asJSON()).collect(Collectors.toList());
-		} else {
-			nodeList = new ArrayList<>();
-			nodeList.add(nodeID.asJSON());
-		}
 		try (final var fileInputStream = new FileInputStream(getUnzippedContent())) {
 			final var buffer = new byte[chunkSize];
 			var count = 0;
@@ -640,20 +598,17 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
 				writeBytes(TEMP_LOCATION, trimmed);
-				for (var nodeId : nodeList) {
-					// AS ToolTransaction saves the reference to input, this should not be reused.
-					var input = getJsonInput();
-					input.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
-					// The other transactions are appends
-					incrementedTime =
-							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
-					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+				// As ToolTransaction saves the reference to input, this should not be reused.
+				var input = getJsonInput();
+				// The other transactions are appends
+				incrementedTime =
+						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
-					final var transaction = (count == 0) ?
-							new ToolFileUpdateTransaction(input) :
-							new ToolFileAppendTransaction(input);
-					transactions.add(transaction);
-				}
+				final var transaction = (count == 0) ?
+						new ToolFileUpdateTransaction(input) :
+						new ToolFileAppendTransaction(input);
+				transactions.add(transaction);
 				count++;
 				inputStream = fileInputStream.read(buffer);
 			}
@@ -669,13 +624,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		final var id = new TransactionId(feePayerAccountId.asAccount(), transactionValidStart.asInstant());
 		detailsGridPane.add(FXUtils.buildTransactionIDBox(detailsGridPane, id.toString()), RIGHT, 0);
 
-		JsonObject nicknames;
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-			nicknames = new JsonObject();
-		}
+		final JsonObject nicknames = getAccountNicknames();
 
 		final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(feePayerAccountId, nicknames));
 		feePayerLabel.setWrapText(true);
@@ -690,19 +639,22 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		timeLabel.setWrapText(true);
 		detailsGridPane.add(timeLabel, RIGHT, 3);
 
-		if (getTransactionCreationMetadata() != null && !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
+		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
 			final var nLabel = new Label("Transactions will be submitted to nodes: ");
 			nLabel.setWrapText(true);
 			detailsGridPane.add(nLabel, LEFT,4);
 
-			final var nodesString = new StringBuilder();
-			for (final var n : getTransactionCreationMetadata().getNodes().getList()) {
-//				need the network name, or something, or maybe I need to store the full identifier... or both?
-				var identifier = Identifier.parse(n, "");
-				nodesString.append(identifier.toNicknameAndChecksum(nicknames)).append("\n");
-			}
+			final var nodesString = getTransactionCreationMetadata().getNodes().getList().stream()
+					.map(identifier -> identifier.toNicknameAndChecksum(nicknames))
+					.collect(Collectors.joining("\n"));
 
-			detailsGridPane.add(new Label(nodesString.toString()), RIGHT, 4);
+			final var scrollPane = new ScrollPane();
+			scrollPane.setFitToWidth(true);
+			final var label = new Label(nodesString);
+			scrollPane.setMaxHeight(100);
+			scrollPane.setContent(label);
+			detailsGridPane.add(scrollPane, RIGHT, 4);
 		} else {
 			detailsGridPane.add(new Label("Node:"), LEFT, 4);
 			detailsGridPane.add(new Label(nodeID.toNicknameAndChecksum(nicknames)), RIGHT, 4);
@@ -774,10 +726,239 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		toJson.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
 		toJson.add(TRANSACTION_VALID_START_FIELD_NAME, transactionValidStart.asJSON());
 		toJson.addProperty(VALID_INCREMENT_PROPERTY, validIncrement);
+		// As this method isn't currently used, this will be left alone.
 		toJson.add(NODE_ID_PROPERTY, nodeID.asJSON());
 		toJson.addProperty(TRANSACTION_FEE_PROPERTY, transactionFee);
 		toJson.addProperty(MEMO_PROPERTY, memo);
 		toJson.addProperty(CONTENT_PROPERTY, content.getAbsolutePath());
 		return toJson;
+	}
+
+	private class ExecuteGroupedTask extends Task<String> {
+		static final String TRANSACTIONS_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "transactions";
+		static final String SIGNATURES_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "signatures";
+		static final int NANO_INCREMENT = 10;
+		final String keyName;
+		final PrivateKey privateKey;
+		final String tempStorage;
+		final String user;
+		final String output;
+		final int max;
+		long currentCount = 0L;
+		final List<String> fileList = new ArrayList<>();
+
+		public ExecuteGroupedTask(final String keyName, final PrivateKey privateKey,
+								  final String user, final String output) {
+			this.privateKey = privateKey;
+			this.keyName = keyName;
+			tempStorage = new File(TEMP_DIRECTORY,
+					LocalDate.now().toString()).getAbsolutePath() + File.separator + "LargeBinary"
+							+ File.separator + keyName + File.separator;
+			try {
+				if (new File(tempStorage).exists()) {
+					FileUtils.cleanDirectory(new File(tempStorage));
+				}
+
+				if (new File(tempStorage).mkdirs()) {
+					logger.info("Created temp folder {}", tempStorage);
+				}
+			} catch (IOException e) {
+				logger.info(String.format("Failed to clean directory: %s", tempStorage));
+			}
+			this.output = output;
+			this.user = user;
+			try {
+				final var actualContent = getUnzippedContent();
+
+				try (final var fileInputStream = new FileInputStream(actualContent)) {
+					final var buffer = new byte[chunkSize];
+					int inputStream;
+					var fileCount = 0;
+					while ((inputStream = fileInputStream.read(buffer)) > 0) {
+						final var trimmed = Arrays.copyOf(buffer, inputStream);
+						final var filePath =
+								String.format("%s%s-%05d", tempStorage,
+										FilenameUtils.getBaseName(filename), fileCount++);
+
+						writeBytes(filePath, trimmed);
+						fileList.add(filePath);
+					}
+				} catch (IOException ex) {
+					//TODO
+				}
+			} catch (HederaClientException ex) {
+				//TODO
+			}
+			if (getTransactionCreationMetadata() == null) {
+				this.max = 1;
+			} else {
+				final var nodeListSize = getTransactionCreationMetadata().getNodes() == null ? 1
+						: getTransactionCreationMetadata().getNodes().getList().size();
+				this.max = nodeListSize * fileList.size();
+			}
+		}
+
+		@Override
+		protected String call() throws Exception {
+			var result = "";
+			final var transactionJson = getJsonInput();
+			if (getTransactionCreationMetadata() == null) {
+				result = processSingleTransaction(transactionJson);
+			} else {
+				if (getTransactionCreationMetadata().getNodes() != null) {
+					for (final var nodeId : getTransactionCreationMetadata().getNodes().getList()) {
+						transactionJson.add(NODE_ID_FIELD_NAME, nodeId.asJSON());
+						var tempResult = processTransactionForNode(transactionJson);
+						if ("".equals(result)) {
+							result = tempResult;
+						}
+					}
+				} else {
+					result = processTransactionForNode(transactionJson);
+				}
+			}
+			try {
+				FileUtils.deleteDirectory(new File(tempStorage));
+			} catch (IOException e) {
+				logger.info(String.format("Directory could not be deleted: %s",tempStorage));
+			}
+			return result;
+		}
+
+		private String processTransaction(final JsonObject jsonObject)
+				throws Exception {
+			var result = "";
+			long count = 0L;
+
+			var incrementedTime = transactionValidStart;
+
+			for (var filePath : fileList) {
+				incrementedTime =
+						new Timestamp(incrementedTime.asDuration().plusNanos(count * validIncrement));
+				jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+				jsonObject.addProperty(CONTENTS_FIELD_NAME, filePath);
+
+				final var transaction = (count == 0) ?
+						new ToolFileUpdateTransaction(jsonObject) :
+						new ToolFileAppendTransaction(jsonObject);
+
+				transaction.store(String.format("%s.%s",filePath,TRANSACTION_EXTENSION));
+				final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+						transaction.createSignature(privateKey));
+				signaturePair.write(String.format("%s.%s",filePath,SIGNATURE_EXTENSION));
+				count++;
+			}
+
+			return result;
+		}
+
+		private String processSingleTransaction(final JsonObject jsonObject) throws Exception {
+			final var result = processTransaction(jsonObject);
+			final var pathname = String.format("%s_%s.zip",
+					FilenameUtils.getBaseName(getName()),
+					keyName);
+
+			for (var file : fileList) {
+				Files.deleteIfExists(Path.of(file));
+			}
+			zipMessages(pathname, "");
+
+			return result;
+		}
+
+		private String processTransactionForNode(final JsonObject jsonObject) throws Exception {
+			final var result = processTransaction(jsonObject);
+			pack(Identifier.parse(jsonObject.getAsJsonObject(NODE_ID_FIELD_NAME)).toReadableString());
+			return result;
+		}
+
+		public void pack(String nodeId) throws HederaClientException {
+			final var baseName = getZipFileBaseName(nodeId);
+			try {
+				summarizeTransactions(baseName);
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+			zipMessages(String.format("%s%s.%s", baseName, TRANSACTIONS_SUFFIX, ZIP_EXTENSION),
+					TRANSACTION_EXTENSION);
+			zipMessages(String.format("%s%s.%s", baseName, SIGNATURES_SUFFIX, ZIP_EXTENSION),
+					SIGNATURE_EXTENSION);
+		}
+
+		private void summarizeTransactions(final String baseName) throws HederaClientException, IOException {
+			final var transactions =
+					new File(tempStorage).listFiles((dir, name) -> name.endsWith(TRANSACTION_EXTENSION));
+			if (transactions == null) {
+				throw new HederaClientRuntimeException("Unable to read transactions list");
+			}
+			final var files = Arrays.asList(transactions);
+			Collections.sort(files);
+
+			final var summary = Path.of(output, user, baseName +
+					FILE_NAME_GROUP_SEPARATOR + "summary.csv");
+
+			Files.deleteIfExists(summary);
+			try (final var printWriter = new PrintWriter(summary.toFile());
+				 final var writer = new CSVWriter(printWriter)) {
+				final var header = new String[] { "Filename", "Transaction Json" };
+				writer.writeNext(header);
+				for (final var file : files) {
+					final List<String> dataList = new ArrayList<>();
+					final var t = getTransaction(file);
+					if (t != null) {
+						dataList.add(file.getName());
+						dataList.add(t.asJson().toString().replace(",", ";"));
+						var data = new String[2];
+						data = dataList.toArray(data);
+						writer.writeNext(data);
+					}
+				}
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+		}
+
+		// Super ugly, but get the transaction for the file, whether it is an update or append
+		private ToolTransaction getTransaction(final File file) {
+			try {
+				return new ToolFileUpdateTransaction(file);
+			} catch (HederaClientException ex1) {
+				try {
+					return new ToolFileAppendTransaction(file);
+				} catch (HederaClientException ex2) {
+					return null;
+				}
+			}
+		}
+
+		private void zipMessages(final String messages, final String ext) throws HederaClientException {
+			try {
+				final var txToPack = new File(tempStorage).listFiles((dir, name) -> name.endsWith(ext));
+				if (txToPack == null) {
+					throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
+				}
+				final var zipFile = Path.of(output, user, messages).toFile();
+
+				if (new File(tempStorage).exists()) {
+					Files.deleteIfExists(zipFile.toPath());
+					ZipUtil.packEntries(txToPack, zipFile);
+				}
+
+				// Delete transactions that have now been zipped
+				for (final File file : txToPack) {
+					Files.deleteIfExists(file.toPath());
+				}
+			} catch (final IOException e) {
+				throw new HederaClientException(e);
+			}
+		}
+
+		private String getZipFileBaseName(final String nodeAccount) {
+			// filename(seconds_feepayer_transaction.hash)_keyname_node
+			return String.join(FILE_NAME_GROUP_SEPARATOR,
+					FilenameUtils.removeExtension(filename),
+					keyName,
+					String.format("%s%s%s", "Node", FILE_NAME_INTERNAL_SEPARATOR, nodeAccount));
+		}
 	}
 }

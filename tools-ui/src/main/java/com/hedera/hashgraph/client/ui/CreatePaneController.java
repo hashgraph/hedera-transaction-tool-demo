@@ -149,6 +149,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -1537,8 +1538,7 @@ public class CreatePaneController implements SubController {
 				}
 				validHash = isValidHash();
 				break;
-			case FREEZE_UPGRADE:
-			case TELEMETRY_UPGRADE:
+			case FREEZE_UPGRADE, TELEMETRY_UPGRADE:
 				validStart =
 						isDateValid(freezeHourField, freezeMinuteField, freezeSecondsField, freezeNanosField,
 								datePicker, ZoneId.of(freezeTimeZone.getID()), freezeTimeZoneHBox);
@@ -1626,8 +1626,6 @@ public class CreatePaneController implements SubController {
 			return null;
 		}
 	}
-
-	//TODO it allowed me to create a create account txn with no date selected, it auto put in 1 am (it is 12:25). check that out
 
 	// endregion
 
@@ -1750,7 +1748,10 @@ public class CreatePaneController implements SubController {
 		final List<File> files = new ArrayList<>();
 		files.add(new File(lfuFile));
 		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)));
-		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION)));
+		final var tcmFile = new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
+		if (tcmFile.exists()) {
+			files.add(tcmFile);
+		}
 		moveToOutput(files, remoteLocation);
 
 		for (final var file : files) {
@@ -1819,8 +1820,7 @@ public class CreatePaneController implements SubController {
 		userComments.toFile(destTxtFile.getAbsolutePath());
 
 		final var tcmFile = new TransactionCreationMetadataFile.Builder()
-				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
-						.map(Identifier::toReadableString).toList())
+				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems())
 				.build();
 
 		if (tcmFile != null) {
@@ -1840,7 +1840,8 @@ public class CreatePaneController implements SubController {
 				Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork()).asJSON());
 		outputObject.add(FEE_PAYER_ACCOUNT_ID_PROPERTY,
 				Identifier.parse(feePayerAccountField.getText(), controller.getCurrentNetwork()).asJSON());
-		outputObject.addProperty(NODE_ID_PROPERTIES, nodeAccountField.getText());
+		outputObject.add(NODE_ID_PROPERTIES, nodeAccountList.getItems().get(0).asJSON());
+		outputObject.addProperty(NODE_FIELD_INPUT, nodeAccountField.getText());
 		outputObject.addProperty(CHUNK_SIZE_PROPERTIES, Integer.parseInt(chunkSizeTextField.getText()));
 
 		final var date = startFieldsSet.getDate();
@@ -1888,6 +1889,7 @@ public class CreatePaneController implements SubController {
 			} catch (IOException e) {
 				logger.error(e.getMessage());
 			}
+			contentsFilePathError.setVisible(false);
 		} else {
 			contentsFilePathError.setVisible(true);
 			contents = null;
@@ -1948,20 +1950,7 @@ public class CreatePaneController implements SubController {
 				selectTransactionType.setValue("Network Freeze and Update");
 				loadFreezeTransactionToForm((ToolFreezeTransaction) transaction);
 				break;
-			case FILE_UPDATE:
-				//TODO Both Update and Append are not currently supported. Some issues to deal with:
-				// The content bytes would need to be displayed for the user. The contentsTextField
-				// can be used for this, but it would need to be able to display the whole ByteString,
-				// and make it non editable, only allowing the 'browse button' to be used. Then the
-				// resulting transaction would need to know it was reading bytes, not a location.
-				// Also, in many situations, the bytes of the entire file may not be present in the
-				// selected transaction. If the bytes.length < max and transaction type = FileUpdate,
-				// no issues, otherwise the user can be warned that not all data for the entire update
-				// is available.
-				//selectTransactionType.setValue(CreateTransactionType.FILE_UPDATE.getTypeString());
-				//loadLargeFileUpdateToForm((ToolFileUpdateTransaction) transaction);
-				//break;
-			case FILE_APPEND:
+			case FILE_UPDATE, FILE_APPEND:
 			default:
 				PopupMessage.display("Unsupported transaction", "The transaction is not yet supported by the tool.");
 				return;
@@ -2090,6 +2079,7 @@ public class CreatePaneController implements SubController {
 		final var tempStorage = new File(TEMP_DIRECTORY, "tempStorage").getAbsolutePath();
 		selectTransactionType.setValue("File Contents Update");
 		unZip(transactionFile.getAbsolutePath(), tempStorage);
+		Arrays.stream(new File(tempStorage).listFiles()).forEach(File::deleteOnExit);
 		final var files = new File(tempStorage).listFiles(
 				(dir, name) -> JSON_EXTENSION.equals(FilenameUtils.getExtension(name)));
 		if (files == null) {
@@ -2098,12 +2088,8 @@ public class CreatePaneController implements SubController {
 		if (files.length != 1) {
 			throw new HederaClientException("Incorrect number of json files");
 		}
-		final var details = readJsonObject(files[0].getPath());
-		try {
-			FileUtils.deleteDirectory(new File(tempStorage));
-		} catch (final IOException e) {
-			throw new HederaClientException("Cannot delete directory", e.getCause());
-		}
+		final var jsonFile = files[0];
+		final var details = readJsonObject(jsonFile.getPath());
 
 		if (details.has(FILE_ID_PROPERTIES)) {
 			final var fileIdentifier = Identifier.parse(details.get(FILE_ID_PROPERTIES).getAsJsonObject());
@@ -2116,9 +2102,10 @@ public class CreatePaneController implements SubController {
 							FEE_PAYER_ACCOUNT_ID_PROPERTY).getAsJsonObject()).toNicknameAndChecksum(
 							controller.getAccountsList()));
 		}
-		if (details.has(NODE_ID_PROPERTIES)) {
-			//TODO will need to get all the nodeidproperties from file and put them in the field, hmmm, this means that it would
-			// need to create the string based on the stuff it pulls, unless we save hte string, too
+		// If the nodeFieldText was saved, use that, otherwise, use the nodeId that was saved
+		if (details.has(NODE_FIELD_INPUT)) {
+			nodeAccountField.setText(details.get(NODE_FIELD_INPUT).getAsString());
+		} else if (details.has(NODE_ID_PROPERTIES)) {
 			final var nodeIdentifier = Identifier.parse(details.get(NODE_ID_PROPERTIES).getAsJsonObject());
 			nodeIdentifier.setNetworkName(controller.getCurrentNetwork());
 			nodeAccountField.setText(nodeIdentifier.toNicknameAndChecksum(controller.getAccountsList()));
@@ -2140,6 +2127,22 @@ public class CreatePaneController implements SubController {
 			transactionFee.setText(
 					Utilities.setCurrencyFormat(details.get(TRANSACTION_FEE_PROPERTY).getAsLong()));
 		}
+
+		final var lfuContents = new File(tempStorage).listFiles(
+				(dir, name) -> CONTENT_EXTENSION.equals(FilenameUtils.getExtension(name)));
+		if (lfuContents == null) {
+			throw new HederaClientException("Error reading files");
+		}
+		if (lfuContents.length != 1) {
+			throw new HederaClientException("Incorrect number of content files");
+		}
+		contents = lfuContents[0];
+		if (!details.has(IS_ZIP_PROPERTY) || !details.get(IS_ZIP_PROPERTY).getAsBoolean()) {
+			final var tempContentStorage = tempStorage+contents.getName();
+			unZip(contents.getAbsolutePath(), tempContentStorage);
+			contents = new File(tempContentStorage);
+		}
+		setContentsAction();
 	}
 
 	private void loadSystemTransactionToForm(final ToolSystemTransaction transaction) {
@@ -2615,7 +2618,7 @@ public class CreatePaneController implements SubController {
 				input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, newSigRequired);
 			}
 			
-			//TODO shoudln't this check it against old?
+			//TODO shouldn't this check it against old?
 			if (!"".equals(stakedAccountIdNew.getText())) {
 				input.add(STAKED_ACCOUNT_ID_FIELD_NAME,
 						Identifier.parse(stakedAccountIdNew.getText(), controller.getCurrentNetwork()).asJSON());
@@ -2673,8 +2676,7 @@ public class CreatePaneController implements SubController {
 							Identifier.parse(freezeFileIDTextField.getText(), controller.getCurrentNetwork()).asJSON());
 					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
 					break;
-				case FREEZE_UPGRADE:
-				case TELEMETRY_UPGRADE:
+				case FREEZE_UPGRADE, TELEMETRY_UPGRADE:
 					input.add(FREEZE_FILE_ID_FIELD_NAME,
 							Identifier.parse(freezeFileIDTextField.getText(), controller.getCurrentNetwork()).asJSON());
 					input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, freezeFileHashTextField.getText());
@@ -2731,8 +2733,7 @@ public class CreatePaneController implements SubController {
 			case FILE_UPDATE:
 				flag = checkAndFlagFileUpdateContentsFields();
 				break;
-			case UNKNOWN:
-			case SELECT:
+			case UNKNOWN, SELECT:
 			default:
 		}
 		if (flag) {
@@ -2895,7 +2896,8 @@ public class CreatePaneController implements SubController {
 	private File loadTransaction() {
 		logger.info("browsing transactions");
 		final var file = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(), createAnchorPane,
-				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION, ZIP_EXTENSION);
+				"Transaction", TRANSACTION_EXTENSION, SIGNED_TRANSACTION_EXTENSION,
+				LARGE_BINARY_EXTENSION, ZIP_EXTENSION);
 		if (file == null) {
 			return null;
 		}
@@ -3064,13 +3066,9 @@ public class CreatePaneController implements SubController {
 		textField.styleProperty().bind(
 				Bindings.when(new SimpleListProperty<>(listView.getItems()).emptyProperty())
 						.then(TEXTFIELD_DEFAULT).otherwise(TEXTFIELD_WITH_LIST_DEFAULT));
-		//TODO Need both min and max heights bound or the grid pane doesn't properly resize
 		listView.minHeightProperty().bind(
 				Bindings.min(new SimpleListProperty<>(listView.getItems()).sizeProperty(), 4)
 						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
-//		listView.maxHeightProperty().bind(
-//				Bindings.min(new SimpleListProperty<>(nodeAccountList.getItems()).sizeProperty(), 4)
-//						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
 		listView.visibleProperty().bind(Bindings.isEmpty(listView.getItems()).not());
 		listView.setCellFactory((view) -> new ListCell<>() {
 			{
@@ -3214,8 +3212,7 @@ public class CreatePaneController implements SubController {
 								parsedAddress.getCorrectChecksum()));
 				errorLabel.requestFocus();
 				break;
-			case GOOD_NO_CHECKSUM:
-			case GOOD_WITH_CHECKSUM:
+			case GOOD_NO_CHECKSUM, GOOD_WITH_CHECKSUM:
 				textField.setStyle(TEXTFIELD_DEFAULT);
 				final var id = Identifier.parse(account, controller.getCurrentNetwork());
 				textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
@@ -3252,10 +3249,8 @@ public class CreatePaneController implements SubController {
 		}
 
 		final var tcm = new TransactionCreationMetadataFile.Builder()
-				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
-						.map(Identifier::toReadableString).toList())
-				.withAccounts(updateAccountID.getText(), updateAccountList.getItems().stream()
-						.map(Identifier::toReadableString).toList())
+				.withNodes(nodeAccountField.getText(), nodeAccountList.getItems())
+				.withAccounts(updateAccountID.getText(), updateAccountList.getItems())
 				.withIsUpdateAccountFeePayer(isUpdateAccountFeePayerCheckBox.isSelected())
 				.build();
 
@@ -3479,10 +3474,7 @@ public class CreatePaneController implements SubController {
 			case FILE_UPDATE:
 				signAndSubmitMultipleTransactions();
 				break;
-			case CREATE:
-			case UPDATE:
-			case TRANSFER:
-			case SYSTEM:
+			case CREATE, UPDATE, TRANSFER, SYSTEM:
 				signAndSubmitSingleTransaction();
 				break;
 			default:
@@ -3490,6 +3482,26 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
+
+
+
+//	both sign and submits should send eveyrthing to one node, only go to the next node if it failed.
+//	also, tooltransaction should allow for stuff like .setnodeid. it would have to recreate the transaction from json after changing the nodeid
+//				if fails for every node, don't continue to the next append transaction
+//	also, could do a rotating list, each transaction doesn't start with the first node again, but instead it continues on the last good node
+//	until all nodes have been tried? or 3 minutes are up? which does the cli do? gives up, it seems, which is probably fine.
+//	but if too many fail, and there are too many appends, it could get to some of hte later appends and they would be invalid
+//	i could set the append transactiontimestamp after each successful previous one
+//
+//	except the signing of a transaction includes the validtimestamp, so that can not be altered after the signging
+//	which is also true for node, so the transactions do need to be created and signed and then submitted.
+//	but that woudl still work, i just need to get the transaction for a specific node so like
+//	map<nodeid, list>
+//		for 0-list.size, map.get(currentgoodnode).get(i)
+//	or something like that
+//
+//
+//		this is fine, i guess, the question is, should it create separate threads for each node, then run the threads
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
@@ -3533,88 +3545,114 @@ public class CreatePaneController implements SubController {
 				"Please wait while the file update transactions are being submitted.", size);
 		final Status[] error = new Status[1];
 
-		final Task<Void> task = new Task<>() {
-			@Override
-			protected Void call() throws InterruptedException, HederaClientException {
-				long counter = 0;
-				for (final var transaction : transactions) {
-					final var toolTransaction = transaction.atNow();
-					toolTransaction.setNetwork(controller.getCurrentNetwork());
-					for (final var privateKey : privateKeys) {
-						toolTransaction.sign(privateKey);
-						updateProgress(counter, size);
-					}
-					try {
-						final var receipt = toolTransaction.submit();
-						storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
-								TransactionType.FILE_UPDATE.toString());
-						if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
-							error[0] = receipt.status;
-							cancel();
+		AtomicInteger cancelledCount = new AtomicInteger(0);
+		AtomicInteger failedCount = new AtomicInteger(0);
+		var taskList = new ArrayList<Task>();
+		for (final var nodeId : nodeAccountList.getItems()) {
+			final Task<Void> task = new Task<>() {
+				@Override
+				protected Void call() throws InterruptedException, NoSuchMethodException,
+								InvocationTargetException, InstantiationException, IllegalAccessException {
+					long counter = 0;
+					for (final var transaction : transactions) {
+						if (isCancelled()) return null;
+						final var transactionJson = transaction.asJson();
+						transactionJson.add(NODE_ID_FIELD_NAME, nodeId.asJSON());
+						final var toolTransaction =
+								getTransaction(transaction.getClass(), transactionJson);
+						toolTransaction.setNetwork(controller.getCurrentNetwork());
+						for (final var privateKey : privateKeys) {
+							toolTransaction.sign(privateKey);
 						}
-						logger.info(receipt);
-					} catch (final PrecheckStatusException e) {
-						logger.error(e.getMessage());
-						storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
-						error[0] = e.status;
-						cancel();
-					} catch (final ReceiptStatusException e) {
-						logger.error(e.getMessage());
-						storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
-								TransactionType.FILE_UPDATE.toString());
-						error[0] = e.receipt.status;
-						cancel();
+
+						try {
+							final var receipt = toolTransaction.submit();
+							storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+									TransactionType.FILE_UPDATE.toString());
+							if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
+								error[0] = receipt.status;
+								cancel();
+								return null;
+							}
+							logger.info(receipt);
+						} catch (final PrecheckStatusException e) {
+							logger.error(e.getMessage());
+							storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
+							error[0] = e.status;
+							cancel();
+							return null;
+						} catch (final ReceiptStatusException e) {
+							logger.error(e.getMessage());
+							storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+									TransactionType.FILE_UPDATE.toString());
+							error[0] = e.receipt.status;
+							cancel();
+							return null;
+						}
+
+						updateProgress(++counter, size);
 					}
-					counter++;
+
+//							sleep(1000);
+					updateProgress(size, size);
+					return null;
 				}
-				sleep(1000);
-				updateProgress(size, size);
-				return null;
-			}
-		};
+			};
+
+			taskList.add(task);
+
+			task.progressProperty().addListener((obs, oldValue, newValue) -> {
+				if (oldValue.doubleValue() == progressBar.getProgress()) {
+					progressBar.setProgress(newValue.doubleValue());
+				}
+			});
+
+			new Thread(task).start();
+			task.setOnSucceeded(workerStateEvent -> {
+				logger.info("Transactions signed");
+				largeBinaryFile.setHistory(true);
+				moveToHistory(largeBinaryFile, privateKeyFiles);
+				controller.historyPaneController.addToHistory(largeBinaryFile);
+
+				if (window != null) {
+					window.close();
+				}
+				PopupMessage.display("Update succeeded",
+						String.format("Contents update for file %s succeeded", updateFileID.getText()));
+				initializePane();
+			});
+
+			task.setOnCancelled(workerStateEvent -> {
+				if (cancelledCount.incrementAndGet() + failedCount.get() == nodeAccountList.getItems().size()) {
+					logger.info("Update cancelled");
+					if (window != null) {
+						window.close();
+					}
+					moveToHistory(largeBinaryFile, privateKeyFiles);
+					largeBinaryFile.setHistory(true);
+					controller.historyPaneController.addToHistory(largeBinaryFile);
+
+					final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "CANCELLED";
+					PopupMessage.display("Update failed",
+							String.format("File update failed with error %s. Please review the transaction and try again.",
+									errorMessage));
+				}
+			});
+
+			task.setOnFailed(workerStateEvent -> {
+				if (failedCount.incrementAndGet() == nodeAccountList.getItems().size()) {
+					logger.info("Update failed");
+					moveToHistory(largeBinaryFile, privateKeyFiles);
+					if (window != null) {
+						window.close();
+					}
+				}
+			});
+		}
 
 		cancelButton.setOnAction(actionEvent -> {
 			logger.info("Task cancelled by user");
-			task.cancel();
-		});
-
-		progressBar.progressProperty().bind(task.progressProperty());
-		new Thread(task).start();
-		task.setOnSucceeded(workerStateEvent -> {
-			logger.info("Transactions signed");
-			largeBinaryFile.setHistory(true);
-			moveToHistory(largeBinaryFile, privateKeyFiles);
-			controller.historyPaneController.addToHistory(largeBinaryFile);
-
-			if (window != null) {
-				window.close();
-			}
-			PopupMessage.display("Update succeeded",
-					String.format("Contents update for file %s succeeded", updateFileID.getText()));
-			initializePane();
-		});
-
-		task.setOnCancelled(workerStateEvent -> {
-			logger.info("Update balances cancelled");
-			if (window != null) {
-				window.close();
-			}
-			moveToHistory(largeBinaryFile, privateKeyFiles);
-			largeBinaryFile.setHistory(true);
-			controller.historyPaneController.addToHistory(largeBinaryFile);
-
-			final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "CANCELLED";
-			PopupMessage.display("Update failed",
-					String.format("File update failed with error %s. Please review the transaction and try again.",
-							errorMessage));
-		});
-
-		task.setOnFailed(workerStateEvent -> {
-			logger.info("Update balances failed");
-			moveToHistory(largeBinaryFile, privateKeyFiles);
-			if (window != null) {
-				window.close();
-			}
+			taskList.stream().forEach(t -> t.cancel(false));
 		});
 	}
 
@@ -3683,10 +3721,8 @@ public class CreatePaneController implements SubController {
 			if (!taskList.isEmpty()) {
 				final var rf = TransactionFile.wrapToolTransaction(mainTransaction);
 				final var tcm = new TransactionCreationMetadataFile.Builder()
-						.withNodes(nodeAccountField.getText(), nodeAccountList.getItems().stream()
-								.map(Identifier::toReadableString).toList())
-						.withAccounts(updateAccountID.getText(), updateAccountList.getItems().stream()
-								.map(Identifier::toReadableString).toList())
+						.withNodes(nodeAccountField.getText(), nodeAccountList.getItems())
+						.withAccounts(updateAccountID.getText(), updateAccountList.getItems())
 						.withIsUpdateAccountFeePayer(isUpdateAccountFeePayerCheckBox.isSelected())
 						.build();
 				rf.setTransactionCreationMetadata(tcm);
@@ -3773,8 +3809,7 @@ public class CreatePaneController implements SubController {
 
 	private void showReceiptOnPopup(final ToolTransaction transaction, final TransactionReceipt receipt) {
 		switch (receipt.status) {
-			case OK:
-			case SUCCESS:
+			case OK, SUCCESS:
 				final var message = getPopupMessage(transaction, receipt);
 				PopupMessage.display("Final status", message);
 				break;
@@ -3785,12 +3820,6 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-
-	//	i need to create all the transactions
-//	then get all the keys for each transaction
-//	then determine unknown keys (including prompt)
-//	and prompt showing all keys being used for all transactions
-//	then store tx and create rf and continue on?
 	private ArrayList<ProgressTask> createSubmitTaskList(final List<ToolTransaction> transactions) throws HederaClientException {
 		final var taskList = new ArrayList<ProgressTask>();
 		final var allPrivateKeys = new HashSet<File>();
@@ -3809,7 +3838,7 @@ public class CreatePaneController implements SubController {
 		final var comments = createCommentsTextArea.getText();
 		for (final var transaction : transactions) {
 			var acceptedKeys = privateKeyMap.get(transaction).stream()
-					.filter(key -> verifiedPrivateKeys.contains(key))
+					.filter(verifiedPrivateKeys::contains)
 					.collect(Collectors.toCollection(ArrayList::new));
 
 			if (acceptedKeys.isEmpty()) {
@@ -3880,7 +3909,6 @@ public class CreatePaneController implements SubController {
 		return new SubmitTask(transaction) {
 			@Override
 			protected Object call() throws Exception {
-				//TODO this isn't displaying properly
 				updateProgress(1L,2L);
 				final var transactionName = getTransactionName(transaction);
 				try {
@@ -3929,7 +3957,7 @@ public class CreatePaneController implements SubController {
 			}
 		} else {
 			Map<Boolean, List<SubmitTask>> partitions = results.stream()
-					.collect(Collectors.partitioningBy(result -> result.isSuccessful()));
+					.collect(Collectors.partitioningBy(SubmitTask::isSuccessful));
 			var successfulList = partitions.get(true);
 			var failedList = partitions.get(false);
 			if (!successfulList.isEmpty()) {

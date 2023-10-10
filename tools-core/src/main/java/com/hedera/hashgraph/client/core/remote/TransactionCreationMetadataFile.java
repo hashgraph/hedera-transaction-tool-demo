@@ -21,6 +21,7 @@ package com.hedera.hashgraph.client.core.remote;
 import com.google.gson.JsonObject;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.remote.helpers.AccountList;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -97,11 +98,17 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 
 	@Override
 	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.JSON_STYLE)
-				.append(NODES_STRING, nodes)
-				.append(ACCOUNTS_STRING, accounts)
-				.append(IS_UPDATE_ACCOUNT_FEE_PAYER, isUpdateAccountFeePayer)
-				.toString();
+		var stringBuilder = new ToStringBuilder(this, ToStringStyle.JSON_STYLE);
+		if (nodes != null) {
+			stringBuilder.append(NODES_STRING, nodes);
+		}
+		if (accounts != null) {
+			stringBuilder.append(ACCOUNTS_STRING, accounts);
+		}
+		if (isUpdateAccountFeePayer) {
+			stringBuilder.append(IS_UPDATE_ACCOUNT_FEE_PAYER, isUpdateAccountFeePayer);
+		}
+		return stringBuilder.toString();
 	}
 
 	@Override
@@ -113,6 +120,14 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 					isUpdateAccountFeePayer);
 		}
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		int base = 13;
+		int hash = base + nodes.hashCode();
+		hash = base * hash + accounts.hashCode();
+		return hash;
 	}
 
 	public static final class Builder {
@@ -133,13 +148,17 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 			return this;
 		}
 
-		public Builder withNodes(final String input, final List<String> list) {
-			this.nodes = new AccountList(input, list);
+		public Builder withNodes(final String input, final List<Identifier> list) {
+			if (list != null && list.size() > 1) {
+				this.nodes = new AccountList(input, list);
+			}
 			return this;
 		}
 
-		public Builder withAccounts(final String input, final List<String> list) {
-			this.accounts = new AccountList(input, list);
+		public Builder withAccounts(final String input, final List<Identifier> list) {
+			if (list != null && list.size() > 1) {
+				this.accounts = new AccountList(input, list);
+			}
 			return this;
 		}
 
@@ -149,11 +168,9 @@ public class TransactionCreationMetadataFile extends RemoteFile {
 		}
 
 		public TransactionCreationMetadataFile build() {
-			// If 0 or 1 node, AND 0 or 1 accounts, AND fee payer is NOT the updated account
-			// return null as no AccountListFile will be created.
-			if ((nodes == null || nodes.getList().size() == 1)
-					&& (accounts == null || accounts.getList().size() <= 1)
-					&& !isUpdateAccountFeePayer) return null;
+			// If no value is valid, return null
+			if (nodes == null && accounts == null && !isUpdateAccountFeePayer) return null;
+
 			final var tcm = new TransactionCreationMetadataFile();
 			tcm.setParentPath(parentPath);
 			tcm.setName(name);

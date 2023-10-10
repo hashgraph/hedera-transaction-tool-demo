@@ -89,7 +89,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
-import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
@@ -111,7 +110,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private static final Logger logger = LogManager.getLogger(TransactionFile.class);
 	private static final String UNBREAKABLE_SPACE = "\u00A0";
 	private static final Font COURIER_FONT = Font.font("Courier New", 17);
-	private static final int NANO_INCREMENT = 10;
 
 	private ToolTransaction transaction;
 	private TransactionType transactionType;
@@ -121,7 +119,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
-	private JsonObject nicknames;
 	private JsonObject oldInfo = null;
 	private String network = "MAINNET";
 
@@ -212,11 +209,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(hbox, RIGHT, 0);
 
 		final var count = detailsGridPane.getRowCount() + 1;
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
 		switch (transaction.getTransactionType()) {
 			case CRYPTO_TRANSFER:
 				handleCryptoTransferFields(detailsGridPane, count);
@@ -247,12 +239,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	 */
 	private void handleTransactionCommonFields(final GridPane detailsGridPane) {
 		int count = 1;
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-			nicknames = new JsonObject();
-		}
+
+		final var nicknames = getAccountNicknames();
 
 		final var feePayerLabel = new Label(CommonMethods.nicknameOrNumber(transaction.getFeePayerID(), nicknames));
 		feePayerLabel.setWrapText(true);
@@ -274,7 +262,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(nLabel, LEFT, ++count);
 
 			final var nodesString = getTransactionCreationMetadata().getNodes().getList().stream()
-					.map(n -> Identifier.parse(n, network).toNicknameAndChecksum(nicknames))
+					.map(identifier -> identifier.toNicknameAndChecksum(nicknames))
 					.collect(Collectors.joining("\n"));
 
 			final var scrollPane = new ScrollPane();
@@ -310,6 +298,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				((ToolTransferTransaction) transaction).getAccountAmountMap();
 		final List<Pair<String, String>> senders = new ArrayList<>();
 		final List<Pair<String, String>> receivers = new ArrayList<>();
+		final var nicknames = getAccountNicknames();
 		for (final var entry : accountAmountMap.entrySet()) {
 			final var amount = entry.getValue();
 			final var identifier = entry.getKey();
@@ -374,12 +363,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(new Label(String.format("%s", createTransaction.isReceiverSignatureRequired())), 1,
 				count++);
 
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-			nicknames = new JsonObject();
-		}
+		final var nicknames = getAccountNicknames();
 
 		var label = new Label("Staked account ID: ");
 		label.setWrapText(true);
@@ -414,20 +398,15 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		final var updateTransaction = (ToolCryptoUpdateTransaction) this.transaction;
 
+		final var nicknames = getAccountNicknames();
+
 		if (!isHistory() && getTransactionCreationMetadata() != null
 				&& !getTransactionCreationMetadata().getAccounts().getList().isEmpty()) {
 			final var nLabel = new Label("Accounts to update: ");
 			detailsGridPane.add(nLabel, LEFT, count);
 
-			try {
-				nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-			} catch (final HederaClientException e) {
-				logger.error(e);
-				nicknames = new JsonObject();
-			}
-
 			final var accountsString = getTransactionCreationMetadata().getAccounts().getList().stream()
-					.map(n -> Identifier.parse(n, network).toNicknameAndChecksum(nicknames))
+					.map(identifier -> identifier.toNicknameAndChecksum(nicknames))
 					.collect(Collectors.joining("\n"));
 
 			final var scrollPane = new ScrollPane();
@@ -468,13 +447,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 		if (updateTransaction.getAccountMemo() != null) {
 			count = handleAccountMemo(detailsGridPane, count, updateTransaction, hasOldInfo);
-		}
-
-		try {
-			nicknames = new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
-		} catch (final HederaClientException e) {
-			logger.error(e);
-			nicknames = new JsonObject();
 		}
 
 		if (updateTransaction.getStakedAccountId() != null) {
@@ -844,6 +816,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 	private class ExecuteGroupedTask extends Task<String> {
 		static final String TRANSACTIONS_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "transactions";
 		static final String SIGNATURES_SUFFIX = FILE_NAME_GROUP_SEPARATOR + "signatures";
+		static final int NANO_INCREMENT = 10;
 		final String keyName;
 		final PrivateKey privateKey;
 		final String tempStorage;
@@ -893,8 +866,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				var validStartTimestamp = new Timestamp(transactionJson.get(TRANSACTION_VALID_START_FIELD_NAME));
 				if (getTransactionCreationMetadata().getNodes() != null) {
 					for (final var nodeId : getTransactionCreationMetadata().getNodes().getList()) {
-						transactionJson.add(NODE_ID_FIELD_NAME,
-								Identifier.parse(nodeId, network).asJSON());
+						transactionJson.add(NODE_ID_FIELD_NAME, nodeId.asJSON());
 						var tempResult = processTransactionForNode(transactionJson, validStartTimestamp);
 						if ("".equals(result)) {
 							result = tempResult;
@@ -920,7 +892,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				var isUpdateAccountFeePayer = getTransactionCreationMetadata().isUpdateAccountFeePayer();
 				// This is specific to account updates
 				for (final var accountId : getTransactionCreationMetadata().getAccounts().getList()) {
-					final var accountJson = Identifier.parse(accountId, network).asJSON();
+					final var accountJson = accountId.asJSON();
 					jsonObject.add(ACCOUNT_TO_UPDATE, accountJson);
 					var incrementedTime = new Timestamp(validStartTimestamp.asDuration()
 							.plusNanos( count++ * NANO_INCREMENT));

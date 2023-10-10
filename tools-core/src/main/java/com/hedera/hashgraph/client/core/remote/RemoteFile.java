@@ -72,6 +72,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_FIELD_CHARACTER_LIMIT;
@@ -1018,6 +1019,15 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 		// Lastly the files are ordered according to the modification date (not expiration)
 		return Long.compare(this.getDate(), o.getDate());
+	}
+
+	protected JsonObject getAccountNicknames() {
+		try {
+			return new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (final HederaClientException e) {
+			logger.error(e);
+			return new JsonObject();
+		}
 	}
 
 	public JsonObject toJson() {

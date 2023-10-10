@@ -85,10 +85,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -126,7 +128,9 @@ public class KeysPaneController implements SubController {
 					".\n\nYou will be prompted for your password to generate a public key file.";
 	private static final String KEYS_GENERATED_MESSAGE =
 			"A private and public key pair has been created, with index %d.\nIt can be found at: ";
-
+	private static final String RECOVERY_PHRASE_VERIFICATION_MESSAGE = "The current recovery phrase file " +
+			"needs to be verified.\n\nThis can be caused by manually altering, copying, " +
+			"or moving the app's system files.\n\nYou will be prompted for your password.";
 	private static final String DUPLICATED_KEY_NAME_MESSAGE =
 			"Cannot replace a public key that is associated with an existing private key.";
 	private static final String KEYS_STRING = "/Keys/";
@@ -201,8 +205,14 @@ public class KeysPaneController implements SubController {
 	public void initializePane() {
 		try {
 			currentHashCode = String.valueOf(controller.getMnemonicHashCode());
+			verifyMnemonicStorage();
 
 			mainKeysScrollPane.setFitToWidth(true);
+			mainKeysScrollPane.addEventFilter(ScrollEvent.ANY, event -> {
+				if (event.getDeltaX() != 0) {
+					event.consume();
+				}
+			});
 
 			closeBoxes();
 			cleanTextFields();
@@ -365,7 +375,6 @@ public class KeysPaneController implements SubController {
 	}
 
 	public void populateKeysTables() throws HederaClientException {
-
 		try {
 			final List<KeysTableRow> keysTableRows = new ArrayList<>();
 			final List<String> keys = new ArrayList<>(publicKeysMap.keySet());
@@ -401,12 +410,6 @@ public class KeysPaneController implements SubController {
 					Bindings.size(signingKeysTableView.getItems()).add(2.01)));
 			signingKeysTableView.minHeightProperty().bind(signingKeysTableView.prefHeightProperty());
 			signingKeysTableView.maxHeightProperty().bind(signingKeysTableView.prefHeightProperty());
-
-			signingKeysVBox.addEventFilter(ScrollEvent.ANY, event -> {
-				if (event.getDeltaX() != 0) {
-					event.consume();
-				}
-			});
 
 			if (!signingKeysTableView.getItems().isEmpty()) {
 				signingKeysVBox.getChildren().add(signingKeysTableView);
@@ -583,9 +586,6 @@ public class KeysPaneController implements SubController {
 			final var mnemonic = getMnemonicFromFile(password);
 			if (mnemonic == null) {
 				return;
-			}
-			if (currentHashCode == null) {
-				currentHashCode = String.valueOf(mnemonic.words.hashCode());
 			}
 			handleMissingHashPemList(missingHashPemList, password, mnemonic);
 			populatePemMaps();
@@ -1123,14 +1123,89 @@ public class KeysPaneController implements SubController {
 		try {
 			if (mnemonicFile.exists()) {
 				final var salt = controller.isLegacyMnemonic() ? new byte[SALT_LENGTH] : controller.getSalt();
-				final var path = new File(controller.getPreferredStorageDirectory(), MNEMONIC_PATH);
-				mnemonic = SecurityUtilities.fromEncryptedFile(password, salt, path.getAbsolutePath());
+				mnemonic = SecurityUtilities.fromEncryptedFile(password, salt, mnemonicFile.getAbsolutePath());
+				verifyMnemonicStorage(mnemonicFile, mnemonic);
 			}
 		} catch (final HederaClientException e) {
 			logger.error(e);
 			controller.displaySystemMessage(e);
 		}
 		return mnemonic;
+	}
+
+	/**
+	 * Verify the Mnemonic stored against the hashCode that is cached. As the password has already been requested from
+	 * the user, this can now fully verify the hashCode and set it if necessary.
+	 *
+	 * @param mnemonicFile
+	 * @param mnemonic
+	 * @throws HederaClientException
+	 */
+	private void verifyMnemonicStorage(final File mnemonicFile, final Mnemonic mnemonic) throws HederaClientException {
+		try {
+			final var checksum = getMnemonicFileChecksum(mnemonicFile);
+			final var savedChecksum = controller.getMnemonicChecksum();
+			if (!Objects.equals(savedChecksum, checksum)) {
+				controller.setMnemonicChecksum(checksum);
+			}
+			// check the words.hashcode, update if necessary
+			final var hashCode = mnemonic.words.hashCode();
+			final var savedHashCode = controller.getMnemonicHashCode();
+			if (!Objects.equals(savedHashCode, hashCode)) {
+				currentHashCode = String.valueOf(hashCode);
+				controller.setMnemonicHashCode(hashCode);
+				//refresh the keys pane
+				removeKeysTables(signingKeysVBox);
+				populateKeysTables();
+			}
+		} catch (final Exception ex) {
+			throw new HederaClientException(ex);
+		}
+	}
+
+	/**
+	 * Verify the Mnemonic stored against the hashCode that is cached. If the checksum value is not present
+	 * in the properties file, this will skip. This will allow a more seamless transition from older versions.
+	 *
+	 * @throws HederaClientException
+	 */
+	private void verifyMnemonicStorage() throws HederaClientException {
+		final var savedChecksum = controller.getMnemonicChecksum();
+		if ("".equals(savedChecksum)) return;
+
+		final var mnemonicFile = new File(controller.getPreferredStorageDirectory(), MNEMONIC_PATH);
+		try {
+			final var checksum = getMnemonicFileChecksum(mnemonicFile);
+			if (!Objects.equals(savedChecksum, checksum)) {
+				GenericPopup.display("Recovery Phrase Verification", ACCEPT_MESSAGE, "",
+						false, false, RECOVERY_PHRASE_VERIFICATION_MESSAGE);
+				final var password = getPassword();
+				if (password.length == 0) {
+					//TODO Should more be done? Failure to verify means the key icons can look wrong,
+					// but that's about it.
+					return;
+				}
+				controller.setMnemonicChecksum(checksum);
+				final var salt = controller.isLegacyMnemonic() ? new byte[SALT_LENGTH] : controller.getSalt();
+				final var mnemonic =
+						SecurityUtilities.fromEncryptedFile(password, salt, mnemonicFile.getAbsolutePath());
+				final var hashCode = mnemonic.words.hashCode();
+				final var savedHashCode = controller.getMnemonicHashCode();
+				if (!Objects.equals(savedHashCode, hashCode)) {
+					currentHashCode = String.valueOf(hashCode);
+					controller.setMnemonicHashCode(hashCode);
+				}
+			}
+		} catch (Exception ex) {
+			throw new HederaClientException(ex);
+		}
+	}
+
+	private String getMnemonicFileChecksum(final File mnemonicFile) throws IOException, NoSuchAlgorithmException {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		byte[] digest = md.digest(Files.readAllBytes(mnemonicFile.toPath()));
+		final var encoder = Base64.getEncoder();
+		return encoder.encodeToString(digest);
 	}
 
 	// endregion
@@ -1325,7 +1400,7 @@ public class KeysPaneController implements SubController {
 		return "";
 	}
 
-	private void recoverIndexFieldListenerAction(final ObservableValue<? extends String> observable,
+	private void recoverIndexFieldListenerAction(final ObservableValue<String> observable,
 			final String oldValue,
 			final String newValue) {
 		if (!newValue.matches("\\d*")) {
@@ -1333,7 +1408,7 @@ public class KeysPaneController implements SubController {
 		}
 	}
 
-	private void recoverIndexFieldFocusedAction(final ObservableValue<? extends Boolean> observable,
+	private void recoverIndexFieldFocusedAction(final ObservableValue<Boolean> observable,
 			final Boolean oldValue,
 			final Boolean newValue) {
 		if (Boolean.FALSE.equals(newValue) && !recoverIndexField.getText().isEmpty()) {
@@ -1353,7 +1428,7 @@ public class KeysPaneController implements SubController {
 		}
 	}
 
-	private void recoverNickNameFieldFocusedAction(final ObservableValue<? extends Boolean> observable,
+	private void recoverNickNameFieldFocusedAction(final ObservableValue<Boolean> observable,
 			final Boolean oldValue,
 			final Boolean newValue) {
 		if (Boolean.FALSE.equals(newValue) &&

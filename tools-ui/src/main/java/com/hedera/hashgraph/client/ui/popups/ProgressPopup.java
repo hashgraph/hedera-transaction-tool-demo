@@ -83,7 +83,7 @@ public class ProgressPopup extends Stage {
 		cancelButton.setMinWidth(200);
 
 		// Cancel Button is currently disabled due to issues with the popup not closing properly at times.
-		cancelButton.setDisable(true);
+//		cancelButton.setDisable(true);
 		cancelButton.setTooltip(new Tooltip("Cannot be canceled until currently running tasks are complete"));
 
 		bar.setPrefWidth(375);
