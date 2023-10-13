@@ -198,7 +198,7 @@ public class Constants {
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 	public static final String NODE_ID_PROPERTIES = "nodeID";
 	public static final String CHUNK_SIZE_PROPERTIES = "chunkSize";
-	public static final String FIRST_TRANSACTION_VALID_START_PROPERTY = "firsTransactionValidStart";
+	public static final String FIRST_TRANSACTION_VALID_START_PROPERTY = "firstTransactionValidStart";
 	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
 	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
 	public static final String MEMO_PROPERTY = "memo";

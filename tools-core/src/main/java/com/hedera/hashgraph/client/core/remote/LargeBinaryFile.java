@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.core.remote;
 
 import com.google.gson.JsonObject;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
@@ -37,8 +38,11 @@ import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.core.utils.FXUtils;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.FileAppendTransaction;
+import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.opencsv.CSVWriter;
 import javafx.beans.property.DoubleProperty;
@@ -86,6 +90,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.DEFAULT_STORA
 import static com.hedera.hashgraph.client.core.constants.Constants.FILENAME_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.FIRST_TRANSACTION_VALID_START_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.IS_ZIP_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
@@ -226,8 +231,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				Duration.ofSeconds(
 						details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
+		// As long as appends have to wait for the previous transaction to finish, then this increment should be larger
+		// than nanos.
 		this.validIncrement =
-				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
+				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100_000_000;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
 				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
@@ -356,10 +363,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	@Nullable
 	private JsonObject getTransactionValidStamp(final JsonObject details) {
 		JsonObject tvStamp = null;
-		if (!details.has("firsTransactionValidStart")) {
+		if (!details.has(FIRST_TRANSACTION_VALID_START_PROPERTY)) {
 			handleError("Missing transaction valid start");
 		} else {
-			tvStamp = details.getAsJsonObject("firsTransactionValidStart");
+			tvStamp = details.getAsJsonObject(FIRST_TRANSACTION_VALID_START_PROPERTY);
 		}
 		return tvStamp;
 	}
@@ -587,30 +594,49 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 	public List<ToolTransaction> createTransactionList() {
 		var incrementedTime = transactionValidStart;
+		final var tempStorage = new File(TEMP_DIRECTORY,
+				LocalDate.now().toString()).getAbsolutePath() + File.separator + "LargeBinary"
+				+ File.separator;
+		try {
+			final var tempStorageFile = new File(tempStorage);
+			if (tempStorageFile.exists()) {
+				FileUtils.cleanDirectory(new File(tempStorage));
+			}
 
+			if (tempStorageFile.mkdirs()) {
+				logger.info("Created temp folder {}", tempStorage);
+			}
+			tempStorageFile.deleteOnExit();
+		} catch (IOException e) {
+			logger.info(String.format("Failed to clean directory: %s", tempStorage));
+		}
 		final List<ToolTransaction> transactions = new ArrayList<>();
 
 		try (final var fileInputStream = new FileInputStream(getUnzippedContent())) {
 			final var buffer = new byte[chunkSize];
 			var count = 0;
-			var inputStream = fileInputStream.read(buffer);
-			while (inputStream > 0) {
+			int inputStream;
+			while ((inputStream = fileInputStream.read(buffer)) > 0) {
 				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
-				writeBytes(TEMP_LOCATION, trimmed);
+				final var filePath =
+						String.format("%s%s-%05d", tempStorage,
+								FilenameUtils.getBaseName(filename), count);
+
+				writeBytes(filePath, trimmed);
 				// As ToolTransaction saves the reference to input, this should not be reused.
 				var input = getJsonInput();
 				// The other transactions are appends
 				incrementedTime =
 						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
 				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+				input.addProperty(CONTENTS_FIELD_NAME, filePath);
 
 				final var transaction = (count == 0) ?
 						new ToolFileUpdateTransaction(input) :
 						new ToolFileAppendTransaction(input);
 				transactions.add(transaction);
 				count++;
-				inputStream = fileInputStream.read(buffer);
 			}
 		} catch (final IOException | HederaClientException e) {
 			logger.error(e.getMessage());
@@ -776,6 +802,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					var fileCount = 0;
 					while ((inputStream = fileInputStream.read(buffer)) > 0) {
 						final var trimmed = Arrays.copyOf(buffer, inputStream);
+
 						final var filePath =
 								String.format("%s%s-%05d", tempStorage,
 										FilenameUtils.getBaseName(filename), fileCount++);
@@ -854,9 +881,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		private String processSingleTransaction(final JsonObject jsonObject) throws Exception {
 			final var result = processTransaction(jsonObject);
-			final var pathname = String.format("%s_%s.zip",
+			final var pathname = String.join(FILE_NAME_GROUP_SEPARATOR, fileID.toReadableString(),
 					FilenameUtils.getBaseName(getName()),
-					keyName);
+					keyName) + "." + ZIP_EXTENSION;
 
 			for (var file : fileList) {
 				Files.deleteIfExists(Path.of(file));
@@ -919,16 +946,14 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		// Super ugly, but get the transaction for the file, whether it is an update or append
-		private ToolTransaction getTransaction(final File file) {
-			try {
+		private ToolTransaction getTransaction(final File file) throws HederaClientException, InvalidProtocolBufferException {
+			final var transaction = Transaction.fromBytes(readBytes(file.getAbsolutePath()));
+			if (transaction instanceof FileUpdateTransaction) {
 				return new ToolFileUpdateTransaction(file);
-			} catch (HederaClientException ex1) {
-				try {
-					return new ToolFileAppendTransaction(file);
-				} catch (HederaClientException ex2) {
-					return null;
-				}
+			} else if (transaction instanceof FileAppendTransaction) {
+				return new ToolFileAppendTransaction(file);
 			}
+			return null;
 		}
 
 		private void zipMessages(final String messages, final String ext) throws HederaClientException {
@@ -956,6 +981,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		private String getZipFileBaseName(final String nodeAccount) {
 			// filename(seconds_feepayer_transaction.hash)_keyname_node
 			return String.join(FILE_NAME_GROUP_SEPARATOR,
+					fileID.toReadableString(),
 					FilenameUtils.removeExtension(filename),
 					keyName,
 					String.format("%s%s%s", "Node", FILE_NAME_INTERNAL_SEPARATOR, nodeAccount));

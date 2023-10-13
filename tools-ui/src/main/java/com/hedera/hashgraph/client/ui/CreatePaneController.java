@@ -149,7 +149,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -244,7 +245,6 @@ import static com.hedera.hashgraph.client.ui.utilities.Utilities.isNotLong;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.setCurrencyFormat;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.string2Hbar;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.stripHBarFormat;
-import static java.lang.Thread.sleep;
 
 public class CreatePaneController implements SubController {
 	// private fields
@@ -1742,7 +1742,6 @@ public class CreatePaneController implements SubController {
 		if (!checkForm()) {
 			return;
 		}
-
 		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();
@@ -1769,8 +1768,8 @@ public class CreatePaneController implements SubController {
 
 	private String createLargeFileUpdateFiles() throws HederaClientException {
 		final var outputObject = getFileUpdateJson();
-		final var payer = Identifier.parse(outputObject.get("feePayerAccountId").getAsJsonObject()).toReadableString();
-		final var time = new Timestamp(outputObject.get("firsTransactionValidStart").getAsJsonObject());
+		final var payer = Identifier.parse(outputObject.get(FEE_PAYER_ACCOUNT_ID_PROPERTY).getAsJsonObject()).toReadableString();
+		final var time = new Timestamp(outputObject.get(FIRST_TRANSACTION_VALID_START_PROPERTY).getAsJsonObject());
 
 		final var name = FilenameUtils.removeExtension(contents.getName());
 		final var jsonFile = new File(TEMP_DIRECTORY, String.format("%s.%s", name, JSON_EXTENSION));
@@ -3070,7 +3069,7 @@ public class CreatePaneController implements SubController {
 				Bindings.min(new SimpleListProperty<>(listView.getItems()).sizeProperty(), 4)
 						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
 		listView.visibleProperty().bind(Bindings.isEmpty(listView.getItems()).not());
-		listView.setCellFactory((view) -> new ListCell<>() {
+		listView.setCellFactory(view -> new ListCell<>() {
 			{
 				prefWidthProperty().bind(listView.widthProperty().subtract(4));
 				setMaxWidth(Control.USE_PREF_SIZE);
@@ -3482,26 +3481,6 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-
-
-
-//	both sign and submits should send eveyrthing to one node, only go to the next node if it failed.
-//	also, tooltransaction should allow for stuff like .setnodeid. it would have to recreate the transaction from json after changing the nodeid
-//				if fails for every node, don't continue to the next append transaction
-//	also, could do a rotating list, each transaction doesn't start with the first node again, but instead it continues on the last good node
-//	until all nodes have been tried? or 3 minutes are up? which does the cli do? gives up, it seems, which is probably fine.
-//	but if too many fail, and there are too many appends, it could get to some of hte later appends and they would be invalid
-//	i could set the append transactiontimestamp after each successful previous one
-//
-//	except the signing of a transaction includes the validtimestamp, so that can not be altered after the signging
-//	which is also true for node, so the transactions do need to be created and signed and then submitted.
-//	but that woudl still work, i just need to get the transaction for a specific node so like
-//	map<nodeid, list>
-//		for 0-list.size, map.get(currentgoodnode).get(i)
-//	or something like that
-//
-//
-//		this is fine, i guess, the question is, should it create separate threads for each node, then run the threads
 	private void signAndSubmitMultipleTransactions() throws HederaClientException {
 		startFieldsSet.setDate(Instant.now());
 		if (!checkNode()) {
@@ -3513,6 +3492,7 @@ public class CreatePaneController implements SubController {
 		largeUpdateFile.deleteOnExit();
 		new File(largeUpdateFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)).deleteOnExit();
 		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
+		// Create and get the full list of the ToolTransactions, including the ToolFileUpdate and ToolFileAppends
 		final var transactions = largeBinaryFile.createTransactionList();
 		if (transactions.isEmpty()) {
 			logger.error("No data found in the selected file.");
@@ -3522,6 +3502,7 @@ public class CreatePaneController implements SubController {
 		}
 		logger.info("Transactions created");
 
+		// Get the private keys needed to sign.
 		final var privateKeyFiles = getPrivateKeys(transactions.get(0));
 		if (privateKeyFiles.isEmpty()) {
 			return;
@@ -3533,127 +3514,139 @@ public class CreatePaneController implements SubController {
 			privateKeys.add(PrivateKey.fromBytes(nameKeyPair.getValue().getPrivate().getEncoded()));
 		}
 
+		// Prompt the user with the summary of the transaction to be submitted
 		final var submit = TransactionPopup.display(largeBinaryFile);
 		if (!submit) {
 			return;
 		}
 
+		// Set up the Submit Progress Window
 		final var progressBar = new ProgressBar();
 		final var cancelButton = new Button(CANCEL_LABEL);
 		final var size = transactions.size();
 		final var window = ProgressPopup.setupProgressPopup(progressBar, cancelButton, "Updating File Contents",
 				"Please wait while the file update transactions are being submitted.", size);
+		// Any error that needs to be displayed will be stored here
 		final Status[] error = new Status[1];
 
-		AtomicInteger cancelledCount = new AtomicInteger(0);
-		AtomicInteger failedCount = new AtomicInteger(0);
-		var taskList = new ArrayList<Task>();
-		for (final var nodeId : nodeAccountList.getItems()) {
-			final Task<Void> task = new Task<>() {
-				@Override
-				protected Void call() throws InterruptedException, NoSuchMethodException,
-								InvocationTargetException, InstantiationException, IllegalAccessException {
-					long counter = 0;
-					for (final var transaction : transactions) {
-						if (isCancelled()) return null;
-						final var transactionJson = transaction.asJson();
+		// Create the task for submitting the data. This task will take the transactions, one at a time,
+		// duplicate them for each node in the list of submission nodes, then send the transaction to all nodes
+		// simultaneously. If any result in success, the next transaction in the list will duplicate the process
+		// until the submission is complete, or all attempts to submit a transaction to all nodes has failed.
+		final Task<Void> task = new Task<>() {
+			@Override
+			protected Void call() throws Exception {
+				// Create the ExecutorService that will be used to submit a transaction to all nodes in the list.
+				final var service = Executors.newFixedThreadPool(nodeAccountList.getItems().size());
+				long counter = 0;
+				for (final var transaction : transactions) {
+					// Get the json of the transaction. This enables the ability to change necessary fields of the
+					// transaction, and then create another transaction with the modified data
+					final var transactionJson = transaction.asJson();
+					// The list of callable tasks used to submit to all nodes
+					final var taskList = new ArrayList<Callable<ToolTransaction>>();
+					for (final var nodeId : nodeAccountList.getItems()) {
 						transactionJson.add(NODE_ID_FIELD_NAME, nodeId.asJSON());
+						// Create the new duplicate transaction based on the modified json
 						final var toolTransaction =
 								getTransaction(transaction.getClass(), transactionJson);
+						// Ensure the network is set
 						toolTransaction.setNetwork(controller.getCurrentNetwork());
+						// Sign the transaction with all keys
 						for (final var privateKey : privateKeys) {
 							toolTransaction.sign(privateKey);
 						}
-
-						try {
-							final var receipt = toolTransaction.submit();
-							storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
-									TransactionType.FILE_UPDATE.toString());
-							if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
-								error[0] = receipt.status;
-								cancel();
-								return null;
+						// This callable will submit the transaction to the given node, and then return success, or
+						// throw an error
+						final var callable = new Callable<ToolTransaction> () {
+							@Override
+							public ToolTransaction call() throws Exception {
+								try {
+									final var receipt = toolTransaction.submit();
+									storeReceipt(receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+											TransactionType.FILE_UPDATE.toString());
+									if (receipt.status != Status.OK && receipt.status != Status.SUCCESS) {
+										error[0] = receipt.status;
+										throw new HederaClientException(receipt.status.toString());
+									}
+									logger.info(receipt);
+									return toolTransaction;
+								} catch (final PrecheckStatusException e) {
+									logger.error(e.getMessage());
+									storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
+									error[0] = e.status;
+									throw new HederaClientException(e.getMessage());
+								} catch (final ReceiptStatusException e) {
+									logger.error(e.getMessage());
+									storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
+											TransactionType.FILE_UPDATE.toString());
+									error[0] = e.receipt.status;
+									throw new HederaClientException(e.getMessage());
+								}
 							}
-							logger.info(receipt);
-						} catch (final PrecheckStatusException e) {
-							logger.error(e.getMessage());
-							storeReceipt(e.status, FilenameUtils.getBaseName(largeBinaryFile.getName()));
-							error[0] = e.status;
-							cancel();
-							return null;
-						} catch (final ReceiptStatusException e) {
-							logger.error(e.getMessage());
-							storeReceipt(e.receipt, FilenameUtils.getBaseName(largeBinaryFile.getName()),
-									TransactionType.FILE_UPDATE.toString());
-							error[0] = e.receipt.status;
-							cancel();
-							return null;
-						}
-
-						updateProgress(++counter, size);
+						};
+						taskList.add(callable);
 					}
 
-//							sleep(1000);
-					updateProgress(size, size);
-					return null;
-				}
-			};
-
-			taskList.add(task);
-
-			task.progressProperty().addListener((obs, oldValue, newValue) -> {
-				if (oldValue.doubleValue() == progressBar.getProgress()) {
-					progressBar.setProgress(newValue.doubleValue());
-				}
-			});
-
-			new Thread(task).start();
-			task.setOnSucceeded(workerStateEvent -> {
-				logger.info("Transactions signed");
-				largeBinaryFile.setHistory(true);
-				moveToHistory(largeBinaryFile, privateKeyFiles);
-				controller.historyPaneController.addToHistory(largeBinaryFile);
-
-				if (window != null) {
-					window.close();
-				}
-				PopupMessage.display("Update succeeded",
-						String.format("Contents update for file %s succeeded", updateFileID.getText()));
-				initializePane();
-			});
-
-			task.setOnCancelled(workerStateEvent -> {
-				if (cancelledCount.incrementAndGet() + failedCount.get() == nodeAccountList.getItems().size()) {
-					logger.info("Update cancelled");
-					if (window != null) {
-						window.close();
+					final var receipt = service.invokeAny(taskList);
+					if (receipt == null) {
+						throw new HederaClientException("Submission to all nodes failed. See error for more details.");
 					}
-					moveToHistory(largeBinaryFile, privateKeyFiles);
-					largeBinaryFile.setHistory(true);
-					controller.historyPaneController.addToHistory(largeBinaryFile);
 
-					final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "CANCELLED";
-					PopupMessage.display("Update failed",
-							String.format("File update failed with error %s. Please review the transaction and try again.",
-									errorMessage));
+					updateProgress(++counter, size);
 				}
-			});
 
-			task.setOnFailed(workerStateEvent -> {
-				if (failedCount.incrementAndGet() == nodeAccountList.getItems().size()) {
-					logger.info("Update failed");
-					moveToHistory(largeBinaryFile, privateKeyFiles);
-					if (window != null) {
-						window.close();
-					}
-				}
-			});
-		}
+				updateProgress(size, size);
+				service.shutdown();
+				return null;
+			}
+		};
+		// Bind the progress to the bar
+		progressBar.progressProperty().bind(task.progressProperty());
 
-		cancelButton.setOnAction(actionEvent -> {
-			logger.info("Task cancelled by user");
-			taskList.stream().forEach(t -> t.cancel(false));
+		// Start the task
+		new Thread(task).start();
+		// Wire up the 'listeners'
+		task.setOnSucceeded(workerStateEvent -> {
+			logger.info("Transactions signed");
+			largeBinaryFile.setHistory(true);
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+
+			if (window != null) {
+				window.close();
+			}
+			PopupMessage.display("Update succeeded",
+					String.format("Contents update for file %s succeeded", updateFileID.getText()));
+			initializePane();
 		});
+
+		task.setOnCancelled(workerStateEvent -> {
+			logger.info("Update cancelled by user");
+			if (window != null) {
+				window.close();
+			}
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			largeBinaryFile.setHistory(true);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+		});
+
+		task.setOnFailed(workerStateEvent -> {
+			logger.info("Update failed");
+			if (window != null) {
+				window.close();
+			}
+			moveToHistory(largeBinaryFile, privateKeyFiles);
+			largeBinaryFile.setHistory(true);
+			controller.historyPaneController.addToHistory(largeBinaryFile);
+
+			final var errorMessage = error[0] != null ? getErrorMessage(error[0]) : "FAILED";
+			PopupMessage.display("Update failed",
+					String.format("File update failed with error %s. Please review the transaction and try again.",
+							errorMessage));
+		});
+
+		cancelButton.setOnAction(actionEvent -> task.cancel());
 	}
 
 	private boolean checkNode() {

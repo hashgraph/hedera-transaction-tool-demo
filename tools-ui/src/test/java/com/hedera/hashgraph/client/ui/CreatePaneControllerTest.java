@@ -1283,8 +1283,8 @@ public class CreatePaneControllerTest extends TestBase implements Supplier<TestB
 		assertTrue(jsonObject.has("validIncrement"));
 		assertEquals(1000000000L, jsonObject.get("validIncrement").getAsLong());
 
-		assertTrue(jsonObject.has("firsTransactionValidStart"));
-		final var first = jsonObject.get("firsTransactionValidStart").getAsJsonObject();
+		assertTrue(jsonObject.has("firstTransactionValidStart"));
+		final var first = jsonObject.get("firstTransactionValidStart").getAsJsonObject();
 		assertEquals(transactionValidStart.getTime() / 1000, first.get("seconds").getAsLong());
 
 		assertTrue(comment.has("Author"));

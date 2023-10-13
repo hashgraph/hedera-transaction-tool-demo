@@ -44,13 +44,42 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
 
+	// As transactions can be duplicated and submitted to multiple nodes simultaneously, the TxnResults
+	// were also duplicated. Each duplicate TxnResult, however, was pointing to the same receipt. This resulted
+	// in the final response indicated that transactionCount*nodeCount number of transactions were submitted
+	// and successCount*nodeCount were successful. If TxnResult is strongly tied to the transactionId, these
+	// duplicates can be removed.
 	public static class TxnResult {
-		public final String message;
-		public final boolean success;
+		private final String transactionId;
+		private final boolean success;
+		private final String message;
 
-		public TxnResult(String message, boolean success) {
-			this.message = message;
+		public TxnResult(String transactionId, boolean success, String message) {
+			this.transactionId = transactionId;
 			this.success = success;
+			this.message = message;
+		}
+
+		public String getTransactionId() {
+			return transactionId;
+		}
+
+		public boolean wasSuccessful() {
+			return success;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return obj instanceof TxnResult && Objects.equals(((TxnResult)obj).getTransactionId(), getTransactionId());
+		}
+
+		@Override
+		public int hashCode() {
+			return getTransactionId().hashCode();
 		}
 	}
 
@@ -182,14 +211,14 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 				logger.info("Worker: Transaction: {}, final status: {}", idString, status);
 
 				storeResponse(receipt, idString);
-				return new TxnResult("Final status for " + idString + " - " + status, Status.SUCCESS.equals(status));
+				return new TxnResult(idString, Status.SUCCESS.equals(status), "Final status for " + idString + " - " + status);
 			} else {
 				throw new HederaClientRuntimeException("could not get receipt for " + idString);
 			}
 		} catch (final Exception e) {
 			logger.error("Worker: Transaction: " + idString + ", failed with error. ", e);
 		}
-		return new TxnResult(idString + " - Threw Exception", false);
+		return new TxnResult(idString, false, idString + " - Threw Exception");
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
