@@ -1742,6 +1742,7 @@ public class CreatePaneController implements SubController {
 		if (!checkForm()) {
 			return;
 		}
+
 		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();

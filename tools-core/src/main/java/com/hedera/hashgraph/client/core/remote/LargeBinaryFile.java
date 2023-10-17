@@ -132,7 +132,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private Duration transactionValidDuration;
 	private Timestamp transactionValidStart;
 	private Timestamp expiration;
-	private int validIncrement;
+	private long validIncrement;
 	private Identifier nodeID;
 	private long transactionFee;
 	private String memo;
@@ -233,8 +233,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.transactionValidStart = timestamp;
 		// As long as appends have to wait for the previous transaction to finish, then this increment should be larger
 		// than nanos.
-		this.validIncrement =
-				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100_000_000;
+		this.validIncrement = details.has(VALID_INCREMENT_PROPERTY) ?
+				details.get(VALID_INCREMENT_PROPERTY).getAsLong() : 10_000_000_000L;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
 				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
@@ -242,7 +242,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		this.content = bins[0];
 		// For backwards compatibility, if the zip property is not there, set it to true to indicate that the user
 		// did manually zip the files beforehand as this tool only allowed zip files previously.
-		this.isZip = details.has(IS_ZIP_PROPERTY) && details.get(IS_ZIP_PROPERTY).getAsBoolean();
+		this.isZip = details.has(IS_ZIP_PROPERTY) ? details.get(IS_ZIP_PROPERTY).getAsBoolean() : true;
 
 		expiration = timestamp.plusSeconds(transactionValidDuration.getSeconds())
 				.plusNanos(transactionValidDuration.getNano());
@@ -435,7 +435,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return now.getSeconds() > getExpiration().getSeconds();
 	}
 
-	public int getValidIncrement() {
+	public long getValidIncrement() {
 		return validIncrement;
 	}
 
@@ -515,6 +515,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return new HashSet<>(Collections.singleton(feePayerAccountId.asAccount()));
 	}
 
+	//TODO temp directory should have an added /transactiontool or something, then clear that when the app closes
+	// and maybe also clear individual temp stuff as things get signed?
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 						  final String output, final Runnable onSucceed) throws HederaClientException {
@@ -627,8 +629,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				// As ToolTransaction saves the reference to input, this should not be reused.
 				var input = getJsonInput();
 				// The other transactions are appends
+				// Hard coded to 10 seconds
 				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+						new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement));
 				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 				input.addProperty(CONTENTS_FIELD_NAME, filePath);
 
@@ -703,7 +706,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				logger.error(e.getMessage());
 			}
 		});
-
 
 		detailsGridPane.add(new Label("File Id"), LEFT, 6);
 		detailsGridPane.add(new Label(fileID.toReadableString()), RIGHT, 6);
@@ -861,7 +863,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 			for (var filePath : fileList) {
 				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos(count * validIncrement));
+						new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement));
 				jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 				jsonObject.addProperty(CONTENTS_FIELD_NAME, filePath);
 

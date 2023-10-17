@@ -158,6 +158,10 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 			long retryDelay = 1000;
 			boolean forceRetry = false;
 
+			//TODO getting the receipt should actually be its own task
+			// so, this should return a gettingReceipt task, not a txnresult
+			// then that should be added to the executor, and that's what the executor stuff should wait for
+			// in the end
 			while (true) {
 
 				if (forceRetry || receipt == null || status == null || retryStatuses.contains(status)) {

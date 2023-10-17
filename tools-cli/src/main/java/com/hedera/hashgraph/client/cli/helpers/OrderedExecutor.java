@@ -92,6 +92,8 @@ public class OrderedExecutor {
                         nextTask = dependencyQueue.peek();
                     }
                 }
+                //TODO this task should be grouped with all the other tasks of this level, they should all fire off
+                // at the same time.
                 if (nextTask != null) {
                     submit(nextTask);
                 }

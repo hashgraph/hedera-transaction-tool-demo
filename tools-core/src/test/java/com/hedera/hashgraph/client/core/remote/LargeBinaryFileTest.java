@@ -67,7 +67,6 @@ class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware 
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
 		}
-
 	}
 
 	@Test
