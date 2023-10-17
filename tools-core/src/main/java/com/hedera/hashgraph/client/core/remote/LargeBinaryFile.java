@@ -115,7 +115,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private Duration transactionValidDuration;
 	private Timestamp transactionValidStart;
 	private Timestamp expiration;
-	private int validIncrement;
+	private long validIncrement;
 	private Identifier nodeID;
 	private long transactionFee;
 	private String memo;
@@ -215,7 +215,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 						details.has(VALID_DURATION_PROPERTY) ? details.get(VALID_DURATION_PROPERTY).getAsLong() : 120);
 		this.transactionValidStart = timestamp;
 		this.validIncrement =
-				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsInt() : 100;
+				details.has(VALID_INCREMENT_PROPERTY) ? details.get(VALID_INCREMENT_PROPERTY).getAsLong() : 10_000_000_000L;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
 				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
@@ -416,7 +416,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return now.getSeconds() > getExpiration().getSeconds();
 	}
 
-	public int getValidIncrement() {
+	public long getValidIncrement() {
 		return validIncrement;
 	}
 
@@ -496,8 +496,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return new HashSet<>(Collections.singleton(feePayerAccountId.asAccount()));
 	}
 
-			//TODO temp directory should have an added /transactiontool or something, then clear that when the app closes
-			// and maybe also clear individual temp stuff as things get signed?
+	//TODO temp directory should have an added /transactiontool or something, then clear that when the app closes
+	// and maybe also clear individual temp stuff as things get signed?
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 			final String output) throws HederaClientException {
@@ -548,9 +548,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 					// The other transactions are appends
 					final var trimmed = Arrays.copyOf(buffer, inputStream);
 					writeBytes(TEMP_LOCATION, trimmed);
-
 					incrementedTime =
-							new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+							new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement));
 					input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
 					final var transaction = (count == 0) ?
@@ -624,8 +623,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
 				writeBytes(TEMP_LOCATION, trimmed);
+				// Hard coded to 10 seconds
 				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos((long) count * validIncrement));
+						new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement*10_000_000*10));
 				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 
 				final var transaction = (count == 0) ?

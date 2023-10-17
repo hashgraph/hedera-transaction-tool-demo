@@ -19,6 +19,7 @@
 package com.hedera.hashgraph.client.cli.options;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.hedera.hashgraph.client.cli.helpers.OrderedExecutor;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -27,6 +28,8 @@ import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker.TxnResult;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.sdk.Client;
+import com.hedera.hashgraph.sdk.FileAppendTransaction;
+import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -47,7 +50,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
@@ -64,28 +66,28 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSA
 public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(SubmitCommand.class);
 
-	@CommandLine.Option(names = { "-t", "--file-with-transaction" }, arity = "1..*", description = "The path(s) to " +
+	@CommandLine.Option(names = {"-t", "--file-with-transaction"}, arity = "1..*", description = "The path(s) to " +
 			"the transaction file(s) or directory that contains transaction files", required = true)
 	private String[] transactionFiles;
 
 	@SuppressWarnings("FieldMayBeFinal")
-	@CommandLine.Option(names = { "-n", "--network" }, description = "The Hedera network the transaction will be " +
+	@CommandLine.Option(names = {"-n", "--network"}, description = "The Hedera network the transaction will be " +
 			"submitted to (one of MAINNET, PREVIEWNET, or TESTNET)")
 	private String submissionClient = "mainnet";
 
-	@CommandLine.Option(names = { "-o", "--output-directory" }, description = "The path to the folder where the " +
+	@CommandLine.Option(names = {"-o", "--output-directory"}, description = "The path to the folder where the " +
 			"receipt(s) of the transaction(s) will be stored")
 	private String out = System.getProperty("user.dir") + File.separator + "out" + File.separator;
 
-	@CommandLine.Option(names = { "-d", "--delay" }, description = "Delay in seconds between the transaction valid " +
+	@CommandLine.Option(names = {"-d", "--delay"}, description = "Delay in seconds between the transaction valid " +
 			"start and the actual submission time (Default 5 seconds)")
 	private int delay = 5;
 
-	@CommandLine.Option(names = { "-i", "--interval" }, description = "Wake up time. If transactions will be " +
+	@CommandLine.Option(names = {"-i", "--interval"}, description = "Wake up time. If transactions will be " +
 			"submitted in the future, the app will wait until there are this amount of seconds left before waking up")
 	private int readyTime = 1;
 
-	@CommandLine.Option(names = { "-threads", "--number-of-threads" }, description =
+	@CommandLine.Option(names = {"-threads", "--number-of-threads"}, description =
 			"The number of threads to use to submit transactions. Defaults to 500. This value can be large because the threads do not"
 					+ " do much work other than wait on sockets. We need it to be large because many transactions can require submission"
 					+ " at the same moment and a low number could cause transactions to expire before the tool has a chance to submit"
@@ -113,13 +115,13 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		final var transactionsFutureTasks = new ArrayList<FutureTask<TxnResult>>(files.size());
 		final var txnId = new String[files.size()];
 		final var executorServiceTransactions = Executors.newFixedThreadPool(this.numberOfThreads);
-
+		final var orderedExecutor = new OrderedExecutor(executorServiceTransactions);
 
 		// Load transactions into the priority queue
 		final var transactions = setupPriorityQueue(files);
-
 		// Submit the transactions
 		var count = 0;
+
 		while (!transactions.isEmpty()) {
 			final var tx = transactions.poll();
 			if (tx == null) {
@@ -129,14 +131,29 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 					tx.getTransactionId()));
 			txnId[count] = tx.getTransactionId().toString();
 			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
-			transactionsFutureTasks.add(new FutureTask<>(worker));
-			executorServiceTransactions.submit(transactionsFutureTasks.get(count));
+			final var futureTask = new FutureTask<>(worker);
+			transactionsFutureTasks.add(futureTask);
+			// For FileUpdate and FileAppend, the fileId and nodeAccountIds will be used as the
+			// key and group, respectively, for the orderedExecutor.
+			if (tx instanceof FileUpdateTransaction) {
+				final var fileId = ((FileUpdateTransaction) tx).getFileId();
+				final var nodes = tx.getNodeAccountIds();
+				orderedExecutor.submit(futureTask, fileId, nodes);
+			} else if (tx instanceof FileAppendTransaction) {
+				final var fileId = ((FileAppendTransaction) tx).getFileId();
+				final var nodes = tx.getNodeAccountIds();
+				orderedExecutor.submit(futureTask, fileId, nodes);
+			} else {
+				orderedExecutor.submit(futureTask);
 
-			// We wait till workers are actually executing to proceed. No need to execute more if they are just going to sleep.
-			worker.doneSleeping.await();
+				// We wait till workers are actually executing to proceed.
+				// No need to execute more if they are just going to sleep.
+				// This is left in, in the off chance that there are so many transactions as to
+				// overwhelm any queue limit the executor service may have.
+				worker.doneSleeping.await();
+			}
 
 			count++;
-
 		}
 
 		if (count == 0) {
@@ -144,14 +161,14 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			throw new HederaClientRuntimeException("No valid transactions found.");
 		}
 
-		final List<TxnResult> transactionResponses = new ArrayList<>();
+		final Set<TxnResult> transactionResponses = new HashSet<>();
 		for (int x = 0; x < transactionsFutureTasks.size(); ++x) {
 			TxnResult response;
 			try {
 				response = transactionsFutureTasks.get(x).get();
 			} catch (final Exception e) {
 				logger.error("Submit Thread Error Result", e);
-				response = new TxnResult(txnId[x] + " - Threw Severe Exception", false);
+				response = new TxnResult(txnId[x], false, txnId[x] + " - Threw Severe Exception");
 			}
 			transactionResponses.add(response);
 		}
@@ -159,14 +176,14 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 		executorServiceTransactions.awaitTermination(1000000, TimeUnit.DAYS);
 
 		transactionResponses.forEach(t -> {
-			if (t.success) {
-				logger.debug(t.message);
+			if (t.wasSuccessful()) {
+				logger.debug(t.getMessage());
 			} else {
-				logger.warn(t.message);
+				logger.warn(t.getMessage());
 			}
 		});
-		logger.info("Transactions succeeded: {} of {}", transactionResponses.stream().filter(t -> t.success).count(), count);
-
+		logger.info("Transactions succeeded: {} of {}",
+				transactionResponses.stream().filter(TxnResult::wasSuccessful).count(), transactionResponses.size());
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(
@@ -175,6 +192,14 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 			if (o1.getTransactionId() == null || o2.getTransactionId() == null) {
 				throw new HederaClientRuntimeException("Invalid transaction ID");
 			}
+			// Check if the transactionIds are the same AND the nodeAccountIds. If they are both the same
+			// then an error must be thrown. If the nodeAccountIds are different, then assume this is due to
+			// purposeful submission of a transaction to multiple nodes.
+			if (Objects.equals(o1.getTransactionId(), o2.getTransactionId())
+					&& Objects.equals(o1.getNodeAccountIds(), o2.getNodeAccountIds())) {
+				throw new HederaClientRuntimeException("Duplicate transaction IDs being submitted to the same Node");
+			}
+
 			final var vs1 = Objects.requireNonNull(o1.getTransactionId()).validStart;
 			final var vs2 = Objects.requireNonNull(o2.getTransactionId()).validStart;
 			if (vs1 == null || vs2 == null) {
