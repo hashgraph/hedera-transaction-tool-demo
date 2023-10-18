@@ -21,13 +21,11 @@ package com.hedera.hashgraph.client.cli.options;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.cli.helpers.OrderedExecutor;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker;
 import com.hedera.hashgraph.client.core.helpers.TransactionCallableWorker.TxnResult;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
-import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.FileAppendTransaction;
 import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -50,13 +48,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipFile;
 
 import static com.hedera.hashgraph.client.cli.options.SubmitCommand.TransactionIDFitness.getFitness;
@@ -72,7 +70,7 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	@SuppressWarnings("FieldMayBeFinal")
 	@CommandLine.Option(names = {"-n", "--network"}, description = "The Hedera network the transaction will be " +
-			"submitted to (one of MAINNET, PREVIEWNET, or TESTNET)")
+			"submitted to (one of MAINNET, PREVIEWNET, TESTNET, or the name of the custom network)")
 	private String submissionClient = "mainnet";
 
 	@CommandLine.Option(names = {"-o", "--output-directory"}, description = "The path to the folder where the " +
@@ -96,94 +94,94 @@ public class SubmitCommand implements ToolCommand, GenericFileReadWriteAware {
 
 	@Override
 	public void execute() throws HederaClientException, InterruptedException {
+		try (final var client = CommonMethods.getClient(submissionClient)) {
+			// we don't want to backoff for more than a few seconds, we only have 120s to get all transactions through
+			client.setMaxBackoff(Duration.ofSeconds(5));
+			client.setNodeMaxBackoff(Duration.ofSeconds(10));
 
-		// Setup client
-		final var network = NetworkEnum.valueOf(submissionClient.toUpperCase(Locale.ROOT));
-		final Client client = CommonMethods.getClient(network);
-
-		// we don't want to backoff for more than a few seconds, we only have 120s to get all transactions through
-		client.setMaxBackoff(Duration.ofSeconds(5));
-		client.setNodeMaxBackoff(Duration.ofSeconds(10));
-
-		// Load transactions
-		final var files = getTransactionPaths();
-		if (files.isEmpty()) {
-			throw new HederaClientException("No valid transactions found");
-		}
-
-		// Setup threads
-		final var transactionsFutureTasks = new ArrayList<FutureTask<TxnResult>>(files.size());
-		final var txnId = new String[files.size()];
-		final var executorServiceTransactions = Executors.newFixedThreadPool(this.numberOfThreads);
-		final var orderedExecutor = new OrderedExecutor(executorServiceTransactions);
-
-		// Load transactions into the priority queue
-		final var transactions = setupPriorityQueue(files);
-		// Submit the transactions
-		var count = 0;
-
-		while (!transactions.isEmpty()) {
-			final var tx = transactions.poll();
-			if (tx == null) {
-				throw new HederaClientRuntimeException("Invalid transaction");
-			}
-			logger.info("Submitting transaction {} to thread pool", Objects.requireNonNull(
-					tx.getTransactionId()));
-			txnId[count] = tx.getTransactionId().toString();
-			final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
-			final var futureTask = new FutureTask<>(worker);
-			transactionsFutureTasks.add(futureTask);
-			// For FileUpdate and FileAppend, the fileId and nodeAccountIds will be used as the
-			// key and group, respectively, for the orderedExecutor.
-			if (tx instanceof FileUpdateTransaction) {
-				final var fileId = ((FileUpdateTransaction) tx).getFileId();
-				final var nodes = tx.getNodeAccountIds();
-				orderedExecutor.submit(futureTask, fileId, nodes);
-			} else if (tx instanceof FileAppendTransaction) {
-				final var fileId = ((FileAppendTransaction) tx).getFileId();
-				final var nodes = tx.getNodeAccountIds();
-				orderedExecutor.submit(futureTask, fileId, nodes);
-			} else {
-				orderedExecutor.submit(futureTask);
-
-				// We wait till workers are actually executing to proceed.
-				// No need to execute more if they are just going to sleep.
-				// This is left in, in the off chance that there are so many transactions as to
-				// overwhelm any queue limit the executor service may have.
-				worker.doneSleeping.await();
+			// Load transactions
+			final var files = getTransactionPaths();
+			if (files.isEmpty()) {
+				throw new HederaClientException("No valid transactions found");
 			}
 
-			count++;
-		}
+			// Setup threads
+			final var transactionsFutureTasks = new ArrayList<FutureTask<TxnResult>>(files.size());
+			final var txnId = new String[files.size()];
+			final var executorServiceTransactions = Executors.newFixedThreadPool(this.numberOfThreads);
+			final var orderedExecutor = new OrderedExecutor(executorServiceTransactions);
 
-		if (count == 0) {
-			logger.error("No valid transactions found. Terminating process.");
-			throw new HederaClientRuntimeException("No valid transactions found.");
-		}
+			// Load transactions into the priority queue
+			final var transactions = setupPriorityQueue(files);
+			// Submit the transactions
+			var count = 0;
 
-		final Set<TxnResult> transactionResponses = new HashSet<>();
-		for (int x = 0; x < transactionsFutureTasks.size(); ++x) {
-			TxnResult response;
-			try {
-				response = transactionsFutureTasks.get(x).get();
-			} catch (final Exception e) {
-				logger.error("Submit Thread Error Result", e);
-				response = new TxnResult(txnId[x], false, txnId[x] + " - Threw Severe Exception");
+			while (!transactions.isEmpty()) {
+				final var tx = transactions.poll();
+				if (tx == null) {
+					throw new HederaClientRuntimeException("Invalid transaction");
+				}
+				logger.info("Submitting transaction {} to thread pool", Objects.requireNonNull(
+						tx.getTransactionId()));
+				txnId[count] = tx.getTransactionId().toString();
+				final TransactionCallableWorker worker = new TransactionCallableWorker(tx, delay, out, client);
+				final var futureTask = new FutureTask<>(worker);
+				transactionsFutureTasks.add(futureTask);
+				// For FileUpdate and FileAppend, the fileId and nodeAccountIds will be used as the
+				// key and group, respectively, for the orderedExecutor.
+				if (tx instanceof FileUpdateTransaction) {
+					final var fileId = ((FileUpdateTransaction) tx).getFileId();
+					final var nodes = tx.getNodeAccountIds();
+					orderedExecutor.submit(futureTask, fileId, nodes);
+				} else if (tx instanceof FileAppendTransaction) {
+					final var fileId = ((FileAppendTransaction) tx).getFileId();
+					final var nodes = tx.getNodeAccountIds();
+					orderedExecutor.submit(futureTask, fileId, nodes);
+				} else {
+					orderedExecutor.submit(futureTask);
+
+					// We wait till workers are actually executing to proceed.
+					// No need to execute more if they are just going to sleep.
+					// This is left in, in the off chance that there are so many transactions as to
+					// overwhelm any queue limit the executor service may have.
+					worker.doneSleeping.await();
+				}
+
+				count++;
 			}
-			transactionResponses.add(response);
-		}
-		executorServiceTransactions.shutdown();
-		executorServiceTransactions.awaitTermination(1000000, TimeUnit.DAYS);
 
-		transactionResponses.forEach(t -> {
-			if (t.wasSuccessful()) {
-				logger.debug(t.getMessage());
-			} else {
-				logger.warn(t.getMessage());
+			if (count == 0) {
+				logger.error("No valid transactions found. Terminating process.");
+				throw new HederaClientRuntimeException("No valid transactions found.");
 			}
-		});
-		logger.info("Transactions succeeded: {} of {}",
-				transactionResponses.stream().filter(TxnResult::wasSuccessful).count(), transactionResponses.size());
+
+			final Set<TxnResult> transactionResponses = new HashSet<>();
+			for (int x = 0; x < transactionsFutureTasks.size(); ++x) {
+				TxnResult response;
+				try {
+					response = transactionsFutureTasks.get(x).get();
+				} catch (final Exception e) {
+					logger.error("Submit Thread Error Result", e);
+					response = new TxnResult(txnId[x], false, txnId[x] + " - Threw Severe Exception");
+				}
+				transactionResponses.add(response);
+			}
+			executorServiceTransactions.shutdown();
+			executorServiceTransactions.awaitTermination(1000000, TimeUnit.DAYS);
+
+			transactionResponses.forEach(t -> {
+				if (t.wasSuccessful()) {
+					logger.debug(t.getMessage());
+				} else {
+					logger.warn(t.getMessage());
+				}
+			});
+			logger.info("Transactions succeeded: {} of {}",
+					transactionResponses.stream().filter(TxnResult::wasSuccessful).count(), transactionResponses.size());
+		} catch (final TimeoutException e) {
+			logger.error(e.getMessage());
+			throw new HederaClientException(e);
+		}
 	}
 
 	private PriorityQueue<Transaction<?>> setupPriorityQueue(

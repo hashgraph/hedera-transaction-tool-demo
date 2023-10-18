@@ -382,6 +382,19 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		// First, determine if the naming convention is the new or old version
 		// Old convention does not use '.'
 		if (!name.contains(".")) {
+//			this is at least part of hte issue. the name in so full of _ and - and accountid stuff. it is messing eveyrthing up
+//					what is it that I want this to do exactly? I want _ to only be ...
+//			look like this is being used for folders and for filenames, and thats at least part of hte issue too
+//					I am trying to separate parts, hwere _suffix is a part, _node-0.0.3 is a part, _keyname is a part, and then whatever else is hte file name
+//					and in filename, it sometimes looks like 0_0_9@382308_0-0_0_3498 and I want that 8_0 to be 8-0 or 8.0 as it is nano
+//
+//				it is still safe to assume that '.' is not used in previous versions
+//					my version is good, except the trailing 0, so i need to see how 12.2 was doing it
+//
+//			tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
+//					pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
+//			really, what i should be doing is only wokring my way backwards
+
 			// Replace '_' with a '.' for any account/node id, if applicable
 			name = name.replace("0_0_", "0.0.");
 			// Replace any '-' with the FILE_NAME_GROUP_SEPARATOR, as long as it isn't followed by a second '-'
