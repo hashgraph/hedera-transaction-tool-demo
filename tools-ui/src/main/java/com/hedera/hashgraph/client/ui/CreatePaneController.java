@@ -606,14 +606,9 @@ public class CreatePaneController implements SubController {
 		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedAccountIdNew.getParent());
 		numericFieldListen(stakedNodeIdNew);
 
-		updateAccountID.setOnKeyPressed(keyEvent -> {
-			final var keyCode = keyEvent.getCode();
-			if (keyCode.equals(KeyCode.ENTER)) {
-				findAccountInfoAndPreloadFields();
-			}
-		});
-
 		updateAccountID.focusedProperty().addListener((obs, oldValue, newValue) -> {
+			// If the action is performed on the textField (enter key), it loses focus and will trigger
+			// this as well.
 			// If newValue is false (focus is lost) AND the field isn't empty, try to preload the files
 			if (Boolean.FALSE.equals(newValue) && !"".equals(updateAccountID.getText())) {
 				findAccountInfoAndPreloadFields();
@@ -3055,7 +3050,6 @@ public class CreatePaneController implements SubController {
 	private void formatAccountRangeTextField(final TextField textField, final ListView<Identifier> listView,
 											 final Label errorLabel, final Node nextNode) {
 		textField.setOnAction(e -> {
-			parseAccountId(textField, listView, errorLabel);
 			nextNode.requestFocus();
 		});
 		textField.focusedProperty().addListener(((observableValue, oldValue, newValue) -> {
