@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
@@ -108,16 +109,22 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
 			// All files to be collated should be zipped. These files will now have been unzipped into a directory
 			// that ends in _unzipped. Whenever the submission node is included in the naming (due to multiple
-			// submission nodes), then both node and a suffix is included. This means that in all currently supported
-			// options, there should only be 5 or 7 parts. In both cases, only the first 3 are needed.
-
+			// submission nodes), then both node and a suffix is included.
 			if (parentNameParts.length < 3) {
 				// If there are fewer parts than 3, which should not happen, then
 				// combine what is there as a new name, and return it.
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, parentNameParts);
 			} else {
-				// Get the first three parts and recombine it into a standard name.
-				parentNameParts = Arrays.copyOf(parentNameParts, 3);
+				// Always start with 2 items before the last, as the last is 'unzipped' and the one before that is
+				// either the key, or suffix.
+				int lastFileNameIndex = parentNameParts.length-3;
+				// If 'Node' exists, it will be the 3rd from the back (the currently marked location).
+				if (parentNameParts[lastFileNameIndex].startsWith("Node")) {
+					// Node exists, go back two parts.
+					lastFileNameIndex-=2;
+				}
+				// Get the remaining parts and recombine it into a standard name.
+				parentNameParts = Arrays.copyOf(parentNameParts, lastFileNameIndex+1);
 				return String.join(FILE_NAME_GROUP_SEPARATOR, parentNameParts);
 			}
 		}
@@ -133,16 +140,20 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			var parentNameParts = parentName.split(FILE_NAME_GROUP_SEPARATOR);
 			// All files to be collated should be zipped. These files will now have been unzipped into a directory
 			// that ends in _unzipped. Whenever the submission node is included in the naming (due to multiple
-			// submission nodes), then both node and a suffix is included. This means that in all currently supported
-			// options, there should only be 5 or 7 parts. In both cases, only the first 3 are needed.
-
+			// submission nodes), then both node and a suffix is included.
 			if (parentNameParts.length < 3) {
 				// If there are fewer parts than 3, which should not happen, then
 				// combine what is there as a new name, and return it.
 				return String.join(FILE_NAME_INTERNAL_SEPARATOR, parentNameParts);
 			} else {
-				// Return the 4th item, which is the keyName
-				return parentNameParts[3];
+				// Always start with the item before the last, as the last is 'unzipped'
+				int keyNameIndex = parentNameParts.length-2;
+				// If 'Node' exists, it will be the 3rd from the back (the one before the currently marked index).
+				if (parentNameParts[keyNameIndex-1].startsWith("Node")) {
+					// Node exists, go back two parts.
+					keyNameIndex-=2;
+				}
+				return parentNameParts[keyNameIndex];
 			}
 		}
 		return "";
@@ -378,34 +389,51 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 		return formatName(fileBaseName);
 	}
 
-	private static String formatName(@NotNull String name) {
+	private static String formatName(@NotNull final String name) {
 		// First, determine if the naming convention is the new or old version
 		// Old convention does not use '.'
 		if (!name.contains(".")) {
-//			this is at least part of hte issue. the name in so full of _ and - and accountid stuff. it is messing eveyrthing up
-//					what is it that I want this to do exactly? I want _ to only be ...
-//			look like this is being used for folders and for filenames, and thats at least part of hte issue too
-//					I am trying to separate parts, hwere _suffix is a part, _node-0.0.3 is a part, _keyname is a part, and then whatever else is hte file name
-//					and in filename, it sometimes looks like 0_0_9@382308_0-0_0_3498 and I want that 8_0 to be 8-0 or 8.0 as it is nano
-//
-//				it is still safe to assume that '.' is not used in previous versions
-//					my version is good, except the trailing 0, so i need to see how 12.2 was doing it
-//
-//			tempStorage + "/" + getName().replace(".csv", "_") + FilenameUtils.getBaseName(
-//					pair.getLeft()) + "_Node-" + nodeID.toReadableString().replace(".", "-");
-//			really, what i should be doing is only wokring my way backwards
+			// If the fileName has '_unzipped', then this should follow the form of:
+			// 'somefilename-keyname_{Node-0-0-4_transaction}_unzipped
+			// where {} is optional.
+			// The trick is that a key name can also have '-' in it. So it is hard to tell where the keyName starts.
+			// Where this is an issue (somefilename-keyname), they do follow the pattern digits-0_0_digits-{-}digits.
+			// When that pattern is not followed, the separator between somefilename and keyname is '_', so it is not
+			// an issue.
+			if (name.endsWith("_unzipped")) {
+				// Ignore the '_unzipped' portion and the suffix portion (if it exists)
+				// Get the Node (if it exists) and replace '-' with '.'
+				// Get the key (the part right before Node) and ensure '_' is replaced with '-'
+				// Combine all parts and put into one name
+				final var pattern = Pattern.compile("^\\d+-0_0_\\d+-(-?)\\d+-");
+				final var matcher = pattern.matcher(name);
+				if (matcher.find()) {
+					final var fileName = matcher.group();
+					final var splitIndex = matcher.end();
+					final var keyName = name.substring(splitIndex);
 
-			// Replace '_' with a '.' for any account/node id, if applicable
-			name = name.replace("0_0_", "0.0.");
-			// Replace any '-' with the FILE_NAME_GROUP_SEPARATOR, as long as it isn't followed by a second '-'
-			// If the hash is negative, retain the negative sign
-			name = name.replaceAll("(?<!-)-", FILE_NAME_GROUP_SEPARATOR);
+					return fileName.replace("_", ".")
+							.replaceAll("(?<!-)-", FILE_NAME_GROUP_SEPARATOR)
+							.concat(keyName);
+				}
+
+				return name.replace("Node-0-0-", "Node-0.0.");
+			} else {
+				// Otherwise replace all '_' with '.' and all non double '--' with '_' (double '--' is replaced with '_-')
+				// The file name's form should be similar to:
+				//1613195463-0_0_3-1820596828.tx
+				// or
+				//0_0_9@382308_0-0_0_3498.tx
+
+				// Replace any '-' with the FILE_NAME_GROUP_SEPARATOR, as long as it isn't preceded by what was a '-'
+				// If the hash is negative, retain the negative sign
+				return name.replace("_", ".")
+						.replaceAll("(?<!-)-", FILE_NAME_GROUP_SEPARATOR);
+			}
 		} else {
 			// If using the newer version, there is a chance that some trailing 0s might be present
 			// at the end of the transactionId's timestamp portion. Those will be replaced here.
-			name = name.replaceAll("\\.0{0,9}(?=_)", ".0");
+			return name.replaceAll("\\.0{0,9}(?=_)", ".0");
 		}
-
-		return name;
 	}
 }

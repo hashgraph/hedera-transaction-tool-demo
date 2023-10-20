@@ -707,6 +707,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			}
 		});
 
+		//TODO
+//		final var printer = JsonFormat.printer();
+//		printer.print(); wait I still need the know hte protobuf objects. which means hard coded again.
+
 		detailsGridPane.add(new Label("File Id"), LEFT, 6);
 		detailsGridPane.add(new Label(fileID.toReadableString()), RIGHT, 6);
 

@@ -670,9 +670,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	public String buildFileName() {
 		final var accountId = getFeePayerID();
 		final var seconds = getTransactionValidStart().getEpochSecond();
-
 		return String.join(FILE_NAME_GROUP_SEPARATOR, seconds+"",
-				accountId.toReadableString(), transaction.hashCode()+"");
+				accountId.toReadableString(), hashCode()+"");
 	}
 
 	@Override

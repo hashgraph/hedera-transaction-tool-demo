@@ -934,7 +934,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		private String processSingleTransaction() throws HederaClientException, IOException {
-			final String tempTxFile = transaction.store(tempStorage);
+			final String tempTxFile = transaction.store(
+					Path.of(tempStorage, getBaseName() + "." + TRANSACTION_EXTENSION).toString());
 			final String signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
 
 			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
@@ -947,7 +948,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				throw new HederaClientRuntimeException("Invalid file in file list");
 			});
 
-			final var zipName = transaction.buildFileName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION;
+			final var zipName = getBaseName() + FILE_NAME_GROUP_SEPARATOR + keyName + "." + ZIP_EXTENSION;
 			final var finalZip = Path.of(output, user, zipName).toFile();
 
 			final var packed = Arrays.toString(toPack);
@@ -1036,7 +1037,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		private String getZipFileBaseName(final String nodeAccount) {
 			// filename(seconds_feepayer_transaction.hash)_keyname_node
 			return String.join(FILE_NAME_GROUP_SEPARATOR,
-					transaction.buildFileName(),
+					getBaseName(),
 					keyName,
 					String.format("%s%s%s", "Node", FILE_NAME_INTERNAL_SEPARATOR, nodeAccount));
 		}
