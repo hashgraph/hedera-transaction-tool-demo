@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.14.0-alpha.3</version>
+		<version>0.14.0-alpha.4</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -38,6 +38,7 @@
 
 	<!-- Project Properties -->
 	<properties>
+		<hedera.hashgraph.sdk.version>2.24.1</hedera.hashgraph.sdk.version>
 		<log4j2.version>2.20.0</log4j2.version>
 		<slf4j.version>2.0.6</slf4j.version>
 		<javafx.version>21-ea+5</javafx.version>
@@ -62,7 +63,6 @@
 		<pragmatists.version>1.1.1</pragmatists.version>
 		<google.code.gson.version>2.10.1</google.code.gson.version>
 		<opencsv.version>5.7.1</opencsv.version>
-		<hedera.hashgraph.sdk.version>2.24.1</hedera.hashgraph.sdk.version>
 		<org.jetbrains.version>24.0.0</org.jetbrains.version>
 		<dotenv.version>2.3.2</dotenv.version>
 		<caffeine.version>3.1.6</caffeine.version>
