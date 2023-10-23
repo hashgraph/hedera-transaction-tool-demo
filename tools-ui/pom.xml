@@ -68,12 +68,6 @@
 			<artifactId>sdk</artifactId>
 		</dependency>
 
-		<!-- PBJ Dependency -->
-		<dependency>
-			<groupId>com.hedera.pbj</groupId>
-			<artifactId>pbj-runtime</artifactId>
-		</dependency>
-
 		<!-- SLF4J-->
 
 		<dependency>
