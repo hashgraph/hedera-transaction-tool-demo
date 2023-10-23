@@ -234,7 +234,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		// As long as appends have to wait for the previous transaction to finish, then this increment should be larger
 		// than nanos.
 		this.validIncrement = details.has(VALID_INCREMENT_PROPERTY) ?
-				details.get(VALID_INCREMENT_PROPERTY).getAsLong() : 10_000_000_000L;
+				details.get(VALID_INCREMENT_PROPERTY).getAsLong() : 10L;
 		this.nodeID = nodeIdentifier;
 		this.transactionFee = details.has(TRANSACTION_FEE_PROPERTY) ?
 				details.get(TRANSACTION_FEE_PROPERTY).getAsLong() : properties.getDefaultTxFee();
@@ -595,7 +595,6 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	}
 
 	public List<ToolTransaction> createTransactionList() {
-		var incrementedTime = transactionValidStart;
 		final var tempStorage = new File(TEMP_DIRECTORY,
 				LocalDate.now().toString()).getAbsolutePath() + File.separator + "LargeBinary"
 				+ File.separator;
@@ -618,6 +617,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final var buffer = new byte[chunkSize];
 			var count = 0;
 			int inputStream;
+			final var initialValidDuration = transactionValidStart.asDuration();
 			while ((inputStream = fileInputStream.read(buffer)) > 0) {
 				// The other transactions are appends
 				final var trimmed = Arrays.copyOf(buffer, inputStream);
@@ -628,16 +628,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 				writeBytes(filePath, trimmed);
 				// As ToolTransaction saves the reference to input, this should not be reused.
 				var input = getJsonInput();
-				// The other transactions are appends
-				// Hard coded to 10 seconds
-				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement));
-				input.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
-				input.addProperty(CONTENTS_FIELD_NAME, filePath);
-
-				final var transaction = (count == 0) ?
-						new ToolFileUpdateTransaction(input) :
-						new ToolFileAppendTransaction(input);
+				final var transaction = createTransactionForFilePath(
+						input, count, initialValidDuration, filePath);
 				transactions.add(transaction);
 				count++;
 			}
@@ -645,6 +637,21 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			logger.error(e.getMessage());
 		}
 		return transactions;
+	}
+
+	private ToolTransaction createTransactionForFilePath(JsonObject jsonObject,
+														 long count,
+														 Duration initialValidDuration,
+														 String filePath) throws HederaClientException {
+		final var incrementedTime =
+				new Timestamp(initialValidDuration.plusSeconds(count*validIncrement));
+		jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
+		jsonObject.addProperty(CONTENTS_FIELD_NAME, filePath);
+
+		// The other transactions are appends
+		return (count == 0) ?
+				new ToolFileUpdateTransaction(jsonObject) :
+				new ToolFileAppendTransaction(jsonObject);
 	}
 
 	@Override
@@ -722,11 +729,18 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		checksumField.setFont(Font.font("Courier New", 16));
 		detailsGridPane.add(checksumField, RIGHT, 8);
 
+		File unzippedContent = null;
+		try {
+			unzippedContent = getUnzippedContent();
+		} catch (HederaClientException ex) {
+			logger.error("Failed to unzip contents: " + ex.getMessage());
+		}
+
 		detailsGridPane.add(new Label("File size"), LEFT, 9);
-		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(getContent()));
+		final var formattedContentSize = String.format("%d bytes", FileUtils.sizeOf(unzippedContent));
 		detailsGridPane.add(new Label(formattedContentSize), RIGHT, 9);
 
-		final var chunks = (int) FileUtils.sizeOf(getContent()) / getChunkSize() + ((FileUtils.sizeOf(
+		final var chunks = (int) FileUtils.sizeOf(unzippedContent) / getChunkSize() + ((FileUtils.sizeOf(
 				getContent()) % getChunkSize() == 0) ? 0 : 1);
 
 		if (chunks > 0) {
@@ -741,7 +755,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
 			detailsGridPane.add(interval, LEFT, 12);
-			final var formattedIntervalLength = String.format("%d nanoseconds", getValidIncrement());
+			final var formattedIntervalLength = String.format("%d seconds", getValidIncrement());
 			detailsGridPane.add(new Label(formattedIntervalLength), RIGHT, 12);
 		}
 
@@ -863,17 +877,11 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			var result = "";
 			long count = 0L;
 
-			var incrementedTime = transactionValidStart;
+			final var initialValidDuration = transactionValidStart.asDuration();
 
 			for (var filePath : fileList) {
-				incrementedTime =
-						new Timestamp(incrementedTime.asDuration().plusNanos(validIncrement));
-				jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
-				jsonObject.addProperty(CONTENTS_FIELD_NAME, filePath);
-
-				final var transaction = (count == 0) ?
-						new ToolFileUpdateTransaction(jsonObject) :
-						new ToolFileAppendTransaction(jsonObject);
+				final var transaction = createTransactionForFilePath(
+						jsonObject, count, initialValidDuration, filePath);
 
 				transaction.store(String.format("%s.%s",filePath,TRANSACTION_EXTENSION));
 				final var signaturePair = new SignaturePair(privateKey.getPublicKey(),

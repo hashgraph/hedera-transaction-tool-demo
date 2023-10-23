@@ -1635,7 +1635,7 @@ public class CreatePaneController implements SubController {
 		contentsLink.setText("");
 		contentsLink.setVisible(false);
 		contentsTextField.clear();
-		intervalTextField.setText("1000000000");
+		intervalTextField.setText(Long.toString(controller.getProperties().getValidIncrement()));
 		chunkSizeTextField.setText("1024");
 		fileDigest.setText("");
 		shaTextFlow.setVisible(false);
@@ -1694,7 +1694,7 @@ public class CreatePaneController implements SubController {
 
 		// Check interval field
 		try {
-			final var interval = Integer.parseInt(intervalTextField.getText());
+			final var interval = Long.parseLong(intervalTextField.getText());
 			if (interval <= 0) {
 				invalidIntervalLabel.setVisible(true);
 				flag = false;
@@ -1841,7 +1841,9 @@ public class CreatePaneController implements SubController {
 
 		final var date = startFieldsSet.getDate();
 		outputObject.add(FIRST_TRANSACTION_VALID_START_PROPERTY, date.asJSON());
-		outputObject.addProperty(VALID_INCREMENT_PROPERTY, Integer.parseInt(intervalTextField.getText()));
+		final var validIncrement = Long.parseLong(intervalTextField.getText());
+		controller.getProperties().setValidIncrement(validIncrement);
+		outputObject.addProperty(VALID_INCREMENT_PROPERTY, validIncrement);
 		outputObject.addProperty(TRANSACTION_VALID_DURATION_PROPERTY, controller.getTxValidDuration());
 		outputObject.addProperty(MEMO_PROPERTY, memoField.getText() == null ? "" : memoField.getText());
 		outputObject.addProperty(TRANSACTION_FEE_PROPERTY,
@@ -2113,7 +2115,7 @@ public class CreatePaneController implements SubController {
 					details.get(FIRST_TRANSACTION_VALID_START_PROPERTY).getAsJsonObject()).asInstant());
 		}
 		if (details.has(VALID_INCREMENT_PROPERTY)) {
-			intervalTextField.setText(String.valueOf(details.get(VALID_INCREMENT_PROPERTY).getAsInt()));
+			intervalTextField.setText(String.valueOf(details.get(VALID_INCREMENT_PROPERTY).getAsLong()));
 		}
 		if (details.has(MEMO_PROPERTY)) {
 			memoField.setText(details.get(MEMO_PROPERTY).getAsString());

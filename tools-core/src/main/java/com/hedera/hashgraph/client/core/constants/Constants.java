@@ -105,6 +105,7 @@ public class Constants {
 
 	// region TRANSACTION DEFAULTS
 	public static final int VAL_NUM_TRANSACTION_VALID_DURATION = 180;
+	public static final long VAL_NUM_TRANSACTION_INCREMENT_SECONDS = 10;
 	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 200000000;
 	public static final int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;

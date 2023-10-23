@@ -59,7 +59,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PREFERRED_STO
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.TX_VALID_DURATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.VALID_INCREMENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_DEFAULT_FEE;
+import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_INCREMENT_SECONDS;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.VERSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
@@ -193,6 +195,16 @@ public class UserAccessibleProperties {
 	public void setTxValidDuration(final long txValidDuration) {
 		if (txValidDuration >= 0 && txValidDuration <= VAL_NUM_TRANSACTION_VALID_DURATION) {
 			properties.setProperty(TX_VALID_DURATION, txValidDuration);
+		}
+	}
+
+	public long getValidIncrement() {
+		return properties.getLongProperty(VALID_INCREMENT_PROPERTY, VAL_NUM_TRANSACTION_INCREMENT_SECONDS);
+	}
+
+	public void setValidIncrement(final long validIncrement) {
+		if (validIncrement > 0) {
+			properties.setProperty(VALID_INCREMENT_PROPERTY, validIncrement);
 		}
 	}
 

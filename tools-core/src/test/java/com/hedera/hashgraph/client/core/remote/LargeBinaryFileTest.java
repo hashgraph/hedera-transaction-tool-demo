@@ -194,7 +194,7 @@ class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware 
 		assertEquals("18233", label.getText());
 
 		label = (Label) gridPane.getChildren().get(25);
-		assertEquals("100 nanoseconds", label.getText());
+		assertEquals("100 seconds", label.getText());
 
 	}
 

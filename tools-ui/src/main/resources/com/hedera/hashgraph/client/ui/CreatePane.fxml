@@ -689,7 +689,7 @@
 						<HBox alignment="CENTER_LEFT" spacing="20.0">
 							<TextField fx:id="intervalTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
 									   style="-fx-border-radius: 10; -fx-background-radius: 10;" text="100"/>
-							<Label text="nanoseconds"/>
+							<Label text="seconds"/>
 							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
 									   visible="false">
 								<Image url="@../../../../../icons/greencheck.png"/>
