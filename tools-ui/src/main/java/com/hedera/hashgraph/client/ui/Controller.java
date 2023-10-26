@@ -1044,6 +1044,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final Set<String> allPayers = new HashSet<>(accounts);
 		allPayers.addAll(customFeePayers);
+
+		// A user would expect that if an account was entered into the text field, it would show up.
+		if (!"".equals(textfield.getText())) {
+			allPayers.add(Identifier.parse(textfield.getText(), currentNetwork).toReadableStringAndChecksum());
+		}
+
 		final List<String> sortedAllPayers = new ArrayList<>(allPayers);
 		Collections.sort(sortedAllPayers);
 

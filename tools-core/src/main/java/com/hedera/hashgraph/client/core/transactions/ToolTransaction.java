@@ -112,7 +112,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	Hbar transactionFee;
 	Instant transactionValidStart;
 	Duration transactionValidDuration;
-	NetworkEnum network;
+	String network;
 	String memo;
 	String nodeInput;
 
@@ -133,7 +133,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	public void setNetwork(final String networkName) {
-		this.network = NetworkEnum.valueOf(networkName);
+		this.network = networkName;
 		if (input != null) {
 			input.addProperty(NETWORK_FIELD_NAME, networkName);
 		}
@@ -234,7 +234,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transactionValidDuration;
 	}
 
-	public NetworkEnum getNetwork() {
+	public String getNetwork() {
 		return network;
 	}
 
@@ -632,11 +632,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 		try {
 			if (input.has(NETWORK_FIELD_NAME)) {
-				// This has issues with a custom network. More will need to be done to make this work.
-				// For the time being, as network isn't currently used, just leave it out.
 				final var networkName = input.get(NETWORK_FIELD_NAME).getAsString();
-//				CommonMethods.getClient(networkName);
-//				network = NetworkEnum.valueOf(networkName);
+				CommonMethods.getClient(networkName);
+				network = networkName;
 			}
 		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NETWORK_FIELD_NAME);
@@ -733,7 +731,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			jsonTransaction.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
 		}
 		if (network != null) {
-			jsonTransaction.addProperty(NETWORK_FIELD_NAME, network.getName());
+			jsonTransaction.addProperty(NETWORK_FIELD_NAME, network);
 		}
 		jsonTransaction.addProperty(MEMO_FIELD_NAME, memo);
 		return jsonTransaction;

@@ -189,7 +189,7 @@ public class KeysPaneController implements SubController {
 	private final Map<String, Integer> indexMap = new HashMap<>();
 
 	// key: Key name; value: hash code of the mnemonic used to generate the pem
-	private final Map<String, String> pemMnemonicMap = new HashMap<>();
+	private Map<String, String> pemMnemonicMap = new HashMap<>();
 
 	// key: Key name; value: location of the file
 	private Map<String, String> privateKeysMap = new HashMap<>();
@@ -557,7 +557,6 @@ public class KeysPaneController implements SubController {
 			stream(pemFiles).forEach(pem -> privateKeysMap.put(pem.getName(), pem.getAbsolutePath()));
 		}
 
-
 		populatePemMaps();
 
 		final var missingHashPemList =
@@ -658,6 +657,7 @@ public class KeysPaneController implements SubController {
 	}
 
 	private void populatePemMaps() {
+		pemMnemonicMap = new HashMap<>();
 		for (final var entry : privateKeysMap.entrySet()) {
 			try {
 				final var key = entry.getKey();
