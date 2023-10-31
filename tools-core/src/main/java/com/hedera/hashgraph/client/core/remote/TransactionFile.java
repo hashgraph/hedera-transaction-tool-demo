@@ -256,6 +256,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(timeLabel, RIGHT, ++count);
 
 		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& getTransactionCreationMetadata().getNodes() != null
 				&& !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
 			final var nLabel = new Label("Transactions will be submitted to nodes: ");
 			nLabel.setWrapText(true);

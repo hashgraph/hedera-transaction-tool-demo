@@ -676,6 +676,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		detailsGridPane.add(timeLabel, RIGHT, 3);
 
 		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& getTransactionCreationMetadata().getNodes() != null
 				&& !getTransactionCreationMetadata().getNodes().getList().isEmpty()) {
 			final var nLabel = new Label("Transactions will be submitted to nodes: ");
 			nLabel.setWrapText(true);
