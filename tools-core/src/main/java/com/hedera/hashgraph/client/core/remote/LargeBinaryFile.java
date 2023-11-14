@@ -37,6 +37,7 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.core.utils.FXUtils;
+import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.FileAppendTransaction;
 import com.hedera.hashgraph.sdk.FileUpdateTransaction;
@@ -48,6 +49,8 @@ import com.opencsv.CSVWriter;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -66,7 +69,6 @@ import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import javax.annotation.Nullable;
-import java.awt.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -122,6 +124,8 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	public static final String NODE_ID_PROPERTY = "nodeID";
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 
+	private static final int SYSTEM_FILE_INTERVAL_LENGTH = 1;
+
 	private final UserAccessibleProperties properties =
 			new UserAccessibleProperties(DEFAULT_STORAGE + File.separator + USER_PROPERTIES, "");
 
@@ -139,6 +143,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 	private File content = null;
 	private boolean isZip;
 	private String checksum;
+	private EventHandler<ActionEvent> fileLinkAction;
 
 	private final List<FileActions> actions =
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
@@ -412,6 +417,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return filename;
 	}
 
+	public Identifier getFileID() {
+		return fileID;
+	}
+
 	public int getChunkSize() {
 		return chunkSize;
 	}
@@ -455,13 +464,13 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		return content;
 	}
 
-	private File getUnzippedContentDirectory() {
+	public File getUnzippedContentDirectory() {
 		var unZippedContent = new File(content.getParent(), FilenameUtils.removeExtension(content.getName()));
 		ZipUtil.unpack(content, unZippedContent);
 		return unZippedContent;
 	}
 
-	private File getUnzippedContent() throws HederaClientException {
+	public File getUnzippedContent() throws HederaClientException {
 		// Recreate the contents. This is done here as the contents is pointing to a temporary copy that may have been
 		// altered.
 		final var destination = new File(TEMP_DIRECTORY, getBaseName()).getAbsolutePath();
@@ -503,6 +512,10 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			checksum = CommonMethods.splitStringDigest(digest, 6);
 		}
 		return checksum;
+	}
+
+	public void setFileLinkAction(EventHandler<ActionEvent> action) {
+		this.fileLinkAction = action;
 	}
 
 	@Override
@@ -643,8 +656,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 														 long count,
 														 Duration initialValidDuration,
 														 String filePath) throws HederaClientException {
+		final var increment = isSystemFile() ? SYSTEM_FILE_INTERVAL_LENGTH : validIncrement;
 		final var incrementedTime =
-				new Timestamp(initialValidDuration.plusSeconds(count*validIncrement));
+				new Timestamp(initialValidDuration.plusSeconds(count*increment));
 		jsonObject.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 		jsonObject.addProperty(CONTENTS_FIELD_NAME, filePath);
 
@@ -703,21 +717,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 		}
 
 		final var fileLink = new Hyperlink("Click for more details");
-		fileLink.setOnAction(actionEvent -> {
-			try {
-				if (Desktop.isDesktopSupported()) {
-					final var c = getUnzippedContentDirectory();
-					c.deleteOnExit();
-					Desktop.getDesktop().open(c.getAbsoluteFile());
-				}
-			} catch (final IOException e) {
-				logger.error(e.getMessage());
-			}
-		});
-
-		//TODO
-//		final var printer = JsonFormat.printer();
-//		printer.print(); wait I still need the know hte protobuf objects. which means hard coded again.
+		fileLink.setOnAction(fileLinkAction);
 
 		detailsGridPane.add(new Label("File Id"), LEFT, 6);
 		detailsGridPane.add(new Label(fileID.toReadableString()), RIGHT, 6);
@@ -756,11 +756,29 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			final var interval = new Label("Interval between transactions");
 			interval.setWrapText(true);
 			detailsGridPane.add(interval, LEFT, 12);
-			final var formattedIntervalLength = String.format("%d seconds", getValidIncrement());
+			final String formattedIntervalLength;
+			if (isSystemFile()) {
+				formattedIntervalLength = String.format("%d nanosecond", SYSTEM_FILE_INTERVAL_LENGTH);
+			} else {
+				formattedIntervalLength = String.format("%d seconds", getValidIncrement());
+			}
+
 			detailsGridPane.add(new Label(formattedIntervalLength), RIGHT, 12);
 		}
 
 		return detailsGridPane;
+	}
+
+	public boolean isSpecialFile() {
+		final var accountNum = fileID.getAccountNum();
+		return fileID.getShardNum() == 0 && fileID.getRealmNum() == 0
+				&& StandardSerdes.SYS_FILE_SERDES.containsKey(accountNum);
+	}
+
+	public boolean isSystemFile() {
+		final var accountNum = fileID.getAccountNum();
+		return fileID.getShardNum() == 0 && fileID.getRealmNum() == 0
+				&& 150 <= accountNum && accountNum <= 159;
 	}
 
 	@Override

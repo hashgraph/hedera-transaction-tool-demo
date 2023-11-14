@@ -1,0 +1,122 @@
+{
+  "entries" : [ {
+    "nodeId" : 0,
+    "certHash" : "a171e3ba83476747aeb2e2ac4d0e115caaab918203b0dfe1cdeab443438fc289abc8ba8a6aff83db5f1b334046da88c8",
+    "nodeAccount" : "0.0.3",
+    "endpoints" : [ {
+      "ipAddressV4" : "34.94.106.61",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "34.94.106.61",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "50.18.132.211",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "50.18.132.211",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 1,
+    "certHash" : "7409dec2e494b627ee49c69b294be1ceaebca3fdcaf36789e88fc7d5b0eef5561f52b82d35191a39c2fbed6027267166",
+    "nodeAccount" : "0.0.4",
+    "endpoints" : [ {
+      "ipAddressV4" : "35.237.119.55",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "35.237.119.55",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "3.212.6.13",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "3.212.6.13",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 2,
+    "certHash" : "9b1416584a4a380bb86a6c7d7207d8aeddbc3b63ea305998255bce8351ba4b5dca52c9282a54a6bed60de63ce03aaa24",
+    "nodeAccount" : "0.0.5",
+    "endpoints" : [ {
+      "ipAddressV4" : "35.245.27.193",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "35.245.27.193",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "52.20.18.86",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "52.20.18.86",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 3,
+    "certHash" : "6486685b4e6e0cb963472c01fe99931fd9e4c44887ba83423ae7feed22d648484cf8a3bc5ccca6a37387bf96d3867280",
+    "nodeAccount" : "0.0.6",
+    "endpoints" : [ {
+      "ipAddressV4" : "34.83.112.116",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "34.83.112.116",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "54.70.192.33",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "54.70.192.33",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 4,
+    "certHash" : "39e909915a8528030154a6c770950c7b4777ba401357c0e6187654215cc20aaccdd8e5ff29e9c4d95cf4101fa68be45c",
+    "nodeAccount" : "0.0.7",
+    "endpoints" : [ {
+      "ipAddressV4" : "34.94.160.4",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "34.94.160.4",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "54.176.199.109",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "54.176.199.109",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 5,
+    "certHash" : "a44874a7aa1b37741a071adaae78fb152b696d1c58d8defbe1d82304532a0c019ee96cc19d75686578d39a1e6c31a1ee",
+    "nodeAccount" : "0.0.8",
+    "endpoints" : [ {
+      "ipAddressV4" : "34.106.102.218",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "34.106.102.218",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "35.155.49.147",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "35.155.49.147",
+      "port" : 50212
+    } ]
+  }, {
+    "nodeId" : 6,
+    "certHash" : "69832a73a3602e8d1fbe5ad58d1c2637a1b672d71ee87af10db648eb91afb228253b1f47e57d3d4a44ff547b3394aa22",
+    "nodeAccount" : "0.0.9",
+    "endpoints" : [ {
+      "ipAddressV4" : "34.133.197.230",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "34.133.197.230",
+      "port" : 50212
+    }, {
+      "ipAddressV4" : "52.14.252.207",
+      "port" : 50211
+    }, {
+      "ipAddressV4" : "52.14.252.207",
+      "port" : 50212
+    } ]
+  } ]
+}

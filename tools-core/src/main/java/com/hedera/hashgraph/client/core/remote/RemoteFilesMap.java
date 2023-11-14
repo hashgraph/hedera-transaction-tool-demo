@@ -43,7 +43,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getBuildDateSecondsFromVersionStr;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
-import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class RemoteFilesMap {
@@ -200,7 +199,7 @@ public class RemoteFilesMap {
 		for (final var f : fileDetails) {
 			try {
 				if (validFile(f)) {
-					final RemoteFile remoteFile = getSingleRemoteFile(f);
+					final RemoteFile remoteFile = RemoteFile.getSingleRemoteFile(f);
 					if (remoteFile.isValid()) {
 						final var remoteLocation = new File(remoteFile.getParentPath() + File.separator + "History",
 								getBaseName(remoteFile.getName()) + "." + METADATA_EXTENSION);
@@ -215,56 +214,6 @@ public class RemoteFilesMap {
 			}
 		}
 		return remoteFiles;
-	}
-
-	/**
-	 * Load a file into a RemoteFile
-	 *
-	 * @param fileDetails
-	 * 		the remote file
-	 * @return a RemoteFile
-	 */
-	private RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
-		final RemoteFile remoteFile;
-		final var type = getType(getExtension(fileDetails.getName()));
-		switch (type) {
-			case TRANSACTION:
-				remoteFile = new TransactionFile(fileDetails);
-				break;
-			case LARGE_BINARY:
-				remoteFile = new LargeBinaryFile(fileDetails);
-				break;
-			case BATCH:
-				remoteFile = new BatchFile(fileDetails);
-				break;
-			case COMMENT:
-				remoteFile = new CommentFile(fileDetails);
-				break;
-			case ACCOUNT_INFO:
-				remoteFile = new InfoFile(fileDetails);
-				break;
-			case PUBLIC_KEY:
-				remoteFile = new PublicKeyFile(fileDetails);
-				break;
-			case BUNDLE:
-				remoteFile = new BundleFile(fileDetails);
-				break;
-			case SOFTWARE_UPDATE:
-			case CONFIG:
-				remoteFile = getSoftwareUpdateFile(fileDetails);
-				break;
-			case METADATA:
-				remoteFile = new MetadataFile(fileDetails);
-				break;
-			case TRANSACTION_CREATION_METADATA:
-				remoteFile = new TransactionCreationMetadataFile(fileDetails);
-				break;
-			default:
-				throw new HederaClientException(
-						String.format("Unrecognized type '%s' for file '%s'", type,
-								fileDetails.getPath() + "/" + fileDetails.getName()));
-		}
-		return remoteFile;
 	}
 
 	private void validRemoteAction(final FileType type, final RemoteFile remoteFile, final File remoteLocation) {

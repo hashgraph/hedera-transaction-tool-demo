@@ -165,9 +165,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		this.valid = true;
 	}
 
-	public RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
+	public static RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
 		final RemoteFile remoteFile;
-		switch (FileType.getType(fileDetails.getExtension())) {
+		final var type = FileType.getType(fileDetails.getExtension());
+		switch (type) {
 			case TRANSACTION:
 				remoteFile = new TransactionFile(fileDetails);
 				break;
@@ -200,7 +201,9 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				remoteFile = new TransactionCreationMetadataFile(fileDetails);
 				break;
 			default:
-				throw new HederaClientException(String.format("Unrecognized type %s", type));
+				throw new HederaClientException(
+						String.format("Unrecognized type '%s' for file '%s'", type,
+								fileDetails.getPath() + "/" + fileDetails.getName()));
 		}
 		return remoteFile;
 	}

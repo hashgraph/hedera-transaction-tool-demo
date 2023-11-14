@@ -1,0 +1,12 @@
+{
+  "currentRate" : {
+    "hbarEquiv" : 30000,
+    "centEquiv" : 182219,
+    "expiry" : 1699484400
+  },
+  "nextRate" : {
+    "hbarEquiv" : 30000,
+    "centEquiv" : 181500,
+    "expiry" : 1699488000
+  }
+}

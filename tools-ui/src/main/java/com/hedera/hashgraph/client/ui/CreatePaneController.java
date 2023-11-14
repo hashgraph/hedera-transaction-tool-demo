@@ -674,6 +674,34 @@ public class CreatePaneController implements SubController {
 		});
 
 		formatAccountTextField(updateFileID, invalidUpdateFileToUpdate, updateFileID.getParent());
+		// updateFileId needs a special warning if fileId is between 150-159.
+		// This warning will let the user know that the update can only be submitted to a single node
+		// and that the valid increment between each transaction will be 1 nano.
+		updateFileID.focusedProperty().addListener((obj, oldValue, newValue) -> {
+			if (Boolean.FALSE.equals(newValue)) {
+				try {
+					// Try to parse the identifier
+					final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
+					// If successful, determine if it is a super special (150-159) file
+					if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
+						final var message = String.format("The fileId (%s) is reserved for system files. %n" +
+								"In order to update this file, this transaction must be submitted to only one node. %n" +
+								"The interval between transactions will also be automatically set.",
+								id.toReadableString());
+						PopupMessage.display("Reserved FileId", message);
+						intervalTextField.setEditable(false);
+
+						if (nodeAccountList.getItems().size() > 1) {
+							final var node = nodeAccountList.getItems().get(0);
+							nodeAccountField.setText(node.toReadableString());
+						}
+					}
+				} catch (Exception e) {
+					// No need to handle any errors.
+					intervalTextField.setEditable(true);
+				}
+			}
+		});
 
 		//TODO this never gets deleted after viewing? another issue that could be resolved if temp_directory/txntool is used
 		// and cleaned up on closing the app or something
@@ -1636,6 +1664,7 @@ public class CreatePaneController implements SubController {
 		contentsLink.setVisible(false);
 		contentsTextField.clear();
 		intervalTextField.setText(Long.toString(controller.getProperties().getValidIncrement()));
+		intervalTextField.setEditable(true);
 		chunkSizeTextField.setText("1024");
 		fileDigest.setText("");
 		shaTextFlow.setVisible(false);
@@ -2955,8 +2984,31 @@ public class CreatePaneController implements SubController {
 				createUTCTimeLabel, invalidDate);
 		startFieldsSet.configureDateTime(LocalDateTime.now());
 
-		// endregion
 		formatAccountRangeTextField(nodeAccountField, nodeAccountList, invalidNode, feePayerAccountField);
+		nodeAccountField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
+			if (Boolean.FALSE.equals(newValue)) {
+				// If this is a file update, and the fileId is 'super special', then nodeAccountField can only accept 1
+				// account.
+				try {
+					// Try to parse the identifier
+					final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
+					// If successful, determine if it is a super special (150-159) file
+					if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
+						// Now get the text entered to nodeAccount and ensure it is a singular account.
+						if (nodeAccountList.getItems().size() > 1) {
+							final var message = String.format("The fileId (%s) is reserved for system files. %n" +
+											"In order to update this file, this transaction must be submitted to only one node.",
+									id.toReadableString());
+							PopupMessage.display("Reserved FileId", message);
+							final var node = nodeAccountList.getItems().get(0);
+							nodeAccountField.setText(node.toReadableString());
+						}
+					}
+				} catch (Exception e) {
+					// No need to handle any errors.
+				}
+			}
+		});
 		formatAccountTextField(feePayerAccountField, invalidFeePayer, feePayerAccountField.getParent());
 		feePayerAccountField.disableProperty().bind(isUpdateAccountFeePayerCheckBox.selectedProperty());
 

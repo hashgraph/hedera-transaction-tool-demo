@@ -36,6 +36,7 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
+import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFilesMap;
@@ -46,6 +47,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.Key;
@@ -76,6 +78,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -301,7 +304,7 @@ public class HomePaneController implements SubController {
 	public void addFile(final String filePath) {
 		try {
 			// Create a RemoteFile by filePath and add it to the list
-			addFile(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(filePath))));
+			addFile(RemoteFile.getSingleRemoteFile(FileDetails.parse(new File(filePath))));
 		} catch (HederaClientException e) {
 			logger.error("adding file error: ", e);
 			controller.displaySystemMessage(e.getMessage());
@@ -311,9 +314,9 @@ public class HomePaneController implements SubController {
 	public void addFile(final String filePath, final boolean history) {
 		try {
 			// Create the RemoteFile
-			final var remoteFile = new RemoteFile().getSingleRemoteFile(
+			final var remoteFile = RemoteFile.getSingleRemoteFile(
 					FileDetails.parse(new File(filePath)));
-			// Set its history property - even those RemoteFile.history never gets saved, currently.
+			// Set its history property - even though RemoteFile.history never gets saved, currently.
 			remoteFile.setHistory(history);
 			// Add it to the list
 			addFile(remoteFile);
@@ -406,6 +409,34 @@ public class HomePaneController implements SubController {
 			}
 
 			return;
+		}
+
+		// If the file is a LargeBinaryFile, then create the action it needs and pass it in.
+		if (file instanceof LargeBinaryFile) {
+			final var lbf = (LargeBinaryFile)file;
+			lbf.setFileLinkAction(actionEvent -> {
+				try {
+					// Check if the file is a 'special' file. It will need to be converted
+					// and put in a popup for viewing.
+					if (lbf.isSpecialFile()) {
+						final var accountNumber = lbf.getFileID().getAccountNum();
+						final var deserializer =
+								StandardSerdes.SYS_FILE_SERDES.get(accountNumber);
+						final var json =
+								deserializer.fromRawFile(Files.readAllBytes(lbf.getUnzippedContent().toPath()));
+						PopupMessage.display(lbf.getFilename(), json, true,"CONTINUE");
+					} else {
+						if (Desktop.isDesktopSupported()) {
+							final var c = lbf.getUnzippedContentDirectory();
+							c.deleteOnExit();
+							Desktop.getDesktop().open(c.getAbsoluteFile());
+						}
+					}
+				} catch (final Exception e) {
+					logger.error(e.getMessage());
+					PopupMessage.display("File Link Error", e.getMessage());
+				}
+			});
 		}
 
 		// Build the details box for the RemoteFile

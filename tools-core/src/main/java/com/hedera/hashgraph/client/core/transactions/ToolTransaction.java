@@ -24,7 +24,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -573,6 +572,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				logger.info(Messages.DELAY_MESSAGE, delay);
 				sleep(delay * 1000);
 			}
+
 			final var transactionResponse = transaction.execute(client);
 			receipt = transactionResponse.getReceipt(client);
 		} catch (final HederaClientException | TimeoutException e) {
