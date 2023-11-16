@@ -49,6 +49,7 @@ import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.core.utils.JsonUtils;
+import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -3541,6 +3542,13 @@ public class CreatePaneController implements SubController {
 		largeUpdateFile.deleteOnExit();
 		new File(largeUpdateFile.getAbsolutePath().replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)).deleteOnExit();
 		final var largeBinaryFile = new LargeBinaryFile(FileDetails.parse(largeUpdateFile));
+		if (largeBinaryFile.isSystemFile()) {
+			logger.error("Sign and submit now action cannot be used on a system file.");
+			PopupMessage.display("Cannot Sign and Submit Now",
+					"System files cannot be signed and submitted via the UI at this time. " +
+							"Save the transaction and use the CLI tool to submit this transaction.");
+			return;
+		}
 		// Create and get the full list of the ToolTransactions, including the ToolFileUpdate and ToolFileAppends
 		final var transactions = largeBinaryFile.createTransactionList();
 		if (transactions.isEmpty()) {
