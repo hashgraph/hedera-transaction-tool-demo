@@ -28,6 +28,7 @@ import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import com.hedera.hashgraph.sdk.TransactionReceiptQuery;
+import com.hedera.hashgraph.sdk.TransactionResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -36,11 +37,13 @@ import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 import static java.lang.Thread.sleep;
 
-public class TransactionCallableWorker implements Callable<TxnResult>, GenericFileReadWriteAware {
+public class TransactionCallableWorker implements Callable<CompletableFuture<TxnResult>>, GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(TransactionCallableWorker.class);
 
@@ -83,6 +86,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 		}
 	}
 
+	private final Executor executor;
 	private final Transaction<?> tx;
 	private final int delay;
 	private final String location;
@@ -90,8 +94,10 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 	public final CountDownLatch doneSleeping = new CountDownLatch(1);
 
-	public TransactionCallableWorker(final Transaction<?> tx, final int delay, final String location,
-			final Client client) {
+	public TransactionCallableWorker(final Executor executor, final Transaction<?> tx,
+									 final int delay, final String location,
+									 final Client client) {
+		this.executor = executor;
 		this.tx = tx;
 		this.delay = delay;
 		this.location = location;
@@ -99,7 +105,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 	}
 
 	@Override
-	public TxnResult call() throws Exception {
+	public CompletableFuture<TxnResult> call() throws Exception {
 		try {
 			return process();
 		} finally {
@@ -107,7 +113,7 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 		}
 	}
 
-	public TxnResult process() throws Exception {
+	public CompletableFuture<TxnResult> process() throws Exception {
 		if (tx == null) {
 			throw new HederaClientRuntimeException("Null transaction");
 		}
@@ -124,105 +130,106 @@ public class TransactionCallableWorker implements Callable<TxnResult>, GenericFi
 
 		final var idString = Objects.requireNonNull(tx.getTransactionId()).toString();
 
+		logger.info("Submitting transaction {} to sdk", idString);
+
+		TransactionResponse response;
 		try {
-
-			Status status = null;
-			TransactionReceipt receipt = null;
-
-			try {
-				logger.info("Submitting transaction {} to sdk", idString);
-
-				var response = tx.execute(client);
-				if (response == null) {
-					throw new HederaClientException("Response is null");
-				}
-
-				logger.info("Fetching receipt for transaction {} from sdk", idString);
-
-				receipt = response.getReceiptQuery().setMaxAttempts(2).execute(client);
-
-				if (receipt != null && receipt.status != null) {
-					status = receipt.status;
-					logger.info("got receipt from sdk for {}, with status {}", idString, status);
-				} else {
-					logger.warn("sdk receipt was null or receipt status was null for {}", idString);
-				}
-
-			} catch (final Exception ex) {
-				logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk. Exception -", ex);
+			response = tx.execute(client);
+			if (response == null) {
+				throw new HederaClientException("Response is null");
 			}
+		} catch (Exception ex) {
+			logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk. Exception -", ex);
+			throw ex;
+		}
 
-			final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
-					Status.BUSY, Status.FAIL_INVALID);
+		logger.info("Fetching receipt for transaction {} from sdk", idString);
 
-			long retryDelay = 1000;
-			boolean forceRetry = false;
+		// Create and return the future that will get the receipt
+		return new CompletableFuture<TransactionResponse>().supplyAsync(() -> {
+			try {
+				Status status = null;
+				TransactionReceipt receipt = null;
 
-			//TODO getting the receipt should actually be its own task
-			// so, this should return a gettingReceipt task, not a txnresult
-			// then that should be added to the executor, and that's what the executor stuff should wait for
-			// in the end
-			while (true) {
+				try {
+					receipt = response.getReceiptQuery().setMaxAttempts(2).execute(client);
 
-				if (forceRetry || receipt == null || status == null || retryStatuses.contains(status)) {
+					if (receipt != null && receipt.status != null) {
+						status = receipt.status;
+						logger.info("got receipt from sdk for {}, with status {}", idString, status);
+					} else {
+						logger.warn("sdk receipt was null or receipt status was null for {}", idString);
+					}
+				} catch (final Exception ex) {
+					logger.warn("Error executing transaction " + idString + " and/or getting receipt from sdk. Exception -", ex);
+				}
 
-					logger.info("Trying to manually fetch receipt for transaction {}", idString);
+				final var retryStatuses = EnumSet.of(Status.UNKNOWN, Status.OK, Status.DUPLICATE_TRANSACTION,
+						Status.BUSY, Status.FAIL_INVALID);
 
-					try {
-						var receiptQuery = new TransactionReceiptQuery()
-								.setTransactionId(tx.getTransactionId())
-								.setMaxAttempts(2);
+				long retryDelay = 1000;
+				boolean forceRetry = false;
 
-						if (tx.getNodeAccountIds() != null) {
-							receiptQuery.setNodeAccountIds(tx.getNodeAccountIds());
+				while (true) {
+					if (forceRetry || receipt == null || status == null || retryStatuses.contains(status)) {
+						logger.info("Trying to manually fetch receipt for transaction {}", idString);
+
+						try {
+							var receiptQuery = new TransactionReceiptQuery()
+									.setTransactionId(tx.getTransactionId())
+									.setMaxAttempts(2);
+
+							if (tx.getNodeAccountIds() != null) {
+								receiptQuery.setNodeAccountIds(tx.getNodeAccountIds());
+							}
+
+							logger.info("Submitting manual receipt query for transaction {} to sdk", idString);
+
+							var newReceipt = receiptQuery.execute(client);
+
+							if (newReceipt != null && newReceipt.status != null) {
+								receipt = newReceipt;
+								status = receipt.status;
+								logger.info("got receipt for {}, with status {}", idString, status);
+							} else {
+								logger.warn("receipt or receipt status was null for {}", idString);
+							}
+
+						} catch (final Exception ex) {
+							logger.error("Failed to manually get the transaction receipt for " + idString, ex);
 						}
 
-						logger.info("Submitting manual receipt query for transaction {} to sdk", idString);
-
-						var newReceipt = receiptQuery.execute(client);
-
-						if (newReceipt != null && newReceipt.status != null) {
-							receipt = newReceipt;
-							status = receipt.status;
-							logger.info("got receipt for {}, with status {}", idString, status);
-						} else {
-							logger.warn("receipt or receipt status was null for {}", idString);
-						}
-
-					} catch (final Exception ex) {
-						logger.error("Failed to manually get the transaction receipt for " + idString, ex);
 					}
 
+					forceRetry = true;
+
+					if (receipt != null && status != null && (!retryStatuses.contains(status))) {
+						break;
+					} else if (retryDelay > 30000) {
+						logger.warn("Giving up trying to get receipt for {}, current status is {}", idString, status);
+						break;
+					} else {
+						logger.warn("Got status {}, will retry getting receipt for {} in {}ms", status, idString, retryDelay);
+						sleep(retryDelay);
+						retryDelay *= 1.5;
+					}
 				}
 
-				forceRetry = true;
 
-				if (receipt != null && status != null && (!retryStatuses.contains(status))) {
-					break;
-				} else if (retryDelay > 30000) {
-					logger.warn("Giving up trying to get receipt for {}, current status is {}", idString, status);
-					break;
+				if (receipt != null) {
+
+					logger.info("Worker: Transaction: {}, final status: {}", idString, status);
+
+					storeResponse(receipt, idString);
+					return new TxnResult(idString, Status.SUCCESS.equals(status), "Final status for " + idString + " - " + status);
 				} else {
-					logger.warn("Got status {}, will retry getting receipt for {} in {}ms", status, idString, retryDelay);
-					sleep(retryDelay);
-					retryDelay *= 1.5;
+					throw new HederaClientRuntimeException("could not get receipt for " + idString);
 				}
+			} catch (final Exception e) {
+				logger.error("Worker: Transaction: " + idString + ", failed with error. ", e);
 			}
-
-
-			if (receipt != null) {
-
-				logger.info("Worker: Transaction: {}, final status: {}", idString, status);
-
-				storeResponse(receipt, idString);
-				return new TxnResult(idString, Status.SUCCESS.equals(status), "Final status for " + idString + " - " + status);
-			} else {
-				throw new HederaClientRuntimeException("could not get receipt for " + idString);
-			}
-		} catch (final Exception e) {
-			logger.error("Worker: Transaction: " + idString + ", failed with error. ", e);
-		}
-		return new TxnResult(idString, false, idString + " - Threw Exception");
+			return new TxnResult(idString, false, idString + " - Threw Exception");
+		}, executor);
 	}
 
 	private void sleepUntilNeeded() throws InterruptedException {
