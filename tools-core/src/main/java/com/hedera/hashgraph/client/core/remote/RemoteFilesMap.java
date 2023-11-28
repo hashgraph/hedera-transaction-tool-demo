@@ -200,6 +200,10 @@ public class RemoteFilesMap {
 			try {
 				if (validFile(f)) {
 					final RemoteFile remoteFile = RemoteFile.getSingleRemoteFile(f);
+					if (remoteFile instanceof SoftwareUpdateFile) {
+						((SoftwareUpdateFile)remoteFile).setOldVersion(getSoftwareVersionFromVersionStr(version));
+						((SoftwareUpdateFile)remoteFile).setOldStamp(getBuildDateSecondsFromVersionStr(version));
+					}
 					if (remoteFile.isValid()) {
 						final var remoteLocation = new File(remoteFile.getParentPath() + File.separator + "History",
 								getBaseName(remoteFile.getName()) + "." + METADATA_EXTENSION);
