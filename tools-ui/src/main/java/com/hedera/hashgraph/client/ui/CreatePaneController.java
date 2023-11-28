@@ -3753,9 +3753,8 @@ public class CreatePaneController implements SubController {
 					for (var accountId : updateAccountList.getItems()) {
 						final var accountIdJson = accountId.asJSON();
 						transactionJson.add(ACCOUNT_TO_UPDATE, accountIdJson);
-						final var interval = Long.parseLong(intervalTextField.getText());
 						var incrementedTime = new Timestamp(validStartTimestamp.asDuration()
-								.plusNanos(interval * count++));
+								.plusNanos(10l * count++));
 						transactionJson.add(TRANSACTION_VALID_START_FIELD_NAME, incrementedTime.asJSON());
 						if (isUpdateAccountFeePayerCheckBox.isSelected()) {
 							transactionJson.add(FEE_PAYER_ACCOUNT_FIELD_NAME, accountIdJson);
