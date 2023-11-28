@@ -764,14 +764,8 @@ public class HomePaneController implements SubController {
 			if (answer) {
 				return;
 			}
-			try {
-				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
-				controller.historyPaneController.addToHistory(rf);
-			} catch (final HederaClientException e) {
-				logger.error("buildUpdateButton failed", e);
-			}
 
-			runUpdate(rf.getPath());
+			runUpdate(rf);
 		});
 		return button;
 	}
@@ -797,19 +791,27 @@ public class HomePaneController implements SubController {
 		}
 	}
 
-	private void runUpdate(final String localLocation) {
+	private void runUpdate(final RemoteFile rf) {
 		try {
-			final var processBuilder = new ProcessBuilder("/usr/bin/open", localLocation);
+			final var processBuilder = new ProcessBuilder("/usr/bin/open", rf.getPath());
 			final var process = processBuilder.start();
 			final var exitCode = process.waitFor();
 
 			if (exitCode == 0) {
+				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
+				controller.historyPaneController.addToHistory(rf);
 				System.exit(0);
 			} else {
 				logger.error("The update finished with exit code {}", exitCode);
 				PopupMessage.display("Error opening update file",
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
+		} catch (final HederaClientException e) {
+			logger.error("Failed to move SoftwareUpdateFile to history after a successful update", e);
+			PopupMessage.display("The application has been updated, " +
+					"but the update file failed to be moved to history. " +
+					"\nNo further action is required, the application will now close.", "CLOSE");
+			System.exit(0);
 		} catch (final IOException e) {
 			logger.error("runUpdate failed", e);
 			PopupMessage.display("Error opening update file",
