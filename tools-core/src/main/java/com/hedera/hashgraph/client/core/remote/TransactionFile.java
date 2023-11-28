@@ -668,11 +668,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			try {
 				moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
 				setHistory(true);
-			} catch (final HederaClientException e) {
-				logger.error(e);
-			}
-			try {
+
 				onSucceed.run();
+			} catch (HederaClientException e) {
+				logger.error(e);
 			} catch (Exception e) {
 				throw new HederaClientRuntimeException(e);
 			}

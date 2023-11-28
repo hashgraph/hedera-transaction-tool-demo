@@ -748,12 +748,6 @@ public class BatchFile extends RemoteFile {
 		final DoubleProperty progress = new SimpleDoubleProperty(1);
 
 		try {
-			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
-			setHistory(true);
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
-		try {
 			if (new File(tempStorage).exists()) {
 				FileUtils.deleteDirectory(new File(tempStorage));
 			}
@@ -818,7 +812,12 @@ public class BatchFile extends RemoteFile {
 
 			task.setOnSucceeded(workerStateEvent -> {
 				try {
+					moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
+					setHistory(true);
+
 					onSucceed.run();
+				} catch (HederaClientException e) {
+					logger.error(e);
 				} catch (Exception e) {
 					throw new HederaClientRuntimeException(e);
 				}
