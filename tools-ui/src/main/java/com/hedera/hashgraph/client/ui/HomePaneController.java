@@ -280,9 +280,6 @@ public class HomePaneController implements SubController {
 						if (controller.historyPaneController.isHistory(file.hashCode())) {
 							file.setHistory(true);
 						} else {
-							if (file instanceof TransactionFile) {
-								setupKeyTree((TransactionFile) file);
-							}
 							buildAndAddBox(file);
 						}
 					}
@@ -437,6 +434,11 @@ public class HomePaneController implements SubController {
 					PopupMessage.display("File Link Error", e.getMessage());
 				}
 			});
+		}
+
+		// If the file is a TransactionFile, set up the key tree(s)
+		if (file instanceof TransactionFile) {
+			setupKeyTree((TransactionFile) file);
 		}
 
 		// Build the details box for the RemoteFile
