@@ -122,6 +122,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
 import org.jetbrains.annotations.NotNull;
@@ -459,13 +460,22 @@ public class CreatePaneController implements SubController {
 	private TimeFieldSet startFieldsSet;
 	private TimeFieldSet systemFieldsSet;
 	private TimeFieldSet freezeFieldsSet;
-
 	// endregion
+
+	// In order to prevent duplicate listeners, and other such things, this flag has been added.
+	// The initializePane method is called in too many situations, resulting in duplicate listeners
+	// and the like. This will help prevent that.
+	private boolean initialized = false;
 
 	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
-
+	//TODO
+//this one, and all the other panes, gets called more than it should. everytime it is called, more listeners are added.
+//i only want to call init once, though with this code that would be tough.
+//		maybe I just need an 'initialized' flag, that just ensures listeners are only added if flag is false
+//	or just remove all listeners before adding? as long as i don't use multiple listners on same component on purpose'
+//	its a lot of work either way
 	@Override
 	public void initializePane() {
 		setupOutputDirectoriesList();
@@ -505,6 +515,8 @@ public class CreatePaneController implements SubController {
 		setupTooltips();
 
 		setupSelectTransaction();
+
+		initialized = true;
 	}
 
 	private void setupSelectTransaction() {
@@ -536,12 +548,14 @@ public class CreatePaneController implements SubController {
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
 				acceptToAccountButton, errorInvalidToAccount);
 
-		transferFromAmountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
-						"[^\\d.]"));
-		transferToAmountTextField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixNumericTextField(transferToAmountTextField, newValue, "\\d*",
-						"[^\\d.]"));
+		if (!initialized) {
+			transferFromAmountTextField.textProperty().addListener(
+					(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
+							"[^\\d.]"));
+			transferToAmountTextField.textProperty().addListener(
+					(observable, oldValue, newValue) -> fixNumericTextField(transferToAmountTextField, newValue, "\\d*",
+							"[^\\d.]"));
+		}
 
 		final BooleanProperty transferBoolean = new SimpleBooleanProperty();
 		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
@@ -558,13 +572,15 @@ public class CreatePaneController implements SubController {
 		autoCompleteNickname.managedProperty().bind(autoCompleteNickname.visibleProperty());
 		copyFromAccountHBox.getChildren().clear();
 		copyFromAccountHBox.getChildren().add(autoCompleteNickname);
-		createSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> createRSRLabel.setText(String.valueOf(t1)));
-		declineStakingRewards.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(String.valueOf(t1)));
+		if (!initialized) {
+			createSignatureRequired.selectedProperty().addListener(
+					(observableValue, aBoolean, t1) -> createRSRLabel.setText(String.valueOf(t1)));
+			declineStakingRewards.selectedProperty().addListener(
+					(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(String.valueOf(t1)));
 
-		createAccountMemo.textProperty().addListener(
-				(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
+			createAccountMemo.textProperty().addListener(
+					(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
+		}
 		createKeyButton.setOnAction(e -> {
 			autoCompleteNickname.clear();
 			autoCompleteNickname.setVisible(false);
@@ -590,13 +606,6 @@ public class CreatePaneController implements SubController {
 	private void setupUpdateFields() {
 		setupKeyPane(new TreeView<>(), updateNewKey);
 
-		updateAutoRenew.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixNumericTextField(updateAutoRenew, newValue, "\\d*",
-						REGEX));
-		updateReceiverSignatureRequired.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> updateRSRLabel.setText(String.valueOf(t1)));
-		declineStakingRewardsNew.selectedProperty().addListener(
-				(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(String.valueOf(t1)));
 		loadAccountNicknames();
 		final var updateFromNickName = new AutoCompleteNickname(accountNickNames);
 		updateFromNickName.setVisible(false);
@@ -606,15 +615,6 @@ public class CreatePaneController implements SubController {
 		formatAccountRangeTextField(updateAccountID, updateAccountList, invalidUpdateAccountToUpdate, updateAccountID.getParent());
 		formatAccountTextField(stakedAccountIdNew, invalidStakedAccountIdUpdate, stakedAccountIdNew.getParent());
 		numericFieldListen(stakedNodeIdNew);
-
-		updateAccountID.focusedProperty().addListener((obs, oldValue, newValue) -> {
-			// If the action is performed on the textField (enter key), it loses focus and will trigger
-			// this as well.
-			// If newValue is false (focus is lost) AND the field isn't empty, try to preload the files
-			if (Boolean.FALSE.equals(newValue) && !"".equals(updateAccountID.getText())) {
-				findAccountInfoAndPreloadFields();
-			}
-		});
 
 		isUpdateAccountFeePayerCheckBox.setOnAction(event -> {
 			if (event.getSource() instanceof CheckBox) {
@@ -642,8 +642,25 @@ public class CreatePaneController implements SubController {
 			newKeyJSON = key;
 		});
 
-		updateAccountMemoNew.textProperty().addListener(
-				(observableValue, s, t1) -> setMemoByteCounter(updateAccountMemoNew, updateBytesRemaining));
+		if (!initialized) {
+			updateAutoRenew.textProperty().addListener(
+					(observable, oldValue, newValue) -> fixNumericTextField(updateAutoRenew, newValue, "\\d*",
+							REGEX));
+			updateReceiverSignatureRequired.selectedProperty().addListener(
+					(observableValue, aBoolean, t1) -> updateRSRLabel.setText(String.valueOf(t1)));
+			declineStakingRewardsNew.selectedProperty().addListener(
+					(observableValue, aBoolean, t1) -> declineStakingRewardsLabelUpdate.setText(String.valueOf(t1)));
+			updateAccountID.focusedProperty().addListener((obs, oldValue, newValue) -> {
+				// If the action is performed on the textField (enter key), it loses focus and will trigger
+				// this as well.
+				// If newValue is false (focus is lost) AND the field isn't empty, try to preload the files
+				if (Boolean.FALSE.equals(newValue) && !"".equals(updateAccountID.getText())) {
+					findAccountInfoAndPreloadFields();
+				}
+			});
+			updateAccountMemoNew.textProperty().addListener(
+					(observableValue, s, t1) -> setMemoByteCounter(updateAccountMemoNew, updateBytesRemaining));
+		}
 
 		updateFromNickName.setOnKeyReleased(
 				keyEvent -> getKeyFromNickname(updateFromNickName, keyEvent.getCode(), updateNewKey));
@@ -675,34 +692,36 @@ public class CreatePaneController implements SubController {
 		});
 
 		formatAccountTextField(updateFileID, invalidUpdateFileToUpdate, updateFileID.getParent());
-		// updateFileId needs a special warning if fileId is between 150-159.
-		// This warning will let the user know that the update can only be submitted to a single node
-		// and that the valid increment between each transaction will be 1 nano.
-		updateFileID.focusedProperty().addListener((obj, oldValue, newValue) -> {
-			if (Boolean.FALSE.equals(newValue)) {
-				try {
-					// Try to parse the identifier
-					final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
-					// If successful, determine if it is a super special (150-159) file
-					if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
-						final var message = String.format("The fileId (%s) is reserved for system files. %n" +
-								"In order to update this file, this transaction must be submitted to only one node. %n" +
-								"The interval between transactions will also be automatically set.",
-								id.toReadableString());
-						PopupMessage.display("Reserved FileId", message);
-						intervalTextField.setEditable(false);
+		if (!initialized) {
+			// updateFileId needs a special warning if fileId is between 150-159.
+			// This warning will let the user know that the update can only be submitted to a single node
+			// and that the valid increment between each transaction will be 1 nano.
+			updateFileID.focusedProperty().addListener((obj, oldValue, newValue) -> {
+				if (Boolean.FALSE.equals(newValue)) {
+					try {
+						// Try to parse the identifier
+						final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
+						// If successful, determine if it is a super special (150-159) file
+						if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
+							final var message = String.format("The fileId (%s) is reserved for system files. %n" +
+											"In order to update this file, this transaction must be submitted to only one node. %n" +
+											"The interval between transactions will also be automatically set.",
+									id.toReadableString());
+							PopupMessage.display("Reserved FileId", message);
+							intervalTextField.setEditable(false);
 
-						if (nodeAccountList.getItems().size() > 1) {
-							final var node = nodeAccountList.getItems().get(0);
-							nodeAccountField.setText(node.toReadableString());
+							if (nodeAccountList.getItems().size() > 1) {
+								final var node = nodeAccountList.getItems().get(0);
+								nodeAccountField.setText(node.toReadableString());
+							}
 						}
+					} catch (Exception e) {
+						// No need to handle any errors.
+						intervalTextField.setEditable(true);
 					}
-				} catch (Exception e) {
-					// No need to handle any errors.
-					intervalTextField.setEditable(true);
 				}
-			}
-		});
+			});
+		}
 
 		//TODO this never gets deleted after viewing? another issue that could be resolved if temp_directory/txntool is used
 		// and cleaned up on closing the app or something
@@ -741,31 +760,32 @@ public class CreatePaneController implements SubController {
 		systemTypeChoiceBox.getItems().addAll("File", "Smart Contract");
 		systemTypeChoiceBox.getSelectionModel().select(0);
 
-		systemTypeChoiceBox.getSelectionModel().selectedIndexProperty().addListener((observableValue, number, t1) -> {
-			switch (t1.intValue()) {
-				case 0:
-					entityLabel.setText("File ID");
-					expirationLabel.setText("File will expire on:");
-					break;
-				case 1:
-					entityLabel.setText("Contract ID");
-					expirationLabel.setText("Contract will expire on:");
-					break;
-				default:
-					if (!systemTypeChoiceBox.getItems().isEmpty()) {
-						logger.error("Unexpected value: {}", t1.intValue());
-					} else {
-						logger.info("System type choice box cleared");
-					}
-			}
-		});
-
-
 		systemActionChoiceBox.getItems().clear();
 		systemActionChoiceBox.getItems().addAll("Remove Content", "Restore Content");
 		systemActionChoiceBox.getSelectionModel().select(0);
-		systemActionChoiceBox.getSelectionModel().selectedIndexProperty().addListener(
-				(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
+
+		if (!initialized) {
+			systemTypeChoiceBox.getSelectionModel().selectedIndexProperty().addListener((observableValue, number, t1) -> {
+				switch (t1.intValue()) {
+					case 0:
+						entityLabel.setText("File ID");
+						expirationLabel.setText("File will expire on:");
+						break;
+					case 1:
+						entityLabel.setText("Contract ID");
+						expirationLabel.setText("Contract will expire on:");
+						break;
+					default:
+						if (!systemTypeChoiceBox.getItems().isEmpty()) {
+							logger.error("Unexpected value: {}", t1.intValue());
+						} else {
+							logger.info("System type choice box cleared");
+						}
+				}
+			});
+			systemActionChoiceBox.getSelectionModel().selectedIndexProperty().addListener(
+					(observableValue, number, t1) -> systemExpirationVBox.setVisible(t1.intValue() == 0));
+		}
 
 		formatAccountTextField(entityID, invalidEntity, entityID.getParent());
 
@@ -803,70 +823,72 @@ public class CreatePaneController implements SubController {
 		freezeTypeChoiceBox.getSelectionModel().select(SELECT_FREEZE_TYPE);
 		noise = false;
 
-		freezeTypeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
-			if (noise) {
-				return;
-			}
-			cleanCommonFields();
-			cleanFreezeExclusiveFields();
-			if (SELECT_FREEZE_TYPE.equals(t1)) {
-				logger.info("Back to select");
-				cleanAllFreezeFields();
-				freezeFileVBox.setVisible(false);
-				freezeStartVBox.setVisible(false);
-				return;
-			}
-			if (FREEZE_AND_UPGRADE.equals(t1)) {
-				t1 = "freeze upgrade";
-			}
-			final var type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
-			switch (type) {
-				case FREEZE_ONLY:
-					// Freezes the network at the specified time. The start_time field must be provided and must
-					// reference a future time. Any values specified for the update_file and file_hash fields will
-					// be ignored. This transaction does not perform any network changes or upgrades and requires
-					// manual intervention to restart the network.
-					logger.info("Freeze only selected");
-					freezeFileVBox.setVisible(false);
-					freezeStartVBox.setVisible(true);
-					break;
-				case PREPARE_UPGRADE:
-					// A non-freezing operation that initiates network wide preparation in advance of a scheduled
-					// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
-					// start_time field may be omitted and any value present will be ignored.
-					logger.info("Prepare upgrade selected");
-					freezeFileVBox.setVisible(true);
-					freezeStartVBox.setVisible(false);
-					break;
-				case FREEZE_UPGRADE:
-					// Freezes the network at the specified time and performs the previously prepared automatic
-					// upgrade across the entire network.
-					logger.info("Freeze upgrade selected");
-					freezeFileVBox.setVisible(true);
-					freezeStartVBox.setVisible(true);
-					break;
-				case FREEZE_ABORT:
-					// Aborts a pending network freeze operation.
-					logger.info("Freeze abort selected");
+		if (!initialized) {
+			freezeTypeChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, s, t1) -> {
+				if (noise) {
+					return;
+				}
+				cleanCommonFields();
+				cleanFreezeExclusiveFields();
+				if (SELECT_FREEZE_TYPE.equals(t1)) {
+					logger.info("Back to select");
+					cleanAllFreezeFields();
 					freezeFileVBox.setVisible(false);
 					freezeStartVBox.setVisible(false);
-					break;
-				case TELEMETRY_UPGRADE:
-					// Performs an immediate upgrade on auxilary services and containers providing
-					// telemetry/metrics. Does not impact network operations.
-					logger.info("Telemetry upgrade selected");
-					freezeFileVBox.setVisible(true);
-					freezeStartVBox.setVisible(true);
-					break;
-				default:
-					throw new IllegalStateException("Unexpected value: " + type);
-			}
-		});
-		freezeFileHashTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.FALSE.equals(t1)) {
-				isValidHash();
-			}
-		});
+					return;
+				}
+				if (FREEZE_AND_UPGRADE.equals(t1)) {
+					t1 = "freeze upgrade";
+				}
+				final var type = FreezeType.valueOf(t1.replace(" ", "_").toUpperCase(Locale.ROOT));
+				switch (type) {
+					case FREEZE_ONLY:
+						// Freezes the network at the specified time. The start_time field must be provided and must
+						// reference a future time. Any values specified for the update_file and file_hash fields will
+						// be ignored. This transaction does not perform any network changes or upgrades and requires
+						// manual intervention to restart the network.
+						logger.info("Freeze only selected");
+						freezeFileVBox.setVisible(false);
+						freezeStartVBox.setVisible(true);
+						break;
+					case PREPARE_UPGRADE:
+						// A non-freezing operation that initiates network wide preparation in advance of a scheduled
+						// freeze upgrade. The update_file and file_hash fields must be provided and valid. The
+						// start_time field may be omitted and any value present will be ignored.
+						logger.info("Prepare upgrade selected");
+						freezeFileVBox.setVisible(true);
+						freezeStartVBox.setVisible(false);
+						break;
+					case FREEZE_UPGRADE:
+						// Freezes the network at the specified time and performs the previously prepared automatic
+						// upgrade across the entire network.
+						logger.info("Freeze upgrade selected");
+						freezeFileVBox.setVisible(true);
+						freezeStartVBox.setVisible(true);
+						break;
+					case FREEZE_ABORT:
+						// Aborts a pending network freeze operation.
+						logger.info("Freeze abort selected");
+						freezeFileVBox.setVisible(false);
+						freezeStartVBox.setVisible(false);
+						break;
+					case TELEMETRY_UPGRADE:
+						// Performs an immediate upgrade on auxilary services and containers providing
+						// telemetry/metrics. Does not impact network operations.
+						logger.info("Telemetry upgrade selected");
+						freezeFileVBox.setVisible(true);
+						freezeStartVBox.setVisible(true);
+						break;
+					default:
+						throw new IllegalStateException("Unexpected value: " + type);
+				}
+			});
+			freezeFileHashTextField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+				if (Boolean.FALSE.equals(t1)) {
+					isValidHash();
+				}
+			});
+		}
 		freezeFileHashTextField.setOnKeyReleased(event -> {
 			if (KeyCode.ENTER.equals(event.getCode()) || KeyCode.TAB.equals(event.getCode())) {
 				freezeFileHashTextField.getParent().requestFocus();
@@ -1402,10 +1424,12 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
+		if (!initialized) {
+			table.getItems().addListener(
+					(ListChangeListener<AccountAmountStrings>) change -> table.setMinHeight(table.getFixedCellSize() * (
+							!change.getList().isEmpty() ? table.getItems().size() + 1.1 : 2.1)));
 
-		table.getItems().addListener(
-				(ListChangeListener<AccountAmountStrings>) change -> table.setMinHeight(table.getFixedCellSize() * (
-						!change.getList().isEmpty() ? table.getItems().size() + 1.1 : 2.1)));
+		}
 		table.prefHeightProperty().bind(
 				table.fixedCellSizeProperty().multiply(Bindings.size(table.getItems()).add(1.1)));
 
@@ -1477,11 +1501,13 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
-		amountTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				setHBarFormat(amountTextField);
-			}
-		});
+		if (!initialized) {
+			amountTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					setHBarFormat(amountTextField);
+				}
+			});
+		}
 
 
 		acceptButton.setOnKeyPressed((KeyEvent event) -> {
@@ -2328,15 +2354,17 @@ public class CreatePaneController implements SubController {
 	private void setupTokenAssociationsFields(final Label errorLabel, final TextField textField) {
 		errorLabel.setText(
 				String.format("Maximum number of associations cannot exceed %d", MAX_TOKEN_AUTOMATIC_ASSOCIATIONS));
-		textField.textProperty().addListener(
-				(observable, oldValue, newValue) -> mtaChangeListener(oldValue, newValue, textField,
-						errorLabel));
-		textField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
-			if (Boolean.TRUE.equals(t1)) {
-				textField.selectAll();
-			}
-			errorLabel.setVisible(false);
-		});
+		if (!initialized) {
+			textField.textProperty().addListener(
+					(observable, oldValue, newValue) -> mtaChangeListener(oldValue, newValue, textField,
+							errorLabel));
+			textField.focusedProperty().addListener((observableValue, aBoolean, t1) -> {
+				if (Boolean.TRUE.equals(t1)) {
+					textField.selectAll();
+				}
+				errorLabel.setVisible(false);
+			});
+		}
 	}
 
 	private void mtaChangeListener(final String oldValue, final String newValue, final TextField textField,
@@ -2356,12 +2384,14 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void numericFieldListen(final TextField textField) {
-		textField.textProperty().addListener(
-				(observable, oldValue, newValue) -> {
-					if (!newValue.matches("\\d*")) {
-						textField.setText(newValue.replaceAll("\\D", ""));
-					}
-				});
+		if (!initialized) {
+			textField.textProperty().addListener(
+					(observable, oldValue, newValue) -> {
+						if (!newValue.matches("\\d*")) {
+							textField.setText(newValue.replaceAll("\\D", ""));
+						}
+					});
+		}
 	}
 
 	private void setMemoByteCounter(final TextInputControl textField, final Label label) {
@@ -2975,9 +3005,6 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void setupCommonFieldsEvents() {
-		memoField.textProperty().addListener(
-				(observableValue, s, t1) -> setMemoByteCounter(memoField, transactionMemoByteCount));
-
 		nodeAccountField.setText(controller.getDefaultNodeID());
 
 		startFieldsSet = new TimeFieldSet(datePicker, hourField, minuteField, secondsField, nanosField, timeZoneHBox,
@@ -2985,42 +3012,47 @@ public class CreatePaneController implements SubController {
 		startFieldsSet.configureDateTime(LocalDateTime.now());
 
 		formatAccountRangeTextField(nodeAccountField, nodeAccountList, invalidNode, feePayerAccountField);
-		nodeAccountField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
-			if (Boolean.FALSE.equals(newValue)) {
-				// If this is a file update, and the fileId is 'super special', then nodeAccountField can only accept 1
-				// account.
-				try {
-					// Try to parse the identifier
-					final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
-					// If successful, determine if it is a super special (150-159) file
-					if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
-						// Now get the text entered to nodeAccount and ensure it is a singular account.
-						if (nodeAccountList.getItems().size() > 1) {
-							final var message = String.format("The fileId (%s) is reserved for system files. %n" +
-											"In order to update this file, this transaction must be submitted to only one node.",
-									id.toReadableString());
-							PopupMessage.display("Reserved FileId", message);
-							final var node = nodeAccountList.getItems().get(0);
-							nodeAccountField.setText(node.toReadableString());
-						}
-					}
-				} catch (Exception e) {
-					// No need to handle any errors.
-				}
-			}
-		});
 		formatAccountTextField(feePayerAccountField, invalidFeePayer, feePayerAccountField.getParent());
 		feePayerAccountField.disableProperty().bind(isUpdateAccountFeePayerCheckBox.selectedProperty());
 
-		createCommentsTextArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
-			setTextSizeLimit(createCommentsTextArea, LIMIT, oldValue, newValue);
-			if (newValue.intValue() > oldValue.intValue() && createCommentsTextArea.getText().length() >= LIMIT) {
-				createCommentsTextArea.setText(createCommentsTextArea.getText().substring(0, LIMIT));
-			}
+		if (!initialized) {
+			memoField.textProperty().addListener(
+					(observableValue, s, t1) -> setMemoByteCounter(memoField, transactionMemoByteCount));
 
-			createCharsLeft.setText(
-					String.format("Characters left: %d", LIMIT - createCommentsTextArea.getText().length()));
-		});
+			nodeAccountField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
+				if (Boolean.FALSE.equals(newValue)) {
+					// If this is a file update, and the fileId is 'super special', then nodeAccountField can only accept 1
+					// account.
+					try {
+						// Try to parse the identifier
+						final var id = Identifier.parse(updateFileID.getText(), controller.getCurrentNetwork());
+						// If successful, determine if it is a super special (150-159) file
+						if (id.getAccountNum() >= 150 && id.getAccountNum() <= 159) {
+							// Now get the text entered to nodeAccount and ensure it is a singular account.
+							if (nodeAccountList.getItems().size() > 1) {
+								final var message = String.format("The fileId (%s) is reserved for system files. %n" +
+												"In order to update this file, this transaction must be submitted to only one node.",
+										id.toReadableString());
+								PopupMessage.display("Reserved FileId", message);
+								final var node = nodeAccountList.getItems().get(0);
+								nodeAccountField.setText(node.toReadableString());
+							}
+						}
+					} catch (Exception e) {
+						// No need to handle any errors.
+					}
+				}
+			});
+			createCommentsTextArea.lengthProperty().addListener((observable, oldValue, newValue) -> {
+				setTextSizeLimit(createCommentsTextArea, LIMIT, oldValue, newValue);
+				if (newValue.intValue() > oldValue.intValue() && createCommentsTextArea.getText().length() >= LIMIT) {
+					createCommentsTextArea.setText(createCommentsTextArea.getText().substring(0, LIMIT));
+				}
+
+				createCharsLeft.setText(
+						String.format("Characters left: %d", LIMIT - createCommentsTextArea.getText().length()));
+			});
+		}
 
 		setNowValidStart.setOnAction(
 				actionEvent -> {
@@ -3106,11 +3138,13 @@ public class CreatePaneController implements SubController {
 		textField.setOnAction(e -> {
 			nextNode.requestFocus();
 		});
-		textField.focusedProperty().addListener(((observableValue, oldValue, newValue) -> {
-			if (Boolean.FALSE.equals(newValue)) {
-				parseAccountId(textField, listView, errorLabel);
-			}
-		}));
+		if (!initialized) {
+			textField.focusedProperty().addListener(((observableValue, oldValue, newValue) -> {
+				if (Boolean.FALSE.equals(newValue)) {
+					parseAccountId(textField, listView, errorLabel);
+				}
+			}));
+		}
 		textField.styleProperty().bind(
 				Bindings.when(new SimpleListProperty<>(listView.getItems()).emptyProperty())
 						.then(TEXTFIELD_DEFAULT).otherwise(TEXTFIELD_WITH_LIST_DEFAULT));
@@ -3217,11 +3251,13 @@ public class CreatePaneController implements SubController {
 				nextNode.requestFocus();
 			}
 		});
-		textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				accountTFRemoveFocus(textField, errorLabel);
-			}
-		});
+		if (!initialized) {
+			textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					accountTFRemoveFocus(textField, errorLabel);
+				}
+			});
+		}
 	}
 
 	private void accountTFRemoveFocus(final TextField textField, final Label errorLabel) {
@@ -3277,11 +3313,13 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
-		textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				setHBarFormat(textField);
-			}
-		});
+		if (!initialized) {
+			textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					setHBarFormat(textField);
+				}
+			});
+		}
 	}
 
 	private void storeTransactionAndComment(final Pair<UserComments, ToolTransaction> pair,
@@ -3410,33 +3448,37 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void setupHbarNumberField(final TextField currencyField) {
-		currencyField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixNumericTextField(currencyField, newValue, "[^\\d.\\s]",
-						"[^\\d.\\s]"));
-		currencyField.setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-				setHBarFormat(currencyField);
-			}
-		});
-		currencyField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				setHBarFormat(currencyField);
-			}
-		});
+		if (!initialized) {
+			currencyField.textProperty().addListener(
+					(observable, oldValue, newValue) -> fixNumericTextField(currencyField, newValue, "[^\\d.\\s]",
+							"[^\\d.\\s]"));
+			currencyField.setOnKeyReleased(keyEvent -> {
+				if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+					setHBarFormat(currencyField);
+				}
+			});
+			currencyField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					setHBarFormat(currencyField);
+				}
+			});
+		}
 	}
 
 	private void setupIntNumberField(final TextField intField, final int limit) {
-		intField.textProperty().addListener(
-				(observable, oldValue, newValue) -> fixNumericTextField(intField, newValue, "\\d*", REGEX));
-		intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				try {
-					intField.setText(String.valueOf(Math.min(Integer.parseInt(intField.getText()), limit)));
-				} catch (final NumberFormatException e) {
-					logger.error("Cannot parse field");
+		if (!initialized) {
+			intField.textProperty().addListener(
+					(observable, oldValue, newValue) -> fixNumericTextField(intField, newValue, "\\d*", REGEX));
+			intField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					try {
+						intField.setText(String.valueOf(Math.min(Integer.parseInt(intField.getText()), limit)));
+					} catch (final NumberFormatException e) {
+						logger.error("Cannot parse field");
+					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	private void setupManagedProperty(final Node... nodes) {
@@ -3446,11 +3488,12 @@ public class CreatePaneController implements SubController {
 	}
 
 	private void setupTextFieldResizeProperty(final TextField... textFields) {
-		for (final var tf : textFields) {
-			tf.setMinWidth(300);
-			tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
+		if (!initialized) {
+			for (final var tf : textFields) {
+				tf.setMinWidth(300);
+				tf.textProperty().addListener((ov, prevText, currText) -> resizeTextField(tf, currText));
+			}
 		}
-
 	}
 
 	private void resizeTextField(final TextField tf, final String currText) {
