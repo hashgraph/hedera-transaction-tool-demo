@@ -754,17 +754,6 @@ public class HomePaneController implements SubController {
 	private Button buildUpdateButton(final RemoteFile rf) {
 		final var button = buildBlueButton("UPDATE");
 		button.setOnAction(actionEvent -> {
-			var answer = false;
-			if (!verifySignature(rf.getPath())) {
-				answer = PopupMessage.display("Unverified Update",
-						"The update package cannot be verified if you want to continue the update press the CONTINUE " +
-								"button, otherwise CANCEL",
-						true, "CANCEL", "CONTINUE");
-			}
-			if (answer) {
-				return;
-			}
-
 			runUpdate(rf);
 		});
 		return button;
