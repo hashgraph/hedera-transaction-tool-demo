@@ -1132,11 +1132,10 @@ public class CreatePaneController implements SubController {
 			if (!missingAccounts.isEmpty()) {
 				PopupMessage.display("Missing account information",
 						String.format(
-								"In order to display data regarding %s %s, " +
+								"In order to display data regarding %s: %s -  " +
 										"please download the information from the network.",
 								missingAccounts.size() > 1 ? "accounts" : "account",
 								String.join(",", missingAccounts)));
-				nodeAccountList.getItems().clear();
 				return;
 			}
 			// Load public keys before creating any key TreeViews
@@ -3194,7 +3193,7 @@ public class CreatePaneController implements SubController {
 			}
 			updateFeePayer();
 		} catch (final Exception e) {
-			nodeAccountList.getItems().clear();
+			listView.getItems().clear();
 			errorLabel.setVisible(true);
 			logger.error("Invalid Node ID(s): '" + text + "'", e);
 		}
