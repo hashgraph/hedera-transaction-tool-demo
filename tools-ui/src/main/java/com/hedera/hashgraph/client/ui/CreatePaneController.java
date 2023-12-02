@@ -49,7 +49,6 @@ import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.client.core.utils.JsonUtils;
-import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.KeyDesignerPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
@@ -122,7 +121,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.util.encoders.Hex;
 import org.controlsfx.control.ToggleSwitch;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +132,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -470,12 +469,7 @@ public class CreatePaneController implements SubController {
 	void injectMainController(final Controller controller) {
 		this.controller = controller;
 	}
-	//TODO
-//this one, and all the other panes, gets called more than it should. everytime it is called, more listeners are added.
-//i only want to call init once, though with this code that would be tough.
-//		maybe I just need an 'initialized' flag, that just ensures listeners are only added if flag is false
-//	or just remove all listeners before adding? as long as i don't use multiple listners on same component on purpose'
-//	its a lot of work either way
+
 	@Override
 	public void initializePane() {
 		setupOutputDirectoriesList();
@@ -1796,13 +1790,19 @@ public class CreatePaneController implements SubController {
 		final var lfuFile = createLargeFileUpdateFiles();
 
 		final List<File> files = new ArrayList<>();
-		files.add(new File(lfuFile));
+		final var f = new File(lfuFile);
+		final var outputPath = getOutputPathForLocation(remoteLocation, f.getName());
+		// If the outputPath is null, then the file already exists and the user does not want to
+		// replace the existing file.
+		if (outputPath == null) return;
+		files.add(f);
+
 		files.add(new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TXT_EXTENSION)));
 		final var tcmFile = new File(lfuFile.replace(LARGE_BINARY_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
 		if (tcmFile.exists()) {
 			files.add(tcmFile);
 		}
-		moveToOutput(files, remoteLocation);
+		moveToOutput(files, outputPath);
 
 		for (final var file : files) {
 			try {
@@ -3341,16 +3341,23 @@ public class CreatePaneController implements SubController {
 				.build();
 
 		var i = 0;
+		// This will likely never already  exist in temp storage
 		var txFile = new File(tempStorage + File.separator + filenames + "." + TRANSACTION_EXTENSION);
 		while (txFile.exists()) {
 			txFile = new File(tempStorage + File.separator + filenames + i++ + "." + TRANSACTION_EXTENSION);
 		}
+
+		final var outputPath = getOutputPathForLocation(remoteLocation, txFile.getName());
+		// If the outputPath is null, then the file already exists and the user does not want to
+		// replace the existing file.
+		if (outputPath == null) return;
 
 		final var txtFile = new File(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION, COMMENT_EXTENSION));
 		final var tcmFile = new File(txFile.getAbsolutePath().replace(TRANSACTION_EXTENSION,
 				TRANSACTION_CREATION_METADATA_EXTENSION));
 
 		final List<File> files = new ArrayList<>();
+//		and check here, but be sure to use the remotelocation+filename here (and the other one)
 		files.add(txFile);
 		files.add(txtFile);
 
@@ -3366,7 +3373,7 @@ public class CreatePaneController implements SubController {
 			controller.displaySystemMessage(e);
 		}
 
-		moveToOutput(files, remoteLocation);
+		moveToOutput(files, outputPath);
 
 		// Remove all temporary files from local storage
 		try {
@@ -3398,17 +3405,33 @@ public class CreatePaneController implements SubController {
 		selectTransactionType.setValue(SELECT_STRING);
 	}
 
-	private void moveToOutput(final List<File> files, final FileService remoteLocation) {
+	private String getOutputPathForLocation(final FileService remoteLocation, final String fileName) {
 		final var remote = remoteLocation.getPath() + File.separator;
+		var outputFolder = File.separator;
+		if (controller.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {
+			final var user = controller.getEmailFromMap(remoteLocation.getPath());
+			outputFolder = "".equals(user) ? File.separator : "/OutputFiles/" + user + File.separator;
+			logger.info("Exporting file: {}", fileName);
+		}
+		final var newFile = new File(remote + outputFolder + fileName);
+		// This should nearly never happen. If the user imports a transaction and immediately exports it to the same
+		// location, that would in theory be the only time it would happen.
+		if (newFile.exists()) {
+			if (!PopupMessage.display("Overwrite file",
+					"This transaction already exists in the selected location. " +
+							"Do you want to overwrite this transaction?",
+					true, "Yes", "No")) {
+				return null;
+			}
+		}
+		return remote + outputFolder;
+	}
+
+	private void moveToOutput(final List<File> files, final String remote) {
 		for (final var f : files) {
 			try {
-				var outputFolder = File.separator;
-				if (controller.getOneDriveCredentials().containsKey(remoteLocation.getPath())) {
-					final var user = controller.getEmailFromMap(remoteLocation.getPath());
-					outputFolder = "".equals(user) ? File.separator : "/OutputFiles/" + user + File.separator;
-					logger.info("Exporting file: {}", f.getAbsolutePath());
-				}
-				FileUtils.moveFile(f, new File(remote + outputFolder + f.getName()));
+				final var newFile = Path.of(remote, f.getName()).toFile();
+				Files.move(f.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			} catch (final IOException e) {
 				logger.error(e);
 				controller.displaySystemMessage(e.getMessage());
