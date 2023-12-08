@@ -45,7 +45,6 @@ import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSFERS;
 
@@ -188,7 +187,7 @@ public class ToolTransferTransaction extends ToolTransaction {
 		final var array = new JsonArray();
 		for (final Map.Entry<Identifier, Hbar> entry : accountAmountMap.entrySet()) {
 			final var line = new JsonObject();
-			line.add(ACCOUNT_ID_FIELD_NAME, entry.getKey().asJSON());
+			line.add(ACCOUNT, entry.getKey().asJSON());
 			line.addProperty(AMOUNT, entry.getValue().toTinybars());
 			array.add(line);
 		}

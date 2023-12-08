@@ -61,6 +61,7 @@ public class Constants {
 	public static final String AES_EXTENSION = "aes";
 	public static final String GPG_EXTENSION = "asc";
 	public static final String BUNDLE_EXTENSION = "zip";
+	public static final String TRANSACTION_CREATION_METADATA_EXTENSION = "csva";
 	public static final String CONTENT_EXTENSION = "zip";
 	// endregion
 
@@ -79,6 +80,7 @@ public class Constants {
 	public static final String HASH = "hash";
 	public static final String VERSION = "version";
 	public static final String MNEMONIC_HASH_CODE = "hashCode";
+	public static final String MNEMONIC_CHECKSUM = "mnemonicChecksum";
 	public static final String ACCOUNT_INFO_MAP = "accountInfoMap";
 	public static final String USER_NAME = "userName";
 	public static final String SETUP_PHASE = "setupPhase";
@@ -103,7 +105,8 @@ public class Constants {
 
 	// region TRANSACTION DEFAULTS
 	public static final int VAL_NUM_TRANSACTION_VALID_DURATION = 180;
-	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 100000000;
+	public static final long VAL_NUM_TRANSACTION_INCREMENT_SECONDS = 10;
+	public static final long VAL_NUM_TRANSACTION_DEFAULT_FEE = 200000000;
 	public static final int MINIMUM_AUTO_RENEW_PERIOD = 7000000;
 	public static final int MAXIMUM_AUTO_RENEW_PERIOD = 8000000;
 	public static final int COMMENT_FIELD_CHARACTER_LIMIT = 256;
@@ -159,7 +162,8 @@ public class Constants {
 	public static final String BLUE_BUTTON_STYLE =
 			"-fx-background-color: #0b9dfd; -fx-border-color: #0b9dfd; -fx-text-fill: white; -fx-border-radius: " +
 					"10; -fx-background-radius: 10;";
-
+	public static final int LIST_CELL_HEIGHT = 30;
+	public static final int LIST_HEIGHT_SPACER = 2;
 
 	// endregion
 
@@ -195,7 +199,7 @@ public class Constants {
 	public static final String FEE_PAYER_ACCOUNT_ID_PROPERTY = "feePayerAccountId";
 	public static final String NODE_ID_PROPERTIES = "nodeID";
 	public static final String CHUNK_SIZE_PROPERTIES = "chunkSize";
-	public static final String FIRST_TRANSACTION_VALID_START_PROPERTY = "firsTransactionValidStart";
+	public static final String FIRST_TRANSACTION_VALID_START_PROPERTY = "firstTransactionValidStart";
 	public static final String VALID_INCREMENT_PROPERTY = "validIncrement";
 	public static final String TRANSACTION_VALID_DURATION_PROPERTY = "transactionValidDuration";
 	public static final String MEMO_PROPERTY = "memo";
@@ -203,6 +207,8 @@ public class Constants {
 	public static final String TEXTFIELD_ERROR = "-fx-text-fill: red; -fx-background-radius: 10;-fx-border-radius: 10";
 	public static final String TEXTFIELD_DEFAULT =
 			"-fx-text-fill: black; -fx-background-radius: 10;-fx-border-radius: 10";
+	public static final String TEXTFIELD_WITH_LIST_DEFAULT =
+			"-fx-text-fill: black; -fx-background-radius: 10 10 0 0; -fx-border-radius: 10 10 0 0;";
 	public static final String SELECT_FREEZE_TYPE = "SELECT FREEZE TYPE";
 	public static final String ACCOUNT_PARSED = "Account {} parsed";
 	public static final String REMAINING_TIME_MESSAGE =

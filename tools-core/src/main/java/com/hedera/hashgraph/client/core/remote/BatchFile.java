@@ -25,6 +25,7 @@ import com.hedera.hashgraph.client.core.enums.Actions;
 import com.hedera.hashgraph.client.core.enums.FileActions;
 import com.hedera.hashgraph.client.core.enums.FileType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
+import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.props.UserAccessibleProperties;
@@ -738,7 +739,7 @@ public class BatchFile extends RemoteFile {
 
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
-			final String output) throws HederaClientException {
+			final String output, final Runnable onSucceed) throws HederaClientException {
 		final var tempStorage =
 				new File(TEMP_FOLDER_LOCATION,
 						LocalDate.now().toString()).getAbsolutePath() + File.separator + RandomStringUtils.randomAlphanumeric(
@@ -746,12 +747,6 @@ public class BatchFile extends RemoteFile {
 						pair.getLeft()) + File.separator;
 		final DoubleProperty progress = new SimpleDoubleProperty(1);
 
-		try {
-			moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
-			setHistory(true);
-		} catch (final HederaClientException e) {
-			logger.error(e);
-		}
 		try {
 			if (new File(tempStorage).exists()) {
 				FileUtils.deleteDirectory(new File(tempStorage));
@@ -815,7 +810,19 @@ public class BatchFile extends RemoteFile {
 			transactionsProgressBar.progressProperty().bind(task.progressProperty());
 			new Thread(task).start();
 
-			task.setOnSucceeded(workerStateEvent -> window.close());
+			task.setOnSucceeded(workerStateEvent -> {
+				try {
+					moveToHistory(Actions.ACCEPT, getCommentArea().getText(), pair.getLeft());
+					setHistory(true);
+
+					onSucceed.run();
+				} catch (HederaClientException e) {
+					logger.error(e);
+				} catch (Exception e) {
+					throw new HederaClientRuntimeException(e);
+				}
+				window.close();
+			});
 
 
 			cancelButton.setOnAction(actionEvent -> task.cancel());
@@ -833,6 +840,7 @@ public class BatchFile extends RemoteFile {
 		return getFirstTransactionTimeStamp().asCalendar().before(Calendar.getInstance());
 	}
 
+	@Override
 	public Timestamp getExpiration() {
 		return getFirstTransactionTimeStamp();
 	}

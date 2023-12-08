@@ -67,12 +67,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_INFO_FOLDER;
+import static com.hedera.hashgraph.client.core.constants.Constants.ACCOUNTS_MAP_FILE;
 import static com.hedera.hashgraph.client.core.constants.Constants.BATCH_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.BUNDLE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.COMMENT_FIELD_CHARACTER_LIMIT;
@@ -87,6 +87,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION
 import static com.hedera.hashgraph.client.core.constants.Constants.RECEIPT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.REGULAR_BOX_STYLE;
 import static com.hedera.hashgraph.client.core.constants.Constants.SOFTWARE_UPDATE_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_TYPE_ERROR_MESSAGE;
@@ -99,6 +100,7 @@ import static com.hedera.hashgraph.client.core.enums.FileType.METADATA;
 import static com.hedera.hashgraph.client.core.enums.FileType.PUBLIC_KEY;
 import static com.hedera.hashgraph.client.core.enums.FileType.SOFTWARE_UPDATE;
 import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION;
+import static com.hedera.hashgraph.client.core.enums.FileType.TRANSACTION_CREATION_METADATA;
 
 public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteAware {
 
@@ -117,6 +119,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	private boolean hasComments = false;
 	private boolean showAdditionalBoxes = false;
 	private RemoteFile commentsFile;
+	private RemoteFile transactionCreationMetadata;
 	private long signDateInSecs = 0;
 
 	// region CONSTRUCTORS
@@ -162,9 +165,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		this.valid = true;
 	}
 
-	public RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
+	public static RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
 		final RemoteFile remoteFile;
-		switch (FileType.getType(fileDetails.getExtension())) {
+		final var type = FileType.getType(fileDetails.getExtension());
+		switch (type) {
 			case TRANSACTION:
 				remoteFile = new TransactionFile(fileDetails);
 				break;
@@ -193,8 +197,13 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			case METADATA:
 				remoteFile = new MetadataFile(fileDetails);
 				break;
+			case TRANSACTION_CREATION_METADATA:
+				remoteFile = new TransactionCreationMetadataFile(fileDetails);
+				break;
 			default:
-				throw new HederaClientException(String.format("Unrecognized type %s", type));
+				throw new HederaClientException(
+						String.format("Unrecognized type '%s' for file '%s'", type,
+								fileDetails.getPath() + "/" + fileDetails.getName()));
 		}
 		return remoteFile;
 	}
@@ -231,13 +240,23 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			logger.error(CANNOT_PARSE_TYPE_ERROR_MESSAGE);
 			this.valid = false;
 		}
-		if (this.type != COMMENT) {
+		if (this.type != COMMENT && this.type != TRANSACTION_CREATION_METADATA) {
 			final var commentFile = new File(file.getPath(), file.getBaseName() + "." + TXT_EXTENSION);
 			if (commentFile.exists()) {
 				this.hasComments = true;
 				try {
 					final var comment = FileDetails.parse(commentFile);
 					this.commentsFile = new CommentFile(comment);
+				} catch (final HederaClientException e) {
+					logger.error(e);
+				}
+			}
+			final var tcm = new File(file.getPath(),
+					file.getBaseName() + "." + TRANSACTION_CREATION_METADATA_EXTENSION);
+			if (tcm.exists()) {
+				try {
+					final var tcmFileDetails = FileDetails.parse(tcm);
+					this.transactionCreationMetadata = new TransactionCreationMetadataFile(tcmFileDetails);
 				} catch (final HederaClientException e) {
 					logger.error(e);
 				}
@@ -270,6 +289,8 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 				return METADATA;
 			case BUNDLE_EXTENSION:
 				return BUNDLE;
+			case TRANSACTION_CREATION_METADATA_EXTENSION:
+				return TRANSACTION_CREATION_METADATA;
 			default:
 				throw new HederaClientException(String.format("Unrecognized extension: %s", extension));
 		}
@@ -338,6 +359,13 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 
 	public void setCommentsFile(final RemoteFile commentsFile) {
 		this.commentsFile = commentsFile;
+	}
+
+	public TransactionCreationMetadataFile getTransactionCreationMetadata() {
+		return (TransactionCreationMetadataFile) transactionCreationMetadata;
+	}
+	public void setTransactionCreationMetadata(final TransactionCreationMetadataFile transactionCreationMetadata) {
+		this.transactionCreationMetadata = transactionCreationMetadata;
 	}
 
 	public boolean isValid() {
@@ -430,7 +458,7 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 	 * @return The path to the produced files.
 	 */
 	public String execute(final Pair<String, KeyPair> pair, final String user,
-			final String output) throws HederaClientException {
+						  final String output, final Runnable onSucceed) throws HederaClientException {
 		return null;
 	}
 
@@ -463,16 +491,19 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 			commentsFile.moveToHistory(action, "", "");
 		}
 
+		if (transactionCreationMetadata != null) {
+			transactionCreationMetadata.moveToHistory(action, "", "");
+		}
+
 		final var timestamp = new Timestamp();
 		final var d = new MetadataFile(getName());
 
 		this.parentPath = DEFAULT_HISTORY;
-		if (!type.equals(COMMENT)) {
+		if (!type.equals(COMMENT) && !type.equals(TRANSACTION_CREATION_METADATA)) {
 			d.addAction(new MetadataAction(timestamp, action, userComment, keyName));
 		}
 		this.setHistory(true);
 		setSignDateInSecs(timestamp.asDuration().getSeconds());
-
 	}
 
 	/**
@@ -993,6 +1024,15 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		return Long.compare(this.getDate(), o.getDate());
 	}
 
+	protected JsonObject getAccountNicknames() {
+		try {
+			return new File(ACCOUNTS_MAP_FILE).exists() ? readJsonObject(ACCOUNTS_MAP_FILE) : new JsonObject();
+		} catch (final HederaClientException e) {
+			logger.error(e);
+			return new JsonObject();
+		}
+	}
+
 	public JsonObject toJson() {
 		final var signers = new JsonArray();
 		signerSet.stream().map(File::getAbsolutePath).forEachOrdered(signers::add);
@@ -1012,6 +1052,10 @@ public class RemoteFile implements Comparable<RemoteFile>, GenericFileReadWriteA
 		toJson.addProperty("hasComments", hasComments);
 		if (hasComments) {
 			toJson.addProperty("commentsFile", commentsFile.parentPath + "/" + commentsFile.getName());
+		}
+		if (transactionCreationMetadata != null) {
+			toJson.addProperty("transactionCreationMetadataFile",
+					transactionCreationMetadata.parentPath + "/" + transactionCreationMetadata.getName());
 		}
 		toJson.addProperty("signDateInSecs", signDateInSecs);
 		return toJson;

@@ -113,7 +113,7 @@ class JsonUtilsTest implements GenericFileReadWriteAware {
 		assertTrue(jsonBars2.has(TINY_BARS));
 		assertEquals(-12345, jsonBars2.get(TINY_BARS).getAsInt());
 
-		assertThrows(NumberFormatException.class, () -> JsonUtils.jsonToHBars(jsonBars2));
+		assertThrows(HederaClientRuntimeException.class, () -> JsonUtils.jsonToHBars(jsonBars2));
 
 		final var jsonBars3 = new JsonObject();
 		jsonBars3.addProperty(H_BARS, 0);

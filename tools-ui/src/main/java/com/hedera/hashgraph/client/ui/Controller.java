@@ -814,6 +814,18 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 		return properties.getMnemonicHashCode();
 	}
 
+	public void setMnemonicHashCode(final int hashCode) {
+		properties.setMnemonicHashCode(hashCode);
+	}
+
+	public String getMnemonicChecksum() {
+		return properties.getMnemonicChecksum();
+	}
+
+	public void setMnemonicChecksum(final String checksum) {
+		properties.setMnemonicChecksum(checksum);
+	}
+
 	public Map<String, String> getOneDriveCredentials() {
 		return properties.getOneDriveCredentials();
 	}
@@ -1032,6 +1044,12 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 
 		final Set<String> allPayers = new HashSet<>(accounts);
 		allPayers.addAll(customFeePayers);
+
+		// A user would expect that if an account was entered into the text field, it would show up.
+		if (!"".equals(textfield.getText())) {
+			allPayers.add(Identifier.parse(textfield.getText(), currentNetwork).toReadableStringAndChecksum());
+		}
+
 		final List<String> sortedAllPayers = new ArrayList<>(allPayers);
 		Collections.sort(sortedAllPayers);
 
@@ -1161,9 +1179,7 @@ public class Controller implements Initializable, GenericFileReadWriteAware {
 			LOG.warn("Will not start GitHub Updater since current version is unknown");
 		} else {
 			updater = new GithubUpdater(getVersion(), new File(DEFAULT_INTERNAL_FILES, INPUT_FILES),
-					() -> {
-						homePaneController.initializePane();
-					});
+					() -> homePaneController.initializePane());
 		}
 
 		final ChangeListener<Boolean> listener = new ChangeListener<>() {

@@ -29,7 +29,9 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
+import com.hedera.hashgraph.client.core.utils.JsonUtils;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.opencsv.CSVWriter;
 import org.apache.commons.io.FileUtils;
@@ -56,11 +58,9 @@ import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_E
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.H_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.TINY_BARS;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
@@ -170,10 +170,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		input.add(FEE_PAYER_ACCOUNT_FIELD_NAME, new Identifier(feePayer).asJSON());
 
 		// Use default fee for transactions (note: Large binary files might override this)
-		final var feeJson = new JsonObject();
-		feeJson.addProperty(H_BARS, 0);
-		feeJson.addProperty(TINY_BARS, transactionFee);
-		input.add(TRANSACTION_FEE_FIELD_NAME, feeJson);
+		input.add(TRANSACTION_FEE_FIELD_NAME, JsonUtils.hBarsToJsonObject(Hbar.fromTinybars(transactionFee)));
 
 		// Use default for transaction valid duration
 		input.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
@@ -229,6 +226,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			for (final var file : files) {
 				final List<String> dataList = new ArrayList<>();
 				final var transaction = new ToolTransferTransaction(file);
+				transaction.setNetwork(String.valueOf(NetworkEnum.MAINNET));
 				dataList.add(file.getName());
 				dataList.add(transaction.asJson().toString().replace(",", ";"));
 				var data = new String[2];

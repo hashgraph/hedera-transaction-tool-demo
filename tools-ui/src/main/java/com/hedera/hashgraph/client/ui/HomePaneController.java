@@ -36,6 +36,7 @@ import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.remote.BatchFile;
 import com.hedera.hashgraph.client.core.remote.BundleFile;
 import com.hedera.hashgraph.client.core.remote.InfoFile;
+import com.hedera.hashgraph.client.core.remote.LargeBinaryFile;
 import com.hedera.hashgraph.client.core.remote.PublicKeyFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFile;
 import com.hedera.hashgraph.client.core.remote.RemoteFilesMap;
@@ -46,6 +47,7 @@ import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
+import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.sdk.Key;
@@ -204,6 +206,10 @@ public class HomePaneController implements SubController {
 		populatePane();
 	}
 
+	/**
+	 * Populating the Pane is a full refresh. This can be slow. Some changes do require a full refresh in
+	 * order to rebuild the RemoteFile gridPanes. An example would be account key changes.
+	 */
 	public void populatePane() {
 		try {
 			// Clear the list of RemoteFiles to be displayed
@@ -274,9 +280,6 @@ public class HomePaneController implements SubController {
 						if (controller.historyPaneController.isHistory(file.hashCode())) {
 							file.setHistory(true);
 						} else {
-							if (file instanceof TransactionFile) {
-								setupKeyTree((TransactionFile) file);
-							}
 							buildAndAddBox(file);
 						}
 					}
@@ -291,13 +294,14 @@ public class HomePaneController implements SubController {
 		return file.isValid() && !file.isExpired() &&
 				!file.getType().equals(FileType.METADATA) &&
 				!file.getType().equals(FileType.COMMENT) &&
+				!file.getType().equals(FileType.TRANSACTION_CREATION_METADATA) &&
 				!file.isHistory();
 	}
 
 	public void addFile(final String filePath) {
 		try {
 			// Create a RemoteFile by filePath and add it to the list
-			addFile(new RemoteFile().getSingleRemoteFile(FileDetails.parse(new File(filePath))));
+			addFile(RemoteFile.getSingleRemoteFile(FileDetails.parse(new File(filePath))));
 		} catch (HederaClientException e) {
 			logger.error("adding file error: ", e);
 			controller.displaySystemMessage(e.getMessage());
@@ -307,9 +311,9 @@ public class HomePaneController implements SubController {
 	public void addFile(final String filePath, final boolean history) {
 		try {
 			// Create the RemoteFile
-			final var remoteFile = new RemoteFile().getSingleRemoteFile(
+			final var remoteFile = RemoteFile.getSingleRemoteFile(
 					FileDetails.parse(new File(filePath)));
-			// Set its history property - even those RemoteFile.history never gets saved, currently.
+			// Set its history property - even though RemoteFile.history never gets saved, currently.
 			remoteFile.setHistory(history);
 			// Add it to the list
 			addFile(remoteFile);
@@ -336,8 +340,8 @@ public class HomePaneController implements SubController {
 
 	private void sortFiles() {
 		FXCollections.sort(newFilesViewVBox.getChildren(), (t1,t2) -> {
-			final var file1 = fileBoxes.inverse().get((VBox) t1);
-			final var file2 = fileBoxes.inverse().get((VBox) t2);
+			final var file1 = fileBoxes.inverse().get(t1);
+			final var file2 = fileBoxes.inverse().get(t2);
 			// Should never be null
 			if (file1 == null || file1.getExpiration() == null) {
 				return -1;
@@ -402,6 +406,39 @@ public class HomePaneController implements SubController {
 			}
 
 			return;
+		}
+
+		// If the file is a LargeBinaryFile, then create the action it needs and pass it in.
+		if (file instanceof LargeBinaryFile) {
+			final var lbf = (LargeBinaryFile)file;
+			lbf.setFileLinkAction(actionEvent -> {
+				try {
+					// Check if the file is a 'special' file. It will need to be converted
+					// and put in a popup for viewing.
+					if (lbf.isSpecialFile()) {
+						final var accountNumber = lbf.getFileID().getAccountNum();
+						final var deserializer =
+								StandardSerdes.SYS_FILE_SERDES.get(accountNumber);
+						final var json =
+								deserializer.fromRawFile(Files.readAllBytes(lbf.getUnzippedContent().toPath()));
+						PopupMessage.display(lbf.getFilename(), json, true,"CONTINUE");
+					} else {
+						if (Desktop.isDesktopSupported()) {
+							final var c = lbf.getUnzippedContentDirectory();
+							c.deleteOnExit();
+							Desktop.getDesktop().open(c.getAbsoluteFile());
+						}
+					}
+				} catch (final Exception e) {
+					logger.error(e.getMessage());
+					PopupMessage.display("File Link Error", e.getMessage());
+				}
+			});
+		}
+
+		// If the file is a TransactionFile, set up the key tree(s)
+		if (file instanceof TransactionFile) {
+			setupKeyTree((TransactionFile) file);
 		}
 
 		// Build the details box for the RemoteFile
@@ -719,24 +756,7 @@ public class HomePaneController implements SubController {
 	private Button buildUpdateButton(final RemoteFile rf) {
 		final var button = buildBlueButton("UPDATE");
 		button.setOnAction(actionEvent -> {
-			var answer = false;
-			if (!verifySignature(rf.getPath())) {
-				answer = PopupMessage.display("Unverified Update",
-						"The update package cannot be verified if you want to continue the update press the CONTINUE " +
-								"button, otherwise CANCEL",
-						true, "CANCEL", "CONTINUE");
-			}
-			if (answer) {
-				return;
-			}
-			try {
-				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
-				controller.historyPaneController.addToHistory(rf);
-			} catch (final HederaClientException e) {
-				logger.error("buildUpdateButton failed", e);
-			}
-
-			runUpdate(rf.getPath());
+			runUpdate(rf);
 		});
 		return button;
 	}
@@ -762,19 +782,27 @@ public class HomePaneController implements SubController {
 		}
 	}
 
-	private void runUpdate(final String localLocation) {
+	private void runUpdate(final RemoteFile rf) {
 		try {
-			final var processBuilder = new ProcessBuilder("/usr/bin/open", localLocation);
+			final var processBuilder = new ProcessBuilder("/usr/bin/open", rf.getPath());
 			final var process = processBuilder.start();
 			final var exitCode = process.waitFor();
 
 			if (exitCode == 0) {
+				rf.moveToHistory(ACCEPT, ((SoftwareUpdateFile) rf).getDigest(), "");
+				controller.historyPaneController.addToHistory(rf);
 				System.exit(0);
 			} else {
 				logger.error("The update finished with exit code {}", exitCode);
 				PopupMessage.display("Error opening update file",
 						"The software update file cannot be opened.\nPlease contact the administrator.", "CLOSE");
 			}
+		} catch (final HederaClientException e) {
+			logger.error("Failed to move SoftwareUpdateFile to history after a successful update", e);
+			PopupMessage.display("The application has been updated, " +
+					"but the update file failed to be moved to history. " +
+					"\nNo further action is required, the application will now close.", "CLOSE");
+			System.exit(0);
 		} catch (final IOException e) {
 			logger.error("runUpdate failed", e);
 			PopupMessage.display("Error opening update file",
@@ -960,10 +988,16 @@ public class HomePaneController implements SubController {
 	private void createSignedTransaction(final RemoteFile rf, final Pair<String, KeyPair> pair) {
 		try {
 			//When a RemoteFile executes, it will moveToHistory and setHistory
-			rf.execute(pair, user, output);
-			exportComments(rf, rf.getCommentArea(), rf.getName());
-			controller.historyPaneController.addToHistory(rf);
-			removeFile(rf);
+			rf.execute(pair, user, output, () -> {
+				controller.historyPaneController.addToHistory(rf);
+				removeFile(rf);
+				try {
+					exportComments(rf, rf.getCommentArea(), rf.getName());
+				} catch (HederaClientException e) {
+					logger.error("exporting comments failed", e);
+					controller.displaySystemMessage(e.getCause().toString());
+				}
+			});
 		} catch (final Exception e) {
 			logger.error("createSignedTransaction failed", e);
 			controller.displaySystemMessage(e.getCause().toString());

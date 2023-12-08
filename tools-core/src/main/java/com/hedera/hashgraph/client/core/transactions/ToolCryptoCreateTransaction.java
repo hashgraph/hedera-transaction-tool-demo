@@ -53,6 +53,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_AC
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.trimString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.verifyFieldExist;
+import static com.hedera.hashgraph.client.core.utils.JsonUtils.hBarsToJsonObject;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 
 public class ToolCryptoCreateTransaction extends ToolTransaction {
@@ -142,14 +143,12 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 			answer = false;
 		}
 
-
 		try {
 			this.autoRenewDuration = Duration.ofSeconds(input.get(AUTO_RENEW_PERIOD_FIELD_NAME).getAsLong());
 		} catch (final Exception e) {
 			logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, AUTO_RENEW_PERIOD_FIELD_NAME);
 			answer = false;
 		}
-
 
 		try {
 			this.initialBalance = jsonToHBars(input.get(INITIAL_BALANCE_FIELD_NAME).getAsJsonObject());
@@ -263,10 +262,10 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	@Override
 	public JsonObject asJson() {
 		final var asJson = super.asJson();
-		asJson.addProperty("initialBalance", initialBalance.toTinybars());
-		asJson.add("key", EncryptionUtils.keyToJson(key));
-		asJson.addProperty("autoRenewDuration", autoRenewDuration.getSeconds());
-		asJson.addProperty("receiverSignatureRequired", receiverSignatureRequired);
+		asJson.add(INITIAL_BALANCE_FIELD_NAME, hBarsToJsonObject(initialBalance));
+		asJson.add(NEW_KEY_FIELD_NAME, EncryptionUtils.keyToJson(key));
+		asJson.addProperty(AUTO_RENEW_PERIOD_FIELD_NAME, autoRenewDuration.getSeconds());
+		asJson.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, receiverSignatureRequired);
 		if (stakedAccountId != null) {
 			asJson.add(STAKED_ACCOUNT_ID_FIELD_NAME, stakedAccountId.asJSON());
 		}

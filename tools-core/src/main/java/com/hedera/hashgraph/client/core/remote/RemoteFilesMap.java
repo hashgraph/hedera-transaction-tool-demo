@@ -38,11 +38,11 @@ import java.util.Optional;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.METADATA_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TXT_EXTENSION;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getBuildDateSecondsFromVersionStr;
 import static com.hedera.hashgraph.client.core.remote.SoftwareUpdateFile.getSoftwareVersionFromVersionStr;
 import static org.apache.commons.io.FilenameUtils.getBaseName;
-import static org.apache.commons.io.FilenameUtils.getExtension;
 import static org.apache.commons.io.FilenameUtils.removeExtension;
 
 public class RemoteFilesMap {
@@ -144,13 +144,18 @@ public class RemoteFilesMap {
 		final List<RemoteFile> remoteFiles = getRemoteFileList(fileDetails);
 
 		for (final RemoteFile rf : remoteFiles) {
-			if (rf.getType().equals(FileType.COMMENT)) {
+			if (rf.getType().equals(FileType.COMMENT) || rf.getType().equals(FileType.TRANSACTION_CREATION_METADATA)) {
 				continue;
 			}
 
-			final var linkedComments = findFile(remoteFiles, getBaseName(rf.getName()) + "." + TXT_EXTENSION);
+			final var linkedComments = findFile(remoteFiles,
+					getBaseName(rf.getName()) + "." + TXT_EXTENSION);
 			rf.setComments((linkedComments != null));
 			rf.setCommentsFile(rf.hasComments() ? linkedComments : null);
+
+			final var accountListFile = (TransactionCreationMetadataFile) findFile(remoteFiles,
+					getBaseName(rf.getName()) + "." + TRANSACTION_CREATION_METADATA_EXTENSION);
+			rf.setTransactionCreationMetadata(accountListFile);
 
 			// Handle the software update
 			if (rf.getType().equals(FileType.SOFTWARE_UPDATE) && rf.hasComments()) {
@@ -194,7 +199,11 @@ public class RemoteFilesMap {
 		for (final var f : fileDetails) {
 			try {
 				if (validFile(f)) {
-					final RemoteFile remoteFile = getSingleRemoteFile(f);
+					final RemoteFile remoteFile = RemoteFile.getSingleRemoteFile(f);
+					if (remoteFile instanceof SoftwareUpdateFile) {
+						((SoftwareUpdateFile)remoteFile).setOldVersion(getSoftwareVersionFromVersionStr(version));
+						((SoftwareUpdateFile)remoteFile).setOldStamp(getBuildDateSecondsFromVersionStr(version));
+					}
 					if (remoteFile.isValid()) {
 						final var remoteLocation = new File(remoteFile.getParentPath() + File.separator + "History",
 								getBaseName(remoteFile.getName()) + "." + METADATA_EXTENSION);
@@ -209,53 +218,6 @@ public class RemoteFilesMap {
 			}
 		}
 		return remoteFiles;
-	}
-
-	/**
-	 * Load a file into a RemoteFile
-	 *
-	 * @param fileDetails
-	 * 		the remote file
-	 * @return a RemoteFile
-	 */
-	private RemoteFile getSingleRemoteFile(final FileDetails fileDetails) throws HederaClientException {
-		final RemoteFile remoteFile;
-		final var type = getType(getExtension(fileDetails.getName()));
-		switch (type) {
-			case TRANSACTION:
-				remoteFile = new TransactionFile(fileDetails);
-				break;
-			case LARGE_BINARY:
-				remoteFile = new LargeBinaryFile(fileDetails);
-				break;
-			case BATCH:
-				remoteFile = new BatchFile(fileDetails);
-				break;
-			case COMMENT:
-				remoteFile = new CommentFile(fileDetails);
-				break;
-			case ACCOUNT_INFO:
-				remoteFile = new InfoFile(fileDetails);
-				break;
-			case PUBLIC_KEY:
-				remoteFile = new PublicKeyFile(fileDetails);
-				break;
-			case BUNDLE:
-				remoteFile = new BundleFile(fileDetails);
-				break;
-			case SOFTWARE_UPDATE:
-			case CONFIG:
-				remoteFile = getSoftwareUpdateFile(fileDetails);
-				break;
-			case METADATA:
-				remoteFile = new MetadataFile(fileDetails);
-				break;
-			default:
-				throw new HederaClientException(
-						String.format("Unrecognized type '%s' for file '%s'", type,
-								fileDetails.getPath() + "/" + fileDetails.getName()));
-		}
-		return remoteFile;
 	}
 
 	private void validRemoteAction(final FileType type, final RemoteFile remoteFile, final File remoteLocation) {
@@ -441,10 +403,10 @@ public class RemoteFilesMap {
 		return false;
 	}
 
-	private static RemoteFile findFile(final List<RemoteFile> remoteFiles, final String commentName) {
+	private static RemoteFile findFile(final List<RemoteFile> remoteFiles, final String fileName) {
 		for (final var rf :
 				remoteFiles) {
-			if (commentName.equals(rf.getName())) {
+			if (fileName.equals(rf.getName())) {
 				return rf;
 			}
 		}

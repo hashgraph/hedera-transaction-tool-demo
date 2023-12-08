@@ -74,10 +74,12 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Splitter.fixedLength;
+import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_CHECKSUM_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.FULL_ACCOUNT_REGEX;
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.INTEGRATION_NODES_JSON;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.MIN_PASSWORD_LENGTH;
 import static com.hedera.hashgraph.client.core.constants.Constants.NUMBER_REGEX;
@@ -105,7 +107,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		if (!input.has(NETWORK_FIELD_NAME) || !input.has(TRANSACTION_FEE_FIELD_NAME)) {
 			throw new HederaClientException("Missing critical fields in the JSON input to set up the client");
 		}
-		final var client = getClient(NetworkEnum.valueOf(input.get(NETWORK_FIELD_NAME).getAsString()));
+		final var client = getClient(input.get(NETWORK_FIELD_NAME).getAsString());
 		if (input.get(TRANSACTION_FEE_FIELD_NAME).isJsonPrimitive()) {
 			client.setDefaultMaxQueryPayment(Hbar.fromTinybars(input.get(TRANSACTION_FEE_FIELD_NAME).getAsLong()));
 		}
@@ -157,17 +159,27 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @return a client
 	 */
 	public static Client getClient(final String networkString) {
-		if (!new File(networkString).exists()) {
-			return getClient(NetworkEnum.valueOf(networkString.toUpperCase(Locale.ROOT)));
+		// If a file exists for the string, or if it is named in the custom network folder,
+		// get the custom network for the string.
+		if (new File(networkString).exists()) {
+			logger.info("Loading nodes from {}", networkString);
+			final Map<String, AccountId> network = new HashMap<>();
+			final var jsonArray = getIntegrationIPs(networkString);
+			for (final var jsonElement : jsonArray) {
+				final var node = jsonElement.getAsJsonObject();
+				network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
+			}
+			return Client.forNetwork(network);
+		} else if (new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION).exists()) {
+			final var file = new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION);
+			try (final var fileReader = new FileReader(file)) {
+				return CommonMethods.getClient(JsonParser.parseReader(fileReader).getAsJsonArray());
+			} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
+				logger.error(cause);
+			}
 		}
-		logger.info("Loading nodes from {}", networkString);
-		final Map<String, AccountId> network = new HashMap<>();
-		final var jsonArray = getIntegrationIPs(networkString);
-		for (final var jsonElement : jsonArray) {
-			final var node = jsonElement.getAsJsonObject();
-			network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
-		}
-		return Client.forNetwork(network);
+
+		return getClient(NetworkEnum.valueOf(networkString.toUpperCase(Locale.ROOT)));
 	}
 
 	/**
@@ -334,25 +346,23 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * @return true if all the fields exist
 	 */
 	public static boolean verifyFieldExist(final JsonObject input, final String... fields) {
-		var count = 0;
+		var missingFields = false;
 		for (final var field : fields) {
 			if (!input.has(field)) {
-				count++;
 				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
+				missingFields = true;
 			}
 		}
-		return (count == 0);
+		return !missingFields;
 	}
 
 	public static boolean verifyOneOfExists(final JsonObject input, final String... fields) {
-		var count = 0;
 		for (final var field : fields) {
 			if (input.has(field)) {
-				count++;
-				logger.error(ErrorMessages.MISSING_FIELD_ERROR_MESSAGE, field);
+				return true;
 			}
 		}
-		return (count > 0);
+		return false;
 	}
 
 	/**

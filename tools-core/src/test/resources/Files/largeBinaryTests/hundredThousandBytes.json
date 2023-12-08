@@ -16,7 +16,7 @@
     "accountNum": 3
   },
   "chunkSize": 2048,
-  "firsTransactionValidStart": {
+  "firstTransactionValidStart": {
     "seconds": 1662166800,
     "nanos": 0
   },

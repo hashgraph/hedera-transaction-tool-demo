@@ -52,6 +52,7 @@ public class JsonConstants {
 	public static final String SECONDS = "seconds";
 	public static final String NANOS = "nanos";
 	public static final String ACCOUNT_TO_UPDATE = "accountIdToUpdate";
+	public static final String ACCOUNT_TO_UPDATE_INPUT = "accountToUpdateInput";
 	public static final String ENTITY_TO_DEL_UNDEL = "entityToDelUnDel";
 	public static final String FILE_CONTRACT_SWITCH = "fileContractSwitch";
 	public static final String DEL_UNDEL_SWITCH = "deleteUnDeleteSwitch";
@@ -62,6 +63,7 @@ public class JsonConstants {
 	public static final String TRANSACTION_FEE_FIELD_NAME = "transactionFee";
 	public static final String ACCOUNT_ID_FIELD_NAME = "accountID";
 	public static final String NODE_ID_FIELD_NAME = "nodeAccountID";
+	public static final String NODE_FIELD_INPUT = "nodeAccountInput";
 	public static final String NETWORK_FIELD_NAME = "network";
 
 	public static final String REALM_NUMBER = "realmNum";

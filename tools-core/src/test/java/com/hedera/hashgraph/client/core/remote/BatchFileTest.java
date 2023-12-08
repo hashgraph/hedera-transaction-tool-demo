@@ -255,7 +255,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		final var info = FileDetails.parse(file);
 		final var batchFile = new BatchFile(info);
 
-		assertEquals(100000000L, batchFile.getTransactionFee());
+		assertEquals(200000000L, batchFile.getTransactionFee());
 		batchFile.setTransactionFee(2500000L);
 		assertEquals(2500000L, batchFile.getTransactionFee());
 		batchFile.setTransactionFee(-12500000L);
@@ -304,7 +304,7 @@ public class BatchFileTest extends TestBase implements GenericFileReadWriteAware
 		assertEquals("0.0.94-bbukb", label.getText());
 
 		label = (Label) gridPane.getChildren().get(5);
-		assertEquals("1 ℏ", label.getText());
+		assertEquals("2 ℏ", label.getText());
 
 		label = (Label) gridPane.getChildren().get(7);
 		assertTrue(label.getText().contains("2029-09-17 19:30:00 UTC"));

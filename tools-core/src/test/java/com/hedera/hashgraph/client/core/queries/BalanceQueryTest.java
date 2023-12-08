@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.queries;
 
+import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
@@ -25,7 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 import static junit.framework.TestCase.assertTrue;
@@ -38,7 +38,7 @@ class BalanceQueryTest {
 	void getBalance_test() throws HederaClientException, PrecheckStatusException, TimeoutException {
 		var query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(new AccountId(0, 0, 2))
-				.withNetwork("mainnet")
+				.withNetwork(NetworkEnum.MAINNET.getName())
 				.build();
 		var balance = query.getBalance();
 		logger.info("Balance for Mainnet: {}", balance);
@@ -46,7 +46,7 @@ class BalanceQueryTest {
 
 		query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(new AccountId(0, 0, 2))
-				.withNetwork("testnet")
+				.withNetwork(NetworkEnum.TESTNET.getName())
 				.build();
 		balance = query.getBalance();
 		logger.info("Balance for Testnet: {}", balance);
@@ -55,7 +55,7 @@ class BalanceQueryTest {
 
 		query = BalanceQuery.Builder.aBalanceQuery()
 				.withAccountId(new AccountId(0, 0, 2))
-				.withNetwork("previewnet")
+				.withNetwork(NetworkEnum.PREVIEWNET.getName())
 				.build();
 		balance = query.getBalance();
 		logger.info("Balance for PreviewNet: {}", balance);

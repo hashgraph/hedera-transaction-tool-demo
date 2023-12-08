@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -57,7 +58,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-public class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
+class LargeBinaryFileTest extends TestBase implements GenericFileReadWriteAware {
 
 	private static final Logger logger = LogManager.getLogger(LargeBinaryFileTest.class);
 
@@ -66,11 +67,10 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		if (new File(DEFAULT_HISTORY).mkdirs()) {
 			logger.info("History folder created");
 		}
-
 	}
 
 	@Test
-	public void constructor_test() throws IOException, HederaClientException {
+	void constructor_test() throws IOException, HederaClientException {
 		final var emptyFile = new LargeBinaryFile();
 		assertFalse(emptyFile.isValid());
 
@@ -154,14 +154,14 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void buildGridPane_test() throws HederaClientException {
+	void buildGridPane_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
 
 		final var largeBinary = new LargeBinaryFile(info);
 		final var gridPane = largeBinary.buildGridPane();
 		assertEquals(2, gridPane.getColumnCount());
-		assertEquals(24, gridPane.getChildren().size());
+		assertEquals(26, gridPane.getChildren().size());
 		assertTrue(gridPane.getChildren().get(0) instanceof Label);
 
 		var label = (Label) gridPane.getChildren().get(5);
@@ -170,36 +170,36 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		var text = (Text) gridPane.getChildren().get(6);
 		assertEquals("1.9 ℏ", text.getText());
 
-		label = (Label) gridPane.getChildren().get(9);
+		label = (Label) gridPane.getChildren().get(11);
 		assertEquals("a memo included", label.getText());
 
-		assertTrue(gridPane.getChildren().get(13) instanceof Hyperlink);
+		assertTrue(gridPane.getChildren().get(15) instanceof Hyperlink);
 
 		label = (Label) gridPane.getChildren().get(7);
 		assertTrue(label.getText().contains("2022-09-03 01:00:00 UTC"));
 
-		label = (Label) gridPane.getChildren().get(11);
+		label = (Label) gridPane.getChildren().get(13);
 		assertTrue(label.getText().contains("0.0.15225"));
 
-		text = (Text) gridPane.getChildren().get(15);
+		text = (Text) gridPane.getChildren().get(17);
 		assertTrue(text.getText().contains("b08b 228c db53 fe85 efa8 f018"));
 
-		label = (Label) gridPane.getChildren().get(17);
+		label = (Label) gridPane.getChildren().get(19);
 		assertEquals("18651636 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(19);
+		label = (Label) gridPane.getChildren().get(21);
 		assertEquals("1023 bytes", label.getText());
 
-		label = (Label) gridPane.getChildren().get(21);
+		label = (Label) gridPane.getChildren().get(23);
 		assertEquals("18233", label.getText());
 
-		label = (Label) gridPane.getChildren().get(23);
-		assertEquals("100 nanoseconds", label.getText());
+		label = (Label) gridPane.getChildren().get(25);
+		assertEquals("100 seconds", label.getText());
 
 	}
 
 	@Test
-	public void getters_test() throws HederaClientException {
+	void getters_test() throws HederaClientException {
 
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
@@ -220,7 +220,8 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void execute_test() throws IOException, HederaClientException, KeyStoreException {
+	@Disabled("Issues with JavaFX, disabling tests that require the UI.")
+	void execute_test() throws IOException, HederaClientException, KeyStoreException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryTest.lfu");
 		final var info = FileDetails.parse(file);
 
@@ -231,7 +232,10 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 		keyStore0.insertNewKeyPair();
 
 		final var pair = Pair.of("testPem", keyStore0.get(0));
-		final var execute = largeBinary.execute(pair, "test_user", "src/test/resources/Files/output");
+		final var execute = largeBinary.execute(pair, "test_user",
+				"src/test/resources/Files/output", () -> {
+			logger.info("Transfer executed successfully");
+		});
 		final var outputZip = new File(execute);
 		assertTrue(outputZip.exists());
 
@@ -301,7 +305,7 @@ public class LargeBinaryFileTest extends TestBase implements GenericFileReadWrit
 	}
 
 	@Test
-	public void chunkTooLarge_test() throws HederaClientException {
+	void chunkTooLarge_test() throws HederaClientException {
 		final var file = new File("src/test/resources/Files/largeBinaryTests/largeBinaryChunkTooBig.lfu");
 		final var info = FileDetails.parse(file);
 		final Exception exception = assertThrows(HederaClientException.class, () -> new LargeBinaryFile(info));

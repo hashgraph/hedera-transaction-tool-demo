@@ -23,6 +23,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -43,37 +44,64 @@ public class PopupMessage {
 		return display(title, message, false, "Yes", "No");
 	}
 
+	public static Boolean display(final String title, final String message, final boolean scrollable) {
+		return display(title, message, scrollable, false, "Yes", "No");
+	}
+
 	public static Boolean display(final String title, final String message, final String buttonName) {
-		return display(title, message, false, "Yes", "No", buttonName);
+		return display(title, message, false, false, "Yes", "No", buttonName);
+	}
+
+	public static Boolean display(final String title, final String message, final boolean scrollable,
+								  final String buttonName) {
+		return display(title, message, scrollable, false, "Yes", "No", buttonName);
 	}
 
 	public static Boolean display(final String title, final String message, final boolean confirm,
 			final String yesString, final String noString) {
-		return display(title, message, confirm, yesString, noString, BUTTON_CONTINUE);
+		return display(title, message, false, confirm, yesString, noString);
+	}
+
+	public static Boolean display(final String title, final String message, final boolean scrollable,
+								  final boolean confirm, final String yesString, final String noString) {
+		return display(title, message, scrollable, confirm, yesString, noString, BUTTON_CONTINUE);
 	}
 
 	private PopupMessage() {
 		throw new IllegalStateException("Utility class");
 	}
 
-	private static Boolean display(final String title, final String message, final boolean confirm,
-			final String yesString, final String noString,
-			final String buttonName) {
+	private static Boolean display(final String title, final String message, final boolean scrollable,
+								   final boolean confirm, final String yesString, final String noString,
+								   final String buttonName) {
 		final var window = new Stage();
 
 		window.setTitle(title);
 		window.sizeToScene();
-		window.setMaxWidth(500);
+		window.setMaxWidth(600);
 		window.initModality(Modality.APPLICATION_MODAL);
 
-		final var label = new Label();
-		label.setWrapText(true);
-		label.setText(message);
-		label.setWrapText(true);
-		label.setTextAlignment(TextAlignment.LEFT);
-		label.setPrefHeight(Region.USE_COMPUTED_SIZE);
-		label.setMaxWidth(450);
-		label.setStyle("-fx-font-size: 16");
+
+		final var vBox = new VBox();
+		if (scrollable) {
+			final var textArea = new TextArea(message);
+			textArea.setEditable(false);
+			textArea.setFocusTraversable(false);
+			textArea.setMaxWidth(550);
+			textArea.setPrefHeight(Region.USE_COMPUTED_SIZE);
+
+			vBox.getChildren().add(textArea);
+		} else {
+			final var label = new Label();
+			label.setText(message);
+			label.setWrapText(true);
+			label.setTextAlignment(TextAlignment.LEFT);
+			label.setPrefHeight(Region.USE_COMPUTED_SIZE);
+			label.setMaxWidth(550);
+			label.setStyle("-fx-font-size: 16");
+
+			vBox.getChildren().add(label);
+		}
 
 		final var button =
 				(buttonName == null || buttonName.isEmpty() || buttonName.equalsIgnoreCase(BUTTON_CONTINUE)) ?
@@ -135,9 +163,7 @@ public class PopupMessage {
 			centerButton.getChildren().addAll(spacer1, button, spacer2);
 		}
 
-		final var vBox = new VBox();
-
-		vBox.getChildren().addAll(label, centerButton);
+		vBox.getChildren().add(centerButton);
 		vBox.setSpacing(20);
 		vBox.setPadding(new Insets(20, 20, 20, 20));
 

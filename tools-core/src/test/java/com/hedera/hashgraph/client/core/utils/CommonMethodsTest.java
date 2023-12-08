@@ -124,7 +124,7 @@ class CommonMethodsTest implements GenericFileReadWriteAware {
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, "not_a_network");
 		final Exception exception3 =
 				assertThrows(IllegalArgumentException.class, () -> CommonMethods.setupClient(testInput));
-		assertEquals("No enum constant com.hedera.hashgraph.client.core.enums.NetworkEnum.not_a_network",
+		assertEquals("No enum constant com.hedera.hashgraph.client.core.enums.NetworkEnum.NOT_A_NETWORK",
 				exception3.getMessage());
 
 		testInput.addProperty(JsonConstants.NETWORK_FIELD_NAME, NetworkEnum.INTEGRATION.toString());

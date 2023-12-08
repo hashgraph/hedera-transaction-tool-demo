@@ -71,6 +71,8 @@ public class SigningKeysPopup {
 		}
 		layout.getChildren().add(signerTable);
 		layout.getChildren().add(formatLabel(LEGEND_2, 16));
+		// Reset the answer everytime the popup is used
+		answer = null;
 		final var continueButton = new Button(Constants.BUTTON_CONTINUE);
 		continueButton.setStyle(Constants.WHITE_BUTTON_STYLE);
 		continueButton.setOnAction(actionEvent -> {

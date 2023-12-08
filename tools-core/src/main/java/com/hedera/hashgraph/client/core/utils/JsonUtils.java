@@ -69,10 +69,19 @@ public class JsonUtils {
 		final var jsonObject = new JsonObject();
 		final var decimal = hbar.getValue();
 		jsonObject.addProperty(H_BARS, decimal.longValue());
-		jsonObject.addProperty(TINY_BARS, (decimal.remainder(BigDecimal.ONE)).multiply(new BigDecimal(100000000L)));
+		jsonObject.addProperty(TINY_BARS, (decimal.remainder(BigDecimal.ONE)).multiply(new BigDecimal(100000000L)).longValue());
 		return jsonObject;
 	}
 
+	/**
+	 * Convert a JsonObject representing hBars into an HBar object. This value is constrained to be positive. I believe
+	 * it was implemented this way due to the usage of this method seems to have been for converting manually created
+	 * transactions (by means of json/csv) into actual transactions. This would explain the constraint, as the hBar
+	 * value in this case would always be positive.
+	 *
+	 * @param hBars
+	 * @return
+	 */
 	public static Hbar jsonToHBars(final JsonObject hBars) {
 		var bigDecimal = BigDecimal.ZERO;
 		if (hBars.has(TINY_BARS)) {

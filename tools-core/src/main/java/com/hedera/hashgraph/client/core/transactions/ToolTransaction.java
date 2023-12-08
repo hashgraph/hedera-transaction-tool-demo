@@ -24,7 +24,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.constants.Messages;
-import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
@@ -33,6 +32,7 @@ import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.JsonUtils;
 import com.hedera.hashgraph.sdk.AccountCreateTransaction;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
@@ -75,7 +75,9 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
@@ -84,15 +86,17 @@ import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_VA
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_DURATION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile.NODES_STRING;
+import static com.hedera.hashgraph.client.core.remote.helpers.AccountList.INPUT_STRING;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.setupClient;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
 import static java.lang.Thread.sleep;
-
 
 public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware {
 	private static final Logger logger = LogManager.getLogger(ToolTransaction.class);
@@ -107,8 +111,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	Hbar transactionFee;
 	Instant transactionValidStart;
 	Duration transactionValidDuration;
-	NetworkEnum network;
+	String network;
 	String memo;
+	String nodeInput;
 
 	private enum CollateAndVerifyStatus {
 		SUCCESSFUL, NOT_VERIFIABLE, OVER_SIZE_LIMIT
@@ -127,8 +132,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	}
 
 	public void setNetwork(final String networkName) {
-		this.network = NetworkEnum.valueOf(networkName);
-		input.addProperty(NETWORK_FIELD_NAME, networkName);
+		this.network = networkName;
+		if (input != null) {
+			input.addProperty(NETWORK_FIELD_NAME, networkName);
+		}
 	}
 
 	public ToolTransaction(final File inputFile) throws HederaClientException {
@@ -142,6 +149,17 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 					this.transactionValidStart = Objects.requireNonNull(transaction.getTransactionId().validStart);
 					this.transactionValidDuration = transaction.getTransactionValidDuration();
 					this.memo = transaction.getTransactionMemo();
+					final var tcm = new File(inputFile.getAbsolutePath()
+							.replace(TRANSACTION_EXTENSION, TRANSACTION_CREATION_METADATA_EXTENSION));
+					if (tcm.exists()) {
+						var contents = readJsonObject(tcm.getPath());
+						if (contents.has(NODES_STRING)) {
+							contents = contents.get(NODES_STRING).getAsJsonObject();
+							if (contents.has(INPUT_STRING)) {
+								nodeInput = contents.get(INPUT_STRING).getAsString();
+							}
+						}
+					}
 				} catch (final InvalidProtocolBufferException e) {
 					logger.error(e);
 					throw new HederaClientException(CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE);
@@ -199,6 +217,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return nodeID;
 	}
 
+	public String getNodeInput() {
+		return nodeInput;
+	}
+
 	public Hbar getTransactionFee() {
 		return transactionFee;
 	}
@@ -211,7 +233,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return transactionValidDuration;
 	}
 
-	public NetworkEnum getNetwork() {
+	public String getNetwork() {
 		return network;
 	}
 
@@ -286,7 +308,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 						transactionSize + ") is over the maximum limit.");
 			}
 
-			// Build the list of keys that are required for a valid transaction
+			// Build the list of keys that are required for a valid transaction, any additional keys
+			// used/needed will not be present in this keyList, but will still be required in the signing.
+			// This canNOT include the new keys in the key list because all new keys are required but the
+			// key list would allow for thresholds to bypass this requirement.
 			final var requiredKeyList = buildKeyList(accountsInfoFolders);
 
 			// For every key in this.key that isn't in requiredKeyList, sign the transaction.
@@ -385,6 +410,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * Build a keyList of the keys that are a part of the required keyLists. If multiple accounts are
 	 * involved, each of the accounts' keyList will be added to this new list. This differs from
 	 * getSigningKeys in that this returns a KeyList, while getSigningKeys returns a list of all keys in byte form.
+	 * In addition, getSigningKeys will include the new keys in the case of a CryptoUpdateTransaction, whereas
+	 * buildKeyList is strictly the key structure that is currently required.
 	 *
 	 * @param accountsInfoFolders
 	 * 		The location string(s) of the folder(s) containing the account.info files
@@ -545,6 +572,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				logger.info(Messages.DELAY_MESSAGE, delay);
 				sleep(delay * 1000);
 			}
+
 			final var transactionResponse = transaction.execute(client);
 			receipt = transactionResponse.getReceipt(client);
 		} catch (final HederaClientException | TimeoutException e) {
@@ -583,6 +611,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 
 		try {
+			if (input.has(NODE_FIELD_INPUT)) {
+				nodeInput = input.get(NODE_FIELD_INPUT).getAsString();
+			}
+		} catch (final Exception ex) {
+			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NODE_FIELD_INPUT);
+			answer = false;
+		}
+
+		try {
 			final var element = input.get(TRANSACTION_FEE_FIELD_NAME);
 			transactionFee =
 					(element.isJsonPrimitive()) ? Hbar.from(element.getAsLong(), HbarUnit.TINYBAR) : jsonToHBars(
@@ -596,7 +633,8 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		try {
 			if (input.has(NETWORK_FIELD_NAME)) {
 				final var networkName = input.get(NETWORK_FIELD_NAME).getAsString();
-				network = NetworkEnum.valueOf(networkName);
+				CommonMethods.getClient(networkName);
+				network = networkName;
 			}
 		} catch (final Exception e) {
 			logger.error(CANNOT_PARSE_ERROR_MESSAGE, NETWORK_FIELD_NAME);
@@ -627,15 +665,20 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		return (transaction != null) ? transaction.getTransactionId() : null;
 	}
 
+	public String buildFileName() {
+		final var accountId = getFeePayerID();
+		final var seconds = getTransactionValidStart().getEpochSecond();
+		return String.join(FILE_NAME_GROUP_SEPARATOR, seconds+"",
+				accountId.toReadableString(), hashCode()+"");
+	}
+
 	@Override
 	public String store(final String location) throws HederaClientException {
 		final var transactionBytes = transaction.toBytes();
-		final var name = Objects.requireNonNull(transaction.getTransactionId()).toString().replace("@",
-				"_").replace(".", "-");
 
 		final String filePath;
 		if (new File(location).isDirectory()) {
-			filePath = location + File.separator + name + "." + TRANSACTION_EXTENSION;
+			filePath = location + File.separator + buildFileName() + "." + TRANSACTION_EXTENSION;
 		} else {
 			filePath = location;
 		}
@@ -673,18 +716,22 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		if (nodeID != null) {
 			jsonTransaction.add(NODE_ID_FIELD_NAME, nodeID.asJSON());
 		}
-		if (transactionFee != null) {
-			jsonTransaction.addProperty(TRANSACTION_FEE_FIELD_NAME, transactionFee.toTinybars());
+		if (nodeInput != null) {
+			jsonTransaction.addProperty(NODE_FIELD_INPUT, nodeInput);
 		}
 		if (transactionFee != null) {
-			jsonTransaction.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(transactionValidStart).asJSON());
+			jsonTransaction.add(TRANSACTION_FEE_FIELD_NAME, JsonUtils.hBarsToJsonObject(transactionFee));
 		}
 		if (transactionValidStart != null) {
+			jsonTransaction.add(TRANSACTION_VALID_START_FIELD_NAME, new Timestamp(transactionValidStart).asJSON());
 			jsonTransaction.addProperty(TRANSACTION_VALID_START_READABLE_FIELD_NAME,
 					new Timestamp(transactionValidStart).asRFCString());
 		}
 		if (transactionValidDuration != null) {
 			jsonTransaction.addProperty(TRANSACTION_VALID_DURATION_FIELD_NAME, transactionValidDuration.getSeconds());
+		}
+		if (network != null) {
+			jsonTransaction.addProperty(NETWORK_FIELD_NAME, network);
 		}
 		jsonTransaction.addProperty(MEMO_FIELD_NAME, memo);
 		return jsonTransaction;

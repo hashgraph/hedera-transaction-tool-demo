@@ -105,7 +105,6 @@ class RemoteFilesMapTest extends TestBase implements GenericFileReadWriteAware {
 				"Version: 0.1.0-rc.1, UTC-BUILD-TIME: 2021-05-13:41:44+0000, COMMIT-ID: 8c817a2").fromFile(fileService);
 
 		assertEquals(0, remoteFilesMap_badVersion.countType(FileType.SOFTWARE_UPDATE));
-
 	}
 
 	@Test

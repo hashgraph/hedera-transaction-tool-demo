@@ -32,6 +32,8 @@ import com.hedera.hashgraph.client.ui.popups.NewNetworkPopup;
 import com.hedera.hashgraph.client.ui.popups.PopupMessage;
 import com.hedera.hashgraph.client.ui.utilities.DriveSetupHelper;
 import com.hedera.hashgraph.client.ui.utilities.Utilities;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleListProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -40,8 +42,9 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -72,8 +75,12 @@ import java.util.prefs.BackingStoreException;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.CUSTOM_NETWORK_FOLDER;
 import static com.hedera.hashgraph.client.core.constants.Constants.DRIVE_LIMIT;
+import static com.hedera.hashgraph.client.core.constants.Constants.LIST_CELL_HEIGHT;
+import static com.hedera.hashgraph.client.core.constants.Constants.LIST_HEIGHT_SPACER;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_DEFAULT;
+import static com.hedera.hashgraph.client.core.constants.Constants.TEXTFIELD_WITH_LIST_DEFAULT;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FEE_PAYER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.FOLDER_TOOLTIP_MESSAGES;
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.GENERATE_RECORD_TOOLTIP_MESSAGE;
@@ -98,6 +105,7 @@ public class SettingsPaneController implements SubController {
 	public TextField pathTextFieldSP;
 	public TextField emailTextFieldSP;
 	public TextField nodeIDTextField;
+	public ListView<Identifier> nodeAccountList;
 	public TextField txValidDurationTextField;
 	public TextField autoRenewPeriodTextField;
 	public TextField hoursTextField;
@@ -215,9 +223,6 @@ public class SettingsPaneController implements SubController {
 			hoursTextField.setText(String.valueOf(controller.getDefaultHours()));
 			minutesTextField.setText(String.format("%02d", controller.getDefaultMinutes()));
 			secondsTextField.setText(String.format("%02d", controller.getDefaultSeconds()));
-			final Identifier defaultNodeID = Identifier.parse(controller.getDefaultNodeID());
-			nodeIDTextField.setText(defaultNodeID.toNicknameAndChecksum(controller.getAccountsList()));
-			nodeIDTextField.setEditable(true);
 			txValidDurationTextField.setText(String.valueOf(controller.getTxValidDuration()));
 			autoRenewPeriodTextField.setText(String.valueOf(controller.getAutoRenewPeriod()));
 
@@ -230,9 +235,9 @@ public class SettingsPaneController implements SubController {
 			readVersion();
 
 			// region Events
-			setupNodeIDTextField();
-
 			setupNetworkBox();
+
+			setupNodeIDTextField();
 
 			setupTxValidDurationTextField();
 
@@ -354,9 +359,6 @@ public class SettingsPaneController implements SubController {
 								throw new IllegalStateException(
 										"Only a String should be selected by the network Combobox!");
 							}
-							final String account = calcNodeId(controller.getDefaultNodeID()).toNicknameAndChecksum(
-									controller.getAccountsList());
-							nodeIDTextField.setText(account);
 							checkNodeID();
 						} catch (final Exception e) {
 							LOG.error("Error in network selection", e);
@@ -529,28 +531,37 @@ public class SettingsPaneController implements SubController {
 	}
 
 	private void setupNodeIDTextField() {
-		nodeIDTextField.setOnKeyReleased(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.ENTER)) {
+		nodeIDTextField.setOnAction(e -> checkNodeID());
+		nodeIDTextField.focusedProperty().addListener(((observableValue, oldValue, newValue) -> {
+			if (Boolean.FALSE.equals(newValue)) {
 				checkNodeID();
 			}
-		});
-
-		nodeIDTextField.setOnKeyPressed(keyEvent -> {
-			if (keyEvent.getCode().equals(KeyCode.TAB)) {
-				checkNodeID();
+		}));
+		nodeIDTextField.setText(controller.getDefaultNodeID());
+		nodeIDTextField.setEditable(true);
+		nodeIDTextField.styleProperty().bind(
+				Bindings.when(new SimpleListProperty<>(nodeAccountList.getItems()).emptyProperty())
+						.then(TEXTFIELD_DEFAULT).otherwise(TEXTFIELD_WITH_LIST_DEFAULT));
+		//Need both min and max heights bound or the grid pane doesn't properly resize
+		nodeAccountList.minHeightProperty().bind(
+				Bindings.min(new SimpleListProperty<>(nodeAccountList.getItems()).sizeProperty(), 4)
+						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
+		nodeAccountList.maxHeightProperty().bind(
+				Bindings.min(new SimpleListProperty<>(nodeAccountList.getItems()).sizeProperty(), 4)
+						.multiply(LIST_CELL_HEIGHT).add(LIST_HEIGHT_SPACER));
+		nodeAccountList.visibleProperty().bind(Bindings.isEmpty(nodeAccountList.getItems()).not());
+		nodeAccountList.setCellFactory(listView -> new ListCell<>() {
+			@Override
+			protected void updateItem(Identifier id, boolean b) {
+				super.updateItem(id, b);
+				if (id != null && !b) {
+					setText(id.toNicknameAndChecksum(controller.getAccountsList()));
+				}
 			}
 		});
-
-		nodeIDTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-			if (Boolean.FALSE.equals(newPropertyValue)) {
-				LOG.info("Node ID text field changed to: {}", nodeIDTextField.getText());
-				checkNodeID();
-			}
-		});
-
+		checkNodeID();
 		nodeIDTooltip.setOnAction(actionEvent -> CommonMethods.showTooltip(controller.settingsPane, nodeIDTooltip,
 				NODE_ID_TOOLTIP_MESSAGE));
-
 	}
 
 	private void managedPropertyBinding(final Node... nodes) {
@@ -633,37 +644,87 @@ public class SettingsPaneController implements SubController {
 
 	private Identifier calcNodeId(final String account) {
 		return Optional.ofNullable(networkChoicebox.getValue())
-				.filter(value -> value instanceof String)
-				.map(value -> (String) value)
+				.filter(String.class::isInstance)
+				.map(String.class::cast)
 				.map(network -> Identifier.parse(account, network))
 				.orElseGet(() -> Identifier.parse(account));
 	}
 
-	private void checkNodeID() {
-		final String account = nodeIDTextField.getText();
-		try {
-			LOG.info("Node ID text field changed to: {}", account);
-			final Identifier calculatedIdentifier = calcNodeId(controller.getDefaultNodeID());
-			final String calculatedAccount = calculatedIdentifier.toNicknameAndChecksum(controller.getAccountsList());
-			if (Objects.equals(calculatedAccount, account)) {
-				controller.setDefaultNodeID(calculatedIdentifier.toReadableString());
-				accountIDErrorLabel.setVisible(false);
-			} else {
-				final Identifier accountID = calcNodeId(account);
-				if (accountID.isValid()) {
-					controller.setDefaultNodeID(accountID.toReadableString());
-					nodeIDTextField.setText(accountID.toNicknameAndChecksum(controller.getAccountsList()));
-					settingScrollPane.requestFocus();
-					accountIDErrorLabel.setVisible(false);
-				} else {
-					accountIDErrorLabel.setVisible(true);
-					LOG.error("Invalid NodeID: '{}'", account);
-				}
-			}
-		} catch (final Exception e) {
-			accountIDErrorLabel.setVisible(true);
-			LOG.error("Invalid NodeID: '" + account + "'", e);
+	private void addNodeToList(final Identifier accountId) throws HederaClientRuntimeException {
+		if (!Objects.requireNonNull(accountId, "Node ID cannot be null").isValid()) {
+			throw new HederaClientRuntimeException(String.format("Node ID is Invalid: %s", accountId.toReadableString()));
 		}
+		if (nodeAccountList.getItems().size() == 100) {
+			throw new HederaClientRuntimeException("Too many nodes. Max Node count allowed is 100");
+		}
+		nodeAccountList.getItems().add(accountId);
+	}
+
+	private void checkNodeID() {
+		nodeAccountList.getItems().clear();
+		accountIDErrorLabel.setVisible(false);
+		final var text = nodeIDTextField.getText();
+		if (text.isBlank()) {
+			//In case the String is not actually empty
+			nodeIDTextField.setText("");
+			return;
+		}
+		try {
+			LOG.info("Node ID text field changed to: {}", text);
+			parseNodeIdText(text);
+		} catch (final Exception e) {
+			nodeAccountList.getItems().clear();
+			accountIDErrorLabel.setVisible(true);
+			LOG.error(String.format("Invalid Node ID(s): '%s'", text), e);
+		}
+	}
+
+	private void parseNodeIdText(String text) {
+		final var accounts = text.split(",");
+		for (String account : accounts) {
+			final var accountRange = account.split("-(?=\\s*\\d)");
+			if (accountRange.length > 2) {
+				throw new HederaClientRuntimeException(String.format("Invalid Range value: %s", account));
+			} else if (accountRange.length == 2) {
+				final Identifier rangeStartId = getValidId(accountRange[0].strip());
+				final Identifier rangeEndId = getValidId(accountRange[1].strip());
+
+				final String networkName = rangeStartId.getNetworkName();
+				final long rangeShardNum = rangeStartId.getShardNum();
+				final long rangeRealmNum = rangeStartId.getRealmNum();
+				if (rangeShardNum != rangeEndId.getShardNum() ||
+						rangeRealmNum != rangeEndId.getRealmNum()) {
+					throw new HederaClientRuntimeException(String.format("Invalid Ranges, Shards and Realms must match: %s",
+							account));
+				}
+				final long rangeStartNum = rangeStartId.getAccountNum();
+				final long rangeEndNum = rangeEndId.getAccountNum();
+				if (rangeStartNum > rangeEndNum) {
+					throw new HederaClientRuntimeException(String.format("Invalid Range Format: %s", account));
+				}
+				for (long i=rangeStartNum; i<=rangeEndNum; i++) {
+					final var accountId = new Identifier(rangeShardNum, rangeRealmNum, i, networkName);
+					if (accountId.isValid()) {
+						addNodeToList(accountId);
+					}
+				}
+			} else {
+				final var accountId = getValidId(account.strip());
+
+				addNodeToList(accountId);
+			}
+
+			controller.setDefaultNodeID(text);
+		}
+	}
+
+	private Identifier getValidId(String id) {
+		final Identifier validId = calcNodeId(id);
+
+		if (!validId.isValid()) {
+			throw new HederaClientRuntimeException(String.format("Invalid Id: %s", id));
+		}
+		return validId;
 	}
 
 	private String getLocalTime() {

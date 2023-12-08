@@ -52,13 +52,16 @@ import static com.hedera.hashgraph.client.core.constants.Constants.LAST_TRANSACT
 import static com.hedera.hashgraph.client.core.constants.Constants.LEGACY;
 import static com.hedera.hashgraph.client.core.constants.Constants.MAXIMUM_AUTO_RENEW_PERIOD;
 import static com.hedera.hashgraph.client.core.constants.Constants.MINIMUM_AUTO_RENEW_PERIOD;
+import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_CHECKSUM;
 import static com.hedera.hashgraph.client.core.constants.Constants.MNEMONIC_HASH_CODE;
 import static com.hedera.hashgraph.client.core.constants.Constants.NETWORKS;
 import static com.hedera.hashgraph.client.core.constants.Constants.PREFERRED_STORAGE_DIRECTORY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SALT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.SETUP_PHASE;
 import static com.hedera.hashgraph.client.core.constants.Constants.TX_VALID_DURATION;
+import static com.hedera.hashgraph.client.core.constants.Constants.VALID_INCREMENT_PROPERTY;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_DEFAULT_FEE;
+import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_INCREMENT_SECONDS;
 import static com.hedera.hashgraph.client.core.constants.Constants.VAL_NUM_TRANSACTION_VALID_DURATION;
 import static com.hedera.hashgraph.client.core.constants.Constants.VERSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CUSTOM_FEE_PAYERS;
@@ -195,6 +198,16 @@ public class UserAccessibleProperties {
 		}
 	}
 
+	public long getValidIncrement() {
+		return properties.getLongProperty(VALID_INCREMENT_PROPERTY, VAL_NUM_TRANSACTION_INCREMENT_SECONDS);
+	}
+
+	public void setValidIncrement(final long validIncrement) {
+		if (validIncrement > 0) {
+			properties.setProperty(VALID_INCREMENT_PROPERTY, validIncrement);
+		}
+	}
+
 	public SetupPhase getSetupPhase() {
 		return SetupPhase.fromInt(properties.getIntProperty(SETUP_PHASE, 0));
 	}
@@ -290,6 +303,14 @@ public class UserAccessibleProperties {
 
 	public int getMnemonicHashCode() {
 		return properties.getIntProperty(MNEMONIC_HASH_CODE, 0);
+	}
+
+	public void setMnemonicChecksum(final String checksum) {
+		properties.setProperty(MNEMONIC_CHECKSUM, checksum);
+	}
+
+	public String getMnemonicChecksum() {
+		return properties.getProperty(MNEMONIC_CHECKSUM, "");
 	}
 
 	// region Credential map operations
