@@ -4066,8 +4066,20 @@ public class CreatePaneController implements SubController {
 			if (task.isSuccessful()) {
 				showReceiptOnPopup(task.getTransaction(), (TransactionReceipt) task.getResult());
 			} else {
+				String errorString;
+				var result = task.getResult();
+				// If the result is a throwable, drill down to find the causing error.
+				if (result instanceof Throwable) {
+					var thrownError = (Throwable)task.getResult();
+					while (thrownError.getCause() != null) {
+						thrownError = thrownError.getCause();
+					}
+					errorString = thrownError.getMessage();
+				} else {
+					errorString = result == null ? "result is null" : result.toString();
+				}
 				PopupMessage.display(STATUS,
-						String.format(TRANSACTION_FAILED_ERROR_MESSAGE, task.getResult()));
+						String.format(TRANSACTION_FAILED_ERROR_MESSAGE, errorString));
 				return false;
 			}
 		} else {
