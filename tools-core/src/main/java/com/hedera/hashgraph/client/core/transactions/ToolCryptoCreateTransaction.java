@@ -244,6 +244,7 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	@Override
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
 		final var keysSet = super.getSigningKeys(accountsInfoFolder);
+		// The keys of the new account are not actually required for signing. This isn't needed.
 		keysSet.addAll(EncryptionUtils.flatPubKeys(
 				Collections.singletonList(((AccountCreateTransaction) transaction).getKey())));
 		return keysSet;

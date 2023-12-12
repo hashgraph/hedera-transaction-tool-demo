@@ -494,7 +494,9 @@ public class CreatePaneController implements SubController {
 				freezeFileHashTextField, stakedAccountIdField, stakedNodeIdField
 		);
 
-		setupTransferFields();
+		if (!initialized) {
+			setupTransferFields();
+		}
 
 		setupCreateFields();
 
@@ -542,14 +544,12 @@ public class CreatePaneController implements SubController {
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
 				acceptToAccountButton, errorInvalidToAccount);
 
-		if (!initialized) {
-			transferFromAmountTextField.textProperty().addListener(
-					(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
-							"[^\\d.]"));
-			transferToAmountTextField.textProperty().addListener(
-					(observable, oldValue, newValue) -> fixNumericTextField(transferToAmountTextField, newValue, "\\d*",
-							"[^\\d.]"));
-		}
+		transferFromAmountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixNumericTextField(transferFromAmountTextField, newValue, "\\d*",
+						"[^\\d.]"));
+		transferToAmountTextField.textProperty().addListener(
+				(observable, oldValue, newValue) -> fixNumericTextField(transferToAmountTextField, newValue, "\\d*",
+						"[^\\d.]"));
 
 		final BooleanProperty transferBoolean = new SimpleBooleanProperty();
 		transferBoolean.setValue(toTransferTable.getItems().isEmpty() ^ fromTransferTable.getItems().isEmpty());
@@ -1418,15 +1418,9 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
-		if (!initialized) {
-			table.getItems().addListener(
-					(ListChangeListener<AccountAmountStrings>) change -> table.setMinHeight(table.getFixedCellSize() * (
-							!change.getList().isEmpty() ? table.getItems().size() + 1.1 : 2.1)));
-
-		}
-		table.prefHeightProperty().bind(
-				table.fixedCellSizeProperty().multiply(Bindings.size(table.getItems()).add(1.1)));
-
+		table.minHeightProperty().bind(
+				table.fixedCellSizeProperty().multiply(Bindings.max(1, Bindings.size(table.getItems())).add(1.1)));
+		table.prefHeightProperty().bind(table.minHeightProperty());
 		table.maxHeightProperty().bind(table.prefHeightProperty());
 		table.managedProperty().bind(table.visibleProperty());
 	}
@@ -1495,13 +1489,11 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
-		if (!initialized) {
-			amountTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
-				if (Boolean.FALSE.equals(newPropertyValue)) {
-					setHBarFormat(amountTextField);
-				}
-			});
-		}
+		amountTextField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+			if (Boolean.FALSE.equals(newPropertyValue)) {
+				setHBarFormat(amountTextField);
+			}
+		});
 
 
 		acceptButton.setOnKeyPressed((KeyEvent event) -> {
