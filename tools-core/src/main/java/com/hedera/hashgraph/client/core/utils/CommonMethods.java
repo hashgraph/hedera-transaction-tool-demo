@@ -26,6 +26,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
@@ -40,6 +41,7 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
+import com.hedera.hashgraph.sdk.Transaction;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -773,6 +775,69 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var pt = new PauseTransition(new javafx.util.Duration(5000));
 		pt.setOnFinished(e -> customTooltip.hide());
 		pt.play();
+	}
+
+	/**
+	 * Converts a hex string to a byte array
+	 *
+	 * @param hex
+	 * 		the hex string
+	 * @return a byte array
+	 */
+	public static byte[] hexToByteArray(String hex) {
+		int len = hex.length();
+		byte[] data = new byte[len / 2];
+		for (int i = 0; i < len; i += 2) {
+			data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+					+ Character.digit(hex.charAt(i+1), 16));
+		}
+		return data;
+	}
+
+	/**
+	 * Converts a byte array to a hex string
+	 *
+	 * @param bytes
+	 * 		the byte array
+	 * @return a hex string
+	 */
+	public static String byteArrayToHex(byte[] bytes) {
+		StringBuilder hexString = new StringBuilder();
+		for (byte b : bytes) {
+			String hex = Integer.toHexString(0xFF & b);
+			if (hex.length() == 1) {
+				hexString.append('0');
+			}
+			hexString.append(hex);
+		}
+		return hexString.toString();
+	}
+
+	public static String hexToString(String hex) {
+		StringBuilder output = new StringBuilder();
+		for (int i = 0; i < hex.length(); i += 2) {
+			String str = hex.substring(i, i + 2);
+			output.append((char) Integer.parseInt(str, 16));
+		}
+		return output.toString();
+	}
+
+	public static String stringToHex(String string) {
+		StringBuilder hex = new StringBuilder();
+		for (char ch : string.toCharArray()) {
+			hex.append(String.format("%02x", (int) ch));
+		}
+		return hex.toString();
+	}
+
+	public static Transaction<?> getTransaction(final byte[] transactionBytes) throws InvalidProtocolBufferException {
+		var transaction = Transaction.fromBytes(transactionBytes);
+		// Java SDK changed how toBytes/fromBytes determined if a transaction was frozen.
+		// The latest version no longer sets the transaction to frozen when it is created from bytes
+		// automatically. Now it will only be frozen if at least 1 signature is present.
+		// Freeze the transaction so it cannot be modified
+		transaction.freeze();
+		return transaction;
 	}
 }
 
