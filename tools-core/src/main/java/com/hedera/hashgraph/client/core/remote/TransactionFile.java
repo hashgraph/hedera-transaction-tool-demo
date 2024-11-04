@@ -35,6 +35,9 @@ import com.hedera.hashgraph.client.core.transactions.SignaturePair;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeDeleteTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
@@ -45,6 +48,8 @@ import com.opencsv.CSVWriter;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -121,6 +126,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			Arrays.asList(FileActions.SIGN, FileActions.DECLINE, FileActions.ADD_MORE, FileActions.BROWSE);
 	private JsonObject oldInfo = null;
 	private String network = "MAINNET";
+	private EventHandler<ActionEvent> gossipCaCertificateViewAction;
 
 	public TransactionFile() {
 		super();
@@ -200,6 +206,10 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		return now.getSeconds() > getExpiration().getSeconds();
 	}
 
+	public void setGossipCaCertificateViewAction(EventHandler<ActionEvent> action) {
+		this.gossipCaCertificateViewAction = action;
+	}
+
 	@Override
 	public GridPane buildGridPane() {
 		final var detailsGridPane = super.buildGridPane();
@@ -224,6 +234,15 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				break;
 			case FREEZE:
 				handleFreezeTransactionFields(detailsGridPane, count);
+				break;
+			case NODE_CREATE:
+				handleNodeCreateTransactionFields(detailsGridPane, count);
+				break;
+			case NODE_UPDATE:
+				handleNodeUpdateTransactionFields(detailsGridPane, count);
+				break;
+			case NODE_DELETE:
+				handleNodeDeleteTransactionFields(detailsGridPane, count);
 				break;
 			default:
 				logger.error("Unrecognized transaction type {}", transaction.getTransactionType());
@@ -273,7 +292,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			scrollPane.setContent(label);
 			detailsGridPane.add(scrollPane, RIGHT, count);
 		} else {
-			detailsGridPane.add(new Label("Node:"), LEFT, ++count);
+			detailsGridPane.add(new Label("Submit to Node:"), LEFT, ++count);
 			detailsGridPane.add(new Label(transaction.getNodeID().toNicknameAndChecksum(nicknames)), RIGHT, count);
 		}
 
@@ -632,6 +651,152 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 	}
 
+	/**
+	 * Add the NODE CREATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleNodeCreateTransactionFields(final GridPane detailsGridPane, int count) {
+		final var createTransaction = (ToolNodeCreateTransaction) this.transaction;
+
+		final var nicknames = getAccountNicknames();
+
+		detailsGridPane.add(new Label("Node Account ID: "), LEFT, count);
+		final var account = createTransaction.getDabNodeAccountId();
+		account.setNetworkName(network);
+		detailsGridPane.add(new Label(account.toNicknameAndChecksum(nicknames)), RIGHT, count++);
+
+		detailsGridPane.add(new Label("Node Description: "), LEFT, count);
+		final var description = new Label(createTransaction.getNodeDescription());
+		description.setWrapText(true);
+		detailsGridPane.add(description, RIGHT, count++);
+
+		final var keysLink = new Hyperlink("Click for more details");
+
+		detailsGridPane.add(new Label("Admin Key: "), LEFT, count);
+		keysLink.setOnAction(actionEvent -> displayKey(treeView, new TreeView<>()));
+		detailsGridPane.add(keysLink, RIGHT, count++);
+
+		detailsGridPane.add(new Label("Gossip CA Certificate: "), LEFT, count);
+		final var viewGossipLink = new Hyperlink("Click to view");
+		viewGossipLink.setOnAction(gossipCaCertificateViewAction);
+		detailsGridPane.add(viewGossipLink, RIGHT, count++);
+
+		final var grpcCertificateHash = createTransaction.getGrpcCertificateHash();
+		if (grpcCertificateHash != null) {
+			detailsGridPane.add(new Label("GRPC Certificate Hash: "), LEFT, count);
+			final var grpcCertificateHashLabel = new Label(grpcCertificateHash);
+			grpcCertificateHashLabel.setWrapText(true);
+			detailsGridPane.add(grpcCertificateHashLabel, RIGHT, count++);
+		}
+
+		detailsGridPane.add(new Label("Gossip Endpoints: "), LEFT, count);
+		for (final var gossipEndpoint : createTransaction.getGossipEndpointList()) {
+			final var gossipEndpointLabel = new Label(gossipEndpoint.toString());
+			gossipEndpointLabel.setWrapText(true);
+			detailsGridPane.add(gossipEndpointLabel, RIGHT, count++);
+		}
+
+		detailsGridPane.add(new Label("Service Endpoints: "), LEFT, count);
+		for (final var serviceEndpoint : createTransaction.getServiceEndpointList()) {
+			final var serviceEndpointLabel = new Label(serviceEndpoint.toString());
+			serviceEndpointLabel.setWrapText(true);
+			detailsGridPane.add(serviceEndpointLabel, RIGHT, count++);
+		}
+	}
+
+	/**
+	 * Add the NODE UPDATE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleNodeUpdateTransactionFields(final GridPane detailsGridPane, int count) {
+		final var updateTransaction = (ToolNodeUpdateTransaction) this.transaction;
+
+		detailsGridPane.add(new Label("Node ID: "), LEFT, count);
+		detailsGridPane.add(new Label(String.valueOf(updateTransaction.getDabNodeId())), RIGHT, count++);
+
+		final var nicknames = getAccountNicknames();
+
+		final var account = updateTransaction.getDabNodeAccountId();
+		if (account != null) {
+			detailsGridPane.add(new Label("Node Account ID: "), LEFT, count);
+			account.setNetworkName(network);
+			detailsGridPane.add(new Label(account.toNicknameAndChecksum(nicknames)), RIGHT, count++);
+		}
+
+		final var description = updateTransaction.getNodeDescription();
+		if (description != null) {
+			detailsGridPane.add(new Label("Node Description: "), LEFT, count);
+			final var descriptionLabel = new Label(description);
+			descriptionLabel.setWrapText(true);
+			detailsGridPane.add(descriptionLabel, RIGHT, count++);
+		}
+
+		if (treeView.getRoot() != null) {
+			final var keysLink = new Hyperlink("Click for more details");
+
+			detailsGridPane.add(new Label("Admin Key: "), LEFT, count);
+			keysLink.setOnAction(actionEvent -> displayKey(treeView, new TreeView<>()));
+			detailsGridPane.add(keysLink, RIGHT, count++);
+		}
+
+		final var gossipCaCert = updateTransaction.getGossipCACertificate();
+		if (gossipCaCert != null) {
+			detailsGridPane.add(new Label("Gossip CA Certificate: "), LEFT, count);
+			final var gossipCaCertLabel = new Label();
+			gossipCaCertLabel.setWrapText(true);
+			detailsGridPane.add(gossipCaCertLabel, RIGHT, count++);
+		}
+
+		final var grpcCertificateHash = updateTransaction.getGrpcCertificateHash();
+		if (grpcCertificateHash != null) {
+			detailsGridPane.add(new Label("GRPC Certificate Hash: "), LEFT, count);
+			final var grpcCertificateHashLabel = new Label(grpcCertificateHash);
+			grpcCertificateHashLabel.setWrapText(true);
+			detailsGridPane.add(grpcCertificateHashLabel, RIGHT, count++);
+		}
+
+		if (updateTransaction.getGossipEndpointList() != null) {
+			detailsGridPane.add(new Label("Gossip Endpoints: "), LEFT, count);
+			for (final var gossipEndpoint : updateTransaction.getGossipEndpointList()) {
+				final var gossipEndpointLabel = new Label(gossipEndpoint.toString());
+				gossipEndpointLabel.setWrapText(true);
+				detailsGridPane.add(gossipEndpointLabel, RIGHT, count++);
+			}
+		}
+
+		if (updateTransaction.getServiceEndpointList() != null) {
+			detailsGridPane.add(new Label("Service Endpoints: "), LEFT, count);
+			for (final var serviceEndpoint : updateTransaction.getServiceEndpointList()) {
+				final var serviceEndpointLabel = new Label(serviceEndpoint.toString());
+				serviceEndpointLabel.setWrapText(true);
+				detailsGridPane.add(serviceEndpointLabel, RIGHT, count++);
+			}
+		}
+	}
+
+	/**
+	 * Add the NODE DELETE exclusive fields to the grid pane
+	 *
+	 * @param detailsGridPane
+	 * 		the pane where the transaction details are entered
+	 * @param count
+	 * 		the number of rows in the grid pane
+	 */
+	private void handleNodeDeleteTransactionFields(final GridPane detailsGridPane, int count) {
+		final var deleteTransaction = (ToolNodeDeleteTransaction) this.transaction;
+
+		detailsGridPane.add(new Label("Node ID: "), LEFT, count);
+		detailsGridPane.add(new Label(String.valueOf(deleteTransaction.getDabNodeId())), RIGHT, count++);
+	}
+
 	@Override
 	public String execute(final Pair<String, KeyPair> pair, final String user,
 						  final String output, final Runnable onSucceed) throws HederaClientException {
@@ -708,7 +873,6 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		}
 		return super.getSigningPublicKeys();
 	}
-
 
 	private int setAccountAmounts(final GridPane detailsGridPane, int count,
 			final List<Pair<String, String>> receivers) {

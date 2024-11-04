@@ -141,6 +141,34 @@
 							   visible="false"/>
 					</HBox>
 				</VBox>
+				<VBox fx:id="dabNodeAccountIdVBox" spacing="10.0">
+					<VBox.margin>
+						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+					</VBox.margin>
+					<VBox spacing="10.0">
+						<Label text="Node Account ID"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0">
+							<padding>
+								<Insets top="15.0"/>
+							</padding>
+							<TextField fx:id="dabNodeAccountId" alignment="CENTER" maxWidth="-Infinity" minWidth="300.0"
+									   promptText="X.X.XXXX" style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<ImageView fitHeight="15.0" fitWidth="15.0" pickOnBounds="true" preserveRatio="true"
+									   visible="false">
+								<Image url="@../../../../../icons/greencheck.png"/>
+							</ImageView>
+							<Label fx:id="invalidDabNodeAccountId" text="Cannot recognize account" textFill="RED"
+								   visible="false"/>
+						</HBox>
+					</VBox>
+					<VBox spacing="10.0">
+						<Label text="Node Description"/>
+						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+							<TextField fx:id="dabNodeDescriptionField" maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
+									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						</HBox>
+					</VBox>
+				</VBox>
 				<HBox fx:id="systemSlidersHBox" spacing="50.0">
 					<padding>
 						<Insets left="15.0" right="15.0" top="15.0"/>
@@ -748,6 +776,124 @@
 					<padding>
 						<Insets left="15.0" right="15.0" top="10.0"/>
 					</padding>
+				</VBox>
+				<VBox fx:id="dabNodeIdVBox" spacing="20.0" style="-fx-background-color: white;">
+					<padding>
+						<Insets left="15.0" right="15.0" top="10.0"/>
+					</padding>
+					<Label text="Node ID"/>
+					<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+						<TextField fx:id="dabNodeIdTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
+								   promptText="Node ID" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+					</HBox>
+					<Label fx:id="invalidDabNodeId" text="Invalid node id" textFill="RED"
+						   visible="false"/>
+				</VBox>
+				<VBox fx:id="dabNodeInfoVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
+					<padding>
+						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+					</padding>
+					<VBox fx:id="endpointsVBox" alignment="CENTER" spacing="20.0"
+						  style="-fx-background-color: white;">
+						<padding>
+							<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
+						</padding>
+						<VBox alignment="TOP_CENTER" maxHeight="1.7976931348623157E308" maxWidth="-Infinity" spacing="20.0">
+							<VBox fx:id="gossipEndpointsVBox" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308"
+								  maxWidth="-Infinity" spacing="10.0">
+								<Label text="Gossip Endpoints"/>
+								<TableView fx:id="gossipEndpointsTable" focusTraversable="false" maxHeight="-Infinity"
+										   maxWidth="-Infinity" minWidth="800.0" prefWidth="800.0" HBox.hgrow="ALWAYS"/>
+								<HBox fx:id="gossipEndpointsHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity"
+									  spacing="20.0">
+									<TextField fx:id="gossipHostTextField" alignment="CENTER"
+											   promptText="IP or Domain"
+											   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
+									<TextField fx:id="gossipPortTextField" layoutX="10.0" layoutY="10.0" alignment="CENTER"
+											   promptText="Port"
+											   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
+									<Button fx:id="addGossipEndpointButton" mnemonicParsing="false" prefWidth="150.0"
+											style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;"
+											text="Add" textAlignment="CENTER" onAction="#handleAddGossipEndpointButton"/>
+								</HBox>
+								<Label fx:id="errorInvalidGossipEndpoint" style="-fx-text-fill: red;"
+									   text="Cannot parse the gossip endpoint" visible="false"/>
+							</VBox>
+							<VBox fx:id="serviceEndpointsVBox" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308"
+								  spacing="10.0">
+								<Label text="Service Endpoints"/>
+								<TableView fx:id="serviceEndpointsTable" focusTraversable="false" maxHeight="-Infinity"
+										   maxWidth="-Infinity" minWidth="800.0" prefWidth="800.0" HBox.hgrow="ALWAYS"/>
+								<HBox fx:id="serviceEndpointsHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity"
+									  spacing="20.0">
+									<TextField fx:id="serviceHostTextField" alignment="CENTER"
+											   promptText="IP or Domain"
+											   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
+									<TextField fx:id="servicePortTextField" layoutX="10.0" layoutY="10.0" alignment="CENTER"
+											   promptText="Port"
+											   style="-fx-background-radius: 10; -fx-border-radius: 10;"/>
+									<Button fx:id="addServiceEndpointButton" mnemonicParsing="false" prefWidth="150.0"
+											style="-fx-background-color: #0B9DFD; -fx-border-color: #0b9bfd; -fx-text-fill: white; -fx-border-radius: 10; -fx-background-radius: 10;"
+											text="Add" textAlignment="CENTER" onAction="#handleAddServiceEndpointButton"/>
+								</HBox>
+								<Label fx:id="errorInvalidServiceEndpoint" style="-fx-text-fill: red;"
+									   text="Cannot parse the service endpoint" visible="false"/>
+							</VBox>
+							<HBox>
+								<Label fx:id="invalidGossipEndpointList"
+									   text=" There must be at least one gossip endpoint for the node "
+									   textFill="RED" visible="false"/>
+								<Region HBox.hgrow="ALWAYS"/>
+								<Label fx:id="invalidServiceEndpointList"
+									   text=" There must be at least one service endpoint for the node "
+									   textFill="RED" visible="false"/>
+							</HBox>
+						</VBox>
+					</VBox>
+					<VBox fx:id="gossipCaCertificateVBox" spacing="10.0" style="-fx-background-color: white;">
+						<Label text="Gossip CA Certificate"/>
+						<HBox spacing="20.0" VBox.vgrow="ALWAYS">
+							<TextArea fx:id="gossipCaCertificateTextArea" maxHeight="400" minHeight="100.0" prefHeight="200"
+									  promptText="Paste Gossip CA Certificate" wrapText="true"/>
+							<Label fx:id="invalidGossipCaCertificate" text="Invalid certificate" textFill="RED"
+								   visible="false"/>
+						</HBox>
+					</VBox>
+					<VBox fx:id="grpcCertificateHashVBox" spacing="10.0" style="-fx-background-color: white;">
+						<Label text="GRPC Certificate Hash"/>
+						<TextField fx:id="grpcCertificateHashTextField"
+								   maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
+								   promptText="Enter Certificate Hash here"
+								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+					</VBox>
+					<VBox layoutX="25.0" layoutY="617.0" spacing="10.0">
+						<Label text="New admin key"/>
+						<HBox alignment="CENTER_LEFT" spacing="50.0">
+							<ScrollPane fx:id="createAdminKey" hbarPolicy="NEVER" minHeight="150.0" minWidth="-Infinity"
+										prefHeight="150.0" prefWidth="300.0"
+										style="-fx-background-color: white; -fx-border-color: grey;" visible="false"/>
+							<GridPane hgap="5.0" vgap="5.0">
+								<columnConstraints>
+									<ColumnConstraints hgrow="SOMETIMES" minWidth="-Infinity"/>
+									<ColumnConstraints hgrow="SOMETIMES"/>
+								</columnConstraints>
+								<rowConstraints>
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
+									<RowConstraints minHeight="-Infinity" vgrow="NEVER"/>
+								</rowConstraints>
+								<Button fx:id="createAdminKeyButton" maxWidth="1.7976931348623157E308"
+										mnemonicParsing="false"
+										style="-fx-background-color: white; -fx-border-color: #0b9dfd; -fx-text-fill: #0b9dfd; -fx-border-radius: 10; -fx-background-radius: 10;"
+										text="EDIT KEY" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS"
+										GridPane.valignment="CENTER"/>
+								<HBox fx:id="nodeCopyFromAccountHBox" spacing="5.0" GridPane.columnIndex="1"
+									  GridPane.rowIndex="2"/>
+							</GridPane>
+							<Label fx:id="invalidCreateAdminKey" text="A new key must be specified" textFill="RED"
+								   visible="false"/>
+						</HBox>
+					</VBox>
 				</VBox>
 				<HBox alignment="CENTER_RIGHT">
 					<padding>
