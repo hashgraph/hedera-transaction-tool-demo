@@ -1590,7 +1590,6 @@ public class CreatePaneController implements SubController {
 
 	// region Dab Node info
 
-	//TODO
 	@FXML
 	private void handleAddGossipEndpointButton(ActionEvent event) {
 		addEndpointToTable(gossipHostTextField, gossipPortTextField, gossipEndpointsTable);
@@ -2407,6 +2406,18 @@ public class CreatePaneController implements SubController {
 				selectTransactionType.setValue("Network Freeze and Update");
 				loadFreezeTransactionToForm((ToolFreezeTransaction) transaction);
 				break;
+			case NODE_CREATE:
+				selectTransactionType.setValue("Node Create");
+				loadNodeCreateTransactionToForm((ToolNodeCreateTransaction) transaction);
+				break;
+			case NODE_UPDATE:
+				selectTransactionType.setValue("Node Update");
+				loadNodeUpdateTransactionToForm((ToolNodeUpdateTransaction) transaction);
+				break;
+			case NODE_DELETE:
+				selectTransactionType.setValue("Node Delete");
+				loadNodeDeleteTransactionToForm((ToolNodeDeleteTransaction) transaction);
+				break;
 			case FILE_UPDATE, FILE_APPEND:
 			default:
 				PopupMessage.display("Unsupported transaction", "The transaction is not yet supported by the tool.");
@@ -2677,46 +2688,76 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-	private void loadNodeCreateToForm(final ToolNodeCreateTransaction transaction) {
+	private void loadNodeCreateTransactionToForm(final ToolNodeCreateTransaction transaction) {
 		cleanAllNodeCreateFields();
-
 		dabNodeAccountIdVBox.setVisible(true);
 		dabNodeInfoVBox.setVisible(true);
-		createAdminKey.setVisible(true);
-		processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
-		//TODO
-//		final var nodeAccount = transaction.getNodeAccount();
-//		nodeAccount.setNetworkName(controller.getCurrentNetwork());
-//
-//
-//		nodeAccountID.setText(nodeAccount.toNicknameAndChecksum(controller.getAccountsList()));
-//		nodeDescriptionField.setText(transaction.getAccountMemo());
-	}
-	//TODO still need to do the create nodecreatetransaction stuff and json?
+		if (transaction.getDabNodeAccountId() != null) {
+			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
+		}
 
-	//TODO
-//	private void loadNodeUpdateToForm(final ToolNodeUpdateTransaction transaction) {
-//		cleanAllNodeUpdateFields();
-//		final var nodeAccount = transaction.getNodeAccount();
-//		nodeAccount.setNetworkName(controller.getCurrentNetwork());
-//		nodeAccountID.setText(nodeAccount.toNicknameAndChecksum(controller.getAccountsList()));
-//		final var key = transaction.getKey();
-//		if (key != null) {
-//			nodeNewKey.setVisible(true);
-//			processKey(EncryptionUtils.keyToJson(key), nodeNewKey);
-//		}
-//		final var memo = transaction.getMemo();
-//		if (memo != null) {
-//			nodeAccountMemo.setText(memo);
-//		}
-//	}
-//
-//	private void loadNodeDeleteToForm(final ToolNodeDeleteTransaction transaction) {
-//		cleanAllNodeDeleteFields();
-//		final var nodeAccount = transaction.getNodeAccount();
-//		nodeAccount.setNetworkName(controller.getCurrentNetwork());
-//		nodeAccountID.setText(nodeAccount.toNicknameAndChecksum(controller.getAccountsList()));
-//	}
+		dabNodeDescriptionField.setText(transaction.getNodeDescription());
+
+		if (transaction.getGossipEndpointList() != null) {
+			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
+				gossipEndpointsTable.getItems().add(gossipEndpoint);
+			});
+		}
+
+		if (transaction.getServiceEndpointList() != null) {
+			transaction.getServiceEndpointList().forEach(serviceEndpoint -> {
+				serviceEndpointsTable.getItems().add(serviceEndpoint);
+			});
+		}
+
+		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		grpcCertificateHashTextField.setText(transaction.getGrpcCertificateHash());
+
+		if (transaction.getAdminKey() != null) {
+			createAdminKey.setVisible(true);
+			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
+		}
+	}
+
+	private void loadNodeUpdateTransactionToForm(final ToolNodeUpdateTransaction transaction) {
+		cleanAllNodeUpdateFields();
+		dabNodeAccountIdVBox.setVisible(true);
+		dabNodeInfoVBox.setVisible(true);
+		if (transaction.getDabNodeAccountId() != null) {
+			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
+		}
+
+		dabNodeDescriptionField.setText(transaction.getNodeDescription());
+
+		dabNodeIdVBox.setVisible(true);
+		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
+
+		if (transaction.getGossipEndpointList() != null) {
+			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
+				gossipEndpointsTable.getItems().add(gossipEndpoint);
+			});
+		}
+
+		if (transaction.getServiceEndpointList() != null) {
+			transaction.getServiceEndpointList().forEach(serviceEndpoint -> {
+				serviceEndpointsTable.getItems().add(serviceEndpoint);
+			});
+		}
+
+		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		grpcCertificateHashTextField.setText(transaction.getGrpcCertificateHash());
+
+		if (transaction.getAdminKey() != null) {
+			createAdminKey.setVisible(true);
+			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
+		}
+	}
+
+	private void loadNodeDeleteTransactionToForm(final ToolNodeDeleteTransaction transaction) {
+		cleanAllNodeDeleteFields();
+		dabNodeIdVBox.setVisible(true);
+		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
+	}
 
 	public void loadFormFromTransactionTest(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
