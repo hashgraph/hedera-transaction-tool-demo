@@ -700,12 +700,25 @@ public class HomePaneController implements SubController {
 						}
 						for (final Map.Entry<BundleFile.PubInfoKey, File> entry :
 								((BundleFile) rf).getPublicKeyMap().entrySet()) {
-							final var oldLocation =
-									new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
-							Files.deleteIfExists(oldLocation.toPath());
-							final var destination =
-									new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
-							FileUtils.copyFile(entry.getValue(), destination);
+							// if the nickname is to be replaced, it should replace the file
+							if (((BundleFile) rf).replacePublicKeyNicknames()) {
+								final var oldLocation =
+										new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
+								Files.deleteIfExists(oldLocation.toPath());
+								final var destination =
+										new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
+								FileUtils.copyFile(entry.getValue(), destination);
+							} else {
+								// if the nickname is NOT to be replaced, only save the file if the key doesn't already
+								// exist
+								final var oldLocation =
+										new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
+								if (!Files.exists(oldLocation.toPath())) {
+									final var destination =
+											new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
+									FileUtils.copyFile(entry.getValue(), destination);
+								}
+							}
 						}
 						break;
 					default:
