@@ -62,8 +62,8 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 	private Key key;
 	private Duration autoRenewDuration;
 	private boolean receiverSignatureRequired;
-	private int maxTokenAssociations = MAX_TOKEN_AUTOMATIC_ASSOCIATIONS;
-	private String accountMemo = "";
+	private int maxTokenAssociations;
+	private String accountMemo;
 	private Identifier stakedAccountId;
 	private Long stakedNodeId;
 	private boolean declineStakingRewards;
@@ -272,6 +272,10 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 		}
 		if (stakedNodeId != null) {
 			asJson.addProperty(STAKED_NODE_ID_FIELD_NAME, stakedNodeId);
+		}
+
+		if (accountMemo != null) {
+			asJson.addProperty(ACCOUNT_MEMO_FIELD_NAME, accountMemo);
 		}
 		asJson.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards);
 		return asJson;
