@@ -169,6 +169,10 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		return accountCheckBox.isSelected();
 	}
 
+	public boolean replacePublicKeyNicknames() {
+		return keyCheckBox.isSelected();
+	}
+
 	@Override
 	public List<FileActions> getActions() {
 		return actions;
@@ -215,8 +219,8 @@ public class BundleFile extends RemoteFile implements GenericFileReadWriteAware 
 		accountInfoMap.forEach((key, value) -> accounts.addProperty(key.nickname, value.getAbsolutePath()));
 		toJson.add("publicKeys", publicKeys);
 		toJson.add("accountInfos", accounts);
-		toJson.addProperty("replaceKeys", keyCheckBox.isSelected());
-		toJson.addProperty("replaceAccounts", accountCheckBox.isSelected());
+		toJson.addProperty("replaceKeys", replacePublicKeyNicknames());
+		toJson.addProperty("replaceAccounts", replaceAccountNicknames());
 		return toJson;
 	}
 
