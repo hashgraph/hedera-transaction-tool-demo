@@ -1218,7 +1218,7 @@ public class CreatePaneController implements SubController {
 			// Create objects used to determine if the values for an account are the same among all the
 			// accounts to be updated
 			var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
-			var autoRenewPeriodString = String.format("%d s", accountInfo.autoRenewPeriod.getSeconds());
+			var autoRenewPeriodString = String.valueOf(accountInfo.autoRenewPeriod.getSeconds());
 			var isReceiverSignatureRequiredString = String.valueOf(accountInfo.isReceiverSignatureRequired);
 			var accountMemoString = accountInfo.accountMemo;
 			var maxAutomaticTokenAssociationsString = String.valueOf(accountInfo.maxAutomaticTokenAssociations);
@@ -1242,7 +1242,7 @@ public class CreatePaneController implements SubController {
 			for (int i = 1, max = updateAccountList.getItems().size(); i < max; i++) {
 				accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(i));
 				autoRenewPeriodString = compareValues(autoRenewPeriodString,
-						String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()), MIXED);
+						String.valueOf(accountInfo.autoRenewPeriod.getSeconds()), MIXED);
 				isReceiverSignatureRequiredString = compareValues(isReceiverSignatureRequiredString,
 						String.valueOf(accountInfo.isReceiverSignatureRequired), MIXED);
 				// If the keys are different, just show the first key found
@@ -3108,15 +3108,8 @@ public class CreatePaneController implements SubController {
 		// Account Memo
 		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
 
-		// Max Auto Token Associations
-		final var text = createMaxTokenAssociations.getText();
-		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, text.isEmpty() ? 0 : Integer.parseInt(text));
-
 		// Receiver Sig Required
 		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
-
-		// Account Memo
-		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
 
 		// Max Auto Token Associations
 		final var newTokens = createMaxTokenAssociations.getText();
@@ -3131,7 +3124,6 @@ public class CreatePaneController implements SubController {
 		}
 
 		input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards.isSelected());
-
 	}
 
 	private void addCryptoUpdateElements(final JsonObject input) {
