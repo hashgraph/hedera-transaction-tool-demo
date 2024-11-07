@@ -421,6 +421,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		final var nicknames = getAccountNicknames();
 
 		if (!isHistory() && getTransactionCreationMetadata() != null
+				&& getTransactionCreationMetadata().getAccounts() != null
 				&& !getTransactionCreationMetadata().getAccounts().getList().isEmpty()) {
 			final var nLabel = new Label("Accounts to update: ");
 			detailsGridPane.add(nLabel, LEFT, count);
