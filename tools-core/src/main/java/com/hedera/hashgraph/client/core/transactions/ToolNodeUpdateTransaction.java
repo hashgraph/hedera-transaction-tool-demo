@@ -27,7 +27,6 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
-import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.NodeUpdateTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
@@ -297,20 +296,6 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
             keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(keyFromTransaction)));
         }
         return keysSet;
-    }
-
-    @Override
-    public Set<AccountId> getSigningAccounts() {
-        // This will return the Fee Payer account and the account to be updated, no new signatures
-        // will be referenced at this point.
-        final var accountsSet = super.getSigningAccounts();
-//        accountId can't be null, or something. basically i need the account id in order to determine which of my local
-//                accounts has keys and stuff, same with adminkey - i need it somehow
-//
-//                transactionfile, key should be adminkey,
-
-        accountsSet.add(((NodeUpdateTransaction) transaction).getAccountId());
-        return accountsSet;
     }
 
     @Override

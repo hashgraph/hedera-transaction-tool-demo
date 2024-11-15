@@ -20,6 +20,7 @@ package com.hedera.hashgraph.client.core.transactions;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
@@ -231,6 +233,16 @@ public class ToolNodeCreateTransaction  extends ToolTransaction {
         }
 
         return nodeCreateTransaction.freeze();
+    }
+
+    @Override
+    public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
+        final var keysSet = super.getSigningKeys(accountsInfoFolder);
+        final var keyFromTransaction = ((NodeCreateTransaction) transaction).getAdminKey();
+        if (keyFromTransaction != null) {
+            keysSet.addAll(EncryptionUtils.flatPubKeys(Collections.singletonList(keyFromTransaction)));
+        }
+        return keysSet;
     }
 
     @Override
