@@ -52,6 +52,10 @@ import javafx.scene.layout.Pane;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -59,12 +63,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -777,6 +786,48 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		pt.play();
 	}
 
+	public static byte[] convertCertificateStringToBytes(String certificate) {
+		if (certificate == null || certificate.isEmpty()) {
+			return new byte[0];
+		}
+		try (var parser = new PEMParser(new StringReader(certificate))) {
+			var parserObject = parser.readObject();
+			if (parserObject instanceof X509CertificateHolder) {
+				var certificateHolder = (X509CertificateHolder) parserObject;
+				return new JcaX509CertificateConverter().getCertificate(certificateHolder).getEncoded();
+			}
+			throw new CertificateException(
+					"Not X509 Certificate, it is " + parserObject.getClass().getSimpleName());
+		} catch (IOException | CertificateException e) {
+			throw new HederaClientRuntimeException(e);
+		}
+	}
+
+	public static String convertCertificateBytesToString(byte[] certificateBytes) {
+		if (certificateBytes == null || certificateBytes.length == 0) {
+			return "";
+		}
+		try {
+			X509CertificateHolder certificateHolder = new X509CertificateHolder(certificateBytes);
+			StringWriter stringWriter = new StringWriter();
+			try (JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter)) {
+				pemWriter.writeObject(certificateHolder);
+			}
+			return stringWriter.toString();
+		} catch (IOException e) {
+			throw new HederaClientRuntimeException("Error converting certificate bytes to string", e);
+		}
+	}
+
+	public static byte[] hashBytes(byte[] bytes) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-384");
+			return digest.digest(bytes);
+		} catch (NoSuchAlgorithmException e) {
+			throw new HederaClientRuntimeException("Error hashing bytes", e);
+		}
+	}
+
 	/**
 	 * Converts a hex string to a byte array
 	 *
@@ -784,7 +835,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		the hex string
 	 * @return a byte array
 	 */
-	public static byte[] hexToByteArray(String hex) {
+	public static byte[] hexToBytes(String hex) {
 		int len = hex.length();
 		byte[] data = new byte[len / 2];
 		for (int i = 0; i < len; i += 2) {
@@ -801,33 +852,12 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	 * 		the byte array
 	 * @return a hex string
 	 */
-	public static String byteArrayToHex(byte[] bytes) {
+	public static String bytesToHex(byte[] bytes) {
 		StringBuilder hexString = new StringBuilder();
 		for (byte b : bytes) {
-			String hex = Integer.toHexString(0xFF & b);
-			if (hex.length() == 1) {
-				hexString.append('0');
-			}
-			hexString.append(hex);
+			hexString.append(String.format("%02x", b));
 		}
 		return hexString.toString();
-	}
-
-	public static String hexToString(String hex) {
-		StringBuilder output = new StringBuilder();
-		for (int i = 0; i < hex.length(); i += 2) {
-			String str = hex.substring(i, i + 2);
-			output.append((char) Integer.parseInt(str, 16));
-		}
-		return output.toString();
-	}
-
-	public static String stringToHex(String string) {
-		StringBuilder hex = new StringBuilder();
-		for (char ch : string.toCharArray()) {
-			hex.append(String.format("%02x", (int) ch));
-		}
-		return hex.toString();
 	}
 
 	public static Transaction<?> getTransaction(final byte[] transactionBytes) throws InvalidProtocolBufferException {

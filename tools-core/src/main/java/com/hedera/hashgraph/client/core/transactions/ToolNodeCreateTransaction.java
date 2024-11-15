@@ -49,10 +49,10 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.GRPC_CERT
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_DESCRIPTION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.SERVICE_ENDPOINTS_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.byteArrayToHex;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.hexToByteArray;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.hexToString;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.stringToHex;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.bytesToHex;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.convertCertificateBytesToString;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.convertCertificateStringToBytes;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.hexToBytes;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.verifyFieldExist;
 
 public class ToolNodeCreateTransaction  extends ToolTransaction {
@@ -77,12 +77,12 @@ public class ToolNodeCreateTransaction  extends ToolTransaction {
         this.nodeDescription = ((NodeCreateTransaction) transaction).getDescription();
         this.adminKey = ((NodeCreateTransaction) transaction).getAdminKey();
         byte[] bytes = ((NodeCreateTransaction) transaction).getGossipCaCertificate();
-        if (bytes != null) {
-            this.gossipCACertificate = hexToString(byteArrayToHex(bytes));
+        if (bytes != null && bytes.length > 0) {
+            this.gossipCACertificate = convertCertificateBytesToString(bytes);
         }
         bytes = ((NodeCreateTransaction) transaction).getGrpcCertificateHash();
-        if (bytes != null) {
-            this.grpcCertificateHash = byteArrayToHex(bytes);
+        if (bytes != null && bytes.length > 0) {
+            this.grpcCertificateHash = bytesToHex(bytes);
         }
         this.gossipEndpointList = ((NodeCreateTransaction) transaction).getGossipEndpoints().stream()
                 .map(ToolEndpoint::fromSdk).collect(Collectors.toList());
@@ -214,14 +214,14 @@ public class ToolNodeCreateTransaction  extends ToolTransaction {
                 .setTransactionValidDuration(transactionValidDuration)
                 .setAccountId(dabNodeAccountId.asAccount())
                 .setAdminKey(adminKey)
-                .setGossipCaCertificate(hexToByteArray(stringToHex(gossipCACertificate)));
+                .setGossipCaCertificate(convertCertificateStringToBytes(gossipCACertificate));
 
         if (nodeDescription != null) {
             nodeCreateTransaction.setDescription(nodeDescription);
         }
 
         if (grpcCertificateHash != null) {
-            nodeCreateTransaction.setGrpcCertificateHash(hexToByteArray(grpcCertificateHash));
+            nodeCreateTransaction.setGrpcCertificateHash(hexToBytes(grpcCertificateHash));
         }
 
         for (final ToolEndpoint endpoint : gossipEndpointList) {

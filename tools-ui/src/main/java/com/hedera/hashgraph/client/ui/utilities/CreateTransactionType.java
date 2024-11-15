@@ -39,7 +39,7 @@ public enum CreateTransactionType {
 	SYSTEM("Admin Modify Content"),
 	FILE_UPDATE("File Contents Update"),
 	FREEZE("Network Freeze and Update"),
-	NODE_CREATE("Node Creation"),
+	NODE_CREATE("Node Create"),
 	NODE_UPDATE("Node Update"),
 	NODE_DELETE("Node Delete"),
 	UNKNOWN("");

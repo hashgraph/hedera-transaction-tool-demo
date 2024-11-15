@@ -37,7 +37,6 @@ import com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
-import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolEndpoint;
@@ -252,6 +251,9 @@ import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CR
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.bytesToHex;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.convertCertificateStringToBytes;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.hashBytes;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.showTooltip;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
@@ -406,7 +408,6 @@ public class CreatePaneController implements SubController {
 	public TextField updateMaxTokensOriginal;
 	public TextField updateMaxTokensNew;
 	public TextField dabNodeAccountId;
-	public TextField dabNodeDescriptionField;
 	public TextField gossipHostTextField;
 	public TextField gossipPortTextField;
 	public TextField serviceHostTextField;
@@ -418,6 +419,7 @@ public class CreatePaneController implements SubController {
 	public TableView<ToolEndpoint> gossipEndpointsTable;
 	public TableView<ToolEndpoint> serviceEndpointsTable;
 
+	public TextArea dabNodeDescriptionArea;
 	public TextArea createCommentsTextArea;
 	public TextArea gossipCaCertificateTextArea;
 	public TextArea grpcCertificateTextArea;
@@ -446,6 +448,7 @@ public class CreatePaneController implements SubController {
 	public HBox shaTextFlow;
 	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
+	public Label dabNodeDescriptionByteCount;
 	public Label grpcCertificateHashLabel;
 
 	// Error messages
@@ -634,7 +637,7 @@ public class CreatePaneController implements SubController {
 					(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(String.valueOf(t1)));
 
 			createAccountMemo.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
+					(observableValue, s, t1) -> setByteCounter(createAccountMemo, MAX_MEMO_BYTES, createMemoByteCount));
 		}
 		createKeyButton.setOnAction(e -> {
 			autoCompleteNickname.clear();
@@ -714,7 +717,7 @@ public class CreatePaneController implements SubController {
 				}
 			});
 			updateAccountMemoNew.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(updateAccountMemoNew, updateBytesRemaining));
+					(observableValue, s, t1) -> setByteCounter(updateAccountMemoNew, MAX_MEMO_BYTES, updateBytesRemaining));
 		}
 
 		updateFromNickName.setOnKeyReleased(
@@ -1575,6 +1578,9 @@ public class CreatePaneController implements SubController {
 				dabNodeIdTextField.setText(newValue.replaceAll("[^\\d]", ""));
 			}
 		});
+
+		dabNodeDescriptionArea.textProperty().addListener(
+				(observableValue, s, t1) -> setByteCounter(dabNodeDescriptionArea, MAX_MEMO_BYTES, dabNodeDescriptionByteCount));
 	}
 
 	private void cleanAllDabNodeIdFields() {
@@ -1827,14 +1833,24 @@ public class CreatePaneController implements SubController {
 			if ("".equals(newValue) && newValue.equals(oldValue)) {
 				return;
 			}
-			grpcCertificateHashLabel.setText(SecurityUtilities.hashCertificate(newValue));
+			try {
+				var bytes = convertCertificateStringToBytes(newValue);
+				var hash = hashBytes(bytes);
+				grpcCertificateHashLabel.setText(bytesToHex(hash));
+			} catch (final HederaClientRuntimeException e) {
+				PopupMessage.display("Error loading certificate",
+						"The certificate could not be loaded, please check that the certificate is the correct format.");
+				controller.displaySystemMessage(e);
+				logger.error(e);
+				grpcCertificateTextArea.clear();
+			}
 		});
 	}
 
 	private boolean initializeDabNodeInfoTables = true;
 	private void cleanAllDabNodeInfoFields() {
 		dabNodeAccountId.clear();
-		dabNodeDescriptionField.clear();
+		dabNodeDescriptionArea.clear();
 		gossipEndpointsTable.getItems().clear();
 		serviceEndpointsTable.getItems().clear();
 		clearErrorMessages(errorInvalidGossipEndpoint, errorInvalidServiceEndpoint,
@@ -2733,7 +2749,7 @@ public class CreatePaneController implements SubController {
 			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
 		}
 
-		dabNodeDescriptionField.setText(transaction.getNodeDescription());
+		dabNodeDescriptionArea.setText(transaction.getNodeDescription());
 
 		if (transaction.getGossipEndpointList() != null) {
 			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
@@ -2764,7 +2780,7 @@ public class CreatePaneController implements SubController {
 			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
 		}
 
-		dabNodeDescriptionField.setText(transaction.getNodeDescription());
+		dabNodeDescriptionArea.setText(transaction.getNodeDescription());
 
 		dabNodeIdVBox.setVisible(true);
 		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
@@ -2918,14 +2934,14 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-	private void setMemoByteCounter(final TextInputControl textField, final Label label) {
+	private void setByteCounter(final TextInputControl textField, final int maxByteCount, final Label label) {
 		final var text = textField.getText();
 		final var byteSize = text.getBytes(StandardCharsets.UTF_8).length;
-		if (byteSize > MAX_MEMO_BYTES) {
-			textField.setText(CommonMethods.trimString(text, MAX_MEMO_BYTES));
+		if (byteSize > maxByteCount) {
+			textField.setText(CommonMethods.trimString(text, maxByteCount));
 		}
 		label.setText(
-				String.format("Bytes remaining:\t%d", MAX_MEMO_BYTES - textField.getText().getBytes(
+				String.format("Bytes remaining:\t%d", maxByteCount - textField.getText().getBytes(
 						StandardCharsets.UTF_8).length));
 	}
 
@@ -3297,8 +3313,8 @@ public class CreatePaneController implements SubController {
 			input.add(DAB_NODE_ACCOUNT_ID_FIELD_NAME, nodeAccount.asJSON());
 		}
 
-		if (!dabNodeDescriptionField.getText().isEmpty()) {
-			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionField.getText());
+		if (!dabNodeDescriptionArea.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionArea.getText());
 		}
 
 		if (!gossipCaCertificateTextArea.getText().isEmpty()) {
@@ -3341,8 +3357,8 @@ public class CreatePaneController implements SubController {
 			input.add(DAB_NODE_ACCOUNT_ID_FIELD_NAME, nodeAccount.asJSON());
 		}
 
-		if (!dabNodeDescriptionField.getText().isEmpty()) {
-			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionField.getText());
+		if (!dabNodeDescriptionArea.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionArea.getText());
 		}
 
 		if (!gossipCaCertificateTextArea.getText().isEmpty()) {
@@ -3565,7 +3581,8 @@ public class CreatePaneController implements SubController {
 			}
 			storeTransactionAndComment(pair, fileService);
 			cleanForm();
-		} catch (final HederaClientException e) {
+		} catch (final HederaClientException | HederaClientRuntimeException e) {
+			PopupMessage.display("Error storing transaction", e.getMessage());
 			controller.displaySystemMessage(e);
 		}
 
@@ -3670,7 +3687,7 @@ public class CreatePaneController implements SubController {
 
 		if (!initialized) {
 			memoField.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(memoField, transactionMemoByteCount));
+					(observableValue, s, t1) -> setByteCounter(memoField, MAX_MEMO_BYTES, transactionMemoByteCount));
 
 			nodeAccountField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
 				if (Boolean.FALSE.equals(newValue)) {
@@ -4242,17 +4259,22 @@ public class CreatePaneController implements SubController {
 		selectTransactionType.setValue(type);
 	}
 
-	public void signAndSubmitAction() throws HederaClientException {
-
-		switch (transactionType) {
-			case FILE_UPDATE:
-				signAndSubmitMultipleTransactions();
-				break;
-			case CREATE, UPDATE, TRANSFER, SYSTEM, NODE_CREATE, NODE_UPDATE, NODE_DELETE:
-				signAndSubmitSingleTransaction();
-				break;
-			default:
-				throw new HederaClientException("Cannot process transaction");
+	public void signAndSubmitAction() {
+		try {
+			switch (transactionType) {
+				case FILE_UPDATE:
+					signAndSubmitMultipleTransactions();
+					break;
+				case CREATE, UPDATE, TRANSFER, SYSTEM, NODE_CREATE, NODE_UPDATE, NODE_DELETE:
+					signAndSubmitSingleTransaction();
+					break;
+				default:
+					throw new HederaClientException("Cannot process transaction");
+			}
+		} catch (final HederaClientException | HederaClientRuntimeException e) {
+			logger.error(e);
+			controller.displaySystemMessage(e);
+			PopupMessage.display("Error Signing Transaction", e.getMessage());
 		}
 	}
 

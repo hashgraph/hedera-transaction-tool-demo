@@ -141,6 +141,18 @@
 							   visible="false"/>
 					</HBox>
 				</VBox>
+				<VBox fx:id="dabNodeIdVBox" spacing="10.0" style="-fx-background-color: white;">
+					<padding>
+						<Insets left="15.0" right="15.0" top="10.0"/>
+					</padding>
+					<Label text="Node ID"/>
+					<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
+						<TextField fx:id="dabNodeIdTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
+								   promptText="Node ID" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
+					</HBox>
+					<Label fx:id="invalidDabNodeId" text="Invalid node id" textFill="RED"
+						   visible="false"/>
+				</VBox>
 				<VBox fx:id="dabNodeAccountIdVBox" spacing="10.0">
 					<VBox.margin>
 						<Insets bottom="15.0" left="15.0" right="15.0" top="10.0"/>
@@ -164,8 +176,9 @@
 					<VBox spacing="10.0">
 						<Label text="Node Description"/>
 						<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-							<TextField fx:id="dabNodeDescriptionField" maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
-									   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+							<TextArea fx:id="dabNodeDescriptionArea" maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
+									  prefRowCount="1" wrapText="true"/>
+							<Label fx:id="dabNodeDescriptionByteCount" text="Bytes remaining: 100"/>
 						</HBox>
 					</VBox>
 				</VBox>
@@ -776,18 +789,6 @@
 					<padding>
 						<Insets left="15.0" right="15.0" top="10.0"/>
 					</padding>
-				</VBox>
-				<VBox fx:id="dabNodeIdVBox" spacing="20.0" style="-fx-background-color: white;">
-					<padding>
-						<Insets left="15.0" right="15.0" top="10.0"/>
-					</padding>
-					<Label text="Node ID"/>
-					<HBox alignment="CENTER_LEFT" spacing="20.0" VBox.vgrow="ALWAYS">
-						<TextField fx:id="dabNodeIdTextField" maxWidth="300.0" minWidth="300.0" prefWidth="300.0"
-								   promptText="Node ID" style="-fx-border-radius: 10; -fx-background-radius: 10;" />
-					</HBox>
-					<Label fx:id="invalidDabNodeId" text="Invalid node id" textFill="RED"
-						   visible="false"/>
 				</VBox>
 				<VBox fx:id="dabNodeInfoVBox" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
 					<padding>
