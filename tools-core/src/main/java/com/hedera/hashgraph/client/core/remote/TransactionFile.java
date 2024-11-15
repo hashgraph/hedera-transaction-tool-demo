@@ -764,7 +764,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			detailsGridPane.add(grpcCertificateHashLabel, RIGHT, count++);
 		}
 
-		if (updateTransaction.getGossipEndpointList() != null) {
+		if (updateTransaction.getGossipEndpointList() != null
+				&& !updateTransaction.getGossipEndpointList().isEmpty()) {
 			detailsGridPane.add(new Label("Gossip Endpoints: "), LEFT, count);
 			for (final var gossipEndpoint : updateTransaction.getGossipEndpointList()) {
 				final var gossipEndpointLabel = new Label(gossipEndpoint.toString());
@@ -773,7 +774,8 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			}
 		}
 
-		if (updateTransaction.getServiceEndpointList() != null) {
+		if (updateTransaction.getServiceEndpointList() != null
+				&& !updateTransaction.getServiceEndpointList().isEmpty()) {
 			detailsGridPane.add(new Label("Service Endpoints: "), LEFT, count);
 			for (final var serviceEndpoint : updateTransaction.getServiceEndpointList()) {
 				final var serviceEndpointLabel = new Label(serviceEndpoint.toString());
