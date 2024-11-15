@@ -63,6 +63,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
@@ -415,6 +416,22 @@ public class SecurityUtilities {
 		} catch (final Exception e) {
 			logger.error(e);
 			return false;
+		}
+	}
+
+	public static String hashCertificate(String certificate) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-384");
+			byte[] hash = digest.digest(certificate.getBytes(StandardCharsets.UTF_8));
+			StringBuilder hexString = new StringBuilder();
+			for (byte b : hash) {
+				String hex = Integer.toHexString(0xff & b);
+				if (hex.length() == 1) hexString.append('0');
+				hexString.append(hex);
+			}
+			return hexString.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }
