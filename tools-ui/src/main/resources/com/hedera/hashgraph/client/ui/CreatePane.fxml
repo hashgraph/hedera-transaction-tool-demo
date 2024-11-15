@@ -854,17 +854,31 @@
 						<Label text="Gossip CA Certificate"/>
 						<HBox spacing="20.0" VBox.vgrow="ALWAYS">
 							<TextArea fx:id="gossipCaCertificateTextArea" maxHeight="400" minHeight="100.0" prefHeight="200"
-									  promptText="Paste Gossip CA Certificate" wrapText="true"/>
+									  promptText="Paste Gossip CA Certificate text here" wrapText="true"/>
+							<Button fx:id="browseGossipCaCertificateButton" mnemonicParsing="false"
+									onAction="#browseToGossipCaCertificateFile" prefWidth="150.0"
+									style="-fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;
+									-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
+									text="BROWSE"/>
 							<Label fx:id="invalidGossipCaCertificate" text="Invalid certificate" textFill="RED"
 								   visible="false"/>
 						</HBox>
 					</VBox>
 					<VBox fx:id="grpcCertificateHashVBox" spacing="10.0" style="-fx-background-color: white;">
-						<Label text="GRPC Certificate Hash"/>
-						<TextField fx:id="grpcCertificateHashTextField"
-								   maxWidth="600.0" minWidth="600.0" prefWidth="600.0"
-								   promptText="Enter Certificate Hash here"
-								   style="-fx-border-radius: 10; -fx-background-radius: 10;"/>
+						<Label text="GRPC Certificate"/>
+						<HBox spacing="20.0" VBox.vgrow="ALWAYS">
+							<TextArea fx:id="grpcCertificateTextArea" maxHeight="400" minHeight="100.0" prefHeight="200"
+									  promptText="Paste GRPC Certificate text here" wrapText="true"/>
+							<Button fx:id="browseGrpcCertificateButton" mnemonicParsing="false"
+									onAction="#browseToGrpcCertificateFile" prefWidth="150.0"
+									style="-fx-background-color: #0b9bfd; -fx-border-color: #0b9bfd;
+									-fx-background-radius: 10; -fx-border-radius: 10; -fx-text-fill: white;"
+									text="BROWSE"/>
+						</HBox>
+					</VBox>
+					<VBox spacing="10.0" style="-fx-background-color: white;">
+						<Label text="GRPC Certificate Hash:"/>
+						<Label fx:id="grpcCertificateHashLabel" wrapText="true"/>
 					</VBox>
 					<VBox layoutX="25.0" layoutY="617.0" spacing="10.0">
 						<Label text="New admin key"/>

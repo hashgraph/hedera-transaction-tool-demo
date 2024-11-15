@@ -37,6 +37,7 @@ import com.hedera.hashgraph.client.core.remote.TransactionCreationMetadataFile;
 import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
+import com.hedera.hashgraph.client.core.security.SecurityUtilities;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolEndpoint;
@@ -307,6 +308,8 @@ public class CreatePaneController implements SubController {
 	public Button addGossipEndpointButton;
 	public Button addServiceEndpointButton;
 	public Button createAdminKeyButton;
+	public Button browseGossipCaCertificateButton;
+	public Button browseGrpcCertificateButton;
 
 	public GridPane storeOrSubmitGridPane;
 
@@ -409,7 +412,6 @@ public class CreatePaneController implements SubController {
 	public TextField serviceHostTextField;
 	public TextField servicePortTextField;
 	public TextField dabNodeIdTextField;
-	public TextField grpcCertificateHashTextField;
 
 	public TableView<AccountAmountStrings> fromTransferTable;
 	public TableView<AccountAmountStrings> toTransferTable;
@@ -418,6 +420,7 @@ public class CreatePaneController implements SubController {
 
 	public TextArea createCommentsTextArea;
 	public TextArea gossipCaCertificateTextArea;
+	public TextArea grpcCertificateTextArea;
 
 	public DatePicker datePicker;
 	public DatePicker datePickerSystem;
@@ -443,6 +446,7 @@ public class CreatePaneController implements SubController {
 	public HBox shaTextFlow;
 	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
+	public Label grpcCertificateHashLabel;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -1600,6 +1604,36 @@ public class CreatePaneController implements SubController {
 		addEndpointToTable(serviceHostTextField, servicePortTextField, serviceEndpointsTable);
 	}
 
+	@FXML
+	private void browseToGossipCaCertificateFile() {
+		var gossipCaCertificate = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(),
+				createAnchorPane, "Gossip Certificate", "PEM files (*.pem)", "*.pem");
+		if (gossipCaCertificate != null && gossipCaCertificate.exists()) {
+			try {
+				String content = Files.readString(gossipCaCertificate.toPath(), StandardCharsets.UTF_8);
+				gossipCaCertificateTextArea.setText(content);
+				controller.setLastBrowsedDirectory(gossipCaCertificate);
+			} catch (IOException e) {
+				logger.error("Cannot load Gossip CA Certificate", e);
+			}
+		}
+	}
+
+	@FXML
+	private void browseToGrpcCertificateFile() {
+		var grpcCertificate = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(),
+				createAnchorPane, "GRPC Certificate", "PEM files (*.pem)", "*.pem");
+		if (grpcCertificate != null && grpcCertificate.exists()) {
+			try {
+				String content = Files.readString(grpcCertificate.toPath(), StandardCharsets.UTF_8);
+				grpcCertificateTextArea.setText(content);
+				controller.setLastBrowsedDirectory(grpcCertificate);
+			} catch (IOException e) {
+				logger.error("Cannot load GRPC Certificate", e);
+			}
+		}
+	}
+
 	private void initializeEndpointTables(final TableView<ToolEndpoint> table) {
 		final ObservableList<ToolEndpoint> data = FXCollections.observableArrayList();
 		table.setFixedCellSize(FIXED_CELL_SIZE);
@@ -1788,10 +1822,12 @@ public class CreatePaneController implements SubController {
 		autoCompleteNickname.setOnKeyReleased(
 				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createAdminKey));
 
-		grpcCertificateHashTextField.textProperty().addListener((observable, oldValue, newValue) -> {
-			if (newValue.length() > 500) {
-				grpcCertificateHashTextField.setText(oldValue);
+		grpcCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+			// If the new value is empty, and the old and new value are the same, don't alter the label.
+			if ("".equals(newValue) && newValue.equals(oldValue)) {
+				return;
 			}
+			grpcCertificateHashLabel.setText(SecurityUtilities.hashCertificate(newValue));
 		});
 	}
 
@@ -1809,7 +1845,8 @@ public class CreatePaneController implements SubController {
 			initializeDabNodeInfoTables = false;
 		}
 		gossipCaCertificateTextArea.clear();
-		grpcCertificateHashTextField.clear();
+		grpcCertificateTextArea.clear();
+		grpcCertificateHashLabel.setText("");
 		createAdminKey.setContent(new HBox());
 		createAdminKey.setVisible(false);
 	}
@@ -2711,7 +2748,7 @@ public class CreatePaneController implements SubController {
 		}
 
 		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
-		grpcCertificateHashTextField.setText(transaction.getGrpcCertificateHash());
+		grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
 
 		if (transaction.getAdminKey() != null) {
 			createAdminKey.setVisible(true);
@@ -2745,7 +2782,7 @@ public class CreatePaneController implements SubController {
 		}
 
 		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
-		grpcCertificateHashTextField.setText(transaction.getGrpcCertificateHash());
+		grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
 
 		if (transaction.getAdminKey() != null) {
 			createAdminKey.setVisible(true);
@@ -3268,8 +3305,8 @@ public class CreatePaneController implements SubController {
 			input.addProperty(GOSSIP_CA_CERTIFICATE_FIELD_NAME, gossipCaCertificateTextArea.getText());
 		}
 
-		if (!grpcCertificateHashTextField.getText().isEmpty()) {
-			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashTextField.getText());
+		if (!grpcCertificateHashLabel.getText().isEmpty()) {
+			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashLabel.getText());
 		}
 
 		// Key
@@ -3300,7 +3337,8 @@ public class CreatePaneController implements SubController {
 		}
 
 		if (!dabNodeAccountId.getText().isEmpty()) {
-			input.addProperty(DAB_NODE_ACCOUNT_ID_FIELD_NAME, dabNodeAccountId.getText());
+			final var nodeAccount = Identifier.parse(dabNodeAccountId.getText(), controller.getCurrentNetwork());
+			input.add(DAB_NODE_ACCOUNT_ID_FIELD_NAME, nodeAccount.asJSON());
 		}
 
 		if (!dabNodeDescriptionField.getText().isEmpty()) {
@@ -3311,8 +3349,8 @@ public class CreatePaneController implements SubController {
 			input.addProperty(GOSSIP_CA_CERTIFICATE_FIELD_NAME, gossipCaCertificateTextArea.getText());
 		}
 
-		if (!grpcCertificateHashTextField.getText().isEmpty()) {
-			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashTextField.getText());
+		if (!grpcCertificateHashLabel.getText().isEmpty()) {
+			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashLabel.getText());
 		}
 
 		//TODO make sure the original key is a thing for update
@@ -4565,24 +4603,49 @@ public class CreatePaneController implements SubController {
 
 	private ArrayList<ProgressTask> createSubmitTaskList(final List<ToolTransaction> transactions) throws HederaClientException {
 		final var taskList = new ArrayList<ProgressTask>();
+		// Get all the private keys needed to sign the transactions
 		final var allPrivateKeys = new HashSet<File>();
+		// Known signers are the accounts that are already in the list of fee payers, i.e. accounts and keys are
+		// stored locally. Unknown signers either don't have account info, or public keys stored locally.
 		final var unknownSigners = new HashSet<Identifier>();
+		// Ah, so this is like allPrivateKeys but on a per transaction basis.
+		// These lists are used to only pull the keys needed after the 'verifyPrivateKeys' step.
+		// That means, any additional keys added during 'verifyPrivateKeys' will be removed.
+		// This means that the extra keys in the 'verifiedPrivateKeys' list that were added by the user
+		// need to be added separately to the list of keys to sign.
 		final var privateKeyMap = new HashMap<ToolTransaction, List<File>>();
 		for (final var transaction : transactions) {
-			final var privateKeys = new ArrayList<File>();
-			privateKeys.addAll(controller.extractRequiredKeys(transaction.getSigningKeys()));
+            final var privateKeys = new ArrayList<File>(controller.extractRequiredKeys(transaction.getSigningKeys()));
 			privateKeyMap.put(transaction, privateKeys);
 			allPrivateKeys.addAll(privateKeys);
 			unknownSigners.addAll(getUnknownSigners(transaction));
 		}
 
+		// If there are unknown signers, display a message to the user
 		displayUnknownSigners(unknownSigners);
+		// Verify the private keys actually appears to show the private keys gathered, and also
+		// allows the user to add more private keys. The verifiedPrivateKeys list is all the private keys
+		// that should sign the transaction.
+		// Take the resulting list, compare it to allPrivateKeys, any additional keys should be separate.
+		// I believe this 'verifyPrivateKeys' is incorrect. In the case of a list of transactions, one step is being
+		// used to add or remove signatures for all transactions. That should not be. It would be better to do it
+		// on a per transaction basis. Otherwise, a key could be removed that is required for one of the transactions, right?
+		// Or more likely, a key could be added that is not needed for all transactions.
+		// As this flow is not currently in use, and there is no harm in adding signatures that are not needed (aside
+		// from size limitations), this is not a critical issue.
 		final var verifiedPrivateKeys = verifyPrivateKeys(allPrivateKeys);
 		final var comments = createCommentsTextArea.getText();
 		for (final var transaction : transactions) {
+			// Get all the keys that are in the list of keys the user has verified, and that are part of the transaction
+			// and create the acceptedKeys list.
 			var acceptedKeys = privateKeyMap.get(transaction).stream()
 					.filter(verifiedPrivateKeys::contains)
-					.collect(Collectors.toCollection(ArrayList::new));
+					.collect(Collectors.toList());
+			// Now get all the keys that were added by the user during the verification step, but are not part of the
+			// original list of all private keys, and add them to the acceptedKeys list.
+			acceptedKeys.addAll(verifiedPrivateKeys.stream().
+					filter(key -> !allPrivateKeys.contains(key))
+					.collect(Collectors.toList()));
 
 			if (acceptedKeys.isEmpty()) {
 				continue;
@@ -4660,6 +4723,7 @@ public class CreatePaneController implements SubController {
 					storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
 					setResult(receipt);
 					setSuccessful(true);
+					logger.info("Transaction submitted and successful");
 				} catch (final InterruptedException e) {
 					logger.error(e.getMessage());
 					logger.error("Thread interrupted");
@@ -4678,10 +4742,14 @@ public class CreatePaneController implements SubController {
 					setSuccessful(false);
 				}
 
+				logger.info("Set as history");
 				rf.setHistory(true);
 
+				logger.info("Add to history");
 				controller.historyPaneController.addToHistory(rf);
+				logger.info("Update progress");
 				updateProgress(2L,2L);
+				logger.info("Task return");
 				return this;
 			}
 		};
@@ -4830,6 +4898,17 @@ public class CreatePaneController implements SubController {
 				break;
 			case FREEZE:
 				message = "The freeze transaction succeeded";
+				break;
+			case NODE_CREATE:
+				message = String.format("Node %d is set to be created during the next update", receipt.nodeId);
+				break;
+			case NODE_UPDATE:
+				message = String.format("Node %d has been updated"
+						, ((ToolNodeUpdateTransaction) transaction).getDabNodeId());
+				break;
+			case NODE_DELETE:
+				message = String.format("Node %d is set to be deleted during the next upgrade",
+						((ToolNodeDeleteTransaction) transaction).getDabNodeId());
 				break;
 			default:
 				message = "Unknown transaction type";
