@@ -103,6 +103,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -1651,6 +1652,27 @@ public class CreatePaneController implements SubController {
 
 		final var hostColumn = new TableColumn<ToolEndpoint, String>("Host");
 		hostColumn.setCellValueFactory(new PropertyValueFactory<>("host"));
+
+		if (table == gossipEndpointsTable) {
+			hostColumn.setCellFactory(column -> new TableCell<>() {
+				@Override
+				protected void updateItem(String item, boolean empty) {
+					super.updateItem(item, empty);
+					if (empty || item == null) {
+						setText(null);
+					} else {
+						int index = getIndex();
+						if (index == 0) {
+							setText(item + " (internal)");
+						} else if (index == 1) {
+							setText(item + " (external)");
+						} else {
+							setText(item);
+						}
+					}
+				}
+			});
+		}
 
 		final var portColumn = new TableColumn<ToolEndpoint, Integer>("Port");
 		portColumn.setCellValueFactory(new PropertyValueFactory<>("port"));
@@ -3369,9 +3391,7 @@ public class CreatePaneController implements SubController {
 			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashLabel.getText());
 		}
 
-		//TODO make sure the original key is a thing for update
-		// Key
-		if (!newKeyJSON.isJsonNull() && !newKeyJSON.isEmpty() && newKeyJSON.equals(originalKey)
+		if (!newKeyJSON.isJsonNull() && !newKeyJSON.isEmpty() && !newKeyJSON.equals(originalKey)
 				&& !newKeyJSON.equals(emptyKeyObject())) {
 			input.add(ADMIN_KEY_FIELD_NAME, newKeyJSON);
 		}
