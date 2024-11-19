@@ -803,6 +803,8 @@
 							<VBox fx:id="gossipEndpointsVBox" alignment="TOP_CENTER" maxHeight="1.7976931348623157E308"
 								  maxWidth="-Infinity" spacing="10.0">
 								<Label text="Gossip Endpoints"/>
+								<Label text="First endpoint must be for internal host, second endpoint must be for external host"
+										   style="-fx-font-size: 12px; -fx-font-weight: bold;"/>
 								<TableView fx:id="gossipEndpointsTable" focusTraversable="false" maxHeight="-Infinity"
 										   maxWidth="-Infinity" minWidth="800.0" prefWidth="800.0" HBox.hgrow="ALWAYS"/>
 								<HBox fx:id="gossipEndpointsHBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity"
