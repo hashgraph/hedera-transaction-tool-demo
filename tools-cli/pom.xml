@@ -56,6 +56,12 @@
 			<version>0.14.2</version>
 		</dependency>
 
+		<!-- SDK Dependency - this is required for creating custom clients -->
+		<dependency>
+			<groupId>com.hedera.hashgraph</groupId>
+			<artifactId>sdk</artifactId>
+		</dependency>
+
 		<!-- Logging SLF4j + Log4j2 implementation -->
 		<!-- SLF4J-->
 		<dependency>
