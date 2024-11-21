@@ -1864,8 +1864,7 @@ public class CreatePaneController implements SubController {
 				return;
 			}
 			try {
-				var bytes = convertCertificateStringToBytes(newValue);
-				var hash = hashBytes(bytes);
+				var hash = hashBytes(newValue.getBytes(StandardCharsets.UTF_8));
 				grpcCertificateHashLabel.setText(bytesToHex(hash));
 			} catch (final HederaClientRuntimeException e) {
 				PopupMessage.display("Error loading certificate",
