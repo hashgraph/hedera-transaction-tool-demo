@@ -172,7 +172,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	public static Client getClient(final String networkString) {
 		// If a file exists for the string, or if it is named in the custom network folder,
 		// get the custom network for the string.
-		if (new File(networkString).exists()) {
+		var file = new File(networkString);
+		if (file.exists() && file.isFile()) {
 			logger.info("Loading nodes from {}", networkString);
 			final Map<String, AccountId> network = new HashMap<>();
 			final var jsonArray = getIntegrationIPs(networkString);
@@ -181,8 +182,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
 			}
 			return Client.forNetwork(network);
-		} else if (new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION).exists()) {
-			final var file = new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION);
+		} else if ((file = new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION)).exists()) {
 			try (final var fileReader = new FileReader(file)) {
 				return CommonMethods.getClient(JsonParser.parseReader(fileReader).getAsJsonArray());
 			} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
@@ -493,7 +493,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		try (final var file = new FileReader(nodes)) {
 			return JsonParser.parseReader(file).getAsJsonArray();
 		} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
-			logger.error(cause);
+			logger.error("An error occurred: ", cause);
 		}
 		return new JsonArray();
 	}
