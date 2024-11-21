@@ -1613,8 +1613,12 @@ public class CreatePaneController implements SubController {
 
 	@FXML
 	private void browseToGossipCaCertificateFile() {
-		var gossipCaCertificate = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(),
-				createAnchorPane, "Gossip Certificate", "PEM files (*.pem)", "*.pem");
+		var gossipCaCertificate = BrowserUtilities.browseFiles(
+				controller.getLastTransactionsDirectory(),
+				createAnchorPane,
+				"Gossip Certificate",
+				"PEM and CRT files (*.pem, *.crt)",
+				"*.pem", "*.crt");
 		if (gossipCaCertificate != null && gossipCaCertificate.exists()) {
 			try {
 				String content = Files.readString(gossipCaCertificate.toPath(), StandardCharsets.UTF_8);
@@ -1628,8 +1632,12 @@ public class CreatePaneController implements SubController {
 
 	@FXML
 	private void browseToGrpcCertificateFile() {
-		var grpcCertificate = BrowserUtilities.browseFiles(controller.getLastTransactionsDirectory(),
-				createAnchorPane, "GRPC Certificate", "PEM files (*.pem)", "*.pem");
+		var grpcCertificate = BrowserUtilities.browseFiles(
+				controller.getLastTransactionsDirectory(),
+				createAnchorPane,
+				"GRPC Certificate",
+				"PEM and CRT files (*.pem, *.crt)",
+				"*.pem", "*.crt");
 		if (grpcCertificate != null && grpcCertificate.exists()) {
 			try {
 				String content = Files.readString(grpcCertificate.toPath(), StandardCharsets.UTF_8);
@@ -4784,14 +4792,10 @@ public class CreatePaneController implements SubController {
 					setSuccessful(false);
 				}
 
-				logger.info("Set as history");
 				rf.setHistory(true);
 
-				logger.info("Add to history");
 				controller.historyPaneController.addToHistory(rf);
-				logger.info("Update progress");
 				updateProgress(2L,2L);
-				logger.info("Task return");
 				return this;
 			}
 		};
