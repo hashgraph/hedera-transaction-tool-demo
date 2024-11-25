@@ -39,9 +39,13 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolEndpoint;
 import com.hedera.hashgraph.client.core.transactions.ToolFileAppendTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFileUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolFreezeTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeDeleteTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeUpdateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolSystemTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
@@ -73,13 +77,14 @@ import com.hedera.hashgraph.sdk.Status;
 import com.hedera.hashgraph.sdk.TransactionReceipt;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -98,6 +103,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -152,6 +158,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -206,8 +214,10 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT_TO_UPDATE_INPUT;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.ADMIN_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DEL_UNDEL_SWITCH;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ENTITY_TO_DEL_UNDEL;
@@ -218,14 +228,20 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_FI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_FILE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_START_TIME_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FREEZE_TYPE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.GOSSIP_CA_CERTIFICATE_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.GOSSIP_ENDPOINTS_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.GRPC_CERTIFICATE_HASH_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.INITIAL_BALANCE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MAX_TOKEN_ASSOCIATIONS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NEW_KEY_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_ACCOUNT_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_DESCRIPTION_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.SERVICE_ENDPOINTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_ACCOUNT_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.STAKED_NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
@@ -236,6 +252,8 @@ import static com.hedera.hashgraph.client.core.constants.Messages.TRANSACTION_CR
 import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOOLTIP_TEXT;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.bytesToHex;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.hashCertificate;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.showTooltip;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
@@ -261,7 +279,6 @@ public class CreatePaneController implements SubController {
 	private final TimeZone timeZone = TimeZone.getDefault();
 	private final TimeZone timeZoneSystem = TimeZone.getDefault();
 	private final TimeZone freezeTimeZone = TimeZone.getDefault();
-
 
 	private CreateTransactionType transactionType;
 	private List<FileService> outputDirectories = new ArrayList<>();
@@ -290,6 +307,11 @@ public class CreatePaneController implements SubController {
 	public Button browseTransactions;
 	public Button resetFormButton;
 	public Button signAndSubmitButton;
+	public Button addGossipEndpointButton;
+	public Button addServiceEndpointButton;
+	public Button createAdminKeyButton;
+	public Button browseGossipCaCertificateButton;
+	public Button browseGrpcCertificateButton;
 
 	public GridPane storeOrSubmitGridPane;
 
@@ -315,6 +337,14 @@ public class CreatePaneController implements SubController {
 	public VBox freezeFileVBox;
 	public VBox freezeStartVBox;
 	public VBox freezeChoiceVBox;
+	public VBox dabNodeAccountIdVBox;
+	public VBox dabNodeIdVBox;
+	public VBox dabNodeInfoVBox;
+	public VBox endpointsVBox;
+	public VBox gossipEndpointsVBox;
+	public VBox serviceEndpointsVBox;
+	public VBox gossipCaCertificateVBox;
+	public VBox grpcCertificateHashVBox;
 
 	public HBox fromHBox;
 	public HBox toHBox;
@@ -325,6 +355,9 @@ public class CreatePaneController implements SubController {
 	public HBox timeZoneSystemHBox;
 	public HBox freezeTimeZoneHBox;
 	public HBox storeTransactionHBox;
+	public HBox gossipEndpointsHBox;
+	public HBox serviceEndpointsHBox;
+	public HBox nodeCopyFromAccountHBox;
 
 	public TextArea memoField;
 	public TextField feePayerAccountField;
@@ -374,11 +407,22 @@ public class CreatePaneController implements SubController {
 	public TextField updateAccountMemoNew;
 	public TextField updateMaxTokensOriginal;
 	public TextField updateMaxTokensNew;
+	public TextField dabNodeAccountId;
+	public TextField gossipHostTextField;
+	public TextField gossipPortTextField;
+	public TextField serviceHostTextField;
+	public TextField servicePortTextField;
+	public TextField dabNodeIdTextField;
 
 	public TableView<AccountAmountStrings> fromTransferTable;
 	public TableView<AccountAmountStrings> toTransferTable;
+	public TableView<ToolEndpoint> gossipEndpointsTable;
+	public TableView<ToolEndpoint> serviceEndpointsTable;
 
+	public TextArea dabNodeDescriptionArea;
 	public TextArea createCommentsTextArea;
+	public TextArea gossipCaCertificateTextArea;
+	public TextArea grpcCertificateTextArea;
 
 	public DatePicker datePicker;
 	public DatePicker datePickerSystem;
@@ -404,6 +448,9 @@ public class CreatePaneController implements SubController {
 	public HBox shaTextFlow;
 	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
+	public Label dabNodeDescriptionByteCount;
+	public Label gossipCaCertificateHashLabel;
+	public Label grpcCertificateHashLabel;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -435,11 +482,20 @@ public class CreatePaneController implements SubController {
 	public Label invalidFreezeFileHash;
 	public Label createMTAErrorLabel;
 	public Label updateMTAerrorLabel;
+	public Label invalidDabNodeAccountId;
+	public Label errorInvalidGossipEndpoint;
+	public Label errorInvalidServiceEndpoint;
+	public Label invalidGossipEndpointList;
+	public Label invalidServiceEndpointList;
+	public Label invalidGossipCaCertificate;
+	public Label invalidCreateAdminKey;
+	public Label invalidDabNodeId;
 
 	// Keys scroll panes
 	public ScrollPane updateOriginalKey;
 	public ScrollPane updateNewKey;
 	public ScrollPane createNewKey;
+	public ScrollPane createAdminKey;
 
 	// Switches
 	public ToggleSwitch updateReceiverSignatureRequired;
@@ -485,18 +541,18 @@ public class CreatePaneController implements SubController {
 				invalidTransferTotal, invalidTransferList, createNewKey, accountIDToUpdateVBox, storeOrSubmitGridPane,
 				systemDeleteUndeleteVBox, systemSlidersHBox, systemExpirationVBox, freezeVBox, freezeFileVBox,
 				freezeChoiceVBox, contentsTextField, contentsLink, fileContentsUpdateVBox, fileIDToUpdateVBox,
-				freezeStartVBox, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
-				freezeUTCTimeLabel, freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
-				invalidFreezeFileHash, updateMTAerrorLabel, isUpdateAccountFeePayerCheckBox);
+				freezeStartVBox, dabNodeAccountIdVBox, dabNodeIdVBox, dabNodeInfoVBox, endpointsVBox, invalidGossipEndpointList,
+				invalidServiceEndpointList, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
+				freezeUTCTimeLabel,	freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
+				invalidFreezeFileHash, updateMTAerrorLabel, isUpdateAccountFeePayerCheckBox, gossipEndpointsVBox,
+				serviceEndpointsVBox, gossipCaCertificateVBox, grpcCertificateHashVBox, createAdminKey);
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
-				freezeFileHashTextField, stakedAccountIdField, stakedNodeIdField
-		);
+				freezeFileHashTextField, stakedAccountIdField, stakedNodeIdField,
+				gossipHostTextField, gossipPortTextField, serviceHostTextField, servicePortTextField);
 
-		if (!initialized) {
-			setupTransferFields();
-		}
+		setupTransferFields();
 
 		setupCreateFields();
 
@@ -507,6 +563,10 @@ public class CreatePaneController implements SubController {
 		setupFileContentsFields();
 
 		setupFreezeFields();
+
+		setupDabNodeIdFields();
+
+		setupDabNodeInfoFields();
 
 		setupTooltips();
 
@@ -536,9 +596,14 @@ public class CreatePaneController implements SubController {
 		fileContentsUpdateVBox.setVisible(false);
 		freezeVBox.setVisible(false);
 		freezeChoiceVBox.setVisible(false);
+		dabNodeAccountIdVBox.setVisible(false);
+		dabNodeIdVBox.setVisible(false);
+		dabNodeInfoVBox.setVisible(false);
 	}
 
 	private void setupTransferFields() {
+		if (initialized) return;
+
 		transferTableEvents(transferFromAccountIDTextField, transferFromAmountTextField, fromTransferTable,
 				acceptFromAccountButton, errorInvalidFromAccount);
 		transferTableEvents(transferToAccountIDTextField, transferToAmountTextField, toTransferTable,
@@ -573,7 +638,7 @@ public class CreatePaneController implements SubController {
 					(observableValue, aBoolean, t1) -> declineStakingRewardsLabel.setText(String.valueOf(t1)));
 
 			createAccountMemo.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(createAccountMemo, createMemoByteCount));
+					(observableValue, s, t1) -> setByteCounter(createAccountMemo, MAX_MEMO_BYTES, createMemoByteCount));
 		}
 		createKeyButton.setOnAction(e -> {
 			autoCompleteNickname.clear();
@@ -653,7 +718,7 @@ public class CreatePaneController implements SubController {
 				}
 			});
 			updateAccountMemoNew.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(updateAccountMemoNew, updateBytesRemaining));
+					(observableValue, s, t1) -> setByteCounter(updateAccountMemoNew, MAX_MEMO_BYTES, updateBytesRemaining));
 		}
 
 		updateFromNickName.setOnKeyReleased(
@@ -1161,7 +1226,7 @@ public class CreatePaneController implements SubController {
 			// Create objects used to determine if the values for an account are the same among all the
 			// accounts to be updated
 			var jsonObjectKey = EncryptionUtils.keyToJson(accountInfo.key);
-			var autoRenewPeriodString = String.format("%d s", accountInfo.autoRenewPeriod.getSeconds());
+			var autoRenewPeriodString = String.valueOf(accountInfo.autoRenewPeriod.getSeconds());
 			var isReceiverSignatureRequiredString = String.valueOf(accountInfo.isReceiverSignatureRequired);
 			var accountMemoString = accountInfo.accountMemo;
 			var maxAutomaticTokenAssociationsString = String.valueOf(accountInfo.maxAutomaticTokenAssociations);
@@ -1185,7 +1250,7 @@ public class CreatePaneController implements SubController {
 			for (int i = 1, max = updateAccountList.getItems().size(); i < max; i++) {
 				accountInfo = accountsInfoMap.get(updateAccountList.getItems().get(i));
 				autoRenewPeriodString = compareValues(autoRenewPeriodString,
-						String.format("%d s", accountInfo.autoRenewPeriod.getSeconds()), MIXED);
+						String.valueOf(accountInfo.autoRenewPeriod.getSeconds()), MIXED);
 				isReceiverSignatureRequiredString = compareValues(isReceiverSignatureRequiredString,
 						String.valueOf(accountInfo.isReceiverSignatureRequired), MIXED);
 				// If the keys are different, just show the first key found
@@ -1495,13 +1560,466 @@ public class CreatePaneController implements SubController {
 			}
 		});
 
-
 		acceptButton.setOnKeyPressed((KeyEvent event) -> {
 			if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.SPACE) {
 				addAccountAmountToTable(accountIDTextField, amountTextField, table);
 			}
 		});
 		acceptButton.setOnMouseClicked(event -> addAccountAmountToTable(accountIDTextField, amountTextField, table));
+	}
+
+	// endregion
+
+	// region Dab Node Id
+
+	private void setupDabNodeIdFields() {
+		if (initialized) return;
+		dabNodeIdTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+			if (!newValue.matches("\\d*")) {
+				dabNodeIdTextField.setText(newValue.replaceAll("[^\\d]", ""));
+			}
+		});
+
+		dabNodeDescriptionArea.textProperty().addListener(
+				(observableValue, s, t1) -> setByteCounter(dabNodeDescriptionArea, MAX_MEMO_BYTES, dabNodeDescriptionByteCount));
+	}
+
+	private void cleanAllDabNodeIdFields() {
+		dabNodeIdTextField.clear();
+		invalidDabNodeId.setVisible(false);
+	}
+
+	private boolean checkAndFlagDabNodeIdFields() {
+		if (dabNodeIdTextField.getText().isEmpty()) {
+			invalidDabNodeId.setVisible(true);
+			return false;
+		}
+		return true;
+	}
+
+	// endregion
+
+	// region Dab Node info
+
+	@FXML
+	private void handleAddGossipEndpointButton(ActionEvent event) {
+		addEndpointToTable(gossipHostTextField, gossipPortTextField, gossipEndpointsTable);
+	}
+
+	@FXML
+	private void handleAddServiceEndpointButton(ActionEvent event) {
+		addEndpointToTable(serviceHostTextField, servicePortTextField, serviceEndpointsTable);
+	}
+
+	@FXML
+	private void browseToGossipCaCertificateFile() {
+		var gossipCaCertificate = BrowserUtilities.browseFiles(
+				controller.getLastTransactionsDirectory(),
+				createAnchorPane,
+				"Gossip Certificate",
+				"PEM and CRT files (*.pem, *.crt)",
+				"*.pem", "*.crt");
+		if (gossipCaCertificate != null && gossipCaCertificate.exists()) {
+			try {
+				String content = Files.readString(gossipCaCertificate.toPath(), StandardCharsets.UTF_8);
+				gossipCaCertificateTextArea.setText(content);
+				controller.setLastBrowsedDirectory(gossipCaCertificate);
+			} catch (IOException e) {
+				logger.error("Cannot load Gossip CA Certificate", e);
+			}
+		}
+	}
+
+	@FXML
+	private void browseToGrpcCertificateFile() {
+		var grpcCertificate = BrowserUtilities.browseFiles(
+				controller.getLastTransactionsDirectory(),
+				createAnchorPane,
+				"GRPC Certificate",
+				"PEM and CRT files (*.pem, *.crt)",
+				"*.pem", "*.crt");
+		if (grpcCertificate != null && grpcCertificate.exists()) {
+			try {
+				String content = Files.readString(grpcCertificate.toPath(), StandardCharsets.UTF_8);
+				grpcCertificateTextArea.setText(content);
+				controller.setLastBrowsedDirectory(grpcCertificate);
+			} catch (IOException e) {
+				logger.error("Cannot load GRPC Certificate", e);
+			}
+		}
+	}
+
+	private void initializeEndpointTables(final TableView<ToolEndpoint> table) {
+		final ObservableList<ToolEndpoint> data = FXCollections.observableArrayList();
+		table.setFixedCellSize(FIXED_CELL_SIZE);
+		table.setStyle("-fx-font-size: " + FIXED_CELL_SIZE / 2);
+
+		table.setEditable(true);
+
+		table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+		final var hostColumn = new TableColumn<ToolEndpoint, String>("Host");
+		hostColumn.setCellValueFactory(new PropertyValueFactory<>("host"));
+
+		if (table == gossipEndpointsTable) {
+			hostColumn.setCellFactory(column -> new TableCell<>() {
+				@Override
+				protected void updateItem(String item, boolean empty) {
+					super.updateItem(item, empty);
+					if (empty || item == null) {
+						setText(null);
+					} else {
+						int index = getIndex();
+						if (index == 0) {
+							setText(item + " (internal)");
+						} else if (index == 1) {
+							setText(item + " (external)");
+						} else {
+							setText(item);
+						}
+					}
+				}
+			});
+		}
+
+		final var portColumn = new TableColumn<ToolEndpoint, Integer>("Port");
+		portColumn.setCellValueFactory(new PropertyValueFactory<>("port"));
+
+		table.setItems(data);
+		table.getColumns().clear();
+		table.getColumns().addAll(hostColumn, portColumn);
+
+		hostColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.6));
+		portColumn.prefWidthProperty().bind(table.widthProperty().multiply(0.395));
+
+		hostColumn.setResizable(false);
+		portColumn.setResizable(false);
+
+		final var contextMenu = new ContextMenu();
+		final var menuItem = new MenuItem("delete");
+
+		contextMenu.getItems().addAll(menuItem);
+
+		table.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
+			if (mouseEvent.getButton() == MouseButton.SECONDARY) {
+				contextMenu.show(table, mouseEvent.getScreenX(), mouseEvent.getScreenY());
+			}
+		});
+
+		menuItem.setOnAction(event -> {
+			if (!table.getItems().isEmpty()) {
+				final var selectedItem = table.getSelectionModel().getSelectedItem();
+				table.getItems().remove(selectedItem);
+			}
+		});
+
+		table.minHeightProperty().bind(
+				table.fixedCellSizeProperty().multiply(Bindings.max(1, Bindings.size(table.getItems())).add(1.1)));
+		table.prefHeightProperty().bind(table.minHeightProperty());
+		table.maxHeightProperty().bind(table.prefHeightProperty());
+		table.managedProperty().bind(table.visibleProperty());
+	}
+
+	private void endpointsTableEvents(final TextField hostTextField, final TextField portTextField,
+									  final TableView<ToolEndpoint> table, final Button acceptButton,
+									  final Label errorLabel) {
+		table.prefWidthProperty().bind(endpointsVBox.widthProperty().multiply(2).divide(3));
+		//TODO Not sure what this does
+		table.prefHeightProperty().bind(gossipEndpointsTable.heightProperty().multiply(.4));
+
+		formatEndpointStringsInputTextField(hostTextField, errorLabel, portTextField,
+				Utilities::isValidHost,
+				() -> "Please enter a valid host in the format xxx.xxx.xxx.xxx or domain.com");
+		formatEndpointStringsInputTextField(portTextField, errorLabel, acceptButton, Utilities::isValidPort,
+				() -> "Please enter a valid port number between 1 and 65535");
+
+		portTextField.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				acceptButton.fire();
+			}
+		});
+
+		BooleanBinding isPortEmpty = portTextField.textProperty().isEmpty();
+		BooleanBinding isHostEmpty = hostTextField.textProperty().isEmpty();
+
+		acceptButton.disableProperty().bind(
+				isPortEmpty.or(isHostEmpty)
+		);
+
+		acceptButton.setOnKeyPressed(event -> {
+			if (event.getCode() == KeyCode.ENTER) {
+				acceptButton.fire(); // Programmatically click the button
+				event.consume(); // Consume the event to prevent further processing
+			}
+		});
+	}
+
+	private void formatEndpointStringsInputTextField(final TextField textField, final Label errorLabel,
+													 final Node nextNode, final Function<String, Boolean> validator,
+													 final Supplier<String> errorMessageSupplier) {
+
+		textField.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+			textField.setStyle(TEXTFIELD_DEFAULT);
+			errorLabel.setVisible(false);
+			if (event.getCode() == KeyCode.ENTER) {
+				if (nextNode != null) {
+					nextNode.requestFocus();
+				}
+			}
+		});
+		if (!initialized) {
+			textField.focusedProperty().addListener((arg0, oldPropertyValue, newPropertyValue) -> {
+				if (Boolean.FALSE.equals(newPropertyValue)) {
+					final var input = textField.getText();
+					if (input.isBlank()) {
+						return;
+					}
+					if (!validator.apply(input)) {
+						textField.setStyle(TEXTFIELD_ERROR);
+						errorLabel.setVisible(true);
+						PopupMessage.display("Invalid Input", errorMessageSupplier.get());
+						errorLabel.requestFocus();
+					}
+				}
+			});
+		}
+	}
+
+	private void addEndpointToTable(final TextField hostTextField, final TextField portTextField,
+									final TableView<ToolEndpoint> thisTable) {
+		hostTextField.setStyle(null);
+		hostTextField.setStyle(START_STYLE);
+		portTextField.setStyle(null);
+		portTextField.setStyle(START_STYLE);
+
+		try {
+			String host = hostTextField.getText();
+			int port = Integer.parseInt(portTextField.getText());
+
+			final ToolEndpoint newEndpoint =
+					new ToolEndpoint(host, port);
+
+			thisTable.getItems().add(newEndpoint);
+
+			hostTextField.clear();
+			portTextField.clear();
+			hostTextField.requestFocus();
+		} catch (IllegalArgumentException e) {
+			if (e instanceof NumberFormatException ||
+					e instanceof ToolEndpoint.InvalidPortException) {
+				// Set border style for port field
+				portTextField.setStyle(RED_BORDER_STYLE);
+				portTextField.selectAll();
+				portTextField.requestFocus();
+			} else if (e instanceof ToolEndpoint.InvalidHostException) {
+				// Set border style for host field
+				hostTextField.setStyle(RED_BORDER_STYLE);
+				hostTextField.selectAll();
+				hostTextField.requestFocus();
+			}
+		}
+	}
+
+	private void setupDabNodeInfoFields() {
+		if (initialized) return;
+
+		formatAccountTextField(dabNodeAccountId, invalidDabNodeAccountId, dabNodeAccountId.getParent());
+
+		endpointsTableEvents(gossipHostTextField, gossipPortTextField, gossipEndpointsTable,
+				addGossipEndpointButton, errorInvalidGossipEndpoint);
+		endpointsTableEvents(serviceHostTextField, servicePortTextField, serviceEndpointsTable,
+				addServiceEndpointButton, errorInvalidServiceEndpoint);
+
+		invalidGossipEndpointList.setVisible(false);
+		invalidGossipEndpointList.setVisible(false);
+		//TODO this doesn't work
+//		invalidGossipEndpointList.visibleProperty().bind(Bindings.isEmpty(gossipEndpointsTable.getItems()));
+//		invalidServiceEndpointList.visibleProperty().bind(Bindings.isEmpty(serviceEndpointsTable.getItems()));
+
+		loadAccountNicknames();
+		final var autoCompleteNickname = new AutoCompleteNickname(accountNickNames);
+		autoCompleteNickname.setVisible(false);
+		autoCompleteNickname.managedProperty().bind(autoCompleteNickname.visibleProperty());
+		nodeCopyFromAccountHBox.getChildren().clear();
+		nodeCopyFromAccountHBox.getChildren().add(autoCompleteNickname);
+		createAdminKeyButton.setOnAction(e -> {
+			autoCompleteNickname.clear();
+			autoCompleteNickname.setVisible(false);
+
+			var key = newKeyJSON;
+			final var keyDesignerPopup = !newKeyJSON.equals(new JsonObject()) ?
+					new KeyDesignerPopup(getStringPublicKeyMap(), EncryptionUtils.jsonToKey(newKeyJSON)) :
+					new KeyDesignerPopup(getStringPublicKeyMap());
+			key = keyDesignerPopup.display();
+			createAdminKey.setVisible(true);
+			processKey(key, createAdminKey);
+		});
+
+		autoCompleteNickname.setOnKeyReleased(
+				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createAdminKey));
+
+		gossipCaCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+			// If the new value is empty, and the old and new value are the same, don't alter the label.
+			if (newValue == null || newValue.isEmpty()) {
+				gossipCaCertificateHashLabel.setText("");
+				return;
+			}
+			if (!newValue.equals(oldValue)) {
+				try {
+					var hash = hashCertificate(newValue);
+					gossipCaCertificateHashLabel.setText(bytesToHex(hash));
+				} catch (final HederaClientRuntimeException e) {
+					PopupMessage.display("Error loading certificate",
+							"The certificate could not be loaded, please check that the certificate is the correct format.");
+					controller.displaySystemMessage(e);
+					logger.error(e);
+					gossipCaCertificateTextArea.clear();
+				}
+			}
+		});
+
+		grpcCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+			// If the new value is empty, and the old and new value are the same, don't alter the label.
+			if (newValue == null || newValue.isEmpty()) {
+				grpcCertificateHashLabel.setText("");
+				return;
+			}
+			if (!newValue.equals(oldValue)) {
+				try {
+					var hash = hashCertificate(newValue);
+					grpcCertificateHashLabel.setText(bytesToHex(hash));
+				} catch (final HederaClientRuntimeException e) {
+					PopupMessage.display("Error loading certificate",
+							"The certificate could not be loaded, please check that the certificate is the correct format.");
+					controller.displaySystemMessage(e);
+					logger.error(e);
+					grpcCertificateTextArea.clear();
+				}
+			}
+		});
+	}
+
+	private boolean initializeDabNodeInfoTables = true;
+	private void cleanAllDabNodeInfoFields() {
+		dabNodeAccountId.clear();
+		dabNodeDescriptionArea.clear();
+		gossipEndpointsTable.getItems().clear();
+		serviceEndpointsTable.getItems().clear();
+		clearErrorMessages(errorInvalidGossipEndpoint, errorInvalidServiceEndpoint,
+				invalidGossipCaCertificate, invalidCreateAdminKey);
+		if (initializeDabNodeInfoTables) {
+			initializeEndpointTables(gossipEndpointsTable);
+			initializeEndpointTables(serviceEndpointsTable);
+			initializeDabNodeInfoTables = false;
+		}
+		gossipCaCertificateTextArea.clear();
+		grpcCertificateTextArea.clear();
+		grpcCertificateHashLabel.setText("");
+		createAdminKey.setContent(new HBox());
+		createAdminKey.setVisible(false);
+	}
+
+	private boolean checkAndFlagDabNodeInfoFields() {
+		var flag = true;
+
+		if (gossipCaCertificateTextArea.getText().isEmpty()) {
+			invalidGossipCaCertificate.setVisible(true);
+			flag = false;
+		}
+
+		if (newKeyJSON == null || new KeyList().equals(EncryptionUtils.jsonToKey(newKeyJSON))) {
+			invalidCreateAdminKey.setVisible(true);
+			flag = false;
+		}
+
+		if (gossipEndpointsTable.getItems().isEmpty() || serviceEndpointsTable.getItems().isEmpty()) {
+			displayAndLogInformation("Missing endpoints");
+			flag = false;
+		}
+
+		if (flag) {
+			clearErrorMessages(errorInvalidGossipEndpoint, errorInvalidServiceEndpoint,
+					invalidGossipCaCertificate, invalidCreateAdminKey);
+		}
+		return flag;
+	}
+
+	// endregion
+
+	// region NODE_CREATE
+
+	public Pair<UserComments, ToolTransaction> createNodeCreateTransactionAction() throws HederaClientException {
+		if (!checkAndFlagNodeCreateFields()) {
+			return null;
+		}
+		final var input = buildJsonInput();
+		final var tx = new ToolNodeCreateTransaction(input);
+		displayAndLogInformation("NodeCreate " + TRANSACTION_CREATED_MESSAGE);
+		return getUserCommentsTransactionPair(tx);
+	}
+
+	private void cleanAllNodeCreateFields() {
+		cleanCommonFields();
+		cleanAllDabNodeInfoFields();
+	}
+
+	private boolean checkAndFlagNodeCreateFields() {
+		boolean flag = checkAndFlagCommonFields();
+		flag = checkAndFlagDabNodeInfoFields() && flag;
+		return flag;
+	}
+
+	// region
+
+	// region NODE_UPDATE
+
+	public Pair<UserComments, ToolTransaction> createNodeUpdateTransactionAction() throws HederaClientException {
+		if (!checkAndFlagNodeUpdateFields()) {
+			return null;
+		}
+		final var input = buildJsonInput();
+		final var tx = new ToolNodeUpdateTransaction(input);
+		displayAndLogInformation("NodeUpdate " + TRANSACTION_CREATED_MESSAGE);
+		return getUserCommentsTransactionPair(tx);
+	}
+
+	private void cleanAllNodeUpdateFields() {
+		cleanCommonFields();
+		cleanAllDabNodeIdFields();
+		cleanAllDabNodeInfoFields();
+	}
+
+	private boolean checkAndFlagNodeUpdateFields() {
+		boolean flag = checkAndFlagCommonFields();
+		// As there isn't an easy way to compare the current info of a Node to
+		// the NodeUpdateTransaction, only the NodeId is required.
+		flag = checkAndFlagDabNodeIdFields() && flag;
+		return flag;
+	}
+
+	// endregion
+
+	//region NODE_DELETE
+
+	public Pair<UserComments, ToolTransaction> createNodeDeleteTransactionAction() throws HederaClientException {
+		if (!checkAndFlagNodeDeleteFields()) {
+			return null;
+		}
+		final var input = buildJsonInput();
+		final var tx = new ToolNodeDeleteTransaction(input);
+		displayAndLogInformation("NodeDelete " + TRANSACTION_CREATED_MESSAGE);
+		return getUserCommentsTransactionPair(tx);
+	}
+
+	private void cleanAllNodeDeleteFields() {
+		cleanCommonFields();
+		cleanAllDabNodeIdFields();
+	}
+
+	private boolean checkAndFlagNodeDeleteFields() {
+		boolean flag = checkAndFlagCommonFields();
+		flag = checkAndFlagDabNodeIdFields() && flag;
+		return flag;
 	}
 
 	// endregion
@@ -1898,7 +2416,6 @@ public class CreatePaneController implements SubController {
 		return outputObject;
 	}
 
-
 	// endregion
 
 	// region LOAD FROM FILE
@@ -1993,6 +2510,18 @@ public class CreatePaneController implements SubController {
 			case FREEZE:
 				selectTransactionType.setValue("Network Freeze and Update");
 				loadFreezeTransactionToForm((ToolFreezeTransaction) transaction);
+				break;
+			case NODE_CREATE:
+				selectTransactionType.setValue("Node Create");
+				loadNodeCreateTransactionToForm((ToolNodeCreateTransaction) transaction);
+				break;
+			case NODE_UPDATE:
+				selectTransactionType.setValue("Node Update");
+				loadNodeUpdateTransactionToForm((ToolNodeUpdateTransaction) transaction);
+				break;
+			case NODE_DELETE:
+				selectTransactionType.setValue("Node Delete");
+				loadNodeDeleteTransactionToForm((ToolNodeDeleteTransaction) transaction);
 				break;
 			case FILE_UPDATE, FILE_APPEND:
 			default:
@@ -2264,6 +2793,91 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
+	private void loadNodeCreateTransactionToForm(final ToolNodeCreateTransaction transaction) {
+		cleanAllNodeCreateFields();
+		dabNodeAccountIdVBox.setVisible(true);
+		dabNodeInfoVBox.setVisible(true);
+		if (transaction.getDabNodeAccountId() != null) {
+			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
+		}
+
+		if (transaction.getNodeDescription() != null) {
+			dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		}
+
+		if (transaction.getGossipEndpointList() != null) {
+			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
+				gossipEndpointsTable.getItems().add(gossipEndpoint);
+			});
+		}
+
+		if (transaction.getServiceEndpointList() != null) {
+			transaction.getServiceEndpointList().forEach(serviceEndpoint -> {
+				serviceEndpointsTable.getItems().add(serviceEndpoint);
+			});
+		}
+
+		if (transaction.getGossipCACertificate() != null) {
+			gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		}
+
+		if (transaction.getGrpcCertificateHash() != null) {
+			grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		}
+
+		if (transaction.getAdminKey() != null) {
+			createAdminKey.setVisible(true);
+			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
+		}
+	}
+
+	private void loadNodeUpdateTransactionToForm(final ToolNodeUpdateTransaction transaction) {
+		cleanAllNodeUpdateFields();
+		dabNodeAccountIdVBox.setVisible(true);
+		dabNodeInfoVBox.setVisible(true);
+		if (transaction.getDabNodeAccountId() != null) {
+			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
+		}
+
+		if (transaction.getNodeDescription() != null) {
+			dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		}
+
+		dabNodeIdVBox.setVisible(true);
+		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
+
+		if (transaction.getGossipEndpointList() != null) {
+			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
+				gossipEndpointsTable.getItems().add(gossipEndpoint);
+			});
+		}
+
+		if (transaction.getServiceEndpointList() != null) {
+			transaction.getServiceEndpointList().forEach(serviceEndpoint -> {
+				serviceEndpointsTable.getItems().add(serviceEndpoint);
+			});
+		}
+
+		if (transaction.getGossipCACertificate() != null) {
+			gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		}
+
+		if (transaction.getGrpcCertificateHash() != null) {
+			grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		}
+
+		if (transaction.getAdminKey() != null) {
+			createAdminKey.setVisible(true);
+			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
+		}
+	}
+
+	private void loadNodeDeleteTransactionToForm(final ToolNodeDeleteTransaction transaction) {
+		cleanAllNodeDeleteFields();
+		dabNodeIdVBox.setVisible(true);
+		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
+	}
+
 	public void loadFormFromTransactionTest(final KeyEvent keyEvent) {
 		if (keyEvent.getCode().equals(KeyCode.ENTER)) {
 			loadFormFromTransaction();
@@ -2331,7 +2945,7 @@ public class CreatePaneController implements SubController {
 		keyTree.setStyle("-fx-border-color: white; -fx-background-color: white");
 		keyScrollPane.setContent(keyTree);
 		keyTree.setMinWidth(800);
-		keyTree.prefWidthProperty().bind(createNewKey.widthProperty());
+		keyTree.prefWidthProperty().bind(keyScrollPane.widthProperty());
 		newKeyJSON = key;
 	}
 
@@ -2386,14 +3000,14 @@ public class CreatePaneController implements SubController {
 		}
 	}
 
-	private void setMemoByteCounter(final TextInputControl textField, final Label label) {
+	private void setByteCounter(final TextInputControl textField, final int maxByteCount, final Label label) {
 		final var text = textField.getText();
 		final var byteSize = text.getBytes(StandardCharsets.UTF_8).length;
-		if (byteSize > MAX_MEMO_BYTES) {
-			textField.setText(CommonMethods.trimString(text, MAX_MEMO_BYTES));
+		if (byteSize > maxByteCount) {
+			textField.setText(CommonMethods.trimString(text, maxByteCount));
 		}
 		label.setText(
-				String.format("Bytes remaining:\t%d", MAX_MEMO_BYTES - textField.getText().getBytes(
+				String.format("Bytes remaining:\t%d", maxByteCount - textField.getText().getBytes(
 						StandardCharsets.UTF_8).length));
 	}
 
@@ -2428,6 +3042,9 @@ public class CreatePaneController implements SubController {
 		cleanAllSystemFields();
 		cleanAllFileUpdateContentsFields();
 		cleanAllFreezeFields();
+		cleanAllNodeCreateFields();
+		cleanAllNodeUpdateFields();
+		cleanAllNodeDeleteFields();
 
 		commentsVBox.setVisible(true);
 		commonFieldsVBox.setVisible(true);
@@ -2471,6 +3088,21 @@ public class CreatePaneController implements SubController {
 				freezeVBox.setVisible(true);
 				signAndSubmitButton.setDisable(true);
 				break;
+			case NODE_CREATE:
+				dabNodeAccountIdVBox.setVisible(true);
+				dabNodeInfoVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
+				break;
+			case NODE_UPDATE:
+				dabNodeAccountIdVBox.setVisible(true);
+				dabNodeIdVBox.setVisible(true);
+				dabNodeInfoVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
+				break;
+			case NODE_DELETE:
+				dabNodeIdVBox.setVisible(true);
+				signAndSubmitButton.setDisable(false);
+				break;
 			case UNKNOWN:
 			default:
 				logger.info("Not Implemented");
@@ -2511,6 +3143,15 @@ public class CreatePaneController implements SubController {
 				if (addFreezeNetworkFields(input)) {
 					return null;
 				}
+				break;
+			case NODE_CREATE:
+				addNodeCreateElements(input);
+				break;
+			case NODE_UPDATE:
+				addNodeUpdateElements(input);
+				break;
+			case NODE_DELETE:
+				addNodeDeleteElements(input);
 				break;
 			default:
 				break;
@@ -2586,15 +3227,8 @@ public class CreatePaneController implements SubController {
 		// Account Memo
 		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
 
-		// Max Auto Token Associations
-		final var text = createMaxTokenAssociations.getText();
-		input.addProperty(MAX_TOKEN_ASSOCIATIONS_FIELD_NAME, text.isEmpty() ? 0 : Integer.parseInt(text));
-
 		// Receiver Sig Required
 		input.addProperty(RECEIVER_SIGNATURE_REQUIRED_FIELD_NAME, createSignatureRequired.isSelected());
-
-		// Account Memo
-		input.addProperty(ACCOUNT_MEMO_FIELD_NAME, createAccountMemo.getText());
 
 		// Max Auto Token Associations
 		final var newTokens = createMaxTokenAssociations.getText();
@@ -2609,7 +3243,6 @@ public class CreatePaneController implements SubController {
 		}
 
 		input.addProperty(DECLINE_STAKING_REWARDS_FIELD_NAME, declineStakingRewards.isSelected());
-
 	}
 
 	private void addCryptoUpdateElements(final JsonObject input) {
@@ -2740,6 +3373,96 @@ public class CreatePaneController implements SubController {
 		return false;
 	}
 
+	private void addNodeCreateElements(final JsonObject input) {
+		if (!dabNodeAccountId.getText().isEmpty()) {
+			final var nodeAccount = Identifier.parse(dabNodeAccountId.getText(), controller.getCurrentNetwork());
+			input.add(DAB_NODE_ACCOUNT_ID_FIELD_NAME, nodeAccount.asJSON());
+		}
+
+		if (!dabNodeDescriptionArea.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionArea.getText());
+		}
+
+		if (!gossipCaCertificateTextArea.getText().isEmpty()) {
+			input.addProperty(GOSSIP_CA_CERTIFICATE_FIELD_NAME, gossipCaCertificateTextArea.getText());
+		}
+
+		if (!grpcCertificateHashLabel.getText().isEmpty()) {
+			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashLabel.getText());
+		}
+
+		// Key
+		if (!newKeyJSON.isJsonNull() && !newKeyJSON.isEmpty() && !newKeyJSON.equals(emptyKeyObject())) {
+			input.add(ADMIN_KEY_FIELD_NAME, newKeyJSON);
+		}
+
+		if (!gossipEndpointsTable.getItems().isEmpty()) {
+			final var jsonArray = new JsonArray();
+			for (final var endpoint : gossipEndpointsTable.getItems()) {
+				jsonArray.add(endpoint.asJson());
+			}
+			input.add(GOSSIP_ENDPOINTS_FIELD_NAME, jsonArray);
+		}
+
+		if (!serviceEndpointsTable.getItems().isEmpty()) {
+			final var jsonArray = new JsonArray();
+			for (final var endpoint : serviceEndpointsTable.getItems()) {
+				jsonArray.add(endpoint.asJson());
+			}
+			input.add(SERVICE_ENDPOINTS_FIELD_NAME, jsonArray);
+		}
+	}
+
+	private void addNodeUpdateElements(final JsonObject input) {
+		if (!dabNodeIdTextField.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_ID_FIELD_NAME, Long.parseLong(dabNodeIdTextField.getText()));
+		}
+
+		if (!dabNodeAccountId.getText().isEmpty()) {
+			final var nodeAccount = Identifier.parse(dabNodeAccountId.getText(), controller.getCurrentNetwork());
+			input.add(DAB_NODE_ACCOUNT_ID_FIELD_NAME, nodeAccount.asJSON());
+		}
+
+		if (!dabNodeDescriptionArea.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_DESCRIPTION_FIELD_NAME, dabNodeDescriptionArea.getText());
+		}
+
+		if (!gossipCaCertificateTextArea.getText().isEmpty()) {
+			input.addProperty(GOSSIP_CA_CERTIFICATE_FIELD_NAME, gossipCaCertificateTextArea.getText());
+		}
+
+		if (!grpcCertificateHashLabel.getText().isEmpty()) {
+			input.addProperty(GRPC_CERTIFICATE_HASH_FIELD_NAME, grpcCertificateHashLabel.getText());
+		}
+
+		if (!newKeyJSON.isJsonNull() && !newKeyJSON.isEmpty() && !newKeyJSON.equals(originalKey)
+				&& !newKeyJSON.equals(emptyKeyObject())) {
+			input.add(ADMIN_KEY_FIELD_NAME, newKeyJSON);
+		}
+
+		if (!gossipEndpointsTable.getItems().isEmpty()) {
+			final var jsonArray = new JsonArray();
+			for (final var endpoint : gossipEndpointsTable.getItems()) {
+				jsonArray.add(endpoint.asJson());
+			}
+			input.add(GOSSIP_ENDPOINTS_FIELD_NAME, jsonArray);
+		}
+
+		if (!serviceEndpointsTable.getItems().isEmpty()) {
+			final var jsonArray = new JsonArray();
+			for (final var endpoint : serviceEndpointsTable.getItems()) {
+				jsonArray.add(endpoint.asJson());
+			}
+			input.add(SERVICE_ENDPOINTS_FIELD_NAME, jsonArray);
+		}
+	}
+
+	private void addNodeDeleteElements(final JsonObject input) {
+		if (!dabNodeIdTextField.getText().isEmpty()) {
+			input.addProperty(DAB_NODE_ID_FIELD_NAME, Long.parseLong(dabNodeIdTextField.getText()));
+		}
+	}
+
 	/**
 	 * Pairs the created transaction with the comments the user might have left
 	 *
@@ -2780,6 +3503,15 @@ public class CreatePaneController implements SubController {
 				break;
 			case FILE_UPDATE:
 				flag = checkAndFlagFileUpdateContentsFields();
+				break;
+			case NODE_CREATE:
+				flag = checkAndFlagNodeCreateFields();
+				break;
+			case NODE_UPDATE:
+				flag = checkAndFlagNodeUpdateFields();
+				break;
+			case NODE_DELETE:
+				flag = checkAndFlagNodeDeleteFields();
 				break;
 			case UNKNOWN, SELECT:
 			default:
@@ -2913,7 +3645,8 @@ public class CreatePaneController implements SubController {
 			}
 			storeTransactionAndComment(pair, fileService);
 			cleanForm();
-		} catch (final HederaClientException e) {
+		} catch (final HederaClientException | HederaClientRuntimeException e) {
+			PopupMessage.display("Error storing transaction", e.getMessage());
 			controller.displaySystemMessage(e);
 		}
 
@@ -2988,6 +3721,15 @@ public class CreatePaneController implements SubController {
 			case FREEZE:
 				pair = createFreezeTransaction();
 				break;
+			case NODE_CREATE:
+				pair = createNodeCreateTransactionAction();
+				break;
+			case NODE_UPDATE:
+				pair = createNodeUpdateTransactionAction();
+				break;
+			case NODE_DELETE:
+				pair = createNodeDeleteTransactionAction();
+				break;
 			case FILE_UPDATE:
 			default:
 				logger.error("Cannot recognize transaction type");
@@ -3009,7 +3751,7 @@ public class CreatePaneController implements SubController {
 
 		if (!initialized) {
 			memoField.textProperty().addListener(
-					(observableValue, s, t1) -> setMemoByteCounter(memoField, transactionMemoByteCount));
+					(observableValue, s, t1) -> setByteCounter(memoField, MAX_MEMO_BYTES, transactionMemoByteCount));
 
 			nodeAccountField.focusedProperty().addListener((observableValue, oldValue, newValue) -> {
 				if (Boolean.FALSE.equals(newValue)) {
@@ -3294,8 +4036,6 @@ public class CreatePaneController implements SubController {
 				textField.setText(id.toNicknameAndChecksum(controller.getAccountsList()));
 				errorLabel.setVisible(false);
 		}
-
-
 	}
 
 	private void formatHBarTextField(final TextField textField) {
@@ -3566,6 +4306,15 @@ public class CreatePaneController implements SubController {
 			case FREEZE:
 				cleanAllFreezeFields();
 				break;
+			case NODE_CREATE:
+				cleanAllNodeCreateFields();
+				break;
+			case NODE_UPDATE:
+				cleanAllNodeUpdateFields();
+				break;
+			case NODE_DELETE:
+				cleanAllNodeDeleteFields();
+				break;
 			default:
 				logger.error("Unknown transaction");
 		}
@@ -3574,17 +4323,22 @@ public class CreatePaneController implements SubController {
 		selectTransactionType.setValue(type);
 	}
 
-	public void signAndSubmitAction() throws HederaClientException {
-
-		switch (transactionType) {
-			case FILE_UPDATE:
-				signAndSubmitMultipleTransactions();
-				break;
-			case CREATE, UPDATE, TRANSFER, SYSTEM:
-				signAndSubmitSingleTransaction();
-				break;
-			default:
-				throw new HederaClientException("Cannot process transaction");
+	public void signAndSubmitAction() {
+		try {
+			switch (transactionType) {
+				case FILE_UPDATE:
+					signAndSubmitMultipleTransactions();
+					break;
+				case CREATE, UPDATE, TRANSFER, SYSTEM, NODE_CREATE, NODE_UPDATE, NODE_DELETE:
+					signAndSubmitSingleTransaction();
+					break;
+				default:
+					throw new HederaClientException("Cannot process transaction");
+			}
+		} catch (final HederaClientException | HederaClientRuntimeException e) {
+			logger.error(e);
+			controller.displaySystemMessage(e);
+			PopupMessage.display("Error Signing Transaction", e.getMessage());
 		}
 	}
 
@@ -3908,6 +4662,12 @@ public class CreatePaneController implements SubController {
 			case CRYPTO_UPDATE:
 				key = ((ToolCryptoUpdateTransaction) transactionFile.getTransaction()).getKey();
 				break;
+			case NODE_CREATE:
+				key = ((ToolNodeCreateTransaction) transactionFile.getTransaction()).getAdminKey();
+				break;
+			case NODE_UPDATE:
+				key = ((ToolNodeUpdateTransaction) transactionFile.getTransaction()).getAdminKey();
+				break;
 			default:
 				return new TreeView<>();
 		}
@@ -3929,24 +4689,49 @@ public class CreatePaneController implements SubController {
 
 	private ArrayList<ProgressTask> createSubmitTaskList(final List<ToolTransaction> transactions) throws HederaClientException {
 		final var taskList = new ArrayList<ProgressTask>();
+		// Get all the private keys needed to sign the transactions
 		final var allPrivateKeys = new HashSet<File>();
+		// Known signers are the accounts that are already in the list of fee payers, i.e. accounts and keys are
+		// stored locally. Unknown signers either don't have account info, or public keys stored locally.
 		final var unknownSigners = new HashSet<Identifier>();
+		// Ah, so this is like allPrivateKeys but on a per transaction basis.
+		// These lists are used to only pull the keys needed after the 'verifyPrivateKeys' step.
+		// That means, any additional keys added during 'verifyPrivateKeys' will be removed.
+		// This means that the extra keys in the 'verifiedPrivateKeys' list that were added by the user
+		// need to be added separately to the list of keys to sign.
 		final var privateKeyMap = new HashMap<ToolTransaction, List<File>>();
 		for (final var transaction : transactions) {
-			final var privateKeys = new ArrayList<File>();
-			privateKeys.addAll(controller.extractRequiredKeys(transaction.getSigningKeys()));
+            final var privateKeys = new ArrayList<File>(controller.extractRequiredKeys(transaction.getSigningKeys()));
 			privateKeyMap.put(transaction, privateKeys);
 			allPrivateKeys.addAll(privateKeys);
 			unknownSigners.addAll(getUnknownSigners(transaction));
 		}
 
+		// If there are unknown signers, display a message to the user
 		displayUnknownSigners(unknownSigners);
+		// Verify the private keys actually appears to show the private keys gathered, and also
+		// allows the user to add more private keys. The verifiedPrivateKeys list is all the private keys
+		// that should sign the transaction.
+		// Take the resulting list, compare it to allPrivateKeys, any additional keys should be separate.
+		// I believe this 'verifyPrivateKeys' is incorrect. In the case of a list of transactions, one step is being
+		// used to add or remove signatures for all transactions. That should not be. It would be better to do it
+		// on a per transaction basis. Otherwise, a key could be removed that is required for one of the transactions, right?
+		// Or more likely, a key could be added that is not needed for all transactions.
+		// As this flow is not currently in use, and there is no harm in adding signatures that are not needed (aside
+		// from size limitations), this is not a critical issue.
 		final var verifiedPrivateKeys = verifyPrivateKeys(allPrivateKeys);
 		final var comments = createCommentsTextArea.getText();
 		for (final var transaction : transactions) {
+			// Get all the keys that are in the list of keys the user has verified, and that are part of the transaction
+			// and create the acceptedKeys list.
 			var acceptedKeys = privateKeyMap.get(transaction).stream()
 					.filter(verifiedPrivateKeys::contains)
-					.collect(Collectors.toCollection(ArrayList::new));
+					.collect(Collectors.toList());
+			// Now get all the keys that were added by the user during the verification step, but are not part of the
+			// original list of all private keys, and add them to the acceptedKeys list.
+			acceptedKeys.addAll(verifiedPrivateKeys.stream().
+					filter(key -> !allPrivateKeys.contains(key))
+					.collect(Collectors.toList()));
 
 			if (acceptedKeys.isEmpty()) {
 				continue;
@@ -4024,6 +4809,7 @@ public class CreatePaneController implements SubController {
 					storeReceipt(receipt, transactionName, rf.getTransactionType().toString());
 					setResult(receipt);
 					setSuccessful(true);
+					logger.info("Transaction submitted and successful");
 				} catch (final InterruptedException e) {
 					logger.error(e.getMessage());
 					logger.error("Thread interrupted");
@@ -4194,6 +4980,17 @@ public class CreatePaneController implements SubController {
 				break;
 			case FREEZE:
 				message = "The freeze transaction succeeded";
+				break;
+			case NODE_CREATE:
+				message = String.format("Node %d is set to be created during the next update", receipt.nodeId);
+				break;
+			case NODE_UPDATE:
+				message = String.format("Node %d has been updated"
+						, ((ToolNodeUpdateTransaction) transaction).getDabNodeId());
+				break;
+			case NODE_DELETE:
+				message = String.format("Node %d is set to be deleted during the next upgrade",
+						((ToolNodeDeleteTransaction) transaction).getDabNodeId());
 				break;
 			default:
 				message = "Unknown transaction type";

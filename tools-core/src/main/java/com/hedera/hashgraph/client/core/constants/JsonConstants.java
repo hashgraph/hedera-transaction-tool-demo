@@ -88,6 +88,16 @@ public class JsonConstants {
 	public static final String STAKED_NODE_ID_FIELD_NAME = "stakedNodeId";
 	public static final String DECLINE_STAKING_REWARDS_FIELD_NAME = "declineStakingRewards";
 
+	public static final String DAB_NODE_ACCOUNT_ID_FIELD_NAME = "dabNodeAccountId";
+	public static final String DAB_NODE_DESCRIPTION_FIELD_NAME = "dabNodeDescription";
+	public static final String ADMIN_KEY_FIELD_NAME = "adminKey";
+	public static final String GOSSIP_CA_CERTIFICATE_FIELD_NAME = "gossipCaCertificate";
+	public static final String GRPC_CERTIFICATE_HASH_FIELD_NAME = "grpcCertificateHash";
+	public static final String GOSSIP_ENDPOINTS_FIELD_NAME = "gossipEndpoints";
+	public static final String SERVICE_ENDPOINTS_FIELD_NAME = "serviceEndpoints";
+	public static final String HOST_FIELD_NAME = "host";
+	public static final String PORT_FIELD_NAME = "port";
+	public static final String DAB_NODE_ID_FIELD_NAME = "dabNodeId";
 
 	public static final String TRANSFERS = "transfers";
 	public static final String ACCOUNT = "account";

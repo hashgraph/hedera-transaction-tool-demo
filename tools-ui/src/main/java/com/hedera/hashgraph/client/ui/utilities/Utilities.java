@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.KEY_LENGTH;
@@ -330,5 +331,27 @@ public class Utilities {
 				signersSet.remove(keyFile);
 			}
 		});
+	}
+
+	public static boolean isValidHost(String host) {
+		String ipv4Pattern =
+				"^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+						"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+						"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
+						"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$";
+		String domainPattern =
+				"^(https?://)?" + // optional http or https
+						"(([a-zA-Z0-9\\-]+\\.)+[a-zA-Z]{2,})$"; // domain name
+		return Pattern.compile(ipv4Pattern).matcher(host).matches() ||
+				Pattern.compile(domainPattern).matcher(host).matches();
+	}
+
+	public static boolean isValidPort(String port) {
+		try {
+			int portNumber = Integer.parseInt(port);
+			return portNumber > 0 && portNumber <= 65535;
+		} catch (NumberFormatException e) {
+			return false;
+		}
 	}
 }

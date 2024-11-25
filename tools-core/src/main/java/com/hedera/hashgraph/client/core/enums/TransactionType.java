@@ -25,7 +25,10 @@ public enum TransactionType {
 	SYSTEM_DELETE_UNDELETE,
 	FILE_UPDATE,
 	FILE_APPEND,
-	FREEZE;
+	FREEZE,
+	NODE_CREATE,
+	NODE_UPDATE,
+	NODE_DELETE;
 
 
 	@Override
@@ -45,6 +48,12 @@ public enum TransactionType {
 				return "File Append Transaction";
 			case FREEZE:
 				return "Freeze Transaction";
+			case NODE_CREATE:
+				return "Node Create Transaction";
+			case NODE_UPDATE:
+				return "Node Update Transaction";
+			case NODE_DELETE:
+				return "Node Delete Transaction";
 		}
 		return super.toString();
 	}

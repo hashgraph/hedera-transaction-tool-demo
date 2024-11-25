@@ -46,6 +46,8 @@ import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.remote.helpers.UserComments;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.BrowserUtilities;
 import com.hedera.hashgraph.client.core.utils.sysfiles.serdes.StandardSerdes;
 import com.hedera.hashgraph.client.ui.popups.ExtraKeysSelectorPopup;
@@ -103,7 +105,6 @@ import static com.hedera.hashgraph.client.core.constants.Constants.OUTPUT_FILES;
 import static com.hedera.hashgraph.client.core.constants.Constants.PUB_EXTENSION;
 import static com.hedera.hashgraph.client.core.enums.Actions.ACCEPT;
 import static com.hedera.hashgraph.client.core.enums.Actions.DECLINE;
-import static com.hedera.hashgraph.client.core.security.SecurityUtilities.verifySignature;
 import static com.hedera.hashgraph.client.ui.utilities.Utilities.checkBoxListener;
 
 
@@ -439,6 +440,21 @@ public class HomePaneController implements SubController {
 		// If the file is a TransactionFile, set up the key tree(s)
 		if (file instanceof TransactionFile) {
 			setupKeyTree((TransactionFile) file);
+
+			var transactionType = ((TransactionFile) file).getTransaction().getTransactionType();
+			if (transactionType == TransactionType.NODE_CREATE || transactionType == TransactionType.NODE_UPDATE) {
+				((TransactionFile) file).setGossipCaCertificateViewAction(actionEvent -> {
+					final var transaction = ((TransactionFile) file).getTransaction();
+					String certificate;
+					if (transaction instanceof ToolNodeCreateTransaction) {
+						certificate = ((ToolNodeCreateTransaction) transaction).getGossipCACertificate();
+					} else {
+						certificate = ((ToolNodeUpdateTransaction) transaction).getGossipCACertificate();
+					}
+					PopupMessage.display("Gossip CA Certificate", certificate,
+							true, "CONTINUE");
+				});
+			}
 		}
 
 		// Build the details box for the RemoteFile
@@ -498,14 +514,23 @@ public class HomePaneController implements SubController {
 		Key key = null;
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
-		}
-		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
+		} else if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			final var transaction = (ToolCryptoUpdateTransaction) rf.getTransaction();
 			oldInfo = getOldInfo(transaction.getAccount());
 			if (oldInfo != null) {
 				oldKey = oldInfo.get("key").getAsJsonObject();
 			}
 			key = transaction.getKey();
+		} else if (transactionType.equals(TransactionType.NODE_CREATE)) {
+			key = ((ToolNodeCreateTransaction) rf.getTransaction()).getAdminKey();
+		} else if (transactionType.equals(TransactionType.NODE_UPDATE)) {
+			final var transaction = (ToolNodeUpdateTransaction) rf.getTransaction();
+//			this wont work as is because nodes won't be stored like accounts so it needs to pull it from mirror node or something'
+//			oldInfo = getOldInfo(transaction.getAccount());
+//			if (oldInfo != null) {
+//				oldKey = oldInfo.get("key").getAsJsonObject();
+//			}
+			key = transaction.getAdminKey();
 		}
 		if (key != null) {
 			rf.setTreeView(controller.buildKeyTreeView(key));
@@ -675,12 +700,25 @@ public class HomePaneController implements SubController {
 						}
 						for (final Map.Entry<BundleFile.PubInfoKey, File> entry :
 								((BundleFile) rf).getPublicKeyMap().entrySet()) {
-							final var oldLocation =
-									new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
-							Files.deleteIfExists(oldLocation.toPath());
-							final var destination =
-									new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
-							FileUtils.copyFile(entry.getValue(), destination);
+							// if the nickname is to be replaced, it should replace the file
+							if (((BundleFile) rf).replacePublicKeyNicknames()) {
+								final var oldLocation =
+										new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
+								Files.deleteIfExists(oldLocation.toPath());
+								final var destination =
+										new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
+								FileUtils.copyFile(entry.getValue(), destination);
+							} else {
+								// if the nickname is NOT to be replaced, only save the file if the key doesn't already
+								// exist
+								final var oldLocation =
+										new File(KEYS_FOLDER, entry.getKey().getOldNickname() + "." + PUB_EXTENSION);
+								if (!Files.exists(oldLocation.toPath())) {
+									final var destination =
+											new File(KEYS_FOLDER, entry.getKey().getNickname() + "." + PUB_EXTENSION);
+									FileUtils.copyFile(entry.getValue(), destination);
+								}
+							}
 						}
 						break;
 					default:

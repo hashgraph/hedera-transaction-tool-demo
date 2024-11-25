@@ -26,6 +26,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.client.core.constants.ErrorMessages;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
@@ -40,6 +41,7 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.Mnemonic;
+import com.hedera.hashgraph.sdk.Transaction;
 import javafx.animation.PauseTransition;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -50,6 +52,10 @@ import javafx.scene.layout.Pane;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -57,12 +63,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -161,7 +172,8 @@ public class CommonMethods implements GenericFileReadWriteAware {
 	public static Client getClient(final String networkString) {
 		// If a file exists for the string, or if it is named in the custom network folder,
 		// get the custom network for the string.
-		if (new File(networkString).exists()) {
+		var file = new File(networkString);
+		if (file.exists() && file.isFile()) {
 			logger.info("Loading nodes from {}", networkString);
 			final Map<String, AccountId> network = new HashMap<>();
 			final var jsonArray = getIntegrationIPs(networkString);
@@ -170,8 +182,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 				network.put(node.get("IP").getAsString(), new AccountId(node.get("number").getAsInt()));
 			}
 			return Client.forNetwork(network);
-		} else if (new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION).exists()) {
-			final var file = new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION);
+		} else if ((file = new File(CUSTOM_NETWORK_FOLDER + File.separator + networkString + "." + JSON_EXTENSION)).exists()) {
 			try (final var fileReader = new FileReader(file)) {
 				return CommonMethods.getClient(JsonParser.parseReader(fileReader).getAsJsonArray());
 			} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
@@ -482,7 +493,7 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		try (final var file = new FileReader(nodes)) {
 			return JsonParser.parseReader(file).getAsJsonArray();
 		} catch (final JsonIOException | JsonSyntaxException | IOException cause) {
-			logger.error(cause);
+			logger.error("An error occurred: ", cause);
 		}
 		return new JsonArray();
 	}
@@ -773,6 +784,98 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		final var pt = new PauseTransition(new javafx.util.Duration(5000));
 		pt.setOnFinished(e -> customTooltip.hide());
 		pt.play();
+	}
+
+	public static byte[] convertCertificateStringToBytes(String certificate) {
+		if (certificate == null || certificate.isEmpty()) {
+			return new byte[0];
+		}
+		try (var parser = new PEMParser(new StringReader(certificate))) {
+			var parserObject = parser.readObject();
+			if (parserObject instanceof X509CertificateHolder) {
+				var certificateHolder = (X509CertificateHolder) parserObject;
+				return new JcaX509CertificateConverter().getCertificate(certificateHolder).getEncoded();
+			}
+			throw new CertificateException(
+					"Not X509 Certificate, it is " + parserObject.getClass().getSimpleName());
+		} catch (IOException | CertificateException e) {
+			throw new HederaClientRuntimeException(e);
+		}
+	}
+
+	public static String convertCertificateBytesToString(byte[] certificateBytes) {
+		if (certificateBytes == null || certificateBytes.length == 0) {
+			return "";
+		}
+		try {
+			X509CertificateHolder certificateHolder = new X509CertificateHolder(certificateBytes);
+			StringWriter stringWriter = new StringWriter();
+			try (JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter)) {
+				pemWriter.writeObject(certificateHolder);
+			}
+			return stringWriter.toString();
+		} catch (IOException e) {
+			throw new HederaClientRuntimeException("Error converting certificate bytes to string", e);
+		}
+	}
+
+	public static byte[] hashCertificate(String certificate) {
+		if (!certificate.endsWith("\n")) {
+			certificate += "\n";
+		}
+		var certificateBytes = certificate.getBytes(StandardCharsets.UTF_8);
+		return hashBytes(certificateBytes);
+	}
+
+	public static byte[] hashBytes(byte[] bytes) {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-384");
+			return digest.digest(bytes);
+		} catch (NoSuchAlgorithmException e) {
+			throw new HederaClientRuntimeException("Error hashing bytes", e);
+		}
+	}
+
+	/**
+	 * Converts a hex string to a byte array
+	 *
+	 * @param hex
+	 * 		the hex string
+	 * @return a byte array
+	 */
+	public static byte[] hexToBytes(String hex) {
+		int len = hex.length();
+		byte[] data = new byte[len / 2];
+		for (int i = 0; i < len; i += 2) {
+			data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+					+ Character.digit(hex.charAt(i+1), 16));
+		}
+		return data;
+	}
+
+	/**
+	 * Converts a byte array to a hex string
+	 *
+	 * @param bytes
+	 * 		the byte array
+	 * @return a hex string
+	 */
+	public static String bytesToHex(byte[] bytes) {
+		StringBuilder hexString = new StringBuilder();
+		for (byte b : bytes) {
+			hexString.append(String.format("%02x", b));
+		}
+		return hexString.toString();
+	}
+
+	public static Transaction<?> getTransaction(final byte[] transactionBytes) throws InvalidProtocolBufferException {
+		var transaction = Transaction.fromBytes(transactionBytes);
+		// Java SDK changed how toBytes/fromBytes determined if a transaction was frozen.
+		// The latest version no longer sets the transaction to frozen when it is created from bytes
+		// automatically. Now it will only be frozen if at least 1 signature is present.
+		// Freeze the transaction so it cannot be modified
+		transaction.freeze();
+		return transaction;
 	}
 }
 

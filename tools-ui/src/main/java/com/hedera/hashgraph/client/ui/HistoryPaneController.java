@@ -32,6 +32,8 @@ import com.hedera.hashgraph.client.core.remote.TransactionFile;
 import com.hedera.hashgraph.client.core.remote.helpers.FileDetails;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoCreateTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolCryptoUpdateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeCreateTransaction;
+import com.hedera.hashgraph.client.core.transactions.ToolNodeUpdateTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.ui.utilities.HistoryData;
 import com.hedera.hashgraph.sdk.Key;
@@ -564,14 +566,23 @@ public class HistoryPaneController implements SubController {
 		Key key = null;
 		if (transactionType.equals(TransactionType.CRYPTO_CREATE)) {
 			key = ((ToolCryptoCreateTransaction) rf.getTransaction()).getKey();
-		}
-		if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
+		} else if (transactionType.equals(TransactionType.CRYPTO_UPDATE)) {
 			final var transaction = (ToolCryptoUpdateTransaction) rf.getTransaction();
 			oldInfo = getOldInfo(transaction.getAccount());
 			if (oldInfo != null) {
 				oldKey = oldInfo.get("key").getAsJsonObject();
 			}
 			key = transaction.getKey();
+		} else if (transactionType.equals(TransactionType.NODE_CREATE)) {
+			key = ((ToolNodeCreateTransaction) rf.getTransaction()).getAdminKey();
+		} else if (transactionType.equals(TransactionType.NODE_UPDATE)) {
+			final var transaction = (ToolNodeUpdateTransaction) rf.getTransaction();
+//			this wont work as is because nodes won't be stored like accounts so it needs to pull it from mirror node or something'
+//			oldInfo = getOldInfo(transaction.getAccount());
+//			if (oldInfo != null) {
+//				oldKey = oldInfo.get("key").getAsJsonObject();
+//			}
+			key = transaction.getAdminKey();
 		}
 		if (key != null) {
 			rf.setTreeView(controller.buildKeyTreeView(key));

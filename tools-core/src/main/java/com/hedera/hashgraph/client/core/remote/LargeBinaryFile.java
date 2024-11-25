@@ -43,7 +43,6 @@ import com.hedera.hashgraph.sdk.FileAppendTransaction;
 import com.hedera.hashgraph.sdk.FileUpdateTransaction;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.PrivateKey;
-import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import com.opencsv.CSVWriter;
 import javafx.beans.property.DoubleProperty;
@@ -707,7 +706,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			scrollPane.setContent(label);
 			detailsGridPane.add(scrollPane, RIGHT, 4);
 		} else {
-			detailsGridPane.add(new Label("Node:"), LEFT, 4);
+			detailsGridPane.add(new Label("Submit to Node:"), LEFT, 4);
 			detailsGridPane.add(new Label(nodeID.toNicknameAndChecksum(nicknames)), RIGHT, 4);
 		}
 
@@ -980,7 +979,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 
 		// Super ugly, but get the transaction for the file, whether it is an update or append
 		private ToolTransaction getTransaction(final File file) throws HederaClientException, InvalidProtocolBufferException {
-			final var transaction = Transaction.fromBytes(readBytes(file.getAbsolutePath()));
+			final var transaction = CommonMethods.getTransaction(readBytes(file.getAbsolutePath()));
 			if (transaction instanceof FileUpdateTransaction) {
 				return new ToolFileUpdateTransaction(file);
 			} else if (transaction instanceof FileAppendTransaction) {

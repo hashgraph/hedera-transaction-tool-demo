@@ -44,6 +44,9 @@ import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.HbarUnit;
 import com.hedera.hashgraph.sdk.Key;
 import com.hedera.hashgraph.sdk.KeyList;
+import com.hedera.hashgraph.sdk.NodeCreateTransaction;
+import com.hedera.hashgraph.sdk.NodeDeleteTransaction;
+import com.hedera.hashgraph.sdk.NodeUpdateTransaction;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
 import com.hedera.hashgraph.sdk.PrivateKey;
 import com.hedera.hashgraph.sdk.PublicKey;
@@ -142,7 +145,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		switch (FilenameUtils.getExtension(inputFile.getName())) {
 			case TRANSACTION_EXTENSION:
 				try {
-					this.transaction = Transaction.fromBytes(readBytes(inputFile.getAbsolutePath()));
+					this.transaction = CommonMethods.getTransaction(readBytes(inputFile.getAbsolutePath()));
 					this.feePayerID = new Identifier(Objects.requireNonNull(transaction.getTransactionId()).accountId);
 					this.nodeID = new Identifier((Objects.requireNonNull(transaction.getNodeAccountIds()).get(0)));
 					this.transactionFee = transaction.getMaxTransactionFee();
@@ -181,7 +184,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	public ToolTransaction parseFile(final File inputFile) throws HederaClientException {
 		try {
-			transaction = Transaction.fromBytes(readBytes(inputFile.getAbsolutePath()));
+			transaction = CommonMethods.getTransaction(readBytes(inputFile.getAbsolutePath()));
 		} catch (final InvalidProtocolBufferException e) {
 			throw new HederaClientException(e);
 		}
@@ -205,6 +208,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 		}
 		if (transaction instanceof FileAppendTransaction) {
 			return new ToolFileAppendTransaction(inputFile);
+		}
+		if (transaction instanceof NodeCreateTransaction) {
+			return new ToolNodeCreateTransaction(inputFile);
+		}
+		if (transaction instanceof NodeUpdateTransaction) {
+			return new ToolNodeUpdateTransaction(inputFile);
+		}
+		if (transaction instanceof NodeDeleteTransaction) {
+			return new ToolNodeDeleteTransaction(inputFile);
 		}
 		return new ToolTransaction(inputFile);
 	}
@@ -271,7 +283,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 */
 	public byte[] createSignature(final PrivateKey key) throws HederaClientRuntimeException {
 		try {
-			var transactionCopy = Transaction.fromBytes(transaction.toBytes());
+			var transactionCopy = CommonMethods.getTransaction(transaction.toBytes());
 			return key.signTransaction(transactionCopy);
 		} catch (InvalidProtocolBufferException e) {
 			throw new HederaClientRuntimeException(e);
@@ -464,7 +476,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	// transaction size limit, if possible.
 	private CollateAndVerifyStatus collateAndVerify(final KeyList keyList, Map<PublicKey, byte[]> signatures) throws InvalidProtocolBufferException {
 		// Create a backup of the transaction
-		final var backupTransaction = Transaction.fromBytes(transaction.toBytes());
+		final var backupTransaction = CommonMethods.getTransaction(transaction.toBytes());
 
 		// First, sign the transaction and determine if the resulting transaction is too large
 		final var transactionTooLarge = !addSignatures(signatures);
@@ -479,7 +491,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				// For every key in newKeys
 				for (final var key : signatures.keySet()) {
 					// Reset the transaction
-					transaction = Transaction.fromBytes(backupTransaction.toBytes());
+					transaction = CommonMethods.getTransaction(backupTransaction.toBytes());
 					// Remove the key from the signatures
 					final var signature = signaturesCopy.remove(key);
 					// Try again with the new list of signatures
