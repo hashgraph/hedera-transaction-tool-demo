@@ -2801,7 +2801,9 @@ public class CreatePaneController implements SubController {
 			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
 		}
 
-		dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		if (transaction.getNodeDescription() != null) {
+			dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		}
 
 		if (transaction.getGossipEndpointList() != null) {
 			transaction.getGossipEndpointList().forEach(gossipEndpoint -> {
@@ -2815,8 +2817,13 @@ public class CreatePaneController implements SubController {
 			});
 		}
 
-		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
-		grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		if (transaction.getGossipCACertificate() != null) {
+			gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		}
+
+		if (transaction.getGrpcCertificateHash() != null) {
+			grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		}
 
 		if (transaction.getAdminKey() != null) {
 			createAdminKey.setVisible(true);
@@ -2832,7 +2839,9 @@ public class CreatePaneController implements SubController {
 			dabNodeAccountId.setText(transaction.getDabNodeAccountId().toReadableString());
 		}
 
-		dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		if (transaction.getNodeDescription() != null) {
+			dabNodeDescriptionArea.setText(transaction.getNodeDescription());
+		}
 
 		dabNodeIdVBox.setVisible(true);
 		dabNodeIdTextField.setText(String.valueOf(transaction.getDabNodeId()));
@@ -2849,8 +2858,13 @@ public class CreatePaneController implements SubController {
 			});
 		}
 
-		gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
-		grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		if (transaction.getGossipCACertificate() != null) {
+			gossipCaCertificateTextArea.setText(transaction.getGossipCACertificate());
+		}
+
+		if (transaction.getGrpcCertificateHash() != null) {
+			grpcCertificateHashLabel.setText(transaction.getGrpcCertificateHash());
+		}
 
 		if (transaction.getAdminKey() != null) {
 			createAdminKey.setVisible(true);
