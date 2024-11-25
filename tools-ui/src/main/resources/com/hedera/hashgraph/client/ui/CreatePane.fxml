@@ -867,6 +867,10 @@
 								   visible="false"/>
 						</HBox>
 					</VBox>
+					<VBox spacing="10.0" style="-fx-background-color: white;">
+						<Label text="Gossip Ca Certificate Hash (SHA-384):"/>
+						<Label fx:id="gossipCaCertificateHashLabel" wrapText="true"/>
+					</VBox>
 					<VBox fx:id="grpcCertificateHashVBox" spacing="10.0" style="-fx-background-color: white;">
 						<Label text="GRPC Certificate"/>
 						<HBox spacing="20.0" VBox.vgrow="ALWAYS">
@@ -880,7 +884,7 @@
 						</HBox>
 					</VBox>
 					<VBox spacing="10.0" style="-fx-background-color: white;">
-						<Label text="GRPC Certificate Hash:"/>
+						<Label text="GRPC Certificate Hash (SHA-384):"/>
 						<Label fx:id="grpcCertificateHashLabel" wrapText="true"/>
 					</VBox>
 					<VBox layoutX="25.0" layoutY="617.0" spacing="10.0">

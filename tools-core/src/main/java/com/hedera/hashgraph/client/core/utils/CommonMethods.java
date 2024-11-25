@@ -819,6 +819,14 @@ public class CommonMethods implements GenericFileReadWriteAware {
 		}
 	}
 
+	public static byte[] hashCertificate(String certificate) {
+		if (!certificate.endsWith("\n")) {
+			certificate += "\n";
+		}
+		var certificateBytes = certificate.getBytes(StandardCharsets.UTF_8);
+		return hashBytes(certificateBytes);
+	}
+
 	public static byte[] hashBytes(byte[] bytes) {
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-384");

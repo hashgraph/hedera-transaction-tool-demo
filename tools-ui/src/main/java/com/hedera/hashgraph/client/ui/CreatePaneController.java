@@ -253,8 +253,7 @@ import static com.hedera.hashgraph.client.core.constants.ToolTipMessages.NOW_TOO
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseAddress;
 import static com.hedera.hashgraph.client.core.security.AddressChecksums.parseStatus;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.bytesToHex;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.convertCertificateStringToBytes;
-import static com.hedera.hashgraph.client.core.utils.CommonMethods.hashBytes;
+import static com.hedera.hashgraph.client.core.utils.CommonMethods.hashCertificate;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.showTooltip;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitString;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.splitStringDigest;
@@ -450,6 +449,7 @@ public class CreatePaneController implements SubController {
 	public Text fileDigest;
 	public Label freezeUTCTimeLabel;
 	public Label dabNodeDescriptionByteCount;
+	public Label gossipCaCertificateHashLabel;
 	public Label grpcCertificateHashLabel;
 
 	// Error messages
@@ -1858,20 +1858,43 @@ public class CreatePaneController implements SubController {
 		autoCompleteNickname.setOnKeyReleased(
 				keyEvent -> getKeyFromNickname(autoCompleteNickname, keyEvent.getCode(), createAdminKey));
 
-		grpcCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+		gossipCaCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
 			// If the new value is empty, and the old and new value are the same, don't alter the label.
-			if ("".equals(newValue) && newValue.equals(oldValue)) {
+			if (newValue == null || newValue.isEmpty()) {
+				gossipCaCertificateHashLabel.setText("");
 				return;
 			}
-			try {
-				var hash = hashBytes(newValue.getBytes(StandardCharsets.UTF_8));
-				grpcCertificateHashLabel.setText(bytesToHex(hash));
-			} catch (final HederaClientRuntimeException e) {
-				PopupMessage.display("Error loading certificate",
-						"The certificate could not be loaded, please check that the certificate is the correct format.");
-				controller.displaySystemMessage(e);
-				logger.error(e);
-				grpcCertificateTextArea.clear();
+			if (!newValue.equals(oldValue)) {
+				try {
+					var hash = hashCertificate(newValue);
+					gossipCaCertificateHashLabel.setText(bytesToHex(hash));
+				} catch (final HederaClientRuntimeException e) {
+					PopupMessage.display("Error loading certificate",
+							"The certificate could not be loaded, please check that the certificate is the correct format.");
+					controller.displaySystemMessage(e);
+					logger.error(e);
+					gossipCaCertificateTextArea.clear();
+				}
+			}
+		});
+
+		grpcCertificateTextArea.textProperty().addListener((observable, oldValue, newValue) -> {
+			// If the new value is empty, and the old and new value are the same, don't alter the label.
+			if (newValue == null || newValue.isEmpty()) {
+				grpcCertificateHashLabel.setText("");
+				return;
+			}
+			if (!newValue.equals(oldValue)) {
+				try {
+					var hash = hashCertificate(newValue);
+					grpcCertificateHashLabel.setText(bytesToHex(hash));
+				} catch (final HederaClientRuntimeException e) {
+					PopupMessage.display("Error loading certificate",
+							"The certificate could not be loaded, please check that the certificate is the correct format.");
+					controller.displaySystemMessage(e);
+					logger.error(e);
+					grpcCertificateTextArea.clear();
+				}
 			}
 		});
 	}
