@@ -6,35 +6,46 @@ on:
     tags: [ v* ]
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: transaction-tools-linux-medium
     timeout-minutes: 180
     env:
       MAVEN_CLI_OPTS: --batch-mode --no-transfer-progress
       TEST_ACCOUNT_ID: ${{ secrets.TEST_ACCOUNT_ID }}
       TEST_PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f # v2.10.2
+        with:
+          egress-policy: audit
+
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+
       - name: Install JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v91d3aa4956ec4a53e477c4907347b5e3481be8c9 # v2.5.1
         with:
           cache: 'maven'
           distribution: 'temurin'
           java-version: 17
+
       - name: Cache SonarCloud packages
         uses: actions/cache@v1
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
+
       - name: Compile
         run: ./mvnw $MAVEN_CLI_OPTS clean compile
+
       - name: Unit Tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || '' }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN || '' }}
         run: ./mvnw $MAVEN_CLI_OPTS test
+
       - name: Publish Unit Test Results
         uses: EnricoMi/publish-unit-test-result-action@v1
         if: always()
