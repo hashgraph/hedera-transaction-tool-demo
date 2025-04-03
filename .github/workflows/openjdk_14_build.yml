@@ -47,7 +47,7 @@ jobs:
         run: ./mvnw $MAVEN_CLI_OPTS test
 
       - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+        uses: step-security/publish-unit-test-result-action@97e3e8db4f0406df69ad75ce125553e13bd998a9 #v1
         if: always()
         with:
           files: "*/target/surefire-reports/*.xml"
