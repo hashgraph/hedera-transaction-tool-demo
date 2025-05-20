@@ -915,6 +915,14 @@
 								   visible="false"/>
 						</HBox>
 					</VBox>
+					<VBox spacing="10.0">
+						<HBox spacing="20.0">
+							<CheckBox fx:id="updateDeclineRewardCheckBox"/>
+							<Label text="Decline Reward"/>
+							<ToggleSwitch fx:id="declineReward"/>
+							<Label fx:id="declineRewardLabel" layoutX="10.0" layoutY="10.0" text="false"/>
+						</HBox>
+					</VBox>
 				</VBox>
 				<HBox alignment="CENTER_RIGHT">
 					<padding>

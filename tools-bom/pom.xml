@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.14.2</version>
+		<version>0.14.3</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -38,7 +38,7 @@
 
 	<!-- Project Properties -->
 	<properties>
-		<hedera.hashgraph.sdk.version>2.43.0-jbair-SNAPSHOT</hedera.hashgraph.sdk.version>
+		<hedera.hashgraph.sdk.version>2.56.1</hedera.hashgraph.sdk.version>
 		<log4j2.version>2.20.0</log4j2.version>
 		<slf4j.version>2.0.6</slf4j.version>
 		<javafx.version>21-ea+5</javafx.version>

@@ -707,6 +707,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			serviceEndpointLabel.setWrapText(true);
 			detailsGridPane.add(serviceEndpointLabel, RIGHT, count++);
 		}
+
+		if (createTransaction.getDeclineReward() != null) {
+			detailsGridPane.add(new Label("Decline Reward: "), LEFT, count);
+			detailsGridPane.add(new Label(String.format("%s", createTransaction.getDeclineReward())), RIGHT, count++);
+		}
 	}
 
 	/**
@@ -782,6 +787,11 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				serviceEndpointLabel.setWrapText(true);
 				detailsGridPane.add(serviceEndpointLabel, RIGHT, count++);
 			}
+		}
+
+		if (updateTransaction.getDeclineReward() != null) {
+			detailsGridPane.add(new Label("Decline Reward: "), LEFT, count);
+			detailsGridPane.add(new Label(String.format("%s", updateTransaction.getDeclineReward())), RIGHT, count++);
 		}
 	}
 

@@ -108,3 +108,6 @@ tools-integration/src/test/resources/TempTransactions
 
 .mvn/**/*.jar
 
+# files with notes and scripts for manual data/image manipulation
+*.helper
+

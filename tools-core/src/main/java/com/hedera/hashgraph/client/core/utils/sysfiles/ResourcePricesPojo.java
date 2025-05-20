@@ -18,7 +18,6 @@ package com.hedera.hashgraph.client.core.utils.sysfiles;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.hedera.hashgraph.sdk.proto.FeeComponents;
-import org.checkerframework.checker.units.qual.min;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourcePricesPojo {
