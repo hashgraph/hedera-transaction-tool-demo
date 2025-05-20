@@ -218,6 +218,7 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.ADMIN_KEY
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AMOUNT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.AUTO_RENEW_PERIOD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_REWARD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_STAKING_REWARDS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DEL_UNDEL_SWITCH;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ENTITY_TO_DEL_UNDEL;
@@ -413,6 +414,7 @@ public class CreatePaneController implements SubController {
 	public TextField serviceHostTextField;
 	public TextField servicePortTextField;
 	public TextField dabNodeIdTextField;
+	public CheckBox updateDeclineRewardCheckBox;
 
 	public TableView<AccountAmountStrings> fromTransferTable;
 	public TableView<AccountAmountStrings> toTransferTable;
@@ -451,6 +453,7 @@ public class CreatePaneController implements SubController {
 	public Label dabNodeDescriptionByteCount;
 	public Label gossipCaCertificateHashLabel;
 	public Label grpcCertificateHashLabel;
+	public Label declineRewardLabel;
 
 	// Error messages
 	public Label invalidTransferList;
@@ -502,6 +505,7 @@ public class CreatePaneController implements SubController {
 	public ToggleSwitch createSignatureRequired;
 	public ToggleSwitch declineStakingRewards;
 	public ToggleSwitch declineStakingRewardsNew;
+	public ToggleSwitch declineReward;
 
 	public ChoiceBox<String> systemActionChoiceBox;
 	public ChoiceBox<String> systemTypeChoiceBox;
@@ -545,7 +549,8 @@ public class CreatePaneController implements SubController {
 				invalidServiceEndpointList, shaTextFlow, contentsFilePathError, invalidUpdateNewKey, resetFormButton,
 				freezeUTCTimeLabel,	freezeTimeErrorLabel, invalidDate, createUTCTimeLabel, systemCreateLocalTimeLabel,
 				invalidFreezeFileHash, updateMTAerrorLabel, isUpdateAccountFeePayerCheckBox, gossipEndpointsVBox,
-				serviceEndpointsVBox, gossipCaCertificateVBox, grpcCertificateHashVBox, createAdminKey);
+				serviceEndpointsVBox, gossipCaCertificateVBox, grpcCertificateHashVBox, createAdminKey,
+				updateDeclineRewardCheckBox, invalidDabNodeId);
 
 		setupTextFieldResizeProperty(feePayerAccountField, nodeAccountField, entityID, updateFileID,
 				transferToAccountIDTextField, transferFromAccountIDTextField, updateAccountID, freezeFileIDTextField,
@@ -1897,6 +1902,15 @@ public class CreatePaneController implements SubController {
 				}
 			}
 		});
+
+		updateDeclineRewardCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+			if (updateDeclineRewardCheckBox.isVisible()) {
+				declineReward.setDisable(!newValue);
+			}
+		});
+
+		declineReward.selectedProperty().addListener(
+				(observableValue, aBoolean, t1) -> declineRewardLabel.setText(String.valueOf(t1)));
 	}
 
 	private boolean initializeDabNodeInfoTables = true;
@@ -1917,6 +1931,9 @@ public class CreatePaneController implements SubController {
 		grpcCertificateHashLabel.setText("");
 		createAdminKey.setContent(new HBox());
 		createAdminKey.setVisible(false);
+		updateDeclineRewardCheckBox.setVisible(false);
+		updateDeclineRewardCheckBox.setSelected(false);
+		declineReward.setSelected(false);
 	}
 
 	private boolean checkAndFlagDabNodeInfoFields() {
@@ -2829,6 +2846,7 @@ public class CreatePaneController implements SubController {
 			createAdminKey.setVisible(true);
 			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
 		}
+		declineStakingRewards.setSelected(transaction.getDeclineReward());
 	}
 
 	private void loadNodeUpdateTransactionToForm(final ToolNodeUpdateTransaction transaction) {
@@ -2869,6 +2887,14 @@ public class CreatePaneController implements SubController {
 		if (transaction.getAdminKey() != null) {
 			createAdminKey.setVisible(true);
 			processKey(EncryptionUtils.keyToJson(transaction.getAdminKey()), createAdminKey);
+		}
+
+		updateDeclineRewardCheckBox.setVisible(true);
+		declineReward.setDisable(true);
+		if (transaction.getDeclineReward() != null) {
+			updateDeclineRewardCheckBox.setSelected(true);
+			declineReward.setSelected(transaction.getDeclineReward());
+			declineStakingRewardsLabel.setText(String.valueOf(transaction.getDeclineReward()));
 		}
 	}
 
@@ -3098,6 +3124,8 @@ public class CreatePaneController implements SubController {
 				dabNodeIdVBox.setVisible(true);
 				dabNodeInfoVBox.setVisible(true);
 				signAndSubmitButton.setDisable(false);
+				updateDeclineRewardCheckBox.setVisible(true);
+				declineReward.setDisable(true);
 				break;
 			case NODE_DELETE:
 				dabNodeIdVBox.setVisible(true);
@@ -3411,6 +3439,8 @@ public class CreatePaneController implements SubController {
 			}
 			input.add(SERVICE_ENDPOINTS_FIELD_NAME, jsonArray);
 		}
+
+		input.addProperty(DECLINE_REWARD_FIELD_NAME, declineReward.isSelected());
 	}
 
 	private void addNodeUpdateElements(final JsonObject input) {
@@ -3454,6 +3484,10 @@ public class CreatePaneController implements SubController {
 				jsonArray.add(endpoint.asJson());
 			}
 			input.add(SERVICE_ENDPOINTS_FIELD_NAME, jsonArray);
+		}
+
+		if (updateDeclineRewardCheckBox.isSelected()) {
+			input.addProperty(DECLINE_REWARD_FIELD_NAME, declineReward.isSelected());
 		}
 	}
 

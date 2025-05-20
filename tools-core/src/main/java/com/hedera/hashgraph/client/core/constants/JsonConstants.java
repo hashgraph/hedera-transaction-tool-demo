@@ -95,6 +95,7 @@ public class JsonConstants {
 	public static final String GRPC_CERTIFICATE_HASH_FIELD_NAME = "grpcCertificateHash";
 	public static final String GOSSIP_ENDPOINTS_FIELD_NAME = "gossipEndpoints";
 	public static final String SERVICE_ENDPOINTS_FIELD_NAME = "serviceEndpoints";
+	public static final String DECLINE_REWARD_FIELD_NAME = "declineReward";
 	public static final String HOST_FIELD_NAME = "host";
 	public static final String PORT_FIELD_NAME = "port";
 	public static final String DAB_NODE_ID_FIELD_NAME = "dabNodeId";

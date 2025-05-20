@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_IDENTIFIER_ERROR_MESSAGE;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ADMIN_KEY_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.DAB_NODE_ID_FIELD_NAME;
+import static com.hedera.hashgraph.client.core.constants.JsonConstants.DECLINE_REWARD_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.GOSSIP_CA_CERTIFICATE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.GOSSIP_ENDPOINTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.GRPC_CERTIFICATE_HASH_FIELD_NAME;
@@ -70,6 +71,7 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
     private String grpcCertificateHash;
     private List<ToolEndpoint> gossipEndpointList;
     private List<ToolEndpoint> serviceEndpointList;
+    private Boolean declineReward;
 
     public ToolNodeUpdateTransaction(final JsonObject input) throws HederaClientException {
         super(input);
@@ -111,6 +113,7 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
             this.serviceEndpointList = serviceEndpoints.stream()
                 .map(ToolEndpoint::fromSdk).collect(Collectors.toList());
         }
+        this.declineReward = ((NodeUpdateTransaction) transaction).getDeclineReward();
         setTransactionType(TransactionType.NODE_UPDATE);
     }
 
@@ -145,6 +148,8 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
     public List<ToolEndpoint> getServiceEndpointList() {
         return serviceEndpointList;
     }
+
+    public Boolean getDeclineReward() { return declineReward; }
 
     @Override
     public boolean checkInput(final JsonObject input) {
@@ -221,6 +226,15 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
             answer = false;
         }
 
+        try {
+            if (input.has(DECLINE_REWARD_FIELD_NAME)) {
+                this.declineReward = input.get(DECLINE_REWARD_FIELD_NAME).getAsBoolean();
+            }
+        } catch (final Exception e) {
+            logger.error(ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE, DECLINE_REWARD_FIELD_NAME);
+            answer = false;
+        }
+
         return answer;
     }
 
@@ -285,6 +299,10 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
             nodeUpdateTransaction.addServiceEndpoint(endpoint.toSdk());
         }
 
+        if (declineReward != null) {
+            nodeUpdateTransaction.setDeclineReward(declineReward);
+        }
+
         return nodeUpdateTransaction.freeze();
     }
 
@@ -342,6 +360,10 @@ public class ToolNodeUpdateTransaction  extends ToolTransaction {
         }
         if (!array.isEmpty()) {
             asJson.add(SERVICE_ENDPOINTS_FIELD_NAME, array);
+        }
+
+        if (declineReward != null) {
+            asJson.addProperty(DECLINE_REWARD_FIELD_NAME, declineReward);
         }
 
         return asJson;
