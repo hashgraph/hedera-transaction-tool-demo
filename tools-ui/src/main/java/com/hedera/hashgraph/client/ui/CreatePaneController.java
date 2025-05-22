@@ -1933,6 +1933,7 @@ public class CreatePaneController implements SubController {
 		createAdminKey.setVisible(false);
 		updateDeclineRewardCheckBox.setVisible(false);
 		updateDeclineRewardCheckBox.setSelected(false);
+		declineReward.setDisable(false);
 		declineReward.setSelected(false);
 	}
 
@@ -3118,6 +3119,7 @@ public class CreatePaneController implements SubController {
 				dabNodeAccountIdVBox.setVisible(true);
 				dabNodeInfoVBox.setVisible(true);
 				signAndSubmitButton.setDisable(false);
+				declineReward.setDisable(false);
 				break;
 			case NODE_UPDATE:
 				dabNodeAccountIdVBox.setVisible(true);
