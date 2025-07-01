@@ -12,7 +12,7 @@ and is at your own risk.
 
 # Install
 ## Requirements
-* Java 17+ and JavaFX (sdk install java 17.0.13.fx-zulu)
+* Java 21+ and JavaFX (sdk install java 17.0.13.fx-zulu)
 * MacOS (currently does not support other operating systems)
 
 You can download the packages for the Hedera Transaction Tool UI and CLI by downloading the assets in each tag.
