@@ -80,7 +80,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	private String prefix = "";
 
 	// The key is the name of the original transaction file name + node being submitted to.
-	// This is a best guess approach, for a quick fix, as the key is deduced based on the
+	// This is a best-guess approach, for a quick fix, as the key is deduced based on the
 	// zip's file name.
 	private final Map<String, CollatorHelper> transactions = new HashMap<>();
 
@@ -248,7 +248,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 			// Get the accounts associated with the transaction. This would include
 			// the fee payer, and accounts to be updated, or accounts with balances changing
 			// due to transfer, etc.
-			final var accounts = helper.getSigningAccounts();
+			final var accounts = helper.getSigningAccountIds();
 			final var requiredIdsInUse = accounts.stream()
 					.filter(account -> !java.util.Arrays.stream(infoFiles)
 							.filter(a -> CommonMethods.getInfoFiles(a, account).length > 0)
@@ -289,7 +289,7 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 	 * Return a list of key names for keys used to sign the transaction.
 	 *
 	 * @param helper
-	 * @return
+	 * @return a list of public key names that were used to sign the transaction
 	 */
 	private List<String> getPublicKeyNames(final CollatorHelper helper) {
 		final List<String> idList = new ArrayList<>();
@@ -306,7 +306,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		return idList;
 	}
 
-	@NotNull
 	private boolean addItemListToVerification(@NotNull Map<String, List<String>> map,
 											  @NotNull String fileName,
 											  @NotNull String transactionId,
