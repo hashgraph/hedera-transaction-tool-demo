@@ -41,6 +41,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.INFO_EXTENSION;
@@ -156,8 +157,8 @@ public class ToolTransferTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<AccountId> getSigningAccounts() {
-		final var accountsSet = super.getSigningAccounts();
+	public Set<AccountId> getSigningAccountIds() {
+		final var accountsSet = super.getSigningAccountIds();
 		Map<AccountId, AccountInfo> infos = new HashMap<>();
 		try {
 			infos = loadAccountInfos();
@@ -197,7 +198,12 @@ public class ToolTransferTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return super.equals(obj);
+		if (!super.equals(obj) || !(obj instanceof ToolTransferTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolTransferTransaction) obj;
+		return Objects.equals(this.accountAmountMap, other.accountAmountMap);
 	}
 
 	@Override

@@ -33,7 +33,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.CONTENTS_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FILE_ID_FIELD_NAME;
@@ -75,7 +77,14 @@ public class ToolFileAppendTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return super.equals(obj);
+		if (!super.equals(obj) || !(obj instanceof ToolFileAppendTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolFileAppendTransaction) obj;
+		return Objects.equals(this.file, other.file) &&
+				Objects.equals(this.location, other.location) &&
+				Arrays.equals(this.bytes, other.bytes);
 	}
 
 	@Override

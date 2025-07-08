@@ -40,6 +40,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_PARSE_ERROR_MESSAGE;
@@ -190,7 +191,7 @@ public class ToolSystemTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<AccountId> getSigningAccounts() {
+	public Set<AccountId> getSigningAccountIds() {
 		final Set<AccountId> accountIds = new HashSet<>();
 		accountIds.add(new Identifier(0, 0, 2).asAccount());
 		accountIds.add(new Identifier(0, 0, 50).asAccount());
@@ -199,7 +200,15 @@ public class ToolSystemTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return super.equals(obj);
+        if (!super.equals(obj) || !(obj instanceof ToolSystemTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolSystemTransaction) obj;
+		return this.isFile == other.isFile &&
+				this.isDelete == other.isDelete &&
+				Objects.equals(this.entity, other.entity) &&
+				Objects.equals(this.expiration, other.expiration);
 	}
 
 	@Override

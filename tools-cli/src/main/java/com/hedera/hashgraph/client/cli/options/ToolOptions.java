@@ -27,7 +27,8 @@ import picocli.CommandLine.Command;
 		GetAccountInfoCommand.class,
 		CollateCommand.class,
 		SubmitCommand.class,
-		ConvertToKeyCommand.class
+		ConvertToKeyCommand.class,
+		VerifyCommand.class
 
 }, usageHelpWidth = 135)
 

@@ -28,6 +28,7 @@ import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.Key;
+import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.NodeCreateTransaction;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -259,8 +261,31 @@ public class ToolNodeCreateTransaction  extends ToolTransaction {
     }
 
     @Override
+    public KeyList getSigningAccountKeys(KeyList accountKeyList) throws HederaClientRuntimeException {
+        final var requiredKeyList = new KeyList();
+        requiredKeyList.add(accountKeyList);
+        final var keyFromTransaction = ((NodeCreateTransaction) transaction).getAdminKey();
+        if (keyFromTransaction != null) {
+            requiredKeyList.add(keyFromTransaction);
+        }
+        return requiredKeyList;
+    }
+
+    @Override
     public boolean equals(final Object obj) {
-        return super.equals(obj);
+        if (!super.equals(obj) || !(obj instanceof ToolNodeCreateTransaction)) {
+            return false;
+        }
+
+        final var other = (ToolNodeCreateTransaction) obj;
+        return Objects.equals(this.dabNodeAccountId, other.dabNodeAccountId) &&
+                Objects.equals(this.nodeDescription, other.nodeDescription) &&
+                Objects.equals(this.adminKey, other.adminKey) &&
+                Objects.equals(this.gossipCACertificate, other.gossipCACertificate) &&
+                Objects.equals(this.grpcCertificateHash, other.grpcCertificateHash) &&
+                Objects.equals(this.gossipEndpointList, other.gossipEndpointList) &&
+                Objects.equals(this.serviceEndpointList, other.serviceEndpointList) &&
+                Objects.equals(this.declineReward, other.declineReward);
     }
 
     @Override

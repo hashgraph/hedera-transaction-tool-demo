@@ -209,40 +209,31 @@ public class ToolFreezeTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof ToolFreezeTransaction)) {
+		if (!super.equals(obj) || !(obj instanceof ToolFreezeTransaction)) {
 			return false;
 		}
 
 		final var other = (ToolFreezeTransaction) obj;
-		final var freezeTypeBoolean = this.getFreezeType().equals(other.getFreezeType());
-		final var fileHashBoolean =
-				this.getFileHash() != null && other.getFileHash() != null && this.getFileHash().equals(
-						other.getFileHash());
-		final var fileIDBoolean =
-				this.getFileID() != null && other.getFileID() != null && this.getFileID().equals(other.getFileID());
-		final var startTimeBoolean =
-				this.getStartTime() != null && other.getStartTime() != null && this.getStartTime().equals(
-						other.getStartTime());
+		final var freezeTypeBoolean = Objects.equals(this.getFreezeType(), other.getFreezeType());
+		final var fileHashBoolean = Objects.equals(this.getFileHash(), other.getFileHash());
+		final var fileIDBoolean = Objects.equals(this.getFileID(), other.getFileID());
+		final var startTimeBoolean = Objects.equals(this.getStartTime(), other.getStartTime());
 
-		boolean freezeBoolean = freezeTypeBoolean;
 		switch (freezeType) {
 			case UNKNOWN_FREEZE_TYPE:
 				return false;
 			case FREEZE_ONLY:
-				freezeBoolean = freezeBoolean && startTimeBoolean;
-				break;
+				return freezeTypeBoolean && startTimeBoolean;
 			case PREPARE_UPGRADE:
-				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean;
-				break;
+				return freezeTypeBoolean && fileHashBoolean && fileIDBoolean;
 			case FREEZE_UPGRADE:
 			case TELEMETRY_UPGRADE:
-				freezeBoolean = freezeBoolean && fileHashBoolean && fileIDBoolean && startTimeBoolean;
-				break;
+				return freezeTypeBoolean && fileHashBoolean && fileIDBoolean && startTimeBoolean;
 			case FREEZE_ABORT:
 				break;
 		}
 
-		return super.equals(obj) && freezeBoolean;
+		return true;
 	}
 
 	@Override
