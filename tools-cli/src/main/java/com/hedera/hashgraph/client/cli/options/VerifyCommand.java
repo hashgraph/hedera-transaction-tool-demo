@@ -197,25 +197,24 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
         int passedCount = 0;
         for (final var file : files) {
             String filename = getBaseName(file);
-            System.out.println("Transaction " + filename);
+            System.out.println("Verify transaction " + filename);
             final var tx = new ToolTransaction().parseFile(new File(file));
 
             try {
                 if (tx == null) {
                     throw new HederaClientRuntimeException("Invalid transaction");
                 }
-                System.out.println("validating signatures...");
+                System.out.print("validating signatures...");
                 final var failedPublicKeys = ValidationUtils.validateSignatures(tx.getTransaction());
                 if (failedPublicKeys.isEmpty()) {
                     System.out.println("...done");
                 } else {
-                    System.out.println("  invalid signatures found, they will not be included in verification");
+                    System.out.println("...invalid signatures found, they will not be included in verification");
                     for (PublicKey failedPublicKey : failedPublicKeys) {
                         System.out.println("  - " + decodedKey(failedPublicKey));
                     }
+                    System.out.println();
                 }
-
-                System.out.println();
 
                 System.out.println("verifying keys...");
                 KeyList accountKeyList = new KeyList();
@@ -231,6 +230,7 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
                     System.out.println("Transaction " + filename + " passed verification");
                     passedCount++;
                 }
+                System.out.println();
             } catch (IllegalAccessException e) {
                 logger.error("Unable to parse transaction body bytes for transaction ({}): {}", filename, e.getMessage());
             } catch (Exception e) {
