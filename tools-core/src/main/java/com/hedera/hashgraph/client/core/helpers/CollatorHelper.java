@@ -286,8 +286,8 @@ public class CollatorHelper implements GenericFileReadWriteAware {
 			this.comments.addAll(helper.comments);
 		} else if (helper.hasTransaction()) {
 			if (!this.transaction.equals(helper.getTransaction())) {
+				// Log the error, but allow the collating to finish, just in case.
 				logger.error("Found a transaction ({}) with the same name, but does not match.", this.getTransactionFile());
-				throw new HederaClientException("Transactions don't match");
 			}
 			// If the transactions are the same (not including signatures),
 			// then keep the smaller one (will have fewer signatures on it)
