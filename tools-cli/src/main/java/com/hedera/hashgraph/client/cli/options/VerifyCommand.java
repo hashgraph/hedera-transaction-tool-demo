@@ -67,7 +67,7 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
     @SuppressWarnings("FieldMayBeFinal")
     @CommandLine.Option(names = {"-n", "--network"}, description = "The Hedera network the transaction will be " +
             "submitted to (one of MAINNET, PREVIEWNET, TESTNET, or the name of the custom network)")
-    private String submissionClient = "mainnet";
+    private String network = "mainnet";
 
     @CommandLine.Option(names = {"-t", "--file-with-transaction"}, arity = "1..*", description = "The path(s) to " +
             "the transaction file(s) or directory that contains signed transaction files", required = true)
@@ -107,8 +107,9 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
             captureStream.flush();
             String captured = buffer.toString();
 
-            // Dump to logger
-            logger.info("{}", captured);}
+            // Dump to System.out
+            System.out.print(captured);
+        }
     }
 
     private Set<String> getTransactionPaths() {
@@ -219,7 +220,7 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
                 System.out.println("verifying keys...");
                 KeyList accountKeyList = new KeyList();
                 for (AccountId accountId : tx.getSigningAccountIds()) {
-                    Key key = AccountInfoClient.getAccountKey(submissionClient, accountId);
+                    Key key = AccountInfoClient.getAccountKey(network, accountId);
                     accountKeyList.add(key);
                 }
                 KeyList requiredKeylist = tx.getSigningAccountKeys(accountKeyList);

@@ -317,7 +317,7 @@ class ToolFreezeTransactionTest {
 		input.addProperty(FREEZE_FILE_HASH_FIELD_NAME, "123abc");
 
 		final var transaction = new ToolFreezeTransaction(input);
-		final var signers = transaction.getSigningAccounts();
+		final var signers = transaction.getSigningAccountIds();
 
 		assertTrue(signers.contains(new AccountId(0, 0, 50)));
 	}

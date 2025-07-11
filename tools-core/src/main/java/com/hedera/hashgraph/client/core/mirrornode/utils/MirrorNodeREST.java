@@ -26,7 +26,7 @@ public class MirrorNodeREST {
     public static final String LOCAL_NODE = "http://host.docker.internal:5551";
 
     public static String fromBaseURL(String mirrorNetwork) {
-        switch (mirrorNetwork) {
+        switch (mirrorNetwork.toUpperCase()) {
             case "MAINNET":
                 return MAINNET + VERSION;
             case "TESTNET":

@@ -34,10 +34,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
+
 public class AccountInfoClient {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static AccountInfoDTO getAccountInfo(String network, String accountId) throws Exception {
+    public static AccountInfoDTO getAccountInfo(String network, String accountId) throws IOException {
         String url = MirrorNodeREST.fromBaseURL(network) + "/accounts/" + accountId;
         try (CloseableHttpClient client = HttpClients.createDefault()) {
             HttpGet request = new HttpGet(url);
@@ -48,11 +50,11 @@ public class AccountInfoClient {
         }
     }
 
-    public static Key getAccountKey(String network, AccountId accountId) throws Exception {
+    public static Key getAccountKey(String network, AccountId accountId) throws IllegalArgumentException, IOException {
         return getAccountKey(network, accountId.toString());
     }
 
-    public static Key getAccountKey(String network, String accountId) throws Exception {
+    public static Key getAccountKey(String network, String accountId) throws IllegalArgumentException, IOException {
         AccountInfoDTO accountInfo = getAccountInfo(network, accountId);
         if (accountInfo == null || accountInfo.getKey() == null) {
             throw new IllegalArgumentException("Account info or key is null for account: " + accountId);

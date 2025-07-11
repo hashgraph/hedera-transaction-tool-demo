@@ -22,7 +22,6 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.enums.NetworkEnum;
 import com.hedera.hashgraph.client.core.enums.TransactionType;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
-import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.json.Identifier;
 import com.hedera.hashgraph.client.core.json.Timestamp;
 import com.hedera.hashgraph.client.core.security.Ed25519KeyStore;
@@ -34,7 +33,6 @@ import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountInfo;
 import com.hedera.hashgraph.sdk.AccountInfoQuery;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
-import com.hedera.hashgraph.sdk.Client;
 import com.hedera.hashgraph.sdk.Hbar;
 import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PrecheckStatusException;
@@ -70,7 +68,6 @@ import java.util.concurrent.TimeoutException;
 
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.FEE_PAYER_ACCOUNT_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.MEMO_FIELD_NAME;
-import static com.hedera.hashgraph.client.core.constants.JsonConstants.NETWORK_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_FIELD_INPUT;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.NODE_ID_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_FEE_FIELD_NAME;
@@ -78,7 +75,6 @@ import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTI
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.TRANSACTION_VALID_START_READABLE_FIELD_NAME;
 import static com.hedera.hashgraph.client.core.testHelpers.TestHelpers.getJsonInputCT;
-import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -236,7 +232,7 @@ class ToolTransactionTest {
 
 		assertEquals(TransactionType.CRYPTO_TRANSFER, transfer.getTransactionType());
 
-		final var signers = transfer.getSigningAccounts();
+		final var signers = transfer.getSigningAccountIds();
 		assertEquals(1, signers.size());
 		assertTrue(signers.contains(new Identifier(0, 0, sender).asAccount()));
 
@@ -273,7 +269,7 @@ class ToolTransactionTest {
 
 		assertEquals(TransactionType.CRYPTO_TRANSFER, transfer.getTransactionType());
 
-		final var signers = transfer.getSigningAccounts();
+		final var signers = transfer.getSigningAccountIds();
 		assertEquals(2, signers.size());
 		assertTrue(signers.contains(new Identifier(0, 0, 76).asAccount()));
 		assertTrue(signers.contains(new Identifier(0, 0, 50).asAccount()));

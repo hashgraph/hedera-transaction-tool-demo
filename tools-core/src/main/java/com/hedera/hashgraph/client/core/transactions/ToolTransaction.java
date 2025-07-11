@@ -80,6 +80,7 @@ import java.util.stream.Collectors;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNED_TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.ErrorMessages.CANNOT_LOAD_TRANSACTION_ERROR_MESSAGE;
@@ -99,6 +100,7 @@ import static com.hedera.hashgraph.client.core.remote.TransactionCreationMetadat
 import static com.hedera.hashgraph.client.core.remote.helpers.AccountList.INPUT_STRING;
 import static com.hedera.hashgraph.client.core.utils.CommonMethods.setupClient;
 import static com.hedera.hashgraph.client.core.utils.JsonUtils.jsonToHBars;
+import static com.hedera.hashgraph.client.core.utils.ValidationUtils.validateSignature;
 import static java.lang.Thread.sleep;
 
 public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware {
@@ -143,6 +145,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 
 	public ToolTransaction(final File inputFile) throws HederaClientException {
 		switch (FilenameUtils.getExtension(inputFile.getName())) {
+			case SIGNED_TRANSACTION_EXTENSION:
 			case TRANSACTION_EXTENSION:
 				try {
 					this.transaction = CommonMethods.getTransaction(readBytes(inputFile.getAbsolutePath()));
@@ -302,11 +305,21 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 */
 	private boolean addSignatures(final Map<PublicKey, byte[]> signatures) {
 		// Add all signatures to the transaction
-		for (final var entry : signatures.entrySet()) {
-			transaction.addSignature(entry.getKey(), entry.getValue());
+		try {
+			for (final var entry : signatures.entrySet()) {
+				if (!validateSignature(transaction, entry.getKey(), entry.getValue())) {
+					logger.warn("The Public Key ({}) and signature did not match the transaction, it will not be added.", entry.getKey());
+				} else {
+					transaction.addSignature(entry.getKey(), entry.getValue());
+				}
+			}
+		} catch (final IllegalAccessException e) {
+			logger.error("Failed to get transaction body bytes: {}", e.getMessage());
 		}
 
 		// Check the size of the transaction, if too large
+		// NOTE: if using SDK controlled, multi-node transactions, this will not work.
+		// This will be the size of all the transactions, not just the one being signed.
 		return (transaction.toBytes().length <= Constants.MAX_TRANSACTION_LENGTH);
 	}
 
@@ -314,25 +327,32 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 										 final String... accountsInfoFolders) throws HederaClientRuntimeException {
 		try {
 			// Before anything happens, make sure the transaction is within size limitations
-			var transactionSize = transaction.toBytes().length;
+			final var transactionSize = transaction.toBytes().length;
 			if (transactionSize > Constants.MAX_TRANSACTION_LENGTH) {
 				throw new HederaClientRuntimeException("Transaction size (" +
 						transactionSize + ") is over the maximum limit.");
 			}
 
+			// Get the keys from the accountInfoFolders list, based on the required keys
 			// Build the list of keys that are required for a valid transaction, any additional keys
 			// used/needed will not be present in this keyList, but will still be required in the signing.
 			// This canNOT include the new keys in the key list because all new keys are required but the
 			// key list would allow for thresholds to bypass this requirement.
-			final var requiredKeyList = buildKeyList(accountsInfoFolders);
+			final var requiredKeyList = getSigningAccountKeys(buildKeyList(accountsInfoFolders));
 
 			// For every key in this.key that isn't in requiredKeyList, sign the transaction.
 			// This could be because the account info is missing, or outdated,
 			// or is being updated, or it could be due to extra unneeded keys.
 			// In all cases, the user will need to manually verify the keys in use.
 			signatures.entrySet().forEach(entry -> {
-				if (!keyListContainsKey(requiredKeyList, entry.getKey())) {
-					transaction.addSignature(entry.getKey(), entry.getValue());
+				try {
+					// Double check that the signature belongs to the transaction before applying
+					if (validateSignature(transaction, entry.getKey(), entry.getValue()) &&
+							!keyListContainsKey(requiredKeyList, entry.getKey())) {
+						transaction.addSignature(entry.getKey(), entry.getValue());
+					}
+				} catch (final IllegalAccessException e) {
+					logger.error("Failed to get transaction body bytes: {}", e.getMessage());
 				}
 			});
 
@@ -345,6 +365,12 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			}
 			currentSignatures.forEach(map -> map.keySet().forEach(signatures::remove));
 
+			// Make a backup copy of the transaction. If it fails collation, we will reset the transaction
+			// and add all signatures in order to run the verification tree and display the results before discarding
+			// the transaction. We will use the bytes of the transaction at this point, which may already include
+			// some signatures.
+			final var backupTransactionBytes = transaction.toBytes();
+
 			CollateAndVerifyStatus result;
 			// Now check if the requiredKeyList is empty. If empty, then all signatures supplied are already added to
 			// the transaction, no additional verification is possible. Check the size of the transaction.
@@ -356,16 +382,25 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				result = collateAndVerify(requiredKeyList, signatures);
 			}
 
-			// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
-			// cannot result in a valid transaction.
-			// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
-			if (result == CollateAndVerifyStatus.OVER_SIZE_LIMIT) {
-				transactionSize = transaction.toBytes().length;
-				throw new HederaClientRuntimeException("Too many signatures are required for this transaction, " +
-						"resulting in the transaction size (" +	transactionSize + ") being over the maximum limit.");
-			} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
-				throw new HederaClientRuntimeException("Required signatures are missing and the transaction " +
-						"cannot be verified.");
+			if (result != CollateAndVerifyStatus.SUCCESSFUL) {
+				// If the result is not successful, reset the transaction to the backup copy
+				transaction = CommonMethods.getTransaction(backupTransactionBytes);
+				addSignatures(signatures);
+
+				// If the result is OVER_SIZE_LIMIT, that means that the required number of signatures is too great and
+				// cannot result in a valid transaction.
+				// If the result is NOT_VERIFIABLE, that means that there are required signatures missing.
+				if (result == CollateAndVerifyStatus.OVER_SIZE_LIMIT) {
+					logger.error(
+							"Unable to remove unnecessary signatures to produce a valid transaction within the size limit. " +
+									"All attempted combinations exceeded the maximum allowed size."
+					);
+					throw new HederaClientRuntimeException("Transaction over size limit.");
+				} else if (result == CollateAndVerifyStatus.NOT_VERIFIABLE) {
+					logger.error("Required signatures are missing and the transaction " +
+							"cannot be verified.");
+					throw new HederaClientRuntimeException("Transaction not verifiable.");
+				}
 			}
 		} catch (IOException e) {
 			throw new HederaClientRuntimeException(e);
@@ -431,9 +466,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 * 		The new keyList containing all keys from any required account involved in this transaction.
 	 * @throws HederaClientRuntimeException
 	 */
-	private KeyList buildKeyList(final String[] accountsInfoFolders) throws HederaClientRuntimeException {
+	public KeyList buildKeyList(final String[] accountsInfoFolders) throws HederaClientRuntimeException {
 		// Determine all the accounts that need to be involved in the signing
-		final var accounts = getSigningAccounts();
+		final var accounts = getSigningAccountIds();
 		final var fileSet = accounts.stream()
 				.flatMap(account -> java.util.Arrays.stream(accountsInfoFolders)
 							.map(a -> CommonMethods.getInfoFiles(a, account)))
@@ -476,7 +511,7 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	// transaction size limit, if possible.
 	private CollateAndVerifyStatus collateAndVerify(final KeyList keyList, Map<PublicKey, byte[]> signatures) throws InvalidProtocolBufferException {
 		// Create a backup of the transaction
-		final var backupTransaction = CommonMethods.getTransaction(transaction.toBytes());
+		final var backupTransactionBytes = transaction.toBytes();
 
 		// First, sign the transaction and determine if the resulting transaction is too large
 		final var transactionTooLarge = !addSignatures(signatures);
@@ -488,10 +523,9 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			if (transactionTooLarge) {
 				// Create the map copy, it will have entries added/removed, and will be used for the next attempt
 				var signaturesCopy = new HashMap<>(signatures);
-				// For every key in newKeys
 				for (final var key : signatures.keySet()) {
 					// Reset the transaction
-					transaction = CommonMethods.getTransaction(backupTransaction.toBytes());
+					transaction = CommonMethods.getTransaction(backupTransactionBytes);
 					// Remove the key from the signatures
 					final var signature = signaturesCopy.remove(key);
 					// Try again with the new list of signatures
@@ -505,10 +539,6 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 				return CollateAndVerifyStatus.SUCCESSFUL;
 			}
 		}
-
-		// Return why it failed.
-		// The transaction is now signed, even those it failed, in order to help
-		// with the message to be sent to the user
 		return verifiedTransaction ? CollateAndVerifyStatus.OVER_SIZE_LIMIT : CollateAndVerifyStatus.NOT_VERIFIABLE;
 	}
 
@@ -772,10 +802,10 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	/**
 	 * Determines the public keys that are involved in the transactions.
 	 *
-	 * @return a list of ByteStrings
+	 * @return a set of ByteStrings
 	 */
 	public Set<ByteString> getSigningKeys(final String accountsInfoFolder) {
-		final var accounts = getSigningAccounts();
+		final var accounts = getSigningAccountIds();
 		return accounts.stream()
 				.map(account -> CommonMethods.getInfoFiles(accountsInfoFolder, account))
 				.filter(files -> files != null && files.length == 1)
@@ -811,10 +841,15 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 	 *
 	 * @return a Set of AccountId
 	 */
-	public Set<AccountId> getSigningAccounts() {
+	public Set<AccountId> getSigningAccountIds() {
 		final Set<AccountId> signingAccounts = new HashSet<>();
 		signingAccounts.add(Objects.requireNonNull(transaction.getTransactionId()).accountId);
 		return signingAccounts;
+	}
+
+
+	public KeyList getSigningAccountKeys(KeyList accountKeyList) {
+		return accountKeyList;
 	}
 
 	@Override
@@ -823,28 +858,16 @@ public class ToolTransaction implements SDKInterface, GenericFileReadWriteAware 
 			return false;
 		}
 
-		final var tx = ((ToolTransaction) obj).getTransaction();
-		if (tx == null && this.transaction == null) {
-			return this.asJson().equals(((ToolTransaction) obj).asJson());
-		}
-		if (tx != null && this.transaction != null) {
-			if (!this.transaction.getTransactionMemo().equals(tx.getTransactionMemo()) ||
-					!Objects.equals(this.transaction.getTransactionId(), tx.getTransactionId())) {
-				return false;
-			}
-			if (this.transaction.getMaxTransactionFee() == null || tx.getMaxTransactionFee() == null) {
-				throw new HederaClientRuntimeException("Invalid transaction max fee");
-			}
-			if (!this.transaction.getMaxTransactionFee().equals(tx.getMaxTransactionFee())) {
-				return false;
-			}
-			if (this.transaction.getTransactionValidDuration() == null || tx.getTransactionValidDuration() == null) {
-				throw new HederaClientRuntimeException("Invalid transaction valid duration");
-			}
-			return this.transaction.getTransactionValidDuration().equals(tx.getTransactionValidDuration()) &&
-					Objects.equals(this.transaction.getNodeAccountIds(), tx.getNodeAccountIds());
-		}
-		return false;
+		final var other = (ToolTransaction) obj;
+		return Objects.equals(this.transactionType, other.transactionType) &&
+				Objects.equals(this.feePayerID, other.feePayerID) &&
+				Objects.equals(this.nodeID, other.nodeID) &&
+				Objects.equals(this.transactionFee, other.transactionFee) &&
+				Objects.equals(this.transactionValidStart, other.transactionValidStart) &&
+				Objects.equals(this.transactionValidDuration, other.transactionValidDuration) &&
+				Objects.equals(this.network, other.network) &&
+				Objects.equals(this.memo, other.memo) &&
+				Objects.equals(this.nodeInput, other.nodeInput);
 	}
 
 	public ToolTransaction atNow() throws HederaClientException {

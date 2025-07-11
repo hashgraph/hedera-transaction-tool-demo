@@ -23,9 +23,13 @@ import com.hedera.hashgraph.client.core.constants.Constants;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientException;
 import com.hedera.hashgraph.client.core.exceptions.HederaClientRuntimeException;
 import com.hedera.hashgraph.client.core.helpers.CollatorHelper;
+import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
+import com.hedera.hashgraph.client.core.utils.ValidationUtils;
 import com.hedera.hashgraph.sdk.AccountId;
+import com.hedera.hashgraph.sdk.Key;
+import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -34,8 +38,10 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -240,6 +246,12 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 					logger.error("Collation and Verification of " + transactionId
 							+ " failed due to the following error: "
 							+ e.getMessage().replace("Hedera Client Runtime: ", ""));
+					//now build and show tree of failed transaction
+					try {
+						printTransactionFailedVerificationInfo(helper.getTransaction());
+					} catch (Exception ex) {
+						logger.error("Error printing transaction verification info: " + ex.getMessage());
+					}
 				}
 				iterator.remove();
 				continue;
@@ -377,7 +389,6 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 
 		return baseName;
-
 	}
 
 	private void handleZip(final File file) throws HederaClientException {
@@ -428,4 +439,75 @@ public class CollateCommand implements ToolCommand, GenericFileReadWriteAware {
 		}
 	}
 
+	private void printTransactionFailedVerificationInfo(ToolTransaction tx) throws Exception {
+		if (tx == null) {
+			throw new HederaClientRuntimeException("Invalid transaction");
+		}
+
+		System.out.println("Verified signatures:");
+		KeyList requiredKeyList = tx.getSigningAccountKeys(tx.buildKeyList(infoFiles));
+		printVerifyKeyList(tx, requiredKeyList, 1);
+		System.out.println();
+	}
+
+	/**
+	 * Verifies the KeyList and prints the results.
+	 *
+	 * @param tx          The transaction to verify against.
+	 * @param keyList     The KeyList to verify.
+	 * @param indentLevel The current indentation level for printing.
+	 * @return true if the KeyList is satisfied, false otherwise.
+	 * @throws IllegalAccessException if there is an issue accessing the transaction body bytes.
+	 */
+	private boolean printVerifyKeyList(ToolTransaction tx, KeyList keyList, int indentLevel) throws IllegalAccessException {
+		String indent = "  ".repeat(indentLevel);
+		int threshold = (keyList.getThreshold() != null ? keyList.getThreshold() : keyList.size());
+
+		int satisfied = 0;
+		List<String> childOutput = new ArrayList<>();
+
+		for (Key key : keyList) {
+			if (key instanceof PublicKey) {
+				PublicKey pk = (PublicKey) key;
+				// As signatures cannot be removed from a transaction,
+				// verify the public key is valid before verifying against required
+				boolean found = ValidationUtils.validateSignature(tx.getTransaction(), pk) && tx.verify(pk);
+				if (found) satisfied++;
+				String line = indent + "  " + (found ? "✔ " : "✘ ") + decodedKey(pk);
+				childOutput.add(line);
+			} else if (key instanceof KeyList) {
+				// Capture nested output in-memory using a separate buffer
+				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+				PrintStream originalOut = System.out;
+				System.setOut(new PrintStream(buffer));
+
+				boolean subSatisfied = printVerifyKeyList(tx, (KeyList) key, indentLevel + 1);
+
+				System.setOut(originalOut);
+				if (subSatisfied) satisfied++;
+
+				// Capture sub-output and add to childOutput
+				childOutput.add(buffer.toString().stripTrailing());
+			}
+		}
+
+		boolean thisLevelSatisfied = satisfied >= threshold;
+		String status = thisLevelSatisfied ? "✔" : "✘";
+		System.out.println(indent + status + " threshold: " + threshold + " of " + keyList.size());
+
+		// ✅ Then print child output
+		for (String line : childOutput) {
+			System.out.println(line);
+		}
+
+		return thisLevelSatisfied;
+	}
+
+	private String decodedKey(PublicKey pk) {
+		if (publicKeys.containsKey(pk)) {
+			return publicKeys.get(pk);
+		}
+		var keyBytes = pk.toBytesRaw();
+		return CommonMethods.bytesToHex(keyBytes);
+	}
 }
