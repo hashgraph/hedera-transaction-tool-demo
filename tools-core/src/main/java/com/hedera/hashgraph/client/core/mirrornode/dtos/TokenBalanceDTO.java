@@ -1,4 +1,3 @@
-
 /*
  * Hedera Transaction Tool
  *
@@ -17,24 +16,29 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.cli.options;
+package com.hedera.hashgraph.client.core.mirrornode.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
+public class TokenBalanceDTO {
+    @JsonProperty("token_id")
+    private String tokenId;
 
-@Command(subcommands = {
-		GetAccountInfoCommand.class,
-		CollateCommand.class,
-		SubmitCommand.class,
-		ConvertToKeyCommand.class,
-		VerifyCommand.class
+    private long balance;
 
-}, usageHelpWidth = 135)
+    public String getTokenId() {
+        return tokenId;
+    }
 
-public class ToolOptions extends LoggingOptions {
+    public void setTokenId(String tokenId) {
+        this.tokenId = tokenId;
+    }
 
-	@CommandLine.Option(names = { "-h", "--help" }, usageHelp = true, description = "Display help and exit.")
-	private boolean help;
+    public long getBalance() {
+        return balance;
+    }
 
+    public void setBalance(long balance) {
+        this.balance = balance;
+    }
 }

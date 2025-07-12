@@ -165,7 +165,7 @@ class ToolCryptoCreateTransactionTest implements GenericFileReadWriteAware {
 
 		// Accounts 1469 and 1470 have the Receiver Sig Required flag
 
-		final var signers = transaction.getSigningAccounts();
+		final var signers = transaction.getSigningAccountIds();
 		assertEquals(3, signers.size());
 		assertTrue(signers.contains(new AccountId(0, 0, 2)));
 		assertTrue(signers.contains(new AccountId(0, 0, 1469)));
@@ -203,7 +203,7 @@ class ToolCryptoCreateTransactionTest implements GenericFileReadWriteAware {
 		final var toolTransaction = new ToolTransaction();
 		final var transaction = toolTransaction.parseFile(new File("src/test/resources/Files/testTransaction.tx"));
 
-		final var signers = transaction.getSigningAccounts();
+		final var signers = transaction.getSigningAccountIds();
 		assertEquals(1, signers.size());
 		assertTrue(signers.contains(new AccountId(0, 0, 2)));
 

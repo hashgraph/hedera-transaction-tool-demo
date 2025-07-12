@@ -87,7 +87,7 @@ public interface SDKInterface {
 	boolean verify(PublicKey publicKey) throws HederaClientRuntimeException;
 
 	/**
-	 * Verifies the transaction has been signed byt the account provided
+	 * Verifies the transaction has been signed by the account provided
 	 *
 	 * @param info
 	 * 		account info of the account to test
@@ -125,7 +125,7 @@ public interface SDKInterface {
 	 *
 	 * @param location
 	 * 		String path to the storage location
-	 * @return true if the operation succeeded
+	 * @return a String path of the file and the storage location
 	 */
 	String store(String location) throws HederaClientException;
 

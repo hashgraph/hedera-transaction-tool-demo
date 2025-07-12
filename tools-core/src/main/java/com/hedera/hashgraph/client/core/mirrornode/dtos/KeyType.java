@@ -1,4 +1,3 @@
-
 /*
  * Hedera Transaction Tool
  *
@@ -17,24 +16,25 @@
  * limitations under the License.
  */
 
-package com.hedera.hashgraph.client.cli.options;
+package com.hedera.hashgraph.client.core.mirrornode.dtos;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
+public enum KeyType {
+    ECDSA_SECP256K1,
+    ED25519,
+    PROTOBUF_ENCODED;
 
-@Command(subcommands = {
-		GetAccountInfoCommand.class,
-		CollateCommand.class,
-		SubmitCommand.class,
-		ConvertToKeyCommand.class,
-		VerifyCommand.class
-
-}, usageHelpWidth = 135)
-
-public class ToolOptions extends LoggingOptions {
-
-	@CommandLine.Option(names = { "-h", "--help" }, usageHelp = true, description = "Display help and exit.")
-	private boolean help;
-
+    @JsonCreator
+    public static KeyType fromString(String value) {
+        if ("ED25519".equals(value)) {
+            return ED25519;
+        } else if ("ECDSASecp256k1".equals(value)) {
+            return ECDSA_SECP256K1;
+        } else if ("ProtobufEncoded".equals(value)) {
+            return PROTOBUF_ENCODED;
+        } else {
+            throw new IllegalArgumentException("Unknown key type: " + value);
+        }
+    }
 }

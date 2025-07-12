@@ -30,6 +30,7 @@ import com.hedera.hashgraph.client.core.utils.EncryptionUtils;
 import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.AccountUpdateTransaction;
 import com.hedera.hashgraph.sdk.Key;
+import com.hedera.hashgraph.sdk.KeyList;
 import com.hedera.hashgraph.sdk.Transaction;
 import com.hedera.hashgraph.sdk.TransactionId;
 import org.apache.logging.log4j.LogManager;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_CREATION_METADATA_EXTENSION;
@@ -354,17 +356,42 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	}
 
 	@Override
-	public Set<AccountId> getSigningAccounts() {
+	public Set<AccountId> getSigningAccountIds() {
 		// This will return the Fee Payer account and the account to be updated, no new signatures
 		// will be referenced at this point.
-		final var accountsSet = super.getSigningAccounts();
+		final var accountsSet = super.getSigningAccountIds();
 		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
 		return accountsSet;
 	}
 
 	@Override
+	public KeyList getSigningAccountKeys(KeyList accountKeyList) throws HederaClientRuntimeException {
+		final var requiredKeyList = new KeyList();
+		requiredKeyList.add(accountKeyList);
+		final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
+		if (keyFromTransaction != null) {
+			requiredKeyList.add(keyFromTransaction);
+		}
+		return requiredKeyList;
+	}
+
+	@Override
 	public boolean equals(final Object obj) {
-		return super.equals(obj);
+		if (!super.equals(obj) || !(obj instanceof ToolCryptoUpdateTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolCryptoUpdateTransaction) obj;
+		return Objects.equals(account, other.account) &&
+				Objects.equals(key, other.key) &&
+				Objects.equals(autoRenewDuration, other.autoRenewDuration) &&
+				Objects.equals(receiverSignatureRequired, other.receiverSignatureRequired) &&
+				Objects.equals(maxTokenAssociations, other.maxTokenAssociations) &&
+				Objects.equals(accountMemo, other.accountMemo) &&
+				Objects.equals(stakedAccountId, other.stakedAccountId) &&
+				Objects.equals(stakedNodeId, other.stakedNodeId) &&
+				Objects.equals(declineStakingRewards, other.declineStakingRewards) &&
+				isUpdateAccountFeePayer == other.isUpdateAccountFeePayer;
 	}
 
 	@Override

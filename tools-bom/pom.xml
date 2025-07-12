@@ -28,7 +28,7 @@
 	<parent>
 		<groupId>com.hedera.hashgraph</groupId>
 		<artifactId>hedera-transaction-tool</artifactId>
-		<version>0.14.4</version>
+		<version>0.14.5</version>
 	</parent>
 
 	<!-- Project Identifier & Type -->
@@ -38,7 +38,7 @@
 
 	<!-- Project Properties -->
 	<properties>
-		<hedera.hashgraph.sdk.version>2.56.1</hedera.hashgraph.sdk.version>
+		<hedera.hashgraph.sdk.version>2.59.0</hedera.hashgraph.sdk.version>
 		<log4j2.version>2.20.0</log4j2.version>
 		<slf4j.version>2.0.6</slf4j.version>
 		<javafx.version>21-ea+5</javafx.version>
@@ -48,9 +48,9 @@
 		<testfx.version>4.0.16-alpha</testfx.version>
 		<bouncycastle.version>1.72</bouncycastle.version>
 		<passpol.version>0.7.0</passpol.version>
-		<protobuf.version>3.22.0</protobuf.version>
-		<grpc.version>1.53.0</grpc.version>
-		<apache.commons.io.version>2.11.0</apache.commons.io.version>
+		<protobuf.version>3.25.5</protobuf.version>
+		<grpc.version>1.72.0</grpc.version>
+		<apache.commons.io.version>2.14.0</apache.commons.io.version>
 		<apache.commons.lang3.version>3.12.0</apache.commons.lang3.version>
 		<apache.commons.codec.version>1.15</apache.commons.codec.version>
 		<apache.httpclient.version>4.5.14</apache.httpclient.version>
@@ -67,6 +67,7 @@
 		<dotenv.version>2.3.2</dotenv.version>
 		<caffeine.version>3.1.6</caffeine.version>
 		<maven.artifact>3.9.0</maven.artifact>
+		<mockito.version>5.2.0</mockito.version>
 	</properties>
 
 	<!-- Dependency Configuration -->
@@ -335,6 +336,13 @@
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-artifact</artifactId>
 				<version>${maven.artifact}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-inline</artifactId>
+				<version>${mockito.version}</version>
+				<scope>test</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

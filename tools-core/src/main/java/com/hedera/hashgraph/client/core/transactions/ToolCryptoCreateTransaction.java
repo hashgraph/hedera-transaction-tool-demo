@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.MAX_MEMO_BYTES;
@@ -252,7 +253,20 @@ public class ToolCryptoCreateTransaction extends ToolTransaction {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return super.equals(obj);
+		if (!super.equals(obj) || !(obj instanceof ToolCryptoCreateTransaction)) {
+			return false;
+		}
+
+		final var other = (ToolCryptoCreateTransaction) obj;
+		return Objects.equals(this.initialBalance, other.initialBalance) &&
+				Objects.equals(this.key, other.key) &&
+				Objects.equals(this.autoRenewDuration, other.autoRenewDuration) &&
+				Objects.equals(this.receiverSignatureRequired, other.receiverSignatureRequired) &&
+				Objects.equals(this.maxTokenAssociations, other.maxTokenAssociations) &&
+				Objects.equals(this.accountMemo, other.accountMemo) &&
+				Objects.equals(this.stakedAccountId, other.stakedAccountId) &&
+				Objects.equals(this.stakedNodeId, other.stakedNodeId) &&
+				Objects.equals(this.declineStakingRewards, other.declineStakingRewards);
 	}
 
 	@Override

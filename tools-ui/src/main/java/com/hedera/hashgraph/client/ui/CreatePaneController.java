@@ -4794,7 +4794,7 @@ public class CreatePaneController implements SubController {
 	private Set<Identifier> getUnknownSigners(final ToolTransaction transaction) {
 		final var knownSigners = controller.accountsPaneController.getFeePayers();
 		final Set<Identifier> unknownSigners = new HashSet<>();
-		final var signers = transaction.getSigningAccounts();
+		final var signers = transaction.getSigningAccountIds();
 
 		for (final var signer : signers) {
 			final var identifier = new Identifier(signer, controller.getCurrentNetwork());
@@ -4945,7 +4945,7 @@ public class CreatePaneController implements SubController {
 		final Set<Identifier> unknownSigners = new HashSet<>();
 		final var privateKeys = new HashSet<File>();
 		for (final var transaction : transactions) {
-			final var signers = transaction.getSigningAccounts();
+			final var signers = transaction.getSigningAccountIds();
 			privateKeys.addAll(controller.extractRequiredKeys(transaction.getSigningKeys()));
 
 			for (final var signer : signers) {

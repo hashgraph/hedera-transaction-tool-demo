@@ -90,7 +90,12 @@ public class ToolNodeDeleteTransaction  extends ToolTransaction {
 
     @Override
     public boolean equals(final Object obj) {
-        return super.equals(obj);
+        if (!super.equals(obj) || !(obj instanceof ToolNodeDeleteTransaction)) {
+            return false;
+        }
+
+        final var other = (ToolNodeDeleteTransaction) obj;
+        return this.dabNodeId == other.dabNodeId;
     }
 
     @Override
