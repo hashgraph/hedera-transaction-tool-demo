@@ -522,7 +522,6 @@ public class AccountsPaneController implements SubController {
 		return "Request " + e.getMessage();
 	}
 
-
 	@NotNull
 	private AccountInfoQuery getAccountInfoQuery(final Identifier feePayer, final Set<File> privateKeysFiles) {
 
@@ -533,8 +532,15 @@ public class AccountsPaneController implements SubController {
 								FilenameUtils.getBaseName(privateKeyFile.getName())))).map(
 						keyPair -> PrivateKey.fromBytes(keyPair.getPrivate().getEncoded())).collect(Collectors.toList());
 
+		final var network = networkChoiceBoxA.getValue();
+		var networkString = controller.getCurrentNetwork();
+		// If there is a selection, then it is a String
+		if (network instanceof String) {
+			networkString = (String) network;
+		}
 		return AccountInfoQuery.Builder
 				.anAccountInfoQuery()
+				.withNetwork(networkString)
 				.withSigningKeys(privateKeys)
 				.withFeePayer(feePayer.asAccount())
 				.withFee(Hbar.fromTinybars(controller.getDefaultTxFee()))

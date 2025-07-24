@@ -355,12 +355,24 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		return keysSet;
 	}
 
+	// According to documentation, if account is between 3 and 1000 inclusive,
+	// the key is not required IF the fee payer is 2 or 50. In all other cases, the key is required.
+	// https://github.com/hiero-ledger/hiero-consensus-node/blob/main/hedera-node/docs/privileged-transactions.md#waived-signing-requirements-for-crypto-updates
+	private boolean requireSigningRequirements() {
+		final var feePayerNum = feePayerID.getAccountNum();
+		final var accountId = ((AccountUpdateTransaction) transaction).getAccountId();
+		final var accountNum = accountId != null ? accountId.num : 0L;
+		return (accountNum < 3 || accountNum > 1000) || (feePayerNum != 2 && feePayerNum != 50);
+	}
+
 	@Override
 	public Set<AccountId> getSigningAccountIds() {
 		// This will return the Fee Payer account and the account to be updated, no new signatures
 		// will be referenced at this point.
 		final var accountsSet = super.getSigningAccountIds();
-		accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
+		if (requireSigningRequirements()) {
+			accountsSet.add(((AccountUpdateTransaction) transaction).getAccountId());
+		}
 		return accountsSet;
 	}
 
@@ -368,9 +380,11 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 	public KeyList getSigningAccountKeys(KeyList accountKeyList) throws HederaClientRuntimeException {
 		final var requiredKeyList = new KeyList();
 		requiredKeyList.add(accountKeyList);
-		final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
-		if (keyFromTransaction != null) {
-			requiredKeyList.add(keyFromTransaction);
+		if (requireSigningRequirements()) {
+			final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
+			if (keyFromTransaction != null) {
+				requiredKeyList.add(keyFromTransaction);
+			}
 		}
 		return requiredKeyList;
 	}
