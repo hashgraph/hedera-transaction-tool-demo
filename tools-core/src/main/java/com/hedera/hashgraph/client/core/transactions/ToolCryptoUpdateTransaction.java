@@ -381,6 +381,8 @@ public class ToolCryptoUpdateTransaction extends ToolTransaction {
 		final var requiredKeyList = new KeyList();
 		requiredKeyList.add(accountKeyList);
 		if (requireSigningRequirements()) {
+			// New key is required:
+			// https://docs.hedera.com/hedera/sdks-and-apis/sdks/accounts-and-hbar/update-an-account
 			final var keyFromTransaction = ((AccountUpdateTransaction) transaction).getKey();
 			if (keyFromTransaction != null) {
 				requiredKeyList.add(keyFromTransaction);
