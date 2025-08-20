@@ -126,4 +126,18 @@ public class ToolEndpoint {
             super(message);
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof ToolEndpoint)) return false;
+        ToolEndpoint other = (ToolEndpoint) obj;
+        return port == other.port &&
+                java.util.Objects.equals(host, other.host);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(host, port);
+    }
 }
