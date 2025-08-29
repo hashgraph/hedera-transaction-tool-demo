@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.transactions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.sdk.PublicKey;
 import org.apache.logging.log4j.LogManager;
@@ -33,6 +34,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
+
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
+import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 
 public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 	private static final Logger logger = LogManager.getLogger(SignaturePair.class);
@@ -66,14 +70,21 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 		return signature;
 	}
 
-
 	public void write(final String filePath) {
 		try {
 
-			try (final var fileOut = new FileOutputStream(
-					filePath); final var objectOut = new ObjectOutputStream(fileOut)) {
+			try (final var fileOut = new FileOutputStream(filePath);
+				 final var objectOut = new ObjectOutputStream(fileOut)) {
 				objectOut.writeObject(this);
-				logger.info("The Object  was successfully written to a file");
+				logger.info("The Object was successfully written to a file");
+			}
+
+			// Write the JSON representation - for importing into TTv2
+			final String jsonFilePath = filePath.replace(SIGNATURE_EXTENSION, JSON_EXTENSION);
+			final var mapper = new ObjectMapper();
+			try (final var jsonOut = new FileOutputStream(jsonFilePath)) {
+				mapper.writeValue(jsonOut, this);
+				logger.info("The JSON was successfully written to a file");
 			}
 		} catch (final Exception ex) {
 			logger.error(ex);
