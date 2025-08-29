@@ -18,6 +18,8 @@
 
 package com.hedera.hashgraph.client.core.transactions;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
 import com.hedera.hashgraph.sdk.PublicKey;
@@ -41,6 +43,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXT
 public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 	private static final Logger logger = LogManager.getLogger(SignaturePair.class);
 
+	@JsonProperty("publicKey")
 	private final byte[] publicKey;
 	private final byte[] signature;
 
@@ -62,6 +65,7 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 		this.signature = signaturePair.getSignature();
 	}
 
+	@JsonIgnore
 	public PublicKey getPublicKey() {
 		return PublicKey.fromBytes(publicKey);
 	}
@@ -80,7 +84,7 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 			}
 
 			// Write the JSON representation - for importing into TTv2
-			final String jsonFilePath = filePath.replace(SIGNATURE_EXTENSION, JSON_EXTENSION);
+			final String jsonFilePath = filePath.replaceFirst(SIGNATURE_EXTENSION + "$", JSON_EXTENSION);
 			final var mapper = new ObjectMapper();
 			try (final var jsonOut = new FileOutputStream(jsonFilePath)) {
 				mapper.writeValue(jsonOut, this);

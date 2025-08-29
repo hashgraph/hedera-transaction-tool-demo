@@ -1120,7 +1120,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					transaction.createSignature(privateKey));
 			signaturePair.write(signatureFile);
 
-			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile), new File(signatureFile.replace(SIGNATURE_EXTENSION, JSON_EXTENSION)) };
 
 			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
 				throw new HederaClientRuntimeException("Invalid file in file list");
