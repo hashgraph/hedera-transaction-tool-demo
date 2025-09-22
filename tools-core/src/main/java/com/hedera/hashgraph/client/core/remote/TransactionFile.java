@@ -18,6 +18,7 @@
 
 package com.hedera.hashgraph.client.core.remote;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import com.hedera.hashgraph.client.core.action.GenericFileReadWriteAware;
@@ -43,7 +44,10 @@ import com.hedera.hashgraph.client.core.transactions.ToolTransaction;
 import com.hedera.hashgraph.client.core.transactions.ToolTransferTransaction;
 import com.hedera.hashgraph.client.core.utils.CommonMethods;
 import com.hedera.hashgraph.client.core.utils.FXUtils;
+import com.hedera.hashgraph.sdk.AccountId;
 import com.hedera.hashgraph.sdk.PrivateKey;
+import com.hedera.hashgraph.sdk.PublicKey;
+import com.hedera.hashgraph.sdk.Transaction;
 import com.opencsv.CSVWriter;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -78,6 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -90,6 +95,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -1114,13 +1121,46 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 		private String processSingleTransaction() throws HederaClientException, IOException {
 			final String tempTxFile = transaction.store(
 					Path.of(tempStorage, getBaseName() + "." + TRANSACTION_EXTENSION).toString());
-			final String signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
+			String signatureFile;
 
-			final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
-					transaction.createSignature(privateKey));
-			signaturePair.write(signatureFile);
+			final Transaction<?> tx = transaction.getTransaction();
+			if (Objects.requireNonNull(tx.getNodeAccountIds()).size() > 1) {
+				signatureFile = tempTxFile.replaceFirst(TRANSACTION_EXTENSION + "$", JSON_EXTENSION);
 
-			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile), new File(signatureFile.replace(SIGNATURE_EXTENSION, JSON_EXTENSION)) };
+				// This map should only have one entry, due to TTv2 export. But just in case,
+				// we will handle it more generally
+				final Map<AccountId, Map<PublicKey, byte[]>> sigs = tx.getSignatures();
+				final Map<AccountId, Map<PublicKey, byte[]>> newSigs = tx.sign(privateKey).getSignatures();
+
+				for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : sigs.entrySet()) {
+					AccountId accountId = entry.getKey();
+					Map<PublicKey, byte[]> sigMap = entry.getValue();
+
+					if (newSigs.containsKey(accountId)) {
+						Map<PublicKey, byte[]> newSigMap = newSigs.get(accountId);
+						for (PublicKey publicKey : sigMap.keySet()) {
+							newSigMap.remove(publicKey);
+						}
+						// If the inner map is empty after removals, remove the outer key
+						if (newSigMap.isEmpty()) {
+							newSigs.remove(accountId);
+						}
+					}
+				}
+
+				final var mapper = new ObjectMapper();
+				try (final var jsonOut = new FileOutputStream(signatureFile)) {
+					mapper.writeValue(jsonOut, newSigs);
+					logger.info("The JSON was successfully written to a file");
+				}
+			} else {
+				signatureFile = tempTxFile.replace(TRANSACTION_EXTENSION, SIGNATURE_EXTENSION);
+				final var signaturePair = new SignaturePair(privateKey.getPublicKey(),
+						transaction.createSignature(privateKey));
+				signaturePair.write(signatureFile);
+			}
+
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
 
 			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
 				throw new HederaClientRuntimeException("Invalid file in file list");
