@@ -941,7 +941,7 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			zipMessages(String.format("%s%s.%s", baseName, TRANSACTIONS_SUFFIX, ZIP_EXTENSION),
 					TRANSACTION_EXTENSION);
 			zipMessages(String.format("%s%s.%s", baseName, SIGNATURES_SUFFIX, ZIP_EXTENSION),
-					SIGNATURE_EXTENSION);
+					SIGNATURE_EXTENSION, JSON_EXTENSION);
 		}
 
 		private void summarizeTransactions(final String baseName) throws HederaClientException, IOException {
@@ -988,9 +988,9 @@ public class LargeBinaryFile extends RemoteFile implements GenericFileReadWriteA
 			return null;
 		}
 
-		private void zipMessages(final String messages, final String ext) throws HederaClientException {
+		private void zipMessages(final String messages, final String... exts) throws HederaClientException {
 			try {
-				final var txToPack = new File(tempStorage).listFiles((dir, name) -> name.endsWith(ext));
+				final var txToPack = new File(tempStorage).listFiles((dir, name) -> Arrays.stream(exts).anyMatch(name::endsWith));
 				if (txToPack == null) {
 					throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
 				}

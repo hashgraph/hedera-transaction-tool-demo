@@ -53,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.JsonConstants.ACCOUNT;
@@ -159,7 +160,7 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 			throw new HederaClientException(e);
 		}
 		zipMessages(TRANSACTIONS_SUFFIX, TRANSACTION_EXTENSION);
-		zipMessages(SIGNATURES_SUFFIX, SIGNATURE_EXTENSION);
+		zipMessages(SIGNATURES_SUFFIX, SIGNATURE_EXTENSION, JSON_EXTENSION);
 	}
 
 	private ToolTransaction buildTransfer(final BatchLine distributionData) throws HederaClientException {
@@ -238,9 +239,9 @@ public class DistributionMaker implements GenericFileReadWriteAware {
 		}
 	}
 
-	private void zipMessages(final String messages, final String ext) throws HederaClientException {
+	private void zipMessages(final String messages, final String... exts) throws HederaClientException {
 		try {
-			final var txToPack = new File(storageLocation + messages).listFiles((dir, name) -> name.endsWith(ext));
+			final var txToPack = new File(storageLocation + messages).listFiles((dir, name) -> Arrays.stream(exts).anyMatch(name::endsWith));
 			if (txToPack == null) {
 				throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
 			}

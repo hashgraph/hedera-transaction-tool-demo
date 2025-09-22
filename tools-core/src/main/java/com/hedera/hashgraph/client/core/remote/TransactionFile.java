@@ -98,6 +98,7 @@ import static com.hedera.hashgraph.client.core.constants.Constants.CREDIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.DEBIT;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_GROUP_SEPARATOR;
 import static com.hedera.hashgraph.client.core.constants.Constants.FILE_NAME_INTERNAL_SEPARATOR;
+import static com.hedera.hashgraph.client.core.constants.Constants.JSON_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.SIGNATURE_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.TRANSACTION_EXTENSION;
 import static com.hedera.hashgraph.client.core.constants.Constants.WHITE_BUTTON_STYLE;
@@ -1119,7 +1120,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					transaction.createSignature(privateKey));
 			signaturePair.write(signatureFile);
 
-			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile), new File(signatureFile.replace(SIGNATURE_EXTENSION, JSON_EXTENSION)) };
 
 			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
 				throw new HederaClientRuntimeException("Invalid file in file list");
@@ -1152,7 +1153,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			zipMessages(String.format("%s%s.%s", baseName, TRANSACTIONS_SUFFIX, ZIP_EXTENSION),
 					TRANSACTION_EXTENSION);
 			zipMessages(String.format("%s%s.%s", baseName, SIGNATURES_SUFFIX, ZIP_EXTENSION),
-					SIGNATURE_EXTENSION);
+					SIGNATURE_EXTENSION, JSON_EXTENSION);
 		}
 
 		private void summarizeTransactions(final String baseName) throws HederaClientException, IOException {
@@ -1189,9 +1190,9 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 			}
 		}
 
-		private void zipMessages(final String messages, final String ext) throws HederaClientException {
+		private void zipMessages(final String messages, final String... exts) throws HederaClientException {
 			try {
-				final var txToPack = new File(tempStorage).listFiles((dir, name) -> name.endsWith(ext));
+				final var txToPack = new File(tempStorage).listFiles((dir, name) -> Arrays.stream(exts).anyMatch(name::endsWith));
 				if (txToPack == null) {
 					throw new HederaClientRuntimeException("Unable to read list of transactions to pack");
 				}
