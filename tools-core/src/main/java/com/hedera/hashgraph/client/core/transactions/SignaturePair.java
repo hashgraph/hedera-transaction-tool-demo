@@ -82,6 +82,14 @@ public class SignaturePair implements GenericFileReadWriteAware, Serializable {
 				objectOut.writeObject(this);
 				logger.info("The Object was successfully written to a file");
 			}
+
+			// Write the JSON representation - for importing into TTv2
+			final String jsonFilePath = filePath.replaceFirst(SIGNATURE_EXTENSION + "$", JSON_EXTENSION);
+			final var mapper = new ObjectMapper();
+			try (final var jsonOut = new FileOutputStream(jsonFilePath)) {
+				mapper.writeValue(jsonOut, this);
+				logger.info("The JSON was successfully written to a file");
+			}
 		} catch (final Exception ex) {
 			logger.error(ex);
 		}
