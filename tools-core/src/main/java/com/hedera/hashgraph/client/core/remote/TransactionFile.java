@@ -1123,7 +1123,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 					Path.of(tempStorage, getBaseName() + "." + TRANSACTION_EXTENSION).toString());
 			String signatureFile;
 
-			final Transaction<?> tx = transaction.getTransaction();
+			final Transaction<?> tx = CommonMethods.getTransaction(transaction.getTransaction().toBytes());
 			if (Objects.requireNonNull(tx.getNodeAccountIds()).size() > 1) {
 				signatureFile = tempTxFile.replaceFirst(TRANSACTION_EXTENSION + "$", JSON_EXTENSION);
 
@@ -1160,7 +1160,7 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 				signaturePair.write(signatureFile);
 			}
 
-			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile), new File(signatureFile.replace(SIGNATURE_EXTENSION, JSON_EXTENSION)) };
+			final var toPack = new File[] { new File(tempTxFile), new File(signatureFile) };
 
 			Arrays.stream(toPack).filter(file -> !file.exists() || !file.isFile()).forEach(file -> {
 				throw new HederaClientRuntimeException("Invalid file in file list");
