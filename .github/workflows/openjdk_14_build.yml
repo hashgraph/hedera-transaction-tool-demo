@@ -31,7 +31,7 @@ jobs:
           java-version: 17
 
       - name: Cache SonarCloud packages
-        uses: actions/cache@v1
+        uses: actions/cache@f5ce41475b483ad7581884324a6eca9f48f8dcc7 # v1.2.1
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
