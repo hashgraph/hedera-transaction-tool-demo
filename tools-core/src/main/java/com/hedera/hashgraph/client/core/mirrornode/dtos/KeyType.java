@@ -29,7 +29,7 @@ public enum KeyType {
     public static KeyType fromString(String value) {
         if ("ED25519".equals(value)) {
             return ED25519;
-        } else if ("ECDSASecp256k1".equals(value)) {
+        } else if ("ECDSASecp256k1".equals(value) || "ECDSA_SECP256K1".equals(value)) {
             return ECDSA_SECP256K1;
         } else if ("ProtobufEncoded".equals(value)) {
             return PROTOBUF_ENCODED;
