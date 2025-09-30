@@ -93,6 +93,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -1129,22 +1130,21 @@ public class TransactionFile extends RemoteFile implements GenericFileReadWriteA
 
 				// This map should only have one entry, due to TTv2 export. But just in case,
 				// we will handle it more generally
-				final Map<AccountId, Map<PublicKey, byte[]>> sigs = tx.getSignatures();
 				final Map<AccountId, Map<PublicKey, byte[]>> newSigs = tx.sign(privateKey).getSignatures();
 
-				for (Map.Entry<AccountId, Map<PublicKey, byte[]>> entry : sigs.entrySet()) {
-					AccountId accountId = entry.getKey();
+				// Pull all the sigs from newSigs that belong to this private key
+				final PublicKey publicKey = privateKey.getPublicKey();
+				// Only keep signatures in newSigs that match the given publicKey
+				for (Iterator<Map.Entry<AccountId, Map<PublicKey, byte[]>>> it = newSigs.entrySet().iterator(); it.hasNext(); ) {
+					Map.Entry<AccountId, Map<PublicKey, byte[]>> entry = it.next();
 					Map<PublicKey, byte[]> sigMap = entry.getValue();
 
-					if (newSigs.containsKey(accountId)) {
-						Map<PublicKey, byte[]> newSigMap = newSigs.get(accountId);
-						for (PublicKey publicKey : sigMap.keySet()) {
-							newSigMap.remove(publicKey);
-						}
-						// If the inner map is empty after removals, remove the outer key
-						if (newSigMap.isEmpty()) {
-							newSigs.remove(accountId);
-						}
+					// Remove all public keys that do not match the given publicKey
+					sigMap.keySet().removeIf(key -> !key.equals(publicKey));
+
+					// If the inner map is now empty, remove the outer entry
+					if (sigMap.isEmpty()) {
+						it.remove();
 					}
 				}
 
