@@ -19,7 +19,7 @@
 
 # Protect the repository root files
 /README.md                                      @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
-**/LICENSE                                      @hashgraph/release-engineering-managers @hashgraph/transaction-tool
+**/LICENSE                                      @hashgraph/transaction-tool
 
 # Git Ignore definitions
 **/.gitignore                                   @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
