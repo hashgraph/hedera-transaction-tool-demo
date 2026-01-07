@@ -2,7 +2,7 @@
 ##### Global Protection Rule ######
 ###################################
 # NOTE: This rule is overriden by the more specific rules below. This is the catch-all rule for all files not covered by the more specific rules below.
-*                                               @hashgraph/transaction-tool @yiliev0
+*                                               @hashgraph/transaction-tool
 
 #########################
 #####  Core Files  ######
@@ -11,16 +11,16 @@
 # NOTE: Must be placed last to ensure enforcement over all other rules
 
 # Protection Rules for Github Configuration Files and Actions Workflows
-/.github/                                       @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/transaction-tool
-/.github/workflows/                             @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers
+/.github/                                       @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
+/.github/workflows/                             @hashgraph/platform-ci @hashgraph/platform-ci-committers
 
 # Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
-/CODEOWNERS                                     @hashgraph/release-engineering-managers
+/CODEOWNERS                                     @hashgraph/platform-ci-committers
 
 # Protect the repository root files
-/README.md                                      @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/transaction-tool
+/README.md                                      @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
 **/LICENSE                                      @hashgraph/release-engineering-managers @hashgraph/transaction-tool
 
 # Git Ignore definitions
-**/.gitignore                                   @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/transaction-tool
-**/.gitignore.*                                 @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/transaction-tool
+**/.gitignore                                   @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
+**/.gitignore.*                                 @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/transaction-tool
