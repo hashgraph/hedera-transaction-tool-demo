@@ -77,10 +77,11 @@ public class ValidationUtils {
         List<Transaction.SignableNodeTransactionBodyBytes> nodeBodyList = tx.getSignableNodeBodyBytesList();
         Map<AccountId, Map<PublicKey, byte[]>> signatures = tx.getSignatures();
 
-        if (nodeBodyList.isEmpty()) {
+        if (nodeBodyList == null || nodeBodyList.isEmpty()) {
             throw new IllegalArgumentException("Transaction has no signable node bodies");
         }
-        if (signatures.isEmpty()) {
+
+        if (signatures == null || signatures.isEmpty()) {
             throw new IllegalArgumentException("Transaction has no signatures");
         }
 
