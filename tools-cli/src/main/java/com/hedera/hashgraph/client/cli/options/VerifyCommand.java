@@ -271,7 +271,7 @@ public class VerifyCommand implements ToolCommand, GenericFileReadWriteAware {
                 PublicKey pk = (PublicKey) key;
                 // As signatures cannot be removed from a transaction,
                 // verify the public key is valid before verifying against required
-                boolean found = ValidationUtils.validateSignature(tx.getTransaction(), pk) && tx.verify(pk);
+                boolean found = ValidationUtils.hasValidSignaturesForKey(tx.getTransaction(), pk) && tx.verify(pk);
                 if (found) satisfied++;
                 String line = indent + "  " + (found ? "✔ " : "✘ ") + decodedKey(pk);
                 childOutput.add(line);
