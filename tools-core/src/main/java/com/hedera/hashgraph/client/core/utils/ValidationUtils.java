@@ -73,7 +73,7 @@ public class ValidationUtils {
         return null;
     }
 
-    public static ArrayList<PublicKey> validateSignatures(Transaction<?> tx) {
+    public static List<PublicKey> validateSignatures(Transaction<?> tx) {
         List<Transaction.SignableNodeTransactionBodyBytes> nodeBodyList = tx.getSignableNodeBodyBytesList();
         Map<AccountId, Map<PublicKey, byte[]>> signatures = tx.getSignatures();
 
