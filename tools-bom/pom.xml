@@ -41,7 +41,7 @@
 		<hedera.hashgraph.sdk.version>2.59.0</hedera.hashgraph.sdk.version>
 		<log4j2.version>2.20.0</log4j2.version>
 		<slf4j.version>2.0.6</slf4j.version>
-		<javafx.version>21-ea+5</javafx.version>
+		<javafx.version>21.0.4</javafx.version>
 		<jackson.version>2.14.2</jackson.version>
 		<junit.version>5.9.2</junit.version>
 		<ztzip.version>1.15</ztzip.version>
